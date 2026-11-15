@@ -1,4 +1,8 @@
 <!--
+  - SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
+<!--
 	UNREACHABLE COMPONENT — no visual baseline is possible.
 
 	Nothing imports this file: `src/registry.js` is the only place page

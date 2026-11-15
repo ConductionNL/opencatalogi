@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\CommentPeriodController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
 use OCP\App\IAppManager;
@@ -64,7 +65,8 @@ class CommentPeriodFakeObjectService {
 		$schema = null,
 		?string $uuid = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true
+		bool $_multitenancy = true,
+		bool $_unowned = false,
 	): array {
 		$this->counter++;
 		$object['id'] = 'period-' . $this->counter;
@@ -98,16 +100,16 @@ class CommentPeriodControllerTest extends TestCase {
 	/**
 	 * Build the controller.
 	 *
-	 * @param bool   $registerAvailable Whether the container binds the ObjectService.
-	 * @param string $configured        What the register and schema keys answer.
-	 * @param bool   $signedIn          Whether a user is signed in.
+	 * @param bool $registerAvailable Whether the container binds the ObjectService.
+	 * @param string $configured What the register and schema keys answer.
+	 * @param bool $signedIn Whether a user is signed in.
 	 *
 	 * @return CommentPeriodController The controller.
 	 */
 	private function build(
 		bool $registerAvailable = true,
 		string $configured = '42',
-		bool $signedIn = true
+		bool $signedIn = true,
 	): CommentPeriodController {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn($configured);
@@ -171,7 +173,7 @@ class CommentPeriodControllerTest extends TestCase {
 		return new CommentPeriodController(
 			'opencatalogi',
 			$this->request,
-			$container,
+			new OpenRegisterLookup($container, $this->createMock(IAppManager::class)),
 			$l10n,
 			$userSession,
 			$periods
@@ -318,7 +320,7 @@ class CommentPeriodControllerTest extends TestCase {
 		$controller = new CommentPeriodController(
 			'opencatalogi',
 			$this->request,
-			$container,
+			new OpenRegisterLookup($container, $this->createMock(IAppManager::class)),
 			$l10n,
 			$userSession,
 			new CommentPeriodService(new TermRoll($engineless, $appManager), $config, $urls)

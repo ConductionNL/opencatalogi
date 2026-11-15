@@ -11,6 +11,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -21,6 +24,7 @@ use OCA\OpenCatalogi\BackgroundJob\WooReadinessCheck;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Service\SitemapStandards;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Service\WooReadinessService;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -50,11 +54,10 @@ class WooReadinessCheckTest extends TestCase {
 		$readiness = new WooReadinessService(
 			$client,
 			$this->createMock(DirectoryService::class),
-			$this->createMock(SitemapService::class),
+			new SitemapStandards($this->createMock(SitemapService::class), $this->createMock(StandardsVersionService::class)),
 			$settings,
 			$config,
-			$this->createMock(IURLGenerator::class),
-			$this->createMock(StandardsVersionService::class)
+			$this->createMock(IURLGenerator::class)
 		);
 
 		$this->assertNull($readiness->runWhenEnabled());

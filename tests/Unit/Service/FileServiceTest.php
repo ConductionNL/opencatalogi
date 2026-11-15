@@ -16,6 +16,9 @@
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-3
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-4
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -2,8 +2,9 @@
 #
 # check-integration-parity.sh — hydra gate-24 (`integration-parity`) entry point.
 #
-# gate-24 invokes exactly this path. Without it the gate reports SKIPPED even
-# though this repo registers a leaf, and a skipped gate correlated nothing.
+# gate-24 invokes exactly this path. Without it the gate reports SKIPPED; with
+# it, a leaf added later is checked from its first commit. This repo registers
+# no leaf yet, so today the checker passes with nothing to compare.
 #
 # This wrapper deliberately does NOT skip when something is missing. A gate
 # whose absence looks exactly like its success is worse than no gate, so every

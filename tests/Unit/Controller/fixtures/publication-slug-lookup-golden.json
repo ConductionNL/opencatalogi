@@ -1,0 +1,289 @@
+{
+    "one match": {
+        "found": "u-1",
+        "log": [
+            {
+                "search": {
+                    "@self": {
+                        "slug": "besluit-1",
+                        "register": 1,
+                        "schema": 1
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "normalised before the lookup": {
+        "found": "u-2",
+        "log": [
+            {
+                "search": {
+                    "@self": {
+                        "slug": "besluit-2026-0042",
+                        "register": 1,
+                        "schema": 1
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "nothing left after normalising": {
+        "found": null,
+        "log": []
+    },
+    "no match": {
+        "found": null,
+        "log": [
+            {
+                "search": {
+                    "@self": {
+                        "slug": "missing",
+                        "register": 1,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "missing",
+                        "register": 1,
+                        "schema": 4
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "missing",
+                        "register": 2,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "missing",
+                        "register": 2,
+                        "schema": 4
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "match in the last pair": {
+        "found": "u-9",
+        "log": [
+            {
+                "search": {
+                    "@self": {
+                        "slug": "x",
+                        "register": 1,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "x",
+                        "register": 1,
+                        "schema": 4
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "x",
+                        "register": 2,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "x",
+                        "register": 2,
+                        "schema": 4
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "two matches in one pair": {
+        "found": null,
+        "log": [
+            {
+                "search": {
+                    "@self": {
+                        "slug": "dup",
+                        "register": 1,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "warning": "[PublicationsController] Slug \"dup\" is ambiguous in catalog woo: matches publications u-a, u-b",
+                "context": {
+                    "slug": "dup",
+                    "catalogSlug": "woo",
+                    "uuids": [
+                        "u-a",
+                        "u-b"
+                    ]
+                }
+            }
+        ]
+    },
+    "two matches across pairs": {
+        "found": null,
+        "log": [
+            {
+                "search": {
+                    "@self": {
+                        "slug": "dup",
+                        "register": 1,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "dup",
+                        "register": 1,
+                        "schema": 4
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "dup",
+                        "register": 2,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "warning": "[PublicationsController] Slug \"dup\" is ambiguous in catalog woo: matches publications u-a, u-b",
+                "context": {
+                    "slug": "dup",
+                    "catalogSlug": "woo",
+                    "uuids": [
+                        "u-a",
+                        "u-b"
+                    ]
+                }
+            }
+        ]
+    },
+    "search answers no list": {
+        "found": "u-5",
+        "log": [
+            {
+                "search": {
+                    "@self": {
+                        "slug": "odd",
+                        "register": 1,
+                        "schema": 1
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "odd",
+                        "register": 1,
+                        "schema": 2
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "long slug is cut": {
+        "found": null,
+        "log": [
+            {
+                "search": {
+                    "@self": {
+                        "slug": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                        "register": 1,
+                        "schema": 1
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "dashes collapse": {
+        "found": "u-6",
+        "log": [
+            {
+                "search": {
+                    "@self": {
+                        "slug": "a-b",
+                        "register": 1,
+                        "schema": 1
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    }
+}

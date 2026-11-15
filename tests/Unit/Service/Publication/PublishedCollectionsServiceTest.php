@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service\Publication;
@@ -15,6 +20,7 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for PublishedCollectionsService.
  *
  * @covers \OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService
+ * @uses \OCA\OpenCatalogi\Service\Publication\PublicationRuleService
  */
 class PublishedCollectionsServiceTest extends TestCase {
 
@@ -62,6 +68,7 @@ class PublishedCollectionsServiceTest extends TestCase {
 			collections: [
 				[
 					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
 					'anonymousProperties' => ['title'],
 					'conditions' => [['property' => 'status', 'operator' => 'equals', 'value' => 'definitief']],
 				],
@@ -78,6 +85,7 @@ class PublishedCollectionsServiceTest extends TestCase {
 			collections: [
 				[
 					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
 					'anonymousProperties' => ['title'],
 					'conditions' => [['property' => 'status', 'operator' => 'equals', 'value' => 'definitief']],
 				],
@@ -93,6 +101,7 @@ class PublishedCollectionsServiceTest extends TestCase {
 			collections: [
 				[
 					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
 					'anonymousProperties' => ['title'],
 					'conditions' => [['property' => 'status', 'operator' => 'sortOfLike', 'value' => 'x']],
 				],
@@ -104,6 +113,54 @@ class PublishedCollectionsServiceTest extends TestCase {
 		$this->assertSame('', $this->stored);
 
 	}//end testACollectionWithAnUnknownOperatorIsRefusedAtSave()
+
+	/**
+	 * Every error names the collection it belongs to, an entry that is not a
+	 * collection at all is reported in place, and nothing is stored.
+	 */
+	public function testSaveListsEveryErrorUnderItsCollectionIndex(): void {
+		$outcome = $this->service->save(
+			collections: [
+				'not a collection',
+				[
+					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
+					'anonymousProperties' => ['title'],
+					'conditions' => [['property' => 'status', 'operator' => 'sortOfLike', 'value' => 'x']],
+				],
+			]
+		);
+
+		$validation = (new PublicationRuleService())->validateRule(
+			rule: [
+				'recordType' => 'besluit',
+				'wooCategory' => 'infocat002',
+				'anonymousProperties' => ['title'],
+				'conditions' => [['property' => 'status', 'operator' => 'sortOfLike', 'value' => 'x']],
+			]
+		);
+		$expected = ['Collection 0 cannot be read.'];
+		foreach ($validation['errors'] as $error) {
+			$expected[] = 'Collection 1: ' . $error;
+		}
+
+		$this->assertSame(['saved' => false, 'errors' => $expected], $outcome);
+		$this->assertSame('', $this->stored);
+
+	}//end testSaveListsEveryErrorUnderItsCollectionIndex()
+
+	/**
+	 * A valid set is stored as a list, whatever keys it arrived with.
+	 */
+	public function testSaveStoresTheCollectionsAsAList(): void {
+		$collection = ['recordType' => 'besluit', 'wooCategory' => 'infocat002', 'anonymousProperties' => ['title'], 'conditions' => []];
+
+		$outcome = $this->service->save(collections: ['first' => $collection]);
+
+		$this->assertSame(['saved' => true, 'errors' => []], $outcome);
+		$this->assertSame((string)json_encode([$collection]), $this->stored);
+
+	}//end testSaveStoresTheCollectionsAsAList()
 
 	/**
 	 * An unreadable configuration refuses. Read as "publish nothing" it

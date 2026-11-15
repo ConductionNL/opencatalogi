@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
@@ -98,6 +103,8 @@ class SearchControllerTest extends TestCase {
 		$response = $this->controller->index();
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
+		// Built without a collector, the controller fails closed to the `unknown` entry.
+		$expected['appliedFilters'] = [['name' => 'unknown', 'value' => null, 'reason' => 'not recorded']];
 		$this->assertSame($expected, $response->getData());
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 	}//end testIndexReturnsAssembledSearchResultsForAnonymousCallers()
@@ -394,7 +401,6 @@ class SearchControllerTest extends TestCase {
 		$this->queryService->method('assemblePublicSearchResults')->willReturn(['results' => [], 'total' => 0]);
 
 		return $this->controller->index();
-
 	}//end searchAs()
 
 	/**
@@ -409,7 +415,7 @@ class SearchControllerTest extends TestCase {
 
 		$this->assertSame('public, max-age=60, must-revalidate', $headers['Cache-Control']);
 		$this->assertArrayHasKey('ETag', $headers);
-		$this->assertSame('Origin, Accept-Language', $headers['Vary']);
+		$this->assertSame('Origin, Accept, Accept-Language', $headers['Vary']);
 
 	}//end testAnAnonymousSearchAnswerIsPubliclyCacheable()
 

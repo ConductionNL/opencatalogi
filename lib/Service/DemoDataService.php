@@ -3,6 +3,9 @@
 /**
  * Installs this app's demo dataset on request (ADR-111).
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * An app installed from the App Store opens on an empty list, and the only
  * question its first reader has is whether they can see it work. Answering it
  * requires data they cannot author, against a schema they do not know yet.
@@ -30,9 +33,6 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- *
  * @link https://www.OpenCatalogi.nl
  */
 
@@ -40,7 +40,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
-use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -51,7 +52,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md
  */
-class DemoDataService {
+class DemoDataService implements DemoDataServiceInterface {
 	/**
 	 * App-relative path to the generated mock descriptor.
 	 *
@@ -69,14 +70,14 @@ class DemoDataService {
 	 *
 	 * @var string
 	 */
-	private const CONFIG_APP_ID = Application::APP_ID . '.demo';
+	private const CONFIG_APP_ID = AppIdentity::APP_ID . '.demo';
 
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppManager        $appManager Resolves this app's path and version.
-	 * @param ContainerInterface $container  Resolves OpenRegister's importer.
-	 * @param LoggerInterface    $logger     Records what was imported.
+	 * @param IAppManager $appManager Resolves this app's path and version.
+	 * @param ContainerInterface $container Resolves OpenRegister's importer.
+	 * @param LoggerInterface $logger Records what was imported.
 	 *
 	 * @return void
 	 */
@@ -99,24 +100,6 @@ class DemoDataService {
 	}//end isAvailable()
 
 	/**
-	 * The answer that means "plant nothing".
-	 *
-	 * 🔴 NOT THE ABSENCE OF AN ANSWER. An operator who declines has FINISHED the
-	 * step; a step that can never be marked done reopens the wizard over every
-	 * page (nextcloud-vue#806).
-	 *
-	 * @var string
-	 */
-	public const NONE_DATASET = 'none';
-
-	/**
-	 * The id of the dataset this app ships.
-	 *
-	 * @var string
-	 */
-	public const DEMO_DATASET = 'demo';
-
-	/**
 	 * Every answer the wizard's choice step may offer, declining included.
 	 *
 	 * 🔴 THE SERVER OWNS THIS LIST, AND THAT IS THE POINT. The step declares
@@ -132,39 +115,52 @@ class DemoDataService {
 	public function listChoices(): array {
 		$choices = [
 			[
-				'id'          => self::NONE_DATASET,
-				'label'       => 'None, I will set this up myself',
+				'id' => self::NONE_DATASET,
+				'label' => 'None, I will set this up myself',
 				'description' => 'Nothing is imported. You start with an empty app and add your own data.',
 				'objectCount' => 0,
-				'icon'        => 'CloseCircleOutline',
+				'icon' => 'CloseCircleOutline',
 			],
 		];
 
 		$objects = $this->shippedObjectCount();
 		if ($objects !== null) {
-			$choices[] = [
-				'id'    => self::DEMO_DATASET,
-				'label' => 'Example data',
-				// 🔴 NO NUMBER IN THIS SENTENCE. The wizard runs a card's
-				// description through the app's translation function, which is a
-				// literal lookup, so an interpolated count would make the string
-				// untranslatable and leave a Dutch operator reading English. The
-				// count travels as `objectCount` and the card renders it as a
-				// stat, with a label the library translates.
-				'description' => (
-					'Sample values for every schema this app supplies, generated from the schemas '
-					. 'themselves. It shows the lists, detail pages and dashboards working rather '
-					. 'than telling a story. Safe to run more than once, and you can delete it '
-					. 'afterwards.'
-				),
-				'objectCount' => $objects,
-				'icon'        => 'DatabaseOutline',
-			];
+			$choices[] = $this->demoChoice(objects: $objects);
 		}
 
 		return $choices;
-
 	}//end listChoices()
+
+	/**
+	 * The example-data choice, with the number of objects it imports.
+	 *
+	 * @param int $objects The number of objects the descriptor ships.
+	 *
+	 * @return array<string, mixed> The choice card.
+	 *
+	 * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md
+	 */
+	private function demoChoice(int $objects): array {
+		return [
+			'id' => self::DEMO_DATASET,
+			'label' => 'Example data',
+			// 🔴 NO NUMBER IN THIS SENTENCE. The wizard runs a card's
+			// description through the app's translation function, which is a
+			// literal lookup, so an interpolated count would make the string
+			// untranslatable and leave a Dutch operator reading English. The
+			// count travels as `objectCount` and the card renders it as a
+			// stat, with a label the library translates.
+			'description' => (
+				'Sample values for every schema this app supplies, generated from the schemas '
+				. 'themselves. It shows the lists, detail pages and dashboards working rather '
+				. 'than telling a story. Safe to run more than once, and you can delete it '
+				. 'afterwards.'
+			),
+			'objectCount' => $objects,
+			'icon' => 'DatabaseOutline',
+		];
+
+	}//end demoChoice()
 
 	/**
 	 * How many objects the shipped descriptor carries, or null when it ships none.
@@ -176,44 +172,25 @@ class DemoDataService {
 	 * @return integer|null The object count, or null when there is no usable descriptor.
 	 */
 	private function shippedObjectCount(): ?int {
-		$path = $this->descriptorPath();
-		if (is_file($path) === false) {
+		try {
+			$data = $this->readDescriptor();
+		} catch (RuntimeException $e) {
 			return null;
 		}
 
-		$raw = file_get_contents($path);
-		if ($raw === false) {
-			return null;
-		}
-
-		$data = json_decode($raw, true);
-		if (is_array($data) === false) {
-			return null;
-		}
-
-		$components = ($data['components'] ?? []);
-		if (is_array($components) === false || is_array(($components['objects'] ?? null)) === false) {
-			return 0;
-		}
-
-		return count($components['objects']);
-
+		return $this->objectCount(data: $data);
 	}//end shippedObjectCount()
 
 	/**
-	 * Import the demo dataset.
-	 *''
-	 * 🔴 THROWS RATHER THAN RETURNING A QUIET FAILURE. Every caller reports the
-	 * outcome to an operator who just asked for this, so "nothing happened"
-	 * must not be presentable as success.
+	 * The shipped demo descriptor, decoded.
 	 *
-	 * @return array{objects: integer, registers: integer, schemas: integer} What was imported.
+	 * @return array<string, mixed> The descriptor.
 	 *
-	 * @throws RuntimeException When the descriptor is missing, unreadable, or OpenRegister is absent.
+	 * @throws RuntimeException When no descriptor ships, or it cannot be read or is not a JSON object or list.
 	 *
 	 * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md
 	 */
-	public function install(): array {
+	private function readDescriptor(): array {
 		$path = $this->descriptorPath();
 		if (is_file($path) === false) {
 			throw new RuntimeException('No demo dataset ships with this app (' . self::DESCRIPTOR . ' not found).');
@@ -229,26 +206,59 @@ class DemoDataService {
 			throw new RuntimeException('The demo dataset is not valid JSON: ' . $path);
 		}
 
+		return $data;
+	}//end readDescriptor()
+
+	/**
+	 * The number of objects a descriptor ships: 0 when it lists none.
+	 *
+	 * @param array<string, mixed> $data The descriptor.
+	 *
+	 * @return int The object count.
+	 *
+	 * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md
+	 */
+	private function objectCount(array $data): int {
+		$components = ($data['components'] ?? []);
+		if (is_array($components) === false || is_array(($components['objects'] ?? null)) === false) {
+			return 0;
+		}
+
+		return count($components['objects']);
+	}//end objectCount()
+
+	/**
+	 * Import the demo dataset.
+	 *''
+	 * 🔴 THROWS RATHER THAN RETURNING A QUIET FAILURE. Every caller reports the
+	 * outcome to an operator who just asked for this, so "nothing happened"
+	 * must not be presentable as success.
+	 *
+	 * @return array{objects: integer, registers: integer, schemas: integer} What was imported.
+	 *
+	 * @throws RuntimeException When the descriptor is missing, unreadable, or OpenRegister is absent.
+	 *
+	 * @spec openspec/changes/setup-wizard-server-contract/specs/first-time-onboarding/spec.md
+	 */
+	public function install(): array {
+		$data = $this->readDescriptor();
+
 		// Counted from the file rather than from the importer's reply, so the
 		// number reported is the number ASKED FOR. A discrepancy between this
 		// and what lands is a real condition an operator should be able to see.
-		$objects = 0;
-		$components = ($data['components'] ?? []);
-		if (is_array($components) === true && is_array(($components['objects'] ?? null)) === true) {
-			$objects = count($components['objects']);
-		}
+		$objects = $this->objectCount(data: $data);
 
 		$result = $this->configurationService()->importFromApp(
 			appId: self::CONFIG_APP_ID,
 			data: $data,
-			version: $this->appManager->getAppVersion(Application::APP_ID),
+			version: $this->appManager->getAppVersion(AppIdentity::APP_ID),
 			force: true
 		);
 
 		$imported = [
-			'objects'   => $objects,
+			'objects' => $objects,
 			'registers' => count((array)($result['registers'] ?? [])),
-			'schemas'   => count((array)($result['schemas'] ?? [])),
+			'schemas' => count((array)($result['schemas'] ?? [])),
 		];
 
 		$this->logger->info(
@@ -256,7 +266,7 @@ class DemoDataService {
 			. $imported['objects'] . ' object(s), '
 			. $imported['registers'] . ' register(s), '
 			. $imported['schemas'] . ' schema(s).',
-			['app' => Application::APP_ID]
+			['app' => AppIdentity::APP_ID]
 		);
 
 		return $imported;
@@ -268,7 +278,7 @@ class DemoDataService {
 	 * @return string The path.
 	 */
 	private function descriptorPath(): string {
-		return $this->appManager->getAppPath(Application::APP_ID) . self::DESCRIPTOR;
+		return $this->appManager->getAppPath(AppIdentity::APP_ID) . self::DESCRIPTOR;
 	}//end descriptorPath()
 
 	/**

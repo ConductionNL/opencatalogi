@@ -15,6 +15,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -23,7 +26,6 @@ namespace Unit\Service\Publication;
 
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
-use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use Opis\JsonSchema\Validator;
@@ -48,7 +50,7 @@ class PublicationStateServiceTest extends TestCase {
 	/**
 	 * A schema from a register file.
 	 *
-	 * @param string $file   The register file under lib/Settings.
+	 * @param string $file The register file under lib/Settings.
 	 * @param string $schema The schema slug.
 	 *
 	 * @return array<string, mixed> The schema.
@@ -151,19 +153,37 @@ class PublicationStateServiceTest extends TestCase {
 		$this->assertTrue($this->validates($this->states->storable($raw), $schema));
 	}
 
-	/** REQ-PPW-003: a fresh install carries one withdrawn seed publication and its depublication, so Publish again shows. */
-	public function testTheSeedCarriesAWithdrawnPublicationAndItsDepublication(): void {
-		$register = json_decode((string)file_get_contents(__DIR__ . '/../../../../lib/Settings/publication_register.json'), true);
+	/** REQ-PPW-003: the demo data carries one withdrawn example publication and its depublication, so Publish again shows. */
+	public function testTheDemoDataCarriesAWithdrawnPublicationAndItsDepublication(): void {
+		$register = json_decode((string)file_get_contents(__DIR__ . '/../../../../lib/Settings/opencatalogi_mock_register.json'), true);
 		$objects = $register['components']['objects'];
 		$withdrawn = array_values(array_filter($objects, static fn (array $o): bool => ($o['@self']['slug'] ?? '') === 'example-conduction-quarterly-report'))[0];
-		$depublication = array_values(array_filter($objects, static fn (array $o): bool => ($o['@self']['schema'] ?? '') === 'depublication'))[0];
+		$depublication = array_values(array_filter($objects, static fn (array $o): bool => ($o['@self']['slug'] ?? '') === 'example-conduction-quarterly-report-withdrawn'))[0];
 
 		unset($withdrawn['@self'], $depublication['@self']);
 		$this->assertSame('withdrawn', $this->states->stateOf($withdrawn, $this->now));
-		// Only the dates this change sets: `organization` is a seed slug the import resolves to a uuid.
+		// Only the dates this change sets.
 		$dates = array_intersect_key($withdrawn, ['title' => true, 'publicationDate' => true, 'depublicationDate' => true]);
 		$this->assertTrue($this->validates($dates, $this->schema('publication_register.json', 'publication')));
 		$this->assertSame('example-conduction-quarterly-report', $depublication['publication']);
 		$this->assertTrue($this->validates($depublication, $this->schema('register.d/publication-inspection-and-the-national-indexes.json', 'depublication')));
+	}
+
+	/**
+	 * The bundled register imported on install carries no example
+	 * publication, document or depublication: example rows are demo data,
+	 * installed only on request (ADR-111), or they show up in a real
+	 * organisation's public search.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-example-publications-are-demo-data-installed-only-on-request-req-epd-001
+	 */
+	public function testTheInstalledRegisterCarriesNoExamplePublications(): void {
+		$register = json_decode((string)file_get_contents(__DIR__ . '/../../../../lib/Settings/publication_register.json'), true);
+		$examples = array_filter(
+			$register['components']['objects'],
+			static fn (array $o): bool => in_array($o['@self']['schema'] ?? '', ['publication', 'document', 'depublication'], true)
+		);
+
+		$this->assertSame([], array_values($examples));
 	}
 }

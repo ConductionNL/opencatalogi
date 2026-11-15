@@ -1,0 +1,1011 @@
+{
+    "testFederatedUsedMatchesTheRecording aggregation off": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testFederatedUsedMatchesTheRecording aggregation other": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        },
+                        {
+                            "id": "f1"
+                        },
+                        {
+                            "id": "f2"
+                        }
+                    ],
+                    "sources": {
+                        "local": "Local OpenCatalogi instance",
+                        "https://peer": "Peer A"
+                    }
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "getUsed": {
+                    "uuid": "pub-1",
+                    "guzzleConfig": {
+                        "query_params": {
+                            "_aggregate": "no"
+                        }
+                    }
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testFederatedUsedMatchesTheRecording aggregation zero": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testFederatedUsedMatchesTheRecording connect timeout zero": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        },
+                        {
+                            "id": "f1"
+                        },
+                        {
+                            "id": "f2"
+                        }
+                    ],
+                    "sources": {
+                        "local": "Local OpenCatalogi instance",
+                        "https://peer": "Peer A"
+                    }
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "getUsed": {
+                    "uuid": "pub-1",
+                    "guzzleConfig": {
+                        "timeout": 1,
+                        "query_params": {
+                            "timeout": 1,
+                            "connect_timeout": 0
+                        }
+                    }
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testFederatedUsedMatchesTheRecording local without results": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "f1"
+                        },
+                        {
+                            "id": "f2"
+                        }
+                    ],
+                    "sources": {
+                        "local": "Local OpenCatalogi instance",
+                        "https://peer": "Peer A"
+                    }
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "error": "Not Found"
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "getUsed": {
+                    "uuid": "pub-1",
+                    "guzzleConfig": {
+                        "query_params": []
+                    }
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testFederatedUsedMatchesTheRecording merged": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        },
+                        {
+                            "id": "f1"
+                        },
+                        {
+                            "id": "f2"
+                        }
+                    ],
+                    "sources": {
+                        "local": "Local OpenCatalogi instance",
+                        "https://peer": "Peer A"
+                    }
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "getUsed": {
+                    "uuid": "pub-1",
+                    "guzzleConfig": {
+                        "query_params": []
+                    }
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testFederatedUsedMatchesTheRecording peer fails": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "getUsed": {
+                    "uuid": "pub-1",
+                    "guzzleConfig": {
+                        "query_params": []
+                    }
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testFederatedUsedMatchesTheRecording peer without results or sources": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "sources": {
+                        "local": "Local OpenCatalogi instance"
+                    }
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "getUsed": {
+                    "uuid": "pub-1",
+                    "guzzleConfig": {
+                        "query_params": []
+                    }
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testFederatedUsedMatchesTheRecording timeouts at the bounds": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        },
+                        {
+                            "id": "f1"
+                        },
+                        {
+                            "id": "f2"
+                        }
+                    ],
+                    "sources": {
+                        "local": "Local OpenCatalogi instance",
+                        "https://peer": "Peer A"
+                    }
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "getUsed": {
+                    "uuid": "pub-1",
+                    "guzzleConfig": {
+                        "timeout": 120,
+                        "connect_timeout": 30,
+                        "query_params": {
+                            "timeout": 120,
+                            "connect_timeout": "30"
+                        }
+                    }
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testFederatedUsedMatchesTheRecording timeouts in bounds": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        },
+                        {
+                            "id": "f1"
+                        },
+                        {
+                            "id": "f2"
+                        }
+                    ],
+                    "sources": {
+                        "local": "Local OpenCatalogi instance",
+                        "https://peer": "Peer A"
+                    }
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "getUsed": {
+                    "uuid": "pub-1",
+                    "guzzleConfig": {
+                        "timeout": 30,
+                        "connect_timeout": 5,
+                        "query_params": {
+                            "timeout": "30",
+                            "connect_timeout": 5,
+                            "_extend": "x"
+                        }
+                    }
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testFederatedUsedMatchesTheRecording timeouts out of bounds": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        },
+                        {
+                            "id": "f1"
+                        },
+                        {
+                            "id": "f2"
+                        }
+                    ],
+                    "sources": {
+                        "local": "Local OpenCatalogi instance",
+                        "https://peer": "Peer A"
+                    }
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "getUsed": {
+                    "uuid": "pub-1",
+                    "guzzleConfig": {
+                        "query_params": {
+                            "timeout": 121,
+                            "connect_timeout": 31
+                        }
+                    }
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testFederatedUsedMatchesTheRecording timeouts zero or negative": {
+        "results": {
+            "used": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        },
+                        {
+                            "id": "f1"
+                        },
+                        {
+                            "id": "f2"
+                        }
+                    ],
+                    "sources": {
+                        "local": "Local OpenCatalogi instance",
+                        "https://peer": "Peer A"
+                    }
+                },
+                "status": 200
+            },
+            "uses": {
+                "success": true,
+                "data": {
+                    "results": [
+                        {
+                            "id": "l1"
+                        }
+                    ],
+                    "total": 1
+                },
+                "status": 200
+            }
+        },
+        "calls": [
+            {
+                "used": {
+                    "id": "pub-1"
+                }
+            },
+            {
+                "getUsed": {
+                    "uuid": "pub-1",
+                    "guzzleConfig": {
+                        "query_params": {
+                            "timeout": "0",
+                            "connect_timeout": "-1"
+                        }
+                    }
+                }
+            },
+            {
+                "uses": {
+                    "id": "pub-1"
+                }
+            }
+        ]
+    },
+    "testLocalCatalogsMatchTheRecording catalog schema zero": {
+        "results": [
+            {
+                "result": []
+            },
+            {
+                "result": []
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            }
+        ]
+    },
+    "testLocalCatalogsMatchTheRecording catalogs": {
+        "results": [
+            {
+                "result": [
+                    {
+                        "id": "c1",
+                        "slug": "woo",
+                        "title": "Woo",
+                        "summary": "S",
+                        "description": "D",
+                        "organization": "O",
+                        "listed": true
+                    },
+                    {
+                        "id": "c2",
+                        "slug": "from-self",
+                        "title": "Local Catalog",
+                        "summary": "Local catalog instance",
+                        "description": null,
+                        "organization": null,
+                        "listed": false
+                    },
+                    {
+                        "id": "c3",
+                        "slug": "own",
+                        "title": "Local Catalog",
+                        "summary": "Local catalog instance",
+                        "description": null,
+                        "organization": null,
+                        "listed": 0
+                    },
+                    {
+                        "id": 7,
+                        "slug": "",
+                        "title": "Local Catalog",
+                        "summary": "Local catalog instance",
+                        "description": null,
+                        "organization": null,
+                        "listed": false
+                    }
+                ]
+            },
+            {
+                "result": [
+                    {
+                        "id": "c1",
+                        "slug": "woo",
+                        "title": "Woo",
+                        "summary": "S",
+                        "description": "D",
+                        "organization": "O",
+                        "listed": true
+                    },
+                    {
+                        "id": "c2",
+                        "slug": "from-self",
+                        "title": "Local Catalog",
+                        "summary": "Local catalog instance",
+                        "description": null,
+                        "organization": null,
+                        "listed": false
+                    },
+                    {
+                        "id": "c3",
+                        "slug": "own",
+                        "title": "Local Catalog",
+                        "summary": "Local catalog instance",
+                        "description": null,
+                        "organization": null,
+                        "listed": 0
+                    },
+                    {
+                        "id": 7,
+                        "slug": "",
+                        "title": "Local Catalog",
+                        "summary": "Local catalog instance",
+                        "description": null,
+                        "organization": null,
+                        "listed": false
+                    }
+                ]
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "searchObjects": {
+                    "query": {
+                        "@self": {
+                            "schema": "catalog-schema",
+                            "register": "catalog-register"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testLocalCatalogsMatchTheRecording config fails": {
+        "results": [
+            {
+                "result": []
+            },
+            {
+                "result": []
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            }
+        ]
+    },
+    "testLocalCatalogsMatchTheRecording no catalog register": {
+        "results": [
+            {
+                "result": []
+            },
+            {
+                "result": []
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            }
+        ]
+    },
+    "testLocalCatalogsMatchTheRecording no catalog schema": {
+        "results": [
+            {
+                "result": []
+            },
+            {
+                "result": []
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            }
+        ]
+    },
+    "testLocalCatalogsMatchTheRecording no catalogs": {
+        "results": [
+            {
+                "result": []
+            },
+            {
+                "result": []
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "searchObjects": {
+                    "query": {
+                        "@self": {
+                            "schema": "catalog-schema",
+                            "register": "catalog-register"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testLocalCatalogsMatchTheRecording only catalogs without id": {
+        "results": [
+            {
+                "result": []
+            },
+            {
+                "result": []
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "searchObjects": {
+                    "query": {
+                        "@self": {
+                            "schema": "catalog-schema",
+                            "register": "catalog-register"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testLocalCatalogsMatchTheRecording openregister absent": {
+        "results": [
+            {
+                "result": []
+            },
+            {
+                "result": []
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            }
+        ]
+    },
+    "testLocalCatalogsMatchTheRecording search fails": {
+        "results": [
+            {
+                "result": []
+            },
+            {
+                "result": []
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "searchObjects": {
+                    "query": {
+                        "@self": {
+                            "schema": "catalog-schema",
+                            "register": "catalog-register"
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}

@@ -1,0 +1,195 @@
+{
+    "no register": {
+        "summary": {
+            "expiringSoon": 0,
+            "reviewRequired": 0,
+            "archived": 0
+        },
+        "log": {
+            "searched": [],
+            "warnings": []
+        }
+    },
+    "no schema": {
+        "summary": {
+            "expiringSoon": 0,
+            "reviewRequired": 0,
+            "archived": 0
+        },
+        "log": {
+            "searched": [],
+            "warnings": []
+        }
+    },
+    "no object service": {
+        "summary": {
+            "expiringSoon": 0,
+            "reviewRequired": 0,
+            "archived": 0
+        },
+        "log": {
+            "searched": [],
+            "warnings": [
+                "[RetentionService] OpenRegister ObjectService unavailable: no OCA\\OpenRegister\\Service\\ObjectService"
+            ]
+        }
+    },
+    "search fails": {
+        "summary": {
+            "expiringSoon": 0,
+            "reviewRequired": 0,
+            "archived": 0
+        },
+        "log": {
+            "searched": [
+                {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "retentionExpiresAt": {
+                            "$lte": "now+30d"
+                        },
+                        "_limit": 1000
+                    },
+                    "rbac": true,
+                    "multitenancy": false
+                }
+            ],
+            "warnings": [
+                "[RetentionService] queue summary failed: index down"
+            ]
+        }
+    },
+    "no results key": {
+        "summary": {
+            "expiringSoon": 0,
+            "reviewRequired": 0,
+            "archived": 0
+        },
+        "log": {
+            "searched": [
+                {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "retentionExpiresAt": {
+                            "$lte": "now+30d"
+                        },
+                        "_limit": 1000
+                    },
+                    "rbac": true,
+                    "multitenancy": false
+                }
+            ],
+            "warnings": []
+        }
+    },
+    "every branch": {
+        "summary": {
+            "expiringSoon": 3,
+            "reviewRequired": 2,
+            "archived": 2
+        },
+        "log": {
+            "searched": [
+                {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "retentionExpiresAt": {
+                            "$lte": "now+30d"
+                        },
+                        "_limit": 1000
+                    },
+                    "rbac": true,
+                    "multitenancy": false
+                }
+            ],
+            "warnings": []
+        }
+    },
+    "entity rows": {
+        "summary": {
+            "expiringSoon": 0,
+            "reviewRequired": 1,
+            "archived": 1
+        },
+        "log": {
+            "searched": [
+                {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "retentionExpiresAt": {
+                            "$lte": "now+30d"
+                        },
+                        "_limit": 1000
+                    },
+                    "rbac": true,
+                    "multitenancy": false
+                }
+            ],
+            "warnings": []
+        }
+    },
+    "custom window": {
+        "summary": {
+            "expiringSoon": 0,
+            "reviewRequired": 0,
+            "archived": 0
+        },
+        "log": {
+            "searched": [
+                {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "retentionExpiresAt": {
+                            "$lte": "now+7d"
+                        },
+                        "_limit": 1000
+                    },
+                    "rbac": true,
+                    "multitenancy": false
+                }
+            ],
+            "warnings": []
+        }
+    },
+    "zero window": {
+        "summary": {
+            "expiringSoon": 0,
+            "reviewRequired": 0,
+            "archived": 0
+        },
+        "log": {
+            "searched": [
+                {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "retentionExpiresAt": {
+                            "$lte": "now+30d"
+                        },
+                        "_limit": 1000
+                    },
+                    "rbac": true,
+                    "multitenancy": false
+                }
+            ],
+            "warnings": []
+        }
+    }
+}

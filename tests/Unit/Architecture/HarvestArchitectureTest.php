@@ -77,7 +77,6 @@ class HarvestArchitectureTest extends TestCase {
 		}
 
 		return array_values(array_unique($found));
-
 	}//end forbiddenSchemas()
 
 	/**

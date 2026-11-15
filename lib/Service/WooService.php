@@ -3,6 +3,9 @@
 /**
  * Service for the WOO (Wet open overheid) transparency workflow.
  *
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Implements the WOO-specific domain logic described in
  * openspec/changes/woo-transparency. Per hydra ADR-022 this service builds NO
  * bespoke queue/board, NO bespoke state machine and NO bespoke audit store:
@@ -28,9 +31,6 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
- *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
@@ -43,12 +43,14 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
+use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
-use OCP\IAppConfig;
+use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
 use OCP\IL10N;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -56,8 +58,11 @@ use RuntimeException;
  * Drives the WOO transparency workflow.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength) Long workflow steps are split into small documented
+ *   private methods; the docblocks of those steps push the class past the line threshold.
  */
-class WooService {
+class WooService implements TransparencyWorkflowServiceInterface {
+	use ReadsObjectProperties;
 
 	/**
 	 * Config key holding the WOO batch register id/uuid.
@@ -109,31 +114,6 @@ class WooService {
 	public const BATCH_STATUSES = ['in_progress', 'ready_for_review', 'published'];
 
 	/**
-	 * The WOO Art. 5.1/5.2 weigeringsgronden (refusal grounds) catalogue. Each
-	 * entry is the article reference (stored value) mapped to a short Dutch
-	 * description. Absolute grounds (5.1) and relative grounds (5.2).
-	 *
-	 * @var array<string, string>
-	 */
-	public const WEIGERINGSGRONDEN = [
-		'5.1.1.a' => 'Eenheid van de Kroon',
-		'5.1.1.b' => 'Veiligheid van de Staat',
-		'5.1.1.c' => 'Vertrouwelijk verstrekte bedrijfs- en fabricagegegevens',
-		'5.1.1.d' => 'Bijzondere persoonsgegevens en strafrechtelijke gegevens',
-		'5.1.2.a' => 'Betrekkingen van Nederland met andere staten en internationale organisaties',
-		'5.1.2.b' => 'Economische of financiele belangen van de Staat',
-		'5.1.2.c' => 'Opsporing en vervolging van strafbare feiten',
-		'5.1.2.d' => 'Inspectie, controle en toezicht door bestuursorganen',
-		'5.1.2.e' => 'Eerbiediging van de persoonlijke levenssfeer',
-		'5.1.2.f' => 'Bescherming van het milieu',
-		'5.1.2.g' => 'Beveiliging van personen en bedrijven en het voorkomen van sabotage',
-		'5.1.2.h' => 'Het goed functioneren van de Staat en andere publiekrechtelijke lichamen',
-		'5.1.2.i' => 'Het belang van de geadresseerde om als eerste kennis te kunnen nemen',
-		'5.2.a' => 'Persoonlijke beleidsopvattingen in documenten voor intern beraad',
-		'5.2.e' => 'Persoonlijke beleidsopvattingen',
-	];
-
-	/**
 	 * Cached OpenRegister ObjectService instance.
 	 *
 	 * @var object|null
@@ -157,22 +137,22 @@ class WooService {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig $config App configuration.
-	 * @param ContainerInterface $container Server container for resolving OpenRegister.
+	 * @param RegisterBindings $bindings The configured register ids and the OpenRegister services.
 	 * @param IUserSession $userSession Current user session (decision attribution).
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translated refusal messages for the publish gate.
 	 * @param BatchPublicationWriter $publications Makes the batch's publication (woo-batch-creates-publications).
 	 * @param DocumentRedactor $redactor Redacts a partly public document through OpenRegister (woo-redaction-pipeline).
+	 * @param FileFacts|null $fileFacts Reads a document's type from its stored bytes (REQ-PFF-001).
 	 */
 	public function __construct(
-		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
+		private readonly RegisterBindings $bindings,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 		private readonly BatchPublicationWriter $publications,
 		private readonly DocumentRedactor $redactor,
+		private readonly ?FileFacts $fileFacts = null,
 	) {
 
 	}//end __construct()
@@ -187,7 +167,7 @@ class WooService {
 	public function getObjectService(): ?object {
 		if ($this->objectService === null) {
 			try {
-				$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+				$this->objectService = $this->bindings->service('OCA\OpenRegister\Service\ObjectService');
 			} catch (\Throwable $e) {
 				$this->logger->warning('[WooService] OpenRegister ObjectService unavailable: ' . $e->getMessage());
 				return null;
@@ -207,7 +187,7 @@ class WooService {
 	public function getDeckCardService(): ?object {
 		if ($this->deckCardService === null) {
 			try {
-				$this->deckCardService = $this->container->get('OCA\OpenRegister\Service\DeckCardService');
+				$this->deckCardService = $this->bindings->service('OCA\OpenRegister\Service\DeckCardService');
 			} catch (\Throwable $e) {
 				$this->logger->warning('[WooService] OpenRegister DeckCardService unavailable: ' . $e->getMessage());
 				return null;
@@ -229,7 +209,7 @@ class WooService {
 	public function getTaskSequenceMapper(): ?object {
 		if ($this->taskSequenceMapper === null) {
 			try {
-				$this->taskSequenceMapper = $this->container->get('OCA\OpenRegister\Db\TaskSequenceMapper');
+				$this->taskSequenceMapper = $this->bindings->service('OCA\OpenRegister\Db\TaskSequenceMapper');
 			} catch (\Throwable $e) {
 				$this->logger->warning('[WooService] OpenRegister TaskSequenceMapper unavailable: ' . $e->getMessage());
 				return null;
@@ -247,12 +227,7 @@ class WooService {
 	 * @spec exclude pure config plumbing — reads the configured WOO register id.
 	 */
 	public function getRegister(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_BATCH_REGISTER, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_BATCH_REGISTER);
 	}//end getRegister()
 
 	/**
@@ -263,12 +238,7 @@ class WooService {
 	 * @spec exclude pure config plumbing — reads the configured WOO batch schema id.
 	 */
 	public function getBatchSchema(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_BATCH_SCHEMA, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_BATCH_SCHEMA);
 	}//end getBatchSchema()
 
 	/**
@@ -279,12 +249,7 @@ class WooService {
 	 * @spec exclude pure config plumbing — reads the configured WOO assessment schema id.
 	 */
 	public function getAssessmentSchema(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_ASSESSMENT_SCHEMA, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_ASSESSMENT_SCHEMA);
 	}//end getAssessmentSchema()
 
 	/**
@@ -348,108 +313,209 @@ class WooService {
 		}
 
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
-		$user = $this->userSession->getUser();
 
 		// First persist the assessment objects so we have their ids for the cards.
 		$assessmentRefs = [];
 		foreach ($documents as $document) {
-			$assessment = [
-				'documentReference' => (string)($document['documentReference'] ?? ($document['id'] ?? '')),
-				'fileName' => (string)($document['fileName'] ?? ''),
-				'fileType' => (string)($document['fileType'] ?? ''),
-				'assessment' => 'te_beoordelen',
-				'weigeringsgronden' => [],
-				'redactionInstructions' => '',
-				'anonymizedDocument' => '',
-				'caseReference' => $caseReference,
-				'assessedBy' => '',
-				'assessedAt' => '',
-			];
-			$saved = $this->normalise(
+			$assessmentRefs[] = $this->plainArray(
 				object: $this->save(
 					objectService: $objectService,
 					register: $register,
 					schema: $assessmentSchema,
-					data: $assessment
+					data: $this->newAssessment(document: $document, caseReference: $caseReference)
 				)
 			);
-			$assessmentRefs[] = $saved;
-		}//end foreach
+		}
 
 		// Provision (or re-use) the Deck board via the deck leaf, then link a card
 		// per assessment object into the "Te beoordelen" stack.
-		$deckBoardId = $boardId;
+		$batchContext = [
+			'caseReference' => $caseReference,
+			'register' => $register,
+			'boardId' => $boardId,
+			'deckAvailable' => $this->isDeckAvailable(),
+			'now' => $now,
+		];
 		$deckLinks = [];
-		$deckAvailable = $this->isDeckAvailable();
-		if ($deckAvailable === true && $deckBoardId !== null) {
-			$deck = $this->getDeckCardService();
-			$registerId = 0;
-			if (is_numeric($register) === true) {
-				$registerId = (int)$register;
-			}
-
-			foreach ($assessmentRefs as $ref) {
-				$uuid = (string)($ref['id'] ?? ($ref['uuid'] ?? ''));
-				if ($uuid === '') {
-					continue;
-				}
-
-				try {
-					$title = 'Document';
-					if ((string)($ref['fileName'] ?? '') !== '') {
-						$title = (string)$ref['fileName'];
-					}
-
-					$link = $deck->linkOrCreateCard(
-						objectUuid: $uuid,
-						registerId: $registerId,
-						data: [
-							'boardId' => $deckBoardId,
-							'stackId' => $this->resolveStackId(boardId: $deckBoardId, assessment: 'te_beoordelen'),
-							'title' => $title,
-							'description' => 'WOO document — ' . $caseReference,
-						]
-					);
-
-					$deckLink = ['objectUuid' => $uuid];
-					if (method_exists($link, 'jsonSerialize') === true) {
-						$deckLink = $link->jsonSerialize();
-					}
-
-					$deckLinks[] = $deckLink;
-				} catch (\Throwable $e) {
-					$this->logger->warning('[WooService] deck card link failed for ' . $uuid . ': ' . $e->getMessage());
-				}//end try
-			}//end foreach
-		}//end if
-
-		$createdBy = 'system';
-		if ($user !== null) {
-			$createdBy = $user->getUID();
+		if ($batchContext['deckAvailable'] === true && $boardId !== null) {
+			$deckLinks = $this->linkAssessmentCards(assessmentRefs: $assessmentRefs, batchContext: $batchContext);
 		}
 
-		$batch = [
-			'caseReference' => $caseReference,
-			'status' => 'in_progress',
-			'deckBoardId' => $deckBoardId,
-			'deckAvailable' => $deckAvailable,
-			'documents' => array_map(static fn (array $r): string => (string)($r['id'] ?? ($r['uuid'] ?? '')), $assessmentRefs),
-			'decisionLetter' => '',
-			'inventoryList' => '',
-			'createdAt' => $now,
-			'updatedAt' => $now,
-			'createdBy' => $createdBy,
-		];
-		$savedBatch = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		$batch = $this->newBatch(assessmentRefs: $assessmentRefs, batchContext: $batchContext);
+		$savedBatch = $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 
 		$savedBatch['assessments'] = $assessmentRefs;
 		$savedBatch['deckLinks'] = $deckLinks;
-		if ($deckAvailable === false) {
+		if ($batchContext['deckAvailable'] === false) {
 			$savedBatch['deckWarning'] = 'Deck integration required for the WOO queue';
 		}
 
 		return $savedBatch;
 	}//end createBatch()
+
+	/**
+	 * A new assessment object for one collected document, waiting to be assessed.
+	 *
+	 * @param array<string, mixed> $document The collected document
+	 * @param string $caseReference The case the batch belongs to
+	 *
+	 * @return array<string, mixed> The assessment object data
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+	 */
+	private function newAssessment(array $document, string $caseReference): array {
+		$reference = (string)($document['documentReference'] ?? ($document['id'] ?? ''));
+		return [
+			'documentReference' => $reference,
+			'fileName' => (string)($document['fileName'] ?? ''),
+			...$this->assessedFileType(reference: $reference, claimed: (string)($document['fileType'] ?? '')),
+			'assessment' => 'te_beoordelen',
+			'weigeringsgronden' => [],
+			'redactionInstructions' => '',
+			'anonymizedDocument' => '',
+			'caseReference' => $caseReference,
+			'assessedBy' => '',
+			'assessedAt' => '',
+		];
+
+	}//end newAssessment()
+
+	/**
+	 * The assessment's `fileType` from the document's stored bytes, and the
+	 * caller's value as `fileTypeClaimed` when it differs (REQ-PFF-001).
+	 *
+	 * Bytes that cannot be read, or a document that cannot be found, give an
+	 * empty `fileType`: the caller's value is kept only as the claim, never
+	 * taken as the type.
+	 *
+	 * @param string $reference The document reference (file id or path).
+	 * @param string $claimed   The type the caller sent.
+	 *
+	 * @return array{fileType: string, fileTypeClaimed?: string} The assessment fields.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	private function assessedFileType(string $reference, string $claimed): array {
+		if ($this->fileFacts === null) {
+			return ['fileType' => $claimed];
+		}
+
+		$owner = (string)$this->userSession->getUser()?->getUID();
+		$file = $this->publications->resolve(reference: $reference, owner: $owner);
+		$detected = null;
+		if ($file !== null) {
+			$detected = $this->fileFacts->mimeTypeOf(file: $file);
+		}
+
+		$fields = ['fileType' => (string)$detected];
+		if ($claimed !== '' && $claimed !== $detected) {
+			$fields['fileTypeClaimed'] = $claimed;
+		}
+
+		return $fields;
+	}//end assessedFileType()
+
+	/**
+	 * A new batch object, in progress, for its saved assessments.
+	 *
+	 * @param array<int, array<string, mixed>> $assessmentRefs The saved assessment objects
+	 * @param array<string, mixed> $batchContext The case reference, Deck board, Deck availability and creation time
+	 *
+	 * @return array<string, mixed> The batch object data
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+	 */
+	private function newBatch(array $assessmentRefs, array $batchContext): array {
+		$createdBy = 'system';
+		$user = $this->userSession->getUser();
+		if ($user !== null) {
+			$createdBy = $user->getUID();
+		}
+
+		return [
+			'caseReference' => $batchContext['caseReference'],
+			'status' => 'in_progress',
+			'deckBoardId' => $batchContext['boardId'],
+			'deckAvailable' => $batchContext['deckAvailable'],
+			'documents' => array_map(static fn (array $r): string => (string)($r['id'] ?? ($r['uuid'] ?? '')), $assessmentRefs),
+			'decisionLetter' => '',
+			'inventoryList' => '',
+			'createdAt' => $batchContext['now'],
+			'updatedAt' => $batchContext['now'],
+			'createdBy' => $createdBy,
+		];
+
+	}//end newBatch()
+
+	/**
+	 * Link a Deck card to each saved assessment, through the deck leaf.
+	 *
+	 * A card that cannot be linked is logged and left out; the others still link.
+	 *
+	 * @param array<int, array<string, mixed>> $assessmentRefs The saved assessment objects
+	 * @param array<string, mixed> $batchContext The case reference, register and Deck board
+	 *
+	 * @return array<int, array<string, mixed>> The deck links that were made
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+	 */
+	private function linkAssessmentCards(array $assessmentRefs, array $batchContext): array {
+		$deck = $this->getDeckCardService();
+		$boardId = (int)$batchContext['boardId'];
+		$registerId = 0;
+		if (is_numeric($batchContext['register']) === true) {
+			$registerId = (int)$batchContext['register'];
+		}
+
+		$deckLinks = [];
+		foreach ($assessmentRefs as $ref) {
+			$uuid = (string)($ref['id'] ?? ($ref['uuid'] ?? ''));
+			if ($uuid === '') {
+				continue;
+			}
+
+			try {
+				$link = $deck->linkOrCreateCard(
+					objectUuid: $uuid,
+					registerId: $registerId,
+					data: [
+						'boardId' => $boardId,
+						'stackId' => $this->resolveStackId(boardId: $boardId, assessment: 'te_beoordelen'),
+						'title' => $this->assessmentCardTitle(assessmentRef: $ref),
+						'description' => 'WOO document — ' . $batchContext['caseReference'],
+					]
+				);
+
+				$deckLink = ['objectUuid' => $uuid];
+				if (method_exists($link, 'jsonSerialize') === true) {
+					$deckLink = $link->jsonSerialize();
+				}
+
+				$deckLinks[] = $deckLink;
+			} catch (\Throwable $e) {
+				$this->logger->warning('[WooService] deck card link failed for ' . $uuid . ': ' . $e->getMessage());
+			}//end try
+		}//end foreach
+
+		return $deckLinks;
+	}//end linkAssessmentCards()
+
+	/**
+	 * The title of an assessment's Deck card: its file name, or "Document".
+	 *
+	 * @param array<string, mixed> $assessmentRef The saved assessment object
+	 *
+	 * @return string The card title
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
+	 */
+	private function assessmentCardTitle(array $assessmentRef): string {
+		if ((string)($assessmentRef['fileName'] ?? '') !== '') {
+			return (string)$assessmentRef['fileName'];
+		}
+
+		return 'Document';
+	}//end assessmentCardTitle()
 
 	/**
 	 * Whether the consumed deck leaf reports the Deck app available at runtime.
@@ -542,7 +608,7 @@ class WooService {
 			throw new RuntimeException('Assessment not found: ' . $assessmentId);
 		}
 
-		$data = $this->normalise(object: $object);
+		$data = $this->plainArray(object: $object);
 		$user = $this->userSession->getUser();
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
@@ -564,9 +630,11 @@ class WooService {
 		$data['assessedAt'] = $now;
 
 		// A partly public document is published only as its verified redacted version (woo-redaction-pipeline).
+		$before = $data;
 		$data = array_merge($data, $this->redactor->forAssessment(assessment: $data, batchId: $batchId, fallbackOwner: $assessedBy));
+		$data = self::withoutStaleVerification(before: $before, after: $data);
 
-		$saved = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
+		$saved = $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
 
 		// Move the linked Deck card to the matching stack via the leaf (best
 		// effort; the leaf owns the move + stack-driven status sync).
@@ -574,6 +642,113 @@ class WooService {
 
 		return $saved;
 	}//end updateAssessment()
+
+	/**
+	 * Clear a person's verification when the redaction it was given to changed.
+	 *
+	 * @param array<string, mixed> $before The assessment before this save's redaction.
+	 * @param array<string, mixed> $after The assessment with this save's redaction.
+	 *
+	 * @return array<string, mixed> The assessment to store.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private static function withoutStaleVerification(array $before, array $after): array {
+		foreach (['anonymizedDocument', 'anonymizedDocumentHash', 'redactionStatus'] as $field) {
+			if ((string)($before[$field] ?? '') !== (string)($after[$field] ?? '')) {
+				$after['redactionVerifiedBy'] = '';
+				$after['redactionVerifiedAt'] = null;
+				return $after;
+			}
+		}
+
+		return $after;
+	}//end withoutStaleVerification()
+
+	/**
+	 * Record that a person checked the redacted version of a partly public
+	 * document of this batch.
+	 *
+	 * Refused unless the redaction is mechanically verified and its redacted
+	 * file still carries the recorded hash; nothing is stored then.
+	 *
+	 * @param string $batchId The batch the document belongs to.
+	 * @param string $assessmentId The document-assessment object uuid.
+	 *
+	 * @return array<string, mixed> The updated assessment object.
+	 *
+	 * @throws RedactionNotVerifiableException When the redaction cannot be marked verified.
+	 * @throws RuntimeException When the batch or assessment is missing or OpenRegister is unavailable.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function verifyRedaction(string $batchId, string $assessmentId): array {
+		$objectService = $this->getObjectService();
+		$register = $this->getRegister();
+		$assessmentSchema = $this->getAssessmentSchema();
+		if ($objectService === null || $register === null || $assessmentSchema === null) {
+			throw new RuntimeException('OpenRegister WOO register/schema unavailable');
+		}
+
+		$data = $this->batchAssessment(objectService: $objectService, batchId: $batchId, assessmentId: $assessmentId);
+		$uid = $this->signedInUid();
+
+		$refusal = $this->redactor->verificationRefusal(assessment: $data, batchId: $batchId, fallbackOwner: $uid);
+		if ($refusal !== null) {
+			throw new RedactionNotVerifiableException(message: $refusal);
+		}
+
+		$data['redactionVerifiedBy'] = $uid;
+		$data['redactionVerifiedAt'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
+
+		return $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
+	}//end verifyRedaction()
+
+	/**
+	 * An assessment of this batch, so a path cannot reach another batch's document.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $batchId The batch uuid.
+	 * @param string $assessmentId The assessment uuid.
+	 *
+	 * @return array<string, mixed> The assessment.
+	 *
+	 * @throws RuntimeException When either is missing, or the assessment is not the batch's.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private function batchAssessment(object $objectService, string $batchId, string $assessmentId): array {
+		try {
+			$batch = $this->plainArray(object: $objectService->find($batchId));
+			$data = $this->plainArray(object: $objectService->find($assessmentId));
+		} catch (\Throwable $e) {
+			throw new RuntimeException('Assessment not found: ' . $assessmentId);
+		}
+
+		if (in_array($assessmentId, array_map('strval', (array)($batch['documents'] ?? [])), true) === false) {
+			throw new RuntimeException('Assessment not found: ' . $assessmentId);
+		}
+
+		return $data;
+	}//end batchAssessment()
+
+	/**
+	 * The signed-in officer's user id; a person's check needs a person.
+	 *
+	 * @return string
+	 *
+	 * @throws RuntimeException When nobody is signed in.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private function signedInUid(): string {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			throw new RuntimeException('Not logged in');
+		}
+
+		return $user->getUID();
+	}//end signedInUid()
 
 	/**
 	 * Ask the deck leaf to move the card(s) linked to an assessment object into
@@ -624,7 +799,7 @@ class WooService {
 		}
 
 		try {
-			$batch = $this->normalise(object: $objectService->find($batchId));
+			$batch = $this->plainArray(object: $objectService->find($batchId));
 		} catch (\Throwable $e) {
 			throw new RuntimeException('Batch not found: ' . $batchId);
 		}
@@ -671,7 +846,7 @@ class WooService {
 
 		foreach ($refs as $ref) {
 			try {
-				$out[] = $this->normalise(object: $objectService->find((string)$ref));
+				$out[] = $this->plainArray(object: $objectService->find((string)$ref));
 			} catch (\Throwable $e) {
 				$this->logger->info('[WooService] assessment ' . $ref . ' not loadable: ' . $e->getMessage());
 			}
@@ -726,37 +901,19 @@ class WooService {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
 	 */
 	public function renderInventarislijstCsv(array $rows): string {
-		$headers = ['Volgnummer', 'Document', 'Datum', 'Beoordeling', 'Weigeringsgronden'];
-		$keys = ['volgnummer', 'document', 'datum', 'beoordeling', 'weigeringsgronden'];
-
-		$handle = fopen('php://temp', 'r+');
-		// UTF-8 BOM for spreadsheet compatibility.
-		fwrite($handle, "\xEF\xBB\xBF");
-		fputcsv($handle, $headers);
-		foreach ($rows as $row) {
-			$line = [];
-			foreach ($keys as $key) {
-				$line[] = (string)($row[$key] ?? '');
-			}
-
-			fputcsv($handle, $line);
-		}
-
-		rewind($handle);
-		$csv = stream_get_contents($handle);
-		fclose($handle);
-
-		if ($csv === false) {
-			return '';
-		}
-
-		return $csv;
+		$columns = [
+			'volgnummer' => 'Volgnummer',
+			'document' => 'Document',
+			'datum' => 'Datum',
+			'beoordeling' => 'Beoordeling',
+			'weigeringsgronden' => 'Weigeringsgronden',
+		];
+		return (new BomCsv(columns: $columns))->render(rows: $rows);
 	}//end renderInventarislijstCsv()
 
 	/**
-	 * Render the inventarislijst as a minimal, archival-oriented HTML document
-	 * (the print/PDF source). Conversion to PDF/A is delegated to Docudesk;
-	 * OpenCatalogi owns only the WOO-standard layout + header/footer.
+	 * Render the inventarislijst as a minimal, archival-oriented HTML document,
+	 * the source of the PDF/A export.
 	 *
 	 * @param string $batchId The batch uuid (for the header).
 	 * @param array<int, array<string, string>> $rows The inventory rows.
@@ -791,6 +948,26 @@ class WooService {
 			. '</body></html>';
 
 	}//end renderInventarislijstHtml()
+
+	/**
+	 * Render the inventarislijst as a PDF/A document.
+	 *
+	 * @param string $batchId The batch uuid (for the header).
+	 * @param array<int, array<string, string>> $rows The inventory rows.
+	 *
+	 * @return string The PDF bytes.
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
+	 */
+	public function renderInventarislijstPdf(string $batchId, array $rows): string {
+		$mpdf = new Mpdf(config: ['tempDir' => sys_get_temp_dir() . '/mpdf']);
+		$mpdf->PDFA = true;
+		$mpdf->PDFAauto = true;
+		$mpdf->WriteHTML(html: $this->renderInventarislijstHtml(batchId: $batchId, rows: $rows));
+
+		return $mpdf->Output(name: '', dest: Destination::STRING_RETURN);
+
+	}//end renderInventarislijstPdf()
 
 	/**
 	 * Whether a batch is eligible to move to "ready_for_review": every document
@@ -835,11 +1012,11 @@ class WooService {
 			throw new RuntimeException('OpenRegister WOO register/schema unavailable');
 		}
 
-		$batch = $this->normalise(object: $objectService->find($batchId));
+		$batch = $this->plainArray(object: $objectService->find($batchId));
 		$batch['status'] = 'ready_for_review';
 		$batch['updatedAt'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
-		return $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		return $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 	}//end markReadyForReview()
 
 	/**
@@ -852,12 +1029,7 @@ class WooService {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
 	 */
 	public function getPublishApprovalChain(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_APPROVAL_CHAIN, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_APPROVAL_CHAIN);
 	}//end getPublishApprovalChain()
 
 	/**
@@ -997,7 +1169,7 @@ class WooService {
 		$batch['wooPublication'] = $publicationMeta;
 		unset($batch['documentSummary']);
 
-		$saved = $this->normalise(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		$saved = $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
 		$saved['wooPublication'] = $publicationMeta;
 
 		return $saved;
@@ -1029,30 +1201,4 @@ class WooService {
 		);
 
 	}//end save()
-
-	/**
-	 * Normalise an OpenRegister return value (entity or array) to a plain array.
-	 *
-	 * @param mixed $object The OR return value.
-	 *
-	 * @return array<string, mixed> The plain array.
-	 *
-	 * @spec exclude internal helper — shape normalisation for OR return values.
-	 */
-	private function normalise(mixed $object): array {
-		if (is_array($object) === true) {
-			return $object;
-		}
-
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$serialized = $object->jsonSerialize();
-			if (is_array($serialized) === false) {
-				return [];
-			}
-
-			return $serialized;
-		}
-
-		return [];
-	}//end normalise()
 }//end class

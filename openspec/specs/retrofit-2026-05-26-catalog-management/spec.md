@@ -42,3 +42,35 @@ The shared entity detail page MUST load an entity by its route id, present its m
 - **WHEN** the detail page mounts
 - **THEN** the matching entity MUST be loaded and its metadata items rendered
 
+### Requirement: Catalogue overview (REQ-CATM-005)
+
+The catalogues page MUST list every catalogue the user can see in one
+overview. Opening a catalogue MUST lead to its detail page, and from there to
+the list of its publications, scoped to the catalogue's registers and schemas.
+
+#### Scenario: open a catalogue's publications from the overview
+
+- **GIVEN** two catalogues
+- **WHEN** the user opens the catalogues page and selects one catalogue
+- **THEN** its detail page MUST open
+- **AND** opening its publications MUST list only publications in that catalogue's registers and schemas
+
+### Requirement: A catalogue has its own title, summary and web address (REQ-CATM-006)
+
+Creating a catalogue MUST ask for a title, a summary and a slug. The slug MUST
+become the catalogue's public web address: its publications are served on
+`GET /api/{catalogSlug}`. A catalogue MUST hold only the publication schemas
+chosen for it: a publication in a schema outside the catalogue MUST be refused
+for that catalogue.
+
+#### Scenario: the slug is the public address
+
+- **GIVEN** a new catalogue with title "Woo-besluiten", a summary and slug `woo-besluiten`
+- **WHEN** it is saved
+- **THEN** its publications MUST be served on `GET /apps/opencatalogi/api/woo-besluiten`
+
+#### Scenario: only the chosen schemas belong to the catalogue
+
+- **GIVEN** a catalogue that holds only the schema "besluit"
+- **WHEN** a publication of schema "agenda" is requested through that catalogue
+- **THEN** it MUST NOT be served as part of the catalogue

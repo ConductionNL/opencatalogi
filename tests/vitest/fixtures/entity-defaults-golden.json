@@ -1,0 +1,709 @@
+{
+	"listing empty": {
+		"keys": [
+			"id",
+			"catalogusId",
+			"title",
+			"summary",
+			"description",
+			"search",
+			"publications",
+			"directory",
+			"metadata",
+			"status",
+			"statusCode",
+			"lastSync",
+			"available",
+			"default",
+			"organization",
+			"publicationTypes"
+		],
+		"values": {
+			"id": "",
+			"catalogusId": "",
+			"title": "",
+			"summary": "",
+			"description": "",
+			"search": "",
+			"publications": "",
+			"directory": "",
+			"metadata": [],
+			"status": "",
+			"statusCode": 0,
+			"lastSync": "",
+			"available": true,
+			"default": false,
+			"organization": "",
+			"publicationTypes": []
+		}
+	},
+	"listing falsy": {
+		"keys": [
+			"id",
+			"catalogusId",
+			"title",
+			"summary",
+			"description",
+			"search",
+			"publications",
+			"directory",
+			"metadata",
+			"status",
+			"statusCode",
+			"lastSync",
+			"available",
+			"default",
+			"organization",
+			"publicationTypes"
+		],
+		"values": {
+			"id": "0",
+			"catalogusId": "",
+			"title": "",
+			"summary": "",
+			"description": "",
+			"search": "",
+			"publications": "",
+			"directory": "",
+			"metadata": [],
+			"status": "",
+			"statusCode": 0,
+			"lastSync": "",
+			"available": true,
+			"default": false,
+			"organization": "",
+			"publicationTypes": []
+		}
+	},
+	"listing full": {
+		"keys": [
+			"id",
+			"catalogusId",
+			"title",
+			"summary",
+			"description",
+			"search",
+			"publications",
+			"directory",
+			"metadata",
+			"status",
+			"statusCode",
+			"lastSync",
+			"available",
+			"default",
+			"organization",
+			"publicationTypes"
+		],
+		"values": {
+			"id": "12",
+			"catalogusId": "cat-1",
+			"title": "Listing",
+			"summary": "S",
+			"description": "D",
+			"search": "https://s",
+			"publications": "https://p",
+			"directory": "https://d",
+			"metadata": [
+				"m"
+			],
+			"status": "ok",
+			"statusCode": 200,
+			"lastSync": "<Date 2026-01-02T03:04:05.000Z>",
+			"available": true,
+			"default": true,
+			"organization": {
+				"id": "org"
+			},
+			"publicationTypes": [
+				{
+					"id": 1
+				}
+			]
+		}
+	},
+	"listing undefined": {
+		"keys": [
+			"id",
+			"catalogusId",
+			"title",
+			"summary",
+			"description",
+			"search",
+			"publications",
+			"directory",
+			"metadata",
+			"status",
+			"statusCode",
+			"lastSync",
+			"available",
+			"default",
+			"organization",
+			"publicationTypes"
+		],
+		"values": {
+			"id": "",
+			"catalogusId": "",
+			"title": "",
+			"summary": "",
+			"description": "",
+			"search": "",
+			"publications": "",
+			"directory": "",
+			"metadata": [],
+			"status": "",
+			"statusCode": 0,
+			"lastSync": "",
+			"available": true,
+			"default": false,
+			"organization": "",
+			"publicationTypes": []
+		}
+	},
+	"theme empty": {
+		"keys": [
+			"id",
+			"title",
+			"summary",
+			"description",
+			"image",
+			"content",
+			"link",
+			"url",
+			"icon",
+			"isExternal",
+			"sort"
+		],
+		"values": {
+			"id": "",
+			"title": "",
+			"summary": "",
+			"description": "",
+			"image": "",
+			"content": "",
+			"link": "",
+			"url": "",
+			"icon": "",
+			"isExternal": false,
+			"sort": 0
+		}
+	},
+	"theme falsy": {
+		"keys": [
+			"id",
+			"title",
+			"summary",
+			"description",
+			"image",
+			"content",
+			"link",
+			"url",
+			"icon",
+			"isExternal",
+			"sort"
+		],
+		"values": {
+			"id": "0",
+			"title": "",
+			"summary": "",
+			"description": "",
+			"image": "",
+			"content": "",
+			"link": "",
+			"url": "",
+			"icon": "",
+			"isExternal": false,
+			"sort": 0
+		}
+	},
+	"theme nullSort": {
+		"keys": [
+			"id",
+			"title",
+			"summary",
+			"description",
+			"image",
+			"content",
+			"link",
+			"url",
+			"icon",
+			"isExternal",
+			"sort"
+		],
+		"values": {
+			"id": "",
+			"title": "",
+			"summary": "",
+			"description": "",
+			"image": "",
+			"content": "",
+			"link": "",
+			"url": "",
+			"icon": "",
+			"isExternal": false,
+			"sort": 0
+		}
+	},
+	"theme full": {
+		"keys": [
+			"id",
+			"title",
+			"summary",
+			"description",
+			"image",
+			"content",
+			"link",
+			"url",
+			"icon",
+			"isExternal",
+			"sort"
+		],
+		"values": {
+			"id": "theme-1",
+			"title": "Theme",
+			"summary": "S",
+			"description": "D",
+			"image": "img.png",
+			"content": "C",
+			"link": "https://l",
+			"url": "https://u",
+			"icon": "icon",
+			"isExternal": true,
+			"sort": 3
+		}
+	},
+	"theme undefined": {
+		"keys": [
+			"id",
+			"title",
+			"summary",
+			"description",
+			"image",
+			"content",
+			"link",
+			"url",
+			"icon",
+			"isExternal",
+			"sort"
+		],
+		"values": {
+			"id": "",
+			"title": "",
+			"summary": "",
+			"description": "",
+			"image": "",
+			"content": "",
+			"link": "",
+			"url": "",
+			"icon": "",
+			"isExternal": false,
+			"sort": 0
+		}
+	},
+	"publicationType empty": {
+		"keys": [
+			"id",
+			"title",
+			"description",
+			"summary",
+			"version",
+			"required",
+			"properties",
+			"archive",
+			"source"
+		],
+		"values": {
+			"id": "",
+			"title": "",
+			"description": "",
+			"summary": "",
+			"version": "",
+			"required": [],
+			"properties": {},
+			"archive": {
+				"valuation": "n",
+				"class": 1
+			},
+			"source": ""
+		}
+	},
+	"publicationType falsy": {
+		"keys": [
+			"id",
+			"title",
+			"description",
+			"summary",
+			"version",
+			"required",
+			"properties",
+			"archive",
+			"source"
+		],
+		"values": {
+			"id": "0",
+			"title": "",
+			"description": "",
+			"summary": "",
+			"version": "",
+			"required": [],
+			"properties": {},
+			"archive": {
+				"valuation": "n",
+				"class": 1
+			},
+			"source": ""
+		}
+	},
+	"publicationType full": {
+		"keys": [
+			"id",
+			"title",
+			"description",
+			"summary",
+			"version",
+			"required",
+			"properties",
+			"archive",
+			"source"
+		],
+		"values": {
+			"id": "5",
+			"title": "Type",
+			"description": "D",
+			"summary": "S",
+			"version": "1.0",
+			"required": [
+				"a"
+			],
+			"properties": {
+				"a": {
+					"title": "A",
+					"minimum": 0,
+					"maximum": 4,
+					"minLength": 0
+				},
+				"b": {
+					"title": "B"
+				}
+			},
+			"archive": {
+				"valuation": "b",
+				"class": 2
+			},
+			"source": "https://src"
+		}
+	},
+	"publicationType undefined": {
+		"keys": [
+			"id",
+			"title",
+			"description",
+			"summary",
+			"version",
+			"required",
+			"properties",
+			"archive",
+			"source"
+		],
+		"values": {
+			"id": "",
+			"title": "",
+			"description": "",
+			"summary": "",
+			"version": "",
+			"required": [],
+			"properties": {},
+			"archive": {
+				"valuation": "n",
+				"class": 1
+			},
+			"source": ""
+		}
+	},
+	"publication empty": {
+		"keys": [
+			"id",
+			"title",
+			"summary",
+			"description",
+			"reference",
+			"image",
+			"organization",
+			"category",
+			"portal",
+			"featured",
+			"source",
+			"status",
+			"themes",
+			"data",
+			"anonymization",
+			"language",
+			"published",
+			"modified",
+			"license",
+			"archive",
+			"geo",
+			"@self",
+			"catalog",
+			"register",
+			"schema"
+		],
+		"values": {
+			"id": "<undefined>",
+			"title": "",
+			"summary": "",
+			"description": "",
+			"reference": "",
+			"image": "",
+			"organization": "",
+			"category": "",
+			"portal": "",
+			"featured": false,
+			"source": "",
+			"status": "Concept",
+			"themes": [],
+			"data": {},
+			"anonymization": {
+				"anonymized": false,
+				"results": ""
+			},
+			"language": {
+				"code": "",
+				"level": ""
+			},
+			"published": "",
+			"modified": "",
+			"license": "",
+			"archive": {
+				"date": ""
+			},
+			"geo": {
+				"type": "Point",
+				"coordinates": [
+					0,
+					0
+				]
+			},
+			"@self": {},
+			"catalog": {},
+			"register": null,
+			"schema": null
+		}
+	},
+	"publication falsy": {
+		"keys": [
+			"id",
+			"title",
+			"summary",
+			"description",
+			"reference",
+			"image",
+			"organization",
+			"category",
+			"portal",
+			"featured",
+			"source",
+			"status",
+			"themes",
+			"data",
+			"anonymization",
+			"language",
+			"published",
+			"modified",
+			"license",
+			"archive",
+			"geo",
+			"@self",
+			"catalog",
+			"register",
+			"schema"
+		],
+		"values": {
+			"id": "0",
+			"title": "",
+			"summary": "",
+			"description": "",
+			"reference": "",
+			"image": "",
+			"organization": "",
+			"category": "",
+			"portal": "",
+			"featured": false,
+			"source": "",
+			"status": "Concept",
+			"themes": [],
+			"data": {},
+			"anonymization": {
+				"anonymized": false,
+				"results": ""
+			},
+			"language": {
+				"code": "",
+				"level": ""
+			},
+			"published": "",
+			"modified": "",
+			"license": "",
+			"archive": {
+				"date": ""
+			},
+			"geo": {
+				"type": "Point",
+				"coordinates": [
+					0,
+					0
+				]
+			},
+			"@self": {},
+			"catalog": {},
+			"register": null,
+			"schema": null
+		}
+	},
+	"publication featuredString": {
+		"keys": [
+			"id",
+			"title",
+			"summary",
+			"description",
+			"reference",
+			"image",
+			"organization",
+			"category",
+			"portal",
+			"featured",
+			"source",
+			"status",
+			"themes",
+			"data",
+			"anonymization",
+			"language",
+			"published",
+			"modified",
+			"license",
+			"archive",
+			"geo",
+			"@self",
+			"catalog",
+			"register",
+			"schema"
+		],
+		"values": {
+			"id": "<undefined>",
+			"title": "",
+			"summary": "",
+			"description": "",
+			"reference": "",
+			"image": "",
+			"organization": "",
+			"category": "",
+			"portal": "",
+			"featured": true,
+			"source": "",
+			"status": "Published",
+			"themes": [],
+			"data": {},
+			"anonymization": {
+				"anonymized": false,
+				"results": ""
+			},
+			"language": {
+				"code": "",
+				"level": ""
+			},
+			"published": "",
+			"modified": "",
+			"license": "",
+			"archive": {
+				"date": ""
+			},
+			"geo": {
+				"type": "Point",
+				"coordinates": [
+					0,
+					0
+				]
+			},
+			"@self": {},
+			"catalog": {},
+			"register": null,
+			"schema": null
+		}
+	},
+	"publication full": {
+		"keys": [
+			"id",
+			"title",
+			"summary",
+			"description",
+			"reference",
+			"image",
+			"organization",
+			"category",
+			"portal",
+			"featured",
+			"source",
+			"status",
+			"themes",
+			"data",
+			"anonymization",
+			"language",
+			"published",
+			"modified",
+			"license",
+			"archive",
+			"geo",
+			"@self",
+			"catalog",
+			"register",
+			"schema"
+		],
+		"values": {
+			"id": "9",
+			"title": "Publication",
+			"summary": "S",
+			"description": "D",
+			"reference": "R",
+			"image": "img.png",
+			"organization": "org",
+			"category": "cat",
+			"portal": "https://portal",
+			"featured": true,
+			"source": "src",
+			"status": "Withdrawn",
+			"themes": [
+				"t"
+			],
+			"data": {
+				"a": 1
+			},
+			"anonymization": {
+				"anonymized": false,
+				"results": ""
+			},
+			"language": {
+				"code": "",
+				"level": ""
+			},
+			"published": "<Date 2026-01-02T03:04:05.000Z>",
+			"modified": "",
+			"license": "EUPL-1.2",
+			"archive": {
+				"date": ""
+			},
+			"geo": {
+				"type": "Point",
+				"coordinates": [
+					0,
+					0
+				]
+			},
+			"@self": {},
+			"catalog": {},
+			"register": 1,
+			"schema": 2
+		}
+	},
+	"publication undefined": {
+		"thrown": "TypeError"
+	}
+}

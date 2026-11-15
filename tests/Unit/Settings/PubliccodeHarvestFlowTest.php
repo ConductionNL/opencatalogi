@@ -18,6 +18,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -29,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\PubliccodeHarvestService
+ * @uses \OCA\OpenCatalogi\Service\FlowReport
  */
 class PubliccodeHarvestFlowTest extends TestCase {
 
@@ -385,6 +389,6 @@ class PubliccodeHarvestFlowTest extends TestCase {
 			512,
 			JSON_THROW_ON_ERROR
 		);
-		$this->assertSame(['public'], $schemaFragment['components']['schemas']['publiccode']['authorization']['read']);
+		$this->assertSame([['group' => 'public', 'crossOrganisation' => true]], $schemaFragment['components']['schemas']['publiccode']['authorization']['read']);
 	}//end testTheComponentenCatalogueIsPublishedOverAPubliclyReadableSchema()
 }//end class

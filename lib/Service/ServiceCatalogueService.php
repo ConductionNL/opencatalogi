@@ -30,9 +30,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
-use OCP\App\IAppManager;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -40,7 +39,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md
  */
-class ServiceCatalogueService {
+class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 
 	/**
 	 * The reason an entry carries no binding at all.
@@ -87,14 +86,12 @@ class ServiceCatalogueService {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface $container Server container for resolving OpenRegister.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 * @param LoggerInterface $logger Logger.
-	 * @param IAppManager $appManager The app manager, to establish that OpenRegister is there before asking for it.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookup $openRegister,
 		private readonly LoggerInterface $logger,
-		private readonly IAppManager $appManager,
 	) {
 
 	}//end __construct()
@@ -118,19 +115,15 @@ class ServiceCatalogueService {
 		}
 
 		// ADR-083 rule 1: the dependency is optional at runtime, so its presence
-		// is established before it is asked for. Without this the container
-		// lookup is the only place the dependency is declared, which is nowhere
-		// a reader or a gate can see it.
-		// The app id is written out rather than held in a constant: ADR-083's
-		// checker reads the literal, and an indirection here is invisible to it.
-		if ($this->appManager->isInstalled('openregister') === false) {
+		// is established before it is asked for.
+		if ($this->openRegister->isInstalled() === false) {
 			throw new CatalogueUnreadableException(
 				message: 'The service catalogue cannot be read because OpenRegister is not installed.'
 			);
 		}
 
 		try {
-			$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$this->objectService = $this->openRegister->objectService();
 		} catch (\Throwable $e) {
 			$this->logger->error('[ServiceCatalogueService] OpenRegister is unavailable: ' . $e->getMessage());
 			throw new CatalogueUnreadableException(
@@ -141,7 +134,6 @@ class ServiceCatalogueService {
 		}
 
 		return $this->objectService;
-
 	}//end getObjectService()
 
 	/**
@@ -179,7 +171,6 @@ class ServiceCatalogueService {
 		}
 
 		return $indexed;
-
 	}//end indexCaseTypes()
 
 	/**
@@ -197,35 +188,73 @@ class ServiceCatalogueService {
 	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-a-public-catalogue-lists-everything-that-can-be-requested-req-psc-101
 	 */
 	public function decideAvailability(array $entry, array $caseTypesById): array {
-		$binding = ($entry['formBinding'] ?? null);
-
-		if (is_array($binding) === false || $binding === []) {
-			return $this->markUnavailable(entry: $entry, reason: self::REASON_NO_BINDING);
-		}
-
-		$caseType = trim((string)($binding['caseType'] ?? ''));
-		$audience = trim((string)($binding['audience'] ?? ''));
-		$formName = trim((string)($binding['formName'] ?? ''));
-
-		if ($caseType === '' || $audience === '' || $formName === '') {
-			return $this->markUnavailable(entry: $entry, reason: self::REASON_INCOMPLETE_BINDING);
-		}
-
-		if (array_key_exists($caseType, $caseTypesById) === false) {
-			return $this->markUnavailable(entry: $entry, reason: self::REASON_UNKNOWN_CASE_TYPE);
-		}
-
-		$definition = $caseTypesById[$caseType];
-		if (($definition['published'] ?? null) === false) {
-			return $this->markUnavailable(entry: $entry, reason: self::REASON_UNPUBLISHED_CASE_TYPE);
+		$reason = $this->unavailableReason(binding: ($entry['formBinding'] ?? null), caseTypesById: $caseTypesById);
+		if ($reason !== null) {
+			return $this->markUnavailable(entry: $entry, reason: $reason);
 		}
 
 		$entry['available'] = true;
 		unset($entry['unavailableReason']);
 
 		return $entry;
-
 	}//end decideAvailability()
+
+	/**
+	 * Why an entry with this form binding cannot be requested, if it cannot.
+	 *
+	 * @param mixed $binding The entry's form binding.
+	 * @param array<string, array<string, mixed>> $caseTypesById Published case types keyed by identifier.
+	 *
+	 * @return string|null The reason constant, or null when it is available.
+	 */
+	private function unavailableReason(mixed $binding, array $caseTypesById): ?string {
+		if (is_array($binding) === false || $binding === []) {
+			return self::REASON_NO_BINDING;
+		}
+
+		if ($this->isIncompleteBinding(binding: $binding) === true) {
+			return self::REASON_INCOMPLETE_BINDING;
+		}
+
+		return $this->caseTypeReason(caseType: trim((string)($binding['caseType'] ?? '')), caseTypesById: $caseTypesById);
+	}//end unavailableReason()
+
+	/**
+	 * Whether a form binding lacks its case type, audience or form name.
+	 *
+	 * @param array<string, mixed> $binding The form binding.
+	 *
+	 * @return bool
+	 */
+	private function isIncompleteBinding(array $binding): bool {
+		foreach (['caseType', 'audience', 'formName'] as $field) {
+			if (trim((string)($binding[$field] ?? '')) === '') {
+				return true;
+			}
+		}
+
+		return false;
+	}//end isIncompleteBinding()
+
+	/**
+	 * Why a bound case type cannot be requested: unknown, or not published.
+	 *
+	 * @param string $caseType The bound case type.
+	 * @param array<string, array<string, mixed>> $caseTypesById Published case types keyed by identifier.
+	 *
+	 * @return string|null The reason constant, or null when it can be requested.
+	 */
+	private function caseTypeReason(string $caseType, array $caseTypesById): ?string {
+		if (array_key_exists($caseType, $caseTypesById) === false) {
+			return self::REASON_UNKNOWN_CASE_TYPE;
+		}
+
+		if (($caseTypesById[$caseType]['published'] ?? null) === false) {
+			return self::REASON_UNPUBLISHED_CASE_TYPE;
+		}
+
+		return null;
+	}//end caseTypeReason()
 
 	/**
 	 * Mark an entry unavailable with its reason.
@@ -240,7 +269,6 @@ class ServiceCatalogueService {
 		$entry['unavailableReason'] = $reason;
 
 		return $entry;
-
 	}//end markUnavailable()
 
 	/**
@@ -359,7 +387,6 @@ class ServiceCatalogueService {
 		$assembled['total'] = (int)($entryResult['total'] ?? count($entries));
 
 		return $assembled;
-
 	}//end readCatalogue()
 
 	/**
@@ -394,6 +421,5 @@ class ServiceCatalogueService {
 		}
 
 		return $arrays;
-
 	}//end toArrays()
 }//end class

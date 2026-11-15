@@ -9,6 +9,14 @@
 import { mount } from '@vue/test-utils'
 import CatalogModal from './CatalogModal.vue'
 
+// The staff access fields show for administrators only.
+jest.mock('../../composables/useIsAdmin.js', () => ({
+	useIsAdmin: () => ({ isAdmin: { value: false }, loaded: { value: true } }),
+}))
+jest.mock('../../services/nextcloudGroups.js', () => ({
+	getNextcloudGroups: () => Promise.resolve([]),
+}))
+
 jest.mock('../../store/store.js', () => ({
 	navigationStore: { modal: 'catalog', setModal: jest.fn() },
 	objectStore: {

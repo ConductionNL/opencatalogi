@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Service\SettingsService;
 use Psr\Log\LoggerInterface;
 
@@ -40,7 +41,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/woo-compliance/spec.md#requirement-a-publication-that-turns-public-is-delivered-to-plooi-when-the-catalogue-asks-for-it-req-wnd-003
  */
-class PlooiDeliveryService {
+class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 
 	/**
 	 * The publication properties this service writes.
@@ -114,7 +115,6 @@ class PlooiDeliveryService {
 		);
 
 		return $fields;
-
 	}//end deliver()
 
 	/**
@@ -160,7 +160,6 @@ class PlooiDeliveryService {
 		}
 
 		return false;
-
 	}//end isInPlooiCatalogue()
 
 	/**
@@ -187,7 +186,6 @@ class PlooiDeliveryService {
 		);
 
 		return ($result['results'] ?? []);
-
 	}//end plooiCatalogues()
 
 	/**
@@ -211,6 +209,5 @@ class PlooiDeliveryService {
 		$registers = array_map('strval', (array)($catalog['registers'] ?? []));
 		$schemas = array_map('strval', (array)($catalog['schemas'] ?? []));
 		return in_array($register, $registers, true) === true && in_array($schema, $schemas, true) === true;
-
 	}//end covers()
 }//end class

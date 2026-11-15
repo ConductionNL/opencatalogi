@@ -1,0 +1,975 @@
+{
+    "withdraws what is due": {
+        "counts": {
+            "considered": 7,
+            "withdrawn": 3,
+            "failed": 0
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "schema-cp"
+                    },
+                    "automaticWithdrawal": true,
+                    "_limit": 500
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-1"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-1",
+                    "channels": [
+                        "national-woo-index"
+                    ]
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "id": "p-due",
+                    "publication": "pub-1",
+                    "automaticWithdrawal": true,
+                    "legalRemedy": "zienswijze",
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-3"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "p-due",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-6"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-6",
+                    "channels": [
+                        "national-woo-index"
+                    ]
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "publication": "pub-6",
+                    "automaticWithdrawal": true,
+                    "id": "p-wrapped",
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-6"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "p-wrapped",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-7"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-7",
+                    "channels": [
+                        "national-woo-index"
+                    ]
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "publication": "pub-7",
+                    "automaticWithdrawal": true,
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-9"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "no OpenRegister": {
+        "counts": {
+            "considered": 0,
+            "withdrawn": 0,
+            "failed": 0
+        },
+        "calls": [
+            {
+                "log": "warning",
+                "message": "[CommentPeriodWithdrawalService] OpenRegister ObjectService unavailable: not installed"
+            },
+            {
+                "log": "warning",
+                "message": "[CommentPeriodWithdrawalService] No comment period register configured, so no withdrawal was considered. This is NOT \"nothing to withdraw\"."
+            }
+        ]
+    },
+    "no register": {
+        "counts": {
+            "considered": 0,
+            "withdrawn": 0,
+            "failed": 0
+        },
+        "calls": [
+            {
+                "log": "warning",
+                "message": "[CommentPeriodWithdrawalService] No comment period register configured, so no withdrawal was considered. This is NOT \"nothing to withdraw\"."
+            }
+        ]
+    },
+    "no schema": {
+        "counts": {
+            "considered": 0,
+            "withdrawn": 0,
+            "failed": 0
+        },
+        "calls": [
+            {
+                "log": "warning",
+                "message": "[CommentPeriodWithdrawalService] No comment period register configured, so no withdrawal was considered. This is NOT \"nothing to withdraw\"."
+            }
+        ]
+    },
+    "search fails": {
+        "counts": {
+            "considered": 0,
+            "withdrawn": 0,
+            "failed": 0
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "schema-cp"
+                    },
+                    "automaticWithdrawal": true,
+                    "_limit": 500
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "log": "error",
+                "message": "[CommentPeriodWithdrawalService] The comment periods could not be read: search failed"
+            }
+        ]
+    },
+    "no depublication schema": {
+        "counts": {
+            "considered": 7,
+            "withdrawn": 3,
+            "failed": 0
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "schema-cp"
+                    },
+                    "automaticWithdrawal": true,
+                    "_limit": 500
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-1"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "id": "p-due",
+                    "publication": "pub-1",
+                    "automaticWithdrawal": true,
+                    "legalRemedy": "zienswijze",
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "p-due",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-6"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "publication": "pub-6",
+                    "automaticWithdrawal": true,
+                    "id": "p-wrapped",
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "p-wrapped",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-7"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "publication": "pub-7",
+                    "automaticWithdrawal": true,
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "channel sources unreadable": {
+        "counts": {
+            "considered": 7,
+            "withdrawn": 3,
+            "failed": 0
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "schema-cp"
+                    },
+                    "automaticWithdrawal": true,
+                    "_limit": 500
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-1"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-1",
+                    "channels": []
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "id": "p-due",
+                    "publication": "pub-1",
+                    "automaticWithdrawal": true,
+                    "legalRemedy": "zienswijze",
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-3"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "p-due",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-6"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-6",
+                    "channels": []
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "publication": "pub-6",
+                    "automaticWithdrawal": true,
+                    "id": "p-wrapped",
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-6"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "p-wrapped",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-7"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-7",
+                    "channels": []
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "publication": "pub-7",
+                    "automaticWithdrawal": true,
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-9"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "no channel sources": {
+        "counts": {
+            "considered": 7,
+            "withdrawn": 3,
+            "failed": 0
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "schema-cp"
+                    },
+                    "automaticWithdrawal": true,
+                    "_limit": 500
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-1"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-1",
+                    "channels": []
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "id": "p-due",
+                    "publication": "pub-1",
+                    "automaticWithdrawal": true,
+                    "legalRemedy": "zienswijze",
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-3"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "p-due",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-6"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-6",
+                    "channels": []
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "publication": "pub-6",
+                    "automaticWithdrawal": true,
+                    "id": "p-wrapped",
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-6"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "p-wrapped",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-7"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-7",
+                    "channels": []
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "publication": "pub-7",
+                    "automaticWithdrawal": true,
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-9"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "depublication save fails": {
+        "counts": {
+            "considered": 7,
+            "withdrawn": 0,
+            "failed": 3
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "schema-cp"
+                    },
+                    "automaticWithdrawal": true,
+                    "_limit": 500
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-1"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-1",
+                    "channels": [
+                        "national-woo-index"
+                    ]
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "log": "error",
+                "message": "[CommentPeriodWithdrawalService] The withdrawal for period p-due failed: depublication save failed"
+            },
+            {
+                "depublish": {
+                    "id": "pub-6"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-6",
+                    "channels": [
+                        "national-woo-index"
+                    ]
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "log": "error",
+                "message": "[CommentPeriodWithdrawalService] The withdrawal for period p-wrapped failed: depublication save failed"
+            },
+            {
+                "depublish": {
+                    "id": "pub-7"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-7",
+                    "channels": [
+                        "national-woo-index"
+                    ]
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "log": "error",
+                "message": "[CommentPeriodWithdrawalService] The withdrawal for period ? failed: depublication save failed"
+            }
+        ]
+    },
+    "period save fails": {
+        "counts": {
+            "considered": 7,
+            "withdrawn": 0,
+            "failed": 3
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "schema-cp"
+                    },
+                    "automaticWithdrawal": true,
+                    "_limit": 500
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-1"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-1",
+                    "channels": [
+                        "national-woo-index"
+                    ]
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "id": "p-due",
+                    "publication": "pub-1",
+                    "automaticWithdrawal": true,
+                    "legalRemedy": "zienswijze",
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-3"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "p-due",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "log": "error",
+                "message": "[CommentPeriodWithdrawalService] The withdrawal for period p-due failed: period save failed"
+            },
+            {
+                "depublish": {
+                    "id": "pub-6"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-6",
+                    "channels": [
+                        "national-woo-index"
+                    ]
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "publication": "pub-6",
+                    "automaticWithdrawal": true,
+                    "id": "p-wrapped",
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-7"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "p-wrapped",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "log": "error",
+                "message": "[CommentPeriodWithdrawalService] The withdrawal for period p-wrapped failed: period save failed"
+            },
+            {
+                "depublish": {
+                    "id": "pub-7"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-7",
+                    "channels": [
+                        "national-woo-index"
+                    ]
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "publication": "pub-7",
+                    "automaticWithdrawal": true,
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-11"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "log": "error",
+                "message": "[CommentPeriodWithdrawalService] The withdrawal for period ? failed: period save failed"
+            }
+        ]
+    },
+    "depublish refuses": {
+        "counts": {
+            "considered": 7,
+            "withdrawn": 0,
+            "failed": 3
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "schema-cp"
+                    },
+                    "automaticWithdrawal": true,
+                    "_limit": 500
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-1"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "log": "error",
+                "message": "[CommentPeriodWithdrawalService] The withdrawal for period p-due failed: refused"
+            },
+            {
+                "depublish": {
+                    "id": "pub-6"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "log": "error",
+                "message": "[CommentPeriodWithdrawalService] The withdrawal for period p-wrapped failed: refused"
+            },
+            {
+                "depublish": {
+                    "id": "pub-7"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "log": "error",
+                "message": "[CommentPeriodWithdrawalService] The withdrawal for period ? failed: refused"
+            }
+        ]
+    },
+    "nothing to consider": {
+        "counts": {
+            "considered": 0,
+            "withdrawn": 0,
+            "failed": 0
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "schema-cp"
+                    },
+                    "automaticWithdrawal": true,
+                    "_limit": 500
+                },
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "one due only": {
+        "counts": {
+            "considered": 1,
+            "withdrawn": 1,
+            "failed": 0
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "schema-cp"
+                    },
+                    "automaticWithdrawal": true,
+                    "_limit": 500
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "depublish": {
+                    "id": "pub-1"
+                },
+                "reason": "The public comment period on this publication closed, and the publication was set to be withdrawn when it did.",
+                "by": "comment-period-close",
+                "channels": [
+                    "national-woo-index"
+                ],
+                "now": "2026-03-01T12:00:00+01:00"
+            },
+            {
+                "save": {
+                    "publication": "pub-1",
+                    "channels": [
+                        "national-woo-index"
+                    ]
+                },
+                "register": "reg-1",
+                "schema": "schema-dep",
+                "uuid": null,
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "startDate": "2026-01-01T00:00:00+00:00",
+                    "endDate": "2026-02-01T00:00:00+00:00",
+                    "id": "p-due",
+                    "publication": "pub-1",
+                    "automaticWithdrawal": true,
+                    "legalRemedy": "zienswijze",
+                    "withdrawnAt": "2026-03-01T12:00:00+01:00",
+                    "depublication": "dep-3"
+                },
+                "register": "reg-1",
+                "schema": "schema-cp",
+                "uuid": "p-due",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    }
+}

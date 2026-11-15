@@ -29,7 +29,9 @@ use OCA\OpenCatalogi\Controller\ServiceCatalogueController;
 use OCA\OpenCatalogi\Service\CaseTypeCatalogueService;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
@@ -98,7 +100,7 @@ class ServiceCatalogueControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->config,
-			$this->container,
+			new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)),
 			$this->l10n,
 			$this->catalogueService,
 			$this->caseTypeService
@@ -160,6 +162,28 @@ class ServiceCatalogueControllerTest extends TestCase {
 	}//end testAnUnavailableEntryIsServedRatherThanDropped()
 
 	/**
+	 * The entries are answered again as `results`, the list a list page reads,
+	 * each with its availability.
+	 */
+	public function testTheEntriesAreAnsweredAsResultsWithTheirAvailability(): void {
+		$this->request->method('getParams')->willReturn(['_page' => 1, '_limit' => 20]);
+		$entries = [
+			['id' => 'a', 'title' => 'Parkeervergunning voor bewoners', 'available' => true],
+			['id' => 'b', 'title' => 'Afvalcontainer voor inwoners', 'available' => false, 'unavailableReason' => 'unpublished-case-type'],
+		];
+		$this->catalogueService->method('readCatalogue')->willReturn(
+			['entries' => $entries, 'groups' => [], 'unavailable' => 1, 'total' => 2]
+		);
+
+		$data = $this->controller->index()->getData();
+
+		$this->assertSame($entries, $data['results']);
+		$this->assertSame(2, $data['total']);
+		$this->assertFalse($data['results'][1]['available']);
+
+	}//end testTheEntriesAreAnsweredAsResultsWithTheirAvailability()
+
+	/**
 	 * The national catalogue we could not ask is reported as unreachable.
 	 *
 	 * A 200 with an empty body here is the reading that sends an administrator
@@ -204,10 +228,12 @@ class ServiceCatalogueControllerTest extends TestCase {
 	public function testAPublishedCaseTypeIsAnsweredWithItsLinks(): void {
 		$definition = ['identifier' => 'vergunning', 'title' => 'Vergunning', 'published' => true];
 		$objectService = new class($definition) {
-			public function __construct(private readonly array $definition) {
+			public function __construct(
+				private readonly array $definition,
+			) {
 			}
 
-			public function find(string $id, string $register, string $schema): array {
+			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
 				return $this->definition;
 			}
 		};
@@ -248,8 +274,8 @@ class ServiceCatalogueControllerTest extends TestCase {
 	 * endpoints must not have, so the saves are observable rather than
 	 * discarded.
 	 *
-	 * @param array<string, mixed> $stored  The object `find()` answers with.
-	 * @param array<int, mixed>    $results The rows `searchObjects()` answers with.
+	 * @param array<string, mixed> $stored The object `find()` answers with.
+	 * @param array<int, mixed> $results The rows `searchObjects()` answers with.
 	 *
 	 * @return object The stand-in.
 	 */
@@ -270,13 +296,16 @@ class ServiceCatalogueControllerTest extends TestCase {
 			public array $queries = [];
 
 			/**
-			 * @param array<string, mixed> $stored  The object to answer with.
-			 * @param array<int, mixed>    $results The search rows.
+			 * @param array<string, mixed> $stored The object to answer with.
+			 * @param array<int, mixed> $results The search rows.
 			 */
-			public function __construct(private array $stored, private array $results) {
+			public function __construct(
+				private array $stored,
+				private array $results,
+			) {
 			}
 
-			public function find(string $id, string $register, string $schema): array {
+			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
 				if ($this->stored === []) {
 					throw new \RuntimeException('no such object: ' . $id);
 				}
@@ -297,7 +326,7 @@ class ServiceCatalogueControllerTest extends TestCase {
 
 			/**
 			 * @param array<string, mixed> $object The object to store.
-			 * @param array<int, string>   $extend Unused here.
+			 * @param array<int, string> $extend Unused here.
 			 *
 			 * @return array<string, mixed> The stored object.
 			 */
@@ -307,6 +336,7 @@ class ServiceCatalogueControllerTest extends TestCase {
 				string $register = '',
 				string $schema = '',
 				string $uuid = '',
+				bool $_rbac = true,
 			): array {
 				if ($uuid !== '') {
 					$object['id'] = $uuid;

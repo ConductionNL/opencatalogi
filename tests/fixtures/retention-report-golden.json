@@ -1,0 +1,891 @@
+{
+    "catalog and dates": {
+        "rows": [
+            {
+                "id": "p-3",
+                "title": "No date",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-4",
+                "title": "Date missing",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-6",
+                "title": "",
+                "publicationDate": "2026-02-10",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "archived",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            }
+        ],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "catalog unknown": {
+        "rows": [],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "catalog woo": {
+        "rows": [
+            {
+                "id": "p-1",
+                "title": "Besluit",
+                "publicationDate": "2026-01-15T10:00:00+00:00",
+                "retentionCategory": "B",
+                "retentionTermMonths": "60",
+                "retentionExpiresAt": "2031-01-15",
+                "status": "published",
+                "actionTaken": "keep",
+                "decisionBy": "officer2",
+                "decisionAt": "2026-03-01",
+                "decisionNote": "last"
+            },
+            {
+                "id": "p-3",
+                "title": "No date",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-4",
+                "title": "Date missing",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-6",
+                "title": "",
+                "publicationDate": "2026-02-10",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "archived",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            }
+        ],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "empty filters": {
+        "rows": [
+            {
+                "id": "p-1",
+                "title": "Besluit",
+                "publicationDate": "2026-01-15T10:00:00+00:00",
+                "retentionCategory": "B",
+                "retentionTermMonths": "60",
+                "retentionExpiresAt": "2031-01-15",
+                "status": "published",
+                "actionTaken": "keep",
+                "decisionBy": "officer2",
+                "decisionAt": "2026-03-01",
+                "decisionNote": "last"
+            },
+            {
+                "id": "p-2",
+                "title": "",
+                "publicationDate": "2026-03-31",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-3",
+                "title": "No date",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-4",
+                "title": "Date missing",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-5",
+                "title": "",
+                "publicationDate": "2025-12-31T23:59:59Z",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "destroy",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-6",
+                "title": "",
+                "publicationDate": "2026-02-10",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "archived",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "",
+                "title": "",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            }
+        ],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "everything": {
+        "rows": [
+            {
+                "id": "p-1",
+                "title": "Besluit",
+                "publicationDate": "2026-01-15T10:00:00+00:00",
+                "retentionCategory": "B",
+                "retentionTermMonths": "60",
+                "retentionExpiresAt": "2031-01-15",
+                "status": "published",
+                "actionTaken": "keep",
+                "decisionBy": "officer2",
+                "decisionAt": "2026-03-01",
+                "decisionNote": "last"
+            },
+            {
+                "id": "p-2",
+                "title": "",
+                "publicationDate": "2026-03-31",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-3",
+                "title": "No date",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-4",
+                "title": "Date missing",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-5",
+                "title": "",
+                "publicationDate": "2025-12-31T23:59:59Z",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "destroy",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-6",
+                "title": "",
+                "publicationDate": "2026-02-10",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "archived",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "",
+                "title": "",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            }
+        ],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "from": {
+        "rows": [
+            {
+                "id": "p-1",
+                "title": "Besluit",
+                "publicationDate": "2026-01-15T10:00:00+00:00",
+                "retentionCategory": "B",
+                "retentionTermMonths": "60",
+                "retentionExpiresAt": "2031-01-15",
+                "status": "published",
+                "actionTaken": "keep",
+                "decisionBy": "officer2",
+                "decisionAt": "2026-03-01",
+                "decisionNote": "last"
+            },
+            {
+                "id": "p-2",
+                "title": "",
+                "publicationDate": "2026-03-31",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-3",
+                "title": "No date",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-4",
+                "title": "Date missing",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-6",
+                "title": "",
+                "publicationDate": "2026-02-10",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "archived",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "",
+                "title": "",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            }
+        ],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "from and to": {
+        "rows": [
+            {
+                "id": "p-1",
+                "title": "Besluit",
+                "publicationDate": "2026-01-15T10:00:00+00:00",
+                "retentionCategory": "B",
+                "retentionTermMonths": "60",
+                "retentionExpiresAt": "2031-01-15",
+                "status": "published",
+                "actionTaken": "keep",
+                "decisionBy": "officer2",
+                "decisionAt": "2026-03-01",
+                "decisionNote": "last"
+            },
+            {
+                "id": "p-3",
+                "title": "No date",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-4",
+                "title": "Date missing",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-6",
+                "title": "",
+                "publicationDate": "2026-02-10",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "archived",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "",
+                "title": "",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            }
+        ],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "from on the publication day": {
+        "rows": [
+            {
+                "id": "p-1",
+                "title": "Besluit",
+                "publicationDate": "2026-01-15T10:00:00+00:00",
+                "retentionCategory": "B",
+                "retentionTermMonths": "60",
+                "retentionExpiresAt": "2031-01-15",
+                "status": "published",
+                "actionTaken": "keep",
+                "decisionBy": "officer2",
+                "decisionAt": "2026-03-01",
+                "decisionNote": "last"
+            },
+            {
+                "id": "p-2",
+                "title": "",
+                "publicationDate": "2026-03-31",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-3",
+                "title": "No date",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-4",
+                "title": "Date missing",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-6",
+                "title": "",
+                "publicationDate": "2026-02-10",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "archived",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "",
+                "title": "",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            }
+        ],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "no object service": {
+        "rows": [],
+        "search": [],
+        "log": [
+            [
+                "warning",
+                "[RetentionService] OpenRegister ObjectService unavailable: no OCA\\OpenRegister\\Service\\ObjectService",
+                []
+            ]
+        ]
+    },
+    "no register": {
+        "rows": [],
+        "search": [],
+        "log": []
+    },
+    "no results key": {
+        "rows": [],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "no schema": {
+        "rows": [],
+        "search": [],
+        "log": []
+    },
+    "search fails": {
+        "rows": [],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": [
+            [
+                "warning",
+                "[RetentionService] report build failed: search down",
+                []
+            ]
+        ]
+    },
+    "to": {
+        "rows": [
+            {
+                "id": "p-1",
+                "title": "Besluit",
+                "publicationDate": "2026-01-15T10:00:00+00:00",
+                "retentionCategory": "B",
+                "retentionTermMonths": "60",
+                "retentionExpiresAt": "2031-01-15",
+                "status": "published",
+                "actionTaken": "keep",
+                "decisionBy": "officer2",
+                "decisionAt": "2026-03-01",
+                "decisionNote": "last"
+            },
+            {
+                "id": "p-3",
+                "title": "No date",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-4",
+                "title": "Date missing",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-5",
+                "title": "",
+                "publicationDate": "2025-12-31T23:59:59Z",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "destroy",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-6",
+                "title": "",
+                "publicationDate": "2026-02-10",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "archived",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "",
+                "title": "",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            }
+        ],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "to on the publication day": {
+        "rows": [
+            {
+                "id": "p-1",
+                "title": "Besluit",
+                "publicationDate": "2026-01-15T10:00:00+00:00",
+                "retentionCategory": "B",
+                "retentionTermMonths": "60",
+                "retentionExpiresAt": "2031-01-15",
+                "status": "published",
+                "actionTaken": "keep",
+                "decisionBy": "officer2",
+                "decisionAt": "2026-03-01",
+                "decisionNote": "last"
+            },
+            {
+                "id": "p-3",
+                "title": "No date",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-4",
+                "title": "Date missing",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "p-5",
+                "title": "",
+                "publicationDate": "2025-12-31T23:59:59Z",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "destroy",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            },
+            {
+                "id": "",
+                "title": "",
+                "publicationDate": "",
+                "retentionCategory": "",
+                "retentionTermMonths": "",
+                "retentionExpiresAt": "",
+                "status": "",
+                "actionTaken": "pending",
+                "decisionBy": "",
+                "decisionAt": "",
+                "decisionNote": ""
+            }
+        ],
+        "search": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "_limit": 10000
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    }
+}

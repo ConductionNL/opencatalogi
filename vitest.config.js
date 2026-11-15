@@ -25,6 +25,7 @@ const path = require('path')
 module.exports = {
 	test: {
 		environment: 'node',
+		setupFiles: ['tests/vitest/setup-node-window.js'],
 		globals: false,
 		include: ['tests/vitest/**/*.spec.{js,ts}'],
 		exclude: [

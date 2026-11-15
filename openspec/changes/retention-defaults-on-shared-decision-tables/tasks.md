@@ -41,7 +41,7 @@
 
 ## 4. Quality
 
-- [ ] 4.1 phpcs / phpmd (per subdirectory) / psalm / phpstan run individually
+- [x] 4.1 phpcs / phpmd (per subdirectory) / psalm / phpstan run individually
       and green on the touched files
 - [ ] 4.2 Hydra gates `--scope-to-diff` green against
       `origin/development`

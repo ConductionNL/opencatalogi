@@ -33,6 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
+use OCA\OpenCatalogi\Contract\PublishedCollectionsServiceInterface;
 use OCP\IAppConfig;
 
 /**
@@ -40,7 +41,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
  */
-class PublishedCollectionsService {
+class PublishedCollectionsService implements PublishedCollectionsServiceInterface {
 
 	/**
 	 * The config key the published set lives under.
@@ -87,7 +88,6 @@ class PublishedCollectionsService {
 		}
 
 		return array_values(array_filter($decoded, 'is_array'));
-
 	}//end collections()
 
 	/**
@@ -101,24 +101,8 @@ class PublishedCollectionsService {
 	 */
 	public function save(array $collections): array {
 		$errors = [];
-
 		foreach ($collections as $index => $collection) {
-			if (is_array($collection) === false) {
-				$errors[] = 'Collection ' . $index . ' cannot be read.';
-				continue;
-			}
-
-			$validation = $this->ruleService->validateRule(
-				rule: [
-					'recordType' => ($collection['recordType'] ?? ''),
-					'anonymousProperties' => ($collection['anonymousProperties'] ?? []),
-					'conditions' => ($collection['conditions'] ?? []),
-				]
-			);
-
-			foreach ($validation['errors'] as $error) {
-				$errors[] = 'Collection ' . $index . ': ' . $error;
-			}
+			$errors = array_merge($errors, $this->collectionErrors(index: $index, collection: $collection));
 		}
 
 		if ($errors !== []) {
@@ -128,8 +112,47 @@ class PublishedCollectionsService {
 		$this->config->setValueString($this->appName, self::CONFIG_KEY, (string)json_encode(array_values($collections)));
 
 		return ['saved' => true, 'errors' => []];
-
 	}//end save()
+
+	/**
+	 * What is wrong with one collection, each error prefixed with its index.
+	 *
+	 * @param integer|string $index The collection's position in the submitted set.
+	 * @param mixed $collection The collection as submitted.
+	 *
+	 * @return array<int, string> The errors, empty when the collection is valid.
+	 */
+	private function collectionErrors(int|string $index, mixed $collection): array {
+		if (is_array($collection) === false) {
+			return ['Collection ' . $index . ' cannot be read.'];
+		}
+
+		$validation = $this->ruleService->validateRule(rule: $this->ruleOf(collection: $collection));
+
+		$errors = [];
+		foreach ($validation['errors'] as $error) {
+			$errors[] = 'Collection ' . $index . ': ' . $error;
+		}
+
+		return $errors;
+	}//end collectionErrors()
+
+	/**
+	 * The publication rule a collection declares.
+	 *
+	 * @param array<string, mixed> $collection The collection.
+	 *
+	 * @return array{recordType: mixed, anonymousProperties: mixed, conditions: mixed, wooCategory: mixed}
+	 */
+	private function ruleOf(array $collection): array {
+		return [
+			'recordType' => ($collection['recordType'] ?? ''),
+			'anonymousProperties' => ($collection['anonymousProperties'] ?? []),
+			'conditions' => ($collection['conditions'] ?? []),
+			'wooCategory' => ($collection['wooCategory'] ?? null),
+		];
+
+	}//end ruleOf()
 
 	/**
 	 * Whether a record publishes under the configured set.
@@ -151,6 +174,5 @@ class PublishedCollectionsService {
 		}
 
 		return false;
-
 	}//end publishes()
 }//end class

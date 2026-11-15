@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Type definitions for Catalogi entity
  *
  * @module Entities
@@ -26,4 +30,13 @@ export type TCatalogi = {
 	slug: string
 	hasWooSitemap: boolean
 	hasOoapi: boolean
+	showWithheld?: boolean
+	staffAccess?: TCatalogStaffAccess
+}
+
+/** Which staff see and edit a catalogue's publications (catalogue-staff-access). */
+export type TCatalogStaffAccess = {
+	restricted: boolean
+	readGroups: string[]
+	editGroups: string[]
 }

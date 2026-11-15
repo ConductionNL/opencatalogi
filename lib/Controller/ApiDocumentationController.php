@@ -3,7 +3,7 @@
 /**
  * OpenCatalogi API documentation controller.
  *
- * Serves the static `openapi.json` OpenAPI 3.1 document describing this
+ * Serves the static `openapi.json` OpenAPI 3.0 document describing this
  * app's public (`@PublicPage`) API surface, with `info.version` substituted
  * at serve time from the installed app version so an installed-but-not-
  * rebuilt instance never reports a stale version (design decision D2).
@@ -44,6 +44,8 @@ use RuntimeException;
  * @spec openspec/changes/public-api-openapi-document/specs/api-documentation/spec.md#requirement-the-document-is-served-publicly-with-cors-api-doc-003
  */
 class ApiDocumentationController extends Controller {
+	use AnswersCrossOriginReadRequests;
+
 	/**
 	 * ApiDocumentationController constructor.
 	 *
@@ -67,59 +69,7 @@ class ApiDocumentationController extends Controller {
 	}//end __construct()
 
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV);
-	 * '*' (default) emits a literal '*'; an unvetted caller Origin is never echoed back
-	 * unless explicitly allowlisted (mirrors DcatController / SchemaOrgController #735).
-	 *
-	 * @return string The Access-Control-Allow-Origin value.
-	 *
-	 * @spec exclude CORS-policy plumbing mirroring DcatController/SchemaOrgController; fail-closed, no domain behaviour.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->appConfig !== null) {
-			$configured = trim($this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		}
-
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(
-				array_map('trim', explode(',', $configured)),
-				static fn (string $entry): bool => $entry !== ''
-			)
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
-
-	/**
-	 * Build the standard public-CORS header set.
-	 *
-	 * @return array<string, string> The header map.
-	 *
-	 * @spec exclude CORS-header plumbing.
-	 */
-	private function corsHeaders(): array {
-		return [
-			'Access-Control-Allow-Origin' => $this->resolveAllowedOrigin(),
-			'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-			'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
-		];
-
-	}//end corsHeaders()
-
-	/**
-	 * Serve the OpenAPI 3.1 document describing the public API surface.
+	 * Serve the OpenAPI 3.0 document describing the public API surface.
 	 *
 	 * Reads the shipped `openapi.json` from the app root and overwrites
 	 * `info.version` with the installed app version (design decision D2) so
@@ -143,28 +93,18 @@ class ApiDocumentationController extends Controller {
 				throw new RuntimeException('openapi.json could not be read.');
 			}
 
-			$document = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+			// Decoded as objects, so an empty schema `{}` is served as `{}` and not as `[]`.
+			$document = json_decode($raw, false, 512, JSON_THROW_ON_ERROR);
 
-			$document['info']['version'] = $this->appManager->getAppVersion($this->appName);
+			$document->info->version = $this->appManager->getAppVersion($this->appName);
 
-			$response = new JSONResponse($document, Http::STATUS_OK);
-			foreach ($this->corsHeaders() as $name => $value) {
-				$response->addHeader($name, $value);
-			}
-
-			return $response;
+			return $this->withCorsHeaders(response: new JSONResponse($document, Http::STATUS_OK));
 		} catch (\Throwable $e) {
 			$this->logger->error('[ApiDocumentationController::index] Failed to serve openapi.json', ['error' => $e->getMessage()]);
 
-			$response = new JSONResponse(
-				['error' => $this->l10n->t('Internal server error')],
-				Http::STATUS_INTERNAL_SERVER_ERROR
+			return $this->withCorsHeaders(response:
+				new JSONResponse(['error' => $this->l10n->t('Internal server error')], Http::STATUS_INTERNAL_SERVER_ERROR)
 			);
-			foreach ($this->corsHeaders() as $name => $value) {
-				$response->addHeader($name, $value);
-			}
-
-			return $response;
 		}//end try
 
 	}//end index()

@@ -1,0 +1,147 @@
+{
+    "page": {
+        "body": {
+            "type": "grid",
+            "widgets": [
+                {
+                    "id": "page-1-1-markdown",
+                    "widgetKey": "markdown",
+                    "gridX": 0,
+                    "gridY": 0,
+                    "gridWidth": 12,
+                    "gridHeight": 4,
+                    "props": {
+                        "markdown": "Hallo"
+                    }
+                },
+                {
+                    "id": "page-1-2-markdown",
+                    "widgetKey": "markdown",
+                    "gridX": 0,
+                    "gridY": 4,
+                    "gridWidth": 12,
+                    "gridHeight": 4,
+                    "props": {
+                        "markdown": ""
+                    }
+                },
+                {
+                    "id": "page-1-3-markdown",
+                    "widgetKey": "markdown",
+                    "gridX": 0,
+                    "gridY": 8,
+                    "gridWidth": 12,
+                    "gridHeight": 4,
+                    "props": {
+                        "markdown": ""
+                    }
+                },
+                {
+                    "id": "page-1-4-markdown",
+                    "widgetKey": "markdown",
+                    "gridX": 0,
+                    "gridY": 12,
+                    "gridWidth": 12,
+                    "gridHeight": 4,
+                    "props": {
+                        "markdown": ""
+                    }
+                },
+                {
+                    "id": "page-1-5-hero",
+                    "widgetKey": "hero",
+                    "gridX": 0,
+                    "gridY": 16,
+                    "gridWidth": 12,
+                    "gridHeight": 4,
+                    "props": {
+                        "title": "Welkom",
+                        "subtitle": "Ondertitel"
+                    }
+                },
+                {
+                    "id": "page-1-6-hero",
+                    "widgetKey": "hero",
+                    "gridX": 0,
+                    "gridY": 20,
+                    "gridWidth": 12,
+                    "gridHeight": 4,
+                    "props": {
+                        "title": "Welkom",
+                        "subtitle": ""
+                    }
+                },
+                {
+                    "id": "page-1-7-hero",
+                    "widgetKey": "hero",
+                    "gridX": 0,
+                    "gridY": 24,
+                    "gridWidth": 12,
+                    "gridHeight": 4,
+                    "props": {
+                        "title": "Again",
+                        "subtitle": "Twice"
+                    }
+                },
+                {
+                    "id": "page-1-20-markdown",
+                    "widgetKey": "markdown",
+                    "gridX": 0,
+                    "gridY": 28,
+                    "gridWidth": 12,
+                    "gridHeight": 4,
+                    "props": {
+                        "markdown": "5"
+                    }
+                },
+                {
+                    "id": "page-1-key-hero",
+                    "widgetKey": "hero",
+                    "gridX": 0,
+                    "gridY": 32,
+                    "gridWidth": 12,
+                    "gridHeight": 4,
+                    "props": {
+                        "subtitle": null
+                    }
+                }
+            ]
+        },
+        "unmapped": [
+            "carousel",
+            ""
+        ],
+        "dropped": [
+            "hero.subtitle"
+        ]
+    },
+    "quiet": {
+        "body": {
+            "type": "grid",
+            "widgets": [
+                {
+                    "id": "page-2-0-hero",
+                    "widgetKey": "hero",
+                    "gridX": 0,
+                    "gridY": 0,
+                    "gridWidth": 12,
+                    "gridHeight": 4,
+                    "props": {
+                        "subtitle": ""
+                    }
+                },
+                {
+                    "id": "page-2-1-hero",
+                    "widgetKey": "hero",
+                    "gridX": 0,
+                    "gridY": 4,
+                    "gridWidth": 12,
+                    "gridHeight": 4,
+                    "props": []
+                }
+            ]
+        },
+        "unmapped": [],
+        "dropped": []
+    }
+}

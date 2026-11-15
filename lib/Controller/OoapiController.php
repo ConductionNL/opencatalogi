@@ -33,8 +33,11 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\CatalogiService;
-use OCA\OpenCatalogi\Service\OoapiService;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\OoapiPage;
+use OCA\OpenCatalogi\Contract\OoapiScope;
+use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -46,7 +49,6 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -59,6 +61,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/ooapi-catalog-publication/tasks.md#task-3-public-endpoints-serializer
  */
 class OoapiController extends Controller {
+	use AnswersCrossOriginReadRequests;
 	use ResolvesRegisterConfiguration;
 
 	/**
@@ -66,13 +69,13 @@ class OoapiController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request object.
-	 * @param OoapiService $ooapiService The OOAPI 5.0 orchestration service.
-	 * @param CatalogiService $catalogiService Catalog resolution (slug →
-	 *                                         catalog).
+	 * @param OoapiServiceInterface $ooapiService The OOAPI 5.0 orchestration service.
+	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug →
+	 *                                                  catalog).
 	 * @param IUserSession $userSession Nextcloud user session (OOAPI-008 auth gate).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param ContainerInterface $container Server container (ResolvesRegisterConfiguration).
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -80,67 +83,17 @@ class OoapiController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly OoapiService $ooapiService,
-		private readonly CatalogiService $catalogiService,
+		private readonly OoapiServiceInterface $ooapiService,
+		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly ?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * '*' (the default) emits a literal '*'; an unvetted caller Origin is never echoed
-	 * back unless explicitly allowlisted — mirrors DcatController/PublicationsController.
-	 *
-	 * @return string The Access-Control-Allow-Origin value.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->appConfig !== null) {
-			$configured = trim($this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		}
-
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(
-				array_map('trim', explode(',', $configured)),
-				static fn (string $entry): bool => $entry !== ''
-			)
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
-
-	/**
-	 * Build the standard CORS header set for OOAPI responses.
-	 *
-	 * @return array<string, string> The header map.
-	 *
-	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
-	 */
-	private function corsHeaders(): array {
-		return [
-			'Access-Control-Allow-Origin' => $this->resolveAllowedOrigin(),
-			'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-			'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
-		];
-
-	}//end corsHeaders()
 
 	/**
 	 * Build a JSON response carrying the standard OOAPI CORS headers (OOAPI-001).
@@ -151,12 +104,7 @@ class OoapiController extends Controller {
 	 * @return JSONResponse The CORS-headed JSON response.
 	 */
 	private function json(mixed $data, int $status): JSONResponse {
-		$response = new JSONResponse($data, $status);
-		foreach ($this->corsHeaders() as $name => $value) {
-			$response->addHeader($name, $value);
-		}
-
-		return $response;
+		return $this->withCorsHeaders(response: new JSONResponse($data, $status));
 	}//end json()
 
 	/**
@@ -175,14 +123,7 @@ class OoapiController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		foreach ($this->corsHeaders() as $name => $value) {
-			$response->addHeader($name, $value);
-		}
-
-		$response->addHeader('Access-Control-Max-Age', '1728000');
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-		return $response;
+		return $this->readOnlyPreflight();
 	}//end preflightedCors()
 
 	/**
@@ -252,13 +193,13 @@ class OoapiController extends Controller {
 	/**
 	 * Resolve `pageNumber`/`pageSize` query parameters (OOAPI-007).
 	 *
-	 * @return array{page: int, pageSize: int} The resolved pagination parameters.
+	 * @return OoapiPage The page asked for.
 	 */
-	private function resolvePagination(): array {
-		return [
-			'page' => max(1, (int)$this->request->getParam('pageNumber', 1)),
-			'pageSize' => max(1, (int)$this->request->getParam('pageSize', OoapiService::DEFAULT_PAGE_SIZE)),
-		];
+	private function resolvePagination(): OoapiPage {
+		return new OoapiPage(
+			number: max(1, (int)$this->request->getParam('pageNumber', 1)),
+			size: max(1, (int)$this->request->getParam('pageSize', OoapiServiceInterface::DEFAULT_PAGE_SIZE))
+		);
 
 	}//end resolvePagination()
 
@@ -306,6 +247,125 @@ class OoapiController extends Controller {
 	}//end guard()
 
 	/**
+	 * Run a consumer endpoint inside an enabled catalog and its configured register/schema pair.
+	 *
+	 * Refuses an unauthenticated or disallowed consumer, an unknown or OOAPI-disabled
+	 * catalog and an unconfigured context before $render runs; an unexpected failure
+	 * answers 500.
+	 *
+	 * @param array{catalogSlug: string, context: string} $lookup The catalog slug and the `<context>` of the
+	 *                                                            `<context>_register`/`<context>_schema` config keys.
+	 * @param callable $render Builds the answer from the OoapiScope of the catalog and its pair.
+	 *
+	 * @return JSONResponse The answer, or the refusal.
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
+	 */
+	private function inCatalogContext(array $lookup, callable $render): JSONResponse {
+		$authError = $this->requireAuthenticatedConsumer();
+		if ($authError !== null) {
+			return $authError;
+		}
+
+		return $this->guard(
+			action: function () use ($lookup, $render): JSONResponse {
+				$scope = $this->catalogContextScope(lookup: $lookup);
+				if ($scope instanceof JSONResponse) {
+					return $scope;
+				}
+
+				return $render($scope);
+			}
+		);
+
+	}//end inCatalogContext()
+
+	/**
+	 * The scope of an enabled catalog and its configured context, or the refusal
+	 * of an unknown or disabled catalog or an unconfigured context, in that order.
+	 *
+	 * @param array{catalogSlug: string, context: string} $lookup The catalog slug and the context.
+	 *
+	 * @return OoapiScope|JSONResponse The scope, or the refusal.
+	 */
+	private function catalogContextScope(array $lookup): OoapiScope|JSONResponse {
+		$resolved = $this->resolveEnabledCatalog(catalogSlug: $lookup['catalogSlug']);
+		if ($resolved['error'] !== null) {
+			return $resolved['error'];
+		}
+
+		$context = $this->resolveContext(
+			registerKey: $lookup['context'] . '_register',
+			schemaKey: $lookup['context'] . '_schema'
+		);
+		if ($context['error'] !== null) {
+			return $context['error'];
+		}
+
+		return $this->scopeOf(catalog: $resolved['catalog'], pair: $context['pair']);
+	}//end catalogContextScope()
+
+	/**
+	 * A catalog with its register/schema pair as an OOAPI scope.
+	 *
+	 * @param array<string, mixed> $catalog The catalog.
+	 * @param array{register: mixed, schema: mixed} $pair The register and schema.
+	 *
+	 * @return OoapiScope
+	 */
+	private function scopeOf(array $catalog, array $pair): OoapiScope {
+		return new OoapiScope(
+			catalog: $catalog,
+			register: $pair['register'],
+			schema: $pair['schema']
+		);
+	}//end scopeOf()
+
+	/**
+	 * A single resource, or a 404 with the given message when there is none.
+	 *
+	 * @param array<string, mixed>|null $resource The resource.
+	 * @param string $notFound The translated not-found message.
+	 *
+	 * @return JSONResponse The resource, or the 404.
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
+	 */
+	private function resourceOrNotFound(?array $resource, string $notFound): JSONResponse {
+		if ($resource === null) {
+			return $this->json(data: ['error' => $notFound], status: Http::STATUS_NOT_FOUND);
+		}
+
+		return $this->json(data: $resource, status: Http::STATUS_OK);
+	}//end resourceOrNotFound()
+
+	/**
+	 * Fetch one materialized resource by its OOAPI id field.
+	 *
+	 * @param array{catalogSlug: string, context: string, id: string, idField: string} $lookup The catalog slug, config context,
+	 *                                                                                         id and the field that holds it.
+	 * @param string $notFound The translated not-found message.
+	 *
+	 * @return JSONResponse The resource, or a 404 or refusal.
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
+	 */
+	private function materializedResource(array $lookup, string $notFound): JSONResponse {
+		return $this->inCatalogContext(
+			lookup: $lookup,
+			render: fn (OoapiScope $scope): JSONResponse => $this->resourceOrNotFound(
+				resource: $this->ooapiService->getResource(
+					scope: $scope,
+					id: $lookup['id'],
+					idField: $lookup['idField']
+				),
+				notFound: $notFound
+			)
+		);
+
+	}//end materializedResource()
+
+	/**
 	 * List an institution's OOAPI 5.0 organizations for a catalog.
 	 *
 	 * @param string $catalogSlug The catalog slug.
@@ -318,28 +378,10 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
 	 */
 	public function organizations(string $catalogSlug): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'organization_register', schemaKey: 'organization_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$organization = $this->ooapiService->renderOrganization(
-					$resolved['catalog'],
-					organizationRegister: $context['pair']['register'],
-					organizationSchema: $context['pair']['schema']
-				);
+		return $this->inCatalogContext(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'organization'],
+			render: function (OoapiScope $scope): JSONResponse {
+				$organization = $this->ooapiService->renderOrganization(scope: $scope);
 
 				$items = [];
 				if ($organization !== null) {
@@ -374,35 +416,12 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
 	 */
 	public function organization(string $catalogSlug, string $id): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'organization_register', schemaKey: 'organization_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$organization = $this->ooapiService->organizationById(
-					$resolved['catalog'],
-					id: $id,
-					organizationRegister: $context['pair']['register'],
-					organizationSchema: $context['pair']['schema']
-				);
-				if ($organization === null) {
-					return $this->json(data: ['error' => $this->l10n->t('Organization not found')], status: Http::STATUS_NOT_FOUND);
-				}
-
-				return $this->json(data: $organization, status: Http::STATUS_OK);
-			}
+		return $this->inCatalogContext(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'organization'],
+			render: fn (OoapiScope $scope): JSONResponse => $this->resourceOrNotFound(
+				resource: $this->ooapiService->organizationById(scope: $scope, id: $id),
+				notFound: $this->l10n->t('Organization not found')
+			)
 		);
 
 	}//end organization()
@@ -420,34 +439,11 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
 	 */
 	public function courses(string $catalogSlug): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$pagination = $this->resolvePagination();
-				$result = $this->ooapiService->listCourses(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					page: $pagination['page'],
-					pageSize: $pagination['pageSize']
-				);
-
-				return $this->collectionResponse(result: $result);
-			}
+		return $this->inCatalogContext(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_courses'],
+			render: fn (OoapiScope $scope): JSONResponse => $this->collectionResponse(
+				result: $this->ooapiService->listCourses(scope: $scope, page: $this->resolvePagination())
+			)
 		);
 
 	}//end courses()
@@ -466,36 +462,9 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
 	 */
 	public function course(string $catalogSlug, string $id): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$course = $this->ooapiService->getResource(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					id: $id,
-					idField: 'courseId'
-				);
-				if ($course === null) {
-					return $this->json(data: ['error' => $this->l10n->t('Course not found')], status: Http::STATUS_NOT_FOUND);
-				}
-
-				return $this->json(data: $course, status: Http::STATUS_OK);
-			}
+		return $this->materializedResource(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_courses', 'id' => $id, 'idField' => 'courseId'],
+			notFound: $this->l10n->t('Course not found')
 		);
 
 	}//end course()
@@ -513,34 +482,11 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
 	 */
 	public function programs(string $catalogSlug): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_programs_register', schemaKey: 'ooapi_programs_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$pagination = $this->resolvePagination();
-				$result = $this->ooapiService->listPrograms(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					page: $pagination['page'],
-					pageSize: $pagination['pageSize']
-				);
-
-				return $this->collectionResponse(result: $result);
-			}
+		return $this->inCatalogContext(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_programs'],
+			render: fn (OoapiScope $scope): JSONResponse => $this->collectionResponse(
+				result: $this->ooapiService->listPrograms(scope: $scope, page: $this->resolvePagination())
+			)
 		);
 
 	}//end programs()
@@ -559,36 +505,9 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
 	 */
 	public function program(string $catalogSlug, string $id): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_programs_register', schemaKey: 'ooapi_programs_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$program = $this->ooapiService->getResource(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					id: $id,
-					idField: 'programId'
-				);
-				if ($program === null) {
-					return $this->json(data: ['error' => $this->l10n->t('Program not found')], status: Http::STATUS_NOT_FOUND);
-				}
-
-				return $this->json(data: $program, status: Http::STATUS_OK);
-			}
+		return $this->materializedResource(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_programs', 'id' => $id, 'idField' => 'programId'],
+			notFound: $this->l10n->t('Program not found')
 		);
 
 	}//end program()
@@ -607,35 +526,15 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
 	 */
 	public function courseOfferings(string $catalogSlug, string $courseId): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug, $courseId): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_offerings_register', schemaKey: 'ooapi_offerings_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$pagination = $this->resolvePagination();
-				$result = $this->ooapiService->listOfferings(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					courseId: $courseId,
-					page: $pagination['page'],
-					pageSize: $pagination['pageSize']
-				);
-
-				return $this->collectionResponse(result: $result);
-			}
+		return $this->inCatalogContext(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_offerings'],
+			render: fn (OoapiScope $scope): JSONResponse => $this->collectionResponse(
+				result: $this->ooapiService->listOfferings(
+					scope: $scope,
+					page: $this->resolvePagination(),
+					courseId: $courseId
+				)
+			)
 		);
 
 	}//end courseOfferings()
@@ -654,36 +553,9 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
 	 */
 	public function offering(string $catalogSlug, string $id): JSONResponse {
-		$authError = $this->requireAuthenticatedConsumer();
-		if ($authError !== null) {
-			return $authError;
-		}
-
-		return $this->guard(
-			action: function () use ($catalogSlug, $id): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $catalogSlug);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_offerings_register', schemaKey: 'ooapi_offerings_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$offering = $this->ooapiService->getResource(
-					$resolved['catalog'],
-					register: $context['pair']['register'],
-					schema: $context['pair']['schema'],
-					id: $id,
-					idField: 'offeringId'
-				);
-				if ($offering === null) {
-					return $this->json(data: ['error' => $this->l10n->t('Offering not found')], status: Http::STATUS_NOT_FOUND);
-				}
-
-				return $this->json(data: $offering, status: Http::STATUS_OK);
-			}
+		return $this->materializedResource(
+			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_offerings', 'id' => $id, 'idField' => 'offeringId'],
+			notFound: $this->l10n->t('Offering not found')
 		);
 
 	}//end offering()
@@ -706,32 +578,39 @@ class OoapiController extends Controller {
 	public function validate(string $catalogSlug): JSONResponse {
 		return $this->guard(
 			action: function () use ($catalogSlug): JSONResponse {
-				$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-				if ($catalog === null) {
-					return $this->json(data: ['error' => $this->l10n->t('Catalog not found')], status: Http::STATUS_NOT_FOUND);
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$violations = $this->ooapiService->validateCatalog(
-					$catalog,
-					courseRegister: $context['pair']['register'],
-					courseSchema: $context['pair']['schema']
-				);
-
-				return $this->json(
-					data: [
-						'catalogSlug' => $catalogSlug,
-						'valid' => empty($violations),
-						'violations' => $violations,
-					],
-					status: Http::STATUS_OK
-				);
+				return $this->validation(catalogSlug: $catalogSlug);
 			}
 		);
 
 	}//end validate()
+
+	/**
+	 * Validate one catalog's courses, or refuse an unknown catalog or an unconfigured context.
+	 *
+	 * @param string $catalogSlug The catalog slug.
+	 *
+	 * @return JSONResponse The violations, or the refusal.
+	 */
+	private function validation(string $catalogSlug): JSONResponse {
+		$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
+		if ($catalog === null) {
+			return $this->json(data: ['error' => $this->l10n->t('Catalog not found')], status: Http::STATUS_NOT_FOUND);
+		}
+
+		$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
+		if ($context['error'] !== null) {
+			return $context['error'];
+		}
+
+		$violations = $this->ooapiService->validateCatalog(scope: $this->scopeOf(catalog: $catalog, pair: $context['pair']));
+
+		return $this->json(
+			data: [
+				'catalogSlug' => $catalogSlug,
+				'valid' => empty($violations),
+				'violations' => $violations,
+			],
+			status: Http::STATUS_OK
+		);
+	}//end validation()
 }//end class

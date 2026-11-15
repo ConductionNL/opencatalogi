@@ -3,6 +3,9 @@
 /**
  * Turns `document` objects into files on the publication they belong to.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A `document` was never a thing in its own right. It is a wrapper around one
  * attached file, and everything it carries has a home elsewhere now:
  *
@@ -34,9 +37,6 @@
  * @version GIT: <git-id>
  *
  * @link https://OpenCatalogi.nl
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  */
 
 declare(strict_types=1);
@@ -44,6 +44,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
+use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -55,17 +56,8 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class AttachmentMigrationService {
-
-	/**
-	 * The register the publication and document schemas live in.
-	 */
-	public const REGISTER_SLUG = 'publication';
-
-	/**
-	 * The schema being retired.
-	 */
-	public const DOCUMENT_SCHEMA_SLUG = 'document';
+class AttachmentMigrationService implements AttachmentMigrationServiceInterface {
+	use FlattensObjectRows;
 
 	/**
 	 * The schema an attachment ends up hanging from.
@@ -76,7 +68,7 @@ class AttachmentMigrationService {
 	 * Wire the container and the logger.
 	 *
 	 * @param ContainerInterface $container Container, so OpenRegister is resolved lazily.
-	 * @param LoggerInterface    $logger    Logger.
+	 * @param LoggerInterface $logger Logger.
 	 *
 	 * @return void
 	 *
@@ -151,7 +143,8 @@ class AttachmentMigrationService {
 	 * @param array<string, mixed> $document The document's fields.
 	 *
 	 * @return array{description: string|null, labels: array<int, string>, published: string|null, depublished: string|null}
-	 *         The metadata to write onto the file.
+	 *
+	 * Returns: The metadata to write onto the file.
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-the-documents-metadata-lands-on-the-file-req-att-102
 	 */
@@ -211,8 +204,8 @@ class AttachmentMigrationService {
 	/**
 	 * Load the publication a document points at.
 	 *
-	 * @param object                                  $objectService The OpenRegister ObjectService.
-	 * @param array{id: string|null, slug: string|null} $link        What the document's link identifies.
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param array{id: string|null, slug: string|null} $link What the document's link identifies.
 	 *
 	 * @return object|null The publication, or null when it cannot be found.
 	 *
@@ -287,7 +280,7 @@ class AttachmentMigrationService {
 	 * Load the document as an entity, which is what the file API takes.
 	 *
 	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param string $uuid          The document uuid.
+	 * @param string $uuid The document uuid.
 	 *
 	 * @return object The document entity.
 	 *
@@ -303,7 +296,7 @@ class AttachmentMigrationService {
 	/**
 	 * Resolve a search row to an entity.
 	 *
-	 * @param mixed  $row           The row as returned by the reader.
+	 * @param mixed $row The row as returned by the reader.
 	 * @param object $objectService The OpenRegister ObjectService.
 	 *
 	 * @return object|null The entity, or null.
@@ -327,39 +320,6 @@ class AttachmentMigrationService {
 			return null;
 		}
 	}//end entityOf()
-
-	/**
-	 * Flatten an object row into a field map with the uuid resolved.
-	 *
-	 * @param mixed $row The row as the reader returned it.
-	 *
-	 * @return array<string, mixed> The fields.
-	 *
-	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
-	 */
-	public function toFields(mixed $row): array {
-		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-			$row = $row->jsonSerialize();
-		}
-
-		if (is_array($row) === false) {
-			return [];
-		}
-
-		$self = ($row['@self'] ?? []);
-		$uuid = '';
-		if (is_array($self) === true) {
-			$uuid = (string)($self['uuid'] ?? ($self['id'] ?? ''));
-		}
-
-		if ($uuid === '') {
-			$uuid = (string)($row['uuid'] ?? ($row['id'] ?? ''));
-		}
-
-		$row['uuid'] = $uuid;
-
-		return $row;
-	}//end toFields()
 	/**
 	 * Resolve an OpenRegister collaborator, or null when it is unavailable.
 	 *

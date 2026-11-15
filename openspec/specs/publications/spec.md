@@ -1,5 +1,5 @@
 ---
-status: done
+status: in-progress
 retrofit_extensions:
   - PUB-016
   - PUB-017
@@ -26,15 +26,49 @@ The system MUST list publications scoped to a catalog slug with pagination and f
 - WHEN a GET request is made to `/api/publications`
 - THEN the catalog MUST be resolved by slug and publications returned scoped to its schemas/registers with pagination and facets
 
-### Requirement: Retrieve a single publication by catalog slug and object UUID (PUB-002)
-The system MUST retrieve a single publication by catalog slug and object UUID.
+### Requirement: Retrieve a single publication by catalog slug and object UUID or slug (PUB-002)
+
+The system MUST retrieve a single publication by catalog slug and an identifier that is
+either the object's UUID or the object's slug. The identifier MUST first be resolved as
+a UUID within the catalogue's registers and schemas, exactly as before. Only when that
+finds no publication MUST it be resolved as a slug within the same registers and
+schemas. A publication outside the catalogue's registers and schemas MUST NOT be
+returned by either route.
 
 **Priority:** Must **Status:** Implemented
 
-#### Scenario: Get a single publication
+#### Scenario: Get a single publication by UUID
+
 - GIVEN a publication with UUID "xyz-789" within a catalog
 - WHEN a GET request is made to `/api/{catalogSlug}/xyz-789`
 - THEN the matching publication MUST be rendered and returned
+
+#### Scenario: Get a single publication by slug
+
+- GIVEN a publication with slug "2026-0042" within catalog "woo"
+- WHEN a GET request is made to `/api/woo/2026-0042`
+- THEN that publication MUST be rendered and returned with HTTP 200
+- AND the response MUST have the same shape as a lookup by its UUID
+
+#### Scenario: The URL id is normalised before the slug lookup
+
+- GIVEN a publication stored with slug "zaak-2026-0042" within catalog "woo"
+- WHEN a GET request is made to `/api/woo/Zaak_2026-0042`
+- THEN the identifier MUST be normalised like OpenRegister normalises a stored slug (lowercase, spaces and underscores to hyphens, other characters outside a-z, 0-9 and hyphen dropped, hyphen runs collapsed, edge hyphens trimmed, cut to 255) before the slug lookup
+- AND that publication MUST be returned with HTTP 200
+- AND an identifier with nothing left after normalising MUST NOT run a slug search (HTTP 404)
+
+#### Scenario: Slug of a publication in another catalog
+
+- GIVEN a publication with slug "2026-0042" in catalog "archive" only
+- WHEN a GET request is made to `/api/woo/2026-0042`
+- THEN the response MUST be HTTP 404
+
+#### Scenario: Unknown slug
+
+- GIVEN no publication in catalog "woo" holds slug "does-not-exist"
+- WHEN a GET request is made to `/api/woo/does-not-exist`
+- THEN the response MUST be HTTP 404 with the existing "Publication not found" body
 
 ### Requirement: Publication list endpoint must filter by the catalog's configured registers and schemas (PUB-003)
 The publication list endpoint MUST filter by the catalog's configured registers and schemas.
@@ -406,6 +440,131 @@ Implements hydra `woo-citizen-journey` journey step J2.2 (narrow by information 
 - **GIVEN** a visitor on the search page
 - **WHEN** they search with `periodFrom=yesterday`
 - **THEN** the answer is 400 and names `publicationDate[gte]`
+
+### Requirement: An object of another schema in a catalog opens on its own detail page (COS-001)
+
+On a catalog's publications page, a row whose `@self` register and schema are not the publication pair SHALL open on the `CatalogObjectDetail` page for that register, schema and id, by a click, the View action, or a ctrl, cmd, shift or middle click in a new tab. This SHALL also hold in a catalog that does not hold the publication pair, and for every row while the publication register and schema ids are still unresolved. A row whose `@self` register or schema is not a numeric id SHALL open in CnIndexPage's form for its own schema instead, except on a middle click, which SHALL do nothing. The page SHALL show the object's properties in a read-only Data card, including free-form object properties whose schema names a `widget`. The object SHALL be edited through the page's Edit button, not inline.
+
+#### Scenario: A component's description can be read per language
+- **GIVEN** a catalog over the publiccode schema, holding a component with a Dutch and an English short and long description
+- **WHEN** a user clicks the component's row on the catalog's publications page
+- **THEN** the browser SHALL be on `/publications/<catalogSlug>/<register>/<schema>/<id>`
+- **AND** the Data card SHALL show the Dutch and the English short and long description
+
+#### Scenario: A ctrl click opens the component in a new tab
+- **GIVEN** the same catalog
+- **WHEN** a user ctrl-clicks the component's row
+- **THEN** its detail page SHALL open in a new tab and the list SHALL stay open
+
+#### Scenario: The component is edited in the form, with its description
+- **GIVEN** a component's detail page
+- **WHEN** a user clicks the page's Edit button
+- **THEN** the form SHALL open with a JSON field holding the description per language
+
+#### Scenario: A row without numeric ids opens in the form
+- **GIVEN** a row whose `@self` register or schema is a slug instead of a numeric id
+- **WHEN** a user clicks the row
+- **THEN** the form for its own schema SHALL open and no page SHALL be navigated to
+
+@e2e exclude A stored object always carries numeric register and schema ids in `@self`, so a seeded fixture cannot produce this row; covered by the CatalogPublicationsIndex component test.
+
+#### Scenario: Rows open on the generic page while the publication ids are unresolved
+- **GIVEN** the publication register and schema settings are not yet resolved
+- **WHEN** a user clicks a row of the catalog
+- **THEN** the row SHALL open on the CatalogObjectDetail page
+
+@e2e exclude Needs an instance whose OpenCatalogi settings were never imported; covered by the CatalogPublicationsIndex component test.
+
+### Requirement: The publications page offers the filter and columns sidebar (COS-002)
+
+The Publications page SHALL enable CnIndexPage's sidebar with its search, filters and column toggles, the same as the library's index pages.
+
+#### Scenario: The sidebar is offered on a catalog of components
+- **GIVEN** a catalog over the publiccode schema
+- **WHEN** a user opens its publications page
+- **THEN** the page SHALL offer the sidebar with the filters and columns of the publiccode schema
+
+### Requirement: A catalog without the publication schema lists a default column set (COS-003)
+
+When a catalog does not hold the publication pair, its publications page SHALL list the columns Name, Summary and Updated, from the objects' `@self` metadata, instead of every property of the page's schema. The other properties SHALL stay available as optional columns in the sidebar. The publiccode schema SHALL fill `@self.summary` from the Dutch short description, else the English one. OpenRegister fills it when the object is saved, so a component saved before the schema carried this configuration SHALL have an empty Summary until it is saved again, e.g. by a re-harvest.
+
+#### Scenario: The Componenten catalog lists three columns
+- **GIVEN** a catalog over the publiccode schema only
+- **AND** a component saved after the OpenCatalogi settings with this change were imported
+- **WHEN** a user opens its publications page
+- **THEN** the table SHALL have the columns Name, Summary and Updated
+- **AND** the component's Summary SHALL be its Dutch short description
+
+### Requirement: A slug held by more than one publication in a catalogue MUST be refused (PUB-019)
+
+The system MUST NOT return a publication for a slug that matches more than one publication across the catalogue's registers and schemas. It MUST answer HTTP 404 with the
+existing "Publication not found" body, and MUST log a warning that names the catalogue,
+the slug and the UUIDs of the matching publications. The response MUST NOT contain those
+UUIDs.
+
+**Priority:** Must **Status:** Implemented
+
+#### Scenario: Two schemas of one catalogue share a slug
+
+- GIVEN catalog "woo" spans schemas "convenanten" and "adviezen"
+- AND a publication in each holds slug "2026-0042"
+- WHEN a GET request is made to `/api/woo/2026-0042`
+- THEN the response MUST be HTTP 404
+- AND a warning MUST be logged naming catalog "woo", slug "2026-0042" and both UUIDs
+- AND the response body MUST NOT contain either UUID
+
+#### Scenario: The UUID of one of them still resolves
+
+- GIVEN the two publications above
+- WHEN a GET request is made to `/api/woo/{uuid of the first}`
+- THEN that publication MUST be returned with HTTP 200
+
+### Requirement: Slug resolution MUST be backwards compatible (PUB-020)
+
+Resolving by slug MUST NOT change any behaviour for a UUID URL, for a publication without a slug, or for a catalogue without registers and schemas.
+
+**Priority:** Must **Status:** Implemented
+
+#### Scenario: UUID URL unchanged
+
+- GIVEN a publication reachable at `/api/{catalogSlug}/{uuid}` before this change
+- WHEN the same URL is requested after this change
+- THEN the response MUST be identical in status and body
+
+#### Scenario: A numeric slug is never treated as an object id
+
+- GIVEN a publication whose slug is "123456" and another object with numeric id 123456 in the same register
+- WHEN a GET request is made to `/api/{catalogSlug}/123456`
+- THEN the publication holding slug "123456" MUST be returned
+- AND the object with numeric id 123456 MUST NOT be returned through the slug route
+
+#### Scenario: Publication without a slug
+
+- GIVEN a publication without a slug (its source has no `kenmerk`, or it was not backfilled)
+- WHEN it is requested by its UUID
+- THEN it MUST be returned as before
+
+#### Scenario: Catalogue without registers or schemas
+
+- GIVEN a catalogue with no registers or no schemas configured
+- WHEN any identifier is requested
+- THEN the response MUST be what it was before this change (no fallback search)
+
+### Requirement: Example publications are demo data, installed only on request (REQ-EPD-001)
+
+The publication register imported on install MUST NOT carry example publications, documents or depublications. Example rows MUST live in the demo dataset, which is installed only when an administrator asks for it (ADR-111).
+
+#### Scenario: A municipality's public search after a fresh install
+- GIVEN a fresh install where nobody installed the demo data
+- WHEN a visitor searches the public publications for "Voorbeeld"
+- THEN no example publication or document is found
+- @e2e exclude pinned by `PublicationStateServiceTest::testTheInstalledRegisterCarriesNoExamplePublications`; the bundled register is not a browser surface
+
+#### Scenario: The demo data shows Publish again
+- GIVEN an administrator installed the demo data
+- WHEN they open the withdrawn example publication
+- THEN it is withdrawn, has its depublication, and offers Publish again
+- @e2e exclude pinned by `PublicationStateServiceTest::testTheDemoDataCarriesAWithdrawnPublicationAndItsDepublication`
 
 ## Data Model
 

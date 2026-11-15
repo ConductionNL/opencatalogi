@@ -32,8 +32,8 @@ class PublicationLinkerTest extends TestCase {
 	/**
 	 * A linker over a config holding `$values`, a site on a port, and portaliq installed or not.
 	 *
-	 * @param array<string, string> $values    The opencatalogi app config.
-	 * @param bool                  $portaliq  Whether portaliq is installed.
+	 * @param array<string, string> $values The opencatalogi app config.
+	 * @param bool $portaliq Whether portaliq is installed.
 	 *
 	 * @return PublicationLinker
 	 */
@@ -43,7 +43,7 @@ class PublicationLinkerTest extends TestCase {
 			fn (string $app, string $key, string $default = ''): string => $values[$key] ?? $default
 		);
 		$urls = $this->createMock(IURLGenerator::class);
-		$urls->method('getAbsoluteURL')->willReturnCallback(fn (string $path): string => 'http://localhost:8080'.$path);
+		$urls->method('getAbsoluteURL')->willReturnCallback(fn (string $path): string => 'http://localhost:8080' . $path);
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('isInstalled')->willReturnCallback(fn (string $app): bool => $app === 'portaliq' && $portaliq);
 
@@ -77,6 +77,16 @@ class PublicationLinkerTest extends TestCase {
 		$this->assertSame(
 			'http://localhost:8080/index.php/apps/opencatalogi/api/woo/pub-1',
 			$this->linker(values: ['publication_url_catalog' => 'woo'], portaliq: false)->url(id: 'pub-1')
+		);
+	}
+
+	/**
+	 * A blank catalogue setting falls back to the `publication` catalogue.
+	 */
+	public function testABlankCatalogueFallsBackToPublication(): void {
+		$this->assertSame(
+			'http://localhost:8080/index.php/apps/opencatalogi/api/publication/pub%2F1',
+			$this->linker(values: ['publication_url_catalog' => '  ', 'publication_url_template' => 'https://x/no-placeholder'], portaliq: false)->url(id: 'pub/1')
 		);
 	}
 }

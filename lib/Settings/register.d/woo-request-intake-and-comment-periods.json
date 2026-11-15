@@ -27,7 +27,7 @@
 			"wooRequest": {
 				"slug": "wooRequest",
 				"title": "Woo request",
-				"version": "0.1.0",
+				"version": "0.2.0",
 				"published": null,
 				"summary": "One Woo request, from the day it arrived to the day it was decided",
 				"description": "A Woo request is a record of its own, minted when it arrives. Without it the stack has a batch whose case reference points at a number nobody here mints, so there is nothing for a statutory term to hang on. The request carries the reference the requester quotes, the day it was received, what was asked for, who asked, the state it is in, and the disclosure batch it produces. A batch still works without a request, so an organisation that keeps its cases elsewhere loses nothing.",
@@ -159,6 +159,18 @@
 						"title": "Received by",
 						"description": "Who registered the request, or the channel that registered it without a signed-in user.",
 						"maxLength": 255
+					},
+					"migratedTo": {
+						"type": "string",
+						"format": "uuid",
+						"title": "Moved to dossiq case",
+						"description": "The dossiq case this request now lives in. Written by dossiq's import once the case and its term both exist, and never before, so a request without it has not moved yet."
+					},
+					"migratedAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Moved at",
+						"description": "When dossiq's import moved this request to its case."
 					}
 				},
 				"configuration": {

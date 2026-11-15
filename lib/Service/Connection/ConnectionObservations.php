@@ -47,6 +47,19 @@ class ConnectionObservations {
 	public const REGISTRATION_CHECK = 'registration';
 
 	/**
+	 * What a passing readiness check adds about the registration, per registration skip or fail reason.
+	 */
+	private const REGISTRATION_NOTES = [
+		'url-mismatch' => 'The registered Woo-index URL does not match this address.',
+		'registration-pending' => 'The Woo-index registration is requested and not confirmed yet.',
+	];
+
+	/**
+	 * What a passing readiness check adds when this instance is not registered.
+	 */
+	private const NOT_REGISTERED = 'This instance is not registered with the Woo-index yet.';
+
+	/**
 	 * What a directory sync says about the directories.
 	 *
 	 * @param array<string, mixed> $results The result of DirectoryService::doCronSync().
@@ -56,30 +69,57 @@ class ConnectionObservations {
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
 	public function directorySync(array $results): array {
-		$total  = (int) ($results['total_directories'] ?? 0);
-		$failed = (int) ($results['failed_directories'] ?? 0);
-		$synced = (int) ($results['synced_directories'] ?? 0);
+		$total = (int)($results['total_directories'] ?? 0);
+		$failed = (int)($results['failed_directories'] ?? 0);
+		$synced = (int)($results['synced_directories'] ?? 0);
 
 		if ($total === 0) {
 			return ['unconfigured', 'No directory is known yet, so the last sync had nothing to read.'];
 		}
 
-		if ($failed === 0 && $total === 1) {
-			return ['configured', 'The directory answered the last sync.'];
-		}
-
 		if ($failed === 0) {
-			return ['configured', 'All ' . $total . ' directories answered the last sync.'];
+			return ['configured', $this->allAnswered(total: $total)];
 		}
 
-		$errors = array_values((array) ($results['errors'] ?? []));
-		$first  = $this->hostOf(url: (string) ($errors[0]['directory'] ?? ''), fallback: 'A directory');
+		$first = $this->firstFailedDirectory(results: $results);
 		if ($synced === 0) {
 			return ['error', 'No directory answered the last sync. ' . $first . ' did not.'];
 		}
 
 		return ['limited', $synced . ' of ' . $total . ' directories answered the last sync. ' . $first . ' did not.'];
 	}//end directorySync()
+
+	/**
+	 * The message of a sync every directory answered.
+	 *
+	 * @param int $total The number of directories.
+	 *
+	 * @return string The message.
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
+	 */
+	private function allAnswered(int $total): string {
+		if ($total === 1) {
+			return 'The directory answered the last sync.';
+		}
+
+		return 'All ' . $total . ' directories answered the last sync.';
+	}//end allAnswered()
+
+	/**
+	 * The host of the first directory a sync reported an error for.
+	 *
+	 * @param array<string, mixed> $results The sync results.
+	 *
+	 * @return string The host, or `A directory` when it has none.
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
+	 */
+	private function firstFailedDirectory(array $results): string {
+		$errors = array_values((array)($results['errors'] ?? []));
+
+		return $this->hostOf(url: (string)($errors[0]['directory'] ?? ''), fallback: 'A directory');
+	}//end firstFailedDirectory()
 
 	/**
 	 * What a broadcast says about the peer directories.
@@ -96,28 +136,55 @@ class ConnectionObservations {
 			return ['unconfigured', 'No peer directory is known yet, so the last broadcast told nobody.'];
 		}
 
-		$failed   = array_keys(array_filter($results, static fn (mixed $accepted): bool => $accepted !== true));
+		$failed = array_keys(array_filter($results, static fn (mixed $accepted): bool => $accepted !== true));
 		$accepted = ($total - count($failed));
 
 		if ($failed === []) {
-			if ($total === 1) {
-				return ['configured', $this->hostOf(url: (string) array_key_first($results), fallback: 'The peer directory') . ' accepted the last broadcast.'];
-			}
-
-			return ['configured', 'All ' . $total . ' peer directories accepted the last broadcast.'];
+			return $this->allAccepted(results: $results);
 		}
 
-		$first = $this->hostOf(url: (string) $failed[0], fallback: 'A peer directory');
-		if ($accepted === 0 && $total === 1) {
-			return ['error', $first . ' did not accept the last broadcast.'];
+		$first = $this->hostOf(url: (string)$failed[0], fallback: 'A peer directory');
+		if ($accepted > 0) {
+			return ['limited', $accepted . ' of ' . $total . ' peer directories accepted the last broadcast. ' . $first . ' did not.'];
 		}
 
-		if ($accepted === 0) {
-			return ['error', 'No peer directory accepted the last broadcast. ' . $first . ' did not.'];
-		}
-
-		return ['limited', $accepted . ' of ' . $total . ' peer directories accepted the last broadcast. ' . $first . ' did not.'];
+		return ['error', $this->noneAccepted(first: $first, total: $total)];
 	}//end broadcast()
+
+	/**
+	 * The message of a broadcast no peer accepted.
+	 *
+	 * @param string $first The first refusing peer's host.
+	 * @param int $total The number of peers.
+	 *
+	 * @return string The message.
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
+	 */
+	private function noneAccepted(string $first, int $total): string {
+		if ($total === 1) {
+			return $first . ' did not accept the last broadcast.';
+		}
+
+		return 'No peer directory accepted the last broadcast. ' . $first . ' did not.';
+	}//end noneAccepted()
+
+	/**
+	 * The observation of a broadcast every peer accepted: the peer by host when there was one.
+	 *
+	 * @param array<string, mixed> $results The broadcast results, by peer URL.
+	 *
+	 * @return array{0: string, 1: string} The state and the message.
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
+	 */
+	private function allAccepted(array $results): array {
+		if (count($results) === 1) {
+			return ['configured', $this->hostOf(url: (string)array_key_first($results), fallback: 'The peer directory') . ' accepted the last broadcast.'];
+		}
+
+		return ['configured', 'All ' . count($results) . ' peer directories accepted the last broadcast.'];
+	}//end allAccepted()
 
 	/**
 	 * What a refused broadcast says: this instance advertises an address no peer can reach.
@@ -144,23 +211,7 @@ class ConnectionObservations {
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
 	public function wooReadiness(array $report): array {
-		$passed       = 0;
-		$failed       = 0;
-		$registration = null;
-		foreach ((array) ($report['checks'] ?? []) as $check) {
-			if (is_array($check) === false) {
-				continue;
-			}
-
-			if (($check['id'] ?? '') === self::REGISTRATION_CHECK) {
-				$registration = $check;
-				continue;
-			}
-
-			$passed += (int) (($check['status'] ?? '') === 'pass');
-			$failed += (int) (($check['status'] ?? '') === 'fail');
-		}
-
+		[$passed, $failed, $registration] = $this->readinessTally(report: $report);
 		if ($failed > 0 && $passed === 0) {
 			return ['error', 'No readiness check passed. The Woo-index section lists what failed.'];
 		}
@@ -171,6 +222,34 @@ class ConnectionObservations {
 
 		return $this->wooRegistration(registration: $registration);
 	}//end wooReadiness()
+
+	/**
+	 * The passed and failed readiness checks, and the registration check apart.
+	 *
+	 * @param array<string, mixed> $report The persisted readiness report.
+	 *
+	 * @return array{0: int, 1: int, 2: array|null} Passed, failed, and the registration check or null.
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
+	 */
+	private function readinessTally(array $report): array {
+		$tally = [0, 0, null];
+		foreach ((array)($report['checks'] ?? []) as $check) {
+			if (is_array($check) === false) {
+				continue;
+			}
+
+			if (($check['id'] ?? '') === self::REGISTRATION_CHECK) {
+				$tally[2] = $check;
+				continue;
+			}
+
+			$tally[0] += (int)(($check['status'] ?? '') === 'pass');
+			$tally[1] += (int)(($check['status'] ?? '') === 'fail');
+		}
+
+		return $tally;
+	}//end readinessTally()
 
 	/**
 	 * What a readiness check without a Woo-enabled catalog says.
@@ -207,28 +286,20 @@ class ConnectionObservations {
 	 * @return array{0: string, 1: string} The status and message.
 	 */
 	private function wooRegistration(?array $registration): array {
-		$status = (string) ($registration['status'] ?? '');
-		$reason = (string) ($registration['reason'] ?? '');
+		$status = (string)($registration['status'] ?? '');
+		$reason = (string)($registration['reason'] ?? '');
 
 		if ($status === 'pass') {
 			return ['configured', 'Every readiness check passed, and the Woo-index registration matches this address.'];
 		}
 
-		if ($reason === 'url-mismatch') {
-			return ['limited', 'Every readiness check passed. The registered Woo-index URL does not match this address.'];
-		}
-
-		if ($reason === 'registration-pending') {
-			return ['limited', 'Every readiness check passed. The Woo-index registration is requested and not confirmed yet.'];
-		}
-
-		return ['limited', 'Every readiness check passed. This instance is not registered with the Woo-index yet.'];
+		return ['limited', 'Every readiness check passed. ' . (self::REGISTRATION_NOTES[$reason] ?? self::NOT_REGISTERED)];
 	}//end wooRegistration()
 
 	/**
 	 * The host of a URL, or a fallback name when the URL has none.
 	 *
-	 * @param string $url      The URL.
+	 * @param string $url The URL.
 	 * @param string $fallback The name to use without a host.
 	 *
 	 * @return string The host or the fallback.

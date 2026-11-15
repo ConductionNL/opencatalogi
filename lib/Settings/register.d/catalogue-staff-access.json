@@ -1,0 +1,40 @@
+{
+	"components": {
+		"schemas": {
+			"catalog": {
+				"properties": {
+					"staffAccess": {
+						"type": "object",
+						"title": "Staff access",
+						"description": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
+						"facetable": false,
+						"properties": {
+							"restricted": {
+								"type": "boolean",
+								"title": "Restricted",
+								"description": "Only the groups below see and edit this catalogue's publications.",
+								"default": false
+							},
+							"readGroups": {
+								"type": "array",
+								"title": "Who can see unpublished publications",
+								"description": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
+								"items": {
+									"type": "string"
+								}
+							},
+							"editGroups": {
+								"type": "array",
+								"title": "Who can edit",
+								"description": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
+								"items": {
+									"type": "string"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

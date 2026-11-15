@@ -1,9 +1,15 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CallerScope;
 use PHPUnit\Framework\TestCase;
 
@@ -11,6 +17,7 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for CallerScope::writeScope().
  *
  * @covers \OCA\OpenCatalogi\Service\CallerScope
+ * @uses \OCA\OpenCatalogi\Service\AppliedFilters
  */
 class CallerScopeTest extends TestCase {
 
@@ -21,10 +28,10 @@ class CallerScopeTest extends TestCase {
 	 */
 	public static function scopeShapes(): array {
 		return [
-			'one schema, one register'      => [[20], [28], ['@self' => ['owner' => 'alice', 'register' => 20, 'schema' => 28]]],
+			'one schema, one register' => [[20], [28], ['@self' => ['owner' => 'alice', 'register' => 20, 'schema' => 28]]],
 			'several schemas, one register' => [[20], [28, 29], ['@self' => ['owner' => 'alice', 'register' => 20, 'schema' => [28, 29]], '_schemas' => [28, 29]]],
 			'one schema, several registers' => [[20, 21], [28], ['@self' => ['owner' => 'alice', 'register' => [20, 21], 'schema' => [28]], '_registers' => [20, 21], '_schemas' => [28]]],
-			'several of both'               => [[20, 21], [28, 29], ['@self' => ['owner' => 'alice', 'register' => [20, 21], 'schema' => [28, 29]], '_registers' => [20, 21], '_schemas' => [28, 29]]],
+			'several of both' => [[20, 21], [28, 29], ['@self' => ['owner' => 'alice', 'register' => [20, 21], 'schema' => [28, 29]], '_registers' => [20, 21], '_schemas' => [28, 29]]],
 		];
 	}
 
@@ -40,9 +47,9 @@ class CallerScopeTest extends TestCase {
 	 *
 	 * @dataProvider scopeShapes
 	 *
-	 * @param array<int, int>      $registers The scope's registers.
-	 * @param array<int, int>      $schemas   The scope's schemas.
-	 * @param array<string, mixed> $expected  The expected scope keys of the query.
+	 * @param array<int, int> $registers The scope's registers.
+	 * @param array<int, int> $schemas The scope's schemas.
+	 * @param array<string, mixed> $expected The expected scope keys of the query.
 	 *
 	 * @return void
 	 */
@@ -62,8 +69,8 @@ class CallerScopeTest extends TestCase {
 	public static function emptyScopes(): array {
 		return [
 			'no register' => [[], [28]],
-			'no schema'   => [[20], []],
-			'neither'     => [[], []],
+			'no schema' => [[20], []],
+			'neither' => [[], []],
 		];
 	}
 
@@ -77,7 +84,7 @@ class CallerScopeTest extends TestCase {
 	 * @dataProvider emptyScopes
 	 *
 	 * @param array<int, int> $registers The scope's registers.
-	 * @param array<int, int> $schemas   The scope's schemas.
+	 * @param array<int, int> $schemas The scope's schemas.
 	 *
 	 * @return void
 	 */
@@ -95,4 +102,40 @@ class CallerScopeTest extends TestCase {
 	public function testWriteScopeCreatesTheSelfBlock(): void {
 		$this->assertSame(['register' => 20, 'schema' => 28], CallerScope::writeScope(query: ['@self' => 'x'], registers: [20], schemas: [28])['@self']);
 	}//end testWriteScopeCreatesTheSelfBlock()
+	/**
+	 * strip() names every scope key it removes, in check order, with `@self`
+	 * sub-keys prefixed; the values the caller sent are not echoed (REQ-ASF-002).
+	 *
+	 * @return void
+	 */
+	public function testStripReportsTheRemovedKeys(): void {
+		$filters = new AppliedFilters();
+
+		$query = CallerScope::strip(
+			query: ['q' => 'x', '_schemas' => ['secret'], 'register' => 7, '@self' => ['schema' => 9, 'owner' => 'me']],
+			appliedFilters: $filters
+		);
+
+		$this->assertSame(['q' => 'x', '@self' => ['owner' => 'me']], $query);
+		$entries = $filters->all();
+		$this->assertCount(1, $entries);
+		$this->assertSame('callerScopeIgnored', $entries[0]['name']);
+		$this->assertSame(['register', '_schemas', '@self.schema'], $entries[0]['value']);
+		$this->assertStringNotContainsString('secret', (string)json_encode($entries));
+	}//end testStripReportsTheRemovedKeys()
+
+	/**
+	 * A query without scope keys records nothing, and a non-array `@self` is named as `@self`.
+	 *
+	 * @return void
+	 */
+	public function testStripRecordsNothingWithoutScopeKeysAndNamesAScalarSelf(): void {
+		$filters = new AppliedFilters();
+		CallerScope::strip(query: ['q' => 'x', '@self' => ['owner' => 'me']], appliedFilters: $filters);
+		$this->assertSame([], $filters->all());
+
+		$this->assertSame(['@self'], CallerScope::removedKeys(query: ['@self' => 'x']));
+		$this->assertSame([], CallerScope::removedKeys(query: ['q' => 'x']));
+	}//end testStripRecordsNothingWithoutScopeKeysAndNamesAScalarSelf()
+
 }//end class

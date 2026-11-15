@@ -24,8 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\CollectionShareServiceInterface;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
-use OCA\OpenCatalogi\Service\Portal\CollectionShareService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -47,15 +47,15 @@ class SharedCollectionController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                   $appName     The app name.
-	 * @param IRequest                 $request     The request.
-	 * @param CollectionShareService $shares The share links.
-	 * @param LoggerInterface          $logger      The logger.
+	 * @param string $appName The app name.
+	 * @param IRequest $request The request.
+	 * @param CollectionShareServiceInterface $shares The share links.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private readonly CollectionShareService $shares,
+		private readonly CollectionShareServiceInterface $shares,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: $appName, request: $request);
@@ -89,6 +89,5 @@ class SharedCollectionController extends Controller {
 		$response->addHeader('Cache-Control', 'no-store');
 		$response->addHeader('X-Robots-Tag', 'noindex');
 		return $response;
-
 	}//end show()
 }//end class

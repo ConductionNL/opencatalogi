@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
@@ -8,6 +13,7 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Service\SitemapStandards;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Service\WooReadinessService;
 use OCP\Http\Client\IClient;
@@ -22,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for WooReadinessService.
  *
  * @covers \OCA\OpenCatalogi\Service\WooReadinessService
+ * @covers \OCA\OpenCatalogi\Service\SitemapStandards
+ * @uses \OCA\OpenCatalogi\Service\CatalogReadinessChecks
  */
 class WooReadinessServiceTest extends TestCase {
 
@@ -49,12 +57,15 @@ XML;
 
 	private const CATEGORY_SITEMAP_XML = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
-<diwoo:Documents xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:diwoo="https://standaarden.overheid.nl/diwoo/metadata/">
-    <diwoo:Document>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:diwoo="https://standaarden.overheid.nl/diwoo/metadata/">
+    <url>
         <loc>https://example.org/downloads/document-1.pdf</loc>
-        <lastmod>2026-01-01</lastmod>
-    </diwoo:Document>
-</diwoo:Documents>
+        <lastmod>2026-01-01T00:00:00+00:00</lastmod>
+        <diwoo:Document>
+            <diwoo:DiWoo />
+        </diwoo:Document>
+    </url>
+</urlset>
 XML;
 
 	protected function setUp(): void {
@@ -99,11 +110,10 @@ XML;
 		$this->service = new WooReadinessService(
 			$this->clientService,
 			$this->directoryService,
-			$this->sitemapService,
+			new SitemapStandards($this->sitemapService, $this->standardsVersionService),
 			$this->settingsService,
 			$this->config,
-			$this->urlGenerator,
-			$this->standardsVersionService
+			$this->urlGenerator
 		);
 	}
 
@@ -237,12 +247,14 @@ XML;
 			}
 		);
 
-		$this->sitemapService->method('validateDiwooOutput')->willReturn([
-			'catalogSlug' => 'demo-catalog',
-			'categoryCode' => 'sitemapindex-diwoo-infocat001.xml',
-			'valid' => true,
-			'violations' => [],
-		]);
+		$this->sitemapService->expects($this->once())->method('validateDiwooOutput')
+			->with('demo-catalog', 'sitemapindex-diwoo-infocat001.xml', 1)
+			->willReturn([
+				'catalogSlug' => 'demo-catalog',
+				'categoryCode' => 'sitemapindex-diwoo-infocat001.xml',
+				'valid' => true,
+				'violations' => [],
+			]);
 
 		$this->config->expects($this->once())->method('setValueString')
 			->with('opencatalogi', 'woo_readiness_report', $this->isType('string'));
@@ -440,11 +452,10 @@ XML;
 		return new WooReadinessService(
 			$this->clientService,
 			$this->directoryService,
-			$this->sitemapService,
+			new SitemapStandards($this->sitemapService, $versions),
 			$this->settingsService,
 			$this->config,
-			$this->urlGenerator,
-			$versions
+			$this->urlGenerator
 		);
 	}
 

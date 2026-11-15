@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
@@ -51,11 +56,12 @@ class RobotsControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->settingsService,
-			$this->container,
-			$this->appManager,
 			$this->urlGenerator,
 			$this->l10n,
-			$categories
+			new \OCA\OpenCatalogi\Controller\SitemapDirectives(
+				new \OCA\OpenCatalogi\Service\OpenRegisterLookup($this->container, $this->appManager),
+				$categories
+			)
 		);
 	}
 
@@ -88,8 +94,8 @@ class RobotsControllerTest extends TestCase {
 	public function testGetObjectServiceReturnsServiceWhenInstalled(): void {
 		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 
-		$this->appManager->method('getInstalledApps')
-			->willReturn(['openregister']);
+		$this->appManager->method('isInstalled')
+			->willReturn(true);
 
 		$this->container->method('get')
 			->with('OCA\OpenRegister\Service\ObjectService')
@@ -101,8 +107,8 @@ class RobotsControllerTest extends TestCase {
 	}
 
 	public function testGetObjectServiceThrowsWhenNotInstalled(): void {
-		$this->appManager->method('getInstalledApps')
-			->willReturn([]);
+		$this->appManager->method('isInstalled')
+			->willReturn(false);
 
 		$this->expectException(RuntimeException::class);
 		$this->expectExceptionMessage('OpenRegister service is not available.');
@@ -141,8 +147,8 @@ class RobotsControllerTest extends TestCase {
 				],
 			]);
 
-		$this->appManager->method('getInstalledApps')
-			->willReturn(['openregister']);
+		$this->appManager->method('isInstalled')
+			->willReturn(true);
 		$this->container->method('get')
 			->with('OCA\OpenRegister\Service\ObjectService')
 			->willReturn($mockObjService);
@@ -175,8 +181,8 @@ class RobotsControllerTest extends TestCase {
 				],
 			]);
 
-		$this->appManager->method('getInstalledApps')
-			->willReturn(['openregister']);
+		$this->appManager->method('isInstalled')
+			->willReturn(true);
 		$this->container->method('get')
 			->with('OCA\OpenRegister\Service\ObjectService')
 			->willReturn($mockObjService);
@@ -202,8 +208,8 @@ class RobotsControllerTest extends TestCase {
 				],
 			]);
 
-		$this->appManager->method('getInstalledApps')
-			->willReturn(['openregister']);
+		$this->appManager->method('isInstalled')
+			->willReturn(true);
 		$this->container->method('get')
 			->with('OCA\OpenRegister\Service\ObjectService')
 			->willReturn($mockObjService);
@@ -241,8 +247,8 @@ class RobotsControllerTest extends TestCase {
 				],
 			]);
 
-		$this->appManager->method('getInstalledApps')
-			->willReturn(['openregister']);
+		$this->appManager->method('isInstalled')
+			->willReturn(true);
 		$this->container->method('get')
 			->with('OCA\OpenRegister\Service\ObjectService')
 			->willReturn($mockObjService);
@@ -259,7 +265,7 @@ class RobotsControllerTest extends TestCase {
 	 * A catalogue entity with a slug and its Woo flag.
 	 *
 	 * @param string $slug The slug.
-	 * @param bool   $woo  Whether it publishes a Woo sitemap.
+	 * @param bool $woo Whether it publishes a Woo sitemap.
 	 */
 	private function catalogue(string $slug, bool $woo): \OCA\OpenRegister\Db\ObjectEntity {
 		$catalogue = new \OCA\OpenRegister\Db\ObjectEntity();
@@ -272,7 +278,7 @@ class RobotsControllerTest extends TestCase {
 	 * The robots.txt text for these catalogues, with the query the controller asked.
 	 *
 	 * @param array<int, \OCA\OpenRegister\Db\ObjectEntity> $catalogues The search answer.
-	 * @param array<string, mixed>|null                      $query      Filled with the query asked.
+	 * @param array<string, mixed>|null $query Filled with the query asked.
 	 */
 	private function robotsFor(array $catalogues, ?array &$query = null): string {
 		$objectService = $this->getMockBuilder(\OCA\OpenRegister\Service\ObjectService::class)
@@ -286,7 +292,7 @@ class RobotsControllerTest extends TestCase {
 			}
 		);
 		$this->settingsService->method('getSettings')->willReturn(['configuration' => ['catalog_register' => '1', 'catalog_schema' => '5']]);
-		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->appManager->method('isInstalled')->willReturn(true);
 		$this->container->method('get')->willReturn($objectService);
 		$this->urlGenerator->method('getBaseUrl')->willReturn('https://example.com/');
 

@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { navigationStore } from './../store/store.js'
 </script>
@@ -35,6 +39,8 @@ import { navigationStore } from './../store/store.js'
 			v-if="navigationStore.dialog === 'massDepublishObjects'" />
 		<MassValidateObjects
 			v-if="navigationStore.dialog === 'massValidateObjects'" />
+		<MassLockObjects v-if="navigationStore.dialog === 'massLockObjects'" />
+		<MassUnlockObjects v-if="navigationStore.dialog === 'massUnlockObjects'" />
 		<MassAttachmentModal v-if="navigationStore.dialog === 'massAttachment'" />
 	</div>
 </template>
@@ -55,7 +61,9 @@ import DownloadObject from './object/DownloadObject.vue'
 import LockObject from './object/LockObject.vue'
 import MassDeleteObject from './object/MassDeleteObject.vue'
 import MassDepublishObjects from './object/MassDepublishObjects.vue'
+import MassLockObjects from './object/MassLockObjects.vue'
 import MassPublishObjects from './object/MassPublishObjects.vue'
+import MassUnlockObjects from './object/MassUnlockObjects.vue'
 import MassValidateObjects from './object/MassValidateObjects.vue'
 import MergeObject from './object/MergeObject.vue'
 import MigrationObject from './object/MigrationObject.vue'
@@ -93,6 +101,8 @@ export default {
 		MassPublishObjects,
 		MassDepublishObjects,
 		MassValidateObjects,
+		MassLockObjects,
+		MassUnlockObjects,
 		AddPublicationThemeModal,
 		MassAttachmentModal,
 	},

@@ -22,6 +22,9 @@ use RuntimeException;
 /**
  * Unit tests for SettingsService.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * @category Tests
  * @package  Unit\Service
  * @author   Conduction b.v. <info@conduction.nl>
@@ -1980,6 +1983,70 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testTheOrganisationKeysComeFromOpenRegister()
 
 	/**
+	 * The import path, on a fresh install and after an upgrade alike, points the
+	 * organisation keys at OpenRegister's `directory` register and its
+	 * `nc-organisation` projection, the keys the Organizations pages resolve.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/organisations-page-edits-the-shared-organisation/specs/shared-organisation/spec.md
+	 */
+	public function testOrganisationKeysResolveToTheProjection(): void {
+		$register = new \OCA\OpenRegister\Db\Register();
+		$schema = new \OCA\OpenRegister\Db\Schema();
+		foreach ([[$register, 4], [$schema, 51]] as [$entity, $id]) {
+			$property = (new \ReflectionClass($entity))->getProperty('id');
+			$property->setAccessible(true);
+			$property->setValue($entity, $id);
+		}
+
+		// Other lookups on the import path ask the same mappers for other slugs; only these two exist.
+		$asked = [];
+		$only = static function (string $slug, object $entity) use (&$asked): \Closure {
+			return static function ($id) use ($slug, $entity, &$asked): object {
+				$asked[] = $id;
+				if ($id === $slug) {
+					return $entity;
+				}
+
+				throw new \OCP\AppFramework\Db\DoesNotExistException('no ' . (string)$id);
+			};
+		};
+		$registerMapper = $this->createMock(\OCA\OpenRegister\Db\RegisterMapper::class);
+		$registerMapper->method('find')->willReturnCallback($only('directory', $register));
+		$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
+		$schemaMapper->method('find')->willReturnCallback($only('nc-organisation', $schema));
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static function (string $id) use ($registerMapper, $schemaMapper) {
+				if (str_contains($id, 'RegisterMapper') === true) {
+					return $registerMapper;
+				}
+
+				return $schemaMapper;
+			}
+		);
+
+		$stored = [];
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) use (&$stored) {
+					$stored[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [['schemas' => [], 'registers' => []]]);
+
+		$this->assertSame('4', $stored['organization_register']);
+		$this->assertSame('51', $stored['organization_schema']);
+		$this->assertContains('directory', $asked);
+		$this->assertContains('nc-organisation', $asked);
+
+	}//end testOrganisationKeysResolveToTheProjection()
+
+	/**
 	 * OpenRegister being absent leaves the keys unset rather than failing.
 	 *
 	 * A missing picker option is a smaller failure than an import that dies, and
@@ -2400,8 +2467,8 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	 * @return void
 	 */
 	public function testSettingsServiceUsesNoPrivateOcAppApi(): void {
-		$source = (string) file_get_contents(__DIR__ . '/../../../lib/Service/SettingsService.php');
-		$code   = (string) preg_replace('#/\*.*?\*/|//[^\n]*#s', '', $source);
+		$source = (string)file_get_contents(__DIR__ . '/../../../lib/Service/SettingsService.php');
+		$code = (string)preg_replace('#/\*.*?\*/|//[^\n]*#s', '', $source);
 		$this->assertStringNotContainsString('OC_App', $code);
 
 	}//end testSettingsServiceUsesNoPrivateOcAppApi()
@@ -2449,6 +2516,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => '0'])['public_api_cache_seconds']);
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => '-5'])['public_api_cache_seconds']);
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => 'soon'])['public_api_cache_seconds']);
+		$this->assertSame('3600', $this->service->updateSettings(['public_api_cache_seconds' => 31536000])['public_api_cache_seconds']);
 
 	}//end testTheAdministratorSetsThePublicCacheTime()
 }//end class

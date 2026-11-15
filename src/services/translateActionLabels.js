@@ -1,28 +1,49 @@
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/** The config keys whose entries carry a label the library renders as-is. */
+const LABELLED_ACTION_KEYS = ['actions', 'bulkActions']
+
+/**
  * Translate the action labels of one config object.
  *
- * @param {object|undefined} config A config that may hold `actions`.
+ * @param {object|undefined} config A config that may hold `actions` or `bulkActions`.
  * @param {(key: string) => string} translate Maps a source string to its translation.
- * @return {object|undefined} The same config without actions, else a copy with translated labels.
+ * @return {object|undefined} The same config without either list, else a copy with translated labels.
  */
 function translateConfigActions(config, translate) {
-	if (!Array.isArray(config?.actions)) {
+	const keys = LABELLED_ACTION_KEYS.filter((key) => Array.isArray(config?.[key]))
+	if (keys.length === 0) {
 		return config
 	}
-	return {
-		...config,
-		actions: config.actions.map((action) =>
-			action && typeof action === 'object' && typeof action.label === 'string'
-				? { ...action, label: translate(action.label) }
-				: action,
-		),
+	const translated = { ...config }
+	for (const key of keys) {
+		translated[key] = config[key].map((action) =>
+			translateAction(action, translate),
+		)
 	}
+	return translated
 }
 
 /**
- * Translate every `pages[].config.actions[].label` in a manifest, and every
- * `pages[].config.publicationPairConfig.actions[].label`, the actions the
- * Publications page passes on its publication pair only.
+ * Translate one action's label, passing anything without a string label through.
+ *
+ * @param {unknown} action An action entry.
+ * @param {(key: string) => string} translate Maps a source string to its translation.
+ * @return {unknown} A copy with the translated label, or the entry unchanged.
+ */
+function translateAction(action, translate) {
+	return action && typeof action === 'object' && typeof action.label === 'string'
+		? { ...action, label: translate(action.label) }
+		: action
+}
+
+/**
+ * Translate every `pages[].config.actions[].label` and
+ * `pages[].config.bulkActions[].label` in a manifest, and the same lists in
+ * `pages[].config.publicationPairConfig`, the actions the Publications page
+ * passes on its publication pair only.
  *
  * CnRowActions renders a manifest action's label as-is, so the app has to
  * hand the library an already translated string. Returns a new manifest and

@@ -1,0 +1,191 @@
+{
+    "unconfigured": {
+        "counts": {
+            "expiringSoon": 0,
+            "reviewRequired": 0,
+            "depublished": 0,
+            "archived": 0
+        },
+        "calls": [],
+        "log": [
+            "info: [RetentionService] register/schema unconfigured or OpenRegister unavailable; skipping evaluation"
+        ]
+    },
+    "search fails": {
+        "counts": {
+            "expiringSoon": 0,
+            "reviewRequired": 0,
+            "depublished": 0,
+            "archived": 0
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "retentionExpiresAt": {
+                        "$lte": "<today+30>"
+                    },
+                    "_limit": 1000
+                },
+                "rbac": false,
+                "multitenancy": false
+            }
+        ],
+        "log": [
+            "error: [RetentionService] retention search failed: search down"
+        ]
+    },
+    "every branch": {
+        "counts": {
+            "expiringSoon": 1,
+            "reviewRequired": 3,
+            "depublished": 2,
+            "archived": 1
+        },
+        "calls": [
+            {
+                "search": {
+                    "@self": {
+                        "register": "pub-reg",
+                        "schema": "pub-sch"
+                    },
+                    "retentionExpiresAt": {
+                        "$lte": "<today+10>"
+                    },
+                    "_limit": 1000
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "id": "done-yesterday",
+                    "retentionExpiresAt": "<today-5>",
+                    "retentionAction": "depublish",
+                    "retentionLastEvaluatedAt": "<today+0>",
+                    "depublicationDate": "<today+0>",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "auto-depublish",
+                            "by": "officer1",
+                            "at": "<today+0>",
+                            "note": "retention term expired",
+                            "basis": ""
+                        }
+                    ]
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "done-yesterday",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "id": "soon",
+                    "retentionExpiresAt": "<today+3>",
+                    "retentionAction": "archive",
+                    "retentionLastEvaluatedAt": "<today+0>"
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "soon",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "uuid": "archive-uuid",
+                    "retentionExpiresAt": "<today-2>",
+                    "retentionAction": "archive",
+                    "retentionCategory": "besluiten",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "auto-archive",
+                            "by": "officer1",
+                            "at": "<today+0>",
+                            "note": "retention term expired",
+                            "basis": "besluiten"
+                        }
+                    ],
+                    "status": "archived",
+                    "depublicationDate": "<today+0>",
+                    "retentionLastEvaluatedAt": "<today+0>"
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "archive-uuid",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "id": "review",
+                    "retentionExpiresAt": "<today-2>",
+                    "retentionAction": "review",
+                    "retentionLastEvaluatedAt": "<today+0>"
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "review",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "id": "unknown-action",
+                    "retentionExpiresAt": "<today-2>",
+                    "retentionAction": "shred",
+                    "retentionLastEvaluatedAt": "<today+0>"
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "unknown-action",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "id": "no-action",
+                    "retentionExpiresAt": "<today-30>",
+                    "retentionLastEvaluatedAt": "<today+0>"
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "no-action",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "save": {
+                    "id": "entity",
+                    "retentionExpiresAt": "<today-1>",
+                    "retentionAction": "depublish",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "earlier"
+                        },
+                        {
+                            "decision": "auto-depublish",
+                            "by": "officer1",
+                            "at": "<today+0>",
+                            "note": "retention term expired",
+                            "basis": ""
+                        }
+                    ],
+                    "depublicationDate": "<today+0>",
+                    "retentionLastEvaluatedAt": "<today+0>"
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "entity",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ],
+        "log": []
+    }
+}
