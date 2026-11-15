@@ -50,11 +50,25 @@ class AttachmentOrder {
 			$publication = $publication->jsonSerialize();
 		}
 
-		if (is_array($publication) === false) {
-			return [];
+		$order = null;
+		if (is_array($publication) === true) {
+			$order = ($publication['attachmentOrder'] ?? null);
 		}
 
-		$order = ($publication['attachmentOrder'] ?? null);
+		return self::orderedIds(order: $order);
+
+	}//end storedOrder()
+
+	/**
+	 * The unique string and integer ids of a stored order, as strings, in order.
+	 *
+	 * @param mixed $order The stored `attachmentOrder` value.
+	 *
+	 * @return list<string> The ids; empty when the value is not a list.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
+	 */
+	private static function orderedIds(mixed $order): array {
 		if (is_array($order) === false) {
 			return [];
 		}
@@ -68,7 +82,7 @@ class AttachmentOrder {
 
 		return array_values(array_unique($ids));
 
-	}//end storedOrder()
+	}//end orderedIds()
 
 	/**
 	 * The files in the stored order, then the rest by upload time.
@@ -98,25 +112,35 @@ class AttachmentOrder {
 			];
 		}
 
-		usort(
-			$keyed,
-			static function (array $a, array $b): int {
-				if ($a['ranked'] !== $b['ranked']) {
-					// A file in the stored order sorts before one that is not.
-					return ($b['ranked'] <=> $a['ranked']);
-				}
-
-				if ($a['ranked'] === true) {
-					return ($a['rank'] <=> $b['rank']);
-				}
-
-				return [$a['time'], $a['index']] <=> [$b['time'], $b['index']];
-			}
-		);
+		usort($keyed, [self::class, 'compare']);
 
 		return array_map(static fn (array $entry): mixed => $entry['file'], $keyed);
 
 	}//end sort()
+
+	/**
+	 * Compare two sort entries: stored order first, then upload time, then the original position.
+	 *
+	 * @param array{ranked: bool, rank: int, time: int, index: int} $a The one entry.
+	 * @param array{ranked: bool, rank: int, time: int, index: int} $b The other entry.
+	 *
+	 * @return int The comparison.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
+	 */
+	private static function compare(array $a, array $b): int {
+		if ($a['ranked'] !== $b['ranked']) {
+			// A file in the stored order sorts before one that is not.
+			return ($b['ranked'] <=> $a['ranked']);
+		}
+
+		if ($a['ranked'] === true) {
+			return ($a['rank'] <=> $b['rank']);
+		}
+
+		return [$a['time'], $a['index']] <=> [$b['time'], $b['index']];
+
+	}//end compare()
 
 	/**
 	 * Number each file of a paged answer from 1, counting the pages before it.

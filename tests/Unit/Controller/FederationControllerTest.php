@@ -270,14 +270,17 @@ class FederationControllerTest extends TestCase {
 			->willReturn(['status' => 200, 'data' => ['id' => 'pub-1', 'title' => 'Besluit']]);
 		$this->request->method('getParams')->willReturn([]);
 
-		return new FederationController(
+		$controller = new FederationController(
 			$this->request,
 			$this->publicationService,
 			$this->l10n,
 			null,
-			null,
-			$commentPeriods
+			null
 		);
+		$property = new \ReflectionProperty(FederationController::class, 'commentPeriods');
+		$property->setValue($controller, $commentPeriods);
+
+		return $controller;
 	}
 
 	/** @var object|null The object service double of the last controllerWithPeriod(). */

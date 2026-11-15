@@ -145,6 +145,21 @@ class PublicationCommentPeriod {
 			return null;
 		}
 
+		return self::periodOf(result: $result, publicationId: $publicationId);
+
+	}//end find()
+
+	/**
+	 * The first period of a search result, when it belongs to the publication.
+	 *
+	 * @param mixed  $result        The paginated search result.
+	 * @param string $publicationId The publication's id.
+	 *
+	 * @return array<string, mixed>|null The period, or null.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 */
+	private static function periodOf(mixed $result, string $publicationId): ?array {
 		$first = (((array) ($result['results'] ?? []))[0] ?? null);
 		if (is_object($first) === true && method_exists($first, 'jsonSerialize') === true) {
 			$first = $first->jsonSerialize();
@@ -156,5 +171,5 @@ class PublicationCommentPeriod {
 
 		return $first;
 
-	}//end find()
+	}//end periodOf()
 }//end class
