@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Unit\Support\FindCallShape;
 
 /**
  * The portal's object store over OpenRegister, as the system.
@@ -132,7 +133,7 @@ final class PortalObjectStoreTest extends TestCase {
 			 * @return mixed
 			 */
 			public function find(mixed ...$args): mixed {
-				return $this->answer('find', $args);
+				return $this->answer('find', FindCallShape::named(args: $args));
 			}
 
 			/**

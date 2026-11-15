@@ -26,6 +26,7 @@ namespace Unit\Service\Woo;
 
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Woo\WithheldDocumentStore;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
@@ -99,8 +100,8 @@ class WithheldPublicationExistsTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, mixed $register = null, mixed $schema = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
-				$this->finds[] = ['id' => $id, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$this->finds[] = ['id' => $id, 'register' => $options?->register, 'schema' => $options?->schema, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 				if ($this->outcome instanceof \Throwable) {
 					throw $this->outcome;
 				}
