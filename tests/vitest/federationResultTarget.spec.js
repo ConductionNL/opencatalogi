@@ -13,6 +13,7 @@ import {
 	peerOrigin,
 	resultCatalogSlug,
 	resultClickTarget,
+	sourceUrl,
 } from '../../src/services/federationResultTarget.js'
 import golden from './fixtures/federation-result-click-golden.json'
 
@@ -72,5 +73,37 @@ describe('federationResultTarget helpers', () => {
 			}),
 		).toBe('http://localhost:9082')
 		expect(peerOrigin({ '@self': { directory: 'http://' } })).toBeNull()
+	})
+})
+
+describe('sourceUrl', () => {
+	const remote = {
+		id: 'p/1',
+		'@self': { directory: 'nc-fed-2', uri: 'http://localhost:9082/apps/openregister/api/objects/a' },
+	}
+
+	it('links to the source app\'s history-mode publication route, never a hash route', () => {
+		const url = sourceUrl(remote, 'besluiten')
+		expect(url).toBe('http://localhost:9082/index.php/apps/opencatalogi/publications/besluiten/p%2F1')
+		expect(url).not.toContain('#')
+	})
+
+	it('falls back to the source app root without a slug or an id', () => {
+		expect(sourceUrl(remote, null)).toBe('http://localhost:9082/index.php/apps/opencatalogi/')
+		expect(sourceUrl({ '@self': { directory: 'peer.example' } }, 'besluiten')).toBe('https://peer.example/index.php/apps/opencatalogi/')
+	})
+
+	it('takes the id from @self when the publication has none, and gives null without a host', () => {
+		expect(sourceUrl({ '@self': { id: 'sid', directory: 'peer.example' } }, 's')).toBe('https://peer.example/index.php/apps/opencatalogi/publications/s/sid')
+		expect(sourceUrl({ id: 'p', '@self': { directory: 'http://' } }, 's')).toBeNull()
+	})
+})
+
+describe('a federated result stays in the app', () => {
+	it('never asks to open a new tab', () => {
+		for (const testCase of golden.cases) {
+			const target = resultClickTarget(testCase.result, () => golden.catalogs[testCase.catalogs])
+			expect(target?.open).toBeUndefined()
+		}
 	})
 })

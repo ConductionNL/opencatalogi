@@ -47,6 +47,7 @@ use OCA\OpenCatalogi\Mcp\McpRegistrar;
 use OCA\OpenCatalogi\Mcp\OpenCatalogiScannableServices;
 use OCA\OpenCatalogi\Observability\ObservabilityRegistrar;
 use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
+use OCA\OpenCatalogi\Observability\SearchBackendHealthProvider;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
@@ -160,6 +161,7 @@ class ComponentRegistrarsTest extends TestCase {
 			[
 				'OCA\\OpenRegister\\Mcp\\IMcpScannableServices::opencatalogi' => OpenCatalogiScannableServices::class,
 				'OCA\\OpenRegister\\AppHost\\IMetricsProvider::opencatalogi' => OpenCatalogiMetricsProvider::class,
+				'OCA\\OpenRegister\\AppHost\\IHealthCheckProvider::opencatalogi' => SearchBackendHealthProvider::class,
 			],
 			$aliases
 		);

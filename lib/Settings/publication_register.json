@@ -3,7 +3,7 @@
   "info": {
     "title": "Publication Register (Magic Mapper)",
     "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage. The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
-    "version": "0.7.1"
+    "version": "0.7.2"
   },
   "x-openregister": {
     "type": "application",
@@ -94,7 +94,7 @@
         "slug": "publication",
         "x-schema-org": "schema:CreativeWork",
         "title": "Publication",
-        "version": "0.0.5",
+        "version": "0.0.6",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A single publication entry within the catalog",
         "description": "A publication represents an individual piece of content within the catalog. It can be associated with themes and schemas, and is the primary unit of content that users can view and interact with. Publications can be linked to specific organizations and can be either public or private.",
@@ -193,6 +193,13 @@
             "description": "Publication date (WOO/DIWOO) — when set to a date in the past, this publication is live and publicly accessible",
             "format": "date-time",
             "facetable": true,
+            "authorization": {
+              "update": [
+                {
+                  "group": "opencatalogi-publishers"
+                }
+              ]
+            },
             "title": "Publication Date"
           },
           "depublicationDate": {
@@ -200,6 +207,13 @@
             "description": "Depublication date (WOO/DIWOO) — when set and in the past, this publication is withdrawn from public access. A future value schedules automatic depublication via the OpenRegister published-predicate.",
             "format": "date-time",
             "facetable": true,
+            "authorization": {
+              "update": [
+                {
+                  "group": "opencatalogi-publishers"
+                }
+              ]
+            },
             "title": "Depublication Date"
           },
           "retentionCategory": {

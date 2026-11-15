@@ -723,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Yayınlarının burada listelenmesi için kataloğa bir kayıt ve bir şema ekleyin.",
         "Open catalog": "Kataloğu aç",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "İlk kataloğunuzu oluşturun. Yayınlarınızın yer alacağı kapsayıcıdır. Kataloğun eklediğiniz yayınları listelemesi için Publication kaydını ve Publication şemasını seçin.",
-        "Manage your publications and their status": "Yayınlarınızı ve durumlarını yönetin"
+        "Manage your publications and their status": "Yayınlarınızı ve durumlarını yönetin",
+        "Open at the source": "Kaynakta aç"
     },
     "nplurals=2; plural=(n != 1);"
 )

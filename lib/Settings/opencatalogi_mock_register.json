@@ -930,6 +930,7 @@
           "slug": "publicationrule-publicationrule-1-1"
         },
         "recordType": "Voorbeeld Recordtype 1",
+        "wooCategory": "infocat002",
         "anonymousProperties": [
           "Voorbeeld Anonymousproperties 1"
         ],
@@ -952,6 +953,7 @@
           "slug": "publicationrule-publicationrule-2-2"
         },
         "recordType": "Voorbeeld Recordtype 2",
+        "wooCategory": "infocat009",
         "anonymousProperties": [
           "Voorbeeld Anonymousproperties 2"
         ],
@@ -974,6 +976,7 @@
           "slug": "publicationrule-publicationrule-3-3"
         },
         "recordType": "Voorbeeld Recordtype 3",
+        "wooCategory": "infocat016",
         "anonymousProperties": [
           "Voorbeeld Anonymousproperties 3"
         ],

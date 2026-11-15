@@ -452,71 +452,78 @@ class PublicationService implements PublicationServiceInterface {
 			$cacheKey = (string)$catalogId;
 		}
 
-		// Return cached result if available.
 		if (isset($this->cachedCatalogFilters[$cacheKey]) === true) {
-			return $this->restoreCachedCatalogFilters(cacheKey: $cacheKey);
+			return $this->restoredCatalogFilters(cached: $this->cachedCatalogFilters[$cacheKey]);
 		}
 
 		// FAIL CLOSED on an unconfigured catalog scope. See resolveCatalogScope().
 		$scope = $this->resolveCatalogScope();
 		if ($scope === null) {
-			return $this->emptyCatalogFilters();
+			$this->availableRegisters = [];
+			$this->availableSchemas = [];
+			return [
+				'registers' => [],
+				'schemas' => [],
+			];
 		}
 
-		$this->assignCatalogFilters(catalogs: $this->catalogsForFilters(scope: $scope, catalogId: $catalogId));
+		$catalogs = $this->scopeCatalogs(scope: $scope, catalogId: $catalogId);
 
-		return $this->cacheCatalogFilters(cacheKey: $cacheKey);
+		// Remove duplicate values and assign to class properties.
+		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
+		$this->availableSchemas = $this->guardSchemaScope(
+			schemas: $this->collectUnique(catalogs: $catalogs, property: 'schemas')
+		);
+
+		$result = [
+			'registers' => array_values($this->availableRegisters),
+			'schemas' => array_values($this->availableSchemas),
+		];
+
+		// Cache the result and class properties.
+		$this->cachedCatalogFilters[$cacheKey] = [
+			'result' => $result,
+			'availableRegisters' => $this->availableRegisters,
+			'availableSchemas' => $this->availableSchemas,
+		];
+
+		return $result;
 	}//end getCatalogFilters()
 
 	/**
-	 * Restore the class properties from a cached catalog filter result and return it.
+	 * Restore the scope properties from a cached lookup and return its result.
 	 *
-	 * @param string $cacheKey The cache key of the catalog filters.
+	 * @param array $cached The cached `result`, `availableRegisters` and `availableSchemas`.
 	 *
-	 * @return array<string, array<string>> The cached registers and schemas.
-	 *
-	 * @spec openspec/specs/publications/spec.md
+	 * @return array The cached result.
 	 */
-	private function restoreCachedCatalogFilters(string $cacheKey): array {
-		$cached = $this->cachedCatalogFilters[$cacheKey];
+	private function restoredCatalogFilters(array $cached): array {
 		$this->availableRegisters = $cached['availableRegisters'];
-		$this->availableSchemas   = $cached['availableSchemas'];
+		$this->availableSchemas = $cached['availableSchemas'];
 		return $cached['result'];
-
-	}//end restoreCachedCatalogFilters()
-
-	/**
-	 * The catalog filters of an unconfigured catalog scope: nothing is available.
-	 *
-	 * @return array<string, array<string>> Empty registers and schemas.
-	 *
-	 * @spec openspec/specs/publications/spec.md
-	 */
-	private function emptyCatalogFilters(): array {
-		$this->availableRegisters = [];
-		$this->availableSchemas   = [];
-		return [
-			'registers' => [],
-			'schemas' => [],
-		];
-
-	}//end emptyCatalogFilters()
+	}//end restoredCatalogFilters()
 
 	/**
-	 * The catalogs the filters are collected from: all catalogs in the scope, or the one asked for.
+	 * The catalogs that make up the scope: all catalogs in the configured
+	 * register and schema, or only the given catalog.
 	 *
-	 * @param array               $scope     The configured catalog register and schema.
-	 * @param string|integer|null $catalogId Optional ID of a specific catalog.
+	 * The search runs even when a catalog id is given. Its declared return type is
+	 * `array|int` (an int for a count query); a count-shaped result reads as no catalogs.
 	 *
-	 * @return array The catalogs.
+	 * @param array{register: string, schema: string} $scope The configured catalog register and schema.
+	 * @param string|int|null $catalogId The catalog to narrow to, or null for all.
 	 *
-	 * @spec openspec/specs/publications/spec.md
+	 * @return array The catalog objects.
 	 */
-	private function catalogsForFilters(array $scope, null|string|int $catalogId): array {
-		$query = ['@self' => ['register' => $scope['register'], 'schema' => $scope['schema']]];
-
-		// The searchObjects() call is declared `array|int` (an int for a count query); narrow it.
-		$catalogs = $this->getObjectService()->searchObjects($query);
+	private function scopeCatalogs(array $scope, null|string|int $catalogId): array {
+		$catalogs = $this->getObjectService()->searchObjects(
+			[
+				'@self' => [
+					'register' => $scope['register'],
+					'schema' => $scope['schema'],
+				],
+			]
+		);
 		if (is_array($catalogs) === false) {
 			$catalogs = [];
 		}
@@ -526,50 +533,7 @@ class PublicationService implements PublicationServiceInterface {
 		}
 
 		return $catalogs;
-
-	}//end catalogsForFilters()
-
-	/**
-	 * Assign the unique registers and schemas of the catalogs to the class properties.
-	 *
-	 * @param array $catalogs The catalogs.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/specs/publications/spec.md
-	 */
-	private function assignCatalogFilters(array $catalogs): void {
-		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
-		$this->availableSchemas   = $this->guardSchemaScope(
-			schemas: $this->collectUnique(catalogs: $catalogs, property: 'schemas')
-		);
-
-	}//end assignCatalogFilters()
-
-	/**
-	 * Cache the current registers and schemas under a key and return them.
-	 *
-	 * @param string $cacheKey The cache key of the catalog filters.
-	 *
-	 * @return array<string, array<string>> The registers and schemas.
-	 *
-	 * @spec openspec/specs/publications/spec.md
-	 */
-	private function cacheCatalogFilters(string $cacheKey): array {
-		$result = [
-			'registers' => array_values($this->availableRegisters),
-			'schemas' => array_values($this->availableSchemas),
-		];
-
-		$this->cachedCatalogFilters[$cacheKey] = [
-			'result' => $result,
-			'availableRegisters' => $this->availableRegisters,
-			'availableSchemas' => $this->availableSchemas,
-		];
-
-		return $result;
-
-	}//end cacheCatalogFilters()
+	}//end scopeCatalogs()
 
 	/**
 	 * Find one catalog, but only when it lives in the configured catalog register and schema.

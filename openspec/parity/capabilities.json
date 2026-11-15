@@ -998,9 +998,10 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "CatalogModal.vue:105 organisation picker, saved as catalog.organization (:447); SettingsService.php:1179 organisation is OR's nc-organisation projection; openregister lib/Repair/SeedDirectoryVirtualSchemas.php:80-91 declares oin, tooi, rsin, pki; manifest.json:767 Organizations page still targets schema 'organization' in listing_register",
+				"evidence": "src/manifest.json:1050-1051 and :1075-1076 Organizations and OrganizationDetail on @resolve:organization_register / organization_schema; lib/Service/SettingsService.php:103,1834-1835 resolve them to OR's nc-organisation projection (tests/Unit/Service/SettingsServiceTest.php:1994); manifest.json:1081-1094 org-data shows name, summary, oin, tooi, rsin, pki in two columns (tests/vitest/organisationsPage.spec.js); docs/Administrator/organisaties.md where staff enter the identifiers; CatalogModal.vue:114 organisation picker",
+
 				"change": [
 					"organisations-page-edits-the-shared-organisation",
 					"publications-name-their-responsible-organisation",
@@ -1008,7 +1009,7 @@
 				],
 				"requirement": "openspec/changes/organisations-page-edits-the-shared-organisation/specs/shared-organisation :: Staff record the publishing organisation and its identifiers on the shared organisation (REQ-SHO-103)"
 			},
-			"reachedOn": "/catalogi -> CatalogModal organisation picker; /organizations (manifest.json:767)",
+			"reachedOn": "/catalogi -> CatalogModal organisation picker; /organizations and /organizations/:id (manifest.json:1044, :1069)",
 			"note": "The projection side is done (openregister/the-organisation-projection-is-writable, every task ticked but other apps' migrations). What is left is opencatalogi's: src/manifest.json:1035,1060 still point the Organizations pages at the retired schema \"organization\"; change organisations-page-edits-the-shared-organisation moves them onto nc-organisation (re-measured 2026-10-30). Earlier: A catalogue can point at an organisation, and the identifier fields exist on OR's nc-organisation. The app's own Organizations page queries schema 'organization', which publication_register.json no longer ships, so where staff edit OIN/TOOI/RSIN is unproven. Specified in ConductionNL/openregister openspec/changes/the-organisation-projection-is-writable (openregister lane, OpenSpec pass 2026-09-27).",
 			"provider": "openregister",
 			"providerHow": "read-from-code",

@@ -11,6 +11,8 @@ import MergeObject from './MergeObject.vue'
 import ObjectModal from './ObjectModal.vue'
 import { objectStore } from '../../store/store.js'
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'csrf-token' }))
+
 jest.mock('@codemirror/lang-json', () => ({ json: () => ({}), jsonParseLinter: () => () => [] }))
 jest.mock('vue-codemirror6', () => ({ name: 'CodeMirror', render: () => null }))
 jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: {} }))

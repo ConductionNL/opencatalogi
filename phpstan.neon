@@ -19,6 +19,7 @@ parameters:
         - tests/Stubs/OpenRegister/Mcp/Tool/ToolInterface.php
         - tests/Stubs/OpenRegister/Mcp/Db/Agent.php
         - tests/Stubs/AppHost/IMetricsProvider.php
+        - tests/Stubs/AppHost/IHealthCheckProvider.php
         - tests/Stubs/AppHost/MetricSample.php
 
     ignoreErrors:
