@@ -846,8 +846,12 @@
 					{
 						"id": "pub-related",
 						"type": "related",
-						"title": "Organization & themes",
-						"icon": "OfficeBuilding"
+						"title": "Related",
+						"icon": "OfficeBuilding",
+						"_note": "publication-relations-place-and-source-ids task 1.4 (REQ-PRS-001): groupByRelation splits the related publications into one group per relation type, headed by the label OpenRegister answers for the direction read (vervangt on the newer publication, wordt vervangen door on the older one). Organization and themes stay in the Objects group.",
+						"content": {
+							"groupByRelation": true
+						}
 					},
 					{
 						"id": "pub-files",
