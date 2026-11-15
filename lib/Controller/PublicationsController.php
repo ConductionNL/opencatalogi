@@ -1229,50 +1229,6 @@ class PublicationsController extends Controller {
 	}//end inCatalogScope()
 
 	/**
-	 * Render a publication with the sanitised extend list and answer it as JSON or schema.org JSON-LD.
-	 *
-	 * A catalogue that opted in shows what was withheld and why
-	 * (REQ-PDP-004 / REQ-WDW-003). The answer carries the CORS headers and is
-	 * counted as a view (ANA-001).
-	 *
-	 * @param PublicationRead $read The detail read.
-	 * @param FoundPublication $found The publication found.
-	 *
-	 * @return JSONResponse The publication.
-	 *
-	 * @spec openspec/specs/publications/spec.md
-	 * @spec openspec/specs/structured-data-discoverability/spec.md
-	 */
-	private function renderedPublication(PublicationRead $read, FoundPublication $found): JSONResponse {
-		$result = $this->rendered(read: $read, found: $found);
-		if ($result === null) {
-			return $this->publicationNotAccessible(query: $read->query);
-		}
-
-		if ($this->wantsSchemaOrg() === true) {
-			$response = $this->schemaOrgResponse(read: $read, result: $result);
-		} else {
-			if (($read->catalog['showWithheld'] ?? false) === true && is_array($result) === true) {
-				$result = $this->container->get(WithheldFromPublicationInterface::class)->addForCatalog(
-					response: $result,
-					catalog: $read->catalog,
-					publicationId: $found->publicationId
-				);
-			}
-
-			if (is_array($result) === true) {
-				$result = $this->withFreshLinks(result: $result, object: $found->object);
-			}
-
-			$response = new JSONResponse($result, 200);
-		}
-
-		$this->addCorsHeaders(response: $response);
-
-		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
-	}//end renderedPublication()
-
-	/**
 	 * A rendered publication with its public and officer pages computed now.
 	 *
 	 * The stored values were computed when it was created; a setting changed
@@ -1302,6 +1258,50 @@ class PublicationsController extends Controller {
 
 		return array_merge($result, $links);
 	}//end withFreshLinks()
+
+	/**
+	 * Render a publication with the sanitised extend list and answer it as JSON or schema.org JSON-LD.
+	 *
+	 * A catalogue that opted in shows what was withheld and why
+	 * (REQ-PDP-004 / REQ-WDW-003). The answer carries the CORS headers and is
+	 * counted as a view (ANA-001).
+	 *
+	 * @param PublicationRead $read The detail read.
+	 * @param FoundPublication $found The publication found.
+	 *
+	 * @return JSONResponse The publication.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function renderedPublication(PublicationRead $read, FoundPublication $found): JSONResponse {
+		$result = $this->rendered(read: $read, found: $found);
+		if ($result === null) {
+			return $this->publicationNotAccessible(query: $read->query);
+		}
+
+		if ($this->wantsSchemaOrg() === true) {
+			$response = $this->schemaOrgResponse(read: $read, result: $result);
+		} else {
+			if (is_array($result) === true) {
+				$result = $this->withFreshLinks(result: $result, object: $found->object);
+			}
+
+			if (($read->catalog['showWithheld'] ?? false) === true && is_array($result) === true) {
+				$result = $this->container->get(WithheldFromPublicationInterface::class)->addForCatalog(
+					response: $result,
+					catalog: $read->catalog,
+					publicationId: $found->publicationId
+				);
+			}
+
+			$response = new JSONResponse($result, 200);
+		}
+
+		$this->addCorsHeaders(response: $response);
+
+		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
+	}//end renderedPublication()
 
 	/**
 	 * The found publication rendered by OpenRegister, as the caller may read it.
