@@ -2212,7 +2212,8 @@ export default {
 			)
 			const objectId = this.currentObject['@self']?.id || this.currentObject.id
 			const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
-			if (this.editLanguage !== SOURCE_LANGUAGE) {
+			// An unset edit language is the source language: a PATCH needs a language to write.
+			if (this.editLanguage && this.editLanguage !== SOURCE_LANGUAGE) {
 				// REQ-PTR-003: another language writes only its translatable fields.
 				return {
 					isCreating,
