@@ -130,16 +130,43 @@ class NoIndexMiddleware extends Middleware {
 	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
 	 */
 	private function isPublicPage(?object $controller, string $methodName): bool {
+		$method = $this->readMethod(controller: $controller, methodName: $methodName);
+
+		return $method !== null && $this->declaresPublicPage(method: $method);
+	}//end isPublicPage()
+
+	/**
+	 * The controller method that answered, or null when it cannot be read.
+	 *
+	 * @param object|null $controller The controller that answered.
+	 * @param string      $methodName The controller method that answered.
+	 *
+	 * @return ReflectionMethod|null The method, or null without a controller, a name or a readable method.
+	 *
+	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 */
+	private function readMethod(?object $controller, string $methodName): ?ReflectionMethod {
 		if ($controller === null || $methodName === '') {
-			return false;
+			return null;
 		}
 
 		try {
-			$method = new ReflectionMethod($controller, $methodName);
+			return new ReflectionMethod($controller, $methodName);
 		} catch (ReflectionException) {
-			return false;
+			return null;
 		}
+	}//end readMethod()
 
+	/**
+	 * Whether the method carries `#[PublicPage]` or `@PublicPage`.
+	 *
+	 * @param ReflectionMethod $method The controller method.
+	 *
+	 * @return bool True for a public page.
+	 *
+	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 */
+	private function declaresPublicPage(ReflectionMethod $method): bool {
 		if ($method->getAttributes(PublicPage::class) !== []) {
 			return true;
 		}
@@ -147,5 +174,5 @@ class NoIndexMiddleware extends Middleware {
 		$doc = $method->getDocComment();
 
 		return is_string($doc) === true && preg_match('/@PublicPage\b/', $doc) === 1;
-	}//end isPublicPage()
+	}//end declaresPublicPage()
 }//end class

@@ -906,9 +906,9 @@ export default defineComponent({
 				)
 			}
 
-			if (configuration && configuration.search_indexing !== undefined) {
-				this.searchIndexingBlocked = configuration.search_indexing === 'blocked'
-			}
+			this.showStoredSearchIndexing(
+				configuration && configuration.search_indexing,
+			)
 		},
 
 		/**
@@ -1508,10 +1508,9 @@ export default defineComponent({
 				const response = await putSettings({
 					search_indexing: this.searchIndexingBlocked ? 'blocked' : 'allowed',
 				})
-				const stored = response.data && response.data.search_indexing
-				if (stored !== undefined) {
-					this.searchIndexingBlocked = stored === 'blocked'
-				}
+				this.showStoredSearchIndexing(
+					response.data && response.data.search_indexing,
+				)
 			} catch {
 				this.searchIndexingError = this.t(
 					'opencatalogi',
@@ -1519,6 +1518,19 @@ export default defineComponent({
 				)
 			} finally {
 				this.savingSearchIndexing = false
+			}
+		},
+
+		/**
+		 * Shows the search indexing value the server stored, when it sent one.
+		 *
+		 * @param {string|undefined} stored `blocked`, `allowed`, or undefined when absent.
+		 * @return {void}
+		 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+		 */
+		showStoredSearchIndexing(stored) {
+			if (stored !== undefined) {
+				this.searchIndexingBlocked = stored === 'blocked'
 			}
 		},
 
