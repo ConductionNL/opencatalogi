@@ -167,7 +167,9 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($user);
 
-		$rights = $this->getMockBuilder(PublicationRights::class)->disableOriginalConstructor()->onlyMethods(['mayUpdate'])->getMock();
+		$rights = $this->getMockBuilder(PublicationRights::class)->disableOriginalConstructor()->onlyMethods(['mayUpdate', 'mayPublish'])->getMock();
+		// The recorded withdrawals were made by publishers.
+		$rights->method('mayPublish')->willReturn(true);
 		$rights->method('mayUpdate')->willReturnCallback(
 			static function (object $publication) use (&$calls, $session, $case): bool {
 				$calls[] = ['mayUpdate', $publication->jsonSerialize()];

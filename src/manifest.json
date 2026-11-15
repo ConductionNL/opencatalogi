@@ -1063,6 +1063,14 @@
 			"_note": "FederationSearch (custom) wraps CnSearchPage with the federation-aware search store so /search hits /api/federation/publications. The previous type:'search' default fanned out per-schema against the local OpenRegister, bypassing federation entirely."
 		},
 		{
+			"id": "FederatedPublication",
+			"route": "/federation/publications/:id",
+			"type": "custom",
+			"title": "Publication",
+			"component": "FederatedPublicationView",
+			"_note": "FederatedPublicationView (custom) shows a publication another instance holds, read through /api/federation/publications/{id} and its /attachments, both answered from the source (federation-open-remote-publication D3). Custom because the record lives on another instance: there is no local register and schema for a detail page to bind to. The ui#federatedPublication page route serves it on reload."
+		},
+		{
 			"id": "Organizations",
 			"route": "/organizations",
 			"type": "index",

@@ -73,3 +73,28 @@ Both jobs are declared in `appinfo/info.xml`; Nextcloud runs only jobs declared 
 
 `Broadcast` existed for a long time without being declared in `info.xml`, so it never
 ran. It is declared now.
+
+## Reading a publication of another instance
+
+The Search page searches the catalogues of the other instances in the directory as well
+as this one. Selecting a result from another instance opens it inside this app, at
+`/index.php/apps/opencatalogi/federation/publications/{id}`; no new browser tab opens. The
+page reloads and can be shared like any other page of the app.
+
+The page reads the publication from its source at the moment it opens:
+
+| Endpoint | Answers |
+|---|---|
+| `GET /api/federation/publications/{id}` | The publication: this instance's own when it holds it, otherwise the source instance's |
+| `GET /api/federation/publications/{id}/attachments` | Its attachments: this instance's own for a local publication, otherwise the source instance's list, each with the source's download URL |
+
+The call to the source passes the outbound URL guard, so a directory entry that points at
+a private address is never contacted, and it asks the source not to search further
+(`_aggregate=false`). When the source cannot be read, the page says so instead of showing an
+empty publication.
+
+The page shows the title, summary, description, organisation, publication date and the
+source instance, and lists the attachments with download links to the source. **Open at
+the source** links to the publication's own page on the source instance,
+`/index.php/apps/opencatalogi/publications/{catalogue}/{id}`, when the catalogue is known
+from the search result, and to the source app's start page otherwise.

@@ -50,6 +50,22 @@ final class DcatDistributionMapper {
 	];
 
 	/**
+	 * Constructor.
+	 *
+	 * With `$fileFacts`, a distribution's `dcat:mediaType` is the type of the
+	 * stored bytes, never the listed name or type (REQ-PFF-001); without it, the
+	 * listed type or the extension, as before.
+	 *
+	 * @param FileFacts|null $fileFacts Reads a stored file's type from its bytes.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	public function __construct(
+		private readonly ?FileFacts $fileFacts = null,
+	) {
+	}//end __construct()
+
+	/**
 	 * Map a single published file attachment to a `dcat:Distribution`.
 	 *
 	 * @param array<string, mixed> $file A formatFiles-shape file entry.
@@ -134,6 +150,10 @@ final class DcatDistributionMapper {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
 	 */
 	private function mediaTypeNodes(array $file): array {
+		if ($this->fileFacts !== null) {
+			return $this->detectedMediaTypeNodes(file: $file, fileFacts: $this->fileFacts);
+		}
+
 		$extension = strtolower((string)($file['extension'] ?? ''));
 		$mediaType = $this->mediaTypeFor(extension: $extension, mimetype: ($file['mimetype'] ?? $file['mimeType'] ?? null));
 		if ($mediaType === null) {
@@ -178,6 +198,35 @@ final class DcatDistributionMapper {
 
 		return (self::MEDIA_TYPES[$extension] ?? null);
 	}//end mediaTypeFor()
+
+	/**
+	 * The `dcat:mediaType` and `dct:format` from the stored bytes.
+	 *
+	 * Bytes that cannot be read give neither: the extension is not a fallback
+	 * (REQ-PFF-001). `dct:format` is added only for a type this mapper knows the
+	 * EU file-type for.
+	 *
+	 * @param array<string, mixed> $file      A formatFiles-shape file entry, with its Nextcloud `id`.
+	 * @param FileFacts            $fileFacts Reads the stored bytes.
+	 *
+	 * @return array<string, mixed> The nodes, or none.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	private function detectedMediaTypeNodes(array $file, FileFacts $fileFacts): array {
+		$mediaType = $fileFacts->mimeTypeOfListedFile(file: $file);
+		if ($mediaType === null) {
+			return [];
+		}
+
+		$nodes = ['dcat:mediaType' => $mediaType];
+		$extension = array_search($mediaType, self::MEDIA_TYPES, true);
+		if ($extension !== false) {
+			$nodes['dct:format'] = $this->formatUriFor(extension: $extension);
+		}
+
+		return $nodes;
+	}//end detectedMediaTypeNodes()
 
 	/**
 	 * Build the EU file-type authority URI for an extension (DCAT `dct:format`).
