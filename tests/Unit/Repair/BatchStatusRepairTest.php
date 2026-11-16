@@ -1,7 +1,7 @@
 <?php
 
 /**
- * WooBatchStatusRepairTest
+ * BatchStatusRepairTest
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Repair;
 
-use OCA\OpenCatalogi\Repair\WooBatchStatusRepair;
-use OCA\OpenCatalogi\Service\WooService;
+use OCA\OpenCatalogi\Repair\BatchStatusRepair;
+use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -31,9 +31,9 @@ use Psr\Log\LoggerInterface;
 /**
  * Stored batch statuses are mapped onto the lifecycle states, once.
  *
- * @covers \OCA\OpenCatalogi\Repair\WooBatchStatusRepair
+ * @covers \OCA\OpenCatalogi\Repair\BatchStatusRepair
  */
-final class WooBatchStatusRepairTest extends TestCase {
+final class BatchStatusRepairTest extends TestCase {
 
 	/**
 	 * A fake ObjectService over a list of batches, recording each save.
@@ -46,6 +46,8 @@ final class WooBatchStatusRepairTest extends TestCase {
 		return new class($batches) {
 			/** @var array<int, array<string, mixed>> */
 			public array $saved = [];
+
+			public array $reads = [];
 
 			public function __construct(
 				public array $batches,
@@ -60,7 +62,8 @@ final class WooBatchStatusRepairTest extends TestCase {
 				return $this;
 			}
 
-			public function findAll(array $config = []): array {
+			public function findAll(array $config = [], bool $_rbac = true, bool $_multitenancy = true): array {
+				$this->reads[] = [$config, $_rbac, $_multitenancy];
 				return $this->batches;
 			}
 
@@ -82,15 +85,15 @@ final class WooBatchStatusRepairTest extends TestCase {
 	 *
 	 * @param object|null $store The fake ObjectService, or null for no OpenRegister.
 	 *
-	 * @return WooBatchStatusRepair
+	 * @return BatchStatusRepair
 	 */
-	private function repair(?object $store): WooBatchStatusRepair {
-		$woo = $this->createMock(WooService::class);
+	private function repair(?object $store): BatchStatusRepair {
+		$woo = $this->createMock(TransparencyWorkflowServiceInterface::class);
 		$woo->method('getObjectService')->willReturn($store);
 		$woo->method('getRegister')->willReturn('1');
 		$woo->method('getBatchSchema')->willReturn('batch-sch');
 
-		return new WooBatchStatusRepair($woo, $this->createMock(LoggerInterface::class));
+		return new BatchStatusRepair($woo, $this->createMock(LoggerInterface::class));
 	}//end repair()
 
 	/**
@@ -119,6 +122,8 @@ final class WooBatchStatusRepairTest extends TestCase {
 
 		$this->repair($store)->run($output);
 		$this->assertCount(2, $store->saved, 'A second run writes nothing.');
+		// OpenRegister main's API: the access flags are arguments, not config keys.
+		$this->assertSame([['limit' => 10000], false, false], $store->reads[0]);
 	}//end testUnknownStatusesBecomeInProgressOnce()
 
 	/**
@@ -141,7 +146,7 @@ final class WooBatchStatusRepairTest extends TestCase {
 	public function testTheStepIsRegisteredAfterTheRegisterImport(): void {
 		$info = (string)file_get_contents(__DIR__ . '/../../../appinfo/info.xml');
 		$init = strpos($info, '<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>');
-		$step = strpos($info, '<step>' . WooBatchStatusRepair::class . '</step>');
+		$step = strpos($info, '<step>' . BatchStatusRepair::class . '</step>');
 
 		$this->assertNotFalse($step);
 		$this->assertGreaterThan($init, $step);

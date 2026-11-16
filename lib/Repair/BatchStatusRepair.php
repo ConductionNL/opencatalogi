@@ -1,7 +1,7 @@
 <?php
 
 /**
- * WooBatchStatusRepair
+ * BatchStatusRepair
  *
  * Maps the stored `status` of every Woo batch onto the states the declared
  * `wooBatch` lifecycle knows (woo-review-surface REQ-WRV-002). A value the
@@ -30,7 +30,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Repair;
 
-use OCA\OpenCatalogi\Service\WooService;
+use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Log\LoggerInterface;
@@ -45,7 +47,14 @@ use Throwable;
  *
  * @spec openspec/changes/woo-review-surface/tasks.md#task-1.1
  */
-class WooBatchStatusRepair implements IRepairStep {
+class BatchStatusRepair implements IRepairStep {
+
+	/**
+	 * The states the declared `wooBatch` lifecycle knows.
+	 *
+	 * @var array<int, string>
+	 */
+	public const STATUSES = ['in_progress', 'ready_for_review', 'approved', 'published'];
 
 	/**
 	 * The most batches read in one run.
@@ -57,11 +66,11 @@ class WooBatchStatusRepair implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param WooService      $woo    Resolves OpenRegister and the batch schema.
+	 * @param TransparencyWorkflowServiceInterface $woo    Resolves OpenRegister and the batch schema.
 	 * @param LoggerInterface $logger For a batch that could not be written.
 	 */
 	public function __construct(
-		private readonly WooService $woo,
+		private readonly TransparencyWorkflowServiceInterface $woo,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -97,7 +106,7 @@ class WooBatchStatusRepair implements IRepairStep {
 
 		$mapped = 0;
 		foreach ($this->batches(objectService: $objectService, register: $register, schema: $schema) as $batch) {
-			if (in_array((string)($batch['status'] ?? ''), WooService::BATCH_STATUSES, true) === true) {
+			if (in_array((string)($batch['status'] ?? ''), self::STATUSES, true) === true) {
 				continue;
 			}
 
@@ -105,15 +114,16 @@ class WooBatchStatusRepair implements IRepairStep {
 			try {
 				$objectService->saveObject(
 					object: $batch,
-					register: $register,
-					schema: $schema,
-					uuid: (string)($batch['id'] ?? ''),
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $register, schema: $schema),
+						uuid: (string)($batch['id'] ?? '')
+					),
 					_rbac: false,
 					_multitenancy: false,
 				);
 				$mapped++;
 			} catch (Throwable $e) {
-				$this->logger->warning('[WooBatchStatusRepair] Could not map the status of batch ' . (string)($batch['id'] ?? '') . ': ' . $e->getMessage());
+				$this->logger->warning('[BatchStatusRepair] Could not map the status of batch ' . (string)($batch['id'] ?? '') . ': ' . $e->getMessage());
 			}
 		}
 
@@ -131,9 +141,13 @@ class WooBatchStatusRepair implements IRepairStep {
 	 */
 	private function batches(object $objectService, string $register, string $schema): array {
 		try {
-			$found = $objectService->setRegister($register)->setSchema($schema)->findAll(['limit' => self::LIMIT, '_rbac' => false]);
+			$found = $objectService->setRegister($register)->setSchema($schema)->findAll(
+				config: ['limit' => self::LIMIT],
+				_rbac: false,
+				_multitenancy: false
+			);
 		} catch (Throwable $e) {
-			$this->logger->warning('[WooBatchStatusRepair] Could not read the batches: ' . $e->getMessage());
+			$this->logger->warning('[BatchStatusRepair] Could not read the batches: ' . $e->getMessage());
 			return [];
 		}
 

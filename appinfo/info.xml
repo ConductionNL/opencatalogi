@@ -230,7 +230,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				declared wooBatch lifecycle. After InitializeSettings, which imports
 				the lifecycle. Idempotent.
 			-->
-			<step>OCA\OpenCatalogi\Repair\WooBatchStatusRepair</step>
+			<step>OCA\OpenCatalogi\Repair\BatchStatusRepair</step>
 			<!--
 				Writes each catalogue's staff access onto the schemas it covers
 				(catalogue-staff-access). After InitializeSettings and the read-rule
