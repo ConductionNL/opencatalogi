@@ -66,6 +66,9 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Every admin-gated save, called by a delegated administrator.
@@ -520,7 +523,7 @@ class DelegatedAdminSavesTest extends TestCase {
 		$this->storeFor(['gedelegeerden']);
 
 		$this->expectException(\RuntimeException::class);
-		$this->store->saveObject(object: [], register: 'publication', schema: $schema);
+		$this->store->saveObject(object: [], options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'publication', schema: $schema)));
 	}//end testTheShippedBlockRefusesThatCallerWhenRbacIsAsked()
 
 	/**
@@ -621,14 +624,15 @@ final class BlockEnforcingStore {
 	 */
 	public function saveObject(
 		array $object,
-		array $extend = [],
-		?string $register = null,
-		?string $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_unowned = false,
+		bool $_multitenancy = true
 	): array {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
+		$_unowned = $options->actor->unowned ?? false;
 		$action = 'create';
 		if (isset($this->seed[(string)$uuid]) === true) {
 			$action = 'update';
@@ -652,7 +656,9 @@ final class BlockEnforcingStore {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
-	public function find(string $id, ?string $register = null, ?string $schema = null, bool $_rbac = true): array {
+	public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options?->register;
+		$schema = $options?->schema;
 		$this->refuseUnlessGranted(schema: (string)$schema, action: 'read', rbac: $_rbac);
 
 		return $this->seed[$id]['object'] + ['id' => $id];

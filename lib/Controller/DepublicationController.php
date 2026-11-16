@@ -46,6 +46,10 @@ use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\ObjectInPair;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -230,8 +234,7 @@ class DepublicationController extends Controller {
 				object: ObjectInPair::require(
 					found: $this->registers->getObjectService()->find(
 						id: $id,
-						register: $config['register'],
-						schema: $config['schema'],
+						options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
 						_rbac: false
 					),
 					config: $config
@@ -267,10 +270,13 @@ class DepublicationController extends Controller {
 		try {
 			$this->registers->getObjectService()->saveObject(
 				object: $record,
-				extend: [],
-				register: $found['config']['register'],
-				schema: $found['config']['schema'],
-				uuid: $found['id'],
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(
+							register: $found['config']['register'],
+							schema: $found['config']['schema']
+						),
+					uuid: $found['id']
+				),
 				_rbac: false
 			);
 		} catch (\Throwable $e) {
@@ -319,11 +325,14 @@ class DepublicationController extends Controller {
 		try {
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $depublication,
-				extend: [],
-				register: $this->depublicationConfiguration()['register'],
-				schema: $this->depublicationConfiguration()['schema'],
-				_rbac: false,
-				_unowned: true
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(
+							register: $this->depublicationConfiguration()['register'],
+							schema: $this->depublicationConfiguration()['schema']
+						),
+					actor: new SaveActor(unowned: true)
+				),
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -460,7 +469,11 @@ class DepublicationController extends Controller {
 			$objectService = $this->registers->getObjectService();
 			$depublication = $this->asArray(
 				object: ObjectInPair::require(
-					found: $objectService->find(id: $id, register: $config['register'], schema: $config['schema'], _rbac: false),
+					found: $objectService->find(
+						id: $id,
+						options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
+						_rbac: false
+					),
 					config: $config
 				)
 			);
@@ -508,10 +521,13 @@ class DepublicationController extends Controller {
 		try {
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $found['depublication'],
-				extend: [],
-				register: $found['config']['register'],
-				schema: $found['config']['schema'],
-				uuid: $found['id'],
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(
+							register: $found['config']['register'],
+							schema: $found['config']['schema']
+						),
+					uuid: $found['id']
+				),
 				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
