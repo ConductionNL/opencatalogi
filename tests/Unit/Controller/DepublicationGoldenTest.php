@@ -43,6 +43,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Golden test for the depublication actions.
@@ -240,7 +242,9 @@ class DepublicationGoldenTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, mixed $register = null, mixed $schema = null, bool $_rbac = true): array {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options?->register;
+				$schema = $options?->schema;
 				$this->log[] = ['find' => [$id, $register, $schema, $_rbac]];
 				if (($this->case['fail'] ?? null) === 'find') {
 					throw new RuntimeException('no such object');
@@ -253,7 +257,12 @@ class DepublicationGoldenTest extends TestCase {
 				return ($this->case['stored'] ?? ['id' => $id, 'withdrawals' => [['channel' => 'koop2'], ['channel' => 'plooi']]]);
 			}
 
-			public function saveObject(array $object, array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_unowned = false): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
+				$_unowned = $options->actor->unowned ?? false;
 				$this->log[] = ['save' => [$object, $extend, $register, $schema, $uuid, $_rbac, $_unowned]];
 				if (($this->case['fail'] ?? null) === 'save') {
 					throw new RuntimeException('save broke');

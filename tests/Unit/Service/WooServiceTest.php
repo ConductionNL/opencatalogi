@@ -41,6 +41,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Duck-typed fake of the consumed OpenRegister ObjectService.
@@ -53,6 +55,7 @@ class WooFakeObjectService {
 	public int $counter = 0;
 
 	public function find(string $id, mixed ...$rest) {
+		$rest = LegacyObjectArgs::flatten(args: $rest);
 		foreach ($this->objects as $object) {
 			if ((string)($object['id'] ?? '') === $id) {
 				return $object;
@@ -65,7 +68,11 @@ class WooFakeObjectService {
 	/** @var array<int, array{register: mixed, schema: mixed}> */
 	public array $saveTargets = [];
 
-	public function saveObject(array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true) {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true) {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		$this->saveTargets[] = ['register' => $register, 'schema' => $schema];
 		if (($uuid === null || $uuid === '') && empty($object['id']) === true) {
 			$this->counter++;

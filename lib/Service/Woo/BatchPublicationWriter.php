@@ -33,6 +33,9 @@ namespace OCA\OpenCatalogi\Service\Woo;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\WooCategory;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
@@ -268,7 +271,12 @@ class BatchPublicationWriter {
 		$earlier = (string)($batch['wooPublication']['publication'] ?? '');
 		if ($earlier !== '') {
 			try {
-				$entity = $objects->find(id: $earlier, register: self::REGISTER, schema: self::SCHEMA, _rbac: false, _multitenancy: false);
+				$entity = $objects->find(
+					id: $earlier,
+					options: new ObjectFindOptions(register: self::REGISTER, schema: self::SCHEMA),
+					_rbac: false,
+					_multitenancy: false
+				);
 				if ($entity !== null) {
 					return ['id' => $earlier, 'entity' => $entity, 'title' => $this->titleOf(entity: $entity)];
 				}
@@ -280,8 +288,7 @@ class BatchPublicationWriter {
 		$payload = $this->payload(batch: $batch, now: $now);
 		$entity = $objects->saveObject(
 			object: $payload,
-			register: self::REGISTER,
-			schema: self::SCHEMA,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: self::REGISTER, schema: self::SCHEMA)),
 			_rbac: false,
 			_multitenancy: false
 		);

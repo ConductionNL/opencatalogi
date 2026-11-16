@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Contract\TableFile;
 use OCA\OpenRegister\Service\Import\ImportCommit;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * A fake OpenRegister entity: getters and setters over an array.
@@ -124,6 +125,7 @@ class TableFakeOpenRegister {
 
 	/** Register and schema mappers. */
 	public function find(mixed $id, mixed ...$rest): mixed {
+		$rest = LegacyObjectArgs::flatten(args: $rest);
 		if ($id === 'open-data-tables') {
 			return $this->register;
 		}
@@ -170,6 +172,9 @@ class TableFakeOpenRegister {
 
 	/** ObjectService save. */
 	public function saveObject(array $object, mixed ...$options): array {
+		$options = \OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs::flatten(args: $options);
+		$options = \OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs::flatten(args: $options);
+		$options = \OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs::flatten(args: $options);
 		$this->saved[] = ['object' => $object] + $options;
 		return ['id' => 't1'] + $object;
 	}
@@ -418,7 +423,7 @@ class PublishedTableServiceTest extends TestCase {
 		$this->openRegister->found = ['id' => 't1', 'status' => 'ready'];
 		$this->assertSame(['id' => 't1', 'status' => 'ready'], $this->service->findTable(tableId: 't1'));
 		$this->assertSame(
-			['id' => 't1', '_extend' => [], 'register' => 'pub', 'schema' => 'tbl', '_rbac' => false, '_multitenancy' => false],
+			['id' => 't1', 'register' => 'pub', 'schema' => 'tbl', '_rbac' => false, '_multitenancy' => false],
 			$this->openRegister->finds[0]
 		);
 
@@ -434,7 +439,7 @@ class PublishedTableServiceTest extends TestCase {
 	public function testAPublicationIsReadableOnlyWhenFoundWithRbac(): void {
 		$this->openRegister->found = ['id' => 'p1'];
 		$this->assertTrue($this->service->canReadPublication(publicationId: 'p1'));
-		$this->assertSame(['id' => 'p1', '_extend' => [], '_rbac' => true, '_multitenancy' => false], $this->openRegister->finds[0]);
+		$this->assertSame(['id' => 'p1', '_rbac' => true, '_multitenancy' => false], $this->openRegister->finds[0]);
 
 		$this->openRegister->found = null;
 		$this->assertFalse($this->service->canReadPublication(publicationId: 'p1'));
