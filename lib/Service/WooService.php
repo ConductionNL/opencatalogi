@@ -1151,6 +1151,8 @@ class WooService implements TransparencyWorkflowServiceInterface {
 			'publication' => $publication['id'],
 			'publicationUrl' => $publication['url'],
 			'attached' => $publication['attached'],
+			// What was written into each attached copy, by file name (published-file-carries-its-facts, REQ-PFF-002).
+			'embeddedTitles' => ($publication['embeddedTitles'] ?? []),
 			'documentCount' => (int)($batch['documentSummary']['total'] ?? 0),
 			'publishedCount' => $publishedCount,
 			'decisionLetter' => (string)($batch['decisionLetter'] ?? ''),
