@@ -27,7 +27,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 6. Cross-app contract
 
-- [ ] 6.1 Document every response shape of REQ-PDP-002 to REQ-PDP-005 in `openapi.json` and `docs/`, and link that page from the issues of `portaliq/publication-detail-page-complete` and `portaliq/publication-error-reports-and-withheld-notices`, stating they must test against these keys. Verify: `OpenApiParityTest` and the links in the PR body; a grep for U+2014 on the docs.
+- [x] 6.1 (`docs/Technical/publication-detail-for-the-portal.md`; `AttachmentPage`, `DocumentFacts`, `PublicDocument`, `CommentPeriodView`, `ErrorReportRequest` and `ErrorReportReceipt` in `openapi.json`, the federation half in `openapi.standards.json`; linked from portaliq#1220 and portaliq#1221) Document every response shape of REQ-PDP-002 to REQ-PDP-005 in `openapi.json` and `docs/`, and link that page from the issues of `portaliq/publication-detail-page-complete` and `portaliq/publication-error-reports-and-withheld-notices`, stating they must test against these keys. Verify: `OpenApiParityTest` and the links in the PR body; a grep for U+2014 on the docs.
 
 ## 7. Verification
 
