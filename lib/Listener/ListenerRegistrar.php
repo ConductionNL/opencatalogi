@@ -134,6 +134,9 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
 
+		// A field with one lawful value for the officer fills itself before the first write (REQ-WMS-004).
+		$context->registerEventListener(ObjectCreatingEvent::class, SingleLawfulValueListener::class);
+
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is
 		// installed after OpenCatalogi, its register event completes the scope

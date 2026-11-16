@@ -284,4 +284,28 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		}
 
 	}//end testRegisterCallsEveryComponentRegistrar()
+	/**
+	 * The single-lawful-value fill is subscribed to the pre-save create event by
+	 * name, through a registrar register() calls (woo-metadata-suggestions REQ-WMS-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-a-field-with-one-lawful-value-for-this-officer-fills-itself-req-wms-004
+	 */
+	public function testTheSingleLawfulValueFillIsSubscribedToThePreSaveCreate(): void {
+		$registrars = $this->registrars();
+		$this->assertArrayHasKey('ListenerRegistrar', $registrars);
+		$body = $this->methodBody($this->source($registrars['ListenerRegistrar']), 'public function register(');
+
+		$this->assertStringContainsString(
+			'registerEventListener(ObjectCreatingEvent::class, SingleLawfulValueListener::class);',
+			$body,
+			'ListenerRegistrar::register() does not subscribe SingleLawfulValueListener to ObjectCreatingEvent, so nothing fills itself'
+		);
+		$this->assertMatchesRegularExpression(
+			'/\(new ListenerRegistrar\(\)\)->register\(\$context\);/',
+			$this->methodBody($this->source(), 'public function register(')
+		);
+
+	}//end testTheSingleLawfulValueFillIsSubscribedToThePreSaveCreate()
 }//end class

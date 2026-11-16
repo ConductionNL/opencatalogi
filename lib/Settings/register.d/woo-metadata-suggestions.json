@@ -152,6 +152,46 @@
 				},
 				"hardValidation": false,
 				"searchable": false
+			},
+			"publication": {
+				"version": "0.0.8",
+				"properties": {
+					"filledByRule": {
+						"type": "array",
+						"title": "Filled automatically",
+						"description": "The fields filled when the publication was created because they had only one value its officer could choose. Each entry names the field, the value, the rule and when.",
+						"items": {
+							"type": "object",
+							"properties": {
+								"field": {
+									"type": "string",
+									"title": "Field",
+									"enum": [
+										"organization",
+										"wooCategory"
+									]
+								},
+								"value": {
+									"type": "string",
+									"title": "Value"
+								},
+								"rule": {
+									"type": "string",
+									"title": "Rule",
+									"enum": [
+										"officer-member-of-one-organisation",
+										"schema-declared-by-one-category"
+									]
+								},
+								"at": {
+									"type": "string",
+									"format": "date-time",
+									"title": "Filled at"
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
