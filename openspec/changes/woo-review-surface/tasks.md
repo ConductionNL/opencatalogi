@@ -37,9 +37,13 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 5. Verification
 
-- [ ] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. The publish path is central: run the full unit suite once.
-- [ ] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran; gate-18 checks the notification rule, the modal-isolation gate the reject dialog.
+- [x] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. The publish path is central: run the full unit suite once.
+  - Done: the full unit suite on the branch, 6066 tests: 11 errors and 92 failures, the same set as `development` (no new failure).
+- [x] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran; gate-18 checks the notification rule, the modal-isolation gate the reject dialog.
+  - Done: 79 of 79 applicable gates ran. Three fail, all inherited from `development`: public-endpoint-throttling (`PublishedTableController::preflightedCors`), demo-data-coverage (`dryRunDelivery`, `publishedTable`) and procedure-code (`development` itself counts 37 against a baseline of 27; this change adds no procedure-named file). The review classes are named by what they do for that reason.
 - [ ] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - Not ticked: `check:strict` needs a Nextcloud tree. Run per leg on the changed files: phpcs, phpmd and phpstan clean; eslint and prettier clean on the changed frontend files (`npm run lint` reports errors only in files this change does not touch); `check:l10n`, `check:l10n-js` and `check:manifest` pass; `check:schema-l10n` reports fewer uncovered strings than `development`.
+- [x] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - Done: PR #2678 to `development`, `development` merged in, no `Co-Authored-By`.
 
 Done when merged on `development` with CI green. Rows 4.2, 4.7 and 4.12 become `production` only once a store release ships it.

@@ -12,7 +12,12 @@
 			{{ t('opencatalogi', 'Redaction log') }}
 		</h4>
 		<p v-if="entries.length === 0" class="woo-redaction-log__empty">
-			{{ t('opencatalogi', 'No redacted passages are logged. The document cannot be published like this.') }}
+			{{
+				t(
+					'opencatalogi',
+					'No redacted passages are logged. The document cannot be published like this.',
+				)
+			}}
 		</p>
 		<table v-else class="woo-redaction-log__table">
 			<thead>
@@ -29,11 +34,19 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="(entry, index) in entries" :key="entry.relationId || index">
+				<tr
+					v-for="(entry, index) in entries"
+					:key="entry.relationId || index">
 					<td>{{ entry.entityType }}</td>
 					<td>{{ position(entry) }}</td>
-					<td :class="{ 'woo-redaction-log__missing': grounds(entry) === '' }">
-						{{ grounds(entry) || t('opencatalogi', 'No ground: blocks publishing') }}
+					<td
+						:class="{
+							'woo-redaction-log__missing': grounds(entry) === '',
+						}">
+						{{
+							grounds(entry)
+							|| t('opencatalogi', 'No ground: blocks publishing')
+						}}
 					</td>
 				</tr>
 			</tbody>
@@ -54,7 +67,15 @@ import { translate as t } from '@nextcloud/l10n'
 export function groundsText(entry) {
 	const grounds = Array.isArray(entry?.grounds) ? entry.grounds : []
 	return grounds
-		.map((ground) => (typeof ground === 'string' ? ground : ground?.code || ground?.article || ground?.label || ground?.name || ''))
+		.map((ground) =>
+			typeof ground === 'string'
+				? ground
+				: ground?.code
+					|| ground?.article
+					|| ground?.label
+					|| ground?.name
+					|| '',
+		)
 		.filter(Boolean)
 		.join(', ')
 }

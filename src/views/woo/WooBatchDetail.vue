@@ -147,7 +147,9 @@ export default {
 
 		/** @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-a-rejected-batch-or-document-goes-back-to-its-author-with-the-reason-req-wrv-002 */
 		lastRejection() {
-			const rejections = Array.isArray(this.batch?.rejections) ? this.batch.rejections : []
+			const rejections = Array.isArray(this.batch?.rejections)
+				? this.batch.rejections
+				: []
 			return this.batch?.status === 'in_progress' && rejections.length > 0
 				? rejections[rejections.length - 1]
 				: null
@@ -478,11 +480,16 @@ export default {
 				}}
 			</p>
 
-			<NcNoteCard v-if="lastRejection" type="warning" class="woo-batch__rejection">
+			<NcNoteCard
+				v-if="lastRejection"
+				type="warning"
+				class="woo-batch__rejection">
 				{{
 					t('opencatalogi', 'Sent back by {by} on {at}: {reason}', {
 						by: lastRejection.by || '',
-						at: lastRejection.at ? new Date(lastRejection.at).toLocaleDateString() : '',
+						at: lastRejection.at
+							? new Date(lastRejection.at).toLocaleDateString()
+							: '',
 						reason: lastRejection.reason || '',
 					})
 				}}

@@ -23,11 +23,22 @@
 				class="woo-review__document"
 				:data-document="doc.documentId">
 				<div class="woo-review__head">
-					<span class="woo-review__title">{{ doc.title || doc.documentId }}</span>
-					<span class="woo-review__assessment">{{ assessmentLabel(doc.assessment) }}</span>
+					<span class="woo-review__title">{{
+						doc.title || doc.documentId
+					}}</span>
+					<span class="woo-review__assessment">{{
+						assessmentLabel(doc.assessment)
+					}}</span>
 				</div>
-				<p v-if="doc.assessment === 'niet_openbaar'" class="woo-review__muted">
-					{{ t('opencatalogi', 'Not published. The public sees only its line in the inventory list.') }}
+				<p
+					v-if="doc.assessment === 'niet_openbaar'"
+					class="woo-review__muted">
+					{{
+						t(
+							'opencatalogi',
+							'Not published. The public sees only its line in the inventory list.',
+						)
+					}}
 				</p>
 				<template v-else>
 					<p>
@@ -40,14 +51,21 @@
 							{{ t('opencatalogi', 'Open the public view') }}
 						</a>
 						<span v-else class="woo-review__missing">
-							{{ t('opencatalogi', 'No file will be published for this document yet.') }}
+							{{
+								t(
+									'opencatalogi',
+									'No file will be published for this document yet.',
+								)
+							}}
 						</span>
 						<span v-if="isSeen(doc)" class="woo-review__seen">
 							{{ t('opencatalogi', 'Opened') }}
 						</span>
 					</p>
 					<dl v-if="doc.publicMetadata" class="woo-review__metadata">
-						<template v-for="field in metadataFields(doc.publicMetadata)" :key="field.key">
+						<template
+							v-for="field in metadataFields(doc.publicMetadata)"
+							:key="field.key">
 							<dt>
 								{{ field.label }}
 							</dt>
@@ -61,18 +79,30 @@
 						:log="doc.redactionLog || []" />
 				</template>
 				<p v-if="doc.sentBackReason" class="woo-review__muted">
-					{{ t('opencatalogi', 'Sent back: {reason}', { reason: doc.sentBackReason.reason }) }}
+					{{
+						t('opencatalogi', 'Sent back: {reason}', {
+							reason: doc.sentBackReason.reason,
+						})
+					}}
 				</p>
-				<NcButton variant="tertiary" @click="dialog = { scope: 'document', doc }">
+				<NcButton
+					variant="tertiary"
+					@click="dialog = { scope: 'document', doc }">
 					{{ t('opencatalogi', 'Send back') }}
 				</NcButton>
 			</li>
 		</ul>
 		<NcNoteCard v-if="!loading && unseen.length > 0" type="info">
 			{{
-				t('opencatalogi', 'Open the public view of every document before you approve. Not opened yet: {names}', {
-					names: unseen.map((doc) => doc.title || doc.documentId).join(', '),
-				})
+				t(
+					'opencatalogi',
+					'Open the public view of every document before you approve. Not opened yet: {names}',
+					{
+						names: unseen
+							.map((doc) => doc.title || doc.documentId)
+							.join(', '),
+					},
+				)
 			}}
 		</NcNoteCard>
 		<div class="woo-review__actions">
@@ -174,7 +204,9 @@ export default {
 		 * @return {string} The URL.
 		 */
 		url(path) {
-			return generateUrl(`/apps/opencatalogi/api/woo/batches/${this.batchId}/${path}`)
+			return generateUrl(
+				`/apps/opencatalogi/api/woo/batches/${this.batchId}/${path}`,
+			)
 		},
 
 		/**
@@ -241,7 +273,11 @@ export default {
 			}
 			return Object.keys(labels)
 				.filter((key) => metadata[key] !== undefined && metadata[key] !== '')
-				.map((key) => ({ key, label: labels[key], value: String(metadata[key]) }))
+				.map((key) => ({
+					key,
+					label: labels[key],
+					value: String(metadata[key]),
+				}))
 		},
 
 		/**
@@ -267,7 +303,9 @@ export default {
 			if (dialog?.scope === 'document') {
 				await this.move(() =>
 					axios.post(
-						generateUrl(`/apps/opencatalogi/api/woo/assessments/${dialog.doc.documentId}/send-back`),
+						generateUrl(
+							`/apps/opencatalogi/api/woo/assessments/${dialog.doc.documentId}/send-back`,
+						),
 						{ batchId: this.batchId, reason },
 					),
 				)

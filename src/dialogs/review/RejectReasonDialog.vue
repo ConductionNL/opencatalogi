@@ -15,17 +15,19 @@
 			<NcTextArea
 				v-model="reason"
 				:label="t('opencatalogi', 'Reason')"
-				:placeholder="t('opencatalogi', 'What has to change before this can be published')"
+				:placeholder="
+					t(
+						'opencatalogi',
+						'What has to change before this can be published',
+					)
+				"
 				resize="vertical" />
 		</div>
 		<template #actions>
 			<NcButton @click="close">
 				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
-			<NcButton
-				variant="primary"
-				:disabled="trimmed === ''"
-				@click="confirm">
+			<NcButton variant="primary" :disabled="trimmed === ''" @click="confirm">
 				{{ confirmLabel }}
 			</NcButton>
 		</template>
