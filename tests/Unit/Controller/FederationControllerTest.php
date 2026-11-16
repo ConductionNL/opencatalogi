@@ -431,6 +431,31 @@ class FederationControllerTest extends TestCase {
 	}
 
 	/**
+	 * REQ-PDP-002: the federation attachment list carries each document's id and links, the catalogue found by the service.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+	 */
+	public function testTheFederationAttachmentListIsDescribed(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$listed = new JSONResponse(['results' => [['id' => 42, 'title' => 'besluit.pdf']], 'total' => 1]);
+		$described = new JSONResponse(['results' => [['id' => 42, 'documentId' => '42']], 'total' => 1]);
+		$this->publicationService->method('getFederatedAttachments')->willReturn($listed);
+		$documents = $this->createMock(\OCA\OpenCatalogi\Contract\PublicDocumentsInterface::class);
+		$documents->expects($this->once())->method('describe')
+			->with($listed, null, 'pub-1')
+			->willReturn($described);
+
+		$controller = new FederationController(
+			request: $this->request,
+			publicationService: $this->publicationService,
+			l10n: $this->l10n,
+			container: $this->containerWith($documents, \OCA\OpenCatalogi\Contract\PublicDocumentsInterface::class)
+		);
+
+		$this->assertSame('42', $controller->publicationAttachments('pub-1')->getData()['results'][0]['documentId']);
+	}//end testTheFederationAttachmentListIsDescribed()
+
+	/**
 	 * A container that holds one service.
 	 *
 	 * @param object $service The service.

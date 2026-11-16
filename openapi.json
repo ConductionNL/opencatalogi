@@ -381,6 +381,94 @@
           }
         },
         "additionalProperties": true
+      },
+      "DocumentFacts": {
+        "type": "object",
+        "description": "The facts of one document of a publication (REQ-PDP-002). documentId is the Nextcloud file id as a string and does not change when the file is renamed.",
+        "required": [
+          "documentId",
+          "title"
+        ],
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "description": "The Nextcloud file id, as a string."
+          },
+          "position": {
+            "type": "integer",
+            "description": "Position in the publication's document order, from 1."
+          },
+          "title": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "description": "The file extension in lower case, else its media type."
+          },
+          "size": {
+            "type": "integer"
+          },
+          "published": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "downloadUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "documentsoort": {
+            "type": "string",
+            "description": "Present only when a document type is stored, the file's own first."
+          },
+          "creationDate": {
+            "type": "string",
+            "description": "Present only when the publication stores a creationDate."
+          },
+          "metadataUrl": {
+            "type": "string",
+            "description": "This document's metadata route. Absent on a list whose catalogue could not be resolved."
+          },
+          "diwooUrl": {
+            "type": "string",
+            "description": "This document's diwoo:Document route. Absent on a list whose catalogue could not be resolved."
+          }
+        }
+      },
+      "PublicDocument": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DocumentFacts"
+          },
+          {
+            "type": "object",
+            "required": [
+              "publication"
+            ],
+            "properties": {
+              "publication": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "title",
+                  "url"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "description": "The publication the document belongs to."
+              }
+            }
+          }
+        ]
       }
     },
     "parameters": {
@@ -3066,6 +3154,164 @@
               "type": "string"
             },
             "description": "The published table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{id}/documents/{documentId}": {
+      "get": {
+        "operationId": "publications-document",
+        "summary": "One document",
+        "description": "One document's metadata with the publication it belongs to. 404 unless the document is a shared, not withdrawn attachment of a published publication in the catalogue.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The documentId of an attachment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicDocument"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-document-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The documentId of an attachment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{id}/documents/{documentId}/diwoo": {
+      "get": {
+        "operationId": "publications-document-diwoo",
+        "summary": "One document as DiWoo",
+        "description": "One document as a single diwoo:Document element, as the DiWoo sitemap renders it. 404 as the metadata route.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The documentId of an attachment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-document-diwoo-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The documentId of an attachment."
           }
         ],
         "responses": {

@@ -2095,6 +2095,36 @@ class PublicationsControllerTest extends TestCase {
 	}
 
 	/**
+	 * REQ-PDP-002: the catalogue attachment list is described through the catalogue it was read through.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+	 */
+	public function testTheCatalogueAttachmentListIsDescribed(): void {
+		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$listed = new JSONResponse(['results' => [['id' => 42]]], 200);
+		$documents = $this->createMock(\OCA\OpenCatalogi\Contract\PublicDocumentsInterface::class);
+		$documents->expects($this->once())->method('describe')
+			->with($listed, 'test-catalog', 'pub-123')
+			->willReturn(new JSONResponse(['results' => [['id' => 42, 'documentId' => '42']]], 200));
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				\OCA\OpenCatalogi\Contract\PublicDocumentsInterface::class => $documents,
+				default => $mockObjService,
+			}
+		);
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$mockObjService->method('find')
+			->willReturn($this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class));
+		$this->publicationService->method('attachments')->willReturn($listed);
+
+		$response = $this->controller->attachments('test-catalog', 'pub-123');
+
+		$this->assertSame('42', $response->getData()['results'][0]['documentId']);
+	}//end testTheCatalogueAttachmentListIsDescribed()
+
+	/**
 	 * An anonymous attachments answer may be cached publicly (REQ-PAC-001).
 	 *
 	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001

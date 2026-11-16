@@ -9,7 +9,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 2. Documents
 
-- [ ] 2.1 Add `documentId` and the metadata keys to both attachment lists, and the routes `GET /api/{catalogSlug}/{id}/documents/{documentId}` and `/diwoo` with CORS preflights (REQ-PDP-002). Verify: `tests/Unit/Controller/PublicDocumentControllerTest.php::testADocumentAnswersItsMetadataAndItsPublication` (fails today), `::testAWithdrawnFileIs404`, `::testADocumentOfADraftIs404`, `::testTheDiwooRecordIsOneDocument`; route-table and `OpenApiParityTest` cases.
+- [x] 2.1 (`DocumentFacts` adds `documentId`, `format`, `documentsoort`, `creationDate`; `PublicDocuments::describe()` adds `metadataUrl` and `diwooUrl` on `PublicationsController::attachments()` and `FederationController::publicationAttachments()`, the federation list finding the first catalogue that holds the publication; `PublicDocumentController` serves both routes inside OpenRegister's anonymous scope, the DiWoo record through `SitemapDocumentMapper::map()`, which `SitemapService::mapDiwooDocument()` delegates to; `PublicDocumentsTest`, list cases in `FederationControllerTest` and `PublicationsControllerTest`, both paths in `openapi.json`) Add `documentId` and the metadata keys to both attachment lists, and the routes `GET /api/{catalogSlug}/{id}/documents/{documentId}` and `/diwoo` with CORS preflights (REQ-PDP-002). Verify: `tests/Unit/Controller/PublicDocumentControllerTest.php::testADocumentAnswersItsMetadataAndItsPublication` (fails today), `::testAWithdrawnFileIs404`, `::testADocumentOfADraftIs404`, `::testTheDiwooRecordIsOneDocument`; route-table and `OpenApiParityTest` cases.
 
 ## 3. Comment period
 

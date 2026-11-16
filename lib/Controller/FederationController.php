@@ -33,6 +33,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicDocumentsInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -70,6 +71,13 @@ class FederationController extends Controller {
 	private readonly ?AppliedFilters $appliedFilters;
 
 	/**
+	 * Adds each document's id, metadata and links to a local attachment list (REQ-PDP-002); null leaves the list as is.
+	 *
+	 * @var PublicDocumentsInterface|null
+	 */
+	private readonly ?PublicDocumentsInterface $documents;
+
+	/**
 	 * FederationController constructor.
 	 *
 	 * @param IRequest $request The request object.
@@ -102,6 +110,12 @@ class FederationController extends Controller {
 
 		$this->appConfig = $appConfig;
 		$this->appliedFilters = $appliedFilters;
+		$documents = self::optional(container: $container, class: PublicDocumentsInterface::class);
+		if ($documents instanceof PublicDocumentsInterface === false) {
+			$documents = null;
+		}
+
+		$this->documents = $documents;
 
 	}//end __construct()
 
@@ -354,12 +368,16 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationAttachments(string $id): JSONResponse {
-		return $this->withSearchCorsHeaders(
-			response: $this->publicationService->getFederatedAttachments(id: $id, queryParams: $this->request->getParams())
-		);
+		$response = $this->publicationService->getFederatedAttachments(id: $id, queryParams: $this->request->getParams());
+		if ($this->documents !== null) {
+			$response = $this->documents->describe(response: $response, catalogSlug: null, publicationId: $id);
+		}
+
+		return $this->withSearchCorsHeaders(response: $response);
 	}//end publicationAttachments()
 
 	// Lower than the sibling reads: a download moves file bytes, so the cost of

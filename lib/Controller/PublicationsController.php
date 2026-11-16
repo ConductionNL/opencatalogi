@@ -41,6 +41,7 @@ use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
+use OCA\OpenCatalogi\Contract\PublicDocumentsInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Http\DcatNegotiation;
 use OCA\OpenCatalogi\Service\AppliedFilters;
@@ -1397,7 +1398,7 @@ class PublicationsController extends Controller {
 				return $refusal;
 			}
 
-			return $this->cacheableForCaller(response: $this->publicationService->attachments(id: $id));
+			return $this->cacheableForCaller(response: $this->describedAttachments(catalogSlug: $catalogSlug, id: $id));
 		} catch (\Exception $e) {
 			return $this->fileReadFailed(
 				exception: $e,
@@ -1410,6 +1411,33 @@ class PublicationsController extends Controller {
 		}//end try
 
 	}//end attachments()
+
+	/**
+	 * The attachment list with each document's id, metadata and links (REQ-PDP-002).
+	 *
+	 * Without the documents service the list is answered as the publication service gives it.
+	 *
+	 * @param string $catalogSlug The catalogue the list is read through.
+	 * @param string $id The publication.
+	 *
+	 * @return JSONResponse The list.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 */
+	private function describedAttachments(string $catalogSlug, string $id): JSONResponse {
+		$response = $this->publicationService->attachments(id: $id);
+		try {
+			$documents = $this->container->get(PublicDocumentsInterface::class);
+		} catch (\Throwable) {
+			return $response;
+		}
+
+		if (($documents instanceof PublicDocumentsInterface) === false) {
+			return $response;
+		}
+
+		return $documents->describe(response: $response, catalogSlug: $catalogSlug, publicationId: $id);
+	}//end describedAttachments()
 
 	/**
 	 * The 404 answer when the catalogue or the publication of a file read does
