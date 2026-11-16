@@ -133,3 +133,34 @@ export function directorySyncCounts(data) {
 	const total = data.total_directories ?? synced + failed
 	return { synced, total, failed }
 }
+
+/**
+ * The stored CORS allowlist as the lines the settings field shows: one website per line.
+ *
+ * @param {string|undefined} stored - The `cors_allowed_origins` value, comma separated
+ * @return {string} The lines; `*` when nothing is stored
+ * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+ */
+export function corsOriginLines(stored) {
+	if (typeof stored !== 'string' || stored.trim() === '') {
+		return '*'
+	}
+
+	return stored.split(',').map((origin) => origin.trim()).filter((origin) => origin !== '').join('\n')
+}
+
+/**
+ * The reason a CORS allowlist save was refused, as the server named it.
+ *
+ * @param {object} error - The rejected request
+ * @return {string} The server's reason, or '' when it gave none
+ * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+ */
+export function corsSaveRefusal(error) {
+	const answer = error && error.response
+	if (!answer || answer.status !== 400 || !answer.data || typeof answer.data.error !== 'string') {
+		return ''
+	}
+
+	return answer.data.error
+}

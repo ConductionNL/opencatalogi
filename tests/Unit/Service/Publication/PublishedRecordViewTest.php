@@ -29,7 +29,7 @@ use Psr\Container\ContainerInterface;
  * @uses   \OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService
  * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
  */
 class PublishedRecordViewTest extends TestCase {
 
