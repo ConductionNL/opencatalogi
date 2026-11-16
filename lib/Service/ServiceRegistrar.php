@@ -24,6 +24,8 @@ namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\InstanceModeSwitchInterface;
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
+use OCA\OpenCatalogi\Contract\DiwooCompletenessInterface;
+use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
 use OCA\OpenCatalogi\Contract\CatalogueFeedReaderInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
@@ -60,6 +62,8 @@ use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
 use OCA\OpenCatalogi\Contract\ObligationReadServiceInterface;
 use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Contract\PlainSummaryDrafterInterface;
+use OCA\OpenCatalogi\Contract\PlainSummaryProvenanceInterface;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
@@ -107,6 +111,8 @@ use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\InspectionService;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\ObligationReadService;
+use OCA\OpenCatalogi\Service\Publication\PlainLanguageDrafter;
+use OCA\OpenCatalogi\Service\Publication\PlainSummaryProvenance;
 use OCA\OpenCatalogi\Service\Publication\PlooiDeliveryService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
@@ -174,6 +180,8 @@ class ServiceRegistrar {
 		AttachmentMigrationServiceInterface::class => AttachmentMigrationService::class,
 		ServiceCatalogueServiceInterface::class => ServiceCatalogueService::class,
 		InformationCategoryRegistryInterface::class => WooCategoryRegistry::class,
+		DocumentTypeVocabularyInterface::class => TooiVocabularyService::class,
+		DiwooCompletenessInterface::class => SitemapDocumentMapper::class,
 		CmsMigrationServiceInterface::class => CmsMigrationService::class,
 		InformationRequestServiceInterface::class => WooRequestService::class,
 		StandardsVersionServiceInterface::class => StandardsVersionService::class,
@@ -202,6 +210,8 @@ class ServiceRegistrar {
 		PublishedRecordViewInterface::class => PublishedRecordView::class,
 		SitemapServiceInterface::class => SitemapService::class,
 		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
+		PlainSummaryDrafterInterface::class => PlainLanguageDrafter::class,
+		PlainSummaryProvenanceInterface::class => PlainSummaryProvenance::class,
 	];
 
 	/**

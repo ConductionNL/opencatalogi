@@ -188,6 +188,9 @@ class NationalIndexService implements NationalIndexServiceInterface {
 			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
 		}
 
+		// The day it takes effect: the editor's, else the stored validFrom (REQ-DWP-001), else the publication date.
+		$given = array_filter([$decision['effectiveDate'] ?? null, $decision['validFrom'] ?? null, $decision['publicationDate'] ?? null], 'is_string');
+
 		return [
 			'channel' => $channel,
 			'subject' => trim((string)($decision['title'] ?? 'Bekendmaking')),
@@ -198,7 +201,7 @@ class NationalIndexService implements NationalIndexServiceInterface {
 			'organisation' => (string)($decision['organisation'] ?? ''),
 			'url' => (string)($decision['url'] ?? ''),
 			'publicationType' => (string)($decision['publicationType'] ?? ''),
-			'effectiveDate' => (string)($decision['effectiveDate'] ?? ($decision['publicationDate'] ?? '')),
+			'effectiveDate' => (string)(array_values(array_filter(array_map('trim', $given)))[0] ?? ''),
 			'composedAt' => $moment->format(DateTimeInterface::ATOM),
 		];
 
