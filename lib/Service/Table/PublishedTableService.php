@@ -27,8 +27,13 @@ use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\TableFile;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenCatalogi\BackgroundJob\PublishedTableImportJob;
 use OCA\OpenRegister\Service\Import\ImportCommit;
+use OCP\BackgroundJob\IJobList;
+use OCP\Files\File;
+use OCP\Files\IRootFolder;
 use OCP\IUser;
+use RuntimeException;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -79,6 +84,27 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	public const MAX_LIMIT = 1000;
 
 	/**
+	 * A file with more rows than this is imported in the background.
+	 *
+	 * @var integer
+	 */
+	public const BACKGROUND_ROWS = 5000;
+
+	/**
+	 * Seconds after which a table still `importing` is taken to have stopped.
+	 *
+	 * @var integer
+	 */
+	public const STALE_AFTER = 3600;
+
+	/**
+	 * The last error of an import that stopped without an answer.
+	 *
+	 * @var string
+	 */
+	public const STALE_ERROR = 'The import stopped without an answer.';
+
+	/**
 	 * Query parameters that are not a filter on a column.
 	 *
 	 * @var array<int, string>
@@ -90,10 +116,12 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 *
 	 * @param OpenRegisterLookupInterface $registers The OpenRegister ObjectService and register configuration.
 	 * @param ContainerInterface $container Resolves OpenRegister's schema, register and import services.
+	 * @param IJobList|null $jobs Queues a background import; without it every import runs in the request.
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookupInterface $registers,
 		private readonly ContainerInterface $container,
+		private readonly ?IJobList $jobs = null,
 	) {
 	}//end __construct()
 
@@ -103,7 +131,8 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 * Builds the schema from the header and the first rows, previews the import
 	 * of the whole file into it, and commits only when the preview refuses no row.
 	 * The table record says `ready` with its row count, or `failed` with the
-	 * first refused row.
+	 * first refused row. A file over {@see BACKGROUND_ROWS} rows is stored
+	 * `importing` and imported by {@see PublishedTableImportJob}.
 	 *
 	 * @param array<string, mixed> $publication The publication the file belongs to.
 	 * @param TableFile $file The CSV on disk and its identity.
@@ -136,8 +165,154 @@ class PublishedTableService implements PublishedTableServiceInterface {
 			'rowCount' => 0,
 		];
 
+		if (count($rows) > self::BACKGROUND_ROWS && $this->jobs !== null) {
+			$table['status'] = self::STATUS_IMPORTING;
+			$table['importedBy'] = ($user?->getUID() ?? '');
+			$stored = (array)self::plain(value: $this->tables()->save(object: $table));
+			$this->queueImport(tableId: (string)($stored['id'] ?? ''), importedBy: $table['importedBy']);
+
+			return $stored;
+		}
+
 		return $this->lifecycle(table: $table, file: $file, user: $user, importedBy: null, schema: $schema);
 	}//end createFromFile()
+
+	/**
+	 * Queue a background import of a stored table.
+	 *
+	 * @param string      $tableId    The table id.
+	 * @param string|null $importedBy Who started it; null keeps the table's own.
+	 *
+	 * @return boolean Whether the import was queued.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-every-import-ends-in-ready-or-failed-req-dfa-002
+	 */
+	public function queueImport(string $tableId, ?string $importedBy = null): bool {
+		if ($tableId === '' || $this->jobs === null) {
+			return false;
+		}
+
+		$this->jobs->add(PublishedTableImportJob::class, ['table' => $tableId, 'importedBy' => $importedBy]);
+
+		return true;
+	}//end queueImport()
+
+	/**
+	 * The CSV behind a stored table, as a file on disk.
+	 *
+	 * @param array<string, mixed> $table The table record.
+	 *
+	 * @return TableFile The file.
+	 *
+	 * @throws RuntimeException When the attachment is gone or has no local copy.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-every-import-ends-in-ready-or-failed-req-dfa-002
+	 */
+	public function tableFile(array $table): TableFile {
+		$fileId = (string)($table['file'] ?? '');
+		$node = null;
+		if ($fileId !== '') {
+			$node = $this->container->get(IRootFolder::class)->getFirstNodeById((int)$fileId);
+		}
+
+		if ($node instanceof File === false) {
+			throw new RuntimeException('The file of table "'.(string)($table['title'] ?? $fileId).'" is no longer there.');
+		}
+
+		$path = $node->getStorage()->getLocalFile($node->getInternalPath());
+		if (is_string($path) === false || $path === '') {
+			throw new RuntimeException('The file "'.$node->getName().'" could not be read.');
+		}
+
+		return new TableFile(path: $path, id: $fileId, name: $node->getName());
+	}//end tableFile()
+
+	/**
+	 * Store a table failed with a reason, outside an import.
+	 *
+	 * @param array<string, mixed> $table      The stored table record.
+	 * @param string               $message    Why it failed.
+	 * @param string|null          $importedBy Who started it; null keeps the table's own.
+	 *
+	 * @return array<string, mixed> The stored table record.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-every-import-ends-in-ready-or-failed-req-dfa-002
+	 */
+	public function failImport(array $table, string $message, ?string $importedBy = null): array {
+		$table['status'] = self::STATUS_FAILED;
+		$table['lastError'] = self::errorText(message: $message);
+		if ($importedBy !== null) {
+			$table['importedBy'] = $importedBy;
+		}
+
+		return (array)self::plain(value: $this->tables()->save(object: $table));
+	}//end failImport()
+
+	/**
+	 * Store every table that has been `importing` for over an hour as failed.
+	 *
+	 * @param integer $now The current time, as a Unix timestamp.
+	 *
+	 * @return integer How many tables were failed.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-every-import-ends-in-ready-or-failed-req-dfa-002
+	 */
+	public function failStaleImports(int $now): int {
+		$failed = 0;
+		foreach ($this->storedTables(filters: ['status' => self::STATUS_IMPORTING]) as $table) {
+			$since = strtotime((string)($table['@self']['updated'] ?? ''));
+			if (($table['status'] ?? null) !== self::STATUS_IMPORTING || $since === false || $now - $since <= self::STALE_AFTER) {
+				continue;
+			}
+
+			$this->failImport(table: $table, message: self::STALE_ERROR);
+			$failed++;
+		}
+
+		return $failed;
+	}//end failStaleImports()
+
+	/**
+	 * The tables whose rows come from a file.
+	 *
+	 * @param string $fileId The attachment's file id.
+	 *
+	 * @return list<array<string, mixed>> The table records.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-a-replaced-data-file-is-imported-again-req-dfa-003
+	 */
+	public function tablesForFile(string $fileId): array {
+		if ($fileId === '') {
+			return [];
+		}
+
+		return array_values(
+			array_filter(
+				$this->storedTables(filters: ['file' => $fileId]),
+				static fn (array $table): bool => (string)($table['file'] ?? '') === $fileId
+			)
+		);
+	}//end tablesForFile()
+
+	/**
+	 * Stored table records matching the filters, as arrays.
+	 *
+	 * @param array<string, mixed> $filters The filters.
+	 *
+	 * @return list<array<string, mixed>> The records.
+	 */
+	private function storedTables(array $filters): array {
+		$found = $this->tables()->search(filters: $filters + ['_limit' => self::MAX_LIMIT]);
+		$tables = [];
+		foreach ((array)($found['results'] ?? []) as $result) {
+			$table = self::plain(value: $result);
+			if (is_array($table) === true) {
+				$tables[] = $table;
+			}
+		}
+
+		return $tables;
+	}//end storedTables()
 
 	/**
 	 * Import a table's file into its row schema, from importing to ready or failed.

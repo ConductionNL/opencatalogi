@@ -40,6 +40,7 @@ use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
+use OCA\OpenCatalogi\Listener\PublishedTableReimportListener;
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\TermRollListener;
@@ -118,6 +119,8 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatedEvent', ObjectUpdatedEventListener::class],
 				[$e . 'ObjectUpdatedEvent', PortalAccountRemovedListener::class],
 				[$e . 'ObjectUpdatedEvent', PlooiDeliveryListener::class],
+				['OCP\\Files\\Events\\Node\\NodeWrittenEvent', PublishedTableReimportListener::class],
+				[$e . 'FileVersionRestoredEvent', PublishedTableReimportListener::class],
 				[$e . 'ObjectCreatedEvent', WooReadinessTriggerListener::class],
 				[$e . 'ObjectUpdatedEvent', WooReadinessTriggerListener::class],
 				[$e . 'ObjectCreatedEvent', CatalogCacheEventListener::class],

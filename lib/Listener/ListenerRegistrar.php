@@ -27,11 +27,13 @@ use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
+use OCA\OpenRegister\Event\FileVersionRestoredEvent;
 use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
+use OCP\Files\Events\Node\NodeWrittenEvent;
 
 /**
  * Registers the event listeners of OpenCatalogi.
@@ -76,6 +78,17 @@ class ListenerRegistrar {
 		$context->registerEventListener(
 			event: ObjectUpdatedEvent::class,
 			listener: PlooiDeliveryListener::class
+		);
+
+		// Published tables (data-file-import-failure-alert, REQ-DFA-003): a
+		// replaced or restored CSV queues a re-import of the tables it feeds.
+		$context->registerEventListener(
+			event: NodeWrittenEvent::class,
+			listener: PublishedTableReimportListener::class
+		);
+		$context->registerEventListener(
+			event: FileVersionRestoredEvent::class,
+			listener: PublishedTableReimportListener::class
 		);
 
 		// Queue a readiness check when a catalogue is switched on for Woo (REQ-WIH-004).

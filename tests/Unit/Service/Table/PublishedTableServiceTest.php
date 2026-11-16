@@ -524,4 +524,100 @@ class PublishedTableServiceTest extends TestCase {
 		$this->assertSame('bram', $table['importedBy']);
 		$this->assertArrayNotHasKey('lastError', $table);
 	}//end testAReimportOfAStoredTable()
+
+	/**
+	 * The service with a job list, and the container that also answers it.
+	 *
+	 * @param \OCP\BackgroundJob\IJobList $jobs The job list.
+	 *
+	 * @return PublishedTableService The service.
+	 */
+	private function serviceWithJobs(\OCP\BackgroundJob\IJobList $jobs): PublishedTableService {
+		$registers = $this->createMock(OpenRegisterLookupInterface::class);
+		$registers->method('objectService')->willReturn($this->openRegister);
+		$registers->method('registerConfiguration')->willReturn(['register' => 'pub', 'schema' => 'tbl']);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($this->openRegister);
+
+		return new PublishedTableService(registers: $registers, container: $container, jobs: $jobs);
+	}//end serviceWithJobs()
+
+	/**
+	 * A file over 5,000 rows is stored importing under the editor and queued, not imported in the request.
+	 *
+	 * @return void
+	 */
+	public function testABigFileIsStoredImportingAndQueued(): void {
+		$this->openRegister->rows = array_fill(0, PublishedTableService::BACKGROUND_ROWS + 1, ['data' => ['naam' => 'Park']]);
+		$jobs = $this->createMock(\OCP\BackgroundJob\IJobList::class);
+		$jobs->expects($this->once())->method('add')->with(
+			\OCA\OpenCatalogi\BackgroundJob\PublishedTableImportJob::class,
+			['table' => 't1', 'importedBy' => 'anna']
+		);
+		$editor = $this->createMock(\OCP\IUser::class);
+		$editor->method('getUID')->willReturn('anna');
+
+		$table = $this->serviceWithJobs(jobs: $jobs)->createFromFile(
+			publication: ['id' => 'p1', 'slug' => 'speeltuinen'],
+			file: new TableFile(path: '/tmp/speeltuinen.csv', id: '77', name: 'speeltuinen.csv'),
+			user: $editor
+		);
+
+		$this->assertSame([], $this->openRegister->previews);
+		$this->assertCount(1, $this->openRegister->saved);
+		$this->assertSame(['importing', 'anna', 0], [$table['status'], $table['importedBy'], $table['rowCount']]);
+		$this->assertCount(1, $this->openRegister->createdSchemas, 'the row schema is made in the request');
+	}//end testABigFileIsStoredImportingAndQueued()
+
+	/**
+	 * A file of exactly 5,000 rows is still imported in the request.
+	 *
+	 * @return void
+	 */
+	public function testAFileAtTheLimitIsImportedInTheRequest(): void {
+		$this->openRegister->rows = array_fill(0, PublishedTableService::BACKGROUND_ROWS, ['data' => ['naam' => 'Park']]);
+		$jobs = $this->createMock(\OCP\BackgroundJob\IJobList::class);
+		$jobs->expects($this->never())->method('add');
+
+		$table = $this->serviceWithJobs(jobs: $jobs)->createFromFile(
+			publication: ['id' => 'p1'],
+			file: new TableFile(path: '/tmp/speeltuinen.csv', id: '77', name: 'speeltuinen.csv')
+		);
+
+		$this->assertCount(1, $this->openRegister->previews);
+		$this->assertSame('ready', $table['status']);
+	}//end testAFileAtTheLimitIsImportedInTheRequest()
+
+	/**
+	 * Without a job list or a table id nothing is queued.
+	 *
+	 * @return void
+	 */
+	public function testQueueImportNeedsAJobListAndATable(): void {
+		$this->assertFalse($this->service->queueImport(tableId: 't1', importedBy: 'anna'));
+
+		$jobs = $this->createMock(\OCP\BackgroundJob\IJobList::class);
+		$jobs->expects($this->once())->method('add')->with(\OCA\OpenCatalogi\BackgroundJob\PublishedTableImportJob::class, ['table' => 't1', 'importedBy' => null]);
+		$service = $this->serviceWithJobs(jobs: $jobs);
+		$this->assertFalse($service->queueImport(tableId: ''));
+		$this->assertTrue($service->queueImport(tableId: 't1'));
+	}//end testQueueImportNeedsAJobListAndATable()
+
+	/**
+	 * The tables of a file are searched by its id, and only exact matches are kept.
+	 *
+	 * @return void
+	 */
+	public function testTablesForFileKeepsExactMatches(): void {
+		$this->openRegister->searchAnswer = ['results' => [['id' => 't1', 'file' => '77'], ['id' => 't2', 'file' => '770'], 'not a table']];
+
+		$this->assertSame([['id' => 't1', 'file' => '77']], $this->service->tablesForFile(fileId: '77'));
+		$this->assertSame(
+			['@self' => ['register' => 'pub', 'schema' => 'tbl'], 'file' => '77', '_limit' => 1000],
+			$this->openRegister->searches[0]['query']
+		);
+
+		$this->assertSame([], $this->service->tablesForFile(fileId: ''));
+		$this->assertCount(1, $this->openRegister->searches);
+	}//end testTablesForFileKeepsExactMatches()
 }//end class
