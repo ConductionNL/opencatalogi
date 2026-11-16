@@ -935,11 +935,12 @@ export default defineComponent({
 		},
 
 		/**
-		 * Take the channel sources and the public cache time from the stored
-		 * configuration.
+		 * Take the channel sources, the public cache time and the websites that
+		 * may call the public API from the stored configuration.
 		 *
 		 * @param {object|undefined} configuration - The stored configuration
 		 * @return {void}
+		 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
 		 */
 		applyStoredConfiguration(configuration) {
 			this.channelSources = {
