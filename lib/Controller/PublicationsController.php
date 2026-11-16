@@ -33,13 +33,16 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
+use OCA\OpenCatalogi\Http\DcatNegotiation;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
 use OCP\App\IAppManager;
@@ -284,7 +287,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @return void
 	 */
-	private function addCorsHeaders(JSONResponse $response): void {
+	private function addCorsHeaders(Response $response): void {
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
 		$response->addHeader('Access-Control-Allow-Methods', $this->cors->methods);
 		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);
@@ -763,7 +766,7 @@ class PublicationsController extends Controller {
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the configuration cannot be read; the read
 	 *                                                                     then fails rather than serving the record.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	private function anonymousView(mixed $result): mixed {
 		if (is_array($result) === false || $this->queryService->isAnonymous() === false) {
@@ -781,7 +784,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @return array<string, mixed> The page.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	private function publicPage(array $result): array {
 		return $this->anonymousResults(result: $this->withoutEmptyValues(result: $result));
@@ -801,7 +804,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the configuration cannot be read.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	private function anonymousResults(array $result): array {
 		if (is_array($result['results'] ?? null) === false || $this->queryService->isAnonymous() === false) {
@@ -851,7 +854,7 @@ class PublicationsController extends Controller {
 	 * @param string $catalogSlug The slug of the catalog
 	 * @param string $id The ID of the publication to retrieve
 	 *
-	 * @return JSONResponse JSON response containing the requested publication
+	 * @return Response The publication as JSON, or for a dataset IRI asked for RDF or HTML its graph or a redirect
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
 	 * @spec openspec/specs/publications/spec.md
@@ -861,7 +864,7 @@ class PublicationsController extends Controller {
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
-	public function show(string $catalogSlug, string $id): JSONResponse {
+	public function show(string $catalogSlug, string $id): Response {
 		try {
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
 			if ($catalog === null) {
@@ -877,6 +880,11 @@ class PublicationsController extends Controller {
 			// Guarding the catalog covers this route and the scope it hands to the
 			// query builder and the object lookups.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
+			$dereferenced = $this->dereferencedDataset(catalog: $catalog, catalogSlug: $catalogSlug, id: $id);
+			if ($dereferenced !== null) {
+				return $dereferenced;
+			}
+
 			$query = new CatalogSlugQuery(
 				slug: $id,
 				catalogSlug: $catalogSlug,
@@ -897,6 +905,34 @@ class PublicationsController extends Controller {
 		}//end try
 
 	}//end show()
+
+	/**
+	 * The dataset IRI's own answer when the Accept header asks for RDF or HTML (REQ-DCC-003).
+	 *
+	 * The dataset IRI of the DCAT feed is this route. Turtle and RDF/XML answer the
+	 * DCAT graph, HTML redirects to the publication page. An explicit `?format=`
+	 * and every other Accept header, JSON-LD included (schema.org, SDD-001), keep
+	 * the publication answer.
+	 *
+	 * @param array<string, mixed> $catalog The guarded catalogue.
+	 * @param string $catalogSlug The catalogue slug.
+	 * @param string $id The publication id from the URL.
+	 *
+	 * @return Response|null The answer, or null to answer the publication as before.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-catalogue-is-served-as-linked-data-and-through-sparql-req-dcc-003
+	 */
+	private function dereferencedDataset(array $catalog, string $catalogSlug, string $id): ?Response {
+		$kind = DcatNegotiation::preferred(accept: $this->request->getHeader('Accept'));
+		if ($kind === null || (string)$this->request->getParam('format', '') !== '') {
+			return null;
+		}
+
+		$response = $this->container->get(DcatDereferenceInterface::class)->answer(catalog: $catalog, catalogSlug: $catalogSlug, id: $id, kind: $kind);
+		$this->addCorsHeaders(response: $response);
+
+		return $response;
+	}//end dereferencedDataset()
 
 	/**
 	 * The 404 answer for a catalogue slug that resolves to no catalogue.
@@ -1259,6 +1295,10 @@ class PublicationsController extends Controller {
 				);
 			}
 
+			if (is_array($result) === true) {
+				$result = $this->withCommentPeriod(publication: $result);
+			}
+
 			$response = new JSONResponse($result, 200);
 		}
 
@@ -1268,6 +1308,29 @@ class PublicationsController extends Controller {
 	}//end renderedPublication()
 
 	/**
+	 * The publication with the state of its comment period (REQ-PDP-003).
+	 *
+	 * @param array<string, mixed> $publication The rendered publication.
+	 *
+	 * @return array<string, mixed> The publication, unchanged when the period cannot be added.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 */
+	private function withCommentPeriod(array $publication): array {
+		try {
+			$periods = $this->container->get(PublicationCommentPeriodInterface::class);
+		} catch (\Throwable $e) {
+			return $publication;
+		}
+
+		if (($periods instanceof PublicationCommentPeriodInterface) === false) {
+			return $publication;
+		}
+
+		return $periods->addTo(publication: $publication);
+	}//end withCommentPeriod()
+
+	/**
 	 * The found publication rendered by OpenRegister, as the caller may read it.
 	 *
 	 * @param PublicationRead $read The detail read.
@@ -1275,7 +1338,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @return mixed The rendered publication, or null when an anonymous reader may not read it.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	private function rendered(PublicationRead $read, FoundPublication $found): mixed {
 		return $this->anonymousView(

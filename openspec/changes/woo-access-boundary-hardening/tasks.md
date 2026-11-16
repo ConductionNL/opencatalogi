@@ -16,7 +16,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 3. Search indexes
 
-- [ ] 3.1 Extend `RobotsController::index()` and add `NoIndexMiddleware` (registered with `registerMiddleware()`) and the `search_indexing` setting (REQ-WAB-003). Verify: `tests/Unit/Controller/RobotsControllerTest.php::testOfficerPathsAreDisallowed` (fails today), `::testBlockedIndexingDisallowsEverything`, `tests/Unit/Middleware/NoIndexMiddlewareTest.php::testANonPublicResponseCarriesNoindex`, `::testBlockedIndexingMarksEveryResponse`, `::testAPublicResponseIsUntouchedByDefault`.
+- [x] 3.1 Extend `RobotsController::index()` and add `NoIndexMiddleware` (registered with `registerMiddleware()`) and the `search_indexing` setting (REQ-WAB-003). Verify: `tests/Unit/Controller/RobotsControllerTest.php::testOfficerPathsAreDisallowed` (fails today), `::testBlockedIndexingDisallowsEverything`, `tests/Unit/Middleware/NoIndexMiddlewareTest.php::testANonPublicResponseCarriesNoindex`, `::testBlockedIndexingMarksEveryResponse`, `::testAPublicResponseIsUntouchedByDefault`.
 
 ## 4. Rights per group
 
