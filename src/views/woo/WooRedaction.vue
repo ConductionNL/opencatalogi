@@ -17,6 +17,7 @@ import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
+import WooRedactionLog from '../../components/woo/WooRedactionLog.vue'
 import {
 	formatSize,
 	redactionRows,
@@ -61,6 +62,7 @@ export default {
 		NcEmptyContent,
 		NcLoadingIcon,
 		NcNoteCard,
+		WooRedactionLog,
 	},
 
 	data() {
@@ -464,6 +466,18 @@ export default {
 					}}
 				</p>
 			</section>
+
+			<WooRedactionLog
+				v-if="Array.isArray(assessment.redactionLog)"
+				:log="assessment.redactionLog" />
+			<NcNoteCard v-if="assessment.sentBackReason" type="warning">
+				{{
+					t('opencatalogi', 'Sent back by {by}: {reason}', {
+						by: assessment.sentBackReason.by || '',
+						reason: assessment.sentBackReason.reason || '',
+					})
+				}}
+			</NcNoteCard>
 
 			<NcNoteCard v-if="verifyError" type="error">
 				{{ verifyError }}

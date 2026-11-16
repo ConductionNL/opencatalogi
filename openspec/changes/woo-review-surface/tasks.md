@@ -18,6 +18,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 - [x] 2.1 Add `GET /api/woo/batches/{id}/public-preview` and `POST /api/woo/batches/{id}/preview-seen`, and the seen-everything check on `approve` (REQ-WRV-001). Verify: `tests/Unit/Service/WooBatchReviewTest.php::testThePreviewCarriesThePublishedFileAndThePublicFields`, `::testApproveIsRefusedUntilEveryPreviewWasSeen` (fails today), `::testANietOpenbaarDocumentHasNoViewer`.
   - Done: `WooBatchReview` (bound to `WooBatchReviewInterface`) answers the preview per document (`documentId`, `assessment`, `viewerUrl` to the verified redacted file or the original, none for `niet_openbaar` or an unverified redaction, `publicMetadata` as `BatchPublicationWriter::payload()` reduced to the public fields, and the redaction log for the reviewer) and records per reviewer in the batch's new `previewsSeen`. The check runs twice: `POST /api/woo/batches/{id}/approve` refuses naming the unseen documents, and the `approve` transition declares `requires: WooBatchPreviewsSeenGuard`, an OpenRegister lifecycle guard that refuses on every path (the chain's own advance included) and fails closed. `POST /api/woo/batches/{id}/reject` with `{reason}` runs `reject`. Tests in `tests/Unit/Service/Woo/WooBatchReviewTest.php` (the service lives under `Service/Woo/`), `WooBatchPreviewsSeenGuardTest`, `WooBatchLifecycleTest::testApproveRequiresThePreviewsSeenGuard`.
 - [ ] 2.2 Replace the assessment form with the public view on `WooBatchDetail` while the batch is in review, with Approve and Reject (Reject asks the reason in its own dialog under `src/dialogs/`) (REQ-WRV-001, REQ-WRV-002). Verify: `tests/e2e/woo-review-surface.spec.ts` "the reviewer sees each document as the public will" and "a rejected batch goes back to its author with the reason", carrying `@e2e` references.
+  - Built, not ticked: the e2e spec needs a running instance. `WooBatchDetail` shows `src/components/woo/WooBatchReviewPanel.vue` in place of the queue while the batch is `ready_for_review`: per document the link to the public view (opening it records it), the public metadata and, for a partly public document, the redaction log; Approve is disabled until every view was opened; Reject and Send back ask the reason in `src/dialogs/woo/WooRejectDialog.vue`. The batch page shows the last rejection with reviewer and date, and Publish appears only on an approved batch. Unit specs: `WooBatchReviewPanel.spec.js`, `WooRejectDialog.spec.js`.
 
 ## 3. Redaction log
 
@@ -26,11 +27,13 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 - [x] 3.2 Assert no public route returns `redactionLog` (REQ-WRV-003). Verify: `tests/Unit/Service/PublicationQueryServiceTest.php::testNoPublicResponseCarriesARedactionLog`.
   - Done as `tests/Unit/Settings/WooRegisterSchemasTest.php::testNoPublicResponseCarriesARedactionLog`: only `wooAssessment` declares the field and only admins read it; the listing test above covers the publish path.
 - [ ] 3.3 Show the log on the review and assessment pages (REQ-WRV-003). Verify: `tests/e2e/woo-review-surface.spec.ts` "the reviewer reads the log".
+  - Built, not ticked: the e2e spec needs a running instance. `src/components/woo/WooRedactionLog.vue` lists each passage with its type, position and grounds, and marks a passage without a ground; it sits on the review panel and on the redaction page (`WooRedaction.vue`), which also shows a send-back reason. Unit spec: `WooRedactionLog.spec.js`.
 - [ ] 3.4 Live: on the dev instance redact a document with two grounded passages, read the assessment back, and paste its `redactionLog` (values masked) in the PR body. Verify: the pasted log.
 
 ## 4. Docs
 
-- [ ] 4.1 Document the review flow and the redaction log for officers in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+- [x] 4.1 Document the review flow and the redaction log for officers in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+  - Done: `docs/features/woo-transparency.md` (sections "Reviewing a batch" and "Redaction log"); the UI and schema strings in `l10n/en.json` and `l10n/nl.json`, `.js` rebuilt. `check:l10n` reports nothing missing; no U+2014 in the changed docs.
 
 ## 5. Verification
 

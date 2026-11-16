@@ -25,6 +25,7 @@ import {
 	NcLoadingIcon,
 	NcNoteCard,
 } from '@nextcloud/vue'
+import WooBatchReviewPanel from '../../components/woo/WooBatchReviewPanel.vue'
 import WooAssessmentDialog from '../../dialogs/woo/WooAssessmentDialog.vue'
 import {
 	ASSESSMENTS,
@@ -67,6 +68,7 @@ export default {
 		NcLoadingIcon,
 		NcNoteCard,
 		WooAssessmentDialog,
+		WooBatchReviewPanel,
 	},
 
 	data() {
@@ -133,9 +135,22 @@ export default {
 			)
 		},
 
-		/** @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication */
+		/** @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-a-rejected-batch-or-document-goes-back-to-its-author-with-the-reason-req-wrv-002 */
 		canPublish() {
+			return this.batch?.status === 'approved'
+		},
+
+		/** @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-the-reviewer-sees-each-document-as-the-public-will-req-wrv-001 */
+		inReview() {
 			return this.batch?.status === 'ready_for_review'
+		},
+
+		/** @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-a-rejected-batch-or-document-goes-back-to-its-author-with-the-reason-req-wrv-002 */
+		lastRejection() {
+			const rejections = Array.isArray(this.batch?.rejections) ? this.batch.rejections : []
+			return this.batch?.status === 'in_progress' && rejections.length > 0
+				? rejections[rejections.length - 1]
+				: null
 		},
 	},
 
@@ -364,6 +379,17 @@ export default {
 		},
 
 		/**
+		 * A review move changed the batch: read it and its queue again.
+		 *
+		 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-a-rejected-batch-or-document-goes-back-to-its-author-with-the-reason-req-wrv-002
+		 * @return {Promise<void>}
+		 */
+		async onReviewChanged() {
+			await this.loadBatch()
+			await this.loadAssessments()
+		},
+
+		/**
 		 * Mark the batch ready for review (opens the approval gate).
 		 *
 		 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
@@ -452,7 +478,24 @@ export default {
 				}}
 			</p>
 
+			<NcNoteCard v-if="lastRejection" type="warning" class="woo-batch__rejection">
+				{{
+					t('opencatalogi', 'Sent back by {by} on {at}: {reason}', {
+						by: lastRejection.by || '',
+						at: lastRejection.at ? new Date(lastRejection.at).toLocaleDateString() : '',
+						reason: lastRejection.reason || '',
+					})
+				}}
+			</NcNoteCard>
+
+			<WooBatchReviewPanel
+				v-if="inReview"
+				:batchId="batchId"
+				:caseReference="batch.caseReference || ''"
+				@changed="onReviewChanged" />
+
 			<section
+				v-else
 				class="woo-batch__queue"
 				:aria-label="t('opencatalogi', 'Document queue')">
 				<h3>{{ t('opencatalogi', 'Document queue') }}</h3>
