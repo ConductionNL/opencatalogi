@@ -65,8 +65,9 @@ class ProvideManifestConfigStateListenerTest extends TestCase {
 			new BeforeTemplateRenderedEvent(true, new TemplateResponse('opencatalogi', 'index'))
 		);
 
-		// 23 register/schema keys (incl. the 3 WOO and 4 service catalogue keys) + default_directory_url + instance_mode.
-		$this->assertCount(25, $this->provided);
+		// 24 register/schema keys (incl. the 3 WOO, 4 service catalogue and the error report keys) + default_directory_url + instance_mode.
+		$this->assertCount(26, $this->provided);
+		$this->assertSame('42', $this->provided['error_report_schema']);
 		// Anything but production reads as staging, so the banner shows.
 		$this->assertSame('staging', $this->provided['instance_mode']);
 		$this->assertSame('42', $this->provided['catalog_register']);

@@ -56,4 +56,4 @@ Only when the catalogue has `showWithheld` on, the publication carries `withheld
 | `429` | More than five reports in an hour from one address. |
 | `503 {"error": "not-configured"}` | The `error_report_schema` setting is empty. |
 
-The report is never published and stores no IP address. Its notification rule reaches the members of the catalogue's moderator groups.
+The report is never published and stores no IP address. Its notification rule reaches the members of the catalogue's moderator groups. Signed-in staff see the reports on the Error reports page, by catalogue and status, and set the status there.

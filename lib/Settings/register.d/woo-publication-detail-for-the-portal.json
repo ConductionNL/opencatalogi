@@ -34,13 +34,15 @@
 				],
 				"authorization": {
 					"read": [
-						"admin"
+						"admin",
+						"authenticated"
 					],
 					"create": [
 						"admin"
 					],
 					"update": [
-						"admin"
+						"admin",
+						"authenticated"
 					],
 					"delete": [
 						"admin"
