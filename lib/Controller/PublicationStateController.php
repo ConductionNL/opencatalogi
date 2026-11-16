@@ -36,6 +36,10 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -379,11 +383,14 @@ class PublicationStateController extends Controller {
 			);
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $republication,
-				extend: [],
-				register: $configuration['register'],
-				schema: $configuration['schema'],
-				_rbac: false,
-				_unowned: true
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(
+							register: $configuration['register'],
+							schema: $configuration['schema']
+						),
+					actor: new SaveActor(unowned: true)
+				),
+				_rbac: false
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
@@ -477,11 +484,14 @@ class PublicationStateController extends Controller {
 			);
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $this->registers->storable(depublication: $depublication),
-				extend: [],
-				register: $configuration['register'],
-				schema: $configuration['schema'],
-				_rbac: false,
-				_unowned: true
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(
+							register: $configuration['register'],
+							schema: $configuration['schema']
+						),
+					actor: new SaveActor(unowned: true)
+				),
+				_rbac: false
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
@@ -524,8 +534,7 @@ class PublicationStateController extends Controller {
 		try {
 			return $this->registers->getObjectService()->find(
 				id: $id,
-				register: $configuration['register'],
-				schema: $configuration['schema'],
+				options: new ObjectFindOptions(register: $configuration['register'], schema: $configuration['schema']),
 				_rbac: true
 			);
 		} catch (\Throwable $e) {
@@ -557,9 +566,10 @@ class PublicationStateController extends Controller {
 
 		$this->registers->getObjectService()->saveObject(
 			object: $record,
-			register: $configuration['register'],
-			schema: $configuration['schema'],
-			uuid: $id,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $configuration['register'], schema: $configuration['schema']),
+				uuid: $id
+			),
 			_rbac: true
 		);
 
