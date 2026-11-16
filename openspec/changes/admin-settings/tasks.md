@@ -42,7 +42,7 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - [x] 2.2 Add `getSettings(): array` — reads all 21 `{type}_{field}` config keys plus 3 publishing keys
 - [x] 2.3 Detect OpenRegister availability via `IAppManager::isInstalled('openregister')` and minimum version check (0.1.7)
 - [ ] 2.4 Call `RegisterMapper::findAll()` to get available registers; for each, call `SchemaMapper::find()` for each schema ID to build the enriched `schemas` array
-- [ ] 2.5 Return the assembled array with `objectTypes`, `openRegisters`, `availableRegisters`, `configuration`
+- [x] 2.5 Return the assembled array with `objectTypes`, `openRegisters`, `availableRegisters`, `configuration` (verified: lib/Service/SettingsService.php, tests/Unit/Service/SettingsServiceTest.php)
 - [x] 2.6 Add SPDX header to `SettingsService.php`
 
 ---
@@ -57,7 +57,7 @@ Before implementation, verify no overlap with existing OpenRegister services:
   - GIVEN a POST body with `catalog_schema: "10"` WHEN `updateSettings()` is called THEN `IAppConfig::setValueString('opencatalogi', 'catalog_schema', '10')` is called AND existing non-updated keys are preserved
 - [x] 3.1 Add `updateSettings(array $data): array` — iterates over allowed keys, calls `IAppConfig::setValueString()` for each present key, then returns `getSettings()`
 - [ ] 3.2 Allowed keys: `{type}_schema` and `{type}_register` for all 7 types (14 writable keys)
-- [ ] 3.3 Silently ignore any unknown keys in `$data` (do not throw for extra fields)
+- [x] 3.3 Silently ignore any unknown keys in `$data` (do not throw for extra fields) (verified: lib/Service/SettingsService.php, tests/Unit/Service/SettingsServiceTest.php)
 
 ---
 
@@ -100,9 +100,9 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - **acceptance_criteria:**
   - GIVEN a register whose slug contains `"publication"` and schemas titled `"Catalog"`, `"Listing"`, etc. WHEN `autoConfigure()` is called THEN all 7 `{type}_register` and `{type}_schema` keys are set to the matching IDs
 - [x] 6.1 Add `autoConfigure(): array` — calls `RegisterMapper::findAll()` and finds the register whose slug contains `"publication"`
-- [ ] 6.2 For each of the 7 object types, search the register's schemas for one whose title (case-insensitive) matches the type name
-- [ ] 6.3 For each match found, write `{type}_register` and `{type}_schema` to `IAppConfig`; skip types with no match without error
-- [ ] 6.4 Return a summary array of which types were configured and which were skipped
+- [x] 6.2 For each of the 7 object types, search the register's schemas for one whose title (case-insensitive) matches the type name (verified: lib/Service/SettingsService.php, tests/Unit/Service/SettingsServiceTest.php)
+- [x] 6.3 For each match found, write `{type}_register` and `{type}_schema` to `IAppConfig`; skip types with no match without error (verified: lib/Service/SettingsService.php, tests/Unit/Service/SettingsServiceTest.php)
+- [x] 6.4 Return a summary array of which types were configured and which were skipped (verified: lib/Service/SettingsService.php, tests/Unit/Service/SettingsServiceTest.php)
 
 ---
 
@@ -215,12 +215,12 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - **files:** N/A (manual testing and CI)
 - **acceptance_criteria:**
   - GIVEN the full implementation WHEN tested end-to-end THEN all REQ-SET-001 through REQ-SET-014 scenarios pass
-- [ ] 13.1 Restart Apache/php-fpm; run `GET /api/settings` with curl — verify shape matches spec
-- [ ] 13.2 Test `POST /api/settings` with admin credentials — verify config persists; test with non-admin — verify 403
-- [ ] 13.3 Test `POST /api/settings/import` with `force: true` — verify import counts reported; test without force when versions match — verify import skipped
-- [ ] 13.4 Test `GET /api/settings/version` — verify `match` field is correct before and after import
-- [ ] 13.5 Test repair step by simulating install: clear `configuredVersion` key, run `occ maintenance:repair` — verify settings are re-imported
-- [ ] 13.6 Open Nextcloud admin settings → OpenCatalogi — verify `CnVersionInfoCard` renders first, dropdowns populate, save works
+- [ ] 13.1 Restart Apache/php-fpm; run `GET /api/settings` with curl — verify shape matches spec (live pass, decision 139)
+- [ ] 13.2 Test `POST /api/settings` with admin credentials — verify config persists; test with non-admin — verify 403 (live pass, decision 139)
+- [ ] 13.3 Test `POST /api/settings/import` with `force: true` — verify import counts reported; test without force when versions match — verify import skipped (live pass, decision 139)
+- [ ] 13.4 Test `GET /api/settings/version` — verify `match` field is correct before and after import (live pass, decision 139)
+- [ ] 13.5 Test repair step by simulating install: clear `configuredVersion` key, run `occ maintenance:repair` — verify settings are re-imported (live pass, decision 139)
+- [ ] 13.6 Open Nextcloud admin settings → OpenCatalogi — verify `CnVersionInfoCard` renders first, dropdowns populate, save works (live pass, decision 139)
 - [ ] 13.7 Run `npm run check:l10n` — zero MISSING, zero UNWRAPPED
 - [ ] 13.8 Verify `AdminRoot.vue` is absent from the vue-router: `grep -rn "AdminRoot" src/router/` must return no results
 - [ ] 13.9 Run all Hydra gates: `hydra-gate-route-auth`, `hydra-gate-semantic-auth`, `hydra-gate-spdx`, `hydra-gate-forbidden-patterns`, `hydra-gate-admin-router`, `hydra-gate-nc-input-labels`
