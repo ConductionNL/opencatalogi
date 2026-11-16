@@ -36,7 +36,6 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
@@ -65,7 +64,6 @@ class WooController extends Controller {
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The current user session.
 	 * @param InformationCategoryRegistryInterface $categories The information categories, bundled plus local.
-	 * @param DocumentTypeVocabularyInterface $vocabulary The bundled DiWoo value lists.
 	 */
 	public function __construct(
 		$appName,
@@ -74,7 +72,6 @@ class WooController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly InformationCategoryRegistryInterface $categories,
-		private readonly DocumentTypeVocabularyInterface $vocabulary,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -146,33 +143,6 @@ class WooController extends Controller {
 
 		return new JSONResponse(['results' => $rows, 'total' => count($rows)]);
 	}//end categories()
-
-	/**
-	 * Return the DiWoo documentsoorten a publication's document type is chosen from.
-	 *
-	 * Read-only; authenticated, with the same posture as categories(). Each row
-	 * carries the code, the Dutch label and the resource URI the publication
-	 * stores, as the DiWoo value-list XSD enumerates them (REQ-DWP-002).
-	 *
-	 * @return JSONResponse The documentsoorten and their count.
-	 *
-	 * @NoAdminRequired
-	 * @NoCSRFRequired
-	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
-	 *
-	 * @no-admin-idor-exempt Returns the national documentsoorten value list bundled
-	 *   with the app, the same rows for every caller. The endpoint takes no
-	 *   parameter, so there is no object id to scope.
-	 */
-	public function documentsoorten(): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		$rows = $this->vocabulary->documentsoortList();
-		return new JSONResponse(['results' => $rows, 'total' => count($rows)]);
-	}//end documentsoorten()
 
 	/**
 	 * One information category as the list shows it, with its label in the user's language.

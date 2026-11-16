@@ -1138,8 +1138,8 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		// The batch becomes a real publication with its documents attached (woo-batch-creates-publications).
 		// A publication OpenRegister refuses (its DiWoo metadata is incomplete, REQ-DWP-003)
 		// leaves the batch unpublished, with the missing fields named.
-		try {
-			$publication = $this->publications->publishDocuments(
+		$publication = $this->unlessRefused(
+			publish: fn (): mixed => $this->publications->publishDocuments(
 				batch: $batch,
 				listings: $listings,
 				now: $now,
@@ -1149,10 +1149,8 @@ class WooService implements TransparencyWorkflowServiceInterface {
 					schema: $batchSchema,
 					data: $progress
 				)
-			);
-		} catch (\OCA\OpenRegister\Exception\HookStoppedException $e) {
-			throw new RuntimeException($this->refusedPublication(refusal: $e), 0, $e);
-		}
+			)
+		);
 
 		$publishedCount = count($listings);
 		$publicationMeta = [
@@ -1187,6 +1185,26 @@ class WooService implements TransparencyWorkflowServiceInterface {
 
 		return $saved;
 	}//end publishBatch()
+
+	/**
+	 * Run the batch's publication; a publication OpenRegister refuses becomes a
+	 * RuntimeException naming what the refusal names.
+	 *
+	 * @param callable(): mixed $publish Publishes the batch.
+	 *
+	 * @return mixed What $publish returns.
+	 *
+	 * @throws RuntimeException When OpenRegister refuses the publication.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
+	 */
+	private function unlessRefused(callable $publish): mixed {
+		try {
+			return $publish();
+		} catch (\OCA\OpenRegister\Exception\HookStoppedException $e) {
+			throw new RuntimeException($this->refusedPublication(refusal: $e), 0, $e);
+		}
+	}//end unlessRefused()
 
 	/**
 	 * Why the batch's publication was refused, naming the fields the refusal names.

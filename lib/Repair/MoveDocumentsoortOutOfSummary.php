@@ -68,6 +68,20 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	private const FIELDS_INTRODUCED_AT = 'diwoo_fields_introduced_at';
 
 	/**
+	 * OpenRegister's object service, for the run in progress.
+	 *
+	 * @var object|null
+	 */
+	private ?object $objects = null;
+
+	/**
+	 * The running counts of the run in progress.
+	 *
+	 * @var array{moved: int, left: int, failed: int}
+	 */
+	private array $counts = ['moved' => 0, 'left' => 0, 'failed' => 0];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param SettingsServiceInterface $settings Reaches OpenRegister's registers and object service.
@@ -112,11 +126,13 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 			return;
 		}
 
-		$counts = ['moved' => 0, 'left' => 0, 'failed' => 0];
+		$this->objects = $objects;
+		$this->counts = ['moved' => 0, 'left' => 0, 'failed' => 0];
 		foreach ($this->publicationScopes() as [$register, $schema]) {
-			$this->moveInScope(objects: $objects, scope: ['register' => $register, 'schema' => $schema], counts: $counts);
+			$this->moveInScope(scope: ['register' => $register, 'schema' => $schema]);
 		}
 
+		$counts = $this->counts;
 		$output->info(
 			'MoveDocumentsoortOutOfSummary: ' . $counts['moved'] . ' publication(s) moved, '
 			. $counts['left'] . ' summary(ies) left, ' . $counts['failed'] . ' could not be saved.'
@@ -148,7 +164,7 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 		$scopes = [];
 		foreach (($this->settings->getSettings()['availableRegisters'] ?? []) as $register) {
 			foreach ((array)($register['schemas'] ?? []) as $schema) {
-				if (is_array($schema) === true && strtolower((string)($schema['slug'] ?? '')) === self::PUBLICATION_SLUG) {
+				if (self::isPublicationSchemaRow(schema: $schema) === true) {
 					$scopes[] = [(string)($register['id'] ?? ''), (string)($schema['id'] ?? '')];
 				}
 			}
@@ -158,24 +174,33 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	}//end publicationScopes()
 
 	/**
+	 * Whether a register's schema entry is the publication schema.
+	 *
+	 * @param mixed $schema The schema entry.
+	 *
+	 * @return bool True for the publication schema.
+	 */
+	private static function isPublicationSchemaRow(mixed $schema): bool {
+		return is_array($schema) === true && strtolower((string)($schema['slug'] ?? '')) === self::PUBLICATION_SLUG;
+	}//end isPublicationSchemaRow()
+
+	/**
 	 * Move the summaries of every publication in one register and schema, page by page.
 	 *
-	 * @param object $objects OpenRegister's object service.
 	 * @param array{register: string, schema: string} $scope The register and schema.
-	 * @param array{moved: int, left: int, failed: int} $counts The running counts.
 	 *
 	 * @return void
 	 */
-	private function moveInScope(object $objects, array $scope, array &$counts): void {
+	private function moveInScope(array $scope): void {
 		$page = 1;
 		do {
-			$rows = (array)($objects->searchObjectsPaginated(
+			$rows = (array)($this->objects->searchObjectsPaginated(
 				query: ['@self' => $scope, '_limit' => self::PAGE_SIZE, '_page' => $page],
 				_rbac: false,
 				_multitenancy: false
 			)['results'] ?? []);
 			foreach ($rows as $row) {
-				$this->moveOne(objects: $objects, publication: self::asArray(row: $row), scope: $scope, counts: $counts);
+				$this->moveOne(publication: self::asArray(row: $row), scope: $scope);
 			}
 
 			$page++;
@@ -186,14 +211,12 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	/**
 	 * Move one publication's summary when it is exactly a document type and no type is stored.
 	 *
-	 * @param object $objects OpenRegister's object service.
 	 * @param array<string, mixed> $publication The publication.
 	 * @param array{register: string, schema: string} $scope The register and schema.
-	 * @param array{moved: int, left: int, failed: int} $counts The running counts.
 	 *
 	 * @return void
 	 */
-	private function moveOne(object $objects, array $publication, array $scope, array &$counts): void {
+	private function moveOne(array $publication, array $scope): void {
 		$summary = trim((string)($publication['summary'] ?? ''));
 		$stored = trim((string)($publication['documentsoort'] ?? ''));
 		if ($summary === '') {
@@ -202,7 +225,7 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 
 		$member = $this->vocabulary->resolveDocumentsoort($summary);
 		if ($member === null || $stored !== '') {
-			$counts['left']++;
+			$this->counts['left']++;
 			return;
 		}
 
@@ -211,7 +234,7 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 		$publication['documentsoort'] = $member['uri'];
 		$publication['summary'] = '';
 		try {
-			$objects->saveObject(
+			$this->objects->saveObject(
 				object: $publication,
 				options: new ObjectSaveOptions(
 					target: new ObjectFindTarget(register: $scope['register'], schema: $scope['schema']),
@@ -220,9 +243,9 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 				_rbac: false,
 				_multitenancy: false
 			);
-			$counts['moved']++;
+			$this->counts['moved']++;
 		} catch (\Throwable $e) {
-			$counts['failed']++;
+			$this->counts['failed']++;
 			$this->logger->warning('MoveDocumentsoortOutOfSummary: publication ' . $uuid . ' could not be saved: ' . $e->getMessage());
 		}
 

@@ -116,7 +116,10 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
 	 */
 	public function map(array $publication, array $file, array &$violations = [], array $relations = []): array {
-		return $this->document(publication: $publication, file: $file, violations: $violations, relations: $relations)['entry'];
+		$document = $this->document(publication: $publication, file: $file);
+		array_push($violations, ...$document['violations']);
+
+		return self::withRelations(entry: $document['entry'], relations: $relations);
 	}//end map()
 
 	/**
@@ -134,25 +137,40 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function mapComplete(array $publication, array $file, array &$violations = [], array $relations = []): ?array {
-		$document = $this->document(publication: $publication, file: $file, violations: $violations, relations: $relations);
+		$document = $this->document(publication: $publication, file: $file);
+		array_push($violations, ...$document['violations']);
 		if ($document['complete'] === false) {
 			return null;
 		}
 
-		return $document['entry'];
+		return self::withRelations(entry: $document['entry'], relations: $relations);
 	}//end mapComplete()
 
 	/**
-	 * The url entry of one file and whether it carries every mandatory element.
+	 * A url entry with the document's relations added to its DiWoo element.
+	 *
+	 * @param array{loc: string, lastmod: string, 'diwoo:Document': array} $entry     The url entry.
+	 * @param array<string, array<string, mixed>>                          $relations The document's `isPartOf` or `hasParts` element, if any.
+	 *
+	 * @return array{loc: string, lastmod: string, 'diwoo:Document': array} The entry.
+	 */
+	private static function withRelations(array $entry, array $relations): array {
+		$entry['diwoo:Document']['diwoo:DiWoo'] = array_merge($entry['diwoo:Document']['diwoo:DiWoo'], $relations);
+
+		return $entry;
+	}//end withRelations()
+
+	/**
+	 * The url entry of one file without its relations, whether it carries every
+	 * mandatory element, and the unresolved axes it reports.
 	 *
 	 * @param array $publication The publication.
 	 * @param array $file The file.
-	 * @param array<int, array<string, string>> $violations The report, appended to.
-	 * @param array<string, array<string, mixed>> $relations The document relations.
 	 *
-	 * @return array{entry: array, complete: bool} The entry and its completeness.
+	 * @return array{entry: array, complete: bool, violations: array<int, array<string, string>>} The entry, its completeness and its violations.
 	 */
-	private function document(array $publication, array $file, array &$violations, array $relations): array {
+	private function document(array $publication, array $file): array {
+		$violations = [];
 		$loc = ($file['downloadUrl'] ?? '');
 		$format = $this->formatOf(file: $file);
 		$diwoo = $this->diwooCore(publication: $publication, format: $format['element']);
@@ -170,7 +188,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 		$complete = (array_diff(array_column($gaps, 0), self::OPTIONAL_GAPS) === []);
 
 		$elements = $this->fields->withoutUnresolvedType(elements: $elements);
-		$diwoo = array_merge($diwoo, array_filter($elements, static fn (?array $element): bool => $element !== null), $relations);
+		$diwoo = array_merge($diwoo, array_filter($elements, static fn (?array $element): bool => $element !== null));
 
 		$entry = [
 			'loc' => $loc,
@@ -178,7 +196,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 			'diwoo:Document' => ['diwoo:DiWoo' => $diwoo],
 		];
 
-		return ['entry' => $entry, 'complete' => $complete];
+		return ['entry' => $entry, 'complete' => $complete, 'violations' => $violations];
 	}//end document()
 
 	/**

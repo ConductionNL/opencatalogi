@@ -87,16 +87,28 @@ class DiwooCompletenessListener implements IEventListener {
 	 * @spec openspec/changes/diwoo-metadata-on-the-publication
 	 */
 	public function handle(Event $event): void {
-		if ($event instanceof ObjectCreatingEvent === false && $event instanceof ObjectUpdatingEvent === false) {
+		if ($event instanceof ObjectCreatingEvent || $event instanceof ObjectUpdatingEvent) {
+			$this->check(event: $event);
+		}
+
+	}//end handle()
+
+	/**
+	 * Normalise the document types of a pre-save event and stop the save when the metadata does not hold.
+	 *
+	 * @param ObjectCreatingEvent|ObjectUpdatingEvent $event The pre-save event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication
+	 */
+	private function check(ObjectCreatingEvent|ObjectUpdatingEvent $event): void {
+		$scope = $this->scopeOf(event: $event);
+		if ($scope === null) {
 			return;
 		}
 
-		$entity = $this->entityOf(event: $event);
-		$declared = $this->schemaIsDeclared(entity: $entity);
-		if ($declared === false && $this->isPublicationSchema(entity: $entity) === false) {
-			return;
-		}
-
+		[$entity, $declared] = $scope;
 		$data = array_merge(($entity->getObject() ?? []), $event->getModifiedData());
 		$errors = [];
 		$modified = $this->normalisedTypes(data: $data, errors: $errors);
@@ -116,7 +128,25 @@ class DiwooCompletenessListener implements IEventListener {
 			$event->setModifiedData(array_merge($event->getModifiedData(), $modified));
 		}
 
-	}//end handle()
+	}//end check()
+
+	/**
+	 * The object a pre-save event writes and whether a category declares its schema,
+	 * or null when the object is neither a publication nor in a declared schema.
+	 *
+	 * @param ObjectCreatingEvent|ObjectUpdatingEvent $event The pre-save event.
+	 *
+	 * @return array{0: ObjectEntity, 1: bool}|null The object and whether its schema is declared.
+	 */
+	private function scopeOf(ObjectCreatingEvent|ObjectUpdatingEvent $event): ?array {
+		$entity = $this->entityOf(event: $event);
+		$declared = $this->schemaIsDeclared(entity: $entity);
+		if ($declared === false && $this->isPublicationSchema(entity: $entity) === false) {
+			return null;
+		}
+
+		return [$entity, $declared];
+	}//end scopeOf()
 
 	/**
 	 * The object being written.
@@ -158,13 +188,7 @@ class DiwooCompletenessListener implements IEventListener {
 	 * @return bool True when a category declares the schema.
 	 */
 	private function schemaIsDeclared(ObjectEntity $entity): bool {
-		$declared = [];
-		foreach ($this->categories->all() as $code => $record) {
-			foreach ($this->categories->schemasFor(code: (string)$code) as $slug) {
-				$declared[] = strtolower((string)$slug);
-			}
-		}
-
+		$declared = $this->declaredSlugs();
 		if ($declared === [] || $entity->getSchema() === null) {
 			return false;
 		}
@@ -180,6 +204,22 @@ class DiwooCompletenessListener implements IEventListener {
 	}//end schemaIsDeclared()
 
 	/**
+	 * The lower-cased schema slugs the Woo categories name for their sitemaps.
+	 *
+	 * @return array<int, string> The slugs.
+	 */
+	private function declaredSlugs(): array {
+		$declared = [];
+		foreach ($this->categories->all() as $code => $record) {
+			foreach ($this->categories->schemasFor(code: (string)$code) as $slug) {
+				$declared[] = strtolower((string)$slug);
+			}
+		}
+
+		return $declared;
+	}//end declaredSlugs()
+
+	/**
 	 * The document types rewritten to their list member's URI; an unknown one is an error.
 	 *
 	 * @param array<string, mixed> $data The publication.
@@ -188,31 +228,65 @@ class DiwooCompletenessListener implements IEventListener {
 	 * @return array<string, mixed> The rewritten fields.
 	 */
 	private function normalisedTypes(array $data, array &$errors): array {
-		$modified = [];
+		return array_merge(
+			$this->normalisedType(data: $data, errors: $errors),
+			$this->normalisedPerFileTypes(data: $data, errors: $errors)
+		);
+	}//end normalisedTypes()
+
+	/**
+	 * The publication's document type rewritten to its list member's URI; an unknown one is an error.
+	 *
+	 * @param array<string, mixed>  $data   The publication.
+	 * @param array<string, string> $errors The errors, appended to.
+	 *
+	 * @return array<string, mixed> The rewritten field, or none.
+	 */
+	private function normalisedType(array $data, array &$errors): array {
 		$type = $data['documentsoort'] ?? null;
-		if ($type !== null && $type !== '') {
-			$uri = $this->documentsoortUri(type: $type);
-			if ($uri === null) {
-				$errors['documentsoort'] = 'is not a member of the national list of document types';
-			} else if ($uri !== $type) {
-				$modified['documentsoort'] = $uri;
-			}
+		if ($type === null || $type === '') {
+			return [];
 		}
 
+		$uri = $this->documentsoortUri(type: $type);
+		if ($uri === null) {
+			$errors['documentsoort'] = 'is not a member of the national list of document types';
+			return [];
+		}
+
+		if ($uri !== $type) {
+			return ['documentsoort' => $uri];
+		}
+
+		return [];
+	}//end normalisedType()
+
+	/**
+	 * The per-file document types rewritten to their list members' URIs; an unknown one is an error.
+	 *
+	 * @param array<string, mixed>  $data   The publication.
+	 * @param array<string, string> $errors The errors, appended to.
+	 *
+	 * @return array<string, mixed> The rewritten field, or none.
+	 */
+	private function normalisedPerFileTypes(array $data, array &$errors): array {
 		$perFile = $data['fileDocumentsoorten'] ?? null;
 		if ($perFile === null || $perFile === []) {
-			return $modified;
+			return [];
 		}
 
 		$rewritten = $this->normalisedFileTypes(perFile: $perFile);
 		if ($rewritten === null) {
 			$errors['fileDocumentsoorten'] = 'names a document type that is not a member of the national list of document types';
-		} else if ($rewritten !== $perFile) {
-			$modified['fileDocumentsoorten'] = $rewritten;
+			return [];
 		}
 
-		return $modified;
-	}//end normalisedTypes()
+		if ($rewritten !== $perFile) {
+			return ['fileDocumentsoorten' => $rewritten];
+		}
+
+		return [];
+	}//end normalisedPerFileTypes()
 
 	/**
 	 * The per-file document types as URIs, or null when one does not resolve.
