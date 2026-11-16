@@ -2,16 +2,21 @@
 
 ## 1. Server
 
-- [ ] 1.1 Add `UnpublishedOverviewService` with the publications and documents lists, bounded as in D1 (REQ-PUO-001). Verify: `tests/Unit/Service/UnpublishedOverviewServiceTest.php` with a draft, a scheduled, a public and a withdrawn publication, and a file with a future published time.
-- [ ] 1.2 Add `GET /api/dashboard/unpublished` with `kind` and `limit`, RBAC on (REQ-PUO-001). Verify: controller test, including a user who reads only one catalogue.
+- [x] 1.1 Add `UnpublishedOverviewService` with the publications and documents lists, bounded as in D1 (REQ-PUO-001). Verify: `tests/Unit/Service/UnpublishedOverviewServiceTest.php` with a draft, a scheduled, a public and a withdrawn publication, and a file with a future published time.
+- [x] 1.2 Add `GET /api/dashboard/unpublished` with `kind` and `limit`, RBAC on (REQ-PUO-001). Verify: controller test, including a user who reads only one catalogue.
+  - Built: `lib/Service/UnpublishedOverviewService.php`, `lib/Controller/UnpublishedOverviewController.php`, route before the `/api/{catalogSlug}/{id}` catch-all. Both lists read the 200 most recently updated publications (RBAC on) and set `scope: recent-200` when more exist. RBAC is OpenRegister's: the service only sees rows the search returns, pinned by `testEveryReadHasRbacOnAndTheNewestFirst`.
 
 ## 2. Widgets
 
-- [ ] 2.1 Point `UnpublishedPublicationsWidget.vue` at the endpoint and fix the row link with `catalogSlug` (REQ-PUO-002). Verify: `tests/e2e/unpublished-widgets.spec.ts` on the Nextcloud dashboard opens the publication from a row.
-- [ ] 2.2 Point `UnpublishedAttachmentsWidget.vue` at the endpoint with `kind=documents`, retitle it Unpublished documents (REQ-PUO-002). Verify: same e2e spec.
+- [x] 2.1 Point `UnpublishedPublicationsWidget.vue` at the endpoint and fix the row link with `catalogSlug` (REQ-PUO-002). Verify: `tests/e2e/unpublished-widgets.spec.ts` on the Nextcloud dashboard opens the publication from a row.
+- [x] 2.2 Point `UnpublishedAttachmentsWidget.vue` at the endpoint with `kind=documents`, retitle it Unpublished documents (REQ-PUO-002). Verify: same e2e spec.
+
+  - Built: both widgets read `GET /api/dashboard/unpublished` through `src/views/widgets/unpublishedOverview.js` (`kind=publications` / `kind=documents`); a row opens `/publications/{catalogSlug}/{publicationId}` with the slug the server resolved, and does nothing without one. The documents widget is titled "Unpublished documents" and its rows open their publication. Tests: `unpublishedOverview.spec.js`, `PublicationRowLinks.spec.js` (now loads and covers the new row link), `ListWidgetOptions.spec.js`, `UnpublishedAttachmentsWidgetTest`. The Playwright `tests/e2e/unpublished-widgets.spec.ts` needs a live dashboard and is not written here.
 
 ## 3. Specs, seed data, docs and strings
 
-- [ ] 3.1 Mark tasks of `dashboard-consume-or-aggregations` that wait on the `attachment` schema as superseded by this change (REQ-PUO-002). Verify: `openspec validate dashboard-consume-or-aggregations --strict` still passes.
-- [ ] 3.2 Add a third seed publication with a future `publicationDate` (REQ-PUO-001). Verify: a fresh install lists it in the widget and does not list the withdrawn second seed publication.
-- [ ] 3.3 Update `docs/` and `l10n/` (English and Dutch) for the new titles and empty states. Verify: `npm run lint` and the l10n check.
+- [x] 3.1 Mark tasks of `dashboard-consume-or-aggregations` that wait on the `attachment` schema as superseded by this change (REQ-PUO-002). Verify: `openspec validate dashboard-consume-or-aggregations --strict` still passes.
+- [x] 3.2 Add a third seed publication with a future `publicationDate` (REQ-PUO-001). Verify: a fresh install lists it in the widget and does not list the withdrawn second seed publication.
+  - Built: the seed is the demo data, as `publications-publish-and-withdraw-action` already decided for the second publication: `publication_register.json` carries no example rows (ADR-111, pinned by `PublicationStateServiceTest`). `lib/Settings/opencatalogi_mock_register.json` now has `example-municipality-council-agenda` with `publicationDate` 2030-01-01, far enough ahead to stay scheduled. `UnpublishedOverviewServiceTest::testTheDemoDataListsItsScheduledExampleButNotTheWithdrawnOne` runs the three example publications through the service: the agenda is listed, the public annual report and the withdrawn quarterly report are not. A live install of the demo data is not run here.
+- [x] 3.3 Update `docs/` and `l10n/` (English and Dutch) for the new titles and empty states. Verify: `npm run lint` and the l10n check.
+  - Built: `docs/features/dashboard.md` names the Unpublished documents widget and describes what both widgets list, the row link, the empty states, the 200-publication window and the demo row; the English and Dutch strings came with 2.1/2.2.
