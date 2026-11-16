@@ -42,6 +42,8 @@ interface TermRollInterface {
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException When the term engine cannot be reached.
 	 *
+	 * @SuppressWarnings(PHPMD.ShortVariable) $at is TermRoll::roll()'s parameter name, which callers pass by name.
+	 *
 	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-end-date-written-through-the-api-is-rolled-req-ipr-002
 	 */
 	public function roll(

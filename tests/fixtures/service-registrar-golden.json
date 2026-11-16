@@ -353,5 +353,20 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\PlainSummaryProvenanceInterface",
         "OCA\\OpenCatalogi\\Service\\Publication\\PlainSummaryProvenance"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\TermRollInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\TermRoll"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublicationRightsInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRights"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\InstanceModeInterface",
+        "OCA\\OpenCatalogi\\Service\\InstanceMode"
     ]
 ]

@@ -1401,7 +1401,11 @@ class PublicationsController extends Controller {
 		} catch (\Exception $e) {
 			return $this->fileReadFailed(
 				exception: $e,
-				context: ['id' => $id, 'catalogSlug' => $catalogSlug, 'log' => '[PublicationsController::attachments] Failed to retrieve attachments']
+				context: [
+					'id' => $id,
+					'catalogSlug' => $catalogSlug,
+					'log' => '[PublicationsController::attachments] Failed to retrieve attachments',
+				]
 			);
 		}//end try
 
@@ -1542,7 +1546,11 @@ class PublicationsController extends Controller {
 		} catch (\Exception $e) {
 			return $this->fileReadFailed(
 				exception: $e,
-				context: ['id' => $id, 'catalogSlug' => $catalogSlug, 'log' => '[PublicationsController::download] Failed to download publication']
+				context: [
+					'id' => $id,
+					'catalogSlug' => $catalogSlug,
+					'log' => '[PublicationsController::download] Failed to download publication',
+				]
 			);
 		}//end try
 
@@ -1594,23 +1602,11 @@ class PublicationsController extends Controller {
 			);
 			$result = $this->queryService->applyReadRuleGuardToRows(result: $result, page: $page);
 
-			// Add CORS headers for public API access.
-			$response = new JSONResponse($result, 200);
-			$this->addCorsHeaders(response: $response);
-
-			return $response;
+			return $this->relationsAnswer(result: $result);
 		} catch (\Exception $e) {
-			$this->logger->error(
-				'[PublicationsController::uses] Failed to retrieve publication uses',
-				[
-					'id' => $id,
-					'error' => $e->getMessage(),
-				]
-			);
-			// Public endpoint — return a generic error body to the caller (#735).
-			return new JSONResponse(
-				['error' => $this->l10n->t('Internal server error')],
-				500
+			return $this->relationReadFailed(
+				exception: $e,
+				context: ['id' => $id, 'log' => '[PublicationsController::uses] Failed to retrieve publication uses']
 			);
 		}//end try
 
@@ -1659,23 +1655,11 @@ class PublicationsController extends Controller {
 			// block as open. Same read-rule guard on the rows (WOO-581 review round 2).
 			$result = $this->queryService->applyReadRuleGuardToRows(result: $result);
 
-			// Add CORS headers for public API access.
-			$response = new JSONResponse($result, 200);
-			$this->addCorsHeaders(response: $response);
-
-			return $response;
+			return $this->relationsAnswer(result: $result);
 		} catch (\Exception $e) {
-			$this->logger->error(
-				'[PublicationsController::used] Failed to retrieve publication used',
-				[
-					'id' => $id,
-					'error' => $e->getMessage(),
-				]
-			);
-			// Public endpoint — return a generic error body to the caller (#735).
-			return new JSONResponse(
-				['error' => $this->l10n->t('Internal server error')],
-				500
+			return $this->relationReadFailed(
+				exception: $e,
+				context: ['id' => $id, 'log' => '[PublicationsController::used] Failed to retrieve publication used']
 			);
 		}//end try
 
@@ -1754,4 +1738,47 @@ class PublicationsController extends Controller {
 		return null;
 
 	}//end placePublicRoot()
+
+	/**
+	 * The answer for a relation read: the rows, with CORS headers for public API access.
+	 *
+	 * @param array<string, mixed> $result The guarded rows.
+	 *
+	 * @return JSONResponse The 200 answer.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function relationsAnswer(array $result): JSONResponse {
+		$response = new JSONResponse($result, 200);
+		$this->addCorsHeaders(response: $response);
+
+		return $response;
+
+	}//end relationsAnswer()
+
+	/**
+	 * The answer for a relation read that threw: a logged 500 with a generic
+	 * body, since this is a public endpoint (#735).
+	 *
+	 * @param \Exception $exception The exception.
+	 * @param array{id: string, log: string} $context The id from the URL and the log message.
+	 *
+	 * @return JSONResponse The 500 answer.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function relationReadFailed(\Exception $exception, array $context): JSONResponse {
+		$this->logger->error(
+			$context['log'],
+			[
+				'id' => $context['id'],
+				'error' => $exception->getMessage(),
+			]
+		);
+		return new JSONResponse(
+			['error' => $this->l10n->t('Internal server error')],
+			500
+		);
+
+	}//end relationReadFailed()
 }//end class

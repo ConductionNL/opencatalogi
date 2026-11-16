@@ -304,23 +304,7 @@ class PublicationService implements PublicationServiceInterface {
 			// Derive allowed registers/schemas from the catalogs configured on this
 			// instance. getCatalogFilters() returns the union of all catalog scopes,
 			// which is the safe upper-bound for any request that reaches this path.
-			$context = $this->getCatalogFilters();
-			$allowedRegisters = array_map('intval', $context['registers']);
-			$allowedSchemas = array_map('intval', $context['schemas']);
-
-			if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
-				// No catalog scope configured — refuse to do a platform-wide scan.
-				return;
-			}
-
-			// Delegate to the scoped helper that routes the lookup through OpenRegister's
-			// ObjectService, never a raw DBMS-catalog probe, and only within a
-			// constrained (register × schema) set.
-			$location = $this->getQueryService()->findObjectLocation(
-				uuid: $objectId,
-				allowedRegisters: $allowedRegisters,
-				allowedSchemas: $allowedSchemas
-			);
+			$location = $this->locationInCatalogScope(objectId: $objectId);
 
 			if ($location !== null) {
 				$objectService->setRegister(register: (string)$location['register']);
@@ -1179,27 +1163,44 @@ class PublicationService implements PublicationServiceInterface {
 	 */
 	private function isObjectInCatalogScope(string $objectId): bool {
 		try {
-			$context = $this->getCatalogFilters();
-			$allowedRegisters = array_map('intval', $context['registers']);
-			$allowedSchemas = array_map('intval', $context['schemas']);
-
-			if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
-				return false;
-			}
-
-			$location = $this->getQueryService()->findObjectLocation(
-				uuid: $objectId,
-				allowedRegisters: $allowedRegisters,
-				allowedSchemas: $allowedSchemas
-			);
-
-			return $location !== null;
+			return $this->locationInCatalogScope(objectId: $objectId) !== null;
 		} catch (\Exception $e) {
 			// Fail closed — if we cannot verify scope, deny.
 			return false;
 		}//end try
 
 	}//end isObjectInCatalogScope()
+
+	/**
+	 * Where an object lives, looked up only within the (register × schema) pairs
+	 * of the catalogs configured on this instance.
+	 *
+	 * Delegates to the scoped helper that routes the lookup through OpenRegister's
+	 * ObjectService, never a raw DBMS-catalog probe. With no catalog scope
+	 * configured there is no lookup at all: no platform-wide scan.
+	 *
+	 * @param string $objectId The UUID of the object to locate
+	 *
+	 * @return array|null The register and schema of the object, or null when it is not in scope.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function locationInCatalogScope(string $objectId): ?array {
+		$context = $this->getCatalogFilters();
+		$allowedRegisters = array_map('intval', $context['registers']);
+		$allowedSchemas = array_map('intval', $context['schemas']);
+
+		if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
+			return null;
+		}
+
+		return $this->getQueryService()->findObjectLocation(
+			uuid: $objectId,
+			allowedRegisters: $allowedRegisters,
+			allowedSchemas: $allowedSchemas
+		);
+
+	}//end locationInCatalogScope()
 
 	/**
 	 * Shows attachments of a publication
