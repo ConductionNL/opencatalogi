@@ -40,6 +40,7 @@ use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCA\OpenCatalogi\Service\WooReadinessService;
 use OCA\OpenCatalogi\Service\WooRegistrationService;
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -134,18 +135,17 @@ final class OutboundGateWiringTest extends TestCase {
 			/**
 			 * Record the save.
 			 *
-			 * @param array  $object   The object.
-			 * @param string $register The register.
-			 * @param string $schema   The schema.
+			 * @param array             $object  The object.
+			 * @param ObjectSaveOptions $options Where it is saved.
 			 *
 			 * @return array
 			 */
-			public function saveObject(array $object, string $register, string $schema): array {
+			public function saveObject(array $object, ObjectSaveOptions $options=new ObjectSaveOptions()): array {
 				if ($this->fails === true) {
 					throw new RuntimeException('store down');
 				}
 
-				$this->owner->recordSave(save: [$register, $schema, $object]);
+				$this->owner->recordSave(save: [$options->target->register, $options->target->schema, $object]);
 				return $object;
 			}//end saveObject()
 		};

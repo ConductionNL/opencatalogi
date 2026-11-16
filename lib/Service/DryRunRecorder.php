@@ -27,6 +27,8 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Throwable;
@@ -102,8 +104,12 @@ class DryRunRecorder {
 		try {
 			$this->openRegister->installedObjectService()->saveObject(
 				object: $record,
-				register: $this->config->getValueString(AppIdentity::APP_ID, 'publication_register', 'publication'),
-				schema: self::SCHEMA,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(
+						register: $this->config->getValueString(AppIdentity::APP_ID, 'publication_register', 'publication'),
+						schema: self::SCHEMA
+					)
+				),
 			);
 		} catch (Throwable) {
 			return false;
