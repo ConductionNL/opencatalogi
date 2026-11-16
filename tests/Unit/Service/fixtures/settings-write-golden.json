@@ -164,7 +164,8 @@
             "woo_index_registration_url": "https://u",
             "woo_index_registration_at": "2026",
             "woo_index_registration_answer": "a",
-            "public_api_cache_seconds": "120"
+            "public_api_cache_seconds": "120",
+            "cors_allowed_origins": "https://www.voorbeeldgemeente.nl,https://andere.example:8443"
         },
         "written": [
             [
@@ -236,6 +237,11 @@
                 "opencatalogi",
                 "public_api_cache_seconds",
                 "120"
+            ],
+            [
+                "opencatalogi",
+                "cors_allowed_origins",
+                "https://www.voorbeeldgemeente.nl,https://andere.example:8443"
             ]
         ]
     },
@@ -500,7 +506,8 @@
             "woo_index_registration_at": "v73",
             "woo_index_registration_answer": "v72",
             "channel_sources": "{}",
-            "public_api_cache_seconds": "0"
+            "public_api_cache_seconds": "0",
+            "cors_allowed_origins": "https://v13.example"
         },
         "written": [
             [
@@ -697,6 +704,11 @@
                 "opencatalogi",
                 "public_api_cache_seconds",
                 "0"
+            ],
+            [
+                "opencatalogi",
+                "cors_allowed_origins",
+                "https://v13.example"
             ]
         ]
     },
@@ -723,5 +735,31 @@
                 "true"
             ]
         ]
+    },
+    "cors allowlist with a star": {
+        "answer": {
+            "cors_allowed_origins": "*"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "cors_allowed_origins",
+                "*"
+            ]
+        ]
+    },
+    "cors allowlist with a path": {
+        "answer": {
+            "thrown": "InvalidArgumentException",
+            "message": "\"https://a.example/zoeken\" is not a website origin. Give the scheme, host and optional port without a path, for example https://www.example.nl"
+        },
+        "written": []
+    },
+    "cors allowlist as a list": {
+        "answer": {
+            "thrown": "InvalidArgumentException",
+            "message": "Setting cors_allowed_origins takes a single value, not a list or an object"
+        },
+        "written": []
     }
 }

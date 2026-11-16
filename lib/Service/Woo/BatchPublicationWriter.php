@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
@@ -409,9 +410,35 @@ class BatchPublicationWriter {
 		}
 
 		$files->publishFile(object: $target, file: $created->getId());
+		$this->readingQueue()?->queue(fileId: (int)$created->getId(), publicationId: (string)$publication['id']);
 
 		return $embedded;
 	}//end attach()
+
+	/**
+	 * The queue that reads each attached document, or null when it cannot be resolved.
+	 *
+	 * Resolved from the container on use rather than injected, so this
+	 * writer's constructor keeps its five collaborators.
+	 *
+	 * @return AttachmentReadingQueueInterface|null
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
+	 */
+	private function readingQueue(): ?AttachmentReadingQueueInterface {
+		$queue = null;
+		try {
+			$queue = $this->container->get(AttachmentReadingQueueInterface::class);
+		} catch (\Throwable) {
+			// No queue: the document is published unread, as without OCR.
+		}
+
+		if ($queue instanceof AttachmentReadingQueueInterface === false) {
+			return null;
+		}
+
+		return $queue;
+	}//end readingQueue()
 
 	/**
 	 * The public link to the publication.

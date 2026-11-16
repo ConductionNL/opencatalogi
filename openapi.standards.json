@@ -435,6 +435,19 @@
             "$ref": "#/components/responses/InternalServerError"
           }
         }
+      },
+      "options": {
+        "operationId": "federation-publications-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications`.",
+        "tags": [
+          "Federation"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
       }
     },
     "/federation/publications/{id}": {
@@ -470,6 +483,24 @@
             "$ref": "#/components/responses/NotFound"
           }
         }
+      },
+      "options": {
+        "operationId": "federation-publications-show-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications/{id}`.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
       }
     },
     "/federation/publications/{id}/attachments": {
@@ -503,6 +534,24 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "federation-publications-attachments-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications/{id}/attachments`.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
           }
         }
       }
@@ -541,6 +590,24 @@
             "$ref": "#/components/responses/NotFound"
           }
         }
+      },
+      "options": {
+        "operationId": "federation-publications-download-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications/{id}/download`.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
       }
     },
     "/federation/publications/{id}/used": {
@@ -576,6 +643,24 @@
             "$ref": "#/components/responses/NotFound"
           }
         }
+      },
+      "options": {
+        "operationId": "federation-publications-used-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications/{id}/used`.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
       }
     },
     "/federation/publications/{id}/uses": {
@@ -609,6 +694,24 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "federation-publications-uses-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications/{id}/uses`.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
           }
         }
       }
