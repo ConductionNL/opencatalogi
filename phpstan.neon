@@ -21,6 +21,8 @@ parameters:
         - tests/Stubs/AppHost/IMetricsProvider.php
         - tests/Stubs/AppHost/IHealthCheckProvider.php
         - tests/Stubs/AppHost/MetricSample.php
+        # ModeratorRecipients implements OpenRegister's notification recipient resolver contract.
+        - tests/Stubs/OpenRegister/Notifications/Service/Notification/RecipientResolverInterface.php
 
     ignoreErrors:
         # OCP\Files\Node::putContent() exists on File but not on the Node interface stub

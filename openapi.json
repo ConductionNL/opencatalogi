@@ -469,6 +469,36 @@
             }
           }
         ]
+      },
+      "ErrorReportRequest": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "What is wrong, at most 2,000 characters."
+          },
+          "contact": {
+            "type": "string",
+            "format": "email",
+            "description": "Optional address to answer the visitor."
+          }
+        }
+      },
+      "ErrorReportReceipt": {
+        "type": "object",
+        "required": [
+          "reference"
+        ],
+        "properties": {
+          "reference": {
+            "type": "string",
+            "description": "The reference of the stored report."
+          }
+        }
       }
     },
     "parameters": {
@@ -3312,6 +3342,108 @@
               "pattern": "^[0-9]+$"
             },
             "description": "The documentId of an attachment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/publications/{id}/error-reports": {
+      "post": {
+        "operationId": "publications-error-report",
+        "summary": "Report an error",
+        "description": "Report an error in a publication (REQ-PDP-005). Answers 404 unless the publication is published and its catalogue has acceptErrorReports true and names a moderator group. Rate limited to 5 reports an hour per address. The report is never published and stores no IP address.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorReportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Stored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorReportReceipt"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "400": {
+            "description": "The message is empty or longer than 2,000 characters, or the contact is not an e-mail address (error: message-required, message-too-long, invalid-contact).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "description": "Too many reports from this address."
+          },
+          "503": {
+            "description": "The error report schema is not configured.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-error-report-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
           }
         ],
         "responses": {

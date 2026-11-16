@@ -118,6 +118,9 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// (publications-publish-and-withdraw-action, REQ-PPW-001..004).
 		['name' => 'publicationState#visibility', 'url' => '/api/publications/{id}/visibility', 'verb' => 'GET'],
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
+		// A visitor's error report on a publication (REQ-PDP-005).
+		['name' => 'errorReport#create', 'url' => '/api/publications/{id}/error-reports', 'verb' => 'POST'],
+		['name' => 'errorReport#preflightedCors', 'url' => '/api/publications/{id}/error-reports', 'verb' => 'OPTIONS'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
 		['name' => 'publicationState#withdrawFile', 'url' => '/api/publications/{id}/files/{fileId}/withdraw', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		['name' => 'publicationState#republishFile', 'url' => '/api/publications/{id}/files/{fileId}/republish', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
