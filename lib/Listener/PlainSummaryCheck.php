@@ -31,7 +31,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\Publication\PlainSummaryProvenance;
+use OCA\OpenCatalogi\Contract\PlainSummaryDrafterInterface;
+use OCA\OpenCatalogi\Contract\PlainSummaryProvenanceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
@@ -51,7 +52,7 @@ class PlainSummaryCheck implements IEventListener {
 	/**
 	 * The reading levels a plain summary can be written at.
 	 */
-	public const LEVELS = ['A2', 'B1', 'B2'];
+	public const LEVELS = PlainSummaryDrafterInterface::LEVELS;
 
 	/**
 	 * The level a summary saved without naming one is written at.
@@ -61,13 +62,13 @@ class PlainSummaryCheck implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param PlainSummaryProvenance $provenance Builds the provenance, and holds an accepted one.
+	 * @param PlainSummaryProvenanceInterface $provenance Builds the provenance, and holds an accepted one.
 	 * @param IL10N $l10n Localisation.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
-		private readonly PlainSummaryProvenance $provenance,
+		private readonly PlainSummaryProvenanceInterface $provenance,
 		private readonly IL10N $l10n,
 	) {
 

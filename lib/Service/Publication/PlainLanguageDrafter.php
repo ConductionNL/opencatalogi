@@ -33,7 +33,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
-use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
+use OCA\OpenCatalogi\Contract\PlainSummaryDrafterInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -49,7 +49,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
  */
-class PlainLanguageDrafter {
+class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	use ReadsObjectProperties;
 
 	/**
@@ -344,7 +344,7 @@ class PlainLanguageDrafter {
 			throw new PlainSummaryRefusal(reason: 'invalid-text', status: 400, message: $message);
 		}
 
-		if (in_array($level, PlainSummaryCheck::LEVELS, true) === false) {
+		if (in_array($level, self::LEVELS, true) === false) {
 			$message = $this->l10n->t('A plain language summary needs its reading level (plainSummaryLevel): A2, B1 or B2.');
 			throw new PlainSummaryRefusal(reason: 'invalid-level', status: 400, message: $message);
 		}

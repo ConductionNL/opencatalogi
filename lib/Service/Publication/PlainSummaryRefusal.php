@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
+use OCA\OpenCatalogi\Contract\PlainSummaryRefused;
 use RuntimeException;
 
 /**
@@ -31,7 +32,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
  */
-class PlainSummaryRefusal extends RuntimeException {
+class PlainSummaryRefusal extends RuntimeException implements PlainSummaryRefused {
 
 	/**
 	 * Constructor.
@@ -50,4 +51,28 @@ class PlainSummaryRefusal extends RuntimeException {
 		parent::__construct(message: $message);
 
 	}//end __construct()
+
+	/**
+	 * The reason code of the refusal.
+	 *
+	 * @return string The reason, such as no-provider.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	public function reason(): string {
+		return $this->reason;
+
+	}//end reason()
+
+	/**
+	 * The HTTP status the refusal is answered with.
+	 *
+	 * @return int The status code.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	public function status(): int {
+		return $this->status;
+
+	}//end status()
 }//end class

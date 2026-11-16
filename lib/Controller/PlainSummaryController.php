@@ -27,8 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\Publication\PlainLanguageDrafter;
-use OCA\OpenCatalogi\Service\Publication\PlainSummaryRefusal;
+use OCA\OpenCatalogi\Contract\PlainSummaryDrafterInterface;
+use OCA\OpenCatalogi\Contract\PlainSummaryRefused;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -48,7 +48,7 @@ class PlainSummaryController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param PlainLanguageDrafter $drafter Drafts, polls and accepts the summary.
+	 * @param PlainSummaryDrafterInterface $drafter Drafts, polls and accepts the summary.
 	 * @param IUserSession $userSession The current session.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
@@ -56,7 +56,7 @@ class PlainSummaryController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly PlainLanguageDrafter $drafter,
+		private readonly PlainSummaryDrafterInterface $drafter,
 		private readonly IUserSession $userSession,
 	) {
 		parent::__construct(appName: $appName, request: $request);
@@ -88,12 +88,17 @@ class PlainSummaryController extends Controller {
 	 * @return JSONResponse `{taskId}` (202), or the refusal: 409 `no-provider` without a text assistant.
 	 *
 	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 *
+	 * @no-admin-idor-exempt The per-object guard runs in PlainLanguageDrafter, reached
+	 *   through PlainSummaryDrafterInterface: writable() reads the publication with
+	 *   _rbac: true (404 when the caller cannot read it) and refuses 403 without
+	 *   PublicationRights::mayUpdate, before anything else happens.
 	 */
 	#[NoAdminRequired]
 	public function draft(string $id): JSONResponse {
 		try {
 			return new JSONResponse(data: $this->drafter->draft(publicationId: $id), statusCode: Http::STATUS_ACCEPTED);
-		} catch (PlainSummaryRefusal $refusal) {
+		} catch (PlainSummaryRefused $refusal) {
 			return $this->refused(refusal: $refusal);
 		}
 
@@ -108,6 +113,11 @@ class PlainSummaryController extends Controller {
 	 * @return JSONResponse `{status, text?, error?}`, or the refusal.
 	 *
 	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 *
+	 * @no-admin-idor-exempt The per-object guard runs in PlainLanguageDrafter, reached
+	 *   through PlainSummaryDrafterInterface: writable() reads the publication with
+	 *   _rbac: true (404 when the caller cannot read it) and refuses 403 without
+	 *   PublicationRights::mayUpdate, before anything else happens.
 	 */
 	#[NoAdminRequired]
 	public function poll(string $id, string $taskId): JSONResponse {
@@ -117,7 +127,7 @@ class PlainSummaryController extends Controller {
 
 		try {
 			return new JSONResponse($this->drafter->poll(publicationId: $id, taskId: (int)$taskId));
-		} catch (PlainSummaryRefusal $refusal) {
+		} catch (PlainSummaryRefused $refusal) {
 			return $this->refused(refusal: $refusal);
 		}
 
@@ -131,6 +141,11 @@ class PlainSummaryController extends Controller {
 	 * @return JSONResponse The stored plain summary, level and provenance, or the refusal.
 	 *
 	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 *
+	 * @no-admin-idor-exempt The per-object guard runs in PlainLanguageDrafter, reached
+	 *   through PlainSummaryDrafterInterface: writable() reads the publication with
+	 *   _rbac: true (404 when the caller cannot read it) and refuses 403 without
+	 *   PublicationRights::mayUpdate, before anything else happens.
 	 */
 	#[NoAdminRequired]
 	public function accept(string $id): JSONResponse {
@@ -145,7 +160,7 @@ class PlainSummaryController extends Controller {
 			return new JSONResponse(
 				$this->drafter->accept(publicationId: $id, text: $text, level: $level, fromTaskId: $this->taskIdOf(value: $fromTaskId))
 			);
-		} catch (PlainSummaryRefusal $refusal) {
+		} catch (PlainSummaryRefused $refusal) {
 			return $this->refused(refusal: $refusal);
 		}
 
@@ -172,17 +187,17 @@ class PlainSummaryController extends Controller {
 	/**
 	 * The answer for a refusal.
 	 *
-	 * @param PlainSummaryRefusal $refusal The refusal.
+	 * @param PlainSummaryRefused $refusal The refusal.
 	 *
 	 * @return JSONResponse The reason and, when there is one, the text the officer reads.
 	 */
-	private function refused(PlainSummaryRefusal $refusal): JSONResponse {
-		$data = ['error' => $refusal->reason];
+	private function refused(PlainSummaryRefused $refusal): JSONResponse {
+		$data = ['error' => $refusal->reason()];
 		if ($refusal->getMessage() !== '') {
 			$data['message'] = $refusal->getMessage();
 		}
 
-		return new JSONResponse(data: $data, statusCode: $refusal->status);
+		return new JSONResponse(data: $data, statusCode: $refusal->status());
 
 	}//end refused()
 }//end class

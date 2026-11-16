@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeInterface;
+use OCA\OpenCatalogi\Contract\PlainSummaryProvenanceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IUserSession;
 
@@ -38,7 +39,7 @@ use OCP\IUserSession;
  *
  * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
  */
-class PlainSummaryProvenance {
+class PlainSummaryProvenance implements PlainSummaryProvenanceInterface {
 
 	/**
 	 * Provenance waiting for its save, keyed on the text it belongs to.

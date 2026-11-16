@@ -112,10 +112,12 @@ export default {
 	},
 
 	computed: {
+		/** @spec exclude presentational widget adapter — resolves the injected context and object id. */
 		ctx() {
 			return injectedObjectContext(this)
 		},
 
+		/** @spec exclude presentational widget adapter — resolves the injected context and object id. */
 		resolvedObjectId() {
 			return this.objectId || this.ctx.objectId || this.content.objectId || ''
 		},
@@ -135,6 +137,8 @@ export default {
 		 *
 		 * @param {string} tail The path after the publication id.
 		 * @return {string} The URL.
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		url(tail) {
 			return generateUrl('/apps/opencatalogi/api/publications/' + encodeURIComponent(this.resolvedObjectId) + '/' + tail)
@@ -144,6 +148,8 @@ export default {
 		 * Ask whether a text assistant is available; without one the widget stays hidden.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		async checkAssistant() {
 			try {
@@ -158,6 +164,8 @@ export default {
 		 * Schedule a draft and start polling it.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		async startDraft() {
 			this.busy = true
@@ -176,6 +184,8 @@ export default {
 		 * Poll again after the interval.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		schedulePoll() {
 			this.timer = setTimeout(() => this.poll(), POLL_INTERVAL)
@@ -185,6 +195,8 @@ export default {
 		 * Stop a pending poll.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		stopPolling() {
 			if (this.timer !== null) {
@@ -197,6 +209,8 @@ export default {
 		 * Read the draft task once and act on its status.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		async poll() {
 			this.timer = null
@@ -214,6 +228,8 @@ export default {
 		 *
 		 * @param {{status: string, text?: string, error?: string}} data The answer.
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		take(data) {
 			if (data.status === 'successful') {
@@ -234,6 +250,8 @@ export default {
 		 *
 		 * @param {{status: string, error?: string}} data The answer.
 		 * @return {string|null} The error, or null to poll again.
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		pollError(data) {
 			if (data.status === 'failed') {
@@ -249,6 +267,8 @@ export default {
 		 * Store the suggestion, as edited, with its level.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		async accept() {
 			this.busy = true
@@ -268,6 +288,8 @@ export default {
 		 * Clear the suggestion after it was stored and say so.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		accepted() {
 			this.suggestion = ''
@@ -281,6 +303,8 @@ export default {
 		 * Drop the suggestion; nothing was stored.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		discard() {
 			this.stopPolling()
@@ -295,6 +319,8 @@ export default {
 		 *
 		 * @param {object} error The request error.
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		fail(error) {
 			const data = error && error.response ? error.response.data : null
@@ -306,6 +332,8 @@ export default {
 		 *
 		 * @param {string} text The error.
 		 * @return {void}
+		 *
+		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		showError(text) {
 			this.busy = false
