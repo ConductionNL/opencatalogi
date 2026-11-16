@@ -77,25 +77,13 @@ class BatchReviewTaskListener implements IEventListener {
 	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-a-rejected-batch-or-document-goes-back-to-its-author-with-the-reason-req-wrv-002
 	 */
 	public function handle(Event $event): void {
-		if (($event instanceof TaskTerminalEvent) === false || $event->isCommitted() === false) {
-			return;
-		}
-
-		$task = $event->getTask();
-		if (in_array((string)$event->getOutcome(), self::REJECTING_OUTCOMES, true) === false) {
+		$task = $this->rejectedReviewTask(event: $event);
+		if ($task === null) {
 			return;
 		}
 
 		$batchId = (string)$task->getObjectUuid();
-		if ($batchId === '' || $this->review->isBatchReviewSequence(sequenceUuid: (string)$task->getSequenceUuid()) === false) {
-			return;
-		}
-
-		$reason = trim((string)$task->getComment());
-		if ($reason === '') {
-			$reason = trim((string)$task->getResultText());
-		}
-
+		$reason  = $this->reasonOf(task: $task);
 		if ($reason === '') {
 			$this->logger->warning(
 				'[BatchReviewTaskListener] review task of batch ' . $batchId . ' was rejected without a comment; the batch stays in review'
@@ -109,4 +97,57 @@ class BatchReviewTaskListener implements IEventListener {
 			$this->logger->error('[BatchReviewTaskListener] rejecting batch ' . $batchId . ' failed: ' . $e->getMessage());
 		}
 	}//end handle()
+
+	/**
+	 * The task of a committed, rejecting outcome of a batch review sequence, or null.
+	 *
+	 * @param Event $event The event.
+	 *
+	 * @return object|null The review task.
+	 *
+	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-a-rejected-batch-or-document-goes-back-to-its-author-with-the-reason-req-wrv-002
+	 */
+	private function rejectedReviewTask(Event $event): ?object {
+		if ($this->isCommittedRejection(event: $event) === false) {
+			return null;
+		}
+
+		$task = $event->getTask();
+		if ((string)$task->getObjectUuid() === '' || $this->review->isBatchReviewSequence(sequenceUuid: (string)$task->getSequenceUuid()) === false) {
+			return null;
+		}
+
+		return $task;
+	}//end rejectedReviewTask()
+
+	/**
+	 * Whether the event is a committed task outcome that rejects.
+	 *
+	 * @param Event $event The event.
+	 *
+	 * @return bool
+	 *
+	 * @phpstan-assert-if-true TaskTerminalEvent $event
+	 */
+	private function isCommittedRejection(Event $event): bool {
+		return ($event instanceof TaskTerminalEvent)
+			&& $event->isCommitted() === true
+			&& in_array((string)$event->getOutcome(), self::REJECTING_OUTCOMES, true) === true;
+	}//end isCommittedRejection()
+
+	/**
+	 * The reviewer's reason: the task comment, else its result text.
+	 *
+	 * @param object $task The review task.
+	 *
+	 * @return string The trimmed reason, or ''.
+	 */
+	private function reasonOf(object $task): string {
+		$reason = trim((string)$task->getComment());
+		if ($reason === '') {
+			$reason = trim((string)$task->getResultText());
+		}
+
+		return $reason;
+	}//end reasonOf()
 }//end class

@@ -73,29 +73,50 @@ class PreviewsSeenGuard implements LifecycleGuardInterface {
 		}
 
 		try {
-			$batch = $object;
-			$id = (string)($object['id'] ?? ($object['uuid'] ?? ''));
-			if (array_key_exists('documents', $object) === false && $id !== '') {
-				$batch = $this->woo->getBatch(batchId: $id);
-			}
-
-			$unseen = $this->review->unseenPreviews(batch: $batch, userId: $userId);
+			$unseen = $this->review->unseenPreviews(batch: $this->batchOf(object: $object), userId: $userId);
 		} catch (Throwable $e) {
 			return GuardResult::deny('Approve refused: the public views opened could not be read');
 		}
 
 		if ($unseen !== []) {
-			$names = [];
-			foreach ($unseen as $doc) {
-				$names[] = $doc['documentId'];
-				if ($doc['title'] !== '') {
-					$names[(count($names) - 1)] = $doc['title'];
-				}
-			}
-
-			return GuardResult::deny('Approve refused: the public view of these documents was not opened: ' . implode(', ', $names));
+			return GuardResult::deny('Approve refused: the public view of these documents was not opened: ' . implode(', ', self::namesOf(unseen: $unseen)));
 		}
 
 		return GuardResult::allow();
 	}//end check()
+
+	/**
+	 * The batch with its documents: the saved object, else the stored batch it names.
+	 *
+	 * @param array<string, mixed> $object The batch as it is being saved.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function batchOf(array $object): array {
+		$id = (string)($object['id'] ?? ($object['uuid'] ?? ''));
+		if (array_key_exists('documents', $object) === false && $id !== '') {
+			return $this->woo->getBatch(batchId: $id);
+		}
+
+		return $object;
+	}//end batchOf()
+
+	/**
+	 * The names of the unseen documents: each title, else its document id.
+	 *
+	 * @param array<int, array{documentId: string, title: string}> $unseen The unseen documents.
+	 *
+	 * @return list<string>
+	 */
+	private static function namesOf(array $unseen): array {
+		$names = [];
+		foreach ($unseen as $doc) {
+			$names[] = $doc['documentId'];
+			if ($doc['title'] !== '') {
+				$names[(count($names) - 1)] = $doc['title'];
+			}
+		}
+
+		return $names;
+	}//end namesOf()
 }//end class

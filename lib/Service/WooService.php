@@ -1142,6 +1142,36 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	}//end assertPublishApproved()
 
 	/**
+	 * Refuse to publish a batch that is not approved, that the lifecycle engine
+	 * cannot move, or whose approval chain has not completed (all fail closed).
+	 *
+	 * @param array<string, mixed> $batch   The batch.
+	 * @param string               $batchId The batch uuid.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the batch may not be published.
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication
+	 */
+	private function assertMayPublish(array $batch, string $batchId): void {
+		// REQ-WRV-002: only an approved batch is published, whatever path calls this.
+		if ((string)($batch['status'] ?? '') !== 'approved') {
+			throw new RuntimeException('Batch must be approved before publishing');
+		}
+
+		// The status moves through the declared `publish` transition; without the
+		// engine nothing is published (fail closed).
+		if ($this->getTransitionEngine() === null) {
+			throw new RuntimeException('OpenRegister lifecycle engine unavailable: the batch cannot be published');
+		}
+
+		// The actual approval gate: status only says a review CAN start (fail closed).
+		$this->assertPublishApproved(batchId: $batchId);
+
+	}//end assertMayPublish()
+
+	/**
 	 * Publish a completed WOO batch to a public reading room.
 	 *
 	 * The reading room is built on the existing Catalog/Publication infrastructure
@@ -1170,19 +1200,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		}
 
 		$batch = $this->getBatch(batchId: $batchId);
-		// REQ-WRV-002: only an approved batch is published, whatever path calls this.
-		if ((string)($batch['status'] ?? '') !== 'approved') {
-			throw new RuntimeException('Batch must be approved before publishing');
-		}
-
-		// The status moves through the declared `publish` transition; without the
-		// engine nothing is published (fail closed).
-		if ($this->getTransitionEngine() === null) {
-			throw new RuntimeException('OpenRegister lifecycle engine unavailable: the batch cannot be published');
-		}
-
-		// The actual approval gate: status only says a review CAN start (fail closed).
-		$this->assertPublishApproved(batchId: $batchId);
+		$this->assertMayPublish(batch: $batch, batchId: $batchId);
 
 		$assessments = $this->loadAssessments(batch: $batch);
 		$listings = $this->publications->listings(assessments: $assessments);
