@@ -38,6 +38,7 @@ use OCA\OpenCatalogi\Listener\DiwooCompletenessListener;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
+use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
@@ -133,6 +134,8 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', TermRollListener::class],
 				[$e . 'ObjectCreatingEvent', DiwooCompletenessListener::class],
 				[$e . 'ObjectUpdatingEvent', DiwooCompletenessListener::class],
+				[$e . 'ObjectCreatingEvent', PlainSummaryCheck::class],
+				[$e . 'ObjectUpdatingEvent', PlainSummaryCheck::class],
 				[$e . 'RegisterCreatedEvent', CatalogScopePendingListener::class],
 				[$e . 'RegisterUpdatedEvent', CatalogScopePendingListener::class],
 				[$e . 'ToolRegistrationEvent', ToolRegistrationListener::class],

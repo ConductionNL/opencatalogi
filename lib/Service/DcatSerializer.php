@@ -317,6 +317,11 @@ class DcatSerializer implements DcatSerializerInterface {
 				return '<' . $value['@id'] . '>';
 			}
 
+			// Language-tagged literal.
+			if (isset($value['@value']) === true) {
+				return $this->turtleValue(value: (string)$value['@value']) . $this->languageSuffix(value: $value);
+			}
+
 			// Nested blank node (e.g. foaf:Agent / distribution).
 			if ($this->isAssoc(array: $value) === true) {
 				return $this->turtleBlankNode(node: $value);
@@ -341,6 +346,24 @@ class DcatSerializer implements DcatSerializerInterface {
 
 		return '"' . str_replace(['\\', '"', "\n"], ['\\\\', '\\"', '\\n'], (string)$value) . '"';
 	}//end turtleValue()
+
+	/**
+	 * The `@lang` suffix of a language-tagged literal, empty without a language.
+	 *
+	 * @param array<string, mixed> $value The literal node.
+	 *
+	 * @return string The suffix.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 */
+	private function languageSuffix(array $value): string {
+		$language = (string)($value['@language'] ?? '');
+		if (preg_match('/^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/', $language) !== 1) {
+			return '';
+		}
+
+		return '@' . $language;
+	}//end languageSuffix()
 
 	/**
 	 * Resolve a Turtle predicate for a JSON-LD key (`@type` → `a`).
@@ -422,6 +445,16 @@ class DcatSerializer implements DcatSerializerInterface {
 
 		if (is_array($value) === true && isset($value['@id']) === true && count($value) === 1) {
 			return '    <' . $tag . ' rdf:resource="' . htmlspecialchars((string)$value['@id'], ENT_QUOTES) . '"/>' . "\n";
+		}
+
+		// Language-tagged literal.
+		if (is_array($value) === true && isset($value['@value']) === true) {
+			$lang = '';
+			if (isset($value['@language']) === true) {
+				$lang = ' xml:lang="' . htmlspecialchars((string)$value['@language'], ENT_QUOTES) . '"';
+			}
+
+			return '    <' . $tag . $lang . '>' . htmlspecialchars((string)$value['@value'], ENT_QUOTES) . '</' . $tag . '>' . "\n";
 		}
 
 		// Nested blank node.

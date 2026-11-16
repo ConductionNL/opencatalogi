@@ -328,5 +328,15 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface",
         "OCA\\OpenCatalogi\\Service\\OpenRegisterLookup"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PlainSummaryDrafterInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PlainLanguageDrafter"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PlainSummaryProvenanceInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PlainSummaryProvenance"
     ]
 ]

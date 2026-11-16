@@ -61,6 +61,8 @@ use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
 use OCA\OpenCatalogi\Contract\ObligationReadServiceInterface;
 use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Contract\PlainSummaryDrafterInterface;
+use OCA\OpenCatalogi\Contract\PlainSummaryProvenanceInterface;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
@@ -108,6 +110,8 @@ use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\InspectionService;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\ObligationReadService;
+use OCA\OpenCatalogi\Service\Publication\PlainLanguageDrafter;
+use OCA\OpenCatalogi\Service\Publication\PlainSummaryProvenance;
 use OCA\OpenCatalogi\Service\Publication\PlooiDeliveryService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
@@ -204,6 +208,8 @@ class ServiceRegistrar {
 		PublishedRecordViewInterface::class => PublishedRecordView::class,
 		SitemapServiceInterface::class => SitemapService::class,
 		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
+		PlainSummaryDrafterInterface::class => PlainLanguageDrafter::class,
+		PlainSummaryProvenanceInterface::class => PlainSummaryProvenance::class,
 	];
 
 	/**
