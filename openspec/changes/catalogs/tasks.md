@@ -114,7 +114,7 @@
   - [ ] `CatalogiWidget.vue` uses `CnWidgetWrapper` / `CnInfoWidget` or equivalent — no custom widget shell.
   - [x] All user-visible strings are wrapped in `t('opencatalogi', '...')`. No hardcoded Dutch or English strings in templates.
   - [ ] All components import from `@conduction/nextcloud-vue`, not `@nextcloud/vue`.
-  - [ ] Every `<NcFoo>` and `<CnFoo>` used in a template is imported AND listed in `components: {}`.
+  - [x] Every `<NcFoo>` and `<CnFoo>` used in a template is imported AND listed in `components: {}`. (verified: every Nc*/Cn* tag in CatalogiIndex.vue, CatalogModal.vue, ViewCatalogi.vue and CatalogiWidget.vue is registered)
   - [ ] SPDX header `<!-- SPDX-License-Identifier: EUPL-1.2 -->` present as first line of each `.vue` file.
 
 ## Task 10: Seed data in publication_register.json
