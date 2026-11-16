@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Service\Publication\PlainSummaryProvenance;
 use OCA\OpenCatalogi\Service\Publication\PlainSummaryRefusal;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IL10N;
@@ -104,8 +105,8 @@ class PlainLanguageDrafterTest extends TestCase {
 			}
 		);
 		$this->objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true): ObjectEntity {
-				$this->saves[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid, '_rbac' => $_rbac];
+			function (array $object, ObjectSaveOptions $options, bool $_rbac = true): ObjectEntity {
+				$this->saves[] = ['object' => $object, 'register' => $options->target->register, 'schema' => $options->target->schema, 'uuid' => $options->uuid, '_rbac' => $_rbac];
 				return new ObjectEntity();
 			}
 		);

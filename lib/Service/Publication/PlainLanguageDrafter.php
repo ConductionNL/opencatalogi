@@ -35,6 +35,9 @@ use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IL10N;
 use OCP\IUserSession;
 use OCP\TaskProcessing\IManager;
@@ -309,7 +312,14 @@ class PlainLanguageDrafter {
 		try {
 			$target = $this->publicationRegister();
 			$objects = $this->openRegister->objectService();
-			$objects->saveObject(object: $record, register: $target['register'], schema: $target['schema'], uuid: $publicationId, _rbac: true);
+			$objects->saveObject(
+				object: $record,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $target['register'], schema: $target['schema']),
+					uuid: $publicationId
+				),
+				_rbac: true
+			);
 		} catch (\Throwable $e) {
 			$this->logger->warning('[PlainLanguageDrafter] The plain summary could not be stored: ' . $e->getMessage());
 			$message = $this->l10n->t('The plain language summary could not be stored.');
@@ -383,7 +393,11 @@ class PlainLanguageDrafter {
 		try {
 			$target = $this->publicationRegister();
 			$objects = $this->openRegister->objectService();
-			$publication = $objects->find(id: $publicationId, register: $target['register'], schema: $target['schema'], _rbac: true);
+			$publication = $objects->find(
+				id: $publicationId,
+				options: new ObjectFindOptions(register: $target['register'], schema: $target['schema']),
+				_rbac: true
+			);
 		} catch (\Throwable $e) {
 			throw $this->readRefusal(exception: $e);
 		}
