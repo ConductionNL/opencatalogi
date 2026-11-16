@@ -226,6 +226,12 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			-->
 			<step>OCA\OpenCatalogi\Repair\WOO536RepairReadRules</step>
 			<!--
+				woo-review-surface REQ-WRV-002: every Woo batch in a state of the
+				declared wooBatch lifecycle. After InitializeSettings, which imports
+				the lifecycle. Idempotent.
+			-->
+			<step>OCA\OpenCatalogi\Repair\WooBatchStatusRepair</step>
+			<!--
 				Writes each catalogue's staff access onto the schemas it covers
 				(catalogue-staff-access). After InitializeSettings and the read-rule
 				backfill, either of which may reset a schema's authorization to the
