@@ -31,9 +31,9 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 7. Verification
 
-- [ ] 7.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
-- [ ] 7.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran. gate-19 wants the `@e2e` references of 1.2 and 5.2.
-- [ ] 7.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+- [x] 7.1 (TMPDIR beside the clone; PHPUnit read by the `Tests:` line: 6,040 tests, 74 failures and 4 errors, every one of them also failing on development, 6,017 tests there) `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
+- [ ] 7.2 (102 gates ran with `--base origin/development`; the four findings this branch caused are fixed, the rest also fail on development; gate-19's `@e2e` references wait for the e2e specs of 1.2 and 5.2) `run-hydra-gates.sh --base origin/development`, counting the gates that ran. gate-19 wants the `@e2e` references of 1.2 and 5.2.
+- [ ] 7.3 (run leg by leg because composer refuses to run its scripts as root here: phpcs 0 errors, phpstan no errors, phpmd and psalm findings on changed files also present on development, `npm run lint` no errors in changed files, prettier clean on changed files, `check:l10n` only the three inherited unwrapped `Delete` literals, `check:l10n-js` up to date, `check:manifest` passes, `check:schema-l10n` 240 uncovered against 242 on development; left open for a run of `composer check:strict` itself) Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
 - [ ] 7.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
 
 Done when merged on `development` with CI green. Row 6.25 becomes `production` only once a store release ships it. Rows 6.15, 6.16, 6.19, 6.36 and 7.20 close in portaliq.

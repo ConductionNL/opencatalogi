@@ -16,7 +16,8 @@ import { moveDocument, orderedDocuments } from '../../services/attachmentOrder.j
 
 jest.mock('@nextcloud/axios', () => ({ get: jest.fn(), patch: jest.fn() }))
 jest.mock('@nextcloud/router', () => ({
-	generateUrl: (path, params = {}) => path.replace(/{(\w+)}/g, (_, key) => params[key]),
+	generateUrl: (path, params = {}) =>
+		path.replace(/{(\w+)}/g, (_, key) => params[key]),
 }))
 
 const ROUTE = { register: 'reg-1', schema: 'pubs', id: 'pub-1' }
@@ -52,7 +53,10 @@ function labels(wrapper) {
  * @return {Promise<void>}
  */
 async function press(wrapper, index, direction) {
-	await wrapper.findAll('.attachment-order__item')[index].find(`[data-testid="attachment-order-${direction}"]`).trigger('click')
+	await wrapper
+		.findAll('.attachment-order__item')
+		[index].find(`[data-testid="attachment-order-${direction}"]`)
+		.trigger('click')
 }
 
 describe('AttachmentOrderList', () => {
@@ -63,27 +67,41 @@ describe('AttachmentOrderList', () => {
 	it('reads the files and shows them in the stored order, the rest after', async () => {
 		const wrapper = await mountList(['13', '99'])
 
-		expect(axios.get).toHaveBeenCalledWith('/apps/openregister/api/objects/reg-1/pubs/pub-1/files')
+		expect(axios.get).toHaveBeenCalledWith(
+			'/apps/openregister/api/objects/reg-1/pubs/pub-1/files',
+		)
 		expect(labels(wrapper)).toEqual(['Bijlage 1', 'Bijlage 2', 'Besluit'])
 	})
 
 	it('moves by the buttons, names each button after its document and announces the new place', async () => {
 		const wrapper = await mountList()
 
-		const up = wrapper.findAll('.attachment-order__item')[1].find('[data-testid="attachment-order-up"]')
+		const up = wrapper
+			.findAll('.attachment-order__item')[1]
+			.find('[data-testid="attachment-order-up"]')
 		expect(up.attributes('aria-label')).toBe('Move Besluit up')
 		await press(wrapper, 1, 'up')
 		await press(wrapper, 2, 'up')
 
 		expect(labels(wrapper)).toEqual(['Besluit', 'Bijlage 1', 'Bijlage 2'])
-		expect(wrapper.find('[data-testid="attachment-order-live"]').text()).toBe('Bijlage 1 is now number 2 of 3')
-		expect(wrapper.find('[data-testid="attachment-order-live"]').attributes('aria-live')).toBe('polite')
+		expect(wrapper.find('[data-testid="attachment-order-live"]').text()).toBe(
+			'Bijlage 1 is now number 2 of 3',
+		)
+		expect(
+			wrapper
+				.find('[data-testid="attachment-order-live"]')
+				.attributes('aria-live'),
+		).toBe('polite')
 	})
 
 	it('saves the order on the publication', async () => {
 		axios.patch.mockResolvedValue({ data: {} })
 		const wrapper = await mountList()
-		expect(wrapper.find('[data-testid="attachment-order-save"]').attributes('disabled')).toBeDefined()
+		expect(
+			wrapper
+				.find('[data-testid="attachment-order-save"]')
+				.attributes('disabled'),
+		).toBeDefined()
 
 		await press(wrapper, 1, 'up')
 		await press(wrapper, 2, 'up')
@@ -119,7 +137,11 @@ describe('AttachmentOrderList', () => {
 
 describe('attachment order helpers', () => {
 	it('skips stored ids that are no longer attached', () => {
-		expect(orderedDocuments([{ id: 1, label: 'a' }], ['9', '1']).map((doc) => doc.id)).toEqual(['1'])
+		expect(
+			orderedDocuments([{ id: 1, label: 'a' }], ['9', '1']).map(
+				(doc) => doc.id,
+			),
+		).toEqual(['1'])
 	})
 
 	it('does not move past either end', () => {

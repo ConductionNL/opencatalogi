@@ -3,21 +3,26 @@
   - SPDX-License-Identifier: EUPL-1.2
 -->
 <template>
-	<section v-if="documents.length > 1" class="attachment-order" data-testid="attachment-order">
+	<section
+		v-if="documents.length > 1"
+		class="attachment-order"
+		data-testid="attachment-order">
 		<h3 class="attachment-order__title">
 			{{ t('opencatalogi', 'Order on the portal') }}
 		</h3>
 		<ol class="attachment-order__list">
 			<li
-v-for="(doc, index) in documents"
+				v-for="(doc, index) in documents"
 				:key="doc.id"
 				class="attachment-order__item"
 				:data-testid="'attachment-order-item-' + doc.id">
 				<span class="attachment-order__label">{{ doc.label }}</span>
 				<NcButton
-:ref="'up-' + doc.id"
+					:ref="'up-' + doc.id"
 					variant="tertiary"
-					:aria-label="t('opencatalogi', 'Move {name} up', { name: doc.label })"
+					:aria-label="
+						t('opencatalogi', 'Move {name} up', { name: doc.label })
+					"
 					:disabled="index === 0 || saving"
 					data-testid="attachment-order-up"
 					@click="move(index, -1)">
@@ -26,9 +31,11 @@ v-for="(doc, index) in documents"
 					</template>
 				</NcButton>
 				<NcButton
-:ref="'down-' + doc.id"
+					:ref="'down-' + doc.id"
 					variant="tertiary"
-					:aria-label="t('opencatalogi', 'Move {name} down', { name: doc.label })"
+					:aria-label="
+						t('opencatalogi', 'Move {name} down', { name: doc.label })
+					"
 					:disabled="index === documents.length - 1 || saving"
 					data-testid="attachment-order-down"
 					@click="move(index, 1)">
@@ -38,11 +45,14 @@ v-for="(doc, index) in documents"
 				</NcButton>
 			</li>
 		</ol>
-		<p class="hidden-visually" aria-live="polite" data-testid="attachment-order-live">
+		<p
+			class="hidden-visually"
+			aria-live="polite"
+			data-testid="attachment-order-live">
 			{{ announcement }}
 		</p>
 		<NcButton
-variant="secondary"
+			variant="secondary"
 			:disabled="!changed || saving"
 			data-testid="attachment-order-save"
 			@click="save">
@@ -61,7 +71,11 @@ import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import ArrowDown from 'vue-material-design-icons/ArrowDown.vue'
 import ArrowUp from 'vue-material-design-icons/ArrowUp.vue'
-import { moveDocument, orderedDocuments, storedOrder } from '../../services/attachmentOrder.js'
+import {
+	moveDocument,
+	orderedDocuments,
+	storedOrder,
+} from '../../services/attachmentOrder.js'
 import { documentOptions } from '../../services/publicationVisibility.js'
 
 /**
@@ -117,7 +131,10 @@ export default {
 		async load() {
 			try {
 				const { data } = await axios.get(
-					generateUrl('/apps/openregister/api/objects/{register}/{schema}/{id}/files', this.route),
+					generateUrl(
+						'/apps/openregister/api/objects/{register}/{schema}/{id}/files',
+						this.route,
+					),
 				)
 				this.documents = orderedDocuments(documentOptions(data), this.order)
 			} catch {
@@ -139,11 +156,15 @@ export default {
 			const doc = this.documents[index]
 			this.documents = moveDocument(this.documents, index, delta)
 			const position = this.documents.indexOf(doc) + 1
-			this.announcement = t('opencatalogi', '{name} is now number {position} of {total}', {
-				name: doc.label,
-				position,
-				total: this.documents.length,
-			})
+			this.announcement = t(
+				'opencatalogi',
+				'{name} is now number {position} of {total}',
+				{
+					name: doc.label,
+					position,
+					total: this.documents.length,
+				},
+			)
 			this.message = ''
 			this.$nextTick(() => {
 				const atEdge = position === 1 || position === this.documents.length
@@ -167,15 +188,24 @@ export default {
 			const order = storedOrder(this.documents)
 			try {
 				await axios.patch(
-					generateUrl('/apps/openregister/api/objects/{register}/{schema}/{id}', this.route),
+					generateUrl(
+						'/apps/openregister/api/objects/{register}/{schema}/{id}',
+						this.route,
+					),
 					{ attachmentOrder: order },
 				)
 				this.saved = order
 				this.messageType = 'success'
-				this.message = t('opencatalogi', 'The order is saved. The portal shows the documents in this order.')
+				this.message = t(
+					'opencatalogi',
+					'The order is saved. The portal shows the documents in this order.',
+				)
 			} catch {
 				this.messageType = 'error'
-				this.message = t('opencatalogi', 'The order could not be saved. Try again.')
+				this.message = t(
+					'opencatalogi',
+					'The order could not be saved. Try again.',
+				)
 			} finally {
 				this.saving = false
 			}

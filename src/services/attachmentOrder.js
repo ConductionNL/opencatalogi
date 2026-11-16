@@ -18,7 +18,12 @@
  * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2
  */
 export function orderedDocuments(documents, order) {
-	const byId = new Map(documents.map((doc) => [String(doc.id), { id: String(doc.id), label: doc.label }]))
+	const byId = new Map(
+		documents.map((doc) => [
+			String(doc.id),
+			{ id: String(doc.id), label: doc.label },
+		]),
+	)
 	const ordered = []
 	for (const id of Array.isArray(order) ? order : []) {
 		const doc = byId.get(String(id))
@@ -43,7 +48,12 @@ export function orderedDocuments(documents, order) {
  */
 export function moveDocument(documents, index, delta) {
 	const target = index + delta
-	if (index < 0 || index >= documents.length || target < 0 || target >= documents.length) {
+	if (
+		index < 0
+		|| index >= documents.length
+		|| target < 0
+		|| target >= documents.length
+	) {
 		return documents.slice()
 	}
 
