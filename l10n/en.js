@@ -1,6 +1,15 @@
 OC.L10N.register(
     "opencatalogi",
     {
+        "Attachment reading": "Attachment reading",
+        "File": "File",
+        "Reading state": "Reading state",
+        "The Nextcloud file id of the published attachment.": "The Nextcloud file id of the published attachment.",
+        "The publication the attachment belongs to.": "The publication the attachment belongs to.",
+        "Updated at": "Updated at",
+        "When the reading job last recorded the state.": "When the reading job last recorded the state.",
+        "Why the attachment has this state, when the state alone does not say it.": "Why the attachment has this state, when the state alone does not say it.",
+        "typed: OpenRegister extracted text; ocr: OCR read the file; waiting: OCR ran and its text is not indexed yet; none: no text was found; unavailable: no OCR is installed; failed: reading failed, see the reason.": "typed: OpenRegister extracted text; ocr: OCR read the file; waiting: OCR ran and its text is not indexed yet; none: no text was found; unavailable: no OCR is installed; failed: reading failed, see the reason.",
         "Unpublished documents": "Unpublished documents",
         "No unpublished documents": "No unpublished documents",
         "Show which documents of a publication were withheld, and on which grounds": "Show which documents of a publication were withheld, and on which grounds",

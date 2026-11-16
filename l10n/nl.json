@@ -1,5 +1,14 @@
 {
     "translations": {
+        "Attachment reading": "Leesbaarheid van bijlage",
+        "File": "Bestand",
+        "Reading state": "Leesstatus",
+        "The Nextcloud file id of the published attachment.": "Het Nextcloud-bestands-id van de gepubliceerde bijlage.",
+        "The publication the attachment belongs to.": "De publicatie waar de bijlage bij hoort.",
+        "Updated at": "Bijgewerkt op",
+        "When the reading job last recorded the state.": "Wanneer de leestaak de status voor het laatst heeft vastgelegd.",
+        "Why the attachment has this state, when the state alone does not say it.": "Waarom de bijlage deze status heeft, als de status dat zelf niet zegt.",
+        "typed: OpenRegister extracted text; ocr: OCR read the file; waiting: OCR ran and its text is not indexed yet; none: no text was found; unavailable: no OCR is installed; failed: reading failed, see the reason.": "typed: OpenRegister heeft tekst uitgelezen; ocr: OCR heeft het bestand gelezen; waiting: OCR is uitgevoerd en de tekst is nog niet geïndexeerd; none: er is geen tekst gevonden; unavailable: er is geen OCR geïnstalleerd; failed: lezen is mislukt, zie de reden.",
         "Unpublished documents": "Niet-gepubliceerde documenten",
         "No unpublished documents": "Geen niet-gepubliceerde documenten",
         "Show which documents of a publication were withheld, and on which grounds": "Toon welke documenten van een publicatie zijn geweigerd, en op welke gronden",

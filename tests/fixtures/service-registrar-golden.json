@@ -331,6 +331,21 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\AttachmentReadingQueueInterface",
+        "OCA\\OpenCatalogi\\BackgroundJob\\AttachmentReadingQueue"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\AttachmentReadingStoreInterface",
+        "OCA\\OpenCatalogi\\Service\\AttachmentReading\\AttachmentReadingStore"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\RedactedOriginalGuardInterface",
+        "OCA\\OpenCatalogi\\Service\\AttachmentReading\\RedactedOriginalGuard"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\PlainSummaryDrafterInterface",
         "OCA\\OpenCatalogi\\Service\\Publication\\PlainLanguageDrafter"
     ],
