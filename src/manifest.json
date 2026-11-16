@@ -763,6 +763,8 @@
 							"include": [
 								"title",
 								"summary",
+								"plainSummary",
+								"plainSummaryLevel",
 								"description",
 								"publicationDate",
 								"depublicationDate",
@@ -928,6 +930,12 @@
 						"icon": "EyeOutline"
 					},
 					{
+						"id": "pub-plain-summary",
+						"type": "plain-summary-draft",
+						"title": "Plain language summary",
+						"icon": "FileDocument"
+					},
+					{
 						"id": "pub-quality",
 						"type": "publication-quality",
 						"title": "Metadata quality",
@@ -1025,17 +1033,25 @@
 					},
 					{
 						"id": "14",
-						"widgetId": "pub-quality",
+						"widgetId": "pub-plain-summary",
 						"gridX": 0,
 						"gridY": 29,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
+						"id": "15",
+						"widgetId": "pub-quality",
+						"gridX": 0,
+						"gridY": 33,
 						"gridWidth": 12,
 						"gridHeight": 3
 					},
 					{
-						"id": "15",
+						"id": "16",
 						"widgetId": "pub-versions",
 						"gridX": 0,
-						"gridY": 32,
+						"gridY": 36,
 						"gridWidth": 12,
 						"gridHeight": 5
 					},
@@ -1043,7 +1059,7 @@
 						"id": "13",
 						"widgetId": "pub-calendar",
 						"gridX": 0,
-						"gridY": 37,
+						"gridY": 41,
 						"gridWidth": 12,
 						"gridHeight": 4
 					}

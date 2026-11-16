@@ -68,11 +68,19 @@ class WooFakeObjectService {
 	/** @var array<int, array{register: mixed, schema: mixed}> */
 	public array $saveTargets = [];
 
+	/** @var (\Closure(array, mixed): ?\Throwable)|null Refuses a save, as a pre-save hook does. */
+	public ?\Closure $refuse = null;
+
 	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true) {
 		$extend = $options->extend ?? [];
 		$register = $options->target->register;
 		$schema = $options->target->schema;
 		$uuid = $options->uuid;
+		$refusal = ($this->refuse !== null) ? ($this->refuse)($object, $schema) : null;
+		if ($refusal !== null) {
+			throw $refusal;
+		}
+
 		$this->saveTargets[] = ['register' => $register, 'schema' => $schema];
 		if (($uuid === null || $uuid === '') && empty($object['id']) === true) {
 			$this->counter++;
@@ -259,6 +267,9 @@ class WooFakeTaskSequenceMapper {
  * @uses \OCA\OpenCatalogi\Service\BomCsv
  * @covers \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
  * @covers \OCA\OpenCatalogi\Service\Woo\DocumentRedactor
+ * @uses \OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter
+ * @uses \OCA\OpenCatalogi\Service\Publication\TitleNotWritten
+ * @uses \OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate
  */
 class WooServiceTest extends TestCase {
 
@@ -898,6 +909,91 @@ class WooServiceTest extends TestCase {
 		unset($payload['id']);
 		$this->assertTrue((new \Opis\JsonSchema\Validator())->validate(json_decode((string)json_encode($payload)), (string)json_encode($schema))->isValid());
 	}//end testPublishingCreatesAnActivePublicationWithTheDisclosableDocumentsAttached()
+
+	/**
+	 * REQ-DWP-003: a batch whose publication OpenRegister refuses for missing DiWoo
+	 * metadata is not marked published, and the refusal names the fields.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
+	 */
+	public function testABatchWithAnIncompleteWooPublicationIsNotMarkedPublished(): void {
+		$this->approvedBatch();
+		$this->objects->refuse = static fn (array $object, mixed $schema): ?\Throwable => ($schema === 'publication')
+			? new \OCA\OpenRegister\Exception\HookStoppedException('refused', ['message' => 'refused', 'fields' => ['wooCategory' => 'missing', 'publisher' => 'missing']])
+			: null;
+
+		try {
+			$this->service->publishBatch('batch-1');
+			$this->fail('Expected the publish to be refused');
+		} catch (\RuntimeException $e) {
+			$this->assertStringContainsString('wooCategory, publisher', $e->getMessage());
+			$this->assertInstanceOf(\OCA\OpenRegister\Exception\HookStoppedException::class, $e->getPrevious());
+		}
+
+		$batch = array_values(array_filter($this->objects->objects, static fn (array $o): bool => ($o['id'] ?? '') === 'batch-1'))[0];
+		$this->assertSame('ready_for_review', $batch['status']);
+		$this->assertArrayNotHasKey('publishedAt', $batch);
+		$this->assertSame([], $this->createdPublications());
+		$this->assertSame([], $this->files->added);
+	}//end testABatchWithAnIncompleteWooPublicationIsNotMarkedPublished()
+
+	/**
+	 * REQ-PFF-002: publishing records, per attached copy, what was written into it.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-the-published-file-carries-its-official-title-req-pff-002
+	 */
+	public function testThePublishRecordsWhatWasWrittenIntoEachPublishedCopy(): void {
+		$this->approvedBatch();
+		$files = new class extends WooFakeFileService {
+			public ?\Closure $asFile = null;
+
+			public function addFile(mixed $objectEntity, string $fileName, mixed $content, bool $share = false, array $tags = [], mixed $_schema = null, mixed $_register = null, mixed $registerId = null): object {
+				$added = parent::addFile($objectEntity, $fileName, $content, $share, $tags, $_schema, $_register, $registerId);
+				return ($this->asFile)($added->getId(), $fileName, $this->added[(count($this->added) - 1)]['content']);
+			}
+		};
+		$files->asFile = function (int $id, string $name, string $content): \OCP\Files\File {
+			$copy = $this->createMock(\OCP\Files\File::class);
+			$copy->method('getId')->willReturn($id);
+			$copy->method('getName')->willReturn($name);
+			$copy->method('getContent')->willReturn($content);
+			$copy->expects($this->never())->method('putContent');
+			return $copy;
+		};
+		$this->files = $files;
+		$titles = new \OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter(
+			new \OCA\OpenCatalogi\Service\Publication\PdfTitleUpdate(),
+			new \OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate(),
+			$this->logger
+		);
+		$writer = new \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter(
+			$this->rootFolder,
+			$this->container,
+			$this->createMock(\OCA\OpenCatalogi\Service\Portal\PublicationLinker::class),
+			$this->l10n,
+			null,
+			$titles
+		);
+		$service = new WooService(
+			new RegisterBindings($this->config, $this->container),
+			$this->userSession,
+			$this->logger,
+			$this->l10n,
+			$writer,
+			new \OCA\OpenCatalogi\Service\Woo\DocumentRedactor($writer, $this->container, $this->l10n, $this->logger)
+		);
+
+		$result = $service->publishBatch('batch-1');
+
+		$expected = [];
+		foreach (['a.pdf', 'b.pdf', 'c-gelakt.pdf'] as $name) {
+			$hash = hash('sha256', 'inhoud van ' . $name);
+			$expected[$name] = ['status' => 'skipped', 'hashBefore' => $hash, 'hashAfter' => $hash, 'reason' => 'unsupported-type'];
+		}
+
+		$this->assertSame($expected, $result['wooPublication']['embeddedTitles']);
+		$this->assertSame($expected, $service->getBatch('batch-1')['wooPublication']['embeddedTitles']);
+	}//end testThePublishRecordsWhatWasWrittenIntoEachPublishedCopy()
 
 	/**
 	 * REQ-WBP-001: the batch's own category and title win.

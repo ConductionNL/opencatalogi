@@ -67,6 +67,7 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// WOO transparency (woo-transparency)
 		['name' => 'woo#weigeringsgronden', 'url' => '/api/woo/weigeringsgronden', 'verb' => 'GET'],
 		['name' => 'woo#categories', 'url' => '/api/woo/categories', 'verb' => 'GET'],
+		['name' => 'documentsoorten#index', 'url' => '/api/woo/documentsoorten', 'verb' => 'GET'],
 		['name' => 'woo#createBatch', 'url' => '/api/woo/batches', 'verb' => 'POST'],
 		['name' => 'woo#getBatch', 'url' => '/api/woo/batches/{batchId}', 'verb' => 'GET'],
 		['name' => 'woo#updateAssessment', 'url' => '/api/woo/batches/{batchId}/documents/{docId}', 'verb' => 'PUT'],
@@ -117,6 +118,12 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
 		['name' => 'publicationState#withdrawFile', 'url' => '/api/publications/{id}/files/{fileId}/withdraw', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		['name' => 'publicationState#republishFile', 'url' => '/api/publications/{id}/files/{fileId}/republish', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
+		// A plain language summary an officer writes, or drafts with a text assistant and accepts
+		// (publication-plain-language-and-translation, REQ-PPL-002).
+		['name' => 'plainSummary#assistant', 'url' => '/api/plain-summary/assistant', 'verb' => 'GET'],
+		['name' => 'plainSummary#draft', 'url' => '/api/publications/{id}/plain-summary-draft', 'verb' => 'POST'],
+		['name' => 'plainSummary#poll', 'url' => '/api/publications/{id}/plain-summary-draft/{taskId}', 'verb' => 'GET', 'requirements' => ['taskId' => '\d+']],
+		['name' => 'plainSummary#accept', 'url' => '/api/publications/{id}/plain-summary', 'verb' => 'POST'],
 		['name' => 'publicationDisclosure#announce', 'url' => '/api/publications/announce', 'verb' => 'POST'],
 		['name' => 'publicationDisclosure#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
 		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
@@ -173,6 +180,37 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'listings#preflightedCors', 'postfix' => '-listings-id', 'url' => '/api/listings/{id}', 'verb' => 'OPTIONS'],
 		['name' => 'listings#preflightedCors', 'postfix' => '-listings-sync', 'url' => '/api/listings/sync', 'verb' => 'OPTIONS'],
 		['name' => 'listings#preflightedCors', 'postfix' => '-listings-add', 'url' => '/api/listings/add', 'verb' => 'OPTIONS'],
+		// Search and federation CORS (REQ-SCO-001), one preflight per GET route.
+		['name' => 'search#preflightedCors', 'postfix' => '-search', 'url' => '/api/search', 'verb' => 'OPTIONS'],
+		['name' => 'search#preflightedCors', 'postfix' => '-search-id', 'url' => '/api/search/{id}', 'verb' => 'OPTIONS'],
+		['name' => 'search#preflightedCors', 'postfix' => '-search-id-attachments', 'url' => '/api/search/{id}/attachments', 'verb' => 'OPTIONS'],
+		['name' => 'search#preflightedCors', 'postfix' => '-search-id-download', 'url' => '/api/search/{id}/download', 'verb' => 'OPTIONS'],
+		['name' => 'search#preflightedCors', 'postfix' => '-search-id-uses', 'url' => '/api/search/{id}/uses', 'verb' => 'OPTIONS'],
+		['name' => 'search#preflightedCors', 'postfix' => '-search-id-used', 'url' => '/api/search/{id}/used', 'verb' => 'OPTIONS'],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed',
+			'url' => '/api/federation/publications', 'verb' => 'OPTIONS',
+		],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed-id',
+			'url' => '/api/federation/publications/{id}', 'verb' => 'OPTIONS',
+		],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed-id-attachments',
+			'url' => '/api/federation/publications/{id}/attachments', 'verb' => 'OPTIONS',
+		],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed-id-download',
+			'url' => '/api/federation/publications/{id}/download', 'verb' => 'OPTIONS',
+		],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed-id-uses',
+			'url' => '/api/federation/publications/{id}/uses', 'verb' => 'OPTIONS',
+		],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed-id-used',
+			'url' => '/api/federation/publications/{id}/used', 'verb' => 'OPTIONS',
+		],
 		/**
 		 * And here we have the public endpoints, the part of the API that is used by the frontend and publicly accessible
 		 * 

@@ -181,6 +181,16 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentTypeVocabularyInterface",
+        "OCA\\OpenCatalogi\\Service\\TooiVocabularyService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DiwooCompletenessInterface",
+        "OCA\\OpenCatalogi\\Service\\SitemapDocumentMapper"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\CmsMigrationServiceInterface",
         "OCA\\OpenCatalogi\\Service\\CmsMigrationService"
     ],
@@ -318,5 +328,30 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface",
         "OCA\\OpenCatalogi\\Service\\OpenRegisterLookup"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\AttachmentReadingQueueInterface",
+        "OCA\\OpenCatalogi\\BackgroundJob\\AttachmentReadingQueue"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\AttachmentReadingStoreInterface",
+        "OCA\\OpenCatalogi\\Service\\AttachmentReading\\AttachmentReadingStore"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\RedactedOriginalGuardInterface",
+        "OCA\\OpenCatalogi\\Service\\AttachmentReading\\RedactedOriginalGuard"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PlainSummaryDrafterInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PlainLanguageDrafter"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PlainSummaryProvenanceInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PlainSummaryProvenance"
     ]
 ]

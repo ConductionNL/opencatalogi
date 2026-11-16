@@ -64,6 +64,7 @@ vi.mock('../../src/registry.js', () => ({ default: { FederationDirectory: { name
 vi.mock('../../src/views/settings/Settings.vue', () => ({ default: { name: 'AdminSettings' } }))
 vi.mock('../../src/components/widgets/AuditTrailWidget.vue', () => ({ default: { name: 'AuditTrailWidget' } }))
 vi.mock('../../src/components/widgets/NationalAnnounceWidget.vue', () => ({ default: { name: 'NationalAnnounceWidget' } }))
+vi.mock('../../src/components/widgets/PlainSummaryDraftWidget.vue', () => ({ default: { name: 'PlainSummaryDraftWidget' } }))
 vi.mock('../../src/components/widgets/PublicationAttachmentsWidget.vue', () => ({ default: { name: 'PublicationAttachmentsWidget' } }))
 vi.mock('../../src/components/widgets/PublicationQualityWidget.vue', () => ({ default: { name: 'PublicationQualityWidget' } }))
 vi.mock('../../src/components/widgets/PublicationVisibilityWidget.vue', () => ({ default: { name: 'PublicationVisibilityWidget' } }))
@@ -117,7 +118,7 @@ afterEach(() => {
 })
 
 describe('src/main.js', () => {
-	it('registers the nine detail-page widgets after the built-in ones', async () => {
+	it('registers the ten detail-page widgets after the built-in ones', async () => {
 		await runMain()
 
 		expect(lib.registerBuiltinDashboardWidgets).toHaveBeenCalledOnce()
@@ -126,6 +127,7 @@ describe('src/main.js', () => {
 			'audit-trail',
 			'national-announce',
 			'publication-visibility',
+			'plain-summary-draft',
 			'publication-quality',
 			'publication-attachments',
 			'theme-preview',
@@ -138,9 +140,10 @@ describe('src/main.js', () => {
 			expect(options.form).toBe(null)
 		}
 		expect(calls[0][1].renderer).toEqual({ name: 'AuditTrailWidget' })
-		expect(calls[3][1].renderer).toEqual({ name: 'PublicationQualityWidget' })
-		expect(calls[4][1].defaultContent).toEqual({ maxDisplay: 100 })
-		expect(calls[6][1].renderer).toBe(lib.CnTreeView)
+		expect(calls[3][1].renderer).toEqual({ name: 'PlainSummaryDraftWidget' })
+		expect(calls[4][1].renderer).toEqual({ name: 'PublicationQualityWidget' })
+		expect(calls[5][1].defaultContent).toEqual({ maxDisplay: 100 })
+		expect(calls[7][1].renderer).toBe(lib.CnTreeView)
 		expect(lib.registerBuiltinDashboardWidgets.mock.invocationCallOrder[0]).toBeLessThan(lib.registerDashboardWidget.mock.invocationCallOrder[0])
 	})
 

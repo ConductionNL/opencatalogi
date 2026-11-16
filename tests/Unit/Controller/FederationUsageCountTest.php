@@ -25,6 +25,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -43,7 +45,9 @@ final class FederationUsageCountTest extends TestCase {
 	protected function setUp(): void {
 		$this->request = $this->createMock(IRequest::class);
 		$this->request->method('getParams')->willReturn([]);
-		$this->request->method('getHeader')->with('User-Agent')->willReturn('Mozilla/5.0');
+		$this->request->method('getHeader')->willReturnCallback(
+			static fn (string $name): string => ($name === 'User-Agent' ? 'Mozilla/5.0' : '')
+		);
 		$this->publications = $this->createMock(PublicationServiceInterface::class);
 		$this->counter = $this->createMock(UsageCounterServiceInterface::class);
 		$this->counter->method('increment')->willReturnCallback(
@@ -64,8 +68,23 @@ final class FederationUsageCountTest extends TestCase {
 			publicationService: $this->publications,
 			l10n: $l10n,
 			logger: $this->logger,
-			usageCounter: $this->counter
+			container: $this->container()
 		);
+	}
+
+	private function container(): ContainerInterface {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			function (string $class): object {
+				if ($class === UsageCounterServiceInterface::class) {
+					return $this->counter;
+				}
+
+				throw new class ('not registered') extends \RuntimeException implements NotFoundExceptionInterface {
+				};
+			}
+		);
+		return $container;
 	}
 
 	public function testALocalPublicationServedIsCountedAsAView(): void {
