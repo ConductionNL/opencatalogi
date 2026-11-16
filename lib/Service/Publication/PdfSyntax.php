@@ -88,10 +88,7 @@ final class PdfSyntax {
 	 * @throws TitleNotWritten When the value runs past the end of the file.
 	 */
 	private function valueEnd(string $bytes, int $pos): int {
-		$char = ($bytes[$pos] ?? '');
-		if ($char === '') {
-			throw new TitleNotWritten(PdfTitleUpdate::UNPARSEABLE);
-		}
+		$char = ($bytes[$pos] ?? throw new TitleNotWritten(PdfTitleUpdate::UNPARSEABLE));
 
 		if (substr($bytes, $pos, 2) === '<<') {
 			return $this->dictionaryAt(bytes: $bytes, offset: $pos)[1];

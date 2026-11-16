@@ -104,6 +104,7 @@ class TitleFakeFileService {
  * @uses \OCA\OpenCatalogi\Service\Publication\PdfSyntax
  * @uses \OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate
  * @uses \OCA\OpenCatalogi\Service\Publication\TitleNotWritten
+ * @uses \OCA\OpenCatalogi\Service\Publication\EmbeddedTitle
  */
 class BatchPublicationWriterTest extends TestCase {
 

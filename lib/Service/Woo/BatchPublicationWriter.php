@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Woo;
 
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
+use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\WooCategory;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
@@ -219,29 +220,25 @@ class BatchPublicationWriter {
 	public function publishDocuments(array $batch, array $listings, string $now, callable $keepProgress): array {
 		$files = $this->resolveAll(listings: $listings, owner: (string)($batch['createdBy'] ?? ''));
 		$publication = $this->publication(batch: $batch, now: $now);
-		$attached = array_values(array_map('strval', (array)($batch['wooPublication']['attached'] ?? [])));
-		$embedded = (array)($batch['wooPublication']['embeddedTitles'] ?? []);
+		$progress = self::progressOf(batch: $batch, publicationId: $publication['id']);
 
 		foreach ($files as $file) {
-			if (in_array($file->getName(), $attached, true) === true) {
+			if (in_array($file->getName(), $progress['attached'], true) === true) {
 				continue;
 			}
 
 			try {
 				$title = $this->attach(publication: $publication, file: $file);
 			} catch (Throwable $e) {
-				$batch['wooPublication'] = array_merge(
-					(array)($batch['wooPublication'] ?? []),
-					['publication' => $publication['id'], 'attached' => $attached, 'embeddedTitles' => $embedded]
-				);
+				$batch['wooPublication'] = array_merge((array)($batch['wooPublication'] ?? []), $progress);
 				unset($batch['documentSummary']);
 				$keepProgress($batch);
 				throw new RuntimeException($this->l10n->t('Publishing stopped at %s. Publish again to continue.', [$file->getName()]), 0, $e);
 			}
 
-			$attached[] = $file->getName();
+			$progress['attached'][] = $file->getName();
 			if ($title !== null) {
-				$embedded[$file->getName()] = $title;
+				$progress['embeddedTitles'][$file->getName()] = $title;
 			}
 		}//end foreach
 
@@ -249,11 +246,29 @@ class BatchPublicationWriter {
 			'id' => $publication['id'],
 			'url' => $this->url(id: $publication['id']),
 			'wooCategory' => $this->category(batch: $batch),
-			'attached' => $attached,
-			'embeddedTitles' => $embedded,
+			'attached' => $progress['attached'],
+			'embeddedTitles' => $progress['embeddedTitles'],
 		];
 
 	}//end publishDocuments()
+
+	/**
+	 * How far an earlier attempt got: the publication, the files attached and the titles written into them.
+	 *
+	 * @param array<string, mixed> $batch         The batch.
+	 * @param string               $publicationId The publication the documents are attached to.
+	 *
+	 * @return array{publication: string, attached: array<int, string>, embeddedTitles: array<string, mixed>}
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-the-published-file-carries-its-official-title-req-pff-002
+	 */
+	private static function progressOf(array $batch, string $publicationId): array {
+		return [
+			'publication' => $publicationId,
+			'attached' => array_values(array_map('strval', (array)($batch['wooPublication']['attached'] ?? []))),
+			'embeddedTitles' => (array)($batch['wooPublication']['embeddedTitles'] ?? []),
+		];
+	}//end progressOf()
 
 	/**
 	 * Create the batch's publication, or take the one an earlier attempt made.
@@ -389,7 +404,8 @@ class BatchPublicationWriter {
 
 		$embedded = null;
 		if ($this->titles !== null && $created instanceof File) {
-			$embedded = $this->titles->write(file: $created, title: (string)($publication['title'] ?? ''), identifier: $publication['id']);
+			$facts = new EmbeddedTitle(title: (string)($publication['title'] ?? ''), identifier: $publication['id']);
+			$embedded = $this->titles->write(file: $created, facts: $facts);
 		}
 
 		$files->publishFile(object: $target, file: $created->getId());

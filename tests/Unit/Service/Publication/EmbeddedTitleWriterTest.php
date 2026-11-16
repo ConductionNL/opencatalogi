@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace Unit\Service\Publication;
 
+use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate;
 use OCA\OpenCatalogi\Service\Publication\PdfTitleUpdate;
@@ -43,6 +44,7 @@ require_once __DIR__ . '/PdfReadBack.php';
  * @covers \OCA\OpenCatalogi\Service\Publication\PdfSyntax
  * @covers \OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate
  * @covers \OCA\OpenCatalogi\Service\Publication\TitleNotWritten
+ * @covers \OCA\OpenCatalogi\Service\Publication\EmbeddedTitle
  */
 class EmbeddedTitleWriterTest extends TestCase {
 
@@ -115,7 +117,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 	}//end fixture()
 
 	public function testThePdfInfoAndXmpCarryTheTitle(): void {
-		$outcome = $this->writer()->write(file: $this->file(self::fixture('plain')), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file(self::fixture('plain')), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 
 		$this->assertSame(EmbeddedTitleWriter::WRITTEN, $outcome['status']);
 		$this->assertArrayNotHasKey('reason', $outcome);
@@ -128,7 +130,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 
 	public function testTheVerifiedRedactedBytesAreAnExactPrefix(): void {
 		$verified = self::fixture('plain');
-		$outcome = $this->writer()->write(file: $this->file($verified), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file($verified), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 
 		$this->assertSame(hash('sha256', $verified), $outcome['hashBefore']);
 		$this->assertGreaterThan(strlen($verified), strlen((string)$this->written));
@@ -138,7 +140,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 
 	public function testTheUpdatePointsBackAtTheLastCrossReferenceAndKeepsTheOtherInfoEntries(): void {
 		$before = self::fixture('incremental');
-		$this->writer()->write(file: $this->file($before), title: self::TITLE, identifier: self::IDENTIFIER);
+		$this->writer()->write(file: $this->file($before), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 
 		$read = PdfReadBack::read((string)$this->written);
 		$this->assertSame(PdfReadBack::lastStartxref($before), $read['prev']);
@@ -146,7 +148,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 		$this->assertStringContainsString("5 0 obj\n<< /Title (Second revision) >>", (string)$this->written, 'the earlier revision stays in the file');
 
 		$plain = self::fixture('plain');
-		$this->writer()->write(file: $this->file($plain), title: self::TITLE, identifier: self::IDENTIFIER);
+		$this->writer()->write(file: $this->file($plain), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 		$info = PdfReadBack::read((string)$this->written)['info'];
 		$this->assertStringContainsString('/Producer (Word \\(16\\))', $info);
 		$this->assertStringContainsString('/Author <FEFF0041>', $info);
@@ -156,7 +158,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 
 	public function testAPdfWithACrossReferenceStreamGetsAStreamUpdate(): void {
 		$before = self::fixture('xref-stream');
-		$outcome = $this->writer()->write(file: $this->file($before), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file($before), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 
 		$this->assertSame(EmbeddedTitleWriter::WRITTEN, $outcome['status']);
 		$read = PdfReadBack::read((string)$this->written);
@@ -168,7 +170,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 
 	public function testASignedPdfIsSkippedWithTheReason(): void {
 		$signed = self::fixture('signed');
-		$outcome = $this->writer()->write(file: $this->file($signed), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file($signed), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 
 		$this->assertSame(
 			['status' => 'skipped', 'hashBefore' => hash('sha256', $signed), 'hashAfter' => hash('sha256', $signed), 'reason' => 'signed'],
@@ -178,7 +180,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 	}//end testASignedPdfIsSkippedWithTheReason()
 
 	public function testAnEncryptedPdfIsSkipped(): void {
-		$outcome = $this->writer()->write(file: $this->file(self::fixture('encrypted')), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file(self::fixture('encrypted')), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 
 		$this->assertSame(['skipped', 'encrypted'], [$outcome['status'], $outcome['reason']]);
 		$this->assertNull($this->written);
@@ -207,7 +209,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 	 * @dataProvider damagedPdfs
 	 */
 	public function testADamagedPdfIsSkippedAsUnparseable(string $bytes): void {
-		$outcome = $this->writer()->write(file: $this->file($bytes), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file($bytes), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 
 		$this->assertSame(['skipped', 'unparseable'], [$outcome['status'], $outcome['reason']]);
 		$this->assertNull($this->written);
@@ -219,7 +221,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 			'word/document.xml' => '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"/>',
 			'docProps/core.xml' => '<?xml version="1.0" encoding="UTF-8"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title>Microsoft Word - concept v3</dc:title><dc:creator>Jan</dc:creator></cp:coreProperties>',
 		]);
-		$outcome = $this->writer()->write(file: $this->file($docx), title: self::TITLE . ' & bijlagen', identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file($docx), facts: new EmbeddedTitle(title: self::TITLE . ' & bijlagen', identifier: self::IDENTIFIER));
 
 		$this->assertSame(EmbeddedTitleWriter::WRITTEN, $outcome['status']);
 		$core = self::part((string)$this->written, 'docProps/core.xml');
@@ -237,36 +239,36 @@ class EmbeddedTitleWriterTest extends TestCase {
 			. 'xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><office:meta>'
 			. '<meta:user-defined meta:name="kenmerk">K-1</meta:user-defined></office:meta></office:document-meta>';
 		$odt = self::package(['mimetype' => 'application/vnd.oasis.opendocument.text', 'meta.xml' => $meta]);
-		$this->writer()->write(file: $this->file($odt), title: self::TITLE, identifier: self::IDENTIFIER);
+		$this->writer()->write(file: $this->file($odt), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 
 		$written = self::part((string)$this->written, 'meta.xml');
 		$this->assertSame([self::TITLE], self::texts($written, 'title'));
 		$this->assertSame(['K-1', self::IDENTIFIER], self::texts($written, 'user-defined'));
 
-		$this->writer()->write(file: $this->file((string)$this->written), title: 'Tweede titel', identifier: 'id-2');
+		$this->writer()->write(file: $this->file((string)$this->written), facts: new EmbeddedTitle(title: 'Tweede titel', identifier: 'id-2'));
 		$again = self::part((string)$this->written, 'meta.xml');
 		$this->assertSame(['Tweede titel'], self::texts($again, 'title'));
 		$this->assertSame(['K-1', 'id-2'], self::texts($again, 'user-defined'), 'the identifier field is reused, not added twice');
 	}//end testAnOdtCarriesTheTitleAndAUserDefinedIdentifierInMeta()
 
 	public function testAPackageWithoutMetadataOrWithBrokenMetadataIsSkipped(): void {
-		$outcome = $this->writer()->write(file: $this->file(self::package(['word/document.xml' => '<x/>'])), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file(self::package(['word/document.xml' => '<x/>'])), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 		$this->assertSame(['skipped', 'no-metadata-part'], [$outcome['status'], $outcome['reason']]);
 
-		$outcome = $this->writer()->write(file: $this->file(self::package(['docProps/core.xml' => '<not xml'])), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file(self::package(['docProps/core.xml' => '<not xml'])), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 		$this->assertSame(['skipped', 'unparseable'], [$outcome['status'], $outcome['reason']]);
 
-		$outcome = $this->writer()->write(file: $this->file(self::package(['meta.xml' => '<office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"/>'])), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file(self::package(['meta.xml' => '<office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"/>'])), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 		$this->assertSame(['skipped', 'no-metadata-part'], [$outcome['status'], $outcome['reason']]);
 
-		$outcome = $this->writer()->write(file: $this->file("PK\x03\x04 not a zip"), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file("PK\x03\x04 not a zip"), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 		$this->assertSame(['skipped', 'unparseable'], [$outcome['status'], $outcome['reason']]);
 		$this->assertNull($this->written);
 	}//end testAPackageWithoutMetadataOrWithBrokenMetadataIsSkipped()
 
 	public function testAFailureLeavesTheBytesAndSaysFailed(): void {
 		$plain = self::fixture('plain');
-		$outcome = $this->writer()->write(file: $this->file($plain, new NotPermittedException('read-only storage')), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file($plain, new NotPermittedException('read-only storage')), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 
 		$this->assertSame(
 			['status' => 'failed', 'hashBefore' => hash('sha256', $plain), 'hashAfter' => hash('sha256', $plain), 'reason' => 'write-error'],
@@ -283,16 +285,16 @@ class EmbeddedTitleWriterTest extends TestCase {
 
 		$this->assertSame(
 			['status' => 'failed', 'hashBefore' => null, 'hashAfter' => null, 'reason' => 'write-error'],
-			$this->writer()->write(file: $file, title: self::TITLE, identifier: self::IDENTIFIER)
+			$this->writer()->write(file: $file, facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER))
 		);
 		$this->assertSame(['[EmbeddedTitleWriter] The title was not written into kwijt.pdf: gone'], $this->warnings);
 	}//end testAnUnreadableFileFailsWithoutAHash()
 
 	public function testAnotherTypeAndAMissingTitleAreSkipped(): void {
-		$outcome = $this->writer()->write(file: $this->file('plain text'), title: self::TITLE, identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file('plain text'), facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER));
 		$this->assertSame(['skipped', 'unsupported-type'], [$outcome['status'], $outcome['reason']]);
 
-		$outcome = $this->writer()->write(file: $this->file(self::fixture('plain')), title: '  ', identifier: self::IDENTIFIER);
+		$outcome = $this->writer()->write(file: $this->file(self::fixture('plain')), facts: new EmbeddedTitle(title: '  ', identifier: self::IDENTIFIER));
 		$this->assertSame(['skipped', 'no-title'], [$outcome['status'], $outcome['reason']]);
 		$this->assertNull($this->written);
 	}//end testAnotherTypeAndAMissingTitleAreSkipped()

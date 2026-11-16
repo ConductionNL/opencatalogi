@@ -66,8 +66,7 @@ class PdfTitleUpdate {
 	 * The bytes with the title appended.
 	 *
 	 * @param string $bytes      The PDF.
-	 * @param string $title      The official title.
-	 * @param string $identifier The publication identifier.
+	 * @param EmbeddedTitle $facts The official title and the publication identifier.
 	 *
 	 * @return string The PDF with the update appended.
 	 *
@@ -75,7 +74,7 @@ class PdfTitleUpdate {
 	 *
 	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-the-published-file-carries-its-official-title-req-pff-002
 	 */
-	public function append(string $bytes, string $title, string $identifier): string {
+	public function append(string $bytes, EmbeddedTitle $facts): string {
 		$trailer = $this->lastTrailer(bytes: $bytes);
 		[$root, $size] = $this->writableRoot(bytes: $bytes, trailer: $trailer['dict']);
 		$catalog = $this->objectDictionary(bytes: $bytes, reference: $root);
@@ -86,20 +85,17 @@ class PdfTitleUpdate {
 		$info = $this->infoDictionary(bytes: $bytes, trailer: $trailer['dict']);
 		$infoNumber = $size;
 		$xmpNumber = ($size + 1);
-		$info['/Title'] = self::textString(text: $title);
+		$info['/Title'] = self::textString(text: $facts->title);
 		$catalog['/Metadata'] = $xmpNumber . ' 0 R';
 
-		$out = $bytes;
-		if (preg_match('/[\r\n]\z/', $out) !== 1) {
-			$out .= "\n";
-		}
+		$out = self::endingInNewline(bytes: $bytes);
 
 		$offsets = [];
 		$offsets[$root[0]] = [strlen($out), $root[1]];
 		$out .= $root[0] . ' ' . $root[1] . " obj\n" . self::dictionary(entries: $catalog) . "\nendobj\n";
 		$offsets[$infoNumber] = [strlen($out), 0];
 		$out .= $infoNumber . " 0 obj\n" . self::dictionary(entries: $info) . "\nendobj\n";
-		$xmp = self::xmp(title: $title, identifier: $identifier);
+		$xmp = self::xmp(facts: $facts);
 		$offsets[$xmpNumber] = [strlen($out), 0];
 		$out .= $xmpNumber . " 0 obj\n<< /Type /Metadata /Subtype /XML /Length " . strlen($xmp) . " >>\nstream\n" . $xmp . "\nendstream\nendobj\n";
 
@@ -115,6 +111,21 @@ class PdfTitleUpdate {
 
 		return $this->withXrefTable(out: $out, offsets: $offsets, size: ($size + 2), trailer: $newTrailer);
 	}//end append()
+
+	/**
+	 * The file with a line end after its last byte, so an appended object starts on its own line.
+	 *
+	 * @param string $bytes The file.
+	 *
+	 * @return string
+	 */
+	private static function endingInNewline(string $bytes): string {
+		if (preg_match('/[\r\n]\z/', $bytes) === 1) {
+			return $bytes;
+		}
+
+		return $bytes . "\n";
+	}//end endingInNewline()
 
 	/**
 	 * The catalog reference and `/Size` of a PDF this writer may change.
@@ -345,18 +356,17 @@ class PdfTitleUpdate {
 	/**
 	 * The XMP packet with the title and the identifier.
 	 *
-	 * @param string $title      The official title.
-	 * @param string $identifier The publication identifier.
+	 * @param EmbeddedTitle $facts The official title and the publication identifier.
 	 *
 	 * @return string
 	 */
-	private static function xmp(string $title, string $identifier): string {
+	private static function xmp(EmbeddedTitle $facts): string {
 		$escape = static fn (string $text): string => htmlspecialchars($text, (ENT_XML1 | ENT_QUOTES), 'UTF-8');
 		return '<?xpacket begin="' . "\u{FEFF}" . '" id="W5M0MpCehiHzreSzNTczkc9d"?>' . "\n"
 			. '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
 			. '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
-			. '<dc:title><rdf:Alt><rdf:li xml:lang="x-default">' . $escape($title) . '</rdf:li></rdf:Alt></dc:title>'
-			. '<dc:identifier>' . $escape($identifier) . '</dc:identifier>'
+			. '<dc:title><rdf:Alt><rdf:li xml:lang="x-default">' . $escape($facts->title) . '</rdf:li></rdf:Alt></dc:title>'
+			. '<dc:identifier>' . $escape($facts->identifier) . '</dc:identifier>'
 			. '</rdf:Description></rdf:RDF></x:xmpmeta>' . "\n"
 			. '<?xpacket end="w"?>';
 	}//end xmp()

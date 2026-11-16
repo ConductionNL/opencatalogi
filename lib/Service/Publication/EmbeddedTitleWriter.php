@@ -81,14 +81,13 @@ class EmbeddedTitleWriter {
 	 * Write the title and identifier into the file.
 	 *
 	 * @param File   $file       The published copy.
-	 * @param string $title      The publication's official title.
-	 * @param string $identifier The publication identifier.
+	 * @param EmbeddedTitle $facts The official title and the publication identifier.
 	 *
 	 * @return array{status: string, hashBefore: string|null, hashAfter: string|null, reason?: string}
 	 *
 	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-the-published-file-carries-its-official-title-req-pff-002
 	 */
-	public function write(File $file, string $title, string $identifier): array {
+	public function write(File $file, EmbeddedTitle $facts): array {
 		try {
 			$before = $file->getContent();
 		} catch (Throwable $e) {
@@ -96,13 +95,13 @@ class EmbeddedTitleWriter {
 		}
 
 		$hash = hash('sha256', $before);
-		$title = trim($title);
-		if ($title === '') {
+		$facts = new EmbeddedTitle(title: trim($facts->title), identifier: $facts->identifier);
+		if ($facts->title === '') {
 			return self::outcome(status: self::SKIPPED, before: $hash, after: $hash, reason: self::NO_TITLE);
 		}
 
 		try {
-			$after = $this->withTitle(bytes: $before, title: $title, identifier: $identifier);
+			$after = $this->withTitle(bytes: $before, facts: $facts);
 		} catch (TitleNotWritten $skip) {
 			return self::outcome(status: self::SKIPPED, before: $hash, after: $hash, reason: $skip->getMessage());
 		} catch (Throwable $e) {
@@ -122,20 +121,19 @@ class EmbeddedTitleWriter {
 	 * The bytes with the title, by the file's own type.
 	 *
 	 * @param string $bytes      The file.
-	 * @param string $title      The official title.
-	 * @param string $identifier The publication identifier.
+	 * @param EmbeddedTitle $facts The official title and the publication identifier.
 	 *
 	 * @return string
 	 *
 	 * @throws TitleNotWritten When the type is not one this writer changes, or the file may not be changed.
 	 */
-	private function withTitle(string $bytes, string $title, string $identifier): string {
+	private function withTitle(string $bytes, EmbeddedTitle $facts): string {
 		if (str_starts_with($bytes, '%PDF-') === true) {
-			return $this->pdf->append(bytes: $bytes, title: $title, identifier: $identifier);
+			return $this->pdf->append(bytes: $bytes, facts: $facts);
 		}
 
 		if ($this->office->handles(bytes: $bytes) === true) {
-			return $this->office->apply(bytes: $bytes, title: $title, identifier: $identifier);
+			return $this->office->apply(bytes: $bytes, facts: $facts);
 		}
 
 		throw new TitleNotWritten(self::UNSUPPORTED);
