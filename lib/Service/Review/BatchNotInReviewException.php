@@ -4,7 +4,7 @@
  * Raised when a review move is asked of a Woo batch that is not in review.
  *
  * @category Exception
- * @package  OCA\OpenCatalogi\Service\Woo
+ * @package  OCA\OpenCatalogi\Service\Review
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\Review;
 
 use RuntimeException;
 

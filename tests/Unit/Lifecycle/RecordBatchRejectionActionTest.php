@@ -1,7 +1,7 @@
 <?php
 
 /**
- * RecordWooBatchRejectionActionTest
+ * RecordBatchRejectionActionTest
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Lifecycle;
 
-use OCA\OpenCatalogi\Lifecycle\RecordWooBatchRejectionAction;
+use OCA\OpenCatalogi\Lifecycle\RecordBatchRejectionAction;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
@@ -31,18 +31,18 @@ use RuntimeException;
 /**
  * A rejection is recorded with reason, reviewer and moment, and the batch goes back to its author.
  *
- * @covers \OCA\OpenCatalogi\Lifecycle\RecordWooBatchRejectionAction
+ * @covers \OCA\OpenCatalogi\Lifecycle\RecordBatchRejectionAction
  */
-final class RecordWooBatchRejectionActionTest extends TestCase {
+final class RecordBatchRejectionActionTest extends TestCase {
 
 	/**
 	 * The action for a signed-in reviewer, or nobody.
 	 *
 	 * @param string|null $uid The reviewer's uid.
 	 *
-	 * @return RecordWooBatchRejectionAction
+	 * @return RecordBatchRejectionAction
 	 */
-	private function action(?string $uid): RecordWooBatchRejectionAction {
+	private function action(?string $uid): RecordBatchRejectionAction {
 		$session = $this->createMock(IUserSession::class);
 		$user    = null;
 		if ($uid !== null) {
@@ -51,7 +51,7 @@ final class RecordWooBatchRejectionActionTest extends TestCase {
 		}
 
 		$session->method('getUser')->willReturn($user);
-		return new RecordWooBatchRejectionAction($session);
+		return new RecordBatchRejectionAction($session);
 	}//end action()
 
 	/**
@@ -66,7 +66,7 @@ final class RecordWooBatchRejectionActionTest extends TestCase {
 			['id' => 'batch-1', 'status' => 'in_progress', 'createdBy' => 'anna', 'reason' => ' Bijlage 3 bevat nog een BSN ', 'rejections' => [$earlier]],
 			['id' => 'batch-1', 'status' => 'ready_for_review', 'createdBy' => 'anna'],
 			[],
-			RecordWooBatchRejectionAction::class
+			RecordBatchRejectionAction::class
 		);
 
 		$this->assertArrayNotHasKey('reason', $batch);

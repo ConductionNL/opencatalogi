@@ -56,7 +56,7 @@
 							</dd>
 						</template>
 					</dl>
-					<WooRedactionLog
+					<RedactionLog
 						v-if="doc.assessment === 'deels_openbaar'"
 						:log="doc.redactionLog || []" />
 				</template>
@@ -86,7 +86,7 @@
 				{{ t('opencatalogi', 'Reject') }}
 			</NcButton>
 		</div>
-		<WooRejectDialog
+		<RejectReasonDialog
 			v-if="dialog"
 			:scope="dialog.scope"
 			:subject="dialog.doc ? dialog.doc.title : caseReference"
@@ -100,17 +100,17 @@ import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-import WooRejectDialog from '../../dialogs/woo/WooRejectDialog.vue'
-import WooRedactionLog from './WooRedactionLog.vue'
+import RejectReasonDialog from '../../dialogs/review/RejectReasonDialog.vue'
+import RedactionLog from './RedactionLog.vue'
 
 export default {
-	name: 'WooBatchReviewPanel',
+	name: 'BatchReviewPanel',
 	components: {
 		NcButton,
 		NcLoadingIcon,
 		NcNoteCard,
-		WooRedactionLog,
-		WooRejectDialog,
+		RedactionLog,
+		RejectReasonDialog,
 	},
 
 	props: {

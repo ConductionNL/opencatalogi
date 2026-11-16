@@ -2,11 +2,11 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Unit test for `WooRejectDialog.vue` (woo-review-surface, REQ-WRV-002):
+ * Unit test for `RejectReasonDialog.vue` (woo-review-surface, REQ-WRV-002):
  * nothing goes back without a reason, and the reason goes back trimmed.
  */
 
-import WooRejectDialog from './WooRejectDialog.vue'
+import RejectReasonDialog from './RejectReasonDialog.vue'
 
 jest.mock('@nextcloud/vue', () => ({}))
 
@@ -19,23 +19,23 @@ jest.mock('@nextcloud/vue', () => ({}))
 function dialog(props = {}) {
 	const emitted = []
 	const state = {
-		...WooRejectDialog.data(),
+		...RejectReasonDialog.data(),
 		scope: 'batch',
 		subject: '',
 		...props,
 		emitted,
 		$emit: (name, payload) => emitted.push([name, payload]),
 	}
-	for (const [name, getter] of Object.entries(WooRejectDialog.computed)) {
+	for (const [name, getter] of Object.entries(RejectReasonDialog.computed)) {
 		Object.defineProperty(state, name, { get: getter.bind(state) })
 	}
-	for (const [name, method] of Object.entries(WooRejectDialog.methods)) {
+	for (const [name, method] of Object.entries(RejectReasonDialog.methods)) {
 		state[name] = method.bind(state)
 	}
 	return state
 }
 
-describe('WooRejectDialog', () => {
+describe('RejectReasonDialog', () => {
 	it('hands back nothing without a reason', () => {
 		const state = dialog()
 		state.reason = '   '

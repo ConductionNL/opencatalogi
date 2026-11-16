@@ -1,7 +1,7 @@
 <?php
 
 /**
- * WooBatchPreviewsSeenGuardTest
+ * PreviewsSeenGuardTest
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -23,8 +23,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Lifecycle;
 
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
-use OCA\OpenCatalogi\Contract\WooBatchReviewInterface;
-use OCA\OpenCatalogi\Lifecycle\WooBatchPreviewsSeenGuard;
+use OCA\OpenCatalogi\Contract\BatchReviewInterface;
+use OCA\OpenCatalogi\Lifecycle\PreviewsSeenGuard;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -32,18 +32,18 @@ use RuntimeException;
 /**
  * The `approve` guard refuses until the approving user opened every public view, and fails closed.
  *
- * @covers \OCA\OpenCatalogi\Lifecycle\WooBatchPreviewsSeenGuard
+ * @covers \OCA\OpenCatalogi\Lifecycle\PreviewsSeenGuard
  */
-final class WooBatchPreviewsSeenGuardTest extends TestCase {
+final class PreviewsSeenGuardTest extends TestCase {
 
-	private WooBatchReviewInterface&MockObject $review;
+	private BatchReviewInterface&MockObject $review;
 	private TransparencyWorkflowServiceInterface&MockObject $woo;
-	private WooBatchPreviewsSeenGuard $guard;
+	private PreviewsSeenGuard $guard;
 
 	protected function setUp(): void {
-		$this->review = $this->createMock(WooBatchReviewInterface::class);
+		$this->review = $this->createMock(BatchReviewInterface::class);
 		$this->woo = $this->createMock(TransparencyWorkflowServiceInterface::class);
-		$this->guard = new WooBatchPreviewsSeenGuard($this->review, $this->woo);
+		$this->guard = new PreviewsSeenGuard($this->review, $this->woo);
 
 	}//end setUp()
 

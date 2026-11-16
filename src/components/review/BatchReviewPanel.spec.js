@@ -2,14 +2,14 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Unit test for `WooBatchReviewPanel.vue` (woo-review-surface, REQ-WRV-001,
+ * Unit test for `BatchReviewPanel.vue` (woo-review-surface, REQ-WRV-001,
  * REQ-WRV-002): the public views load, opening one records it, approve
  * waits until every one was opened, and a reason travels with a rejection
  * or a single document's send-back.
  */
 
 import axios from '@nextcloud/axios'
-import WooBatchReviewPanel from './WooBatchReviewPanel.vue'
+import BatchReviewPanel from './BatchReviewPanel.vue'
 
 jest.mock('@nextcloud/axios', () => ({
 	__esModule: true,
@@ -26,13 +26,13 @@ jest.mock('@nextcloud/vue', () => ({}))
 function panel() {
 	const emitted = []
 	const state = {
-		...WooBatchReviewPanel.data(),
+		...BatchReviewPanel.data(),
 		batchId: 'batch-1',
 		caseReference: 'WOO-2026-7',
 		emitted,
 		$emit: (name, payload) => emitted.push([name, payload]),
 	}
-	for (const [name, method] of Object.entries(WooBatchReviewPanel.methods)) {
+	for (const [name, method] of Object.entries(BatchReviewPanel.methods)) {
 		state[name] = method.bind(state)
 	}
 	return state
@@ -49,7 +49,7 @@ const PREVIEW = {
 	],
 }
 
-describe('WooBatchReviewPanel', () => {
+describe('BatchReviewPanel', () => {
 	beforeEach(() => {
 		axios.get.mockReset()
 		axios.post.mockReset()

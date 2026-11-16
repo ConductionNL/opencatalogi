@@ -70,12 +70,12 @@ class WooRegisterSchemasTest extends TestCase {
 		// (woo-batch-creates-publications, REQ-WBP-001).
 		'title',
 		'wooCategory',
-		// Written by RecordWooBatchRejectionAction on the `reject` transition
+		// Written by RecordBatchRejectionAction on the `reject` transition
 		// (woo-review-surface REQ-WRV-002).
 		'assignee',
 		'rejections',
 		'lastRejectionReason',
-		// Written by WooBatchReview::markPreviewSeen(): per reviewer, the public views opened (REQ-WRV-001).
+		// Written by BatchReview::markPreviewSeen(): per reviewer, the public views opened (REQ-WRV-001).
 		'previewsSeen',
 	];
 
@@ -101,7 +101,7 @@ class WooRegisterSchemasTest extends TestCase {
 		'redactionMessage',
 		// The redaction log: what was removed and on which grounds (woo-review-surface, REQ-WRV-003).
 		'redactionLog',
-		// Written by WooBatchReview::sendBack(): why a reviewer sent the document back (REQ-WRV-002).
+		// Written by BatchReview::sendBack(): why a reviewer sent the document back (REQ-WRV-002).
 		'sentBackReason',
 		// Set by verifyRedaction() when a person checked the redaction (REQ-WDA-004).
 		'redactionVerifiedBy',

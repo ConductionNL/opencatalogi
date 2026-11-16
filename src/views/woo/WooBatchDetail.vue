@@ -25,7 +25,7 @@ import {
 	NcLoadingIcon,
 	NcNoteCard,
 } from '@nextcloud/vue'
-import WooBatchReviewPanel from '../../components/woo/WooBatchReviewPanel.vue'
+import BatchReviewPanel from '../../components/review/BatchReviewPanel.vue'
 import WooAssessmentDialog from '../../dialogs/woo/WooAssessmentDialog.vue'
 import {
 	ASSESSMENTS,
@@ -68,7 +68,7 @@ export default {
 		NcLoadingIcon,
 		NcNoteCard,
 		WooAssessmentDialog,
-		WooBatchReviewPanel,
+		BatchReviewPanel,
 	},
 
 	data() {
@@ -488,7 +488,7 @@ export default {
 				}}
 			</NcNoteCard>
 
-			<WooBatchReviewPanel
+			<BatchReviewPanel
 				v-if="inReview"
 				:batchId="batchId"
 				:caseReference="batch.caseReference || ''"

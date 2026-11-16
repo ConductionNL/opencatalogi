@@ -1,7 +1,7 @@
 <?php
 
 /**
- * WooBatchReviewTest
+ * BatchReviewTest
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -20,13 +20,13 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Tests\Unit\Service\Woo;
+namespace OCA\OpenCatalogi\Tests\Unit\Service\Review;
 
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
-use OCA\OpenCatalogi\Service\Woo\BatchNotInReviewException;
+use OCA\OpenCatalogi\Service\Review\BatchNotInReviewException;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
-use OCA\OpenCatalogi\Service\Woo\WooBatchReview;
+use OCA\OpenCatalogi\Service\Review\BatchReview;
 use OCA\OpenRegister\Db\TaskSequence;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
@@ -43,11 +43,11 @@ use RuntimeException;
 /**
  * The reviewer sees each document as the public will, and approves only after opening every one.
  *
- * @covers \OCA\OpenCatalogi\Service\Woo\WooBatchReview
+ * @covers \OCA\OpenCatalogi\Service\Review\BatchReview
  * @uses   \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
-final class WooBatchReviewTest extends TestCase {
+final class BatchReviewTest extends TestCase {
 
 	private TransparencyWorkflowServiceInterface&MockObject $woo;
 
@@ -92,7 +92,7 @@ final class WooBatchReviewTest extends TestCase {
 
 		$test = $this;
 		$objectService = new class($test) {
-			public function __construct(private readonly WooBatchReviewTest $test) {
+			public function __construct(private readonly BatchReviewTest $test) {
 			}
 
 			public function find(string $id): array {
@@ -150,9 +150,9 @@ final class WooBatchReviewTest extends TestCase {
 	 *
 	 * @param string|null $uid The reviewer.
 	 *
-	 * @return WooBatchReview
+	 * @return BatchReview
 	 */
-	private function review(?string $uid = 'rita'): WooBatchReview {
+	private function review(?string $uid = 'rita'): BatchReview {
 		$root = $this->createMock(IRootFolder::class);
 		$root->method('getFirstNodeById')->willReturnCallback(
 			function (int $id): ?File {
@@ -186,7 +186,7 @@ final class WooBatchReviewTest extends TestCase {
 			static fn (string $route, array $params): string => $route . ':' . $params['fileid']
 		);
 
-		return new WooBatchReview($this->woo, $writer, $session, $urls, $this->createMock(LoggerInterface::class));
+		return new BatchReview($this->woo, $writer, $session, $urls, $this->createMock(LoggerInterface::class));
 
 	}//end review()
 

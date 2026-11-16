@@ -1723,7 +1723,27 @@ OC.L10N.register(
         "Previews seen": "Geopende weergaven",
         "Per reviewer, the documents whose public view they opened during the review. Approve waits until the approving user opened every published document.": "Per beoordelaar de documenten waarvan die tijdens de beoordeling de openbare weergave opende. Goedkeuren wacht tot de goedkeurder elk gepubliceerd document heeft geopend.",
         "Sent back reason": "Reden van terugsturen",
-        "Why a reviewer sent this document back to assessment, who did and when. Internal: never part of a public response.": "Waarom een beoordelaar dit document terugstuurde naar beoordeling, wie dat deed en wanneer. Intern: nooit onderdeel van een openbaar antwoord."
+        "Why a reviewer sent this document back to assessment, who did and when. Internal: never part of a public response.": "Waarom een beoordelaar dit document terugstuurde naar beoordeling, wie dat deed en wanneer. Intern: nooit onderdeel van een openbaar antwoord.",
+        "Rejected by": "Afgewezen door",
+        "The user who rejected the batch.": "De gebruiker die de batch afwees.",
+        "Rejected at": "Afgewezen op",
+        "When the batch was rejected.": "Wanneer de batch werd afgewezen.",
+        "Why the reviewer sent the batch back.": "Waarom de beoordelaar de batch terugstuurde.",
+        "Relation": "Relatie",
+        "The OpenRegister entity relation the passage comes from.": "De entiteitsrelatie in OpenRegister waar de passage vandaan komt.",
+        "The kind of information that was removed, such as a name or a phone number.": "Het soort informatie dat is weggelakt, zoals een naam of een telefoonnummer.",
+        "Start position": "Beginpositie",
+        "Where the removed passage starts in the text.": "Waar de weggelakte passage in de tekst begint.",
+        "End position": "Eindpositie",
+        "Where the removed passage ends in the text.": "Waar de weggelakte passage in de tekst eindigt.",
+        "Removed value": "Weggelakte waarde",
+        "What was removed. Internal: never part of a public response.": "Wat is weggelakt. Intern: nooit onderdeel van een openbaar antwoord.",
+        "The legal grounds for removing the passage.": "De wettelijke gronden om de passage weg te lakken.",
+        "Why the reviewer sent the document back.": "Waarom de beoordelaar het document terugstuurde.",
+        "Sent back by": "Teruggestuurd door",
+        "The user who sent the document back.": "De gebruiker die het document terugstuurde.",
+        "Sent back at": "Teruggestuurd op",
+        "When the document was sent back.": "Wanneer het document werd teruggestuurd."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -37,7 +37,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcDialog, NcTextArea } from '@nextcloud/vue'
 
 export default {
-	name: 'WooRejectDialog',
+	name: 'RejectReasonDialog',
 	components: {
 		NcButton,
 		NcDialog,

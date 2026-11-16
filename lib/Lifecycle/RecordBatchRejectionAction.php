@@ -1,7 +1,7 @@
 <?php
 
 /**
- * RecordWooBatchRejectionAction
+ * RecordBatchRejectionAction
  *
  * The action OpenRegister runs on the `reject` transition of a Woo batch: it
  * records the reviewer's reason with who rejected the batch and when, and
@@ -45,7 +45,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/woo-review-surface/tasks.md#task-1.1
  */
-class RecordWooBatchRejectionAction implements LifecycleActionInterface {
+class RecordBatchRejectionAction implements LifecycleActionInterface {
 
 	/**
 	 * Who `by` names when no user is signed in (a task decided by the system).

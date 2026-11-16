@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Contract\WooBatchReviewInterface;
+use OCA\OpenCatalogi\Contract\BatchReviewInterface;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -55,11 +55,11 @@ class BatchReviewTaskListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param WooBatchReviewInterface $review The batch review.
+	 * @param BatchReviewInterface $review The batch review.
 	 * @param LoggerInterface         $logger The log.
 	 */
 	public function __construct(
-		private readonly WooBatchReviewInterface $review,
+		private readonly BatchReviewInterface $review,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

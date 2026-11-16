@@ -1,7 +1,7 @@
 <?php
 
 /**
- * WooBatchPreviewsSeenGuard
+ * PreviewsSeenGuard
  *
  * The guard OpenRegister runs on the `approve` transition of a Woo batch: the
  * approving user must have opened the public view of every document the batch
@@ -30,7 +30,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Lifecycle;
 
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
-use OCA\OpenCatalogi\Contract\WooBatchReviewInterface;
+use OCA\OpenCatalogi\Contract\BatchReviewInterface;
 use OCA\OpenRegister\Lifecycle\GuardResult;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use Throwable;
@@ -40,16 +40,16 @@ use Throwable;
  *
  * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-the-reviewer-sees-each-document-as-the-public-will-req-wrv-001
  */
-class WooBatchPreviewsSeenGuard implements LifecycleGuardInterface {
+class PreviewsSeenGuard implements LifecycleGuardInterface {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param WooBatchReviewInterface              $review What a reviewer opened.
+	 * @param BatchReviewInterface              $review What a reviewer opened.
 	 * @param TransparencyWorkflowServiceInterface $woo    Reads the stored batch when the payload lacks its documents.
 	 */
 	public function __construct(
-		private readonly WooBatchReviewInterface $review,
+		private readonly BatchReviewInterface $review,
 		private readonly TransparencyWorkflowServiceInterface $woo,
 	) {
 	}//end __construct()

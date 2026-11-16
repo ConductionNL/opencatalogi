@@ -17,7 +17,7 @@ import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcEmptyContent, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-import WooRedactionLog from '../../components/woo/WooRedactionLog.vue'
+import RedactionLog from '../../components/review/RedactionLog.vue'
 import {
 	formatSize,
 	redactionRows,
@@ -62,7 +62,7 @@ export default {
 		NcEmptyContent,
 		NcLoadingIcon,
 		NcNoteCard,
-		WooRedactionLog,
+		RedactionLog,
 	},
 
 	data() {
@@ -467,7 +467,7 @@ export default {
 				</p>
 			</section>
 
-			<WooRedactionLog
+			<RedactionLog
 				v-if="Array.isArray(assessment.redactionLog)"
 				:log="assessment.redactionLog" />
 			<NcNoteCard v-if="assessment.sentBackReason" type="warning">

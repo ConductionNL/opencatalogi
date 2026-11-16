@@ -1768,7 +1768,27 @@ OC.L10N.register(
         "Previews seen": "Previews seen",
         "Per reviewer, the documents whose public view they opened during the review. Approve waits until the approving user opened every published document.": "Per reviewer, the documents whose public view they opened during the review. Approve waits until the approving user opened every published document.",
         "Sent back reason": "Sent back reason",
-        "Why a reviewer sent this document back to assessment, who did and when. Internal: never part of a public response.": "Why a reviewer sent this document back to assessment, who did and when. Internal: never part of a public response."
+        "Why a reviewer sent this document back to assessment, who did and when. Internal: never part of a public response.": "Why a reviewer sent this document back to assessment, who did and when. Internal: never part of a public response.",
+        "Rejected by": "Rejected by",
+        "The user who rejected the batch.": "The user who rejected the batch.",
+        "Rejected at": "Rejected at",
+        "When the batch was rejected.": "When the batch was rejected.",
+        "Why the reviewer sent the batch back.": "Why the reviewer sent the batch back.",
+        "Relation": "Relation",
+        "The OpenRegister entity relation the passage comes from.": "The OpenRegister entity relation the passage comes from.",
+        "The kind of information that was removed, such as a name or a phone number.": "The kind of information that was removed, such as a name or a phone number.",
+        "Start position": "Start position",
+        "Where the removed passage starts in the text.": "Where the removed passage starts in the text.",
+        "End position": "End position",
+        "Where the removed passage ends in the text.": "Where the removed passage ends in the text.",
+        "Removed value": "Removed value",
+        "What was removed. Internal: never part of a public response.": "What was removed. Internal: never part of a public response.",
+        "The legal grounds for removing the passage.": "The legal grounds for removing the passage.",
+        "Why the reviewer sent the document back.": "Why the reviewer sent the document back.",
+        "Sent back by": "Sent back by",
+        "The user who sent the document back.": "The user who sent the document back.",
+        "Sent back at": "Sent back at",
+        "When the document was sent back.": "When the document was sent back."
     },
     "nplurals=2; plural=(n != 1);"
 )

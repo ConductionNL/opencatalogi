@@ -38,8 +38,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
-use OCA\OpenCatalogi\Contract\WooBatchReviewInterface;
-use OCA\OpenCatalogi\Service\Woo\BatchNotInReviewException;
+use OCA\OpenCatalogi\Contract\BatchReviewInterface;
+use OCA\OpenCatalogi\Service\Review\BatchNotInReviewException;
 use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -66,7 +66,7 @@ class WooController extends Controller {
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The current user session.
 	 * @param InformationCategoryRegistryInterface $categories The information categories, bundled plus local.
-	 * @param WooBatchReviewInterface $review The review of a batch: public views, approve, reject and send-back.
+	 * @param BatchReviewInterface $review The review of a batch: public views, approve, reject and send-back.
 	 */
 	public function __construct(
 		$appName,
@@ -75,7 +75,7 @@ class WooController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly InformationCategoryRegistryInterface $categories,
-		private readonly WooBatchReviewInterface $review,
+		private readonly BatchReviewInterface $review,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

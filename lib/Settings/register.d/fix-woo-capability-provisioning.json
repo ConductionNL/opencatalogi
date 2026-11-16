@@ -199,12 +199,18 @@
               "type": "object",
               "properties": {
                 "reason": {
+                  "title": "Reason",
+                  "description": "Why the reviewer sent the batch back.",
                   "type": "string"
                 },
                 "by": {
+                  "title": "Rejected by",
+                  "description": "The user who rejected the batch.",
                   "type": "string"
                 },
                 "at": {
+                  "title": "Rejected at",
+                  "description": "When the batch was rejected.",
                   "type": "string",
                   "format": "date-time"
                 }
@@ -253,7 +259,7 @@
                   "ready_for_review"
                 ],
                 "to": "approved",
-                "requires": "OCA\\OpenCatalogi\\Lifecycle\\WooBatchPreviewsSeenGuard"
+                "requires": "OCA\\OpenCatalogi\\Lifecycle\\PreviewsSeenGuard"
               },
               "reject": {
                 "from": [
@@ -268,7 +274,7 @@
                 ],
                 "actions": [
                   {
-                    "action": "OCA\\OpenCatalogi\\Lifecycle\\RecordWooBatchRejectionAction"
+                    "action": "OCA\\OpenCatalogi\\Lifecycle\\RecordBatchRejectionAction"
                   }
                 ]
               },
@@ -433,21 +439,33 @@
               "type": "object",
               "properties": {
                 "relationId": {
+                  "title": "Relation",
+                  "description": "The OpenRegister entity relation the passage comes from.",
                   "type": "integer"
                 },
                 "entityType": {
+                  "title": "Type",
+                  "description": "The kind of information that was removed, such as a name or a phone number.",
                   "type": "string"
                 },
                 "positionStart": {
+                  "title": "Start position",
+                  "description": "Where the removed passage starts in the text.",
                   "type": "integer"
                 },
                 "positionEnd": {
+                  "title": "End position",
+                  "description": "Where the removed passage ends in the text.",
                   "type": "integer"
                 },
                 "value": {
+                  "title": "Removed value",
+                  "description": "What was removed. Internal: never part of a public response.",
                   "type": "string"
                 },
                 "grounds": {
+                  "title": "Grounds",
+                  "description": "The legal grounds for removing the passage.",
                   "type": "array"
                 }
               }
@@ -486,12 +504,18 @@
             "type": "object",
             "properties": {
               "reason": {
+                "title": "Reason",
+                "description": "Why the reviewer sent the document back.",
                 "type": "string"
               },
               "by": {
+                "title": "Sent back by",
+                "description": "The user who sent the document back.",
                 "type": "string"
               },
               "at": {
+                "title": "Sent back at",
+                "description": "When the document was sent back.",
                 "type": "string",
                 "format": "date-time"
               }

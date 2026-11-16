@@ -30,7 +30,7 @@ namespace OCA\OpenCatalogi\Contract;
  *
  * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md
  */
-interface WooBatchReviewInterface {
+interface BatchReviewInterface {
 	/**
 	 * Whether an OpenRegister task sequence is the review chain of a Woo batch.
 	 *

@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
-use OCA\OpenCatalogi\Contract\WooBatchReviewInterface;
+use OCA\OpenCatalogi\Contract\BatchReviewInterface;
 use OCA\OpenCatalogi\Controller\WooController;
 use OCA\OpenCatalogi\Service\WooService;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -47,14 +47,14 @@ class WooControllerTest extends TestCase {
 	private IRequest|MockObject $request;
 	private WooService|MockObject $wooService;
 	private IUserSession|MockObject $userSession;
-	private WooBatchReviewInterface|MockObject $review;
+	private BatchReviewInterface|MockObject $review;
 	private WooController $controller;
 
 	protected function setUp(): void {
 		$this->request = $this->createMock(IRequest::class);
 		$this->wooService = $this->createMock(WooService::class);
 		$this->userSession = $this->createMock(IUserSession::class);
-		$this->review = $this->createMock(WooBatchReviewInterface::class);
+		$this->review = $this->createMock(BatchReviewInterface::class);
 
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
@@ -435,7 +435,7 @@ class WooControllerTest extends TestCase {
 	 */
 	public function testSendBackOutsideReviewIsRefused(): void {
 		$this->review->method('sendBack')->willReturnOnConsecutiveCalls(
-			$this->throwException(new \OCA\OpenCatalogi\Service\Woo\BatchNotInReviewException('The batch is not in review')),
+			$this->throwException(new \OCA\OpenCatalogi\Service\Review\BatchNotInReviewException('The batch is not in review')),
 			$this->throwException(new \RuntimeException('Sending a document back needs a reason'))
 		);
 

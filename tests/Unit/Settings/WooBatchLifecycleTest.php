@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Settings;
 
-use OCA\OpenCatalogi\Lifecycle\RecordWooBatchRejectionAction;
-use OCA\OpenCatalogi\Lifecycle\WooBatchPreviewsSeenGuard;
+use OCA\OpenCatalogi\Lifecycle\RecordBatchRejectionAction;
+use OCA\OpenCatalogi\Lifecycle\PreviewsSeenGuard;
 use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use PHPUnit\Framework\TestCase;
@@ -104,8 +104,8 @@ final class WooBatchLifecycleTest extends TestCase {
 	public function testApproveRequiresThePreviewsSeenGuard(): void {
 		$batch = self::batch();
 
-		$this->assertSame(WooBatchPreviewsSeenGuard::class, $batch['configuration']['x-openregister-lifecycle']['transitions']['approve']['requires']);
-		$this->assertTrue(is_subclass_of(WooBatchPreviewsSeenGuard::class, LifecycleGuardInterface::class));
+		$this->assertSame(PreviewsSeenGuard::class, $batch['configuration']['x-openregister-lifecycle']['transitions']['approve']['requires']);
+		$this->assertTrue(is_subclass_of(PreviewsSeenGuard::class, LifecycleGuardInterface::class));
 		$this->assertSame('object', $batch['properties']['previewsSeen']['type']);
 	}//end testApproveRequiresThePreviewsSeenGuard()
 
@@ -117,7 +117,7 @@ final class WooBatchLifecycleTest extends TestCase {
 	public function testTheRejectActionIsALifecycleAction(): void {
 		$actions = self::batch()['configuration']['x-openregister-lifecycle']['transitions']['reject']['actions'];
 
-		$this->assertSame([['action' => RecordWooBatchRejectionAction::class]], $actions);
-		$this->assertTrue(is_subclass_of(RecordWooBatchRejectionAction::class, LifecycleActionInterface::class));
+		$this->assertSame([['action' => RecordBatchRejectionAction::class]], $actions);
+		$this->assertTrue(is_subclass_of(RecordBatchRejectionAction::class, LifecycleActionInterface::class));
 	}//end testTheRejectActionIsALifecycleAction()
 }//end class

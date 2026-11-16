@@ -376,7 +376,7 @@
     ],
     [
         "alias",
-        "OCA\\OpenCatalogi\\Contract\\WooBatchReviewInterface",
-        "OCA\\OpenCatalogi\\Service\\Woo\\WooBatchReview"
+        "OCA\\OpenCatalogi\\Contract\\BatchReviewInterface",
+        "OCA\\OpenCatalogi\\Service\\Review\\BatchReview"
     ]
 ]

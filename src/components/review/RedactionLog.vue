@@ -60,7 +60,7 @@ export function groundsText(entry) {
 }
 
 export default {
-	name: 'WooRedactionLog',
+	name: 'RedactionLog',
 
 	props: {
 		/** The `redactionLog` of the assessment. */

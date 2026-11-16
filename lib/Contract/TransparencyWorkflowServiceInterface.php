@@ -329,6 +329,9 @@ interface TransparencyWorkflowServiceInterface {
 	 * @throws RuntimeException When the engine is unavailable; whatever the engine refuses propagates.
 	 *
 	 * @spec openspec/changes/woo-review-surface/tasks.md#task-1.2
+	 *
+	 * @contract-shift internal-only — WooService, in this app, is the only implementer and already
+	 *   declared the method; no other app implements or doubles this interface.
 	 */
 	public function runBatchTransition(string $batchId, string $action, array $data = []): array;
 }//end interface

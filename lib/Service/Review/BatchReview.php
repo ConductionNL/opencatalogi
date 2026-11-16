@@ -10,7 +10,7 @@
  * single document's send-back go back with the reviewer's reason.
  *
  * @category Service
- * @package  OCA\OpenCatalogi\Service\Woo
+ * @package  OCA\OpenCatalogi\Service\Review
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -28,14 +28,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\Review;
 
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
-use OCA\OpenCatalogi\Contract\WooBatchReviewInterface;
+use OCA\OpenCatalogi\Contract\BatchReviewInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IURLGenerator;
@@ -49,7 +50,7 @@ use Throwable;
  *
  * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md
  */
-class WooBatchReview implements WooBatchReviewInterface {
+class BatchReview implements BatchReviewInterface {
 	use ReadsObjectProperties;
 
 	/**
@@ -116,7 +117,7 @@ class WooBatchReview implements WooBatchReviewInterface {
 		try {
 			$sequence = $mapper->findByUuid($sequenceUuid);
 		} catch (Throwable $e) {
-			$this->logger->info('[WooBatchReview] task sequence ' . $sequenceUuid . ' not readable: ' . $e->getMessage());
+			$this->logger->info('[BatchReview] task sequence ' . $sequenceUuid . ' not readable: ' . $e->getMessage());
 			return false;
 		}
 
@@ -426,7 +427,7 @@ class WooBatchReview implements WooBatchReviewInterface {
 			try {
 				$out[$ref] = $this->plainArray(object: $objectService->find($ref));
 			} catch (Throwable $e) {
-				$this->logger->info('[WooBatchReview] assessment ' . $ref . ' not loadable: ' . $e->getMessage());
+				$this->logger->info('[BatchReview] assessment ' . $ref . ' not loadable: ' . $e->getMessage());
 			}
 		}
 

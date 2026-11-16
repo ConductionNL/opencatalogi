@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Listener;
 
-use OCA\OpenCatalogi\Contract\WooBatchReviewInterface;
+use OCA\OpenCatalogi\Contract\BatchReviewInterface;
 use OCA\OpenCatalogi\Listener\BatchReviewTaskListener;
 use OCA\OpenRegister\Db\Task;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
@@ -41,12 +41,12 @@ use RuntimeException;
  */
 final class BatchReviewTaskListenerTest extends TestCase {
 
-	private WooBatchReviewInterface&MockObject $review;
+	private BatchReviewInterface&MockObject $review;
 	private LoggerInterface&MockObject $logger;
 	private BatchReviewTaskListener $listener;
 
 	protected function setUp(): void {
-		$this->review = $this->createMock(WooBatchReviewInterface::class);
+		$this->review = $this->createMock(BatchReviewInterface::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$this->listener = new BatchReviewTaskListener($this->review, $this->logger);
 

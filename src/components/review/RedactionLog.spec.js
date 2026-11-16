@@ -2,13 +2,13 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Unit test for `WooRedactionLog.vue` (woo-review-surface, REQ-WRV-003): each
+ * Unit test for `RedactionLog.vue` (woo-review-surface, REQ-WRV-003): each
  * passage shows its grounds and where it sits; a passage without a ground shows empty.
  */
 
-import WooRedactionLog, { groundsText } from './WooRedactionLog.vue'
+import RedactionLog, { groundsText } from './RedactionLog.vue'
 
-describe('WooRedactionLog', () => {
+describe('RedactionLog', () => {
 	it('reads grounds as text, whatever shape OpenRegister gave them', () => {
 		expect(groundsText({ grounds: ['5.1.2.e', { code: '5.1.1.d' }, { article: '5.2' }, null] })).toBe('5.1.2.e, 5.1.1.d, 5.2')
 		expect(groundsText({ grounds: [] })).toBe('')
@@ -16,7 +16,7 @@ describe('WooRedactionLog', () => {
 	})
 
 	it('places a passage by its character range', () => {
-		const { position } = WooRedactionLog.methods
+		const { position } = RedactionLog.methods
 
 		expect(position({ positionStart: 10, positionEnd: 24 })).toBe('10–24')
 		expect(position({})).toBe('')
