@@ -35,7 +35,7 @@ interface PublicationRuleServiceInterface {
 	 *
 	 * @return array{valid: boolean, errors: array<int, string>}
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function validateRule(array $rule): array;
 
@@ -53,7 +53,7 @@ interface PublicationRuleServiceInterface {
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When a condition cannot be evaluated.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function publishes(array $record, array $rule): bool;
 
@@ -69,7 +69,7 @@ interface PublicationRuleServiceInterface {
 	 *
 	 * @return array<string, mixed> The properties the set allows, and no others.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function projectForAnonymous(array $record, array $rule): array;
 
@@ -92,7 +92,7 @@ interface PublicationRuleServiceInterface {
 	 *     sampleSize: integer
 	 * }
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function preview(array $rule, array $sample): array;
 
@@ -109,7 +109,7 @@ interface PublicationRuleServiceInterface {
 	 *
 	 * @return array<int, array<string, mixed>> The anonymous views.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
 	 */
 	public function projectList(array $records, array $rulesByType): array;
 
@@ -125,7 +125,7 @@ interface PublicationRuleServiceInterface {
 	 *
 	 * @return array<int, array<string, mixed>> The matching anonymous views.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
 	 */
 	public function searchPublic(array $records, array $rulesByType, string $terms): array;
 
@@ -136,7 +136,7 @@ interface PublicationRuleServiceInterface {
 	 *
 	 * @return array<string, array<string, mixed>> The rules keyed by record type.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function indexByRecordType(array $rules): array;
 }//end interface
