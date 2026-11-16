@@ -3,6 +3,7 @@
 ## 1. Schema
 
 - [x] 1.1 Add `metadataSuggestion` with its lifecycle and pending-count aggregation in `lib/Settings/register.d/woo-metadata-suggestions.json`, plus the seed suggestion (REQ-WMS-001). Verify: a clean `occ app:enable` imports the schema; `tests/Unit/Settings/RegisterFragmentTest.php` reads the fragment.
+  > 16 Nov: no seed suggestion. `lib/Settings/publication_register.json` seeds a catalogue, pages, menus and a theme but no publication, so the "second seed publication" of the design does not exist and a seed suggestion would point at nothing.
 
 ## 2. Rules floor
 
