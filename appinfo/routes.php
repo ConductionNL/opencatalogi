@@ -211,6 +211,9 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'apiDocumentation#index', 'url' => '/api/openapi.json', 'verb' => 'GET'],
 		// DCAT-AP-NL harvest endpoints (specific routes - MUST be before wildcard catalog routes)
 		['name' => 'dcat#instance', 'url' => '/api/dcat', 'verb' => 'GET'],
+		// data.overheid.nl registration and harvest evidence (admin-only, AuthorizedAdminSetting)
+		['name' => 'dcat#donlRegistration', 'url' => '/api/dcat/donl-registration', 'verb' => 'GET'],
+		['name' => 'dcat#recordDonlRegistration', 'url' => '/api/dcat/donl-registration', 'verb' => 'POST'],
 		['name' => 'dcat#catalog', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// schema.org DataCatalog endpoint (specific route - must be before wildcard catalog routes)
 		['name' => 'schemaOrg#catalog', 'url' => '/api/catalogs/{catalogSlug}/schema', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],

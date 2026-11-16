@@ -395,10 +395,7 @@ class AppliedFiltersResponseTest extends TestCase {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParams')->willReturn([]);
 
-		$container = $this->createMock(\Psr\Container\ContainerInterface::class);
-		$container->method('get')->willReturnCallback(static fn (string $id): ?object => ($id === AppliedFilters::class ? $filters : null));
-
-		return new FederationController($request, $publications, $this->l10n(), container: $container);
+		return new FederationController($request, $publications, $this->l10n(), appliedFilters: $filters);
 	}//end federationController()
 
 	/**

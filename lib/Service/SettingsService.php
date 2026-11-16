@@ -261,6 +261,7 @@ class SettingsService implements SettingsServiceInterface {
 	 * - Woo-index registration status (WOO-HR-003, design D3): operational config, not a publication.
 	 * - National channel sources (REQ-WND-001): a JSON map from channel to integriq source slug.
 	 * - Public API cache time in seconds (REQ-PAC-003); 0 switches the public cache headers off.
+	 * - Search indexing (REQ-WAB-003): `blocked` keeps every surface out of search engine indexes.
 	 */
 	private const SETTING_DEFAULTS = [
 		'auto_publish_attachments' => 'false',
@@ -279,6 +280,7 @@ class SettingsService implements SettingsServiceInterface {
 		'channel_sources' => '{}',
 		'public_api_cache_seconds' => '60',
 		'cors_allowed_origins' => '*',
+		'search_indexing' => 'allowed',
 	];
 
 	/**
@@ -304,6 +306,7 @@ class SettingsService implements SettingsServiceInterface {
 		'channel_sources',
 		'public_api_cache_seconds',
 		'cors_allowed_origins',
+		'search_indexing',
 	];
 
 	/**
@@ -1005,6 +1008,15 @@ class SettingsService implements SettingsServiceInterface {
 
 		if ($key === 'public_api_cache_seconds') {
 			return $this->publicApiCacheSeconds(value: $value);
+		}
+
+		if ($key === 'search_indexing') {
+			// Only the two known values are stored; anything else keeps the default (REQ-WAB-003).
+			if ($value === 'blocked') {
+				return 'blocked';
+			}
+
+			return 'allowed';
 		}
 
 		return $value;

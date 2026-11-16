@@ -31,10 +31,9 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
-use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
-use OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -44,7 +43,6 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 
@@ -57,44 +55,26 @@ class FederationController extends Controller {
 	use AnswersCrossOriginSearchRequests;
 
 	/**
-	 * App config holding the CORS allowlist; null allows every origin.
-	 *
-	 * @var IAppConfig|null
-	 */
-	private readonly ?IAppConfig $appConfig;
-
-	/**
-	 * The request's collector of applied filters (REQ-ASF-001).
-	 *
-	 * @var AppliedFilters|null
-	 */
-	private readonly ?AppliedFilters $appliedFilters;
-
-	/**
 	 * FederationController constructor.
 	 *
 	 * @param IRequest $request The request object.
 	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
-	 * @param PublicationCommentPeriod|null $commentPeriods The comment period state (REQ-PDP-003).
-	 * @param ContainerInterface|null $container DI container for the optional collaborators: the app config
-	 *                                           holding the CORS allowlist (without it every origin is allowed)
-	 *                                           and the request's collector of applied filters (REQ-ASF-001).
+	 * @param LocalPublicationStateInterface|null $localState Adds the withheld list (REQ-WDW-003) and the comment period state (REQ-PDP-003).
+	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
+	 * @param IAppConfig|null $appConfig App config holding the CORS allowlist; null allows every origin.
 	 */
 	public function __construct(
 		IRequest $request,
 		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
-		private readonly ?WithheldFromPublicationInterface $withheld = null,
-		private readonly ?PublicationCommentPeriod $commentPeriods = null,
-		?ContainerInterface $container = null,
+		private readonly ?LocalPublicationStateInterface $localState = null,
+		private readonly ?AppliedFilters $appliedFilters = null,
+		private readonly ?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
-		$this->appConfig      = $container?->get(IAppConfig::class);
-		$this->appliedFilters = $container?->get(AppliedFilters::class);
 
 	}//end __construct()
 
@@ -200,13 +180,8 @@ class FederationController extends Controller {
 			$isLocal = (($result['federated'] ?? false) !== true
 				&& is_array($result['data']) === true
 				&& array_key_exists('sources', $result['data']) === false);
-			if ($this->withheld !== null && $result['status'] === 200 && $isLocal === true) {
-				$result['data'] = $this->withheld->addForPublication(response: $result['data']);
-			}
-
-			// REQ-PDP-003: the state of the publication's comment period, for a local one.
-			if ($this->commentPeriods !== null && $result['status'] === 200 && $isLocal === true) {
-				$result['data'] = $this->commentPeriods->addTo(publication: $result['data']);
+			if ($this->localState !== null && $result['status'] === 200 && $isLocal === true) {
+				$result['data'] = $this->localState->addTo(publication: $result['data']);
 			}
 
 			return $this->withSearchCorsHeaders(response: new JSONResponse($result['data'], $result['status']));

@@ -237,23 +237,9 @@ class FederationControllerTest extends TestCase {
 			request: $this->request,
 			publicationService: $this->publicationService,
 			l10n: $this->l10n,
-			container: $this->containerWith(services: [\OCP\IAppConfig::class => $config])
+			appConfig: $config
 		);
 	}//end controllerCalledFrom()
-
-	/**
-	 * A DI container double answering the given services, null for any other.
-	 *
-	 * @param array<string,object> $services The services by id.
-	 *
-	 * @return \Psr\Container\ContainerInterface The container.
-	 */
-	private function containerWith(array $services): \Psr\Container\ContainerInterface {
-		$container = $this->createMock(\Psr\Container\ContainerInterface::class);
-		$container->method('get')->willReturnCallback(static fn (string $id): ?object => ($services[$id] ?? null));
-
-		return $container;
-	}//end containerWith()
 
 	/**
 	 * A municipality's website on the allowlist is named on every federation answer.
@@ -371,8 +357,7 @@ class FederationControllerTest extends TestCase {
 			$this->publicationService,
 			$this->l10n,
 			null,
-			null,
-			$commentPeriods
+			new \OCA\OpenCatalogi\Service\Publication\LocalPublicationState(null, $commentPeriods)
 		);
 	}
 

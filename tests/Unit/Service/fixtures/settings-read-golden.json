@@ -57,7 +57,8 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "60",
-                "cors_allowed_origins": "*"
+                "cors_allowed_origins": "*",
+                "search_indexing": "allowed"
             }
         },
         "enabled": [],
@@ -127,7 +128,8 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "60",
-                "cors_allowed_origins": "*"
+                "cors_allowed_origins": "*",
+                "search_indexing": "allowed"
             }
         },
         "enabled": [],
@@ -199,7 +201,8 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "0",
-                "cors_allowed_origins": "*"
+                "cors_allowed_origins": "*",
+                "search_indexing": "allowed"
             }
         },
         "enabled": [],

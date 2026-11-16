@@ -2579,4 +2579,33 @@ https://andere.example"]);
 		$this->assertSame('*', $this->service->getSettings()['configuration']['cors_allowed_origins']);
 
 	}//end testTheAllowlistIsReportedWithItsDefault()
+
+	/**
+	 * Search indexing defaults to allowed, and only `blocked` is stored as blocked (REQ-WAB-003).
+	 *
+	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 *
+	 * @return void
+	 */
+	public function testTheAdministratorSwitchesSearchIndexing(): void {
+		$stored = [];
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+		$this->config->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored) {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+		$this->config->method('getValueString')->willReturnCallback(
+			function (string $app, string $key, string $default = '') use (&$stored) {
+				return ($stored[$key] ?? $default);
+			}
+		);
+
+		$this->assertSame('allowed', $this->service->getSettings()['configuration']['search_indexing']);
+		$this->assertSame('blocked', $this->service->updateSettings(['search_indexing' => 'blocked'])['search_indexing']);
+		$this->assertSame('allowed', $this->service->updateSettings(['search_indexing' => 'allowed'])['search_indexing']);
+		$this->assertSame('allowed', $this->service->updateSettings(['search_indexing' => 'BLOCK'])['search_indexing']);
+
+	}//end testTheAdministratorSwitchesSearchIndexing()
 }//end class

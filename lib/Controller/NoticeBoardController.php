@@ -33,7 +33,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
+ * @spec openspec/specs/public-and-community-surface/spec.md
  */
 
 declare(strict_types=1);
@@ -61,7 +61,7 @@ use OCP\IUserSession;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
+ * @spec openspec/specs/public-and-community-surface/spec.md
  */
 class NoticeBoardController extends Controller {
 	use ReadsOpenRegisterResults;
@@ -97,7 +97,7 @@ class NoticeBoardController extends Controller {
 	 *
 	 * @NoAdminRequired
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	public function banners(): JSONResponse {
 		$user = $this->userSession->getUser();
@@ -123,7 +123,7 @@ class NoticeBoardController extends Controller {
 	 *
 	 * @NoAdminRequired
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	public function dismissBanner(): JSONResponse {
 		$user = $this->userSession->getUser();
@@ -146,7 +146,7 @@ class NoticeBoardController extends Controller {
 	 *
 	 * @return JSONResponse The board, or the refusal.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function saveNoticeBoard(): JSONResponse {
@@ -201,7 +201,7 @@ class NoticeBoardController extends Controller {
 	 *
 	 * @return JSONResponse The stored notice, or the refusal.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function saveNotice(): JSONResponse {
