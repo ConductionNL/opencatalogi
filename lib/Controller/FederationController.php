@@ -31,10 +31,10 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
-use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -59,7 +59,7 @@ class FederationController extends Controller {
 	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
+	 * @param LocalPublicationStateInterface|null $localState Adds the withheld list (REQ-WDW-003) and the comment period state (REQ-PDP-003).
 	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 * @param UsageCounterServiceInterface|null $usageCounter Counts a served local publication and download (ANA-001).
 	 */
@@ -68,7 +68,7 @@ class FederationController extends Controller {
 		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
-		private readonly ?WithheldFromPublicationInterface $withheld = null,
+		private readonly ?LocalPublicationStateInterface $localState = null,
 		private readonly ?AppliedFilters $appliedFilters = null,
 		private readonly ?UsageCounterServiceInterface $usageCounter = null,
 	) {
@@ -178,8 +178,8 @@ class FederationController extends Controller {
 			$isLocal = (($result['federated'] ?? false) !== true
 				&& is_array($result['data']) === true
 				&& array_key_exists('sources', $result['data']) === false);
-			if ($this->withheld !== null && $result['status'] === 200 && $isLocal === true) {
-				$result['data'] = $this->withheld->addForPublication(response: $result['data']);
+			if ($this->localState !== null && $result['status'] === 200 && $isLocal === true) {
+				$result['data'] = $this->localState->addTo(publication: $result['data']);
 			}
 
 			if ($result['status'] === 200 && $isLocal === true) {

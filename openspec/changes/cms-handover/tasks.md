@@ -43,5 +43,5 @@
 - **acceptance_criteria**:
   - The removal change exists with proposal and tasks, naming the three controllers and the release after which they go
   - It is written in this change, because a deprecation with no scheduled removal becomes permanent
-- [ ] Implement
+- [x] Implement (verified: openspec/changes/cms-proxy-removal/proposal.md and tasks.md name the three controllers and the release)
 - [ ] Test

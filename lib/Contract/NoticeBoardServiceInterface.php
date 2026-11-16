@@ -40,7 +40,7 @@ interface NoticeBoardServiceInterface {
 	 *
 	 * @throws DomainException When comments are enabled and no moderator is named.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function validateBoard(array $board): array;
 
@@ -51,7 +51,7 @@ interface NoticeBoardServiceInterface {
 	 *
 	 * @return boolean True only when comments are on and somebody moderates.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function commentsOffered(array $board): bool;
 
@@ -64,7 +64,7 @@ interface NoticeBoardServiceInterface {
 	 *
 	 * @throws DomainException When it carries no board, title or readable period.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function validateNotice(array $notice): array;
 
@@ -76,7 +76,7 @@ interface NoticeBoardServiceInterface {
 	 *
 	 * @return boolean True while it should be shown.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function isCurrent(array $notice, ?DateTimeInterface $now = null): bool;
 
@@ -92,7 +92,7 @@ interface NoticeBoardServiceInterface {
 	 *
 	 * @return boolean True when it may enter the sitemap.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function belongsInSitemap(array $entry): bool;
 
@@ -103,7 +103,7 @@ interface NoticeBoardServiceInterface {
 	 *
 	 * @return array<int, array<string, mixed>> The entries that belong in the sitemap.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
 	 */
 	public function excludeNotices(array $entries): array;
 }//end interface

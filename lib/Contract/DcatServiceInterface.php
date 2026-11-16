@@ -29,6 +29,15 @@ namespace OCA\OpenCatalogi\Contract;
  */
 interface DcatServiceInterface {
 	/**
+	 * The DCAT-AP-NL properties every dataset must carry, in the order they are checked.
+	 *
+	 * Named so the validation report can say what it checked, not only what failed (DCAT-010).
+	 *
+	 * @var array<int, string>
+	 */
+	public const MANDATORY_DATASET_PROPERTIES = ['dct:title', 'dct:publisher', 'dcat:landingPage'];
+
+	/**
 	 * Determine whether DCAT is enabled for a catalog.
 	 *
 	 * @param array<string, mixed> $catalog The catalog object (jsonSerialize shape).

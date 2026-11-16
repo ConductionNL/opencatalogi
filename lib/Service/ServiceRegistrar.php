@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
+use OCA\OpenCatalogi\Contract\CatalogueFeedReaderInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use OCA\OpenCatalogi\Contract\BannerServiceInterface;
@@ -37,9 +38,11 @@ use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
+use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
 use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
+use OCA\OpenCatalogi\Contract\DonlRegistrationServiceInterface;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
@@ -78,8 +81,13 @@ use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
+use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
+use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
+use OCA\OpenCatalogi\Service\Publication\LocalPublicationState;
+use OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
+use OCA\OpenCatalogi\Service\Community\CatalogueFeedReader;
 use OCA\OpenCatalogi\Service\Table\PublishedTableService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
@@ -137,6 +145,8 @@ class ServiceRegistrar {
 		TransparencyWorkflowServiceInterface::class => WooService::class,
 		CatalogiServiceInterface::class => CatalogiService::class,
 		DcatServiceInterface::class => DcatService::class,
+		DcatDereferenceInterface::class => DcatDereference::class,
+		DonlRegistrationServiceInterface::class => DonlRegistrationService::class,
 		UsageCounterServiceInterface::class => UsageCounterService::class,
 		HarvesterReadinessServiceInterface::class => WooReadinessService::class,
 		BroadcastServiceInterface::class => BroadcastService::class,
@@ -168,6 +178,8 @@ class ServiceRegistrar {
 		SavedSearchServiceInterface::class => SavedSearchService::class,
 		DemoDataServiceInterface::class => DemoDataService::class,
 		WithheldFromPublicationInterface::class => WithheldFromPublication::class,
+		LocalPublicationStateInterface::class => LocalPublicationState::class,
+		PublicationCommentPeriodInterface::class => PublicationCommentPeriod::class,
 		InformationRequestStoreInterface::class => WooRequestStore::class,
 		PlooiDeliveryServiceInterface::class => PlooiDeliveryService::class,
 		MarkupRenderServiceInterface::class => MarkupRenderService::class,
@@ -175,6 +187,7 @@ class ServiceRegistrar {
 		InspectionServiceInterface::class => InspectionService::class,
 		StatusPageServiceInterface::class => StatusPageService::class,
 		AtomFeedServiceInterface::class => AtomFeedService::class,
+		CatalogueFeedReaderInterface::class => CatalogueFeedReader::class,
 		InformationRequestIntakeInterface::class => WooRequestIntake::class,
 		PublicationStateServiceInterface::class => PublicationStateService::class,
 		CollectionShareServiceInterface::class => CollectionShareService::class,
