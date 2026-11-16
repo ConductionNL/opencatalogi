@@ -68,4 +68,28 @@ class PortalDetailSchemaTest extends TestCase {
 			$this->assertNotFalse(\DateTimeImmutable::createFromFormat(\DATE_ATOM, $row['createdAt']));
 		}
 	}//end testTheErrorReportDemoRowsFitTheSchema()
+
+	/**
+	 * Only the report's own moderator groups (and admins) read and update an error report; nobody but an admin
+	 * creates or deletes one through the API, and only an admin moves it to another publication, catalogue, moment
+	 * or set of moderator groups.
+	 *
+	 * @return void
+	 */
+	public function testAnErrorReportIsReadAndHandledOnlyByItsModerators(): void {
+		$schema = $this->schema('register.d/woo-publication-detail-for-the-portal.json', 'errorReport');
+		$moderators = ['group' => 'authenticated', 'match' => ['moderators' => ['$contains' => '$user.groups']]];
+
+		$this->assertSame(['admin', $moderators], $schema['authorization']['read']);
+		$this->assertSame(['admin', $moderators], $schema['authorization']['update']);
+		$this->assertSame(['admin'], $schema['authorization']['create']);
+		$this->assertSame(['admin'], $schema['authorization']['delete']);
+		$this->assertNotContains('authenticated', $schema['authorization']['read'], 'a signed-in user outside the moderator groups reads no report');
+		$this->assertNotContains('authenticated', $schema['authorization']['update'], 'a signed-in user outside the moderator groups changes no report');
+		foreach (['publication', 'catalog', 'createdAt', 'moderators'] as $property) {
+			$this->assertSame(['admin'], $schema['properties'][$property]['authorization']['update'], $property . ' is fixed for a moderator');
+		}
+		$this->assertArrayNotHasKey('authorization', $schema['properties']['status'], 'a moderator sets the status');
+		$this->assertSame(['admin'], $schema['properties']['contact']['authorization']['read']);
+	}//end testAnErrorReportIsReadAndHandledOnlyByItsModerators()
 }//end class

@@ -1,5 +1,5 @@
 {
-	"_note": "Register fragment for publication-detail-for-the-portal (REQ-PDP-001). The publication carries attachmentOrder, the file ids of its documents in the order an officer set; PublicationService::attachments() answers the public and federation attachment lists in that order. Named to merge after woo-information-categories-as-data.json, so its version wins. It also adds errorReport (REQ-PDP-005): a report a visitor posts on a publication of a catalogue that accepts them. Reports have no public read rule and are never published; the moderator groups the catalogue names get a notification.",
+	"_note": "Register fragment for publication-detail-for-the-portal (REQ-PDP-001). The publication carries attachmentOrder, the file ids of its documents in the order an officer set; PublicationService::attachments() answers the public and federation attachment lists in that order. Named to merge after woo-information-categories-as-data.json, so its version wins. It also adds errorReport (REQ-PDP-005): a report a visitor posts on a publication of a catalogue that accepts them. Reports have no public read rule and are never published; the moderator groups the catalogue names get a notification, and only members of those groups (and admins) read and update them, and only admins change which publication, catalogue, moment and groups a report belongs to.",
 	"components": {
 		"schemas": {
 			"publication": {
@@ -35,14 +35,28 @@
 				"authorization": {
 					"read": [
 						"admin",
-						"authenticated"
+						{
+							"group": "authenticated",
+							"match": {
+								"moderators": {
+									"$contains": "$user.groups"
+								}
+							}
+						}
 					],
 					"create": [
 						"admin"
 					],
 					"update": [
 						"admin",
-						"authenticated"
+						{
+							"group": "authenticated",
+							"match": {
+								"moderators": {
+									"$contains": "$user.groups"
+								}
+							}
+						}
 					],
 					"delete": [
 						"admin"
@@ -53,13 +67,23 @@
 						"type": "string",
 						"title": "Publication",
 						"facetable": true,
-						"description": "The publication the report is about."
+						"description": "The publication the report is about.",
+						"authorization": {
+							"update": [
+								"admin"
+							]
+						}
 					},
 					"catalog": {
 						"type": "string",
 						"title": "Catalogue",
 						"facetable": true,
-						"description": "The catalogue the publication was read through."
+						"description": "The catalogue the publication was read through.",
+						"authorization": {
+							"update": [
+								"admin"
+							]
+						}
 					},
 					"message": {
 						"type": "string",
@@ -95,7 +119,12 @@
 						"type": "string",
 						"format": "date-time",
 						"title": "Created at",
-						"description": "When the report came in."
+						"description": "When the report came in.",
+						"authorization": {
+							"update": [
+								"admin"
+							]
+						}
 					},
 					"moderators": {
 						"type": "array",
@@ -103,7 +132,12 @@
 							"type": "string"
 						},
 						"title": "Moderator groups",
-						"description": "The catalogue's moderator groups when the report came in. The notification goes to their members."
+						"description": "The catalogue's moderator groups when the report came in. The notification goes to their members.",
+						"authorization": {
+							"update": [
+								"admin"
+							]
+						}
 					}
 				},
 				"x-openregister-notifications": {
