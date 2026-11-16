@@ -94,6 +94,11 @@ use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
+use OCA\OpenCatalogi\Contract\InstanceModeInterface;
+use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
+use OCA\OpenCatalogi\Contract\TermRollInterface;
+use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Service\Publication\TermRoll;
 use OCA\OpenCatalogi\Service\Publication\LocalPublicationState;
 use OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
@@ -216,5 +221,8 @@ final class ServiceBindings {
 		RedactedOriginalGuardInterface::class => RedactedOriginalGuard::class,
 		PlainSummaryDrafterInterface::class => PlainLanguageDrafter::class,
 		PlainSummaryProvenanceInterface::class => PlainSummaryProvenance::class,
+		TermRollInterface::class => TermRoll::class,
+		PublicationRightsInterface::class => PublicationRights::class,
+		InstanceModeInterface::class => InstanceMode::class,
 	];
 }//end class
