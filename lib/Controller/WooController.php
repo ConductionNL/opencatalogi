@@ -38,6 +38,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
+use OCA\OpenCatalogi\Contract\WooBatchReviewInterface;
+use OCA\OpenCatalogi\Service\Woo\BatchNotInReviewException;
 use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -64,6 +66,7 @@ class WooController extends Controller {
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The current user session.
 	 * @param InformationCategoryRegistryInterface $categories The information categories, bundled plus local.
+	 * @param WooBatchReviewInterface $review The review of a batch: public views, approve, reject and send-back.
 	 */
 	public function __construct(
 		$appName,
@@ -72,6 +75,7 @@ class WooController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly InformationCategoryRegistryInterface $categories,
+		private readonly WooBatchReviewInterface $review,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -388,4 +392,136 @@ class WooController extends Controller {
 		}
 
 	}//end publishBatch()
+
+	/**
+	 * Each document of a batch as the public will see it, for its reviewer.
+	 *
+	 * Admin-only, the same right as getBatch(). The answer carries the redaction
+	 * log of a partly public document, which is internal: this route is never public.
+	 *
+	 * @param string $batchId The batch uuid.
+	 *
+	 * @return JSONResponse The documents with their public view, and what the reviewer has not opened.
+	 *
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-the-reviewer-sees-each-document-as-the-public-will-req-wrv-001
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function publicPreview(string $batchId): JSONResponse {
+		try {
+			return new JSONResponse($this->review->publicPreview(batchId: $batchId));
+		} catch (\Throwable $e) {
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
+		}
+
+	}//end publicPreview()
+
+	/**
+	 * Record that the signed-in reviewer opened the public view of one document.
+	 *
+	 * Admin-only. Answers 409 when the batch is not in review.
+	 *
+	 * @param string $batchId The batch uuid.
+	 *
+	 * @return JSONResponse What the reviewer opened and what is still unseen.
+	 *
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-the-reviewer-sees-each-document-as-the-public-will-req-wrv-001
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function previewSeen(string $batchId): JSONResponse {
+		$documentId = (string)$this->request->getParam('documentId', '');
+
+		return $this->reviewAnswer(move: fn (): array => $this->review->markPreviewSeen(batchId: $batchId, documentId: $documentId));
+
+	}//end previewSeen()
+
+	/**
+	 * Approve a batch in review.
+	 *
+	 * Admin-only. Refused, naming the documents, until the signed-in reviewer
+	 * opened every public view; the approval chain on the transition then asks
+	 * the reviewers in OpenRegister's task list.
+	 *
+	 * @param string $batchId The batch uuid.
+	 *
+	 * @return JSONResponse The batch, or the refusal.
+	 *
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-the-reviewer-sees-each-document-as-the-public-will-req-wrv-001
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function approveBatch(string $batchId): JSONResponse {
+		return $this->reviewAnswer(move: fn (): array => $this->review->approveBatch(batchId: $batchId));
+
+	}//end approveBatch()
+
+	/**
+	 * Reject a batch in review: it goes back to its author with the reason.
+	 *
+	 * Admin-only. The reason is required.
+	 *
+	 * @param string $batchId The batch uuid.
+	 *
+	 * @return JSONResponse The batch, or the refusal.
+	 *
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-a-rejected-batch-or-document-goes-back-to-its-author-with-the-reason-req-wrv-002
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function rejectBatch(string $batchId): JSONResponse {
+		$reason = (string)$this->request->getParam('reason', '');
+
+		return $this->reviewAnswer(move: fn (): array => $this->review->rejectBatch(batchId: $batchId, reason: $reason));
+
+	}//end rejectBatch()
+
+	/**
+	 * Send one document of a batch in review back to assessment, with the reason.
+	 *
+	 * Admin-only. The batch the document belongs to comes in the body
+	 * (`batchId`) and must hold the document; 409 when it is not in review.
+	 *
+	 * @param string $assessmentId The assessment uuid.
+	 *
+	 * @return JSONResponse The assessment, or the refusal.
+	 *
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-a-rejected-batch-or-document-goes-back-to-its-author-with-the-reason-req-wrv-002
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function sendBack(string $assessmentId): JSONResponse {
+		$batchId = (string)$this->request->getParam('batchId', '');
+		$reason = (string)$this->request->getParam('reason', '');
+
+		return $this->reviewAnswer(
+			move: fn (): array => $this->review->sendBack(batchId: $batchId, assessmentId: $assessmentId, reason: $reason)
+		);
+
+	}//end sendBack()
+
+	/**
+	 * The answer to a review move: 200 with its result, 409 outside review, else 400 with the reason.
+	 *
+	 * @param callable(): array<string, mixed> $move The move.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-a-rejected-batch-or-document-goes-back-to-its-author-with-the-reason-req-wrv-002
+	 */
+	private function reviewAnswer(callable $move): JSONResponse {
+		try {
+			return new JSONResponse($move());
+		} catch (BatchNotInReviewException $e) {
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_CONFLICT);
+		} catch (\Throwable $e) {
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+	}//end reviewAnswer()
 }//end class

@@ -220,6 +220,20 @@
             "description": "The reason of the most recent rejection, as the author's notification names it.",
             "facetable": false,
             "title": "Last rejection reason"
+          },
+          "previewsSeen": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "default": {},
+            "description": "Per reviewer, the documents whose public view they opened during the review. Approve waits until the approving user opened every published document.",
+            "facetable": false,
+            "title": "Previews seen"
           }
         },
         "configuration": {
@@ -238,7 +252,8 @@
                 "from": [
                   "ready_for_review"
                 ],
-                "to": "approved"
+                "to": "approved",
+                "requires": "OCA\\OpenCatalogi\\Lifecycle\\WooBatchPreviewsSeenGuard"
               },
               "reject": {
                 "from": [
@@ -273,7 +288,8 @@
                   "role": "woo-reviewer",
                   "min": 1
                 }
-              ]
+              ],
+              "onApprove": "advanceTransition"
             }
           }
         },
@@ -465,6 +481,24 @@
             "default": false,
             "facetable": false,
             "title": "Title public"
+          },
+          "sentBackReason": {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "description": "Why a reviewer sent this document back to assessment, who did and when. Internal: never part of a public response.",
+            "facetable": false,
+            "title": "Sent back reason"
           }
         },
         "configuration": {

@@ -75,6 +75,8 @@ class WooRegisterSchemasTest extends TestCase {
 		'assignee',
 		'rejections',
 		'lastRejectionReason',
+		// Written by WooBatchReview::markPreviewSeen(): per reviewer, the public views opened (REQ-WRV-001).
+		'previewsSeen',
 	];
 
 	/**
@@ -99,6 +101,8 @@ class WooRegisterSchemasTest extends TestCase {
 		'redactionMessage',
 		// The redaction log: what was removed and on which grounds (woo-review-surface, REQ-WRV-003).
 		'redactionLog',
+		// Written by WooBatchReview::sendBack(): why a reviewer sent the document back (REQ-WRV-002).
+		'sentBackReason',
 		// Set by verifyRedaction() when a person checked the redaction (REQ-WDA-004).
 		'redactionVerifiedBy',
 		'redactionVerifiedAt',

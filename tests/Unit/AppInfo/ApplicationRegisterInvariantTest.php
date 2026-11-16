@@ -332,4 +332,25 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		);
 
 	}//end testRegisterRegistersTheNoIndexMiddleware()
+
+	/**
+	 * register() subscribes the batch review listener to OpenRegister's task terminal event,
+	 * by name and unconditionally (woo-review-surface REQ-WRV-002).
+	 *
+	 * The event class is named, never probed: at register() time the OpenRegister
+	 * prefix is not on the autoloader yet, and a probe would silently drop the
+	 * subscription, leaving a rejected review task without effect on its batch.
+	 *
+	 * @return void
+	 */
+	public function testRegisterSubscribesTheBatchReviewListener(): void {
+		$body = $this->methodBody($this->source($this->registrars()['ListenerRegistrar']), 'public function register(');
+
+		$this->assertStringContainsString(
+			'registerEventListener(TaskTerminalEvent::class, BatchReviewTaskListener::class)',
+			$body,
+			'ListenerRegistrar::register() does not subscribe BatchReviewTaskListener to TaskTerminalEvent'
+		);
+
+	}//end testRegisterSubscribesTheBatchReviewListener()
 }//end class

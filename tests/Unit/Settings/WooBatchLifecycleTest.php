@@ -23,6 +23,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Settings;
 
 use OCA\OpenCatalogi\Lifecycle\RecordWooBatchRejectionAction;
+use OCA\OpenCatalogi\Lifecycle\WooBatchPreviewsSeenGuard;
+use OCA\OpenRegister\Lifecycle\LifecycleGuardInterface;
 use OCA\OpenRegister\Lifecycle\LifecycleActionInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -79,7 +81,7 @@ final class WooBatchLifecycleTest extends TestCase {
 		);
 		$this->assertSame([['field' => 'reason', 'required' => true]], $lifecycle['transitions']['reject']['inputs']);
 		$this->assertSame(
-			['batchReview' => ['transition' => 'approve', 'approvers' => [['role' => 'woo-reviewer', 'min' => 1]]]],
+			['batchReview' => ['transition' => 'approve', 'approvers' => [['role' => 'woo-reviewer', 'min' => 1]], 'onApprove' => 'advanceTransition']],
 			$batch['configuration']['x-openregister-approval-chains']
 		);
 
@@ -92,6 +94,20 @@ final class WooBatchLifecycleTest extends TestCase {
 			$this->assertArrayHasKey($property, $batch['properties']);
 		}
 	}//end testTheBatchDeclaresItsLifecycleAndApprovalChain()
+
+	/**
+	 * `approve` runs the previews-seen guard, a lifecycle guard class that exists, on
+	 * every path to it: the review page and the chain's own advance (REQ-WRV-001).
+	 *
+	 * @return void
+	 */
+	public function testApproveRequiresThePreviewsSeenGuard(): void {
+		$batch = self::batch();
+
+		$this->assertSame(WooBatchPreviewsSeenGuard::class, $batch['configuration']['x-openregister-lifecycle']['transitions']['approve']['requires']);
+		$this->assertTrue(is_subclass_of(WooBatchPreviewsSeenGuard::class, LifecycleGuardInterface::class));
+		$this->assertSame('object', $batch['properties']['previewsSeen']['type']);
+	}//end testApproveRequiresThePreviewsSeenGuard()
 
 	/**
 	 * The action the reject transition names is a lifecycle action class that exists.

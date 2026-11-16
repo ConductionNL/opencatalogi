@@ -1103,7 +1103,8 @@ class WooServiceTest extends TestCase {
 		}
 
 		$batch = array_values(array_filter($this->objects->objects, static fn (array $o): bool => ($o['id'] ?? '') === 'batch-1'))[0];
-		$this->assertSame('ready_for_review', $batch['status']);
+		// Still approved, not published: the publish transition did not run.
+		$this->assertSame('approved', $batch['status']);
 		$this->assertArrayNotHasKey('publishedAt', $batch);
 		$this->assertSame([], $this->createdPublications());
 		$this->assertSame([], $this->files->added);

@@ -18,6 +18,8 @@ parameters:
     scanFiles:
         - tests/Stubs/OpenRegister/Mcp/Tool/ToolInterface.php
         - tests/Stubs/OpenRegister/Lifecycle/LifecycleActionInterface.php
+        - tests/Stubs/OpenRegister/Lifecycle/LifecycleGuardInterface.php
+        - tests/Stubs/OpenRegister/Lifecycle/GuardResult.php
         - tests/Stubs/OpenRegister/Mcp/Db/Agent.php
         - tests/Stubs/AppHost/IMetricsProvider.php
         - tests/Stubs/AppHost/IHealthCheckProvider.php
