@@ -43,6 +43,7 @@ use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
 use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
+use OCA\OpenRegister\Kernel\Contracts\RenderSelection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -1317,11 +1318,7 @@ class PublicationsController extends Controller {
 		return $this->anonymousView(
 			result: $read->objectService->renderEntity(
 				entity: $found->object,
-				_extend: $read->extend,
-				depth: 0,
-				filter: [],
-				fields: [],
-				unset: [],
+				selection: new RenderSelection(extend: $read->extend, filter: [], fields: [], unset: []),
 				_rbac: true,
 				_multitenancy: false,
 			)

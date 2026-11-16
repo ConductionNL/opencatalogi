@@ -34,6 +34,9 @@ namespace OCA\OpenCatalogi\Service\Publication;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -207,7 +210,12 @@ class CompletenessSweepService {
 	private function refresh(array $scope, string $id): string {
 		['objects' => $objects, 'register' => $register, 'schema' => $schema, 'now' => $now] = $scope;
 		try {
-			$entity = $objects->find(id: $id, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
+			$entity = $objects->find(
+				id: $id,
+				options: new ObjectFindOptions(register: $register, schema: $schema),
+				_rbac: false,
+				_multitenancy: false
+			);
 			if ($entity instanceof ObjectEntity === false) {
 				return 'failed';
 			}
@@ -220,9 +228,7 @@ class CompletenessSweepService {
 
 			$objects->saveObject(
 				object: array_merge($data, $this->completeness->propertiesFor(value: $value, previous: $data, now: $now)),
-				register: $register,
-				schema: $schema,
-				uuid: $id,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: $schema), uuid: $id),
 				_rbac: false,
 				_multitenancy: false
 			);

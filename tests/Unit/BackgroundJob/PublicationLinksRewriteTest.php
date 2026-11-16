@@ -28,6 +28,7 @@ use OCA\OpenCatalogi\BackgroundJob\PublicationLinksRewrite;
 use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
 use OCA\OpenCatalogi\Service\Publication\PublicationLinksRewriteService;
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
@@ -137,11 +138,9 @@ final class PublicationLinksRewriteTest extends TestCase {
 			}
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (): ObjectEntity {
-				// Positional as PHPUnit hands them on: object, extend, register, schema, uuid.
-				$args = func_get_args();
-				self::assertSame(['pubs', '12'], [$args[2], $args[3]]);
-				$this->saved[] = [$args[0], $args[4]];
+			function (array $object, ObjectSaveOptions $options): ObjectEntity {
+				self::assertSame(['pubs', '12'], [$options->target->register, $options->target->schema]);
+				$this->saved[] = [$object, $options->uuid];
 				return new ObjectEntity();
 			}
 		);

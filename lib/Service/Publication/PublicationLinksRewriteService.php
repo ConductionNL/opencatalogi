@@ -30,6 +30,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -138,9 +140,10 @@ class PublicationLinksRewriteService {
 			unset($data['@self']);
 			$objects->saveObject(
 				object: array_merge($data, $links),
-				register: $scope['register'],
-				schema: $scope['schema'],
-				uuid: $uuid,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $scope['register'], schema: $scope['schema']),
+					uuid: $uuid
+				),
 				_rbac: false,
 				_multitenancy: false
 			);

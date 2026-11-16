@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Controller\PublicationsController;
+use OCA\OpenRegister\Kernel\Contracts\RenderSelection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
@@ -378,8 +379,9 @@ class PublicationShowGoldenTest extends TestCase {
 				);
 			}
 
-			public function renderEntity(object $entity, array $_extend = [], int $depth = 0, array $filter = [], array $fields = [], array $unset = [], bool $_rbac = true, bool $_multitenancy = true): array {
-				$this->log[] = ['render' => [$entity->getUuid(), $_extend, $depth, $filter, $fields, $unset, $_rbac, $_multitenancy]];
+			public function renderEntity(object $entity, ?RenderSelection $selection = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				// Logged in the recording's shape: uuid, extend, depth (always 0), filter, fields, unset, rbac, multitenancy.
+				$this->log[] = ['render' => [$entity->getUuid(), $selection?->extend ?? [], 0, $selection?->filter ?? [], $selection?->fields ?? [], $selection?->unset ?? [], $_rbac, $_multitenancy]];
 				return ['id' => $entity->getUuid(), 'title' => 'T'];
 			}
 		};
