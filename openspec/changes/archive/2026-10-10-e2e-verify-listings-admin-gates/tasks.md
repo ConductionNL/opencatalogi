@@ -24,7 +24,7 @@
       seeded listing's title is unchanged (not the rejected PUT's payload)
       after the 403; `4.8b` asserts the seeded listing still exists after the
       403'd DELETE.
-- [ ] 1.4 DEFERRED — running Newman against a live two-instance federation
+- [ ] 1.4 DEFERRED — running Newman against a live two-instance federation (live pass, decision 139)
       environment requires `docker compose -f docker-compose.federation.yml`
       up with real network I/O, which is out of scope for this isolated,
       no-deploy worktree. JSON syntax was validated
