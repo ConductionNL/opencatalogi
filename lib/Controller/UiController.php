@@ -150,6 +150,20 @@ class UiController extends Controller {
 	}//end search()
 
 	/**
+	 * Serve the page of a publication another instance holds, so a reload or a shared link works.
+	 *
+	 * @return TemplateResponse
+	 *
+	 * @NoAdminRequired
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-a-federated-result-opens-inside-the-app-req-for-001
+	 */
+	public function federatedPublication(): TemplateResponse {
+		return $this->makeSpaResponse();
+	}//end federatedPublication()
+
+	/**
 	 * Serve organizations page.
 	 *
 	 * @return TemplateResponse

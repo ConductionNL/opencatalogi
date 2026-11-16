@@ -44,6 +44,8 @@ use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -157,6 +159,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @param IRequest $request Request interface for accessing HTTP headers
 	 * @param LoggerInterface|null $logger PSR-3 logger for the SSRF-allowance warning
 	 * @param ConnectionReporter|null $connectionReporter Tells integriq what a sync met, or nothing when absent.
+	 * @param DryRunRecorder|null $dryRuns Holds the announcement to a peer as a dry run in staging (REQ-STG-002).
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
@@ -176,6 +179,8 @@ class DirectoryService implements DirectoryServiceInterface {
 		// The integriq connection report (adopt-connection-registry). Nullable
 		// and last for the same reason as the logger above.
 		private readonly ?ConnectionReporter $connectionReporter = null,
+		// Holds the announcement to a peer in staging (instance-staging-mode REQ-STG-002).
+		private readonly ?DryRunRecorder $dryRuns = null,
 	) {
 		$this->appName = 'opencatalogi';
 		$this->client = new Client([]);
@@ -788,12 +793,31 @@ class DirectoryService implements DirectoryServiceInterface {
 			return;
 		}
 
+		// In staging the announcement is kept as a dry run and the peer is not told.
+		if ($this->announcementHeld(directoryUrl: $directoryUrl, ourDirectoryUrl: $ourDirectoryUrl) === true) {
+			return;
+		}
+
 		try {
 			$this->broadcastService->broadcast($directoryUrl);
 		} catch (\Exception $e) {
 			// A peer that cannot be reached learns about us on its own next sync.
 		}
 	}//end broadcastToDirectory()
+
+	/**
+	 * Whether the announcement to a peer is held as a dry run (staging) instead of sent.
+	 *
+	 * @param string $directoryUrl    The peer's directory.
+	 * @param string $ourDirectoryUrl Our directory.
+	 *
+	 * @return bool
+	 */
+	private function announcementHeld(string $directoryUrl, string $ourDirectoryUrl): bool {
+		$announcement = ['directoryUrl' => $directoryUrl, 'ourDirectoryUrl' => $ourDirectoryUrl];
+
+		return $this->dryRuns?->hold(channel: 'directory-announce', payload: $announcement) !== null;
+	}//end announcementHeld()
 
 	/**
 	 * Mark the directory's listings with a failed fetch and build the exception to rethrow.
@@ -1191,10 +1215,10 @@ class DirectoryService implements DirectoryServiceInterface {
 	private function saveListing(array $target, array $listingData, $uuid): void {
 		$target['objectService']->saveObject(
 			object: $listingData,
-			extend: [],
-			register: $target['register'],
-			schema: $target['schema'],
-			uuid: $uuid
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $target['register'], schema: $target['schema']),
+				uuid: $uuid
+			)
 		);
 	}//end saveListing()
 
@@ -1728,10 +1752,10 @@ class DirectoryService implements DirectoryServiceInterface {
 				// Use positional parameters for compatibility with different ObjectService versions.
 				$objectService->saveObject(
 					object: $errorData,
-					extend: [],
-					register: $listingRegister,
-					schema: $listingSchema,
-					uuid: $listingData['id']
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $listingRegister, schema: $listingSchema),
+						uuid: $listingData['id']
+					)
 				);
 			}
 		} catch (\Exception $e) {

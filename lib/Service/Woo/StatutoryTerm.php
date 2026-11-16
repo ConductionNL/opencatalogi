@@ -33,6 +33,7 @@ namespace OCA\OpenCatalogi\Service\Woo;
 use DateTimeInterface;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
 use OCA\OpenCatalogi\Service\Term\TermEngineCall;
+use OCA\OpenRegister\Db\FlowTimer\TimerSubject;
 use OCA\OpenRegister\Service\Flow\Timer\FlowTimerService;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
@@ -495,7 +496,10 @@ class StatutoryTerm implements StatutoryTermInterface {
 	 */
 	public function forRequest(string $requestUuid): array {
 		$engine = $this->engine();
-		$timers = $this->store()->findBySubject(self::SUBJECT_TYPE, $requestUuid, []);
+		$timers = $this->store()->findBySubject(
+			subject: new TimerSubject(type: self::SUBJECT_TYPE, uuid: $requestUuid),
+			states: []
+		);
 		if (is_array($timers) === false) {
 			return [];
 		}

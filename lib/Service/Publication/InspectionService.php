@@ -26,7 +26,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
 /**
  * Opens inspection windows and refuses the link once one closes.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
  */
 class InspectionService implements InspectionServiceInterface {
 
@@ -77,7 +77,7 @@ class InspectionService implements InspectionServiceInterface {
 	 * @throws DomainException When the type declares no term, or no document was chosen.
 	 * @throws TermRollUnavailableException When the end date cannot be rolled off a non-working day.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
 	 */
 	public function open(
@@ -194,7 +194,7 @@ class InspectionService implements InspectionServiceInterface {
 	 *
 	 * @throws DomainException When the window's dates cannot be read.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function isOpen(array $inspection, ?DateTimeInterface $now = null): bool {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
@@ -234,7 +234,7 @@ class InspectionService implements InspectionServiceInterface {
 	 *
 	 * @return array{readable: boolean, documents: array<int, string>, reason: string|null, endDate: string|null}
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function resolveLink(array $inspection, string $token, ?DateTimeInterface $now = null): array {
 		if ($this->tokenMatches(inspection: $inspection, token: $token) === false) {

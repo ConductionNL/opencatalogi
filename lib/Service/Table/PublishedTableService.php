@@ -26,6 +26,7 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\TableFile;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Service\Import\ImportCommit;
 use OCP\IUser;
 use Psr\Container\ContainerInterface;
@@ -320,9 +321,7 @@ class PublishedTableService implements PublishedTableServiceInterface {
 		try {
 			$table = $this->registers->objectService()->find(
 				id: $tableId,
-				_extend: [],
-				register: $config['register'],
-				schema: $config['schema'],
+				options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
 				_rbac: false,
 				_multitenancy: false
 			);
@@ -349,7 +348,7 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 */
 	public function canReadPublication(string $publicationId): bool {
 		try {
-			return $this->registers->objectService()->find(id: $publicationId, _extend: [], _rbac: true, _multitenancy: false) !== null;
+			return $this->registers->objectService()->find(id: $publicationId, _rbac: true, _multitenancy: false) !== null;
 		} catch (\Throwable $e) {
 			return false;
 		}
