@@ -101,7 +101,6 @@ class SitemapService implements SitemapServiceInterface {
 		private readonly PublicationQueryService $queryService,
 		private readonly WooCategoryRegistry $categories,
 	) {
-
 	}//end __construct()
 
 	/**
@@ -230,7 +229,11 @@ class SitemapService implements SitemapServiceInterface {
 		$apiBase = $this->instance->baseUrl() . '/apps/opencatalogi/api/' . rawurlencode($catalogSlug);
 		foreach ($publications as $publication) {
 			foreach (SitemapDocumentRelations::forPublication(publication: $publication, apiBase: $apiBase) as [$file, $relations]) {
-				$documents[] = $this->mapDiwooDocument(publication: $publication, file: $file, relations: $relations);
+				// A document the Woo-index would refuse is held back; validateDiwooOutput() reports it (REQ-DWP-004).
+				$document = $this->documentMapper->mapComplete(publication: $publication, file: $file, relations: $relations);
+				if ($document !== null) {
+					$documents[] = $document;
+				}
 			}
 		}
 
