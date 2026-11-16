@@ -1,6 +1,8 @@
 OC.L10N.register(
     "opencatalogi",
     {
+        "Unpublished documents": "Unpublished documents",
+        "No unpublished documents": "No unpublished documents",
         "Show which documents of a publication were withheld, and on which grounds": "Show which documents of a publication were withheld, and on which grounds",
         "Show withheld documents": "Show withheld documents",
         "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.",
@@ -56,7 +58,6 @@ OC.L10N.register(
         "Clear search": "Clear search",
         "Close": "Close",
         "Concept": "Concept",
-        "Concept bijlage": "Concept bijlage",
         "Concept publicaties": "Concept publicaties",
         "Concept Publications": "Concept Publications",
         "concept": "concept",
@@ -122,7 +123,6 @@ OC.L10N.register(
         "No": "No",
         "No catalogs found": "No catalogs found",
         "No concept attachments": "No concept attachments",
-        "No concept attachments found": "No concept attachments found",
         "No concept publications": "No concept publications",
         "No concept publications found": "No concept publications found",
         "No directory listing selected": "No directory listing selected",
