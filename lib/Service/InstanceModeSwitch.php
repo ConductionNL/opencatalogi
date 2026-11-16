@@ -24,6 +24,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\InstanceModeSwitchInterface;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\Log\Audit\CriticalActionPerformedEvent;
@@ -37,7 +38,7 @@ use Throwable;
  *
  * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  */
-class InstanceModeSwitch {
+class InstanceModeSwitch implements InstanceModeSwitchInterface {
 
 	/**
 	 * The modes an administrator can choose.

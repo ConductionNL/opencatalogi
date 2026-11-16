@@ -31,8 +31,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
+use OCA\OpenCatalogi\Contract\InstanceModeSwitchInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
-use OCA\OpenCatalogi\Service\InstanceModeSwitch;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -57,7 +57,7 @@ class SettingsController extends Controller {
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The user session.
 	 * @param ConnectionReporterInterface|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
-	 * @param InstanceModeSwitch|null $instanceModes Reads and changes the instance mode.
+	 * @param InstanceModeSwitchInterface|null $instanceModes Reads and changes the instance mode.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
@@ -70,7 +70,7 @@ class SettingsController extends Controller {
 		private readonly ?ConnectionReporterInterface $connectionReporter = null,
 		// Instance mode (instance-staging-mode REQ-STG-001). Nullable and last,
 		// so every existing construction site keeps working.
-		private readonly ?InstanceModeSwitch $instanceModes = null,
+		private readonly ?InstanceModeSwitchInterface $instanceModes = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

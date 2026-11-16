@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\InstanceModeSwitchInterface;
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
 use OCA\OpenCatalogi\Contract\CatalogueFeedReaderInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
@@ -141,6 +142,7 @@ class ServiceRegistrar {
 		PublicationServiceInterface::class => PublicationService::class,
 		PublicationQueryServiceInterface::class => PublicationQueryService::class,
 		SettingsServiceInterface::class => SettingsService::class,
+		InstanceModeSwitchInterface::class => InstanceModeSwitch::class,
 		RetentionServiceInterface::class => RetentionService::class,
 		TransparencyWorkflowServiceInterface::class => WooService::class,
 		CatalogiServiceInterface::class => CatalogiService::class,
