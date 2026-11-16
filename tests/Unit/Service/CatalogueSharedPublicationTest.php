@@ -251,13 +251,18 @@ class CatalogueSharedPublicationTest extends TestCase {
 	}//end testAnEditShowsInBothCatalogues()
 
 	/**
-	 * A catalogue that does not exist lists nothing, so the shared list is not a fallback.
+	 * A catalogue that does not exist answers 404 and lists nothing, so the shared list is not a fallback.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/catalogs/specs/catalogs/spec.md
 	 */
 	public function testAnUnknownCatalogueListsNothing(): void {
-		$this->assertSame([], $this->listOf(slug: 'onbekend'));
-		$this->assertSame([], $this->listQueries);
+		$response = $this->service->index(catalogId: 'onbekend');
+
+		$this->assertSame(expected: 404, actual: $response->getStatus());
+		$this->assertSame(expected: ['message' => 'Catalog not found'], actual: $response->getData());
+		$this->assertSame(expected: [], actual: $this->listQueries);
 
 	}//end testAnUnknownCatalogueListsNothing()
 }//end class

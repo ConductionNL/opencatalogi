@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 
 declare(strict_types=1);
@@ -32,7 +32,7 @@ use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
  * Previews a publication rule, searches what the rules make public, and
  * validates a decision for publication.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 class PublicationRuleChecks {
 
@@ -63,7 +63,7 @@ class PublicationRuleChecks {
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the rule cannot be read.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
 	 */
 	public function preview(array $rule, array $sample): array {
 		return $this->ruleService->preview(rule: $rule, sample: array_values(array_filter($sample, 'is_array')));
@@ -78,7 +78,7 @@ class PublicationRuleChecks {
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When a rule cannot be evaluated.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
 	 */
 	public function searchPublic(array $query): array {
 		return $this->ruleService->searchPublic(
@@ -104,7 +104,7 @@ class PublicationRuleChecks {
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When a rule, the configuration or a condition cannot be read.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
 	 */
 	public function search(array $query): array {
 		if ($query['records'] !== null) {
@@ -127,7 +127,7 @@ class PublicationRuleChecks {
 	 *
 	 * @return array{publishable: boolean, reasons: array<int, string>, responseDate: string|null, publicationText: string|null}
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
 	 */
 	public function validateDecision(array $decision, array $decisionType): array {
 		return $this->decisionValidator->validate(decision: $decision, decisionType: $decisionType);

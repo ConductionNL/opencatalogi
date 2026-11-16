@@ -29,6 +29,7 @@ import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import MetadataSuggestionsWidget from './components/widgets/MetadataSuggestionsWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
+import PlainSummaryDraftWidget from './components/widgets/PlainSummaryDraftWidget.vue'
 import PublicationAttachmentsWidget from './components/widgets/PublicationAttachmentsWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
@@ -109,6 +110,16 @@ registerDashboardWidget('metadata-suggestions', {
 	defaultContent: {},
 	displayName: 'Metadata suggestions',
 	icon: 'LightbulbOnOutline',
+	surfaces: ['detail-page'],
+})
+// Draft a plain language summary with the text assistant and accept it
+// (publication-plain-language-and-translation, REQ-PPL-002).
+registerDashboardWidget('plain-summary-draft', {
+	renderer: PlainSummaryDraftWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Plain language summary',
+	icon: 'FileDocument',
 	surfaces: ['detail-page'],
 })
 // The publication's attachments with Add attachment, which opens the app's

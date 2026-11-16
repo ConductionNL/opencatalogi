@@ -49,3 +49,39 @@ With no gateway installed, nothing is recorded as sent. The panel shows the comp
 ### A current verdict
 
 The readiness check runs once a day while a catalogue publishes a Woo sitemap. It also runs once right after a catalogue is switched on for Woo.
+
+## DiWoo metadata on the publication
+
+The national Woo-index only takes a document whose metadata follows the DiWoo metadata standard. A publication stores that metadata in its own fields, and the DiWoo sitemap emits what it stores.
+
+| Field | What it holds |
+| --- | --- |
+| `title` | The official title (`diwoo:officieleTitel`). |
+| `documentsoort` | The document type, from the national list of document types. Stored as the address of the list member. |
+| `fileDocumentsoorten` | A different document type for one attached file, such as an annex to a decision. Keyed by the file id. |
+| `language` | The language of the document. It defaults to `nl`. |
+| `creationDate` | The day the document was made. This is not the day it was published. |
+| `validFrom` and `validUntil` | The days the content takes and loses legal effect. They are apart from the publication date. |
+
+`GET /api/woo/documentsoorten` lists the document types an editor can choose from.
+
+### What a save checks
+
+A document type may be given as its code, its label or its address. The save stores the address. A document type the national list does not hold is refused. A validity that ends before it starts is refused.
+
+A Woo publication cannot be made public while a field the Woo-index requires is missing. This holds for a publication date now and for one in the future. A Woo publication has a Woo category, or sits in a schema a category names. The required fields are the publisher with a TOOI identifier, the title, the information category and the handling type. The refusal names every missing field. A draft without a publication date may be incomplete.
+
+Publishing a Woo batch reports the same refusal and leaves the batch unpublished.
+
+### What the sitemap emits
+
+Each document carries its title, document type, language, creation date, validity and the responsible organisation. Until the responsible organisation has its own field, it is the publisher.
+
+A publication created before these fields existed falls back to the old derivation: the day it was saved for the creation date, and `nl` for the language. A newer publication gets no fallback. A document that still lacks a required field is left off the sitemap page, and the rest of the page is served. The DiWoo validation report at `/api/{catalogSlug}/sitemaps/{categoryCode}/validate` lists each held-back document with the field and the reason.
+
+The national announcement takes `validFrom` as its effective date when the editor gives none.
+
+### Release notes
+
+- An earlier hand-off wrote a document type into the summary of a publication. On upgrade, a summary that is exactly a document type moves to the document type field, and that summary is emptied. Editors may want to write a real summary for those publications.
+- A Woo publication can no longer be made public without the metadata the Woo-index requires. The save names what is missing.

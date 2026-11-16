@@ -137,6 +137,16 @@ class ListenerRegistrar {
 		// A field with one lawful value for the officer fills itself before the first write (REQ-WMS-004).
 		$context->registerEventListener(ObjectCreatingEvent::class, SingleLawfulValueListener::class);
 
+		// A Woo publication does not go public without its mandatory DiWoo metadata,
+		// and a document type is stored as its list member's URI (REQ-DWP-002, REQ-DWP-003).
+		$context->registerEventListener(ObjectCreatingEvent::class, DiwooCompletenessListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, DiwooCompletenessListener::class);
+
+		// A plain language summary is saved with its reading level, and its
+		// provenance is the server's to write (publication-plain-language-and-translation, REQ-PPL-001).
+		$context->registerEventListener(ObjectCreatingEvent::class, PlainSummaryCheck::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PlainSummaryCheck::class);
+
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is
 		// installed after OpenCatalogi, its register event completes the scope

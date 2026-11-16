@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "OpenCatalogi standard protocol endpoints",
-    "version": "2.1.16-unstable.20261010175130",
+    "version": "2.1.16-unstable.20261116192537",
     "description": "The public endpoints of OpenCatalogi that implement an external standard (DCAT-AP, OOAPI, schema.org, DiWoo sitemaps, robots.txt, Atom feeds, federation between instances; listed in lib/Middleware/Support/StandardProtocolPaths.php). Their URLs, request and error formats are the ones their standard defines, so they keep their unversioned paths and are not part of the versioned API that openapi.json describes.",
     "contact": {
       "name": "Conduction",
@@ -435,6 +435,19 @@
             "$ref": "#/components/responses/InternalServerError"
           }
         }
+      },
+      "options": {
+        "operationId": "federation-publications-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications`.",
+        "tags": [
+          "Federation"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
       }
     },
     "/federation/publications/{id}": {
@@ -470,6 +483,24 @@
             "$ref": "#/components/responses/NotFound"
           }
         }
+      },
+      "options": {
+        "operationId": "federation-publications-show-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications/{id}`.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
       }
     },
     "/federation/publications/{id}/attachments": {
@@ -503,6 +534,24 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "federation-publications-attachments-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications/{id}/attachments`.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
           }
         }
       }
@@ -541,6 +590,24 @@
             "$ref": "#/components/responses/NotFound"
           }
         }
+      },
+      "options": {
+        "operationId": "federation-publications-download-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications/{id}/download`.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
       }
     },
     "/federation/publications/{id}/used": {
@@ -576,6 +643,24 @@
             "$ref": "#/components/responses/NotFound"
           }
         }
+      },
+      "options": {
+        "operationId": "federation-publications-used-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications/{id}/used`.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
       }
     },
     "/federation/publications/{id}/uses": {
@@ -609,6 +694,24 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "federation-publications-uses-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/federation/publications/{id}/uses`.",
+        "tags": [
+          "Federation"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
           }
         }
       }
