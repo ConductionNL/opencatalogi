@@ -17,6 +17,7 @@ use OCA\OpenCatalogi\BackgroundJob\SuggestPublicationMetadata;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Woo\MetadataSuggestionStore;
 use OCA\OpenCatalogi\Service\WooMetadataSuggestionService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -96,8 +97,8 @@ final class SuggestPublicationMetadataTest extends TestCase {
 				return ['results' => $this->existing];
 			}
 
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac, bool $_multitenancy, bool $_unowned): array {
-				$this->saved[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac];
+			public function saveObject(array $object, ObjectSaveOptions $options, bool $_rbac, bool $_multitenancy): array {
+				$this->saved[] = ['object' => $object, 'register' => $options->target->register, 'schema' => $options->target->schema, 'rbac' => $_rbac];
 				return $object;
 			}
 		};
