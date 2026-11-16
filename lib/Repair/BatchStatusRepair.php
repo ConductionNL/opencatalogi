@@ -104,20 +104,6 @@ class BatchStatusRepair implements IRepairStep {
 			return;
 		}
 
-		$mapped = $this->mapUnknownStatuses(objectService: $objectService, register: $register, schema: $schema);
-		$output->info(sprintf('Woo batch statuses: %d batch(es) set to in_progress.', $mapped));
-	}//end run()
-
-	/**
-	 * Set every batch whose status is not a lifecycle status to `in_progress`.
-	 *
-	 * @param object $objectService OpenRegister's ObjectService.
-	 * @param string $register      The register id.
-	 * @param string $schema        The batch schema id.
-	 *
-	 * @return int How many batches were saved.
-	 */
-	private function mapUnknownStatuses(object $objectService, string $register, string $schema): int {
 		$mapped = 0;
 		foreach ($this->batches(objectService: $objectService, register: $register, schema: $schema) as $batch) {
 			if (in_array((string)($batch['status'] ?? ''), self::STATUSES, true) === true) {
@@ -125,41 +111,24 @@ class BatchStatusRepair implements IRepairStep {
 			}
 
 			$batch['status'] = 'in_progress';
-			if ($this->saveBatch(objectService: $objectService, register: $register, schema: $schema, batch: $batch) === true) {
+			try {
+				$objectService->saveObject(
+					object: $batch,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $register, schema: $schema),
+						uuid: (string)($batch['id'] ?? '')
+					),
+					_rbac: false,
+					_multitenancy: false,
+				);
 				$mapped++;
+			} catch (Throwable $e) {
+				$this->logger->warning('[BatchStatusRepair] Could not map the status of batch ' . (string)($batch['id'] ?? '') . ': ' . $e->getMessage());
 			}
 		}
 
-		return $mapped;
-	}//end mapUnknownStatuses()
-
-	/**
-	 * Save one batch without RBAC; a failure is logged and reported as false.
-	 *
-	 * @param object               $objectService OpenRegister's ObjectService.
-	 * @param string               $register      The register id.
-	 * @param string               $schema        The batch schema id.
-	 * @param array<string, mixed> $batch         The batch with its new status.
-	 *
-	 * @return bool Whether it was saved.
-	 */
-	private function saveBatch(object $objectService, string $register, string $schema, array $batch): bool {
-		try {
-			$objectService->saveObject(
-				object: $batch,
-				options: new ObjectSaveOptions(
-					target: new ObjectFindTarget(register: $register, schema: $schema),
-					uuid: (string)($batch['id'] ?? '')
-				),
-				_rbac: false,
-				_multitenancy: false,
-			);
-			return true;
-		} catch (Throwable $e) {
-			$this->logger->warning('[BatchStatusRepair] Could not map the status of batch ' . (string)($batch['id'] ?? '') . ': ' . $e->getMessage());
-			return false;
-		}
-	}//end saveBatch()
+		$output->info(sprintf('Woo batch statuses: %d batch(es) set to in_progress.', $mapped));
+	}//end run()
 
 	/**
 	 * Every batch in the register, as plain arrays with their id.
