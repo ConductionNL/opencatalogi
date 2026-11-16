@@ -237,7 +237,7 @@ class FederationControllerTest extends TestCase {
 			request: $this->request,
 			publicationService: $this->publicationService,
 			l10n: $this->l10n,
-			appConfig: $config
+			container: $this->containerWith(service: $config, class: \OCP\IAppConfig::class)
 		);
 	}//end controllerCalledFrom()
 
@@ -429,4 +429,28 @@ class FederationControllerTest extends TestCase {
 		$this->assertArrayNotHasKey('commentPeriod', $none);
 		$this->assertArrayNotHasKey('commentPeriodError', $none);
 	}
+
+	/**
+	 * A container that holds one service.
+	 *
+	 * @param object $service The service.
+	 * @param string $class   The id it is resolved by.
+	 *
+	 * @return \Psr\Container\ContainerInterface The container.
+	 */
+	private function containerWith(object $service, string $class): \Psr\Container\ContainerInterface {
+		$container = $this->createMock(originalClassName: \Psr\Container\ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id) use ($service, $class): object {
+				if ($id === $class) {
+					return $service;
+				}
+
+				throw new class ('No ' . $id) extends \RuntimeException implements \Psr\Container\NotFoundExceptionInterface {
+				};
+			}
+		);
+
+		return $container;
+	}//end containerWith()
 }

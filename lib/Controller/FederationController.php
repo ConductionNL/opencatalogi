@@ -43,6 +43,7 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 
@@ -55,6 +56,20 @@ class FederationController extends Controller {
 	use AnswersCrossOriginSearchRequests;
 
 	/**
+	 * App config holding the CORS allowlist; null allows every origin.
+	 *
+	 * @var IAppConfig|null
+	 */
+	private readonly ?IAppConfig $appConfig;
+
+	/**
+	 * The request's collector of applied filters (REQ-ASF-001).
+	 *
+	 * @var AppliedFilters|null
+	 */
+	private readonly ?AppliedFilters $appliedFilters;
+
+	/**
 	 * FederationController constructor.
 	 *
 	 * @param IRequest $request The request object.
@@ -62,8 +77,9 @@ class FederationController extends Controller {
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param LocalPublicationStateInterface|null $localState Adds the withheld list (REQ-WDW-003) and the comment period state (REQ-PDP-003).
-	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
-	 * @param IAppConfig|null $appConfig App config holding the CORS allowlist; null allows every origin.
+	 * @param ContainerInterface|null $container DI container for the optional collaborators: the app config
+	 *                                           holding the CORS allowlist (without it every origin is allowed)
+	 *                                           and the request's collector of applied filters (REQ-ASF-001).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -71,12 +87,46 @@ class FederationController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?LocalPublicationStateInterface $localState = null,
-		private readonly ?AppliedFilters $appliedFilters = null,
-		private readonly ?IAppConfig $appConfig = null,
+		?ContainerInterface $container = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
+		$appConfig = self::optional(container: $container, class: IAppConfig::class);
+		$appliedFilters = self::optional(container: $container, class: AppliedFilters::class);
+		if ($appConfig instanceof IAppConfig === false) {
+			$appConfig = null;
+		}
+
+		if ($appliedFilters instanceof AppliedFilters === false) {
+			$appliedFilters = null;
+		}
+
+		$this->appConfig = $appConfig;
+		$this->appliedFilters = $appliedFilters;
 
 	}//end __construct()
+
+	/**
+	 * One optional collaborator from the container, or null when there is none.
+	 *
+	 * @param ContainerInterface|null $container The DI container.
+	 * @param string                  $class     The service to resolve.
+	 *
+	 * @return mixed The service, or null.
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
+	 */
+	private static function optional(?ContainerInterface $container, string $class): mixed {
+		if ($container === null) {
+			return null;
+		}
+
+		try {
+			return $container->get($class);
+		} catch (ContainerExceptionInterface | NotFoundExceptionInterface $e) {
+			return null;
+		}
+
+	}//end optional()
 
 	/**
 	 * Retrieve all publications from local and federated sources.
