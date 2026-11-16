@@ -12,11 +12,13 @@
 
 ## 3. Hermiq
 
-- [ ] 3.1 Add `HermiqMetadataClient` and the `source=hermiq` path of `POST /api/publications/{id}/metadata-suggestions`, answering 409 without Hermiq (REQ-WMS-002). Verify: controller test with and without the client.
+- [x] 3.1 Add `HermiqMetadataClient` and the `source=hermiq` path of `POST /api/publications/{id}/metadata-suggestions`, answering 409 without Hermiq (REQ-WMS-002). Verify: controller test with and without the client.
+  > 16 Nov: `HermiqMetadataClient` asks Hermiq's `FormFillEngineInterface` (resolved by name through the container, so Hermiq stays optional) for the value-list fields the publication lacks (`WooMetadataSuggestionService::hermiqFields()`: category and handling type, with their allowed values as options), from the text OpenRegister extracted from the publication's files (`PublicationDocumentText`, over OpenRegister's object file reader and text chunks). `fromHermiq()` checks every value against the same value lists, drops fields already set and values already suggested, and stores the rest as pending `hermiq` suggestions; nothing existing is changed. `POST .../metadata-suggestions` with `source=hermiq` needs the update right on the publication and answers 409 `hermiq-unavailable` without Hermiq; `GET` on the same path lists the suggestions with `hermiq` and `canDecide` for the widget. Free-text fields (summary, title) are not asked for: the B1 summary is gated row 14.2 (6.5). Tests: `MetadataSuggestionControllerTest`, `HermiqMetadataClientTest`, `PublicationDocumentTextTest`, `WooMetadataSuggestionServiceTest` (Hermiq cases).
 
 ## 4. A person decides
 
-- [ ] 4.1 Add accept and reject endpoints with the publication's update right checked (REQ-WMS-003). Verify: `tests/Unit/Controller/MetadataSuggestionControllerTest.php`, including a user without update rights.
+- [x] 4.1 Add accept and reject endpoints with the publication's update right checked (REQ-WMS-003). Verify: `tests/Unit/Controller/MetadataSuggestionControllerTest.php`, including a user without update rights.
+  > 16 Nov: `POST /api/metadata-suggestions/{id}/accept` and `/reject` (`MetadataSuggestionController` over `MetadataSuggestionDecisions`). The publication is read with RBAC on (unreadable answers 404) and the update right is asked of OpenRegister through `PublicationRights::mayUpdate()` (fail closed, 403) before anything is written; a decided suggestion answers 409. Accept saves the value on the publication with RBAC on, then marks the suggestion `accepted` with `decidedBy` and `decidedAt`; a refused write leaves both unchanged. Reject only marks the suggestion. `MetadataSuggestionStore` gained `find()` and `decide()` and now saves through OpenRegister main's `ObjectSaveOptions`.
 - [ ] 4.2 Add the `metadata-suggestions` widget and place it on `PublicationDetail` in `src/manifest.json` (REQ-WMS-003). Verify: `tests/e2e/woo-metadata-suggestions.spec.ts` accepts one suggestion and sees the field filled.
 
 ## 5. Docs and strings

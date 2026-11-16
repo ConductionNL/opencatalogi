@@ -17,6 +17,9 @@ use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Woo\MetadataSuggestionStore;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -76,4 +79,131 @@ final class MetadataSuggestionStoreTest extends TestCase {
 
 		$store->create(proposal: ['field' => 'wooCategory'], publicationId: 'pub-1');
 	}//end testAnUnsetSchemaIsNamed()
+	/**
+	 * An ObjectService double that keeps the find and save calls.
+	 *
+	 * @param array<string, array<string, mixed>> $stored Stored objects by uuid.
+	 *
+	 * @return object The double.
+	 */
+	private function objects(array $stored=[]): object {
+		return new class($stored) {
+			/** @var array<int, array<string, mixed>> */
+			public array $finds = [];
+
+			/** @var array<int, array<string, mixed>> */
+			public array $saves = [];
+
+			/**
+			 * @param array<string, array<string, mixed>> $stored Stored objects by uuid.
+			 */
+			public function __construct(private array $stored) {
+			}
+
+			public function find(string $id, ObjectFindOptions $options, bool $_rbac, bool $_multitenancy): ?array {
+				$this->finds[] = ['id' => $id, 'register' => $options->register, 'schema' => $options->schema, 'rbac' => $_rbac];
+				if (isset($this->stored[$id]) === false) {
+					throw new DoesNotExistException('none');
+				}
+
+				return $this->stored[$id];
+			}
+
+			public function saveObject(array $object, ObjectSaveOptions $options, bool $_rbac, bool $_multitenancy): array {
+				$this->saves[] = [
+					'object' => $object,
+					'register' => $options->target->register,
+					'schema' => $options->target->schema,
+					'uuid' => $options->uuid,
+					'unowned' => $options->actor->unowned,
+					'rbac' => $_rbac,
+					'multitenancy' => $_multitenancy,
+				];
+
+				return $object + ['id' => ($options->uuid ?? 'new-1')];
+			}
+		};
+	}
+
+	public function testAProposalIsStoredPendingAsTheSystemInTheConfiguredSchema(): void {
+		$objects = $this->objects();
+		$store = $this->store(['publication_register' => '7', 'metadata_suggestion_schema' => '30'], $objects);
+
+		$stored = $store->create(
+			proposal: ['field' => 'wooCategory', 'value' => 'infocat001', 'valueLabel' => 'Wetten', 'source' => 'rules', 'reason' => 'r'],
+			publicationId: 'pub-1'
+		);
+
+		$this->assertSame('pending', $stored['status']);
+		$this->assertSame('new-1', $stored['id']);
+		$this->assertSame(
+			[[
+				'object' => [
+					'publication' => 'pub-1',
+					'field' => 'wooCategory',
+					'value' => 'infocat001',
+					'valueLabel' => 'Wetten',
+					'source' => 'rules',
+					'reason' => 'r',
+					'status' => 'pending',
+				],
+				'register' => '7',
+				'schema' => '30',
+				'uuid' => null,
+				'unowned' => true,
+				'rbac' => false,
+				'multitenancy' => false,
+			]],
+			$objects->saves
+		);
+	}
+
+	public function testASuggestionIsFoundByUuidAndAnUnknownOneIsNull(): void {
+		$objects = $this->objects(['s-1' => ['object' => ['field' => 'wooCategory', 'status' => 'pending'], 'id' => 's-1']]);
+		$store = $this->store(['publication_register' => '7', 'metadata_suggestion_schema' => '30'], $objects);
+
+		$this->assertSame(['field' => 'wooCategory', 'status' => 'pending', 'id' => 's-1'], $store->find(id: 's-1'));
+		$this->assertNull($store->find(id: 'missing'));
+		$this->assertSame(
+			[
+				['id' => 's-1', 'register' => '7', 'schema' => '30', 'rbac' => false],
+				['id' => 'missing', 'register' => '7', 'schema' => '30', 'rbac' => false],
+			],
+			$objects->finds
+		);
+	}
+
+	public function testADecisionRecordsTheStatusWhoAndWhenOnTheSameSuggestion(): void {
+		$objects = $this->objects();
+		$store = $this->store(['publication_register' => '7', 'metadata_suggestion_schema' => '30'], $objects);
+
+		$decided = $store->decide(
+			suggestion: ['id' => 's-1', '@self' => ['id' => 's-1'], 'field' => 'wooCategory', 'value' => 'infocat001', 'status' => 'pending'],
+			status: MetadataSuggestionStore::STATUS_ACCEPTED,
+			decidedBy: 'editor',
+			decidedAt: '2026-11-16T12:00:00+00:00'
+		);
+
+		$this->assertSame('accepted', $decided['status']);
+		$this->assertSame(
+			['field' => 'wooCategory', 'value' => 'infocat001', 'status' => 'accepted', 'decidedBy' => 'editor', 'decidedAt' => '2026-11-16T12:00:00+00:00'],
+			$objects->saves[0]['object']
+		);
+		$this->assertSame('s-1', $objects->saves[0]['uuid']);
+		$this->assertTrue($objects->saves[0]['unowned']);
+	}
+
+	public function testOnlyAcceptedOrRejectedIsADecision(): void {
+		$objects = $this->objects();
+		$store = $this->store(['publication_register' => '7', 'metadata_suggestion_schema' => '30'], $objects);
+
+		try {
+			$store->decide(suggestion: ['id' => 's-1'], status: 'pending', decidedBy: 'editor', decidedAt: 'now');
+			$this->fail('A pending status was taken as a decision.');
+		} catch (RuntimeException $e) {
+			$this->assertStringContainsString('"pending"', $e->getMessage());
+		}
+
+		$this->assertSame([], $objects->saves);
+	}
 }//end class

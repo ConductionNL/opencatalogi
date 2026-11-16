@@ -35,6 +35,9 @@ use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 
 /**
  * Proposes missing Woo metadata from data the instance holds.
+ *
+ * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
+ * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
  */
 class WooMetadataSuggestionService {
 
@@ -44,6 +47,13 @@ class WooMetadataSuggestionService {
 	 * @var string
 	 */
 	public const SOURCE_RULES = 'rules';
+
+	/**
+	 * The source of a suggestion Hermiq made on an editor's request.
+	 *
+	 * @var string
+	 */
+	public const SOURCE_HERMIQ = 'hermiq';
 
 	/**
 	 * How a record arrived, mapped to the handling type that implies: a record a
@@ -116,6 +126,124 @@ class WooMetadataSuggestionService {
 
 		return $out;
 	}//end suggestFromRules()
+
+	/**
+	 * The fields Hermiq is asked about: the value-list fields the publication lacks.
+	 *
+	 * Each carries its allowed values as options, so Hermiq can only pick from
+	 * the TOOI and DiWoo lists. Free-text fields are not asked for here.
+	 *
+	 * @param array<string, mixed> $publication The publication as stored.
+	 *
+	 * @return array<int, array{key: string, label: string, type: string, options: array<int, string>}> The fields.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
+	 */
+	public function hermiqFields(array $publication): array {
+		$fields = [];
+		$categories = array_keys($this->categoriesByLabel());
+		if ($this->isSet(value: ($publication['wooCategory'] ?? null)) === false && $categories !== []) {
+			$fields[] = ['key' => 'wooCategory', 'label' => 'Woo information category', 'type' => 'select', 'options' => $categories];
+		}
+
+		if ($this->isSet(value: ($publication['soortHandeling'] ?? null)) === false) {
+			$fields[] = [
+				'key' => 'soortHandeling',
+				'label' => 'Handling type of the document',
+				'type' => 'select',
+				'options' => array_keys($this->tooiVocabulary->soortHandelingList()),
+			];
+		}
+
+		return $fields;
+	}//end hermiqFields()
+
+	/**
+	 * Hermiq's values as proposals, checked against the same value lists as the rules floor.
+	 *
+	 * A value that does not resolve, a field the publication already has, and a
+	 * field and value a suggestion already exists for are dropped. Hermiq only
+	 * adds: nothing here changes or removes an existing suggestion.
+	 *
+	 * @param array<string, mixed> $publication The publication as stored.
+	 * @param array<string, mixed> $values Hermiq's values by field key.
+	 * @param array<int, array<string, mixed>> $existing The suggestions already recorded (`field`, `value`).
+	 *
+	 * @return array<int, array{field: string, value: string, valueLabel: string, source: string, reason: string}> The proposals.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
+	 */
+	public function fromHermiq(array $publication, array $values, array $existing=[]): array {
+		$asked = array_column($this->hermiqFields(publication: $publication), 'key');
+		$taken = [];
+		foreach ($existing as $suggestion) {
+			$taken[] = ($suggestion['field'] ?? '') . "\0" . ($suggestion['value'] ?? '');
+		}
+
+		$out = [];
+		foreach ($values as $field => $value) {
+			if (in_array($field, $asked, true) === false || is_string($value) === false) {
+				continue;
+			}
+
+			$proposal = $this->hermiqProposal(field: (string)$field, value: $value);
+			if ($proposal === null || in_array($proposal['field'] . "\0" . $proposal['value'], $taken, true) === true) {
+				continue;
+			}
+
+			$out[] = $proposal;
+		}
+
+		return $out;
+	}//end fromHermiq()
+
+	/**
+	 * One Hermiq value as a proposal, or null when it does not resolve against its value list.
+	 *
+	 * @param string $field The field.
+	 * @param string $value The value Hermiq chose.
+	 *
+	 * @return array{field: string, value: string, valueLabel: string, source: string, reason: string}|null The proposal.
+	 */
+	private function hermiqProposal(string $field, string $value): ?array {
+		$reason = 'Hermiq proposed this value from the text of the publication\'s documents.';
+		if ($field === 'soortHandeling') {
+			$member = $this->tooiVocabulary->resolveSoortHandeling(trim($value));
+			if ($member === null || trim($value) === '') {
+				return null;
+			}
+
+			return $this->proposal(field: $field, value: $member['label'], valueLabel: $member['label'], reason: $reason, source: self::SOURCE_HERMIQ);
+		}
+
+		$record = ($this->categoriesByLabel()[$value] ?? null);
+		if ($record === null) {
+			return null;
+		}
+
+		if ($this->tooiVocabulary->resolveInformatiecategorie((string)($record['tooiUri'] ?? '')) === null) {
+			return null;
+		}
+
+		return $this->proposal(field: $field, value: (string)$record['code'], valueLabel: $value, reason: $reason, source: self::SOURCE_HERMIQ);
+	}//end hermiqProposal()
+
+	/**
+	 * The information categories by label.
+	 *
+	 * @return array<string, array<string, mixed>> The category records, keyed by label.
+	 */
+	private function categoriesByLabel(): array {
+		$out = [];
+		foreach ($this->categories->all() as $code => $record) {
+			$label = (string)($record['label'] ?? '');
+			if ($label !== '') {
+				$out[$label] = $record + ['code' => (string)$code];
+			}
+		}
+
+		return $out;
+	}//end categoriesByLabel()
 
 	/**
 	 * Propose the information category whose sitemap covers the schema, when it is the only one.
@@ -241,21 +369,22 @@ class WooMetadataSuggestionService {
 	}//end isSet()
 
 	/**
-	 * One rules proposal.
+	 * One proposal.
 	 *
 	 * @param string $field The publication field.
 	 * @param string $value The proposed value.
 	 * @param string $valueLabel The value as an editor reads it.
 	 * @param string $reason Why it is proposed.
+	 * @param string $source Who proposed it: SOURCE_RULES or SOURCE_HERMIQ.
 	 *
 	 * @return array{field: string, value: string, valueLabel: string, source: string, reason: string} The proposal.
 	 */
-	private function proposal(string $field, string $value, string $valueLabel, string $reason): array {
+	private function proposal(string $field, string $value, string $valueLabel, string $reason, string $source=self::SOURCE_RULES): array {
 		return [
 			'field' => $field,
 			'value' => $value,
 			'valueLabel' => $valueLabel,
-			'source' => self::SOURCE_RULES,
+			'source' => $source,
 			'reason' => $reason,
 		];
 	}//end proposal()

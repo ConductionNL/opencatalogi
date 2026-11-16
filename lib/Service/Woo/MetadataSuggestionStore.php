@@ -26,8 +26,13 @@ namespace OCA\OpenCatalogi\Service\Woo;
 
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 use OCP\IAppConfig;
 use RuntimeException;
+use Throwable;
 
 /**
  * The suggestions OpenRegister stores for publications (design D1).
@@ -36,6 +41,8 @@ use RuntimeException;
  * Writes go in as the system: a suggestion is never a change to the
  * publication, and the person who decides on it is checked where the decision
  * is written (REQ-WMS-003).
+ *
+ * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
  */
 class MetadataSuggestionStore {
 	use ReadsObjectProperties;
@@ -46,6 +53,20 @@ class MetadataSuggestionStore {
 	 * @var string
 	 */
 	public const STATUS_PENDING = 'pending';
+
+	/**
+	 * A suggestion a person accepted: its value is on the publication.
+	 *
+	 * @var string
+	 */
+	public const STATUS_ACCEPTED = 'accepted';
+
+	/**
+	 * A suggestion a person rejected: the publication is unchanged.
+	 *
+	 * @var string
+	 */
+	public const STATUS_REJECTED = 'rejected';
 
 	/**
 	 * The most suggestions read for one publication.
@@ -142,20 +163,113 @@ class MetadataSuggestionStore {
 			'status' => self::STATUS_PENDING,
 		];
 
+		return $this->write(record: $record, uuid: null);
+	}//end create()
+
+	/**
+	 * One suggestion by its uuid, read as the system.
+	 *
+	 * The caller decides who may see or change it, through the publication it
+	 * belongs to (REQ-WMS-003).
+	 *
+	 * @param string $id The suggestion's uuid.
+	 *
+	 * @return array<string, mixed>|null The suggestion, or null when there is none with that uuid.
+	 *
+	 * @throws RuntimeException When the store is not configured or OpenRegister is unavailable.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
+	 */
+	public function find(string $id): ?array {
+		$register = $this->registerOrFail();
+		$schema = $this->schemaOrFail();
+		$objects = $this->objects();
+
+		try {
+			$found = $objects->find(
+				id: $id,
+				options: new ObjectFindOptions(register: $register, schema: $schema),
+				_rbac: false,
+				_multitenancy: false
+			);
+		} catch (Throwable $e) {
+			if (str_ends_with(get_class($e), 'DoesNotExistException') === true) {
+				return null;
+			}
+
+			throw $e;
+		}
+
+		if ($found === null) {
+			return null;
+		}
+
+		$suggestion = $this->asArray(object: $found);
+		if ($suggestion === []) {
+			return null;
+		}
+
+		$suggestion['id'] = (string)($suggestion['id'] ?? $id);
+
+		return $suggestion;
+	}//end find()
+
+	/**
+	 * Record a person's decision on a suggestion: who decided, when, and which way.
+	 *
+	 * @param array<string, mixed> $suggestion The suggestion as find() returned it.
+	 * @param string $status STATUS_ACCEPTED or STATUS_REJECTED.
+	 * @param string $decidedBy The deciding user's uid.
+	 * @param string $decidedAt When, as an ISO 8601 date-time.
+	 *
+	 * @return array<string, mixed> The stored suggestion.
+	 *
+	 * @throws RuntimeException When the status is not a decision, or the store is not configured, or the write fails.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
+	 */
+	public function decide(array $suggestion, string $status, string $decidedBy, string $decidedAt): array {
+		if ($status !== self::STATUS_ACCEPTED && $status !== self::STATUS_REJECTED) {
+			throw new RuntimeException(message: 'A suggestion is decided as accepted or rejected, not "' . $status . '".');
+		}
+
+		$uuid = (string)($suggestion['id'] ?? '');
+		$record = $suggestion;
+		unset($record['id'], $record['@self']);
+		$record['status'] = $status;
+		$record['decidedBy'] = $decidedBy;
+		$record['decidedAt'] = $decidedAt;
+
+		return $this->write(record: $record, uuid: $uuid);
+	}//end decide()
+
+	/**
+	 * Save a suggestion record as the system, new or by uuid.
+	 *
+	 * @param array<string, mixed> $record The record.
+	 * @param string|null $uuid The suggestion to update, null for a new one.
+	 *
+	 * @return array<string, mixed> The stored suggestion.
+	 *
+	 * @throws RuntimeException When the store is not configured or the write fails.
+	 */
+	private function write(array $record, ?string $uuid): array {
 		$register = $this->registerOrFail();
 		$schema = $this->schemaOrFail();
 
 		return $this->asArray(
 			object: $this->objects()->saveObject(
 				object: $record,
-				register: $register,
-				schema: $schema,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $register, schema: $schema),
+					uuid: $uuid,
+					actor: new SaveActor(unowned: true)
+				),
 				_rbac: false,
-				_multitenancy: false,
-				_unowned: true
+				_multitenancy: false
 			)
 		);
-	}//end create()
+	}//end write()
 
 	/**
 	 * The configured publication register id, empty when unset.

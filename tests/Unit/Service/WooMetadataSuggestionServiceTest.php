@@ -207,4 +207,70 @@ class WooMetadataSuggestionServiceTest extends TestCase {
 
 		$this->assertSame(expected: ['organization'], actual: array_column($proposals, 'field'));
 	}
+	/**
+	 * Hermiq is asked only about the value-list fields a publication lacks,
+	 * each with its allowed values as options (REQ-WMS-002).
+	 *
+	 * @return void
+	 */
+	public function testHermiqIsAskedOnlyAboutMissingValueListFields(): void {
+		$service = $this->service();
+		$labels = array_column((new TooiVocabularyService())->informatiecategorieList(), 'label');
+
+		$fields = $service->hermiqFields(publication: ['title' => 'Besluit', 'soortHandeling' => 'vaststelling']);
+
+		$this->assertCount(1, $fields);
+		$this->assertSame('wooCategory', $fields[0]['key']);
+		$this->assertSame('select', $fields[0]['type']);
+		$this->assertSame($labels, $fields[0]['options']);
+
+		$both = $service->hermiqFields(publication: []);
+		$this->assertSame(['wooCategory', 'soortHandeling'], array_column($both, 'key'));
+		$this->assertSame(['ontvangst', 'vaststelling', 'ondertekening'], $both[1]['options']);
+
+		$this->assertSame([], $service->hermiqFields(publication: ['wooCategory' => 'infocat001', 'soortHandeling' => 'ontvangst']));
+	}
+
+	/**
+	 * Hermiq's values become hermiq proposals only when they resolve against the
+	 * value lists, were asked for, and are not already suggested (REQ-WMS-002).
+	 *
+	 * @return void
+	 */
+	public function testHermiqValuesAreCheckedAgainstTheValueListsAndOnlyAdded(): void {
+		$service = $this->service();
+		$list = (new TooiVocabularyService())->informatiecategorieList();
+		$code = (string)array_key_first($list);
+		$label = $list[$code]['label'];
+
+		$proposals = $service->fromHermiq(
+			publication: ['title' => 'Besluit'],
+			values: ['wooCategory' => $label, 'soortHandeling' => 'geen handeling', 'title' => 'Iets anders'],
+			existing: []
+		);
+
+		$this->assertSame(
+			[[
+				'field' => 'wooCategory',
+				'value' => $code,
+				'valueLabel' => $label,
+				'source' => WooMetadataSuggestionService::SOURCE_HERMIQ,
+				'reason' => "Hermiq proposed this value from the text of the publication's documents.",
+			]],
+			$proposals
+		);
+
+		$handling = $service->fromHermiq(publication: ['wooCategory' => $code], values: ['soortHandeling' => 'Vaststelling']);
+		$this->assertSame([['soortHandeling', 'vaststelling', 'hermiq']], array_map(
+			static fn (array $p): array => [$p['field'], $p['value'], $p['source']],
+			$handling
+		));
+
+		$this->assertSame(
+			[],
+			$service->fromHermiq(publication: [], values: ['wooCategory' => $label], existing: [['field' => 'wooCategory', 'value' => $code]])
+		);
+		$this->assertSame([], $service->fromHermiq(publication: ['wooCategory' => $code], values: ['wooCategory' => $label]));
+		$this->assertSame([], $service->fromHermiq(publication: [], values: ['wooCategory' => 'Geen categorie']));
+	}
 }
