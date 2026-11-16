@@ -41,6 +41,7 @@ import FolderMultiple from 'vue-material-design-icons/FolderMultiple.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
 import History from 'vue-material-design-icons/History.vue'
+import LightbulbOnOutline from 'vue-material-design-icons/LightbulbOnOutline.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
@@ -95,6 +96,7 @@ export default {
 	FolderOutline,
 	FormatListBulleted,
 	History,
+	LightbulbOnOutline,
 	LinkVariant,
 	ListBoxOutline,
 	Lock,

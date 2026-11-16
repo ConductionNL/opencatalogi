@@ -27,6 +27,7 @@ import { createApp, h } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
+import MetadataSuggestionsWidget from './components/widgets/MetadataSuggestionsWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
 import PublicationAttachmentsWidget from './components/widgets/PublicationAttachmentsWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
@@ -97,6 +98,17 @@ registerDashboardWidget('publication-visibility', {
 	defaultContent: {},
 	displayName: 'Publication status',
 	icon: 'EyeOutline',
+	surfaces: ['detail-page'],
+})
+// The pending metadata suggestions with Accept, Reject and Ask Hermiq
+// (woo-metadata-suggestions, REQ-WMS-002..004): the screen for
+// GET/POST .../metadata-suggestions and POST /api/metadata-suggestions/{id}/accept|reject.
+registerDashboardWidget('metadata-suggestions', {
+	renderer: MetadataSuggestionsWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Metadata suggestions',
+	icon: 'LightbulbOnOutline',
 	surfaces: ['detail-page'],
 })
 // The publication's attachments with Add attachment, which opens the app's

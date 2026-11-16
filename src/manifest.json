@@ -919,6 +919,12 @@
 						"type": "publication-visibility",
 						"title": "Publication status",
 						"icon": "EyeOutline"
+					},
+					{
+						"id": "pub-metadata-suggestions",
+						"type": "metadata-suggestions",
+						"title": "Metadata suggestions",
+						"icon": "LightbulbOnOutline"
 					}
 				],
 				"layout": [
@@ -1017,6 +1023,14 @@
 						"gridY": 29,
 						"gridWidth": 12,
 						"gridHeight": 4
+					},
+					{
+						"id": "14",
+						"widgetId": "pub-metadata-suggestions",
+						"gridX": 0,
+						"gridY": 4,
+						"gridWidth": 8,
+						"gridHeight": 2
 					}
 				],
 				"lifecycleActions": {
