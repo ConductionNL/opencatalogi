@@ -30,6 +30,7 @@ use OCA\OpenCatalogi\Dashboard\MostViewedPublicationsWidget;
 use OCA\OpenCatalogi\Dashboard\RetentionWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
+use OCA\OpenCatalogi\Listener\BatchReviewTaskListener;
 use OCA\OpenCatalogi\Listener\CatalogAccessListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
@@ -136,6 +137,7 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', DiwooCompletenessListener::class],
 				[$e . 'ObjectCreatingEvent', PlainSummaryCheck::class],
 				[$e . 'ObjectUpdatingEvent', PlainSummaryCheck::class],
+				[$e . 'TaskTerminalEvent', BatchReviewTaskListener::class],
 				[$e . 'RegisterCreatedEvent', CatalogScopePendingListener::class],
 				[$e . 'RegisterUpdatedEvent', CatalogScopePendingListener::class],
 				[$e . 'ToolRegistrationEvent', ToolRegistrationListener::class],

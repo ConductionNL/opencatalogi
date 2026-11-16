@@ -98,6 +98,8 @@ use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
 use OCA\OpenCatalogi\Contract\InstanceModeInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Contract\TermRollInterface;
+use OCA\OpenCatalogi\Contract\BatchReviewInterface;
+use OCA\OpenCatalogi\Service\Review\BatchReview;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
 use OCA\OpenCatalogi\Service\Publication\LocalPublicationState;
@@ -226,5 +228,6 @@ final class ServiceBindings {
 		TermRollInterface::class => TermRoll::class,
 		PublicationRightsInterface::class => PublicationRights::class,
 		InstanceModeInterface::class => InstanceMode::class,
+		BatchReviewInterface::class => BatchReview::class,
 	];
 }//end class
