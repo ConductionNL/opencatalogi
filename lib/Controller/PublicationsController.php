@@ -40,6 +40,7 @@ use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Http\DcatNegotiation;
 use OCA\OpenCatalogi\Service\AppliedFilters;
@@ -1294,6 +1295,10 @@ class PublicationsController extends Controller {
 				);
 			}
 
+			if (is_array($result) === true) {
+				$result = $this->withCommentPeriod(publication: $result);
+			}
+
 			$response = new JSONResponse($result, 200);
 		}
 
@@ -1301,6 +1306,29 @@ class PublicationsController extends Controller {
 
 		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 	}//end renderedPublication()
+
+	/**
+	 * The publication with the state of its comment period (REQ-PDP-003).
+	 *
+	 * @param array<string, mixed> $publication The rendered publication.
+	 *
+	 * @return array<string, mixed> The publication, unchanged when the period cannot be added.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 */
+	private function withCommentPeriod(array $publication): array {
+		try {
+			$periods = $this->container->get(PublicationCommentPeriodInterface::class);
+		} catch (\Throwable $e) {
+			return $publication;
+		}
+
+		if (($periods instanceof PublicationCommentPeriodInterface) === false) {
+			return $publication;
+		}
+
+		return $periods->addTo(publication: $publication);
+	}//end withCommentPeriod()
 
 	/**
 	 * The found publication rendered by OpenRegister, as the caller may read it.
