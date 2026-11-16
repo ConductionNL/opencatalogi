@@ -30,16 +30,11 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Review;
 
-use DateTimeImmutable;
-use DateTimeInterface;
-use DateTimeZone;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Contract\BatchReviewInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
-use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
-use OCP\IURLGenerator;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -68,33 +63,17 @@ class BatchReview implements BatchReviewInterface {
 	public const IN_REVIEW = 'ready_for_review';
 
 	/**
-	 * The assessments whose document is published, and so previewed.
-	 *
-	 * @var array<int, string>
-	 */
-	public const PREVIEWED = ['openbaar', 'deels_openbaar'];
-
-	/**
-	 * The publication fields the public read returns.
-	 *
-	 * @var array<int, string>
-	 */
-	public const PUBLIC_FIELDS = ['title', 'wooCategory', 'publicationKind', 'publicationDate', 'caseReference'];
-
-	/**
 	 * Constructor.
 	 *
 	 * @param TransparencyWorkflowServiceInterface $woo         The batch, its OpenRegister wiring and its transitions.
-	 * @param BatchPublicationWriter               $writer      The publication a batch becomes, and its files.
+	 * @param PublicView                           $publicView  Each document as the public will see it.
 	 * @param IUserSession                         $userSession Who is reviewing.
-	 * @param IURLGenerator                        $urls        Links to the files.
 	 * @param LoggerInterface                      $logger      The log.
 	 */
 	public function __construct(
 		private readonly TransparencyWorkflowServiceInterface $woo,
-		private readonly BatchPublicationWriter $writer,
+		private readonly PublicView $publicView,
 		private readonly IUserSession $userSession,
-		private readonly IURLGenerator $urls,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -189,35 +168,13 @@ class BatchReview implements BatchReviewInterface {
 		$batch = $this->woo->getBatch(batchId: $batchId);
 		$uid = $this->signedInUid();
 		$seen = $this->seenBy(batch: $batch, userId: $uid);
-		$metadata = $this->publicMetadata(batch: $batch);
-		$owner = (string)($batch['createdBy'] ?? '');
 
 		$documents = [];
 		foreach ($this->assessments(batch: $batch) as $documentId => $assessment) {
-			$kind = (string)($assessment['assessment'] ?? '');
-			$title = (string)($assessment['fileName'] ?? '');
-			$document = [
-				'documentId' => $documentId,
-				'title' => $title,
-				'assessment' => $kind,
-				'viewerUrl' => $this->viewerUrl(assessment: $assessment, owner: $owner),
-				'publicMetadata' => null,
-				'seen' => in_array($documentId, $seen, true),
-			];
-			if (in_array($kind, self::PREVIEWED, true) === true) {
-				$document['publicMetadata'] = array_merge($metadata, ['documentTitle' => $title]);
-			}
-
-			if ($kind === 'deels_openbaar') {
-				$document['redactionLog'] = ($assessment['redactionLog'] ?? null);
-			}
-
-			if (empty($assessment['sentBackReason']) === false) {
-				$document['sentBackReason'] = $assessment['sentBackReason'];
-			}
-
+			$document = $this->publicView->document(documentId: $documentId, assessment: $assessment, batch: $batch);
+			$document['seen'] = in_array($documentId, $seen, true);
 			$documents[] = $document;
-		}//end foreach
+		}
 
 		return [
 			'batchId' => $batchId,
@@ -286,7 +243,7 @@ class BatchReview implements BatchReviewInterface {
 		$unseen = [];
 		foreach (self::documentIds(batch: $batch) as $documentId) {
 			$assessment = ($assessments[$documentId] ?? null);
-			if ($assessment !== null && in_array((string)($assessment['assessment'] ?? ''), self::PREVIEWED, true) === false) {
+			if ($assessment !== null && in_array((string)($assessment['assessment'] ?? ''), PublicView::PREVIEWED, true) === false) {
 				continue;
 			}
 
@@ -336,7 +293,7 @@ class BatchReview implements BatchReviewInterface {
 		$assessment['sentBackReason'] = [
 			'reason' => $reason,
 			'by' => $uid,
-			'at' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM),
+			'at' => gmdate(DATE_ATOM),
 		];
 
 		return $this->plainArray(object: $this->save(schema: $this->woo->getAssessmentSchema(), data: $assessment));
@@ -433,47 +390,6 @@ class BatchReview implements BatchReviewInterface {
 
 		return $out;
 	}//end assessments()
-
-	/**
-	 * The publication metadata as the public read returns it.
-	 *
-	 * @param array<string, mixed> $batch The batch.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private function publicMetadata(array $batch): array {
-		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
-
-		return array_intersect_key($this->writer->payload(batch: $batch, now: $now), array_flip(self::PUBLIC_FIELDS));
-	}//end publicMetadata()
-
-	/**
-	 * A link to the file a document is published as, or null when none is.
-	 *
-	 * @param array<string, mixed> $assessment The assessment.
-	 * @param string               $owner      The batch's creator, for a relative path.
-	 *
-	 * @return string|null
-	 */
-	private function viewerUrl(array $assessment, string $owner): ?string {
-		$kind = (string)($assessment['assessment'] ?? '');
-		$reference = '';
-		if ($kind === 'openbaar') {
-			$reference = (string)($assessment['documentReference'] ?? '');
-		}
-
-		// Only the verified redacted file is published, never the original.
-		if ($kind === 'deels_openbaar' && (string)($assessment['redactionStatus'] ?? '') === 'verified') {
-			$reference = (string)($assessment['anonymizedDocument'] ?? '');
-		}
-
-		$file = $this->writer->resolve(reference: $reference, owner: $owner);
-		if ($file === null) {
-			return null;
-		}
-
-		return $this->urls->linkToRoute('files.View.showFile', ['fileid' => $file->getId()]);
-	}//end viewerUrl()
 
 	/**
 	 * Save an object of the Woo register.

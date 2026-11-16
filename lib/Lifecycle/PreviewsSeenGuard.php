@@ -63,6 +63,8 @@ class PreviewsSeenGuard implements LifecycleGuardInterface {
 	 *
 	 * @return GuardResult
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) GuardResult, OpenRegister's guard answer, has only the named constructors allow() and deny().
+	 *
 	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-the-reviewer-sees-each-document-as-the-public-will-req-wrv-001
 	 */
 	public function check(array $object, string $action, string $userId): GuardResult {

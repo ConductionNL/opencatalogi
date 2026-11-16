@@ -80,11 +80,11 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'woo#publishBatch', 'url' => '/api/woo/batches/{batchId}/publish', 'verb' => 'POST'],
 		// The review of a batch (woo-review-surface): the public view per document, what the
 		// reviewer opened, approve and reject, and one document's send-back.
-		['name' => 'woo#publicPreview', 'url' => '/api/woo/batches/{batchId}/public-preview', 'verb' => 'GET'],
-		['name' => 'woo#previewSeen', 'url' => '/api/woo/batches/{batchId}/preview-seen', 'verb' => 'POST'],
-		['name' => 'woo#approveBatch', 'url' => '/api/woo/batches/{batchId}/approve', 'verb' => 'POST'],
-		['name' => 'woo#rejectBatch', 'url' => '/api/woo/batches/{batchId}/reject', 'verb' => 'POST'],
-		['name' => 'woo#sendBack', 'url' => '/api/woo/assessments/{assessmentId}/send-back', 'verb' => 'POST'],
+		['name' => 'batchReview#publicPreview', 'url' => '/api/woo/batches/{batchId}/public-preview', 'verb' => 'GET'],
+		['name' => 'batchReview#previewSeen', 'url' => '/api/woo/batches/{batchId}/preview-seen', 'verb' => 'POST'],
+		['name' => 'batchReview#approve', 'url' => '/api/woo/batches/{batchId}/approve', 'verb' => 'POST'],
+		['name' => 'batchReview#reject', 'url' => '/api/woo/batches/{batchId}/reject', 'verb' => 'POST'],
+		['name' => 'batchReview#sendBack', 'url' => '/api/woo/assessments/{assessmentId}/send-back', 'verb' => 'POST'],
 		// Woo request intake and the statutory term (woo-request-intake). The
 		// citizen-facing form is portaliq's; this is the API it calls.
 		// terms-report comes BEFORE {requestId} or the wildcard swallows it.

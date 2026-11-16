@@ -27,6 +27,7 @@ use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Review\BatchNotInReviewException;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Review\BatchReview;
+use OCA\OpenCatalogi\Service\Review\PublicView;
 use OCA\OpenRegister\Db\TaskSequence;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
@@ -44,6 +45,7 @@ use RuntimeException;
  * The reviewer sees each document as the public will, and approves only after opening every one.
  *
  * @covers \OCA\OpenCatalogi\Service\Review\BatchReview
+ * @covers \OCA\OpenCatalogi\Service\Review\PublicView
  * @uses   \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
@@ -186,7 +188,7 @@ final class BatchReviewTest extends TestCase {
 			static fn (string $route, array $params): string => $route . ':' . $params['fileid']
 		);
 
-		return new BatchReview($this->woo, $writer, $session, $urls, $this->createMock(LoggerInterface::class));
+		return new BatchReview($this->woo, new PublicView($writer, $urls), $session, $this->createMock(LoggerInterface::class));
 
 	}//end review()
 
