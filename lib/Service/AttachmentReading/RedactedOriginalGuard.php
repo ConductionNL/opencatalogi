@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\AttachmentReading;
 
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Contract\RedactedOriginalGuardInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenCatalogi\Service\WooService;
 use OCP\IAppConfig;
@@ -38,7 +39,7 @@ use Throwable;
  *
  * @spec openspec/changes/scanned-attachments-become-searchable/tasks.md#1.4
  */
-class RedactedOriginalGuard {
+class RedactedOriginalGuard implements RedactedOriginalGuardInterface {
 	use ReadsObjectProperties;
 
 	/**
@@ -71,27 +72,17 @@ class RedactedOriginalGuard {
 	 * @spec openspec/changes/scanned-attachments-become-searchable/tasks.md#1.4
 	 */
 	public function isRedactedOriginal(int $fileId): ?bool {
-		$register = trim($this->config->getValueString('opencatalogi', WooService::CONFIG_BATCH_REGISTER, ''));
-		$schema = trim($this->config->getValueString('opencatalogi', WooService::CONFIG_ASSESSMENT_SCHEMA, ''));
-		if ($register === '' || $schema === '' || $fileId <= 0) {
+		$target = $this->assessmentTarget();
+		if ($target === null || $fileId <= 0) {
 			return false;
 		}
 
-		try {
-			if ($this->openRegister->isInstalled() === false) {
-				return null;
-			}
-
-			$result = $this->openRegister->objectService()->searchObjectsPaginated(
-				query: ['@self' => ['register' => $register, 'schema' => $schema], 'documentReference' => (string)$fileId, '_limit' => self::LIMIT],
-				_rbac: false,
-				_multitenancy: false
-			);
-		} catch (Throwable $e) {
+		$rows = $this->assessmentsOf(target: $target, fileId: $fileId);
+		if ($rows === null) {
 			return null;
 		}
 
-		foreach ((array)($result['results'] ?? []) as $row) {
+		foreach ($rows as $row) {
 			if ($this->marksRedaction(assessment: $this->asRecord(object: $row), fileId: $fileId) === true) {
 				return true;
 			}
@@ -100,6 +91,49 @@ class RedactedOriginalGuard {
 		return false;
 
 	}//end isRedactedOriginal()
+
+	/**
+	 * The configured Woo register and assessment schema, or null when either is not configured.
+	 *
+	 * @return array{register: string, schema: string}|null
+	 */
+	private function assessmentTarget(): ?array {
+		$register = trim($this->config->getValueString('opencatalogi', WooService::CONFIG_BATCH_REGISTER, ''));
+		$schema = trim($this->config->getValueString('opencatalogi', WooService::CONFIG_ASSESSMENT_SCHEMA, ''));
+		if ($register === '' || $schema === '') {
+			return null;
+		}
+
+		return ['register' => $register, 'schema' => $schema];
+
+	}//end assessmentTarget()
+
+	/**
+	 * The assessments that reference the file, or null when they could not be read.
+	 *
+	 * @param array{register: string, schema: string} $target The register and schema of the assessments.
+	 * @param int                                      $fileId The Nextcloud file id.
+	 *
+	 * @return array<int, mixed>|null
+	 */
+	private function assessmentsOf(array $target, int $fileId): ?array {
+		try {
+			if ($this->openRegister->isInstalled() === false) {
+				return null;
+			}
+
+			$result = $this->openRegister->objectService()->searchObjectsPaginated(
+				query: ['@self' => $target, 'documentReference' => (string)$fileId, '_limit' => self::LIMIT],
+				_rbac: false,
+				_multitenancy: false
+			);
+		} catch (Throwable $e) {
+			return null;
+		}
+
+		return array_values((array)($result['results'] ?? []));
+
+	}//end assessmentsOf()
 
 	/**
 	 * Whether an assessment names this file as the original of a separate redacted file.

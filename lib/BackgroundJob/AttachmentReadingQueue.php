@@ -3,8 +3,8 @@
 /**
  * Queues the reading of a published attachment.
  *
- * @category Service
- * @package  OCA\OpenCatalogi\Service\AttachmentReading
+ * @category BackgroundJob
+ * @package  OCA\OpenCatalogi\BackgroundJob
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,9 +22,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\AttachmentReading;
+namespace OCA\OpenCatalogi\BackgroundJob;
 
-use OCA\OpenCatalogi\BackgroundJob\AttachmentReadingJob;
+use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCP\BackgroundJob\IJobList;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -34,7 +34,7 @@ use Throwable;
  *
  * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
  */
-class AttachmentReadingQueue {
+class AttachmentReadingQueue implements AttachmentReadingQueueInterface {
 
 	/**
 	 * Constructor.

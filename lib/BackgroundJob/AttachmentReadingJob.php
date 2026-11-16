@@ -29,8 +29,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\BackgroundJob;
 
-use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingStore;
-use OCA\OpenCatalogi\Service\AttachmentReading\RedactedOriginalGuard;
+use OCA\OpenCatalogi\Contract\AttachmentReadingStoreInterface;
+use OCA\OpenCatalogi\Contract\RedactedOriginalGuardInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\QueuedJob;
@@ -108,17 +108,17 @@ class AttachmentReadingJob extends QueuedJob {
 	 * @param ITimeFactory $time Time factory.
 	 * @param ContainerInterface $container Resolves OpenRegister's extraction and filinq's fallback.
 	 * @param IRootFolder $rootFolder The file's MIME type.
-	 * @param AttachmentReadingStore $store Records the state.
+	 * @param AttachmentReadingStoreInterface $store Records the state.
 	 * @param LoggerInterface $logger Logger.
-	 * @param RedactedOriginalGuard|null $redactions Tells the original of a redacted document; null reads every file.
+	 * @param RedactedOriginalGuardInterface|null $redactions Tells the original of a redacted document; null reads every file.
 	 */
 	public function __construct(
 		ITimeFactory $time,
 		private readonly ContainerInterface $container,
 		private readonly IRootFolder $rootFolder,
-		private readonly AttachmentReadingStore $store,
+		private readonly AttachmentReadingStoreInterface $store,
 		private readonly LoggerInterface $logger,
-		private readonly ?RedactedOriginalGuard $redactions=null,
+		private readonly ?RedactedOriginalGuardInterface $redactions=null,
 	) {
 		parent::__construct(time: $time);
 
@@ -263,7 +263,11 @@ class AttachmentReadingJob extends QueuedJob {
 
 		if (array_key_exists('ocrSkipped', $answer) === true) {
 			$reason = trim((string)$answer['ocrSkipped']);
-			return [self::STATE_FAILED, ($reason === '' ? 'OCR was skipped' : $reason)];
+			if ($reason === '') {
+				$reason = 'OCR was skipped';
+			}
+
+			return [self::STATE_FAILED, $reason];
 		}
 
 		if (($answer['ocrDetectionPending'] ?? false) === true) {

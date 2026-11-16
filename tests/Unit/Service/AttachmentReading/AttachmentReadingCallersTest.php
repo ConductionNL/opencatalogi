@@ -18,7 +18,8 @@ declare(strict_types=1);
 
 namespace Unit\Service\AttachmentReading;
 
-use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingQueue;
+use OCA\OpenCatalogi\BackgroundJob\AttachmentReadingQueue;
+use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Service\EventService;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\SettingsService;
@@ -105,7 +106,7 @@ class AttachmentReadingCallersTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			static fn (string $id): object => match ($id) {
-				AttachmentReadingQueue::class => $queue,
+				AttachmentReadingQueueInterface::class => $queue,
 				'OCA\OpenRegister\Service\FileService' => $fileService,
 				'OCA\OpenRegister\Files\Db\FileMapper' => $fileMapper,
 				default => $objects,

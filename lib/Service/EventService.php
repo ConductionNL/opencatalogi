@@ -30,8 +30,8 @@
 namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
+use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
-use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingQueue;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
@@ -636,18 +636,18 @@ class EventService implements EventServiceInterface {
 	 * Resolved from the container on use rather than injected, so this
 	 * service's constructor keeps its four collaborators.
 	 *
-	 * @return AttachmentReadingQueue|null
+	 * @return AttachmentReadingQueueInterface|null
 	 *
 	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
 	 */
-	private function readingQueue(): ?AttachmentReadingQueue {
+	private function readingQueue(): ?AttachmentReadingQueueInterface {
 		try {
-			$queue = $this->container->get(AttachmentReadingQueue::class);
+			$queue = $this->container->get(AttachmentReadingQueueInterface::class);
 		} catch (\Throwable $e) {
 			return null;
 		}
 
-		if ($queue instanceof AttachmentReadingQueue) {
+		if ($queue instanceof AttachmentReadingQueueInterface) {
 			return $queue;
 		}
 

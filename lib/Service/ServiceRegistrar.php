@@ -25,6 +25,12 @@ namespace OCA\OpenCatalogi\Service;
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
+use OCA\OpenCatalogi\BackgroundJob\AttachmentReadingQueue;
+use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
+use OCA\OpenCatalogi\Contract\AttachmentReadingStoreInterface;
+use OCA\OpenCatalogi\Contract\RedactedOriginalGuardInterface;
+use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingStore;
+use OCA\OpenCatalogi\Service\AttachmentReading\RedactedOriginalGuard;
 use OCA\OpenCatalogi\Contract\BannerServiceInterface;
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
 use OCA\OpenCatalogi\Contract\CaseTypeCatalogueServiceInterface;
@@ -185,6 +191,9 @@ class ServiceRegistrar {
 		PublishedRecordViewInterface::class => PublishedRecordView::class,
 		SitemapServiceInterface::class => SitemapService::class,
 		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
+		AttachmentReadingQueueInterface::class => AttachmentReadingQueue::class,
+		AttachmentReadingStoreInterface::class => AttachmentReadingStore::class,
+		RedactedOriginalGuardInterface::class => RedactedOriginalGuard::class,
 	];
 
 	/**

@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\AttachmentReading;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Contract\AttachmentReadingStoreInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -37,7 +38,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
  */
-class AttachmentReadingStore {
+class AttachmentReadingStore implements AttachmentReadingStoreInterface {
 	use ReadsObjectProperties;
 
 	/**
@@ -79,28 +80,40 @@ class AttachmentReadingStore {
 			throw new RuntimeException('OpenRegister is not available, so the reading state cannot be written.');
 		}
 
-		$objects = $this->openRegister->objectService();
+		$this->save(
+			objects: $this->openRegister->objectService(),
+			object: [
+				'fileId' => $fileId,
+				'publication' => $publicationId,
+				'state' => $state,
+				'reason' => $reason,
+				'updatedAt' => (new DateTimeImmutable())->format('c'),
+			]
+		);
+
+	}//end record()
+
+	/**
+	 * Save the reading state over the object already recorded for its file, if any.
+	 *
+	 * @param object               $objects OpenRegister's ObjectService.
+	 * @param array<string, mixed> $object  The reading state, its fileId included.
+	 *
+	 * @return void
+	 */
+	private function save(object $objects, array $object): void {
 		[$register, $schema] = $this->target();
-
-		$object = [
-			'fileId' => $fileId,
-			'publication' => $publicationId,
-			'state' => $state,
-			'reason' => $reason,
-			'updatedAt' => (new DateTimeImmutable())->format('c'),
-		];
-
 		$objects->saveObject(
 			object: $object,
 			options: new ObjectSaveOptions(
 				target: new ObjectFindTarget(register: $register, schema: $schema),
-				uuid: $this->existingId(objects: $objects, fileId: $fileId)
+				uuid: $this->existingId(objects: $objects, fileId: (int)$object['fileId'])
 			),
 			_rbac: false,
 			_multitenancy: false
 		);
 
-	}//end record()
+	}//end save()
 
 	/**
 	 * The id of the object already recorded for the file, or null.
@@ -119,13 +132,8 @@ class AttachmentReadingStore {
 		);
 
 		foreach ((array)($result['results'] ?? []) as $row) {
-			$stored = $this->asRecord(object: $row);
-			if ((int)($stored['fileId'] ?? 0) !== $fileId) {
-				continue;
-			}
-
-			$id = (string)($stored['id'] ?? '');
-			if ($id !== '') {
+			$id = $this->idFor(stored: $this->asRecord(object: $row), fileId: $fileId);
+			if ($id !== null) {
 				return $id;
 			}
 		}
@@ -133,6 +141,24 @@ class AttachmentReadingStore {
 		return null;
 
 	}//end existingId()
+
+	/**
+	 * The id of a stored reading state when it is the one of the file, else null.
+	 *
+	 * @param array<string, mixed> $stored The stored reading state.
+	 * @param int                  $fileId The Nextcloud file id.
+	 *
+	 * @return string|null
+	 */
+	private function idFor(array $stored, int $fileId): ?string {
+		$id = (string)($stored['id'] ?? '');
+		if ((int)($stored['fileId'] ?? 0) !== $fileId || $id === '') {
+			return null;
+		}
+
+		return $id;
+
+	}//end idFor()
 
 	/**
 	 * The publication register and the attachmentReading schema from the app config.

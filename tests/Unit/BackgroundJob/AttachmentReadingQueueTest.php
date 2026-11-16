@@ -16,10 +16,10 @@
 
 declare(strict_types=1);
 
-namespace Unit\Service\AttachmentReading;
+namespace Unit\BackgroundJob;
 
 use OCA\OpenCatalogi\BackgroundJob\AttachmentReadingJob;
-use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingQueue;
+use OCA\OpenCatalogi\BackgroundJob\AttachmentReadingQueue;
 use OCP\BackgroundJob\IJobList;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -28,7 +28,7 @@ use RuntimeException;
 /**
  * Tests for AttachmentReadingQueue.
  *
- * @covers \OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingQueue
+ * @covers \OCA\OpenCatalogi\BackgroundJob\AttachmentReadingQueue
  */
 class AttachmentReadingQueueTest extends TestCase {
 
