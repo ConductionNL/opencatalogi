@@ -301,6 +301,18 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
+			id="section-instance-mode"
+			:name="t('opencatalogi', 'Instance mode')"
+			:description="
+				t(
+					'opencatalogi',
+					'In staging nothing leaves this instance: every hand-over to the national index, PLOOI and federation partners is kept as a dry run, and the public pages answer only to signed-in users.',
+				)
+			">
+			<InstanceModeSection />
+		</NcSettingsSection>
+
+		<NcSettingsSection
 			id="section-publiccode-harvest"
 			:name="t('opencatalogi', 'GitHub harvest')"
 			:description="
@@ -614,6 +626,7 @@ import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
 import DcatFeedValidation from './DcatFeedValidation.vue'
 import DonlHarvestStatus from './DonlHarvestStatus.vue'
+import InstanceModeSection from './InstanceModeSection.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
@@ -724,6 +737,7 @@ export default defineComponent({
 		CloseCircle,
 		MinusCircle,
 		InformationOutline,
+		InstanceModeSection,
 		PublishRightsLine,
 		WooIndexConnection,
 		DcatFeedValidation,

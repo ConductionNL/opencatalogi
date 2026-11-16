@@ -57,6 +57,9 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'settings#getSyncOptions', 'url' => '/api/settings/sync', 'verb' => 'GET'],
 		['name' => 'settings#updateSyncOptions', 'url' => '/api/settings/sync', 'verb' => 'POST'],
 		['name' => 'settings#getVersionInfo', 'url' => '/api/settings/version', 'verb' => 'GET'],
+		// Instance mode (instance-staging-mode REQ-STG-001): admin only, CSRF enforced on the change.
+		['name' => 'instanceMode#getInstanceMode', 'url' => '/api/settings/instance-mode', 'verb' => 'GET'],
+		['name' => 'instanceMode#updateInstanceMode', 'url' => '/api/settings/instance-mode', 'verb' => 'POST'],
 		['name' => 'settings#manualImport', 'url' => '/api/settings/import', 'verb' => 'POST'],
 		// Retention lifecycle (publication-retention-lifecycle)
 		['name' => 'retention#queueSummary', 'url' => '/api/retention/queue', 'verb' => 'GET'],

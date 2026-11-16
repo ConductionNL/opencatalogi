@@ -42,6 +42,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
+use OCA\OpenCatalogi\Service\DryRunRecorder;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -152,12 +153,16 @@ class NationalIndexService implements NationalIndexServiceInterface {
 	 * @param IAppConfig $config App configuration, for the channel sources.
 	 * @param IEventDispatcher $dispatcher Dispatcher for the gateway delivery request.
 	 * @param LoggerInterface $logger Logger.
+	 * @param DryRunRecorder|null $dryRuns Holds every hand-over as a dry run in staging (REQ-STG-002).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $config,
 		private readonly IEventDispatcher $dispatcher,
 		private readonly LoggerInterface $logger,
+		// Holds every hand-over in staging (instance-staging-mode REQ-STG-002).
+		// Nullable and last, so every existing construction site keeps working.
+		private readonly ?DryRunRecorder $dryRuns = null,
 	) {
 
 	}//end __construct()
@@ -254,7 +259,7 @@ class NationalIndexService implements NationalIndexServiceInterface {
 	 * `publicatie` gateway by reference; every other channel is called through
 	 * its configured source.
 	 *
-	 * @return array{channel: string, deliveredAt: string, answer: string, delivery?: array<string, mixed>}
+	 * @return array{channel: string, deliveredAt: ?string, answer: string, delivery?: array<string, mixed>, dryRun?: true, reason?: string}
 	 *
 	 * @throws IndexUnreachableException When the delivery could not be made.
 	 *
@@ -262,6 +267,12 @@ class NationalIndexService implements NationalIndexServiceInterface {
 	 */
 	public function deliver(array $notice, ?DateTimeInterface $now = null): array {
 		$channel = (string)($notice['channel'] ?? '');
+		// In staging nothing leaves: the notice is kept as a dry run and nothing claims it was delivered.
+		$held = $this->dryRuns?->hold(channel: 'national-index', payload: $notice);
+		if ($held !== null) {
+			return ['channel' => $channel, 'deliveredAt' => null] + self::dryRunAnswer(held: $held);
+		}
+
 		$delivery = null;
 		$answer = '';
 		if ($channel === self::CHANNEL_NATIONAL) {
@@ -457,13 +468,18 @@ class NationalIndexService implements NationalIndexServiceInterface {
 	 * @param array<string, mixed> $request The composed registration request.
 	 * @param DateTimeInterface|null $now The moment.
 	 *
-	 * @return array{channel: string, registeredAt: string, answer: string}
+	 * @return array{channel: string, registeredAt: ?string, answer: string, dryRun?: true, reason?: string}
 	 *
 	 * @throws IndexUnreachableException When the index could not be asked.
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
 	 */
 	public function registerWithWooIndex(array $request, ?DateTimeInterface $now = null): array {
+		$held = $this->dryRuns?->hold(channel: 'woo-registration', payload: $request);
+		if ($held !== null) {
+			return ['channel' => self::CHANNEL_WOO_INDEX, 'registeredAt' => null] + self::dryRunAnswer(held: $held);
+		}
+
 		$answer = $this->handOver(
 			channel: self::CHANNEL_WOO_INDEX,
 			endpoint: 'registrations',
@@ -495,19 +511,36 @@ class NationalIndexService implements NationalIndexServiceInterface {
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-publication-that-turns-public-is-delivered-to-plooi-when-the-catalogue-asks-for-it-req-wnd-003
 	 */
 	public function deliverToPlooi(array $document): array {
-		$answer = $this->handOver(channel: self::CHANNEL_PLOOI, endpoint: '', payload: $document);
-
-		$identifier = null;
-		$decoded = json_decode($answer, true);
-		if (is_array($decoded) === true) {
-			$found = ($decoded['identificatie'] ?? $decoded['identifier'] ?? $decoded['id'] ?? null);
-			if (is_scalar($found) === true && (string)$found !== '') {
-				$identifier = (string)$found;
-			}
+		$held = $this->dryRuns?->hold(channel: 'plooi', payload: $document);
+		if ($held !== null) {
+			return ['identifier' => null] + self::dryRunAnswer(held: $held);
 		}
 
-		return ['answer' => $answer, 'identifier' => $identifier];
+		$answer = $this->handOver(channel: self::CHANNEL_PLOOI, endpoint: '', payload: $document);
+
+		return ['answer' => $answer, 'identifier' => self::identifierOf(answer: $answer)];
 	}//end deliverToPlooi()
+
+	/**
+	 * The identifier PLOOI answered with, or null when the answer carries none.
+	 *
+	 * @param string $answer The raw answer.
+	 *
+	 * @return string|null
+	 */
+	private static function identifierOf(string $answer): ?string {
+		$decoded = json_decode($answer, true);
+		if (is_array($decoded) === false) {
+			return null;
+		}
+
+		$found = ($decoded['identificatie'] ?? $decoded['identifier'] ?? $decoded['id'] ?? null);
+		if (is_scalar($found) === true && (string)$found !== '') {
+			return (string)$found;
+		}
+
+		return null;
+	}//end identifierOf()
 
 	/**
 	 * Withdraw a publication from one channel.
@@ -517,13 +550,18 @@ class NationalIndexService implements NationalIndexServiceInterface {
 	 * @param string $reason Why it is coming down.
 	 * @param DateTimeInterface|null $now The moment.
 	 *
-	 * @return array{channel: string, acknowledgedAt: string, answer: string}
+	 * @return array{channel: string, acknowledgedAt: ?string, answer: string, dryRun?: true, reason?: string}
 	 *
 	 * @throws IndexUnreachableException When the channel could not be reached.
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
 	 */
 	public function withdraw(string $channel, string $publicationId, string $reason, ?DateTimeInterface $now = null): array {
+		$held = $this->dryRuns?->hold(channel: 'national-index', payload: ['channel' => $channel, 'reference' => $publicationId, 'reason' => $reason]);
+		if ($held !== null) {
+			return ['channel' => $channel, 'acknowledgedAt' => null] + self::dryRunAnswer(held: $held);
+		}
+
 		$answer = $this->handOver(
 			channel: $channel,
 			endpoint: 'withdrawals',
@@ -672,4 +710,17 @@ class NationalIndexService implements NationalIndexServiceInterface {
 		$log = $response->getObject();
 		return [(int)($log['statusCode'] ?? ($log['response']['statusCode'] ?? 0)), ($log['response']['body'] ?? '')];
 	}//end statusAndBody()
+
+	/**
+	 * The answer a held hand-over gives: marked as a dry run, with why, and no destination answer.
+	 *
+	 * @param array<string, mixed> $held What DryRunRecorder::hold() answered.
+	 *
+	 * @return array{answer: string, dryRun: true, reason: string}
+	 *
+	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
+	 */
+	private static function dryRunAnswer(array $held): array {
+		return ['answer' => '', 'dryRun' => true, 'reason' => (string)($held['reason'] ?? '')];
+	}//end dryRunAnswer()
 }//end class

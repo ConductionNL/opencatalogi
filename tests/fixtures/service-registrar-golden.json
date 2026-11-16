@@ -31,6 +31,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\InstanceModeSwitchInterface",
+        "OCA\\OpenCatalogi\\Service\\InstanceModeSwitch"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\RetentionServiceInterface",
         "OCA\\OpenCatalogi\\Service\\RetentionService"
     ],
