@@ -518,17 +518,29 @@ class NationalIndexService implements NationalIndexServiceInterface {
 
 		$answer = $this->handOver(channel: self::CHANNEL_PLOOI, endpoint: '', payload: $document);
 
-		$identifier = null;
+		return ['answer' => $answer, 'identifier' => self::identifierOf(answer: $answer)];
+	}//end deliverToPlooi()
+
+	/**
+	 * The identifier PLOOI answered with, or null when the answer carries none.
+	 *
+	 * @param string $answer The raw answer.
+	 *
+	 * @return string|null
+	 */
+	private static function identifierOf(string $answer): ?string {
 		$decoded = json_decode($answer, true);
-		if (is_array($decoded) === true) {
-			$found = ($decoded['identificatie'] ?? $decoded['identifier'] ?? $decoded['id'] ?? null);
-			if (is_scalar($found) === true && (string)$found !== '') {
-				$identifier = (string)$found;
-			}
+		if (is_array($decoded) === false) {
+			return null;
 		}
 
-		return ['answer' => $answer, 'identifier' => $identifier];
-	}//end deliverToPlooi()
+		$found = ($decoded['identificatie'] ?? $decoded['identifier'] ?? $decoded['id'] ?? null);
+		if (is_scalar($found) === true && (string)$found !== '') {
+			return (string)$found;
+		}
+
+		return null;
+	}//end identifierOf()
 
 	/**
 	 * Withdraw a publication from one channel.

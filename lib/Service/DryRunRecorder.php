@@ -104,12 +104,7 @@ class DryRunRecorder {
 		try {
 			$this->openRegister->installedObjectService()->saveObject(
 				object: $record,
-				options: new ObjectSaveOptions(
-					target: new ObjectFindTarget(
-						register: $this->config->getValueString(AppIdentity::APP_ID, 'publication_register', 'publication'),
-						schema: self::SCHEMA
-					)
-				),
+				options: new ObjectSaveOptions(target: $this->target()),
 			);
 		} catch (Throwable) {
 			return false;
@@ -117,4 +112,16 @@ class DryRunRecorder {
 
 		return true;
 	}//end store()
+
+	/**
+	 * Where dry runs are stored: the publication register's dryRunDelivery schema.
+	 *
+	 * @return ObjectFindTarget
+	 */
+	private function target(): ObjectFindTarget {
+		return new ObjectFindTarget(
+			register: $this->config->getValueString(AppIdentity::APP_ID, 'publication_register', 'publication'),
+			schema: self::SCHEMA
+		);
+	}//end target()
 }//end class

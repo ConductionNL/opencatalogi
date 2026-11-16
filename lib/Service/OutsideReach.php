@@ -100,8 +100,19 @@ class OutsideReach {
 			return [];
 		}
 
+		return self::enabledNames(rows: (array)($found['results'] ?? $found));
+	}//end synchronisations()
+
+	/**
+	 * The names of the rows that are not disabled.
+	 *
+	 * @param array<int|string, mixed> $rows The synchronisation rows.
+	 *
+	 * @return list<string>
+	 */
+	private static function enabledNames(array $rows): array {
 		$names = [];
-		foreach ((array)($found['results'] ?? $found) as $row) {
+		foreach ($rows as $row) {
 			$data = self::dataOf(row: $row);
 			if (($data['status'] ?? '') !== 'disabled') {
 				$names[] = (string)($data['name'] ?? '');
@@ -109,7 +120,7 @@ class OutsideReach {
 		}
 
 		return $names;
-	}//end synchronisations()
+	}//end enabledNames()
 
 	/**
 	 * A row's data, whether an entity or an array.

@@ -100,15 +100,28 @@ class InstanceModeSwitch implements InstanceModeSwitchInterface {
 		}
 
 		$this->appConfig->setValueString(AppIdentity::APP_ID, InstanceMode::KEY, $mode);
+		$this->audit(previous: $previous, mode: $mode, userId: $userId);
+
+		return ['mode' => $mode, 'previous' => $previous, 'changed' => true];
+	}//end change()
+
+	/**
+	 * Record the change in the audit log.
+	 *
+	 * @param string $previous The mode before.
+	 * @param string $mode     The mode now.
+	 * @param string $userId   Who changed it.
+	 *
+	 * @return void
+	 */
+	private function audit(string $previous, string $mode, string $userId): void {
 		$this->dispatcher->dispatchTyped(
 			new CriticalActionPerformedEvent(
 				'OpenCatalogi instance mode changed from %s to %s by %s',
 				[$previous, $mode, $userId]
 			)
 		);
-
-		return ['mode' => $mode, 'previous' => $previous, 'changed' => true];
-	}//end change()
+	}//end audit()
 
 	/**
 	 * The stored mode as written; an unreadable value reads as unreadable, which the gate treats as staging.

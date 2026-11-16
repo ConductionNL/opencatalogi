@@ -794,8 +794,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		// In staging the announcement is kept as a dry run and the peer is not told.
-		$announcement = ['directoryUrl' => $directoryUrl, 'ourDirectoryUrl' => $ourDirectoryUrl];
-		if ($this->dryRuns?->hold(channel: 'directory-announce', payload: $announcement) !== null) {
+		if ($this->announcementHeld(directoryUrl: $directoryUrl, ourDirectoryUrl: $ourDirectoryUrl) === true) {
 			return;
 		}
 
@@ -805,6 +804,20 @@ class DirectoryService implements DirectoryServiceInterface {
 			// A peer that cannot be reached learns about us on its own next sync.
 		}
 	}//end broadcastToDirectory()
+
+	/**
+	 * Whether the announcement to a peer is held as a dry run (staging) instead of sent.
+	 *
+	 * @param string $directoryUrl    The peer's directory.
+	 * @param string $ourDirectoryUrl Our directory.
+	 *
+	 * @return bool
+	 */
+	private function announcementHeld(string $directoryUrl, string $ourDirectoryUrl): bool {
+		$announcement = ['directoryUrl' => $directoryUrl, 'ourDirectoryUrl' => $ourDirectoryUrl];
+
+		return $this->dryRuns?->hold(channel: 'directory-announce', payload: $announcement) !== null;
+	}//end announcementHeld()
 
 	/**
 	 * Mark the directory's listings with a failed fetch and build the exception to rethrow.
