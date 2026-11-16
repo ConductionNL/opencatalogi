@@ -19,6 +19,7 @@ jest.mock('@nextcloud/vue', () => ({}))
 jest.mock('@conduction/nextcloud-vue', () => ({}))
 jest.mock('./PubliccodeHarvest.vue', () => ({}))
 jest.mock('./WooIndexConnection.vue', () => ({}))
+jest.mock('./DonlHarvestStatus.vue', () => ({}))
 
 /**
  * A settings page state with its methods and `fields`.

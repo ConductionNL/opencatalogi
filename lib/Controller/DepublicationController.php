@@ -34,7 +34,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 
 declare(strict_types=1);
@@ -65,7 +65,7 @@ use OCP\IUserSession;
  * administrators the routes' admin-setting check lets in. That check is the
  * gate, so these reads and saves skip RBAC.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
  */
 class DepublicationController extends Controller {
 	use ReadsOpenRegisterResults;
@@ -132,7 +132,7 @@ class DepublicationController extends Controller {
 	 *
 	 * @return JSONResponse The depublication, with any outstanding channel named.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function depublish(): JSONResponse {
@@ -181,7 +181,7 @@ class DepublicationController extends Controller {
 	 *
 	 * @return array{record: array<string, mixed>, state: string, depublicationDate: mixed}|JSONResponse What was taken down, or the refusal.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
 	 */
 	private function takeDown(array $publication): array|JSONResponse {
 		$id = trim((string)($publication['id'] ?? ''));
@@ -406,7 +406,7 @@ class DepublicationController extends Controller {
 	 *
 	 * @return JSONResponse The depublication with what is still outstanding.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function acknowledgeWithdrawal(): JSONResponse {
