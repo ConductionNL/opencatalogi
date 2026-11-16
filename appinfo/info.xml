@@ -56,7 +56,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl. Voor een Service Level Agreement (SLA), neem contact op via sales@conduction.nl.
     ]]></description>
-	<version>2.1.16-unstable.20261010175130</version>
+	<version>2.1.16-unstable.20261116112356</version>
 	<licence>EUPL-1.2</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
@@ -225,6 +225,9 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				bundled one. Idempotent: a schema whose rules already match is not written.
 			-->
 			<step>OCA\OpenCatalogi\Repair\RecomputeCatalogAccess</step>
+			<!-- Hands depublication, inspection, comment-period, community and Woo-request records an
+			     editor came to own to the system. Needs OpenRegister's release-to-system call; idempotent. -->
+			<step>OCA\OpenCatalogi\Repair\HandRecordsToSystem</step>
 			<!--
 				Written but never registered, so it had never run once: a class that
 				exists is not a class that runs. gate-98 found it.

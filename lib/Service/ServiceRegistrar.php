@@ -80,6 +80,7 @@ use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
+use OCA\OpenCatalogi\Contract\UnpublishedOverviewServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
@@ -150,6 +151,7 @@ class ServiceRegistrar {
 		DcatDereferenceInterface::class => DcatDereference::class,
 		DonlRegistrationServiceInterface::class => DonlRegistrationService::class,
 		UsageCounterServiceInterface::class => UsageCounterService::class,
+		UnpublishedOverviewServiceInterface::class => UnpublishedOverviewService::class,
 		HarvesterReadinessServiceInterface::class => WooReadinessService::class,
 		BroadcastServiceInterface::class => BroadcastService::class,
 		SchemaOrgServiceInterface::class => SchemaOrgService::class,
