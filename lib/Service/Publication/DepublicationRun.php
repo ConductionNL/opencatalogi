@@ -20,7 +20,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
  */
 
 declare(strict_types=1);
@@ -31,7 +31,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
  * One depublication. Built by DepublicationService::depublish() and never
  * handed outside it.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
  */
 final class DepublicationRun {
 

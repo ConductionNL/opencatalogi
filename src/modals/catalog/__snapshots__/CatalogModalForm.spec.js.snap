@@ -48,6 +48,7 @@ exports[`CatalogModal form adds the catalog without an id, then resets and close
     "catalogi": {
       "description": "",
       "filters": {},
+      "hasDcat": false,
       "hasOoapi": false,
       "hasWooSitemap": false,
       "listed": false,
@@ -77,6 +78,7 @@ exports[`CatalogModal form does not fill itself while another modal is open or w
     "catalogi": {
       "description": "",
       "filters": {},
+      "hasDcat": false,
       "hasOoapi": false,
       "hasWooSitemap": false,
       "listed": false,
@@ -101,6 +103,7 @@ exports[`CatalogModal form does not fill itself while another modal is open or w
     "catalogi": {
       "description": "",
       "filters": {},
+      "hasDcat": false,
       "hasOoapi": false,
       "hasWooSitemap": false,
       "listed": false,
@@ -303,6 +306,7 @@ exports[`CatalogModal form starts empty and invalid 1`] = `
     "catalogi": {
       "description": "",
       "filters": {},
+      "hasDcat": false,
       "hasOoapi": false,
       "hasWooSitemap": false,
       "listed": false,
