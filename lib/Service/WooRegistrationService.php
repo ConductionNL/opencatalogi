@@ -69,7 +69,6 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 	 * @param IAppConfig $config The registration status keys.
 	 * @param IURLGenerator $urlGenerator The instance's base URL.
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local.
-	 * @param DryRunRecorder|null $dryRuns Holds the registration request as a dry run in staging (REQ-STG-002).
 	 */
 	public function __construct(
 		private readonly WooReadinessService $readiness,
@@ -78,9 +77,6 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 		private readonly IAppConfig $config,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly WooCategoryRegistry $categories,
-		// Holds the registration request in staging (instance-staging-mode REQ-STG-002).
-		// Nullable and last, so every existing construction site keeps working.
-		private readonly ?DryRunRecorder $dryRuns = null,
 	) {
 
 	}//end __construct()
@@ -209,12 +205,6 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 	 */
 	public function request(?DateTimeInterface $now = null): array {
 		$request = $this->compose();
-		// In staging the request is kept as a dry run; the stored registration is left as it is.
-		$held = $this->dryRuns?->hold(channel: 'woo-registration', payload: $request);
-		if ($held !== null) {
-			return ['sent' => false, 'dryRun' => true, 'reason' => $held['reason'], 'request' => $request, 'registration' => $this->registration()];
-		}
-
 
 		try {
 			$answer = $this->index->registerWithWooIndex(request: $request, now: $now);
@@ -222,6 +212,18 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 			return [
 				'sent' => false,
 				'reason' => $e->getMessage(),
+				'request' => $request,
+				'registration' => $this->registration(),
+			];
+		}
+
+		// In staging the index keeps the request as a dry run (instance-staging-mode
+		// REQ-STG-002); the stored registration is left as it is.
+		if (($answer['dryRun'] ?? false) === true) {
+			return [
+				'sent' => false,
+				'dryRun' => true,
+				'reason' => (string)($answer['reason'] ?? ''),
 				'request' => $request,
 				'registration' => $this->registration(),
 			];

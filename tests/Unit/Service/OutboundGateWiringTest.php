@@ -351,13 +351,13 @@ final class OutboundGateWiringTest extends TestCase {
 
 	/**
 	 * A Woo registration over a real national index service; what it writes to app config is recorded.
+	 * In staging the index holds the request, so the registration needs no recorder of its own.
 	 *
-	 * @param NationalIndexService $index   The national index service.
-	 * @param DryRunRecorder|null  $dryRuns The recorder.
+	 * @param NationalIndexService $index The national index service.
 	 *
 	 * @return WooRegistrationService
 	 */
-	private function wooRegistration(NationalIndexService $index, ?DryRunRecorder $dryRuns): WooRegistrationService {
+	private function wooRegistration(NationalIndexService $index): WooRegistrationService {
 		$readiness = $this->getMockBuilder(WooReadinessService::class)
 			->disableOriginalConstructor()
 			->onlyMethods(['getWooEnabledCatalogs', 'getRegistrationConfig'])
@@ -381,7 +381,7 @@ final class OutboundGateWiringTest extends TestCase {
 			new LocalCategoryAdmission(new TooiVocabularyService()),
 		);
 
-		return new WooRegistrationService($readiness, $index, $this->createMock(SettingsService::class), $config, $urls, $categories, $dryRuns);
+		return new WooRegistrationService($readiness, $index, $this->createMock(SettingsService::class), $config, $urls, $categories);
 	}//end wooRegistration()
 
 	/**
@@ -434,7 +434,7 @@ final class OutboundGateWiringTest extends TestCase {
 			'deliverToPlooi' => static fn (): array => $index->deliverToPlooi(document: ['identifier' => 'pub-1']),
 			'withdraw' => static fn (): array => $index->withdraw(channel: 'national-woo-index', publicationId: 'pub-1', reason: 'In error'),
 			'plooiDelivery' => fn (): ?array => $this->plooi(index: $index, dryRuns: $dryRuns)->deliver(uuid: 'pub-1', register: '7', schema: '12'),
-			'registration' => fn (): array => $this->wooRegistration(index: $index, dryRuns: $dryRuns)->request(),
+			'registration' => fn (): array => $this->wooRegistration(index: $index)->request(),
 			'broadcast' => fn (): bool => self::send(service: $this->broadcast(dryRuns: $dryRuns)),
 			'announce' => fn (): mixed => (new ReflectionMethod(DirectoryService::class, 'broadcastToDirectory'))
 				->invoke($this->directory(dryRuns: $dryRuns), 'https://directory.example/apps/opencatalogi/api/directory'),

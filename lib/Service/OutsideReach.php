@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use Psr\Container\ContainerInterface;
 use Throwable;
 
@@ -40,13 +41,13 @@ class OutsideReach {
 	 * Constructor.
 	 *
 	 * @param ContainerInterface $container    DI container (OpenRegister's webhook mapper, lazily).
-	 * @param OpenRegisterLookup $openRegister Reaches OpenRegister's object service.
+	 * @param OpenRegisterLookupInterface $openRegister Reaches OpenRegister's object service.
 	 *
 	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterLookupInterface $openRegister,
 	) {
 	}//end __construct()
 
