@@ -42,7 +42,7 @@
     "no results key": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -61,7 +61,7 @@
     "no catalogues": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -80,7 +80,7 @@
     "one catalogue, two categories": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.com/apps/opencatalogi/api/woo/sitemaps/c1\nSitemap: https://example.com/apps/opencatalogi/api/woo/sitemaps/c2\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\nSitemap: https://example.com/apps/opencatalogi/api/woo/sitemaps/c1\nSitemap: https://example.com/apps/opencatalogi/api/woo/sitemaps/c2\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -99,7 +99,7 @@
     "no categories": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -118,7 +118,7 @@
     "trailing slashes on the base url": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.org/apps/opencatalogi/api/woo/sitemaps/c1\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\nSitemap: https://example.org/apps/opencatalogi/api/woo/sitemaps/c1\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -137,7 +137,7 @@
     "empty base url": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: /apps/opencatalogi/api/woo/sitemaps/c1\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\nSitemap: /apps/opencatalogi/api/woo/sitemaps/c1\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -156,7 +156,7 @@
     "slug null": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.com/apps/opencatalogi/api/ok/sitemaps/c1\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\nSitemap: https://example.com/apps/opencatalogi/api/ok/sitemaps/c1\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -175,7 +175,7 @@
     "slug empty": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -194,7 +194,7 @@
     "slug an int": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -213,7 +213,7 @@
     "no getObject": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.com/apps/opencatalogi/api/ok/sitemaps/c1\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\nSitemap: https://example.com/apps/opencatalogi/api/ok/sitemaps/c1\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -232,7 +232,7 @@
     "hasWooSitemap false": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -251,7 +251,7 @@
     "hasWooSitemap as text": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -270,7 +270,7 @@
     "hasWooSitemap as one": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -289,7 +289,7 @@
     "hasWooSitemap missing": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -308,7 +308,7 @@
     "object as an object": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.com/apps/opencatalogi/api/obj/sitemaps/c1\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\nSitemap: https://example.com/apps/opencatalogi/api/obj/sitemaps/c1\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [
@@ -327,7 +327,7 @@
     "three catalogues": {
         "answer": {
             "status": 200,
-            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.com/apps/opencatalogi/api/a/sitemaps/c1\nSitemap: https://example.com/apps/opencatalogi/api/a/sitemaps/c2\nSitemap: https://example.com/apps/opencatalogi/api/c/sitemaps/c1\nSitemap: https://example.com/apps/opencatalogi/api/c/sitemaps/c2\n",
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nDisallow: /apps/opencatalogi/\nDisallow: /index.php/apps/opencatalogi/\nDisallow: /settings/admin/opencatalogi\nDisallow: /index.php/settings/admin/opencatalogi\nSitemap: https://example.com/apps/opencatalogi/api/a/sitemaps/c1\nSitemap: https://example.com/apps/opencatalogi/api/a/sitemaps/c2\nSitemap: https://example.com/apps/opencatalogi/api/c/sitemaps/c1\nSitemap: https://example.com/apps/opencatalogi/api/c/sitemaps/c2\n",
             "type": "text/plain; charset=utf-8"
         },
         "searched": [

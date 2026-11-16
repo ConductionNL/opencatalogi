@@ -419,6 +419,38 @@
 						</NcButton>
 					</div>
 				</div>
+
+				<!-- Search engine indexing (REQ-WAB-003) -->
+				<div class="option-section" data-testid="search-indexing">
+					<NcCheckboxRadioSwitch
+						v-model="searchIndexingBlocked"
+						:disabled="savingSearchIndexing">
+						{{ t('opencatalogi', 'Keep this install out of search engines') }}
+					</NcCheckboxRadioSwitch>
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'For an acceptance or test install. Every page answers with noindex and robots.txt disallows everything. The public side is still served.',
+							)
+						}}
+					</p>
+					<NcNoteCard v-if="searchIndexingError" type="error">
+						{{ searchIndexingError }}
+					</NcNoteCard>
+					<div class="button-container">
+						<NcButton
+							variant="secondary"
+							:disabled="savingSearchIndexing"
+							@click="saveSearchIndexing">
+							<template #icon>
+								<NcLoadingIcon v-if="savingSearchIndexing" :size="20" />
+								<Save v-else :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Save search indexing') }}
+						</NcButton>
+					</div>
+				</div>
 			</div>
 
 			<!-- Loading State -->
@@ -717,6 +749,10 @@ export default defineComponent({
 			publicCacheSeconds: '60',
 			savingPublicCache: false,
 			publicCacheError: '',
+			// Search engine indexing switch (REQ-WAB-003).
+			searchIndexingBlocked: false,
+			savingSearchIndexing: false,
+			searchIndexingError: '',
 			syncingDirectories: false,
 			loadingSyncOptions: true,
 			savingSyncOptions: false,
@@ -881,6 +917,10 @@ export default defineComponent({
 					configuration.public_api_cache_seconds,
 				)
 			}
+
+			this.showStoredSearchIndexing(
+				configuration && configuration.search_indexing,
+			)
 		},
 
 		/**
@@ -1462,6 +1502,47 @@ export default defineComponent({
 			const stored = response.data && response.data.public_api_cache_seconds
 			if (stored !== undefined) {
 				this.publicCacheSeconds = String(stored)
+			}
+		},
+
+		/**
+		 * Saves whether this install is kept out of search engines. The
+		 * server stores `blocked` or `allowed`, which is shown back.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+		 */
+		async saveSearchIndexing() {
+			this.savingSearchIndexing = true
+			this.searchIndexingError = ''
+
+			try {
+				const response = await putSettings({
+					search_indexing: this.searchIndexingBlocked ? 'blocked' : 'allowed',
+				})
+				this.showStoredSearchIndexing(
+					response.data && response.data.search_indexing,
+				)
+			} catch {
+				this.searchIndexingError = this.t(
+					'opencatalogi',
+					'The search indexing setting could not be saved. Try again.',
+				)
+			} finally {
+				this.savingSearchIndexing = false
+			}
+		},
+
+		/**
+		 * Shows the search indexing value the server stored, when it sent one.
+		 *
+		 * @param {string|undefined} stored `blocked`, `allowed`, or undefined when absent.
+		 * @return {void}
+		 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+		 */
+		showStoredSearchIndexing(stored) {
+			if (stored !== undefined) {
+				this.searchIndexingBlocked = stored === 'blocked'
 			}
 		},
 
