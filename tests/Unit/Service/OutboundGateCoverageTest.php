@@ -70,6 +70,7 @@ final class OutboundGateCoverageTest extends TestCase {
 	private const READERS = [
 		'Observability/SearchBackendHealthProvider.php' => 'pings the configured search backend for the health check',
 		'Service/DirectoryService.php' => 'fetches peer directories and their listings',
+		'Service/DonlRegistrationService.php' => 'reads how many of the feed\'s datasets data.overheid.nl lists',
 		'Service/StandardsVersionService.php' => 'reads the published versions of the standards',
 		'Service/WooReadinessService.php' => 'reads the catalogue\'s own public sitemap for the readiness check',
 	];
