@@ -326,6 +326,21 @@ class PublicDocumentControllerTest extends TestCase {
 	}//end testTheDiwooRecordIsOneDocument()
 
 	/**
+	 * A found document whose DiWoo record cannot be rendered answers 500, not a half record.
+	 *
+	 * @return void
+	 */
+	public function testARenderFailureIs500(): void {
+		$this->holds(publication: self::PUBLICATION, formatted: [self::FILE]);
+		$this->mapper->method('map')->willThrowException(new \RuntimeException('no vocabulary'));
+
+		$response = $this->controller->diwoo(catalogSlug: 'woo', id: 'pub-1', documentId: '42');
+
+		$this->assertSame(500, $response->getStatus());
+		$this->assertSame('document-unavailable', $response->getData()['error']);
+	}//end testARenderFailureIs500()
+
+	/**
 	 * The preflight answers both routes.
 	 *
 	 * @return void

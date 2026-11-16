@@ -45,4 +45,27 @@ class PortalDetailSchemaTest extends TestCase {
 		$this->assertSame('0.6.0', $catalog['version'], 'a schema change moves its version');
 		$this->assertSame('0.3.0', $assessment['version'], 'the base fragment keeps its version; the last fragment carries the bump');
 	}//end testTheDefaultsAreOff()
+
+	/**
+	 * The demo error reports carry every required field, a status the schema lists and a message within the limit,
+	 * and no property the schema does not declare.
+	 *
+	 * @return void
+	 */
+	public function testTheErrorReportDemoRowsFitTheSchema(): void {
+		$schema = $this->schema('register.d/woo-publication-detail-for-the-portal.json', 'errorReport');
+		$demo = json_decode((string)file_get_contents(self::SETTINGS . 'opencatalogi_mock_register.json'), true, 512, JSON_THROW_ON_ERROR);
+		$rows = array_values(array_filter($demo['components']['objects'], static fn (array $row): bool => ($row['@self']['schema'] ?? '') === 'errorReport'));
+
+		$this->assertCount(3, $rows);
+		$this->assertSame(['new', 'handled', 'dismissed'], array_column($rows, 'status'));
+		foreach ($rows as $row) {
+			$data = array_diff_key($row, ['@self' => true]);
+			$this->assertSame([], array_diff($schema['required'], array_keys($data)));
+			$this->assertSame([], array_diff(array_keys($data), array_keys($schema['properties'])));
+			$this->assertContains($row['status'], $schema['properties']['status']['enum']);
+			$this->assertLessThanOrEqual($schema['properties']['message']['maxLength'], mb_strlen($row['message']));
+			$this->assertNotFalse(\DateTimeImmutable::createFromFormat(\DATE_ATOM, $row['createdAt']));
+		}
+	}//end testTheErrorReportDemoRowsFitTheSchema()
 }//end class

@@ -13,6 +13,7 @@
 // vue-material-design-icons.
 
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
 import BookOpenPageVariantOutline from 'vue-material-design-icons/BookOpenPageVariantOutline.vue'
@@ -67,6 +68,7 @@ import Web from 'vue-material-design-icons/Web.vue'
 
 export default {
 	AccountGroup,
+	AlertCircleOutline,
 	AlertOutline,
 	ArchiveOutline,
 	BookOpenPageVariantOutline,

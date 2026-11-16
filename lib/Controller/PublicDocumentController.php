@@ -89,7 +89,11 @@ class PublicDocumentController extends Controller {
 			return $this->notFound(documentId: $documentId);
 		}
 
-		return $this->withCorsHeaders(response: new JSONResponse($this->documents->metadata(found: $found)));
+		try {
+			return $this->withCorsHeaders(response: new JSONResponse($this->documents->metadata(found: $found)));
+		} catch (\Throwable) {
+			return $this->failed();
+		}
 
 	}//end show()
 
@@ -115,7 +119,11 @@ class PublicDocumentController extends Controller {
 			return $this->notFound(documentId: $documentId);
 		}
 
-		return $this->withCorsHeaders(response: new XMLResponse(data: $this->documents->diwoo(found: $found)));
+		try {
+			return $this->withCorsHeaders(response: new XMLResponse(data: $this->documents->diwoo(found: $found)));
+		} catch (\Throwable) {
+			return $this->failed();
+		}
 
 	}//end diwoo()
 
@@ -128,10 +136,26 @@ class PublicDocumentController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->readOnlyPreflight();
 
 	}//end preflightedCors()
+
+	/**
+	 * The 500 answer when a found document cannot be rendered.
+	 *
+	 * @return Response The answer, with CORS headers.
+	 */
+	private function failed(): Response {
+		return $this->withCorsHeaders(
+			response: new JSONResponse(
+				data: ['error' => 'document-unavailable', 'message' => $this->l10n->t('The document cannot be shown right now.')],
+				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+			)
+		);
+
+	}//end failed()
 
 	/**
 	 * The 404 answer.

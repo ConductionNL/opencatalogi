@@ -246,6 +246,16 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublicDocumentsInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublicDocuments"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\ErrorReportIntakeInterface",
+        "OCA\\OpenCatalogi\\Service\\ErrorReport\\ErrorReportIntake"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\InformationRequestStoreInterface",
         "OCA\\OpenCatalogi\\Service\\Woo\\WooRequestStore"
     ],
