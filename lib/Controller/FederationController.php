@@ -355,7 +355,7 @@ class FederationController extends Controller {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-21
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.1
 	 */
 	private function countReach(string $publicationId, string $kind): void {
 		if ($this->usageCounter === null || strtoupper((string)$this->request->getMethod()) === 'HEAD') {

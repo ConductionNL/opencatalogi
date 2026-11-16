@@ -10,7 +10,7 @@
  * _fallback: { termMonths, action } } }`. The catalogue-wide fallback is the
  * row `_fallback`.
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-31
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
  */
 
 /** The row key of the catalogue-wide fallback. */
@@ -36,7 +36,7 @@ function termText(value) {
  * @param {string} slug - the catalogue slug.
  * @param {Array<{code: string, label: string}>} categories - the Woo information categories.
  * @return {Array<{code: string, label: string, termMonths: string, action: string}>}
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-31
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
  */
 export function catalogRows(defaults, slug, categories) {
 	const own = defaults && typeof defaults[slug] === 'object' && defaults[slug] !== null ? defaults[slug] : {}
@@ -57,7 +57,7 @@ export function catalogRows(defaults, slug, categories) {
  *
  * @param {{termMonths: string}} row - the row.
  * @return {boolean}
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-31
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
  */
 export function termIsValid(row) {
 	const text = String(row.termMonths ?? '').trim()
@@ -74,7 +74,7 @@ export function termIsValid(row) {
  * @param {string} slug - the catalogue slug.
  * @param {Array<{code: string, termMonths: string, action: string}>} rows - the edited rows.
  * @return {object} a new map.
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-31
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
  */
 export function withCatalogRows(defaults, slug, rows) {
 	const entry = {}

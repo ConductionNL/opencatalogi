@@ -91,7 +91,7 @@ import { catalogRows, FALLBACK, RETENTION_ACTIONS, termIsValid, withCatalogRows 
  * `GET`/`POST /api/retention/defaults`; the server applies them when a
  * publication is first published (RET-004).
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-31
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
  */
 export default {
 	name: 'CatalogRetentionDefaultsFields',
@@ -117,6 +117,7 @@ export default {
 	},
 
 	computed: {
+		/** @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1 */
 		actionOptions() {
 			const labels = {
 				review: t('opencatalogi', 'Flag for review'),
@@ -126,6 +127,7 @@ export default {
 			return RETENTION_ACTIONS.map((id) => ({ id, label: labels[id] }))
 		},
 
+		/** @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1 */
 		valid() {
 			return this.rows.every(termIsValid)
 		},
@@ -143,6 +145,7 @@ export default {
 		 * Load the categories and the stored defaults.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
 		 */
 		async load() {
 			this.loading = true
@@ -170,6 +173,7 @@ export default {
 		 * Save this catalogue's rows into the defaults map.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
 		 */
 		async save() {
 			this.saving = true
@@ -190,6 +194,7 @@ export default {
 		/**
 		 * @param {{code: string, label: string}} row - the row.
 		 * @return {string} the row's name.
+		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
 		 */
 		rowLabel(row) {
 			return row.code === FALLBACK ? t('opencatalogi', 'Any other category') : row.label
@@ -198,6 +203,7 @@ export default {
 		/**
 		 * @param {string} action - the stored action.
 		 * @return {?object} the selected option.
+		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
 		 */
 		actionOption(action) {
 			return this.actionOptions.find((option) => option.id === action) ?? null

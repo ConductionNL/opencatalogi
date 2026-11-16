@@ -43,7 +43,7 @@ import { injectedObjectContext } from './objectContext.js'
  * publication renders as in its catalogue's DCAT feed, and the fields it still
  * misses, shown before it is published. Advisory only (PQM-001, PQM-004).
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
  */
 export default {
 	name: 'PublicationQualityWidget',
@@ -78,13 +78,14 @@ export default {
 			return this.content.catalogSlug || this.$route?.params?.catalogSlug || ''
 		},
 
-		/** @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25 */
+		/** @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5 */
 		missingNames() {
 			return missingFieldNames(this.missing, t)
 		},
 	},
 
 	watch: {
+		/** @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5 */
 		resolvedObjectId() {
 			this.load()
 		},
@@ -101,7 +102,7 @@ export default {
 		 * Load the score.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
 		 */
 		async load() {
 			if (!this.resolvedObjectId || !this.catalogSlug) {

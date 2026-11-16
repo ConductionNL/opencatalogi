@@ -5,7 +5,7 @@
  * publicationQuality: a publication's metadata-quality score as its detail page
  * shows it, from `GET /api/catalogs/{slug}/publications/{id}/quality` (PQM-001).
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
  */
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
@@ -41,7 +41,7 @@ function fieldLabels(t) {
  * @param {Array<string>} missing - the DCAT properties the score names.
  * @param {(app: string, text: string) => string} t - the translate function.
  * @return {Array<string>}
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
  */
 export function missingFieldNames(missing, t) {
 	const labels = fieldLabels(t)
@@ -55,7 +55,7 @@ export function missingFieldNames(missing, t) {
  * @param {string} catalogSlug - the catalogue the publication is opened in.
  * @param {string} id - the publication.
  * @return {Promise<{total: number, missing: Array<string>}>}
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
  */
 export async function fetchPublicationQuality(catalogSlug, id) {
 	const url = generateUrl(`/apps/opencatalogi/api/catalogs/${encodeURIComponent(catalogSlug)}/publications/${encodeURIComponent(id)}/quality`)

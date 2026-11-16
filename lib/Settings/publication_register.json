@@ -268,11 +268,11 @@
             "items": {
               "type": "object",
               "properties": {
-                "decision": {"type": "string"},
-                "by": {"type": "string"},
-                "at": {"type": "string", "format": "date-time"},
-                "note": {"type": "string"},
-                "basis": {"type": "string"}
+                "decision": {"type": "string", "title": "Decision", "description": "What was decided about the publication."},
+                "by": {"type": "string", "title": "Decided by", "description": "The user who made the decision."},
+                "at": {"type": "string", "format": "date-time", "title": "Decided at", "description": "When the decision was made."},
+                "note": {"type": "string", "title": "Note", "description": "The explanation given with the decision."},
+                "basis": {"type": "string", "title": "Legal basis", "description": "The legal basis the decision rests on."}
               }
             },
             "facetable": false,

@@ -98,7 +98,7 @@ final class RetentionRun {
 	 *
 	 * @return bool Whether OpenRegister removed it.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-27
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.7
 	 */
 	public function remove(string $id): bool {
 		return (bool)$this->objectService->deleteObject(

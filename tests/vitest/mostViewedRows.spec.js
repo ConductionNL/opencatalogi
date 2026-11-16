@@ -4,7 +4,7 @@
  *
  * The most viewed widget's request, rows and links (ANA-005).
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-23
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.3
  */
 import axios from '@nextcloud/axios'
 import { afterEach, describe, expect, it, vi } from 'vitest'

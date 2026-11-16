@@ -213,7 +213,9 @@ class StatsController extends Controller {
 	 *
 	 * @return JSONResponse `{ results: [{ id, title, catalog, views, downloads }] }`.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-23
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.3
+	 *
+	 * @no-admin-idor-exempt Takes no object id. MostViewedPublications::top() counts only the catalogues whose own object the caller may read (catalogReadable) and names only publications the caller may read, so the rows are scoped to the caller there.
 	 */
 	#[NoAdminRequired]
 	public function top(): JSONResponse {
@@ -249,7 +251,7 @@ class StatsController extends Controller {
 	 *
 	 * @return JSONResponse `{ total, dimensions, missing }`.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
 	 */
 	#[NoAdminRequired]
 	public function publicationQuality(string $slug, string $id): JSONResponse {

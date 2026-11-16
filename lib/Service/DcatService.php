@@ -460,7 +460,7 @@ class DcatService implements DcatServiceInterface {
 	 *
 	 * @return array The dataset node.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
 	 */
 	public function buildPublicationDataset(array $catalog, string $catalogSlug, array $publication): array {
 		$scope = $this->resolveCatalogScope(catalog: $catalog, catalogSlug: $catalogSlug);

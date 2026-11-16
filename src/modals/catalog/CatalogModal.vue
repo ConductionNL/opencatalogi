@@ -362,7 +362,7 @@ export default {
 		/**
 		 * The slug the catalogue is saved under, which keys its retention defaults (RET-004).
 		 *
-		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-31
+		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
 		 */
 		storedSlug() {
 			return objectStore.getActiveObject('catalog')?.slug || ''

@@ -175,7 +175,7 @@ class DcatCatalogDocumentTest extends TestCase {
 	/**
 	 * One publication renders as the same dataset node the catalogue feed holds, without DQV.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
 	 */
 	public function testOnePublicationRendersAsItsNodeInTheCatalogueFeed(): void {
 		$searched = [];

@@ -2,7 +2,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-31
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
  */
 import { describe, expect, it } from 'vitest'
 import { catalogRows, FALLBACK, termIsValid, withCatalogRows } from '../../src/services/retentionDefaults.js'

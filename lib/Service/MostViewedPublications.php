@@ -34,7 +34,7 @@ use Psr\Log\LoggerInterface;
  * check failing leaves it out (fail closed). Counts are the privacy-safe usage
  * counters, never the audit trail (ANA-005).
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-23
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.3
  */
 class MostViewedPublications {
 
@@ -54,7 +54,7 @@ class MostViewedPublications {
 	 * @param IAppConfig                   $config    Names the publication register and schema.
 	 * @param LoggerInterface              $logger    Records a failed read check.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-23
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.3
 	 */
 	public function __construct(
 		private readonly UsageCounterServiceInterface $counters,
@@ -74,7 +74,7 @@ class MostViewedPublications {
 	 *
 	 * @return array<int, array{id: string, title: string, catalog: string, views: int, downloads: int}>
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-23
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.3
 	 */
 	public function top(?string $from, ?string $to, int $top): array {
 		$top     = max(1, $top);

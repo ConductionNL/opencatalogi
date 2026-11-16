@@ -32,7 +32,7 @@ use Psr\Log\LoggerInterface;
  * catalogue's registers and schemas; one the caller cannot read is not scored
  * (no IDOR). The score is advisory and never gates publishing (PQM-004).
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
  */
 class PublicationQuality {
 
@@ -44,7 +44,7 @@ class PublicationQuality {
 	 * @param ContainerInterface      $container Resolves OpenRegister's object service.
 	 * @param LoggerInterface         $logger    Records a failed read.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
 	 */
 	public function __construct(
 		private readonly DcatServiceInterface $dcat,
@@ -63,7 +63,7 @@ class PublicationQuality {
 	 *
 	 * @return array{total: int, dimensions: array<string, int>, missing: array<int, string>}|null
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
 	 */
 	public function score(array $catalog, string $catalogSlug, string $id): ?array {
 		$publication = $this->readablePublication(catalog: $catalog, id: $id);

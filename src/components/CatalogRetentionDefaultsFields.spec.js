@@ -6,7 +6,7 @@
  * the Woo categories and the stored defaults, and a save posts the whole map
  * with only this catalogue's entry changed (RET-004).
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-31
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
  */
 
 import axios from '@nextcloud/axios'
