@@ -25,6 +25,8 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Service\InstanceSettings;
+use OCA\OpenCatalogi\Service\UnpublishedOverviewReader;
+use OCA\OpenCatalogi\Service\UnpublishedOverviewRows;
 use OCA\OpenCatalogi\Service\UnpublishedOverviewService;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -175,7 +177,11 @@ class UnpublishedOverviewServiceTest extends TestCase {
 			}
 		);
 
-		return new UnpublishedOverviewService(openRegister: $lookup, instance: $instance, publications: $rule, container: $container);
+		return new UnpublishedOverviewService(
+			reader: new UnpublishedOverviewReader(openRegister: $lookup, instance: $instance, container: $container),
+			publications: $rule,
+			rows: new UnpublishedOverviewRows()
+		);
 	}//end service()
 
 	/**

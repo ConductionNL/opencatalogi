@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\UnpublishedOverviewService;
+use OCA\OpenCatalogi\Contract\UnpublishedOverviewServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -48,7 +48,7 @@ class UnpublishedOverviewController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param UnpublishedOverviewService $overview The overview lists.
+	 * @param UnpublishedOverviewServiceInterface $overview The overview lists.
 	 * @param IUserSession $userSession The current user session.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger The logger.
@@ -56,7 +56,7 @@ class UnpublishedOverviewController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly UnpublishedOverviewService $overview,
+		private readonly UnpublishedOverviewServiceInterface $overview,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,

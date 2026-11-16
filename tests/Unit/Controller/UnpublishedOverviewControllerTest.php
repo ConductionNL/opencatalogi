@@ -23,7 +23,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\UnpublishedOverviewController;
-use OCA\OpenCatalogi\Service\UnpublishedOverviewService;
+use OCA\OpenCatalogi\Contract\UnpublishedOverviewServiceInterface;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
@@ -40,9 +40,9 @@ class UnpublishedOverviewControllerTest extends TestCase {
 	/**
 	 * The overview double.
 	 *
-	 * @var UnpublishedOverviewService&MockObject
+	 * @var UnpublishedOverviewServiceInterface&MockObject
 	 */
-	private UnpublishedOverviewService&MockObject $overview;
+	private UnpublishedOverviewServiceInterface&MockObject $overview;
 
 	/**
 	 * Build the controller.
@@ -52,7 +52,7 @@ class UnpublishedOverviewControllerTest extends TestCase {
 	 * @return UnpublishedOverviewController The controller.
 	 */
 	private function controller(bool $signedIn = true): UnpublishedOverviewController {
-		$this->overview = $this->createMock(UnpublishedOverviewService::class);
+		$this->overview = $this->createMock(UnpublishedOverviewServiceInterface::class);
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn(($signedIn === true) ? $this->createMock(IUser::class) : null);
 		$l10n = $this->createMock(IL10N::class);
