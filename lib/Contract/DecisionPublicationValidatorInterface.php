@@ -45,7 +45,7 @@ interface DecisionPublicationValidatorInterface {
 	 *
 	 * @return array{publishable: boolean, reasons: array<int, string>, responseDate: string|null, publicationText: string|null}
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
 	 */
 	public function validate(array $decision, array $decisionType): array;
 
@@ -56,7 +56,7 @@ interface DecisionPublicationValidatorInterface {
 	 *
 	 * @return string|null The text, or null when the type declares none.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
 	 */
 	public function publicationText(array $decisionType): ?string;
 
@@ -70,7 +70,7 @@ interface DecisionPublicationValidatorInterface {
 	 *
 	 * @throws \DomainException When the validation refused.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
 	 */
 	public function applyValidated(array $decision, array $validation): array;
 }//end interface
