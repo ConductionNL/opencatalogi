@@ -324,4 +324,39 @@ class RobotsControllerTest extends TestCase {
 		$this->assertStringContainsString("Allow: /apps/opencatalogi/api/\n", $text);
 		$this->assertStringContainsString("Allow: /index.php/apps/opencatalogi/api/\n", $text);
 	}
+	/**
+	 * A default install disallows the officer paths and the settings pages and still allows the API (REQ-WAB-003).
+	 */
+	public function testOfficerPathsAreDisallowed(): void {
+		$this->settingsService->method('getSettings')
+			->willReturn(['configuration' => ['catalog_register' => '1', 'catalog_schema' => '5', 'search_indexing' => 'allowed']]);
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturn(['results' => []]);
+		$this->appManager->method('isInstalled')->willReturn(true);
+		$this->container->method('get')->willReturn($objectService);
+		$this->urlGenerator->method('getBaseUrl')->willReturn('https://example.com');
+
+		$text = $this->controller->index()->render();
+
+		$this->assertStringContainsString("Allow: /apps/opencatalogi/api/\n", $text);
+		$this->assertStringContainsString("Allow: /index.php/apps/opencatalogi/api/\n", $text);
+		$this->assertStringContainsString("Disallow: /apps/opencatalogi/\n", $text);
+		$this->assertStringContainsString("Disallow: /index.php/apps/opencatalogi/\n", $text);
+		$this->assertStringContainsString("Disallow: /settings/admin/opencatalogi\n", $text);
+		$this->assertStringContainsString("Disallow: /index.php/settings/admin/opencatalogi\n", $text);
+		$this->assertStringNotContainsString("Disallow: /\n", $text);
+	}
+
+	/**
+	 * A blocked install answers a disallow-all robots.txt, even before the catalogue settings are read (REQ-WAB-003).
+	 */
+	public function testBlockedIndexingDisallowsEverything(): void {
+		$this->settingsService->method('getSettings')
+			->willReturn(['configuration' => ['search_indexing' => 'blocked']]);
+
+		$response = $this->controller->index();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame("User-agent: *\nDisallow: /\n", $response->render());
+	}
 }
