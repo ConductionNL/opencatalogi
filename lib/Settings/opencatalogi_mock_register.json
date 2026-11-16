@@ -2181,6 +2181,17 @@
         "state": "ocr",
         "reason": "",
         "updatedAt": "2026-10-01T10:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publication",
+          "slug": "example-municipality-council-agenda"
+        },
+        "title": "Voorbeeld: Raadsagenda januari 2030 van Gemeente Voorbeeld",
+        "summary": "Voorbeeldpublicatie uit de demodata: een geplande publicatie, zodat het overzicht van niet-gepubliceerde publicaties er een laat zien.",
+        "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd. De publicatiedatum ligt ver in de toekomst, zodat de rij gepland blijft. Gemeente Voorbeeld bestaat niet en staat voor geen echte overheidsorganisatie.",
+        "publicationDate": "2030-01-01T09:00:00+00:00"
       }
     ]
   }
