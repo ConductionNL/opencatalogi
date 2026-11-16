@@ -51,6 +51,16 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\DcatDereferenceInterface",
+        "OCA\\OpenCatalogi\\Service\\DcatDereference"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DonlRegistrationServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\DonlRegistrationService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\UsageCounterServiceInterface",
         "OCA\\OpenCatalogi\\Service\\UsageCounterService"
     ],

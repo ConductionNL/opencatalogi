@@ -28,11 +28,10 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
+use OCA\OpenCatalogi\Contract\DonlRegistrationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Http\DcatResponse;
-use OCA\OpenCatalogi\Service\DcatService;
-use OCA\OpenCatalogi\Service\DonlRegistrationService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -67,7 +66,7 @@ class DcatController extends Controller {
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param StandardsVersionServiceInterface $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
-	 * @param DonlRegistrationService|null $donl The data.overheid.nl registration and its harvest evidence.
+	 * @param DonlRegistrationServiceInterface|null $donl The data.overheid.nl registration and its harvest evidence.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -82,7 +81,7 @@ class DcatController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly StandardsVersionServiceInterface $standardsVersions,
 		private readonly ?IAppConfig $appConfig = null,
-		private readonly ?DonlRegistrationService $donl = null,
+		private readonly ?DonlRegistrationServiceInterface $donl = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -277,7 +276,7 @@ class DcatController extends Controller {
 					'valid' => empty($violations),
 					'violations' => $violations,
 					'profile' => $this->standardsVersions->dcatApNlVersion(),
-					'checked' => DcatService::MANDATORY_DATASET_PROPERTIES,
+					'checked' => DcatServiceInterface::MANDATORY_DATASET_PROPERTIES,
 				],
 				200
 			);

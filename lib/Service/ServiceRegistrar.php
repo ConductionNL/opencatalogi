@@ -37,9 +37,11 @@ use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
+use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
 use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
+use OCA\OpenCatalogi\Contract\DonlRegistrationServiceInterface;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
@@ -137,6 +139,8 @@ class ServiceRegistrar {
 		TransparencyWorkflowServiceInterface::class => WooService::class,
 		CatalogiServiceInterface::class => CatalogiService::class,
 		DcatServiceInterface::class => DcatService::class,
+		DcatDereferenceInterface::class => DcatDereference::class,
+		DonlRegistrationServiceInterface::class => DonlRegistrationService::class,
 		UsageCounterServiceInterface::class => UsageCounterService::class,
 		HarvesterReadinessServiceInterface::class => WooReadinessService::class,
 		BroadcastServiceInterface::class => BroadcastService::class,

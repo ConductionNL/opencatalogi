@@ -33,6 +33,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
@@ -40,9 +41,9 @@ use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
+use OCA\OpenCatalogi\Http\DcatNegotiation;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
-use OCA\OpenCatalogi\Service\DcatDereference;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -921,12 +922,12 @@ class PublicationsController extends Controller {
 	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-catalogue-is-served-as-linked-data-and-through-sparql-req-dcc-003
 	 */
 	private function dereferencedDataset(array $catalog, string $catalogSlug, string $id): ?Response {
-		$kind = DcatDereference::preferred(accept: $this->request->getHeader('Accept'));
+		$kind = DcatNegotiation::preferred(accept: $this->request->getHeader('Accept'));
 		if ($kind === null || (string)$this->request->getParam('format', '') !== '') {
 			return null;
 		}
 
-		$response = $this->container->get(DcatDereference::class)->answer(catalog: $catalog, catalogSlug: $catalogSlug, id: $id, kind: $kind);
+		$response = $this->container->get(DcatDereferenceInterface::class)->answer(catalog: $catalog, catalogSlug: $catalogSlug, id: $id, kind: $kind);
 		$this->addCorsHeaders(response: $response);
 
 		return $response;

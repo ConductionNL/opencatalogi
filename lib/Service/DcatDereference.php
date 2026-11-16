@@ -22,7 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
 use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
+use OCA\OpenCatalogi\Http\DcatNegotiation;
 use OCA\OpenCatalogi\Http\DcatResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\RedirectResponse;
@@ -41,20 +43,8 @@ use OCP\IURLGenerator;
  *
  * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-catalogue-is-served-as-linked-data-and-through-sparql-req-dcc-003
  */
-class DcatDereference {
+class DcatDereference implements DcatDereferenceInterface {
 
-	/**
-	 * The RDF media types a dataset IRI answers, by serializer format.
-	 */
-	public const RDF_TYPES = [
-		'text/turtle' => 'turtle',
-		'application/rdf+xml' => 'rdfxml',
-	];
-
-	/**
-	 * The media types answered with a redirect to the publication page.
-	 */
-	public const HTML_TYPES = ['text/html', 'application/xhtml+xml'];
 
 	/**
 	 * Constructor.
@@ -82,17 +72,7 @@ class DcatDereference {
 	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-catalogue-is-served-as-linked-data-and-through-sparql-req-dcc-003
 	 */
 	public static function preferred(?string $accept): ?string {
-		$best = null;
-		$bestQuality = 0.0;
-		foreach (explode(',', (string)$accept) as $range) {
-			[$type, $quality] = self::mediaRange(range: $range);
-			if ($quality > $bestQuality) {
-				$best = $type;
-				$bestQuality = $quality;
-			}
-		}
-
-		return self::kindOf(type: $best);
+		return DcatNegotiation::preferred(accept: $accept);
 	}//end preferred()
 
 	/**
@@ -132,42 +112,4 @@ class DcatDereference {
 			headers: ['Vary' => 'Accept']
 		);
 	}//end answer()
-
-	/**
-	 * One media range of an Accept header as its type and quality.
-	 *
-	 * @param string $range One comma-separated part, such as `text/turtle;q=0.9`.
-	 *
-	 * @return array{0: string, 1: float} The lower-case type and its quality.
-	 *
-	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-catalogue-is-served-as-linked-data-and-through-sparql-req-dcc-003
-	 */
-	private static function mediaRange(string $range): array {
-		$parts = array_map('trim', explode(';', $range));
-		$quality = 1.0;
-		foreach (array_slice($parts, 1) as $parameter) {
-			if (str_starts_with(strtolower($parameter), 'q=') === true) {
-				$quality = (float)substr($parameter, 2);
-			}
-		}
-
-		return [strtolower($parts[0]), $quality];
-	}//end mediaRange()
-
-	/**
-	 * The representation a media type names here.
-	 *
-	 * @param string|null $type The media type.
-	 *
-	 * @return string|null `turtle`, `rdfxml`, `html` or null.
-	 *
-	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-catalogue-is-served-as-linked-data-and-through-sparql-req-dcc-003
-	 */
-	private static function kindOf(?string $type): ?string {
-		if (in_array($type, self::HTML_TYPES, true) === true) {
-			return 'html';
-		}
-
-		return (self::RDF_TYPES[(string)$type] ?? null);
-	}//end kindOf()
 }//end class

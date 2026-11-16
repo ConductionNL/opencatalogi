@@ -26,6 +26,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use InvalidArgumentException;
+use OCA\OpenCatalogi\Contract\DonlRegistrationServiceInterface;
 use OCP\Http\Client\IClientService;
 use OCP\IAppConfig;
 
@@ -45,7 +46,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-data-overheid-nl-registration-and-its-harvest-are-tracked-req-dcc-002
  */
-class DonlRegistrationService {
+class DonlRegistrationService implements DonlRegistrationServiceInterface {
 
 	/**
 	 * The app id the values are stored under.

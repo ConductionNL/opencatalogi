@@ -23,8 +23,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\BackgroundJob;
 
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
+use OCA\OpenCatalogi\Contract\DonlRegistrationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
-use OCA\OpenCatalogi\Service\DonlRegistrationService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -49,14 +49,14 @@ class DonlHarvestCheck extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time The clock.
-	 * @param DonlRegistrationService $donl Asks DONL and stores the answer.
+	 * @param DonlRegistrationServiceInterface $donl Asks DONL and stores the answer.
 	 * @param DcatServiceInterface $dcat Builds the feed pages that are counted.
 	 * @param PublicationQueryServiceInterface $guard The read-rule guard of the public feed.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly DonlRegistrationService $donl,
+		private readonly DonlRegistrationServiceInterface $donl,
 		private readonly DcatServiceInterface $dcat,
 		private readonly PublicationQueryServiceInterface $guard,
 		private readonly LoggerInterface $logger,

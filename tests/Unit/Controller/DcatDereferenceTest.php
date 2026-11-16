@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
@@ -57,6 +58,7 @@ use Psr\Log\LoggerInterface;
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @covers \OCA\OpenCatalogi\Service\DcatService
  * @uses   \OCA\OpenCatalogi\Controller\CorsSettings
+ * @uses   \OCA\OpenCatalogi\Http\DcatNegotiation
  * @uses   \OCA\OpenCatalogi\Http\DcatResponse
  * @uses   \OCA\OpenCatalogi\Service\CallerScope
  * @uses   \OCA\OpenCatalogi\Service\DcatAssurance
@@ -141,7 +143,7 @@ class DcatDereferenceTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			static fn (string $id) => match ($id) {
-				DcatDereference::class => $dereference,
+				DcatDereferenceInterface::class => $dereference,
 				default => $orContainer->get($id),
 			}
 		);
