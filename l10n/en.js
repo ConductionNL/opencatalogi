@@ -1734,7 +1734,14 @@ OC.L10N.register(
         "What would have been sent.": "What would have been sent.",
         "When the hand-over was held.": "When the hand-over was held.",
         "Who started the hand-over, or empty for a background job.": "Who started the hand-over, or empty for a background job.",
-        "Why it was held: staging, or a mode that could not be read.": "Why it was held: staging, or a mode that could not be read."
+        "Why it was held: staging, or a mode that could not be read.": "Why it was held: staging, or a mode that could not be read.",
+        "Order on the portal": "Order on the portal",
+        "Move {name} up": "Move {name} up",
+        "Move {name} down": "Move {name} down",
+        "Save order": "Save order",
+        "{name} is now number {position} of {total}": "{name} is now number {position} of {total}",
+        "The order is saved. The portal shows the documents in this order.": "The order is saved. The portal shows the documents in this order.",
+        "The order could not be saved. Try again.": "The order could not be saved. Try again."
     },
     "nplurals=2; plural=(n != 1);"
 )

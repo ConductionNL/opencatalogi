@@ -10,6 +10,8 @@
 // @nextcloud/auth ships ESM that Jest does not transform; the store only
 // needs the request token.
 jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'tok' }))
+// The order list reads the files; this spec only checks what it is handed.
+jest.mock('@nextcloud/axios', () => ({ get: jest.fn(() => Promise.resolve({ data: [] })), patch: jest.fn() }))
 
 import { flushPromises, mount } from '@vue/test-utils'
 import PublicationAttachmentsWidget from './PublicationAttachmentsWidget.vue'
@@ -61,6 +63,16 @@ describe('PublicationAttachmentsWidget', () => {
 	afterEach(() => {
 		navigationStore.setDialog(false)
 		jest.restoreAllMocks()
+	})
+
+	it('hands the order list the publication route and its stored order (REQ-PDP-001)', () => {
+		const ordered = { ...publication, attachmentOrder: ['12', '11'] }
+		const list = mountWidget({ objectId: 'pub-1', object: ordered }).findComponent({ name: 'AttachmentOrderList' })
+
+		expect(list.props()).toEqual({
+			route: { register: '19', schema: '173', id: 'pub-1' },
+			order: ['12', '11'],
+		})
 	})
 
 	it("lists the page's publication's files", () => {

@@ -1689,7 +1689,14 @@ OC.L10N.register(
         "What would have been sent.": "Wat er verstuurd zou zijn.",
         "When the hand-over was held.": "Wanneer de overdracht werd vastgehouden.",
         "Who started the hand-over, or empty for a background job.": "Wie de overdracht startte, of leeg voor een achtergrondtaak.",
-        "Why it was held: staging, or a mode that could not be read.": "Waarom die werd vastgehouden: staging, of een modus die niet kon worden gelezen."
+        "Why it was held: staging, or a mode that could not be read.": "Waarom die werd vastgehouden: staging, of een modus die niet kon worden gelezen.",
+        "Order on the portal": "Volgorde op het portaal",
+        "Move {name} up": "{name} omhoog verplaatsen",
+        "Move {name} down": "{name} omlaag verplaatsen",
+        "Save order": "Volgorde opslaan",
+        "{name} is now number {position} of {total}": "{name} staat nu op plaats {position} van {total}",
+        "The order is saved. The portal shows the documents in this order.": "De volgorde is opgeslagen. Het portaal toont de documenten in deze volgorde.",
+        "The order could not be saved. Try again.": "De volgorde kon niet worden opgeslagen. Probeer het opnieuw."
     },
     "nplurals=2; plural=(n != 1);"
 )
