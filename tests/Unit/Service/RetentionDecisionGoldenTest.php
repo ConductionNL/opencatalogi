@@ -35,6 +35,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
@@ -177,8 +178,8 @@ class RetentionDecisionGoldenTest extends TestCase {
 			) {
 			}
 
-			public function deleteObject(string $uuid, ?string $register = null, ?string $schema = null, bool $_rbac = true, bool $_multitenancy = true): bool {
-				$this->log[] = ['delete' => $uuid, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true): bool {
+				$this->log[] = ['delete' => $deletion->uuid, 'register' => $deletion->target->register, 'schema' => $deletion->target->schema, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 				return $this->removed;
 			}
 

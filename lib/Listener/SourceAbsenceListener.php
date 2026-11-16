@@ -34,6 +34,8 @@ namespace OCA\OpenCatalogi\Listener;
 use OCA\OpenCatalogi\Service\Publication\SourceAbsence;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
@@ -152,9 +154,13 @@ class SourceAbsenceListener implements IEventListener {
 		try {
 			$this->container->get('OCA\OpenRegister\Service\ObjectService')->saveObject(
 				object: $data,
-				register: (string)$entity->getRegister(),
-				schema: (string)$entity->getSchema(),
-				uuid: (string)$entity->getUuid(),
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(
+						register: (string)$entity->getRegister(),
+						schema: (string)$entity->getSchema()
+					),
+					uuid: (string)$entity->getUuid()
+				),
 				_rbac: false,
 				_multitenancy: false
 			);

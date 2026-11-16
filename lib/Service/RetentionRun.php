@@ -25,6 +25,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
@@ -101,9 +102,10 @@ final class RetentionRun {
 	 */
 	public function remove(string $id): bool {
 		return (bool)$this->objectService->deleteObject(
-			uuid: $id,
-			register: $this->register,
-			schema: $this->schema,
+			deletion: new ObjectDeletion(
+				uuid: $id,
+				target: new ObjectFindTarget(register: $this->register, schema: $this->schema)
+			),
 			_rbac: false,
 			_multitenancy: false,
 		);
