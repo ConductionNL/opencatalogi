@@ -23,6 +23,10 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
+use OCA\OpenCatalogi\Contract\DiwooCompletenessInterface;
+use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
+use OCA\OpenCatalogi\Contract\PlainSummaryDrafterInterface;
+use OCA\OpenCatalogi\Contract\PlainSummaryProvenanceInterface;
 use OCA\OpenCatalogi\Contract\CatalogueFeedReaderInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
@@ -122,6 +126,8 @@ use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCA\OpenCatalogi\Service\Woo\WooRequestIntake;
 use OCA\OpenCatalogi\Service\Woo\WooRequestService;
 use OCA\OpenCatalogi\Service\Woo\WooRequestStore;
+use OCA\OpenCatalogi\Service\Publication\PlainLanguageDrafter;
+use OCA\OpenCatalogi\Service\Publication\PlainSummaryProvenance;
 
 /**
  * The interfaces callers in other components depend on, bound to their implementation.
@@ -175,6 +181,8 @@ final class ServiceBindings {
 		AttachmentMigrationServiceInterface::class => AttachmentMigrationService::class,
 		ServiceCatalogueServiceInterface::class => ServiceCatalogueService::class,
 		InformationCategoryRegistryInterface::class => WooCategoryRegistry::class,
+		DocumentTypeVocabularyInterface::class => TooiVocabularyService::class,
+		DiwooCompletenessInterface::class => SitemapDocumentMapper::class,
 		CmsMigrationServiceInterface::class => CmsMigrationService::class,
 		InformationRequestServiceInterface::class => WooRequestService::class,
 		StandardsVersionServiceInterface::class => StandardsVersionService::class,
@@ -206,5 +214,7 @@ final class ServiceBindings {
 		AttachmentReadingQueueInterface::class => AttachmentReadingQueue::class,
 		AttachmentReadingStoreInterface::class => AttachmentReadingStore::class,
 		RedactedOriginalGuardInterface::class => RedactedOriginalGuard::class,
+		PlainSummaryDrafterInterface::class => PlainLanguageDrafter::class,
+		PlainSummaryProvenanceInterface::class => PlainSummaryProvenance::class,
 	];
 }//end class

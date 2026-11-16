@@ -284,6 +284,36 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		}
 
 	}//end testRegisterCallsEveryComponentRegistrar()
+
+	/**
+	 * Application::register() subscribes the DiWoo completeness listener to both pre-save events.
+	 *
+	 * Without it on ObjectCreatingEvent, a new Woo publication goes public with its
+	 * mandatory metadata missing; without it on ObjectUpdatingEvent, an edit does
+	 * (REQ-DWP-003). Recorded through the context register() is handed, so the
+	 * registrar it delegates to is followed as Nextcloud follows it.
+	 *
+	 * @return void
+	 */
+	public function testTheDiwooCompletenessListenerIsRegisteredOnBothPreSaveEvents(): void {
+		$listeners = [];
+		$context = $this->createMock(\OCP\AppFramework\Bootstrap\IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$listeners): void {
+				$listeners[$listener][] = $event;
+			}
+		);
+
+		$application = (new \ReflectionClass(\OCA\OpenCatalogi\AppInfo\Application::class))->newInstanceWithoutConstructor();
+		$application->register($context);
+
+		$this->assertSame(
+			['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'],
+			($listeners[\OCA\OpenCatalogi\Listener\DiwooCompletenessListener::class] ?? [])
+		);
+
+	}//end testTheDiwooCompletenessListenerIsRegisteredOnBothPreSaveEvents()
+
 	/**
 	 * The no-index middleware is registered, so officer responses carry noindex (REQ-WAB-003).
 	 *

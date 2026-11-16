@@ -1,24 +1,19 @@
 <?php
 
 /**
- * OpenRegister ObjectSaveOptions stub for tests and static analysis.
+ * Stub of OpenRegister's ObjectSaveOptions for unit runs without OpenRegister.
  *
- * Mirrors openregister/lib/Kernel/Contracts/Value/ObjectSaveOptions.php on
- * main (the options ObjectService::saveObject() takes), without the policy
- * and actor parameters no caller here passes. The real class ships in
- * openregister; this stub only exists for runs without it.
+ * Mirrors the constructor of OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions on main.
  *
- * @category Tests
- * @package  OCA\OpenRegister\Kernel\Contracts\Value
+ * @category Test
+ * @package  OCA\OpenCatalogi\Tests
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- *
- * @link https://conduction.nl
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -26,23 +21,20 @@ declare(strict_types=1);
 namespace OCA\OpenRegister\Kernel\Contracts\Value;
 
 /**
- * Where and how ObjectService::saveObject() stores an object.
+ * The options of one object save.
  */
 final class ObjectSaveOptions {
 
 	/**
-	 * Constructor.
-	 *
-	 * @param ObjectFindTarget $target        The register and schema.
-	 * @param string|null      $uuid          The object to update, null to create.
-	 * @param array|null       $extend        Properties to extend in the result.
-	 * @param array|null       $uploadedFiles Files uploaded with the object.
+	 * Build the value.
 	 */
 	public function __construct(
-		public readonly ObjectFindTarget $target=new ObjectFindTarget(),
-		public readonly ?string $uuid=null,
-		public readonly ?array $extend=[],
-		public readonly ?array $uploadedFiles=null,
+		public readonly ObjectFindTarget $target = new ObjectFindTarget(),
+		public readonly ?string $uuid = null,
+		public readonly ?array $extend = [],
+		public readonly ?array $uploadedFiles = null,
+		public readonly SavePolicy $policy = new SavePolicy(),
+		public readonly SaveActor $actor = new SaveActor(),
 	) {
 	}//end __construct()
 }//end class

@@ -1,46 +1,36 @@
 <?php
 
 /**
- * OpenRegister ObjectFindTarget stub for tests and static analysis.
+ * Stub of OpenRegister's ObjectFindTarget for unit runs without OpenRegister.
  *
- * Mirrors openregister/lib/Kernel/Contracts/Value/ObjectFindTarget.php on
- * main: the register and schema an object call targets. The real class
- * ships in openregister; this stub only exists for runs without it.
+ * Mirrors the constructor of OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget on main.
  *
- * @category Tests
- * @package  OCA\OpenRegister\Kernel\Contracts\Value
+ * @category Test
+ * @package  OCA\OpenCatalogi\Tests
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- *
- * @link https://conduction.nl
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace OCA\OpenRegister\Kernel\Contracts\Value;
 
-use OCA\OpenRegister\Db\Register;
-use OCA\OpenRegister\Db\Schema;
-
 /**
- * The register and schema an object call targets.
+ * Which register and schema an object lives in.
  */
 final class ObjectFindTarget {
 
 	/**
-	 * Constructor.
-	 *
-	 * @param Register|string|int|null $register The register, or null for any.
-	 * @param Schema|string|int|null   $schema   The schema, or null for any.
+	 * Build the value.
 	 */
 	public function __construct(
-		public readonly Register|string|int|null $register=null,
-		public readonly Schema|string|int|null $schema=null,
+		public readonly mixed $register = null,
+		public readonly mixed $schema = null,
 	) {
 	}//end __construct()
 }//end class
