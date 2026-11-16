@@ -129,9 +129,13 @@ class AttachmentReadingCallersTest extends TestCase {
 
 	public function testAttachingAWooDocumentQueuesTheReadingOfThePublishedCopy(): void {
 		$fileService = new CallersFakeFileService();
+		$queue = $this->queue();
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			static fn (string $id): object => $fileService
+			static fn (string $id): object => match ($id) {
+				AttachmentReadingQueueInterface::class => $queue,
+				default => $fileService,
+			}
 		);
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('isInstalled')->willReturn(true);
@@ -141,8 +145,7 @@ class AttachmentReadingCallersTest extends TestCase {
 			$container,
 			$this->createMock(PublicationLinker::class),
 			$this->createMock(IL10N::class),
-			$apps,
-			$this->queue()
+			$apps
 		);
 
 		$document = $this->createMock(File::class);

@@ -66,7 +66,6 @@ class BatchPublicationWriter {
 	 * @param PublicationLinker $linker The public link to the publication.
 	 * @param IL10N $l10n The refusal message.
 	 * @param IAppManager|null $appManager Whether OpenRegister is installed.
-	 * @param AttachmentReadingQueueInterface|null $readingQueue Queues the reading of each attached document.
 	 */
 	public function __construct(
 		private readonly IRootFolder $rootFolder,
@@ -74,7 +73,6 @@ class BatchPublicationWriter {
 		private readonly PublicationLinker $linker,
 		private readonly IL10N $l10n,
 		private readonly ?IAppManager $appManager = null,
-		private readonly ?AttachmentReadingQueueInterface $readingQueue = null,
 	) {
 
 	}//end __construct()
@@ -371,9 +369,34 @@ class BatchPublicationWriter {
 		}
 
 		$files->publishFile(object: $target, file: $created->getId());
-		$this->readingQueue?->queue(fileId: (int)$created->getId(), publicationId: (string)$publication['id']);
+		$this->readingQueue()?->queue(fileId: (int)$created->getId(), publicationId: (string)$publication['id']);
 
 	}//end attach()
+
+	/**
+	 * The queue that reads each attached document, or null when it cannot be resolved.
+	 *
+	 * Resolved from the container on use rather than injected, so this
+	 * writer's constructor keeps its five collaborators.
+	 *
+	 * @return AttachmentReadingQueueInterface|null
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
+	 */
+	private function readingQueue(): ?AttachmentReadingQueueInterface {
+		$queue = null;
+		try {
+			$queue = $this->container->get(AttachmentReadingQueueInterface::class);
+		} catch (\Throwable) {
+			// No queue: the document is published unread, as without OCR.
+		}
+
+		if ($queue instanceof AttachmentReadingQueueInterface === false) {
+			return null;
+		}
+
+		return $queue;
+	}//end readingQueue()
 
 	/**
 	 * The public link to the publication.

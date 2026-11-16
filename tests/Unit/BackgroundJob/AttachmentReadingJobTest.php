@@ -110,11 +110,20 @@ class AttachmentReadingJobTest extends TestCase {
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('isEnabledForUser')->willReturnCallback(fn (string $app): bool => $app === 'filinq' && $this->filinqEnabled);
 
+		$file = $this->createMock(File::class);
+		$file->method('getMimeType')->willReturnCallback(fn (): string => $this->mimeType);
+		$root = $this->createMock(IRootFolder::class);
+		$root->method('getFirstNodeById')->willReturn($file);
+
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			function (string $id) use ($apps): object {
+			function (string $id) use ($apps, $root): object {
 				if ($id === IAppManager::class) {
 					return $apps;
+				}
+
+				if ($id === IRootFolder::class) {
+					return $root;
 				}
 
 				if ($id === AttachmentReadingJob::TEXT_EXTRACTION_CLASS) {
@@ -129,11 +138,6 @@ class AttachmentReadingJobTest extends TestCase {
 			}
 		);
 
-		$file = $this->createMock(File::class);
-		$file->method('getMimeType')->willReturnCallback(fn (): string => $this->mimeType);
-		$root = $this->createMock(IRootFolder::class);
-		$root->method('getFirstNodeById')->willReturn($file);
-
 		$store = $this->createMock(AttachmentReadingStore::class);
 		$store->method('record')->willReturnCallback(
 			function (int $fileId, string $publicationId, string $state, string $reason): void {
@@ -144,7 +148,6 @@ class AttachmentReadingJobTest extends TestCase {
 		return new AttachmentReadingJob(
 			$this->createMock(ITimeFactory::class),
 			$container,
-			$root,
 			$store,
 			new NullLogger(),
 			$this->guard

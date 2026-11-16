@@ -106,8 +106,7 @@ class AttachmentReadingJob extends QueuedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory.
-	 * @param ContainerInterface $container Resolves OpenRegister's extraction and filinq's fallback.
-	 * @param IRootFolder $rootFolder The file's MIME type.
+	 * @param ContainerInterface $container Resolves OpenRegister's extraction, filinq's fallback and the root folder.
 	 * @param AttachmentReadingStoreInterface $store Records the state.
 	 * @param LoggerInterface $logger Logger.
 	 * @param RedactedOriginalGuardInterface|null $redactions Tells the original of a redacted document; null reads every file.
@@ -115,7 +114,6 @@ class AttachmentReadingJob extends QueuedJob {
 	public function __construct(
 		ITimeFactory $time,
 		private readonly ContainerInterface $container,
-		private readonly IRootFolder $rootFolder,
 		private readonly AttachmentReadingStoreInterface $store,
 		private readonly LoggerInterface $logger,
 		private readonly ?RedactedOriginalGuardInterface $redactions=null,
@@ -446,7 +444,8 @@ class AttachmentReadingJob extends QueuedJob {
 	 */
 	private function mimeType(int $fileId): ?string {
 		try {
-			$node = $this->rootFolder->getFirstNodeById($fileId);
+			// Resolved on use, so the constructor keeps five collaborators.
+			$node = $this->container->get(IRootFolder::class)->getFirstNodeById($fileId);
 		} catch (Throwable $e) {
 			return null;
 		}
