@@ -39,9 +39,9 @@ use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
-use OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -1283,12 +1283,12 @@ class PublicationsController extends Controller {
 	 */
 	private function withCommentPeriod(array $publication): array {
 		try {
-			$periods = $this->container->get(PublicationCommentPeriod::class);
+			$periods = $this->container->get(PublicationCommentPeriodInterface::class);
 		} catch (\Throwable $e) {
 			return $publication;
 		}
 
-		if (($periods instanceof PublicationCommentPeriod) === false) {
+		if (($periods instanceof PublicationCommentPeriodInterface) === false) {
 			return $publication;
 		}
 

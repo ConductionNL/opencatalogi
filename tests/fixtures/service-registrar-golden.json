@@ -206,6 +206,16 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\LocalPublicationStateInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\LocalPublicationState"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\InformationRequestStoreInterface",
         "OCA\\OpenCatalogi\\Service\\Woo\\WooRequestStore"
     ],

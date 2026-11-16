@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
+use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 
 /**
@@ -33,7 +34,7 @@ use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
  *
  * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
  */
-class LocalPublicationState {
+class LocalPublicationState implements LocalPublicationStateInterface {
 
 	/**
 	 * Constructor.

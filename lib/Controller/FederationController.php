@@ -31,9 +31,9 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
-use OCA\OpenCatalogi\Service\Publication\LocalPublicationState;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -57,7 +57,7 @@ class FederationController extends Controller {
 	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param LocalPublicationState|null $localState Adds the withheld list (REQ-WDW-003) and the comment period state (REQ-PDP-003).
+	 * @param LocalPublicationStateInterface|null $localState Adds the withheld list (REQ-WDW-003) and the comment period state (REQ-PDP-003).
 	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 */
 	public function __construct(
@@ -65,7 +65,7 @@ class FederationController extends Controller {
 		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
-		private readonly ?LocalPublicationState $localState = null,
+		private readonly ?LocalPublicationStateInterface $localState = null,
 		private readonly ?AppliedFilters $appliedFilters = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);

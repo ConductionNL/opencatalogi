@@ -78,6 +78,10 @@ use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
+use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
+use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
+use OCA\OpenCatalogi\Service\Publication\LocalPublicationState;
+use OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Table\PublishedTableService;
@@ -168,6 +172,8 @@ class ServiceRegistrar {
 		SavedSearchServiceInterface::class => SavedSearchService::class,
 		DemoDataServiceInterface::class => DemoDataService::class,
 		WithheldFromPublicationInterface::class => WithheldFromPublication::class,
+		LocalPublicationStateInterface::class => LocalPublicationState::class,
+		PublicationCommentPeriodInterface::class => PublicationCommentPeriod::class,
 		InformationRequestStoreInterface::class => WooRequestStore::class,
 		PlooiDeliveryServiceInterface::class => PlooiDeliveryService::class,
 		MarkupRenderServiceInterface::class => MarkupRenderService::class,

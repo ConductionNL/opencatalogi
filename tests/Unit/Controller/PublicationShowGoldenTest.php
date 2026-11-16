@@ -304,7 +304,7 @@ class PublicationShowGoldenTest extends TestCase {
 		$commentPeriods->method('addTo')->willReturnArgument(0);
 
 		$services = [
-			\OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod::class => $commentPeriods,
+			\OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface::class => $commentPeriods,
 			IUserSession::class => $session,
 			IAppConfig::class => $config,
 			WithheldFromPublicationInterface::class => $withheld,

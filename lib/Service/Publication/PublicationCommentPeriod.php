@@ -26,6 +26,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeInterface;
 use DomainException;
+use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -42,7 +43,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
  */
-class PublicationCommentPeriod {
+class PublicationCommentPeriod implements PublicationCommentPeriodInterface {
 
 	/**
 	 * Constructor.
