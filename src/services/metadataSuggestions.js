@@ -12,6 +12,7 @@
  *
  * @param {function(string, string): string} t The translate function.
  * @return {Object<string, string>} Field to label.
+ * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
  */
 export function fieldLabels(t) {
 	return {

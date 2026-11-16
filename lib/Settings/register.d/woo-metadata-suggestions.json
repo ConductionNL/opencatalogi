@@ -166,6 +166,7 @@
 								"field": {
 									"type": "string",
 									"title": "Field",
+									"description": "The publication field the rule filled.",
 									"enum": [
 										"organization",
 										"wooCategory"
@@ -173,11 +174,13 @@
 								},
 								"value": {
 									"type": "string",
-									"title": "Value"
+									"title": "Value",
+									"description": "The value the rule wrote into the field."
 								},
 								"rule": {
 									"type": "string",
 									"title": "Rule",
+									"description": "Why the field had only one value the officer could choose.",
 									"enum": [
 										"officer-member-of-one-organisation",
 										"schema-declared-by-one-category"
@@ -186,7 +189,8 @@
 								"at": {
 									"type": "string",
 									"format": "date-time",
-									"title": "Filled at"
+									"title": "Filled at",
+									"description": "When the rule filled the field."
 								}
 							}
 						}

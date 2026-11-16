@@ -23,21 +23,21 @@
 
 declare(strict_types=1);
 
-namespace Unit\Service;
+namespace Unit\Service\MetadataSuggestion;
 
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
-use OCA\OpenCatalogi\Service\WooMetadataSuggestionService;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Tests for WooMetadataSuggestionService::suggestFromRules().
+ * Tests for MetadataSuggestionService::suggestFromRules().
  */
-#[CoversClass(WooMetadataSuggestionService::class)]
+#[CoversClass(MetadataSuggestionService::class)]
 #[UsesClass(TooiVocabularyService::class)]
-class WooMetadataSuggestionServiceTest extends TestCase {
+class MetadataSuggestionServiceTest extends TestCase {
 
 	private const ORG_TOOI = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0363';
 
@@ -46,9 +46,9 @@ class WooMetadataSuggestionServiceTest extends TestCase {
 	 *
 	 * @param array<string, array<string, mixed>> $categories Code to record, each with `schemas`.
 	 *
-	 * @return WooMetadataSuggestionService
+	 * @return MetadataSuggestionService
 	 */
-	private function service(array $categories=[]): WooMetadataSuggestionService {
+	private function service(array $categories=[]): MetadataSuggestionService {
 		$tooi = new TooiVocabularyService();
 		$records = [];
 		foreach ($tooi->informatiecategorieList() as $code => $member) {
@@ -70,7 +70,7 @@ class WooMetadataSuggestionServiceTest extends TestCase {
 			static fn (string $code): array => (array)($records[$code]['schemas'] ?? [])
 		);
 
-		return new WooMetadataSuggestionService(tooiVocabulary: $tooi, categories: $registry);
+		return new MetadataSuggestionService(tooiVocabulary: $tooi, categories: $registry);
 	}
 
 	/**
@@ -254,7 +254,7 @@ class WooMetadataSuggestionServiceTest extends TestCase {
 				'field' => 'wooCategory',
 				'value' => $code,
 				'valueLabel' => $label,
-				'source' => WooMetadataSuggestionService::SOURCE_HERMIQ,
+				'source' => MetadataSuggestionService::SOURCE_HERMIQ,
 				'reason' => "Hermiq proposed this value from the text of the publication's documents.",
 			]],
 			$proposals

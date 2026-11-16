@@ -11,10 +11,10 @@
 
 declare(strict_types=1);
 
-namespace Unit\Service\Woo;
+namespace Unit\Service\MetadataSuggestion;
 
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
-use OCA\OpenCatalogi\Service\Woo\MetadataSuggestionStore;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionStore;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;

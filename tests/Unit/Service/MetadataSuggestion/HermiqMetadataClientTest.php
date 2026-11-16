@@ -13,9 +13,9 @@
 
 declare(strict_types=1);
 
-namespace Unit\Service\Woo;
+namespace Unit\Service\MetadataSuggestion;
 
-use OCA\OpenCatalogi\Service\Woo\HermiqMetadataClient;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\HermiqMetadataClient;
 use OCP\App\IAppManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;

@@ -23,13 +23,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\MetadataSuggestion;
 
 use OCA\OpenCatalogi\Exception\MetadataSuggestionRefusedException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
-use OCA\OpenCatalogi\Service\WooMetadataSuggestionService;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -63,7 +62,7 @@ class MetadataSuggestionDecisions {
 	 * @param MetadataSuggestionStore $store The stored suggestions.
 	 * @param PublicationRights $rights The update right on one publication.
 	 * @param OpenRegisterLookup $openRegister OpenRegister's ObjectService and the publication register.
-	 * @param WooMetadataSuggestionService $suggestions The fields Hermiq is asked about, and its answers checked.
+	 * @param MetadataSuggestionService $suggestions The fields Hermiq is asked about, and its answers checked.
 	 * @param HermiqMetadataClient $hermiq Hermiq, when installed.
 	 * @param PublicationDocumentText $documents The text of the publication's documents.
 	 * @param ITimeFactory $time The clock a decision is dated by.
@@ -72,7 +71,7 @@ class MetadataSuggestionDecisions {
 		private readonly MetadataSuggestionStore $store,
 		private readonly PublicationRights $rights,
 		private readonly OpenRegisterLookup $openRegister,
-		private readonly WooMetadataSuggestionService $suggestions,
+		private readonly MetadataSuggestionService $suggestions,
 		private readonly HermiqMetadataClient $hermiq,
 		private readonly PublicationDocumentText $documents,
 		private readonly ITimeFactory $time,

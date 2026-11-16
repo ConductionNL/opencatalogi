@@ -34,6 +34,12 @@ use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use OCA\OpenCatalogi\BackgroundJob\AttachmentReadingQueue;
 use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Contract\AttachmentReadingStoreInterface;
+use OCA\OpenCatalogi\Contract\MetadataRuleSuggesterInterface;
+use OCA\OpenCatalogi\Contract\MetadataSuggestionStoreInterface;
+use OCA\OpenCatalogi\Contract\SingleLawfulValueInterface;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionService;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionStore;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\SingleLawfulValue;
 use OCA\OpenCatalogi\Contract\RedactedOriginalGuardInterface;
 use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingStore;
 use OCA\OpenCatalogi\Service\AttachmentReading\RedactedOriginalGuard;
@@ -220,6 +226,9 @@ final class ServiceBindings {
 		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
 		AttachmentReadingQueueInterface::class => AttachmentReadingQueue::class,
 		AttachmentReadingStoreInterface::class => AttachmentReadingStore::class,
+		MetadataRuleSuggesterInterface::class => MetadataSuggestionService::class,
+		MetadataSuggestionStoreInterface::class => MetadataSuggestionStore::class,
+		SingleLawfulValueInterface::class => SingleLawfulValue::class,
 		RedactedOriginalGuardInterface::class => RedactedOriginalGuard::class,
 		PlainSummaryDrafterInterface::class => PlainLanguageDrafter::class,
 		PlainSummaryProvenanceInterface::class => PlainSummaryProvenance::class,

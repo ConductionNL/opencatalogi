@@ -29,9 +29,11 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service;
+namespace OCA\OpenCatalogi\Service\MetadataSuggestion;
 
+use OCA\OpenCatalogi\Contract\MetadataRuleSuggesterInterface;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
+use OCA\OpenCatalogi\Service\TooiVocabularyService;
 
 /**
  * Proposes missing Woo metadata from data the instance holds.
@@ -39,7 +41,7 @@ use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
  * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
  * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
  */
-class WooMetadataSuggestionService {
+class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 
 	/**
 	 * The source of a suggestion made by these rules.
@@ -47,13 +49,6 @@ class WooMetadataSuggestionService {
 	 * @var string
 	 */
 	public const SOURCE_RULES = 'rules';
-
-	/**
-	 * The source of a suggestion Hermiq made on an editor's request.
-	 *
-	 * @var string
-	 */
-	public const SOURCE_HERMIQ = 'hermiq';
 
 	/**
 	 * How a record arrived, mapped to the handling type that implies: a record a

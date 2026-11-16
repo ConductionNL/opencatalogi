@@ -23,11 +23,11 @@ use OCA\OpenCatalogi\Exception\MetadataSuggestionRefusedException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
-use OCA\OpenCatalogi\Service\Woo\HermiqMetadataClient;
-use OCA\OpenCatalogi\Service\Woo\MetadataSuggestionDecisions;
-use OCA\OpenCatalogi\Service\Woo\MetadataSuggestionStore;
-use OCA\OpenCatalogi\Service\Woo\PublicationDocumentText;
-use OCA\OpenCatalogi\Service\WooMetadataSuggestionService;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\HermiqMetadataClient;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionDecisions;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionStore;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\PublicationDocumentText;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionService;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -54,7 +54,7 @@ class FakeNotAuthorizedException extends \Exception {
 #[UsesClass(MetadataSuggestionDecisions::class)]
 #[UsesClass(MetadataSuggestionStore::class)]
 #[UsesClass(MetadataSuggestionRefusedException::class)]
-#[UsesClass(WooMetadataSuggestionService::class)]
+#[UsesClass(MetadataSuggestionService::class)]
 #[UsesClass(TooiVocabularyService::class)]
 final class MetadataSuggestionControllerTest extends TestCase {
 
@@ -196,7 +196,7 @@ final class MetadataSuggestionControllerTest extends TestCase {
 			store: new MetadataSuggestionStore(config: $config, openRegister: $lookup),
 			rights: $rights,
 			openRegister: $lookup,
-			suggestions: new WooMetadataSuggestionService(tooiVocabulary: $tooi, categories: $registry),
+			suggestions: new MetadataSuggestionService(tooiVocabulary: $tooi, categories: $registry),
 			hermiq: $this->hermiq,
 			documents: $documents,
 			time: $time

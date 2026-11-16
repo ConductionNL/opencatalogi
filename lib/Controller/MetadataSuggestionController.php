@@ -27,8 +27,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Exception\MetadataSuggestionRefusedException;
-use OCA\OpenCatalogi\Service\Woo\MetadataSuggestionDecisions;
-use OCA\OpenCatalogi\Service\WooMetadataSuggestionService;
+use OCA\OpenCatalogi\Contract\MetadataRuleSuggesterInterface;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionDecisions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -90,7 +90,7 @@ class MetadataSuggestionController extends Controller {
 	#[NoAdminRequired]
 	public function create(string $id): JSONResponse {
 		$source = (string)$this->request->getParam('source', '');
-		if ($source !== WooMetadataSuggestionService::SOURCE_HERMIQ) {
+		if ($source !== MetadataRuleSuggesterInterface::SOURCE_HERMIQ) {
 			return new JSONResponse(
 				data: ['error' => 'unknown-source', 'message' => $this->l10n->t('Suggestions can only be asked of Hermiq.')],
 				statusCode: Http::STATUS_BAD_REQUEST

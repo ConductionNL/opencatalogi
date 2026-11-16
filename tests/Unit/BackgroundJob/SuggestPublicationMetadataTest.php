@@ -15,8 +15,8 @@ namespace Unit\BackgroundJob;
 
 use OCA\OpenCatalogi\BackgroundJob\SuggestPublicationMetadata;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
-use OCA\OpenCatalogi\Service\Woo\MetadataSuggestionStore;
-use OCA\OpenCatalogi\Service\WooMetadataSuggestionService;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionStore;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionService;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
@@ -136,8 +136,8 @@ final class SuggestPublicationMetadataTest extends TestCase {
 			static fn (string $id): object => str_ends_with($id, 'SchemaMapper') === true ? $schemaMapper : $organisationMapper
 		);
 
-		/** @var WooMetadataSuggestionService&MockObject $rules */
-		$rules = $this->createMock(WooMetadataSuggestionService::class);
+		/** @var MetadataSuggestionService&MockObject $rules */
+		$rules = $this->createMock(MetadataSuggestionService::class);
 		$rules->method('suggestFromRules')->willReturnCallback(
 			function (array $publication, array $context): array {
 				$this->asked[] = [$publication, $context];

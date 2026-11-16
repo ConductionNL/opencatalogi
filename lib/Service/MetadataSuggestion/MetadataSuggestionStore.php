@@ -22,8 +22,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\MetadataSuggestion;
 
+use OCA\OpenCatalogi\Contract\MetadataSuggestionStoreInterface;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
@@ -44,7 +45,7 @@ use Throwable;
  *
  * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
  */
-class MetadataSuggestionStore {
+class MetadataSuggestionStore implements MetadataSuggestionStoreInterface {
 	use ReadsObjectProperties;
 
 	/**

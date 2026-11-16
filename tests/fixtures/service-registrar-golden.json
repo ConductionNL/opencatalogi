@@ -346,6 +346,21 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\MetadataRuleSuggesterInterface",
+        "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\MetadataSuggestionService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\MetadataSuggestionStoreInterface",
+        "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\MetadataSuggestionStore"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\SingleLawfulValueInterface",
+        "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\SingleLawfulValue"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\RedactedOriginalGuardInterface",
         "OCA\\OpenCatalogi\\Service\\AttachmentReading\\RedactedOriginalGuard"
     ],

@@ -22,8 +22,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\MetadataSuggestion;
 
+use OCA\OpenCatalogi\Contract\SingleLawfulValueInterface;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\AppFramework\Utility\ITimeFactory;
@@ -48,7 +49,7 @@ use Throwable;
  *
  * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-a-field-with-one-lawful-value-for-this-officer-fills-itself-req-wms-004
  */
-class SingleLawfulValue {
+class SingleLawfulValue implements SingleLawfulValueInterface {
 
 	/**
 	 * The rule that filled an organisation: the officer is a member of one organisation only.

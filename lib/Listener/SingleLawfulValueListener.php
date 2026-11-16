@@ -25,7 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\Woo\SingleLawfulValue;
+use OCA\OpenCatalogi\Contract\SingleLawfulValueInterface;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -47,12 +47,12 @@ class SingleLawfulValueListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param SingleLawfulValue $lawfulValue Computes the fills.
+	 * @param SingleLawfulValueInterface $lawfulValue Computes the fills.
 	 * @param IUserSession $userSession The officer creating the object.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly SingleLawfulValue $lawfulValue,
+		private readonly SingleLawfulValueInterface $lawfulValue,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {

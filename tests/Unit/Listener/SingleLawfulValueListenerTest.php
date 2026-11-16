@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace Unit\Listener;
 
 use OCA\OpenCatalogi\Listener\SingleLawfulValueListener;
-use OCA\OpenCatalogi\Service\Woo\SingleLawfulValue;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\SingleLawfulValue;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
@@ -25,7 +25,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Unit\Service\Woo\SingleLawfulValueTest;
+use Unit\Service\MetadataSuggestion\SingleLawfulValueTest;
 
 /**
  * Tests for SingleLawfulValueListener.
@@ -43,7 +43,7 @@ final class SingleLawfulValueListenerTest extends TestCase {
 	 * @return SingleLawfulValueListener
 	 */
 	private function listener(array $organisations, bool $signedIn=true): SingleLawfulValueListener {
-		require_once __DIR__ . '/../Service/Woo/SingleLawfulValueTest.php';
+		require_once __DIR__ . '/../Service/MetadataSuggestion/SingleLawfulValueTest.php';
 		$user = null;
 		if ($signedIn === true) {
 			$user = $this->createMock(IUser::class);

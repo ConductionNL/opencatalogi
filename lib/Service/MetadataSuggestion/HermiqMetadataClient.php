@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\MetadataSuggestion;
 
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;

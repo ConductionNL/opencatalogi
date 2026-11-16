@@ -2192,6 +2192,54 @@
         "summary": "Voorbeeldpublicatie uit de demodata: een geplande publicatie, zodat het overzicht van niet-gepubliceerde publicaties er een laat zien.",
         "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd. De publicatiedatum ligt ver in de toekomst, zodat de rij gepland blijft. Gemeente Voorbeeld bestaat niet en staat voor geen echte overheidsorganisatie.",
         "publicationDate": "2030-01-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "metadataSuggestion",
+          "slug": "metadatasuggestion-metadatasuggestion-1-1"
+        },
+        "publication": "Voorbeeld Publication 1",
+        "field": "wooCategory",
+        "value": "Voorbeeld Value 1",
+        "source": "rules",
+        "status": "pending",
+        "valueLabel": "Voorbeeld Valuelabel 1",
+        "reason": "Voorbeeld Reason 1",
+        "decidedBy": "Voorbeeld Decidedby 1",
+        "decidedAt": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "metadataSuggestion",
+          "slug": "metadatasuggestion-metadatasuggestion-2-2"
+        },
+        "publication": "Voorbeeld Publication 2",
+        "field": "soortHandeling",
+        "value": "Voorbeeld Value 2",
+        "source": "hermiq",
+        "status": "accepted",
+        "valueLabel": "Voorbeeld Valuelabel 2",
+        "reason": "Voorbeeld Reason 2",
+        "decidedBy": "Voorbeeld Decidedby 2",
+        "decidedAt": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "metadataSuggestion",
+          "slug": "metadatasuggestion-metadatasuggestion-3-3"
+        },
+        "publication": "Voorbeeld Publication 3",
+        "field": "organization",
+        "value": "Voorbeeld Value 3",
+        "source": "rules",
+        "status": "rejected",
+        "valueLabel": "Voorbeeld Valuelabel 3",
+        "reason": "Voorbeeld Reason 3",
+        "decidedBy": "Voorbeeld Decidedby 3",
+        "decidedAt": "2026-03-03T09:00:00+00:00"
       }
     ]
   }

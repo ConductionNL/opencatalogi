@@ -13,11 +13,11 @@
 
 declare(strict_types=1);
 
-namespace Unit\Service\Woo;
+namespace Unit\Service\MetadataSuggestion;
 
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
-use OCA\OpenCatalogi\Service\Woo\SingleLawfulValue;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\SingleLawfulValue;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use OCP\IUser;

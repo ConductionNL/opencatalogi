@@ -13,9 +13,9 @@
 
 declare(strict_types=1);
 
-namespace Unit\Service\Woo;
+namespace Unit\Service\MetadataSuggestion;
 
-use OCA\OpenCatalogi\Service\Woo\PublicationDocumentText;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\PublicationDocumentText;
 use OCP\App\IAppManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;

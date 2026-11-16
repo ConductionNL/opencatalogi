@@ -26,8 +26,8 @@ namespace OCA\OpenCatalogi\BackgroundJob;
 
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
-use OCA\OpenCatalogi\Service\Woo\MetadataSuggestionStore;
-use OCA\OpenCatalogi\Service\WooMetadataSuggestionService;
+use OCA\OpenCatalogi\Contract\MetadataRuleSuggesterInterface;
+use OCA\OpenCatalogi\Contract\MetadataSuggestionStoreInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\QueuedJob;
 use OCP\IAppConfig;
@@ -39,7 +39,7 @@ use Psr\Log\LoggerInterface;
  * The argument names the publication: `register`, `schema` and `id`. The job
  * reads what the instance knows around it (its schema's slug, the
  * organisation of the catalogue it sits in, the suggestions it already has),
- * asks WooMetadataSuggestionService for proposals and stores each as a
+ * asks MetadataSuggestionService for proposals and stores each as a
  * pending suggestion. Nothing is written to the publication itself.
  */
 class SuggestPublicationMetadata extends QueuedJob {
@@ -56,16 +56,16 @@ class SuggestPublicationMetadata extends QueuedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time The clock.
-	 * @param WooMetadataSuggestionService $suggestions The rules floor.
-	 * @param MetadataSuggestionStore $store Where suggestions are stored.
+	 * @param MetadataRuleSuggesterInterface $suggestions The rules floor.
+	 * @param MetadataSuggestionStoreInterface $store Where suggestions are stored.
 	 * @param OpenRegisterLookup $openRegister OpenRegister's services.
 	 * @param IAppConfig $config Holds the catalogue register and schema.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly WooMetadataSuggestionService $suggestions,
-		private readonly MetadataSuggestionStore $store,
+		private readonly MetadataRuleSuggesterInterface $suggestions,
+		private readonly MetadataSuggestionStoreInterface $store,
 		private readonly OpenRegisterLookup $openRegister,
 		private readonly IAppConfig $config,
 		private readonly LoggerInterface $logger,
@@ -151,7 +151,11 @@ class SuggestPublicationMetadata extends QueuedJob {
 			return null;
 		}
 
-		return is_string($slug) === true && $slug !== '' ? $slug : null;
+		if (is_string($slug) === false || $slug === '') {
+			return null;
+		}
+
+		return $slug;
 	}//end schemaSlug()
 
 	/**
