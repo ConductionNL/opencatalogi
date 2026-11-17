@@ -11,11 +11,13 @@ Read `lib/Settings/register.d/publiccode-github-harvest.json` and `lib/Service/P
 
 - [x] 2.1 Add `CouncilHarvestService` with `status()`, `setUp(string $sourceSlug)`, `setEnabled(bool)`, `runNow()` and the refusals of design D5 risks (REQ-CDH-001). Verify: `tests/Unit/Service/CouncilHarvestServiceTest.php::testSetUpWritesTheSynchronizationAndRuleForNotubiz`, `::testSetUpRefusesAnIbabsSourceWithoutAKey`, `::testSetUpRefusesWithoutIntegriq`.
 - [x] 2.2 Add `CouncilHarvestController` and the admin-only routes `/api/settings/council-harvest`, `/setup`, `/enable`, `/disable`, `/run` next to the publiccode harvest routes. Verify: a controller test per route and a route-table test.
-- [ ] 2.3 Upsert on the source identifier (REQ-CDH-003). Verify: `tests/Unit/Flow/CouncilHarvestFlowTest.php::testASecondRunUpdatesAndCreatesNothing`, `::testAPublicDocumentBecomesAConceptPublicationWithItsFile`, `::testADocumentNotMarkedPublicIsNotWritten`, run over a recorded Notubiz page fixture.
+- [x] 2.3 Upsert on the source identifier (REQ-CDH-003). Verify: `tests/Unit/Flow/CouncilHarvestFlowTest.php::testASecondRunUpdatesAndCreatesNothing`, `::testAPublicDocumentBecomesAConceptPublicationWithItsFile`, `::testADocumentNotMarkedPublicIsNotWritten`, run over a recorded Notubiz page fixture.
+  - Built: `tests/Unit/Flow/CouncilHarvestFlowTest.php` replays the shipped Notubiz flow's tail over the recorded page `tests/fixtures/notubiz/documents-page.json`: items at the synchronization's `resultsPosition`, the flow's own JSON Logic filter, its own mapping rendered with Twig, and the upsert on the write node's own `match` (`caseReference`). A changed filter or match key fails all three tests.
 
 ## 3. Settings section
 
 - [ ] 3.1 Add the "Council documents" section to the admin settings after "GitHub harvest" (board `OcInstellingen`), with the fields and actions of design D5 and the decidiq warning (REQ-CDH-001). Verify: `tests/e2e/council-documents-harvest.spec.ts` "an administrator sets up the council harvest", carrying `@e2e` REQ-CDH-001.
+  - Round 2: `tests/e2e/council-documents-harvest.spec.ts` is written (admin sets up from `notubiz-ris-v1`, sees Run now and Switch on/off, switches it off again; a context with an empty storage state is refused on the status and set-up routes). Not run: needs a live instance with integriq and its Notubiz source.
 - [x] 3.2 Add the strings to `l10n/` (en, nl) and document the harvest for administrators in `docs/`. Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
 
 ## 4. Verification
