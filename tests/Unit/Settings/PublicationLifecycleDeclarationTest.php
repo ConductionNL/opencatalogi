@@ -105,6 +105,9 @@ final class PublicationLifecycleDeclarationTest extends TestCase {
 			);
 		}
 
+		// REQ-PLC-005: every approval stamps the moment a calling system reconciles on.
+		self::assertSame([['action' => 'set-fields', 'actionParameters' => ['approvedAt' => '@now']]], $transitions['approve']['actions']);
+		self::assertSame('date-time', $publication['properties']['approvedAt']['format']);
 		self::assertSame(ReviewNotRequiredGuard::class, $transitions['publishWithoutReview']['requires']);
 		self::assertArrayNotHasKey('requires', $transitions['publish']);
 		self::assertTrue(class_exists($transitions['publishWithoutReview']['requires']));

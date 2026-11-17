@@ -131,6 +131,8 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// The publication lifecycle (publication-lifecycle-on-or REQ-PLC-001): literal
 		// paths, declared before every /api/{catalogSlug}/{id} route so they are not read as an id.
 		['name' => 'publicationLifecycle#index', 'url' => '/api/publications/lifecycle', 'verb' => 'GET'],
+		// The publications ready to publish, for a calling system to reconcile (REQ-PLC-005).
+		['name' => 'readyPublications#index', 'url' => '/api/publications/ready', 'verb' => 'GET'],
 		['name' => 'publicationState#visibility', 'url' => '/api/publications/{id}/visibility', 'verb' => 'GET'],
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],

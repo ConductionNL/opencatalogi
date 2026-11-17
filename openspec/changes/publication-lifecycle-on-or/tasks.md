@@ -27,7 +27,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy the `env
 
 ## 5. Ready list
 
-- [ ] 5.1 Add `GET /api/publications/ready` (`#[NoAdminRequired]`, no `#[PublicPage]`), declared before the `{id}` routes, reading through `ObjectService` so the caller's read rights apply (REQ-PLC-005). Verify: `tests/Unit/Controller/ReadyPublicationsControllerTest.php::testOnlyApprovedPublicationsAreListed` (fails today: no route), `::testSinceFiltersOnTheMomentOfApproval`, `::testAnAnonymousCallerIsRefused`; and `tests/Unit/AppInfo/RouteNameUniquenessTest.php` stays green.
+- [x] 5.1 Add `GET /api/publications/ready` (`#[NoAdminRequired]`, no `#[PublicPage]`), declared before the `{id}` routes, reading through `ObjectService` so the caller's read rights apply (REQ-PLC-005). Verify: `tests/Unit/Controller/ReadyPublicationsControllerTest.php::testOnlyApprovedPublicationsAreListed` (fails today: no route), `::testSinceFiltersOnTheMomentOfApproval`, `::testAnAnonymousCallerIsRefused`; and `tests/Unit/AppInfo/RouteNameUniquenessTest.php` stays green.
+  - Done: `ReadyPublicationsController` over `ReadyPublicationsService`, which reads `status: approved` through the object service with RBAC on and checks every row again. The `approve` transition now stamps `approvedAt` (`set-fields` `@now`), the moment `since` filters on. 401 without a session, 400 for an unreadable `since`.
 
 ## 6. Unlisted
 

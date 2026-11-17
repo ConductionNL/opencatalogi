@@ -284,6 +284,13 @@
             "facetable": false,
             "title": "First released at"
           },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the publication last entered the approved state; a calling system reconciles on it through GET /api/publications/ready (REQ-PLC-005).",
+            "facetable": false,
+            "title": "Approved at"
+          },
           "unlisted": {
             "type": "boolean",
             "description": "When true, a public publication stays readable at its own link but is left out of search, the sitemaps, DCAT, PLOOI delivery and the federation list (REQ-PLC-006). Clearing it puts the publication back.",
@@ -342,7 +349,15 @@
               ],
               "to": "approved",
               "label": "Approve",
-              "description": "Approve the publication for publishing"
+              "description": "Approve the publication for publishing",
+              "actions": [
+                {
+                  "action": "set-fields",
+                  "actionParameters": {
+                    "approvedAt": "@now"
+                  }
+                }
+              ]
             },
             "reject": {
               "from": [
