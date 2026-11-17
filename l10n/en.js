@@ -166,6 +166,8 @@ OC.L10N.register(
         "Property \"url\" is required": "Property \"url\" is required",
         "Public": "Public",
         "Publication not found": "Publication not found",
+        "At least one output option must be enabled; \"download\" was false": "At least one output option must be enabled; \"download\" was false",
+        "Failed to read the rendered publication metadata PDF": "Failed to read the rendered publication metadata PDF",
         "Publication types": "Publication types",
         "Publications": "Publications",
         "publications": "publications",
