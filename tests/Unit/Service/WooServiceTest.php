@@ -414,6 +414,10 @@ class WooServiceTest extends TestCase {
 					return $this->engine;
 				}
 
+				if ($id === \OCA\OpenCatalogi\Service\Publication\PublishTransition::class) {
+					return $this->publishTransition();
+				}
+
 				if ($id === 'OCA\OpenRegister\Service\FileService') {
 					return $this->files;
 				}
@@ -1061,7 +1065,9 @@ class WooServiceTest extends TestCase {
 		$this->assertSame('infocat014', $publication['wooCategory']);
 		$this->assertSame('WOO-2026-009', $publication['caseReference']);
 		$this->assertSame('Woo-publicatie WOO-2026-009', $publication['title']);
-		$this->assertNotEmpty($publication['publicationDate']);
+		// Created approved; the publish transition writes the publication date (REQ-PLC-003).
+		$this->assertSame('approved', $publication['status']);
+		$this->assertArrayNotHasKey('publicationDate', $publication);
 		$this->assertContains(['register' => 'publication', 'schema' => 'publication'], $this->objects->saveTargets);
 
 		$this->assertSame(['a.pdf', 'b.pdf', 'c-gelakt.pdf'], array_column($this->files->added, 'name'));
@@ -1562,4 +1568,16 @@ class WooServiceTest extends TestCase {
 		];
 
 	}//end seedBatchWithAssessments()
+
+	/**
+	 * A PublishTransition double: the batch's publication is published by the lifecycle (REQ-PLC-003).
+	 *
+	 * @return \OCA\OpenCatalogi\Service\Publication\PublishTransition
+	 */
+	private function publishTransition(): \OCA\OpenCatalogi\Service\Publication\PublishTransition {
+		$publisher = $this->createMock(\OCA\OpenCatalogi\Service\Publication\PublishTransition::class);
+		$publisher->method('publish')->willReturn(new \stdClass());
+
+		return $publisher;
+	}//end publishTransition()
 }//end class
