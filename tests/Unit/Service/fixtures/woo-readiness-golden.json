@@ -61,6 +61,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -156,6 +161,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -245,6 +255,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -333,6 +348,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -423,6 +443,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -511,6 +536,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -617,6 +647,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -711,6 +746,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -797,6 +837,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -885,6 +930,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -973,6 +1023,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1061,6 +1116,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1150,6 +1210,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1239,6 +1304,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1333,6 +1403,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1425,6 +1500,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1514,6 +1594,11 @@
                 "status": "registered",
                 "registeredUrl": "https://other.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1601,6 +1686,11 @@
                 "status": "requested",
                 "registeredUrl": "",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1647,6 +1737,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1838,6 +1933,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1902,6 +2002,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1931,6 +2036,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1960,6 +2070,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -1989,6 +2104,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -2018,6 +2138,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -2058,6 +2183,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -2138,6 +2268,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -2204,6 +2339,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -2289,6 +2429,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
@@ -2384,6 +2529,11 @@
                 "status": "registered",
                 "registeredUrl": "https://example.org",
                 "registeredAt": "2026-01-01"
+            },
+            "mapping": {
+                "source": "built-in",
+                "refusal": null,
+                "fieldsFromMapping": []
             }
         },
         "fetched": [
