@@ -46,6 +46,7 @@ use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Http\DcatNegotiation;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
 use OCA\OpenRegister\Kernel\Contracts\RenderSelection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -1268,6 +1269,37 @@ class PublicationsController extends Controller {
 	}//end inCatalogScope()
 
 	/**
+	 * A rendered publication with its public and officer pages computed now.
+	 *
+	 * The stored values were computed when it was created; a setting changed
+	 * since then shows here at once (REQ-PTS-001). Only an object of the
+	 * publication schema carries them. When they cannot be computed the stored
+	 * values are answered.
+	 *
+	 * @param array<string, mixed> $result The rendered publication.
+	 * @param object               $object The publication entity.
+	 *
+	 * @return array<string, mixed> The publication.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	private function withFreshLinks(array $result, object $object): array {
+		$schema = (string)($this->appConfig?->getValueString('opencatalogi', 'publication_schema', '') ?? '');
+		if ($schema === '' || (string)$object->getSchema() !== $schema) {
+			return $result;
+		}
+
+		try {
+			$links = $this->container->get(PublicationLinks::class)->for(uuid: (string)$object->getUuid(), schema: $schema);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[PublicationsController::show] The publication pages could not be computed: ' . $e->getMessage());
+			return $result;
+		}
+
+		return array_merge($result, $links);
+	}//end withFreshLinks()
+
+	/**
 	 * Render a publication with the sanitised extend list and answer it as JSON or schema.org JSON-LD.
 	 *
 	 * A catalogue that opted in shows what was withheld and why
@@ -1291,6 +1323,10 @@ class PublicationsController extends Controller {
 		if ($this->wantsSchemaOrg() === true) {
 			$response = $this->schemaOrgResponse(read: $read, result: $result);
 		} else {
+			if (is_array($result) === true) {
+				$result = $this->withFreshLinks(result: $result, object: $found->object);
+			}
+
 			if (($read->catalog['showWithheld'] ?? false) === true && is_array($result) === true) {
 				$result = $this->container->get(WithheldFromPublicationInterface::class)->addForCatalog(
 					response: $result,
