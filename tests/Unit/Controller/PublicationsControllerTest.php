@@ -1108,6 +1108,50 @@ class PublicationsControllerTest extends TestCase {
 	}
 
 	/**
+	 * Publication-lifecycle-on-or REQ-PLC-006: an unlisted publication still opens at its own link.
+	 *
+	 * @return void
+	 */
+	public function testShowStillAnswersAnUnlistedPublication(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$mockObjService->method('searchObjects')->willReturn([$this->createObjectEntityMock()]);
+		$mockObjService->method('renderEntity')->willReturn(['id' => 'pub-123', 'title' => 'Niet in de lijst', 'unlisted' => true]);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$response = $this->controller->show('test-catalog', 'pub-123');
+
+		$this->assertEquals(200, $response->getStatus());
+		$this->assertSame('pub-123', $response->getData()['id']);
+	}
+
+	/**
+	 * An anonymous catalogue page leaves unlisted publications out and lowers its total.
+	 *
+	 * @return void
+	 */
+	public function testAnAnonymousListLeavesUnlistedPublicationsOut(): void {
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface::class);
+		$queryService->method('isAnonymous')->willReturn(true);
+		$view = $this->createMock(\OCA\OpenCatalogi\Contract\PublishedRecordViewInterface::class);
+		$view->method('viewList')->willReturnArgument(0);
+		$container = $this->createMock(\Psr\Container\ContainerInterface::class);
+		$container->method('get')->willReturn($view);
+		$controller = (new \ReflectionClass(PublicationsController::class))->newInstanceWithoutConstructor();
+		(new \ReflectionProperty(PublicationsController::class, 'queryService'))->setValue($controller, $queryService);
+		(new \ReflectionProperty(PublicationsController::class, 'container'))->setValue($controller, $container);
+
+		$page = (new \ReflectionMethod(PublicationsController::class, 'anonymousResults'))->invoke(
+			$controller,
+			['results' => [['id' => 'a'], ['id' => 'b', 'unlisted' => true], ['id' => 'c', 'unlisted' => false]], 'total' => 3]
+		);
+
+		$this->assertSame(['a', 'c'], array_column($page['results'], 'id'));
+		$this->assertSame(2, $page['total']);
+	}
+
+	/**
 	 * A publication with a published table lists it, with its rows and dictionary URLs (REQ-ODT-003).
 	 *
 	 * @return void

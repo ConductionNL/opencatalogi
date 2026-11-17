@@ -28,6 +28,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
@@ -749,6 +750,11 @@ class SitemapService implements SitemapServiceInterface {
 		foreach ($rows as $publication) {
 			if (is_array($publication) === false) {
 				$publication = $publication->jsonSerialize();
+			}
+
+			// REQ-PLC-006: an unlisted publication is left out of the DiWoo sitemaps.
+			if (UnlistedPublications::isUnlisted(row: $publication) === true) {
+				continue;
 			}
 
 			$files = ($fileService->formatFiles($fileService->getFiles(object: $publication['id']))['results'] ?? []);

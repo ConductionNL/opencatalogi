@@ -23,6 +23,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
@@ -620,6 +621,11 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 				name: AppliedFilters::ARCHIVED_EXCLUDED,
 				reason: 'Archived publications are never shown on a public list.'
 			);
+			return null;
+		}
+
+		// REQ-PLC-006: an unlisted publication is reachable at its own link, never found by search.
+		if (UnlistedPublications::isUnlisted(row: $rowArray) === true) {
 			return null;
 		}
 

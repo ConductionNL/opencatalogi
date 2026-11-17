@@ -32,7 +32,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy the `env
 
 ## 6. Unlisted
 
-- [ ] 6.1 Read `unlisted` in the query builders of `PublicationQueryService`, `SitemapService`, `DcatService` and `FederationController::publications()`, and refuse it in `PlooiDeliveryService::deliver()` (REQ-PLC-006). Verify: `tests/Unit/Service/UnlistedPublicationTest.php::testAnUnlistedPublicationIsAbsentFromSitemapDcatAndFederation`, `::testAnUnlistedPublicationIsStillReadableById`, `tests/Unit/Service/Publication/PlooiDeliveryServiceTest.php::testAnUnlistedPublicationIsNotDelivered`. Each fails today.
+- [x] 6.1 Read `unlisted` in the query builders of `PublicationQueryService`, `SitemapService`, `DcatService` and `FederationController::publications()`, and refuse it in `PlooiDeliveryService::deliver()` (REQ-PLC-006). Verify: `tests/Unit/Service/UnlistedPublicationTest.php::testAnUnlistedPublicationIsAbsentFromSitemapDcatAndFederation`, `::testAnUnlistedPublicationIsStillReadableById`, `tests/Unit/Service/Publication/PlooiDeliveryServiceTest.php::testAnUnlistedPublicationIsNotDelivered`. Each fails today.
+  - Done: `UnlistedPublications` is read where each surface gathers its rows: the search row loop (beside the RET-006 archived drop), the anonymous catalogue list, the sitemap's `publicationsWithFiles()`, DCAT's `searchCatalogPage()` and the federation's local page; in PHP, not SQL, so a legacy row with a NULL flag stays listed. PLOOI delivery refuses an unlisted publication and records `plooiReason: unlisted`. The by-id read is untouched (`PublicationsControllerTest::testShowStillAnswersAnUnlistedPublication`).
 - [ ] 6.2 Add Unlist and List again to the detail page (REQ-PLC-006). Verify: `tests/e2e/publication-lifecycle.spec.ts` "unlisted, still reachable" and "put back".
 
 ## 7. Upgrade

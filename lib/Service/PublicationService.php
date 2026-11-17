@@ -41,6 +41,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use Exception;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
@@ -2009,7 +2010,8 @@ class PublicationService implements PublicationServiceInterface {
 	private function fetchLocalPublicationData(array $queryParams): array {
 		$response = $this->index(catalogId: null, customParams: $queryParams);
 
-		return (json_decode($response->render(), true) ?? []);
+		// REQ-PLC-006: the federation list never carries an unlisted publication.
+		return UnlistedPublications::withoutUnlisted(page: (json_decode($response->render(), true) ?? []));
 	}//end fetchLocalPublicationData()
 
 	/**

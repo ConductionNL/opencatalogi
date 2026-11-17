@@ -32,6 +32,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
@@ -890,6 +891,9 @@ class PublicationsController extends Controller {
 		if (is_array($result['results'] ?? null) === false || $this->queryService->isAnonymous() === false) {
 			return $result;
 		}
+
+		// REQ-PLC-006: an anonymous list never carries an unlisted publication; its own link still opens it.
+		$result = UnlistedPublications::withoutUnlisted(page: $result);
 
 		$views = $this->container->get(PublishedRecordViewInterface::class)->viewList(records: array_values($result['results']));
 		if (is_numeric($result['total'] ?? null) === true) {

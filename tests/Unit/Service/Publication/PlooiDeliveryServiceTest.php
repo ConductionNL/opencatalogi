@@ -141,6 +141,22 @@ class PlooiDeliveryServiceTest extends TestCase {
 		$this->assertTheSchemaAccepts(array_intersect_key($this->saved, array_flip(PlooiDeliveryService::FIELDS)));
 	}
 
+	/** Publication-lifecycle-on-or REQ-PLC-006: an unlisted publication is not delivered, and the reason `unlisted` is recorded. */
+	public function testAnUnlistedPublicationIsNotDelivered(): void {
+		$this->catalogs([['registers' => ['7'], 'schemas' => ['12'], 'plooiDelivery' => true]]);
+		$entity = $this->objects->find(id: 'pub-1');
+		$entity->setObject(['title' => 'Besluit', 'publicationDate' => '2026-09-01T00:00:00+00:00', 'unlisted' => true]);
+		$this->index->expects($this->never())->method('deliverToPlooi');
+
+		$result = $this->service()->deliver(uuid: 'pub-1', register: '7', schema: '12');
+
+		$this->assertSame('failed', $result['plooiStatus']);
+		$this->assertSame('unlisted', $result['plooiReason']);
+		$this->assertSame('unlisted', $this->saved['plooiReason']);
+		$this->assertTrue($this->saved['unlisted']);
+		$this->assertTheSchemaAccepts(array_intersect_key($this->saved, array_flip(PlooiDeliveryService::FIELDS)));
+	}
+
 	/** A publication in no catalogue with PLOOI delivery on is left alone. */
 	public function testAPublicationOutsideAPlooiCatalogueIsNotDelivered(): void {
 		$this->catalogs([['registers' => ['7'], 'schemas' => ['99'], 'plooiDelivery' => true]]);

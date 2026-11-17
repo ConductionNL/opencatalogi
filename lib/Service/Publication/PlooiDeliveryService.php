@@ -102,6 +102,11 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		}
 
 		$publication = $entity->jsonSerialize();
+		// REQ-PLC-006: an unlisted publication is not delivered; the refusal is recorded as `unlisted`.
+		if (UnlistedPublications::isUnlisted(row: $publication) === true) {
+			return $this->recordUnlisted(publication: $publication, uuid: $uuid, target: new ObjectFindTarget(register: $register, schema: $schema));
+		}
+
 		// In staging the document is kept as a dry run, and the publication is left as it is:
 		// no plooiStatus and no plooiDeliveredAt claim a delivery that never happened.
 		$held = $this->dryRuns?->hold(channel: 'plooi', payload: $this->document(publication: $publication, uuid: $uuid));
@@ -138,6 +143,35 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 
 		return $fields;
 	}//end deliver()
+
+	/**
+	 * Record that an unlisted publication was not delivered, and say so.
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param string               $uuid        Its uuid.
+	 * @param ObjectFindTarget     $target      Its register and schema.
+	 *
+	 * @return array<string, string> The fields written.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+	 */
+	private function recordUnlisted(array $publication, string $uuid, ObjectFindTarget $target): array {
+		$fields = [
+			'plooiStatus' => 'failed',
+			'plooiReason' => 'unlisted',
+			'plooiDeliveredAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM),
+		];
+		$record = $publication;
+		unset($record['@self']);
+		$this->settingsService->getObjectService()?->saveObject(
+			object: array_merge($record, $fields),
+			options: new ObjectSaveOptions(target: $target, uuid: $uuid, policy: new SavePolicy(silent: true)),
+			_rbac: false,
+			_multitenancy: false
+		);
+
+		return $fields;
+	}//end recordUnlisted()
 
 	/**
 	 * The DiWoo metadata and document links sent to PLOOI.
