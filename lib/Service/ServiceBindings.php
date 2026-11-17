@@ -67,6 +67,10 @@ use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
+use OCA\OpenCatalogi\Contract\HandoverStateInterface;
+use OCA\OpenCatalogi\Contract\IntakeForwardInterface;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
+use OCA\OpenCatalogi\Service\Woo\DossiqWooForward;
 use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
 use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
 use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
@@ -211,6 +215,8 @@ final class ServiceBindings {
 		LocalPublicationStateInterface::class => LocalPublicationState::class,
 		PublicationCommentPeriodInterface::class => PublicationCommentPeriod::class,
 		InformationRequestStoreInterface::class => WooRequestStore::class,
+		HandoverStateInterface::class => HandoverState::class,
+		IntakeForwardInterface::class => DossiqWooForward::class,
 		PlooiDeliveryServiceInterface::class => PlooiDeliveryService::class,
 		MarkupRenderServiceInterface::class => MarkupRenderService::class,
 		DepublicationServiceInterface::class => DepublicationService::class,
