@@ -1849,6 +1849,14 @@ OC.L10N.register(
         "The publications this one replaces. Each of them reads that it is replaced by this one.": "The publications this one replaces. Each of them reads that it is replaced by this one.",
         "The source system, such as case or decos.": "The source system, such as case or decos.",
         "Whether the identifier may be shown and searched on the public API.": "Whether the identifier may be shown and searched on the public API.",
+        "Woo requests": "Woo requests",
+        "Woo requests are handled by dossiq, which is not installed.": "Woo requests are handled by dossiq, which is not installed.",
+        "Install dossiq from the app store": "Install dossiq from the app store",
+        "The Woo requests stored here have not been handed to dossiq yet.": "The Woo requests stored here have not been handed to dossiq yet.",
+        "Woo requests not yet moved to dossiq: {count}": "Woo requests not yet moved to dossiq: {count}",
+        "Of those, dossiq could not move: {count}": "Of those, dossiq could not move: {count}",
+        "Counted on {date}": "Counted on {date}",
+        "Every Woo request has moved to dossiq; the requests stored here are read-only.": "Every Woo request has moved to dossiq; the requests stored here are read-only.",
         "Column": "Column",
         "Description of {column}": "Description of {column}",
         "Importing the rows…": "Importing the rows…",
@@ -1867,7 +1875,14 @@ OC.L10N.register(
         "Send the columns as a list.": "Send the columns as a list.",
         "The table could not be published.": "The table could not be published.",
         "This table has no column named %s.": "This table has no column named %s.",
-        "The table \"%s\" does not exist or is not accessible.": "The table \"%s\" does not exist or is not accessible."
+        "The table \"%s\" does not exist or is not accessible.": "The table \"%s\" does not exist or is not accessible.",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegister version",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister carries the engine OpenCatalogi needs.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi cannot start",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.",
+        "Invalid listing": "Invalid listing",
+        "Listing not found in scope": "Listing not found in scope"
     },
     "nplurals=2; plural=(n != 1);"
 )

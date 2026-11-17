@@ -145,6 +145,11 @@ class PublicationService implements PublicationServiceInterface {
 	];
 
 	/**
+	 * The folder of a download archive that holds the attachments (REQ-DWN-006).
+	 */
+	private const ATTACHMENTS_FOLDER = 'Bijlagen/';
+
+	/**
 	 * The object service instance.
 	 *
 	 * @var object|null
@@ -1353,6 +1358,8 @@ class PublicationService implements PublicationServiceInterface {
 				$this->removeZipEntriesNotIn(zipPath: $zipInfo['path'], keepNames: $sharedNames);
 			}
 
+			$this->moveZipEntriesIntoAttachmentsFolder(zipPath: $zipInfo['path']);
+
 			// Render the publication metadata PDF and pipe it into the ZIP alongside the
 			// attachments streamed from OR's file service (DWN-OR-001 / DWN-OR-003).
 			$metadataPdf = $this->downloadService->createPublicationFile(
@@ -1509,6 +1516,46 @@ class PublicationService implements PublicationServiceInterface {
 		$zip->close();
 
 	}//end removeZipEntriesNotIn()
+
+	/**
+	 * Move every entry of the archive under `Bijlagen/`.
+	 *
+	 * OpenRegister writes an object's files at the root of the archive; the download
+	 * puts the metadata PDF there and the attachments in `Bijlagen/` (REQ-DWN-006).
+	 *
+	 * @param string $zipPath Path of the ZIP archive to rewrite in place.
+	 *
+	 * @return void
+	 *
+	 * @throws Exception When the archive cannot be opened or an entry cannot be renamed.
+	 *
+	 * @spec openspec/specs/download-service/spec.md
+	 */
+	private function moveZipEntriesIntoAttachmentsFolder(string $zipPath): void {
+		$zip = new ZipArchive();
+		if ($zip->open($zipPath) !== true) {
+			// An archive whose every entry was removed no longer exists on disk.
+			return;
+		}
+
+		$renames = [];
+		for ($index = 0; $index < $zip->numFiles; $index++) {
+			$entryName = (string) $zip->getNameIndex($index);
+			if (str_starts_with($entryName, self::ATTACHMENTS_FOLDER) === false) {
+				$renames[$index] = self::ATTACHMENTS_FOLDER . $entryName;
+			}
+		}
+
+		foreach ($renames as $index => $newName) {
+			if ($zip->renameIndex($index, $newName) === false) {
+				$zip->close();
+				throw new Exception('Failed to move an attachment into the Bijlagen folder of the ZIP archive');
+			}
+		}
+
+		$zip->close();
+
+	}//end moveZipEntriesIntoAttachmentsFolder()
 
 	/**
 	 * Whether the current request has no signed-in user.

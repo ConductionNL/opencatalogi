@@ -1803,6 +1803,14 @@
         "The publications this one replaces. Each of them reads that it is replaced by this one.": "De publicaties die deze vervangt. Bij elk daarvan staat dat het door deze wordt vervangen.",
         "The source system, such as case or decos.": "Het bronsysteem, zoals case of decos.",
         "Whether the identifier may be shown and searched on the public API.": "Of het kenmerk via de openbare API getoond en doorzocht mag worden.",
+        "Woo requests": "Woo-verzoeken",
+        "Woo requests are handled by dossiq, which is not installed.": "Woo-verzoeken worden behandeld in dossiq, en dossiq is niet geïnstalleerd.",
+        "Install dossiq from the app store": "Installeer dossiq uit de app store",
+        "The Woo requests stored here have not been handed to dossiq yet.": "De Woo-verzoeken die hier zijn opgeslagen zijn nog niet aan dossiq overgedragen.",
+        "Woo requests not yet moved to dossiq: {count}": "Woo-verzoeken nog niet naar dossiq overgezet: {count}",
+        "Of those, dossiq could not move: {count}": "Daarvan kon dossiq niet overzetten: {count}",
+        "Counted on {date}": "Geteld op {date}",
+        "Every Woo request has moved to dossiq; the requests stored here are read-only.": "Alle Woo-verzoeken zijn naar dossiq overgezet; de verzoeken die hier zijn opgeslagen zijn alleen-lezen.",
         "Column": "Kolom",
         "Description of {column}": "Beschrijving van {column}",
         "Importing the rows…": "De rijen worden geïmporteerd…",
@@ -1821,7 +1829,14 @@
         "Send the columns as a list.": "Stuur de kolommen als lijst.",
         "The table could not be published.": "De tabel kon niet worden gepubliceerd.",
         "This table has no column named %s.": "Deze tabel heeft geen kolom met de naam %s.",
-        "The table \"%s\" does not exist or is not accessible.": "De tabel \"%s\" bestaat niet of is niet toegankelijk."
+        "The table \"%s\" does not exist or is not accessible.": "De tabel \"%s\" bestaat niet of is niet toegankelijk.",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: versie van OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister bevat de engine die OpenCatalogi nodig heeft.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi vereist OpenRegister %1$s of nieuwer. In de geïnstalleerde OpenRegister ontbreekt %2$s, daarom toont OpenCatalogi een melding in plaats van zijn pagina's. Werk OpenRegister bij.",
+        "OpenCatalogi cannot start": "OpenCatalogi kan niet starten",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vereist OpenRegister %1$s of nieuwer. Vraag je beheerder om OpenRegister bij te werken.",
+        "Invalid listing": "Ongeldige vermelding",
+        "Listing not found in scope": "Vermelding niet gevonden in dit bereik"
     },
     "plurals": {}
 }
