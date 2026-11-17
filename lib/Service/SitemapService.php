@@ -30,6 +30,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Http\XMLResponse;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -117,6 +118,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local
 	 * @param DiwooXsdValidator|null $xsdValidator Validates each rendered document against the shipped XSD (REQ-WNO-002)
 	 * @param LoggerInterface|null $logger Logs a document held back for its XSD errors
+	 * @param PipelineIncidents|null $incidents Tells the incident group about a refused sitemap or document (REQ-WNO-004)
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookup $openRegister,
@@ -127,6 +129,7 @@ class SitemapService implements SitemapServiceInterface {
 		private readonly WooCategoryRegistry $categories,
 		?DiwooXsdValidator $xsdValidator = null,
 		?LoggerInterface $logger = null,
+		private readonly ?PipelineIncidents $incidents = null,
 	) {
 		$this->xsdValidator = ($xsdValidator ?? new DiwooXsdValidator());
 		$this->logger = ($logger ?? new NullLogger());
@@ -201,6 +204,7 @@ class SitemapService implements SitemapServiceInterface {
 		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
 		$error = $this->resolveSitemapRequest(request: $request, objectService: $objectService);
 		if ($error !== null) {
+			$this->raiseWhenRefused(request: $request, error: $error);
 			return $error;
 		}
 
@@ -246,6 +250,7 @@ class SitemapService implements SitemapServiceInterface {
 		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
 		$error = $this->resolveSitemapRequest(request: $request, objectService: $objectService);
 		if ($error !== null) {
+			$this->raiseWhenRefused(request: $request, error: $error);
 			return $error;
 		}
 
@@ -343,13 +348,43 @@ class SitemapService implements SitemapServiceInterface {
 			return true;
 		}
 
+		$loc = (string)($entry['loc'] ?? '');
 		$this->logger->warning(
 			'DiWoo document left out of the sitemap: it does not validate against the DiWoo XSD',
-			['documentLoc' => (string)($entry['loc'] ?? ''), 'errors' => $errors]
+			['documentLoc' => $loc, 'errors' => $errors]
 		);
+		$message = 'Left out of the sitemap, invalid against the DiWoo XSD: ' . implode('; ', $errors);
+		$this->incidents?->raise(kind: self::XSD_INVALID, subject: $loc, message: $message);
 
 		return false;
 	}//end passesXsd()
+
+	/**
+	 * Raise a pipeline incident for a sitemap this instance cannot serve (REQ-WNO-004).
+	 *
+	 * A name nothing is served at (an unknown catalogue or category) is a reader's
+	 * mistake and raises nothing. A server error, or a category a Woo catalogue
+	 * names but cannot list, is the pipeline's.
+	 *
+	 * @param SitemapRequest $request The request, as far as it resolved.
+	 * @param XMLResponse    $error   The refusal.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	private function raiseWhenRefused(SitemapRequest $request, XMLResponse $error): void {
+		if ($error->getStatus() < 500 && empty($request->catalog) === true) {
+			return;
+		}
+
+		$body = $error->render();
+		$this->incidents?->raise(
+			kind: 'sitemap-refused',
+			subject: $request->catalogSlug . '/' . $request->categoryCode,
+			message: 'The sitemap answered HTTP ' . $error->getStatus() . ': ' . trim(strip_tags($body))
+		);
+	}//end raiseWhenRefused()
 
 	/**
 	 * The sitemap `urlset` around the mapped `url` entries.

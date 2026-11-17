@@ -35,6 +35,7 @@ use DateTimeZone;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\DryRunRecorder;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -62,6 +63,7 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 	 * @param NationalIndexService $indexService The national channels.
 	 * @param LoggerInterface $logger Logger.
 	 * @param DryRunRecorder|null $dryRuns Holds the delivery as a dry run in staging (REQ-STG-002).
+	 * @param PipelineIncidents|null $incidents Tells the incident group about a failure (REQ-WNO-004).
 	 */
 	public function __construct(
 		private readonly SettingsService $settingsService,
@@ -70,6 +72,8 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		// Holds the delivery in staging (instance-staging-mode REQ-STG-002).
 		// Nullable and last, so every existing construction site keeps working.
 		private readonly ?DryRunRecorder $dryRuns = null,
+		// Tells the incident group about a failed delivery (REQ-WNO-004). Nullable and last.
+		private readonly ?PipelineIncidents $incidents = null,
 	) {
 
 	}//end __construct()
@@ -147,6 +151,16 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 			$fields['plooiStatus'] = 'failed';
 			$fields['plooiReason'] = $e->getMessage();
 			$this->logger->warning('[PlooiDeliveryService] PLOOI delivery of ' . $uuid . ' failed: ' . $e->getMessage());
+			// The same kind, subject and message as deliverToPlooi() raises, so one failure is one incident.
+			$this->incidents?->raise(
+				kind: PipelineIncidents::KIND_PLOOI,
+				subject: $uuid,
+				message: PipelineIncidents::plooiFailure(
+					title: (string)($publication['title'] ?? ''),
+					reason: $e->getMessage(),
+					withdrawal: $withdraw
+				)
+			);
 		}
 
 		$record = $publication;

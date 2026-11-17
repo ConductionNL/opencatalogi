@@ -1507,6 +1507,80 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	/**
+	 * The service as setUp() builds it, with an incident double.
+	 *
+	 * @param \OCA\OpenCatalogi\Service\Woo\PipelineIncidents $incidents The incidents.
+	 *
+	 * @return SitemapService
+	 */
+	private function serviceRaisingInto(\OCA\OpenCatalogi\Service\Woo\PipelineIncidents $incidents): SitemapService {
+		$instance = new InstanceSettings($this->urlGenerator, $this->config);
+
+		return new SitemapService(
+			new OpenRegisterLookup($this->container, $this->appManager),
+			$this->settingsService,
+			$instance,
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new \OCA\OpenCatalogi\Service\TooiVocabularyService(), $this->wooCategories, new OpenRegisterLookup($this->container, $this->appManager), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this), $instance),
+			$this->queryService,
+			$this->wooCategories,
+			incidents: $incidents
+		);
+	}
+
+	/**
+	 * REQ-WNO-004: a document held back for its XSD errors raises an incident naming it.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	public function testADocumentHeldBackByTheXsdRaisesAnIncident(): void {
+		$incidents = $this->createMock(\OCA\OpenCatalogi\Service\Woo\PipelineIncidents::class);
+		$incidents->expects($this->once())->method('raise')->with(
+			SitemapService::XSD_INVALID,
+			'https://example.com/fout.pdf',
+			$this->stringContains("'0000-01-01' is not a valid value")
+		);
+		$this->service = $this->serviceRaisingInto($incidents);
+
+		$xml = $this->storedValuesPage([
+			['id' => 'goed', 'wooCategory' => 'infocat012', 'creationDate' => '2026-09-30'],
+			['id' => 'fout', 'wooCategory' => 'infocat012', 'creationDate' => '0000-01-01'],
+		]);
+
+		$this->assertStringNotContainsString('fout.pdf', $xml);
+	}
+
+	/**
+	 * REQ-WNO-004: a sitemap the instance cannot serve raises an incident; a name nothing is served at does not.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	public function testARefusedSitemapRaisesAndAnUnknownNameDoesNot(): void {
+		$raised = [];
+		$incidents = $this->createMock(\OCA\OpenCatalogi\Service\Woo\PipelineIncidents::class);
+		$incidents->method('raise')->willReturnCallback(
+			static function (string $kind, string $subject, string $message) use (&$raised): void {
+				$raised[] = [$kind, $subject, $message];
+			}
+		);
+		$this->service = $this->serviceRaisingInto($incidents);
+		$this->storedValuesPage([]);
+
+		$unknown = $this->service->buildSitemap('woo', 'sitemapindex-diwoo-infocat999.xml', 1);
+		$this->assertSame(400, $unknown->getStatus());
+		$this->assertSame([], $raised);
+
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getSettings')->willReturn(['configuration' => []]);
+		$this->settingsService = $settings;
+		$refused = $this->serviceRaisingInto($incidents)->buildSitemapIndex('woo', 'sitemapindex-diwoo-infocat012.xml');
+
+		$this->assertSame(500, $refused->getStatus());
+		$this->assertCount(1, $raised);
+		$this->assertSame(['sitemap-refused', 'woo/sitemapindex-diwoo-infocat012.xml'], array_slice($raised[0], 0, 2));
+		$this->assertStringContainsString('HTTP 500', $raised[0][2]);
+	}
+
+	/**
 	 * REQ-WNO-003: the register side of the reconciliation lists every public document,
 	 * also the one the page holds back, so the difference shows as missing.
 	 *

@@ -68,6 +68,13 @@ class PipelineIncidents {
 	public const SCHEMA_KEY = 'woo_pipeline_incident_schema';
 
 	/**
+	 * The incident kind of a failed PLOOI delivery or withdrawal.
+	 *
+	 * @var string
+	 */
+	public const KIND_PLOOI = 'plooi-delivery';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param OpenRegisterLookupInterface $openRegister OpenRegister's ObjectService and the register configuration.
@@ -80,6 +87,29 @@ class PipelineIncidents {
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
+
+	/**
+	 * The message of a failed PLOOI delivery or withdrawal, naming the publication and the reason.
+	 *
+	 * Both the delivery service and the national channel raise with it, so one
+	 * failure coalesces into one incident.
+	 *
+	 * @param string $title      The publication's title.
+	 * @param string $reason     The platform's or the transport's reason.
+	 * @param bool   $withdrawal True for a withdrawal.
+	 *
+	 * @return string The message.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	public static function plooiFailure(string $title, string $reason, bool $withdrawal = false): string {
+		$what = 'PLOOI delivery';
+		if ($withdrawal === true) {
+			$what = 'PLOOI withdrawal';
+		}
+
+		return $what . " of '" . $title . "' failed: " . $reason;
+	}//end plooiFailure()
 
 	/**
 	 * Raise an incident, unless an identical one is open and recent.

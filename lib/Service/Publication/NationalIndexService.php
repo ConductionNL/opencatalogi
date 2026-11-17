@@ -43,6 +43,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
 use OCA\OpenCatalogi\Service\DryRunRecorder;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -154,6 +155,7 @@ class NationalIndexService implements NationalIndexServiceInterface {
 	 * @param IEventDispatcher $dispatcher Dispatcher for the gateway delivery request.
 	 * @param LoggerInterface $logger Logger.
 	 * @param DryRunRecorder|null $dryRuns Holds every hand-over as a dry run in staging (REQ-STG-002).
+	 * @param PipelineIncidents|null $incidents Tells the incident group about a failure (REQ-WNO-004).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -163,6 +165,8 @@ class NationalIndexService implements NationalIndexServiceInterface {
 		// Holds every hand-over in staging (instance-staging-mode REQ-STG-002).
 		// Nullable and last, so every existing construction site keeps working.
 		private readonly ?DryRunRecorder $dryRuns = null,
+		// Tells the incident group about a failed hand-over (REQ-WNO-004). Nullable and last.
+		private readonly ?PipelineIncidents $incidents = null,
 	) {
 
 	}//end __construct()
@@ -275,13 +279,19 @@ class NationalIndexService implements NationalIndexServiceInterface {
 
 		$delivery = null;
 		$answer = '';
-		if ($channel === self::CHANNEL_NATIONAL) {
-			$delivery = $this->deliverThroughPublicationGateway(notice: $notice);
-			$answer = (string)json_encode($delivery);
-		}
+		try {
+			if ($channel === self::CHANNEL_NATIONAL) {
+				$delivery = $this->deliverThroughPublicationGateway(notice: $notice);
+				$answer = (string)json_encode($delivery);
+			}
 
-		if ($channel !== self::CHANNEL_NATIONAL) {
-			$answer = $this->handOver(channel: $channel, endpoint: 'notices', payload: $notice);
+			if ($channel !== self::CHANNEL_NATIONAL) {
+				$answer = $this->handOver(channel: $channel, endpoint: 'notices', payload: $notice);
+			}
+		} catch (IndexUnreachableException $e) {
+			$message = 'The hand-over to ' . $channel . ' failed: ' . $e->getMessage();
+			$this->incidents?->raise(kind: 'national-delivery', subject: $channel, message: $message);
+			throw $e;
 		}
 
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
@@ -516,7 +526,16 @@ class NationalIndexService implements NationalIndexServiceInterface {
 			return ['identifier' => null] + self::dryRunAnswer(held: $held);
 		}
 
-		$answer = $this->handOver(channel: self::CHANNEL_PLOOI, endpoint: '', payload: $document);
+		try {
+			$answer = $this->handOver(channel: self::CHANNEL_PLOOI, endpoint: '', payload: $document);
+		} catch (IndexUnreachableException $e) {
+			$this->incidents?->raise(
+				kind: PipelineIncidents::KIND_PLOOI,
+				subject: (string)($document['identifier'] ?? ''),
+				message: PipelineIncidents::plooiFailure(title: (string)($document['title'] ?? ''), reason: $e->getMessage())
+			);
+			throw $e;
+		}
 
 		return ['answer' => $answer, 'identifier' => self::identifierOf(answer: $answer)];
 	}//end deliverToPlooi()

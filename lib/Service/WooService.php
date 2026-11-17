@@ -48,6 +48,7 @@ use Mpdf\Output\Destination;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -161,6 +162,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @param BatchPublicationWriter $publications Makes the batch's publication (woo-batch-creates-publications).
 	 * @param DocumentRedactor $redactor Redacts a partly public document through OpenRegister (woo-redaction-pipeline).
 	 * @param FileFacts|null $fileFacts Reads a document's type from its stored bytes (REQ-PFF-001).
+	 * @param PipelineIncidents|null $incidents Tells the incident group about a failure (REQ-WNO-004).
 	 */
 	public function __construct(
 		private readonly RegisterBindings $bindings,
@@ -170,6 +172,8 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		private readonly BatchPublicationWriter $publications,
 		private readonly DocumentRedactor $redactor,
 		private readonly ?FileFacts $fileFacts = null,
+		// Tells the incident group about a batch that failed to publish (REQ-WNO-004).
+		private readonly ?PipelineIncidents $incidents = null,
 	) {
 
 	}//end __construct()
@@ -1206,6 +1210,45 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		$listings = $this->publications->listings(assessments: $assessments);
 		$this->redactor->assertPublishable(listings: $listings, owner: (string)($batch['createdBy'] ?? ''));
 
+		try {
+			return $this->publishApprovedBatch(
+				batchId: $batchId,
+				batch: $batch,
+				listings: $listings,
+				objectService: $objectService,
+				register: $register,
+				batchSchema: $batchSchema
+			);
+		} catch (\Throwable $e) {
+			// The gates above refuse an editor; a failure past them is the pipeline's (REQ-WNO-004).
+			$message = 'Publishing Woo batch ' . $batchId . ' failed: ' . $e->getMessage();
+			$this->incidents?->raise(kind: 'batch-publish', subject: $batchId, message: $message);
+			throw $e;
+		}
+	}//end publishBatch()
+
+	/**
+	 * Publish a batch that passed the approval and redaction gates.
+	 *
+	 * @param string $batchId The batch.
+	 * @param array<string, mixed> $batch The batch record.
+	 * @param array<int, array<string, mixed>> $listings The documents to publish.
+	 * @param object $objectService The OpenRegister object service.
+	 * @param string $register The Woo register.
+	 * @param string $batchSchema The batch schema.
+	 *
+	 * @return array<string, mixed> The published batch.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	private function publishApprovedBatch(
+		string $batchId,
+		array $batch,
+		array $listings,
+		object $objectService,
+		string $register,
+		string $batchSchema
+	): array {
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
 		// The batch becomes a real publication with its documents attached (woo-batch-creates-publications).
@@ -1259,7 +1302,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		$saved['wooPublication'] = $publicationMeta;
 
 		return $saved;
-	}//end publishBatch()
+	}//end publishApprovedBatch()
 
 	/**
 	 * Run the batch's publication; a publication OpenRegister refuses becomes a

@@ -35,6 +35,7 @@ use DOMDocument;
 use OCA\OpenCatalogi\BackgroundJob\DiwooSitemapReconciliation;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
 use OCA\OpenCatalogi\Service\Handover\HandoverState;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
@@ -129,6 +130,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator (public base URL).
 	 * @param WooIndexFieldMapper|null $fieldMapper Where the Woo-index fields come from (REQ-WIM-004).
 	 * @param HandoverState|null $handover What the hand-over of the Woo requests to dossiq left; null reports nothing.
+	 * @param PipelineIncidents|null $incidents Tells the incident group about a failure (REQ-WNO-004).
 	 */
 	public function __construct(
 		private readonly IClientService $clientService,
@@ -139,6 +141,8 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		private readonly IURLGenerator $urlGenerator,
 		private readonly ?WooIndexFieldMapper $fieldMapper = null,
 		private readonly ?HandoverState $handover = null,
+		// Tells the incident group about a failing check (REQ-WNO-004). Nullable and last.
+		private readonly ?PipelineIncidents $incidents = null,
 	) {
 
 	}//end __construct()
@@ -223,9 +227,35 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		$this->persistReport(report: $report);
+		$this->raiseWhenNotReady(report: $report);
 
 		return $report;
 	}//end runCheck()
+
+	/**
+	 * Raise a pipeline incident naming the failing checks of a report that is not ready.
+	 *
+	 * @param array<string, mixed> $report The report.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	private function raiseWhenNotReady(array $report): void {
+		if ($this->incidents === null || $report['verdict'] !== 'not-ready') {
+			return;
+		}
+
+		$failing = [];
+		foreach ($report['checks'] as $check) {
+			if ($check['status'] === 'fail') {
+				$failing[] = $check['id'] . ': ' . (string)($check['reason'] ?? 'failed');
+			}
+		}
+
+		$message = 'The Woo readiness check failed: ' . implode('; ', $failing);
+		$this->incidents->raise(kind: 'readiness', subject: (string)$report['baseUrl'], message: $message);
+	}//end raiseWhenNotReady()
 
 	/**
 	 * The standard-version check, the robots.txt check and the checks of every catalog with a slug.
