@@ -1498,26 +1498,35 @@
                   "$ref": "#/components/schemas/ChangesEnvelope"
                 }
               }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
             }
           },
           "400": {
             "description": "`since` or `cursor` cannot be read; `parameter` names which.",
             "content": {
-              "application/json": {
+              "application/problem+json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Problem"
                     },
-                    "parameter": {
-                      "type": "string",
-                      "enum": [
-                        "since",
-                        "cursor"
-                      ]
+                    {
+                      "type": "object",
+                      "properties": {
+                        "parameter": {
+                          "type": "string",
+                          "enum": [
+                            "since",
+                            "cursor"
+                          ]
+                        }
+                      }
                     }
-                  }
+                  ]
                 }
               }
             }
