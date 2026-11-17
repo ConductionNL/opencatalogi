@@ -472,6 +472,7 @@
             {
               "group": "public",
               "match": {
+                "status": "published",
                 "publicationDate": {
                   "$lte": "$now"
                 },
@@ -484,6 +485,7 @@
             {
               "group": "public",
               "match": {
+                "status": "published",
                 "publicationDate": {
                   "$lte": "$now"
                 },
