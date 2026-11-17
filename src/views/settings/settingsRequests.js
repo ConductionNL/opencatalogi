@@ -3,6 +3,10 @@
  * SPDX-License-Identifier: EUPL-1.2
  */
 
+import { languageName, publicationLanguagesFrom } from '../../services/publicationTranslations.js'
+
+export { languageName, publicationLanguagesFrom }
+
 /**
  * The requests of the admin settings page and the mapping of their answers:
  * the publishing options, the federation sync interval and the manual
@@ -132,6 +136,42 @@ export function directorySyncCounts(data) {
 	const failed = data.failed_directories ?? 0
 	const total = data.total_directories ?? synced + failed
 	return { synced, total, failed }
+}
+
+/**
+ * The languages an administrator can offer to editors, as BCP 47 tags.
+ * Dutch is the source language of every publication and always offered.
+ */
+export const PUBLICATION_LANGUAGE_TAGS = ['nl', 'en', 'de', 'fr', 'fy', 'es', 'it', 'pl', 'pt', 'tr', 'ar', 'uk']
+
+/**
+ * The select options of the publication languages: every offerable language
+ * and any stored one outside that list, Dutch locked as the source.
+ *
+ * @param {Array<string>} selected - The selected tags
+ * @param {string} locale - The reader's locale
+ * @return {Array<{id: string, label: string, locked: boolean}>} The options
+ * @spec openspec/changes/publication-translations/design.md
+ */
+export function publicationLanguageOptions(selected, locale) {
+	const tags = [...PUBLICATION_LANGUAGE_TAGS]
+	for (const tag of selected) {
+		if (!tags.includes(tag)) {
+			tags.push(tag)
+		}
+	}
+	return tags.map((tag) => ({ id: tag, label: languageName(tag, locale), locked: tag === 'nl' }))
+}
+
+/**
+ * The publication languages to save from the selected options, Dutch first.
+ *
+ * @param {Array<{id: string}>} options - The selected options
+ * @return {Array<string>} The tags
+ * @spec openspec/changes/publication-translations/design.md
+ */
+export function publicationLanguagesPayload(options) {
+	return publicationLanguagesFrom((options || []).map((option) => option.id))
 }
 
 /**

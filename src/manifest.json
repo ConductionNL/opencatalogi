@@ -929,6 +929,12 @@
 						"icon": "EyeOutline"
 					},
 					{
+						"id": "pub-languages",
+						"type": "publication-languages",
+						"title": "Languages",
+						"icon": "Translate"
+					},
+					{
 						"id": "pub-plain-summary",
 						"type": "plain-summary-draft",
 						"title": "Plain language summary",
@@ -1045,6 +1051,14 @@
 						"widgetId": "pub-calendar",
 						"gridX": 0,
 						"gridY": 38,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
+						"id": "16",
+						"widgetId": "pub-languages",
+						"gridX": 0,
+						"gridY": 42,
 						"gridWidth": 12,
 						"gridHeight": 4
 					}
