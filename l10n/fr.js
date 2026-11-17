@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Dernière utilisation",
         "This key is shown once. Copy it now: it cannot be shown again.": "Cette clé n'est affichée qu'une fois. Copiez-la maintenant : elle ne pourra plus être affichée.",
         "No feed consumers yet.": "Aucun consommateur du flux pour l'instant.",
-        "Accounts that read every catalogue's feed": "Comptes qui lisent le flux de chaque catalogue"
+        "Accounts that read every catalogue's feed": "Comptes qui lisent le flux de chaque catalogue",
+        "Review publications before they are published": "Relire les publications avant leur publication",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Lorsque cette option est activée, un brouillon doit être soumis et approuvé avant de pouvoir être publié. Lorsqu'elle est désactivée, un rédacteur peut publier un brouillon directement."
     },
     "nplurals=2; plural=(n != 1);"
 )

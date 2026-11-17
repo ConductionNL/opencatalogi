@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Senast använd",
         "This key is shown once. Copy it now: it cannot be shown again.": "Den här nyckeln visas bara en gång. Kopiera den nu: den kan inte visas igen.",
         "No feed consumers yet.": "Inga flödesmottagare ännu.",
-        "Accounts that read every catalogue's feed": "Konton som läser flödet för varje katalog"
+        "Accounts that read every catalogue's feed": "Konton som läser flödet för varje katalog",
+        "Review publications before they are published": "Granska publikationer innan de publiceras",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "När detta är på måste ett utkast skickas in och godkännas innan det kan publiceras. När detta är av kan en redaktör publicera ett utkast direkt."
     },
     "nplurals=2; plural=(n != 1);"
 )

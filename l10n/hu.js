@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Utoljára használva",
         "This key is shown once. Copy it now: it cannot be shown again.": "Ez a kulcs csak egyszer jelenik meg. Másolja most: többé nem jeleníthető meg.",
         "No feed consumers yet.": "Még nincsenek hírfolyam-fogyasztók.",
-        "Accounts that read every catalogue's feed": "Fiókok, amelyek minden katalógus hírfolyamát olvassák"
+        "Accounts that read every catalogue's feed": "Fiókok, amelyek minden katalógus hírfolyamát olvassák",
+        "Review publications before they are published": "Kiadványok ellenőrzése közzététel előtt",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Ha be van kapcsolva, a piszkozatot be kell nyújtani és jóvá kell hagyni, mielőtt közzé lehetne tenni. Ha ki van kapcsolva, a szerkesztő közvetlenül közzéteheti a piszkozatot."
     },
     "nplurals=2; plural=(n != 1);"
 )

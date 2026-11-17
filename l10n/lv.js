@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Pēdējoreiz izmantots",
         "This key is shown once. Copy it now: it cannot be shown again.": "Šī atslēga tiek parādīta tikai vienreiz. Nokopējiet to tagad: to nevarēs parādīt vēlreiz.",
         "No feed consumers yet.": "Vēl nav plūsmas patērētāju.",
-        "Accounts that read every catalogue's feed": "Konti, kas lasa katra kataloga plūsmu"
+        "Accounts that read every catalogue's feed": "Konti, kas lasa katra kataloga plūsmu",
+        "Review publications before they are published": "Pārskatīt publikācijas pirms to publicēšanas",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Ja ieslēgts, melnraksts pirms publicēšanas ir jāiesniedz un jāapstiprina. Ja izslēgts, redaktors var publicēt melnrakstu uzreiz."
     },
     "nplurals=2; plural=(n != 1);"
 )

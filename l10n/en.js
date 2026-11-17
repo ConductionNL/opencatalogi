@@ -1868,7 +1868,9 @@ OC.L10N.register(
         "OpenCatalogi cannot start": "OpenCatalogi cannot start",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.",
         "Invalid listing": "Invalid listing",
-        "Listing not found in scope": "Listing not found in scope"
+        "Listing not found in scope": "Listing not found in scope",
+        "Review publications before they are published": "Review publications before they are published",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly."
     },
     "nplurals=2; plural=(n != 1);"
 )

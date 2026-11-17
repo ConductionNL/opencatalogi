@@ -737,7 +737,9 @@
         "Last used": "Последно използван",
         "This key is shown once. Copy it now: it cannot be shown again.": "Този ключ се показва само веднъж. Копирайте го сега: не може да бъде показан отново.",
         "No feed consumers yet.": "Все още няма потребители на емисията.",
-        "Accounts that read every catalogue's feed": "Профили, които четат емисията на всеки каталог"
+        "Accounts that read every catalogue's feed": "Профили, които четат емисията на всеки каталог",
+        "Review publications before they are published": "Преглед на публикациите преди публикуване",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Когато е включено, черновата трябва да бъде изпратена и одобрена, преди да може да бъде публикувана. Когато е изключено, редакторът може да публикува черновата директно."
     },
     "plurals": {}
 }

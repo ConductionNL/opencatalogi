@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Duvrà l'ultima giada",
         "This key is shown once. Copy it now: it cannot be shown again.": "Questa clav vegn mussada mo ina giada. Copiai ella ussa: ella na po betg vegnir mussada anc ina giada.",
         "No feed consumers yet.": "Anc nagins consumaders dal feed.",
-        "Accounts that read every catalogue's feed": "Contos che leggian il feed da mintga catalog"
+        "Accounts that read every catalogue's feed": "Contos che leggian il feed da mintga catalog",
+        "Review publications before they are published": "Controllar las publicaziuns avant ch'ellas vegnan publitgadas",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Sche activà, sto in sboz vegnir inoltrà ed approvà avant ch'el po vegnir publitgà. Sche deactivà, po in redactur publitgar in sboz directamain."
     },
     "nplurals=2; plural=(n != 1);"
 )

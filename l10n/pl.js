@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Ostatnio użyty",
         "This key is shown once. Copy it now: it cannot be shown again.": "Ten klucz jest wyświetlany tylko raz. Skopiuj go teraz: nie będzie można go ponownie wyświetlić.",
         "No feed consumers yet.": "Brak jeszcze odbiorców kanału.",
-        "Accounts that read every catalogue's feed": "Konta, które czytają kanał każdego katalogu"
+        "Accounts that read every catalogue's feed": "Konta, które czytają kanał każdego katalogu",
+        "Review publications before they are published": "Sprawdzaj publikacje przed ich opublikowaniem",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Gdy włączone, wersja robocza musi zostać przesłana i zatwierdzona, zanim będzie można ją opublikować. Gdy wyłączone, redaktor może opublikować wersję roboczą bezpośrednio."
     },
     "nplurals=2; plural=(n != 1);"
 )

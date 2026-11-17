@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Përdorur së fundi",
         "This key is shown once. Copy it now: it cannot be shown again.": "Ky çelës shfaqet vetëm një herë. Kopjojeni tani: nuk mund të shfaqet përsëri.",
         "No feed consumers yet.": "Ende nuk ka konsumatorë të furnizimit.",
-        "Accounts that read every catalogue's feed": "Llogaritë që lexojnë furnizimin e çdo katalogu"
+        "Accounts that read every catalogue's feed": "Llogaritë që lexojnë furnizimin e çdo katalogu",
+        "Review publications before they are published": "Rishiko botimet përpara se të botohen",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Kur është aktive, një draft duhet të dorëzohet dhe të miratohet përpara se të mund të botohet. Kur është joaktive, një redaktor mund ta botojë një draft drejtpërdrejt."
     },
     "nplurals=2; plural=(n != 1);"
 )

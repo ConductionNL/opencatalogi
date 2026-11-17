@@ -375,6 +375,24 @@
 					</p>
 				</div>
 
+				<!-- Review before publishing (publication-lifecycle-on-or REQ-PLC-001) -->
+				<div class="option-section">
+					<NcCheckboxRadioSwitch
+						v-model="publishingOptions.publicationReviewRequired"
+						:disabled="saving"
+						data-testid="publication-review-required">
+						{{ t('opencatalogi', 'Review publications before they are published') }}
+					</NcCheckboxRadioSwitch>
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.',
+							)
+						}}
+					</p>
+				</div>
+
 				<!-- Use Old Style Publishing View -->
 				<div class="option-section">
 					<NcCheckboxRadioSwitch
@@ -826,6 +844,7 @@ export default defineComponent({
 				autoPublishAttachments: false,
 				autoPublishObjects: false,
 				useOldStylePublishingView: false,
+				publicationReviewRequired: true,
 			},
 
 			versionInfo: {

@@ -1823,7 +1823,9 @@ OC.L10N.register(
         "OpenCatalogi cannot start": "OpenCatalogi kan niet starten",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vereist OpenRegister %1$s of nieuwer. Vraag je beheerder om OpenRegister bij te werken.",
         "Invalid listing": "Ongeldige vermelding",
-        "Listing not found in scope": "Vermelding niet gevonden in dit bereik"
+        "Listing not found in scope": "Vermelding niet gevonden in dit bereik",
+        "Review publications before they are published": "Publicaties beoordelen voordat ze worden gepubliceerd",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Als dit aan staat, moet een concept worden ingediend en goedgekeurd voordat het kan worden gepubliceerd. Als dit uit staat, kan een redacteur een concept direct publiceren."
     },
     "nplurals=2; plural=(n != 1);"
 )

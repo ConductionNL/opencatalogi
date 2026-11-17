@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Son kullanım",
         "This key is shown once. Copy it now: it cannot be shown again.": "Bu anahtar yalnızca bir kez gösterilir. Şimdi kopyalayın: yeniden gösterilemez.",
         "No feed consumers yet.": "Henüz akış tüketicisi yok.",
-        "Accounts that read every catalogue's feed": "Her kataloğun akışını okuyan hesaplar"
+        "Accounts that read every catalogue's feed": "Her kataloğun akışını okuyan hesaplar",
+        "Review publications before they are published": "Yayınları yayımlanmadan önce incele",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Açık olduğunda, bir taslağın yayımlanabilmesi için gönderilmesi ve onaylanması gerekir. Kapalı olduğunda, bir editör taslağı doğrudan yayımlayabilir."
     },
     "nplurals=2; plural=(n != 1);"
 )

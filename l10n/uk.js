@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Востаннє використано",
         "This key is shown once. Copy it now: it cannot be shown again.": "Цей ключ показується лише один раз. Скопіюйте його зараз: його не можна буде показати знову.",
         "No feed consumers yet.": "Споживачів стрічки ще немає.",
-        "Accounts that read every catalogue's feed": "Облікові записи, що читають стрічку кожного каталогу"
+        "Accounts that read every catalogue's feed": "Облікові записи, що читають стрічку кожного каталогу",
+        "Review publications before they are published": "Перевіряти публікації перед публікацією",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Якщо ввімкнено, чернетку потрібно подати й затвердити, перш ніж її можна буде опублікувати. Якщо вимкнено, редактор може опублікувати чернетку одразу."
     },
     "nplurals=2; plural=(n != 1);"
 )

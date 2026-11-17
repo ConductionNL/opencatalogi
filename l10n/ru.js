@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Последнее использование",
         "This key is shown once. Copy it now: it cannot be shown again.": "Этот ключ показывается только один раз. Скопируйте его сейчас: показать его снова нельзя.",
         "No feed consumers yet.": "Потребителей ленты пока нет.",
-        "Accounts that read every catalogue's feed": "Учётные записи, читающие ленту каждого каталога"
+        "Accounts that read every catalogue's feed": "Учётные записи, читающие ленту каждого каталога",
+        "Review publications before they are published": "Проверять публикации перед публикацией",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Если включено, черновик должен быть отправлен на проверку и одобрен, прежде чем его можно будет опубликовать. Если выключено, редактор может опубликовать черновик сразу."
     },
     "nplurals=2; plural=(n != 1);"
 )

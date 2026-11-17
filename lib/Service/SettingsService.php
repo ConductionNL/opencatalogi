@@ -253,6 +253,7 @@ class SettingsService implements SettingsServiceInterface {
 		'auto_publish_attachments',
 		'auto_publish_objects',
 		'use_old_style_publishing_view',
+		'publication_review_required',
 	];
 
 	/**
@@ -276,6 +277,8 @@ class SettingsService implements SettingsServiceInterface {
 		'auto_publish_attachments' => 'false',
 		'auto_publish_objects' => 'false',
 		'use_old_style_publishing_view' => 'false',
+		// Publication-lifecycle-on-or REQ-PLC-001: review is on until an admin turns it off.
+		'publication_review_required' => 'true',
 		'dcat_instance_title' => 'OpenCatalogi',
 		'dcat_publisher_name' => '',
 		'dcat_publisher_uri' => '',
@@ -1160,8 +1163,10 @@ class SettingsService implements SettingsServiceInterface {
 		try {
 			$publishingOptions = [];
 			foreach (self::PUBLISHING_OPTIONS as $option) {
-				// Stored as the text 'true' or 'false'; anything else reads as false.
-				$publishingOptions[$option] = $this->config->getValueString($this->appName, $option, 'false') === 'true';
+				// Stored as the text 'true' or 'false'; anything else reads as false. An unset
+				// option reads as its default (publication_review_required is on by default).
+				$default = self::SETTING_DEFAULTS[$option];
+				$publishingOptions[$option] = $this->config->getValueString($this->appName, $option, $default) === 'true';
 			}
 
 			return $publishingOptions;

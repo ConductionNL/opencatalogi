@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Naposledy použito",
         "This key is shown once. Copy it now: it cannot be shown again.": "Tento klíč se zobrazí jen jednou. Zkopírujte si ho hned: znovu ho zobrazit nelze.",
         "No feed consumers yet.": "Zatím žádní odběratelé kanálu.",
-        "Accounts that read every catalogue's feed": "Účty, které čtou kanál každého katalogu"
+        "Accounts that read every catalogue's feed": "Účty, které čtou kanál každého katalogu",
+        "Review publications before they are published": "Kontrolovat publikace před zveřejněním",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Je-li zapnuto, musí být koncept před zveřejněním odeslán ke kontrole a schválen. Je-li vypnuto, může redaktor koncept zveřejnit přímo."
     },
     "nplurals=2; plural=(n != 1);"
 )

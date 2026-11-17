@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "L-aħħar użat",
         "This key is shown once. Copy it now: it cannot be shown again.": "Din iċ-ċavetta tintwera darba biss. Ikkopjaha issa: ma tistax terġa' tintwera.",
         "No feed consumers yet.": "Għad m'hemmx konsumaturi tal-feed.",
-        "Accounts that read every catalogue's feed": "Kontijiet li jaqraw il-feed ta' kull katalgu"
+        "Accounts that read every catalogue's feed": "Kontijiet li jaqraw il-feed ta' kull katalgu",
+        "Review publications before they are published": "Irrevedi l-pubblikazzjonijiet qabel ma jiġu ppubblikati",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Meta jkun mixgħul, abbozz irid jiġi sottomess u approvat qabel ma jkun jista' jiġi ppubblikat. Meta jkun mitfi, editur jista' jippubblika abbozz direttament."
     },
     "nplurals=2; plural=(n != 1);"
 )

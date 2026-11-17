@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Τελευταία χρήση",
         "This key is shown once. Copy it now: it cannot be shown again.": "Αυτό το κλειδί εμφανίζεται μία φορά. Αντιγράψτε το τώρα: δεν μπορεί να εμφανιστεί ξανά.",
         "No feed consumers yet.": "Δεν υπάρχουν ακόμη καταναλωτές ροής.",
-        "Accounts that read every catalogue's feed": "Λογαριασμοί που διαβάζουν τη ροή κάθε καταλόγου"
+        "Accounts that read every catalogue's feed": "Λογαριασμοί που διαβάζουν τη ροή κάθε καταλόγου",
+        "Review publications before they are published": "Έλεγχος των δημοσιεύσεων πριν δημοσιευτούν",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Όταν είναι ενεργό, ένα πρόχειρο πρέπει να υποβληθεί και να εγκριθεί πριν μπορέσει να δημοσιευτεί. Όταν είναι ανενεργό, ένας συντάκτης μπορεί να δημοσιεύσει ένα πρόχειρο απευθείας."
     },
     "nplurals=2; plural=(n != 1);"
 )

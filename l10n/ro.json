@@ -737,7 +737,9 @@
         "Last used": "Ultima utilizare",
         "This key is shown once. Copy it now: it cannot be shown again.": "Această cheie este afișată o singură dată. Copiați-o acum: nu mai poate fi afișată.",
         "No feed consumers yet.": "Încă nu există consumatori ai fluxului.",
-        "Accounts that read every catalogue's feed": "Conturi care citesc fluxul fiecărui catalog"
+        "Accounts that read every catalogue's feed": "Conturi care citesc fluxul fiecărui catalog",
+        "Review publications before they are published": "Revizuiește publicațiile înainte de a fi publicate",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Când este activat, o ciornă trebuie trimisă și aprobată înainte de a putea fi publicată. Când este dezactivat, un editor poate publica direct o ciornă."
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

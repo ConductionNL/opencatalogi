@@ -737,7 +737,9 @@
         "Last used": "Zadnje korišteno",
         "This key is shown once. Copy it now: it cannot be shown again.": "Ovaj se ključ prikazuje samo jednom. Kopirajte ga sada: ne može se ponovno prikazati.",
         "No feed consumers yet.": "Još nema korisnika feeda.",
-        "Accounts that read every catalogue's feed": "Računi koji čitaju feed svakog kataloga"
+        "Accounts that read every catalogue's feed": "Računi koji čitaju feed svakog kataloga",
+        "Review publications before they are published": "Pregledaj objave prije objavljivanja",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Kada je uključeno, nacrt se mora predati i odobriti prije nego što se može objaviti. Kada je isključeno, urednik može izravno objaviti nacrt."
     },
     "plurals": {}
 }

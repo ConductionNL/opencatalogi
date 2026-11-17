@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Последно користено",
         "This key is shown once. Copy it now: it cannot be shown again.": "Овој клуч се прикажува само еднаш. Копирајте го сега: не може повторно да се прикаже.",
         "No feed consumers yet.": "Сè уште нема корисници на фидот.",
-        "Accounts that read every catalogue's feed": "Сметки што го читаат фидот на секој каталог"
+        "Accounts that read every catalogue's feed": "Сметки што го читаат фидот на секој каталог",
+        "Review publications before they are published": "Прегледај ги објавите пред да бидат објавени",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Кога е вклучено, нацртот мора да биде поднесен и одобрен пред да може да се објави. Кога е исклучено, уредникот може директно да објави нацрт."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Úsáidte go deireanach",
         "This key is shown once. Copy it now: it cannot be shown again.": "Ní thaispeántar an eochair seo ach uair amháin. Cóipeáil anois í: ní féidir í a thaispeáint arís.",
         "No feed consumers yet.": "Níl aon tomhaltóirí fotha fós.",
-        "Accounts that read every catalogue's feed": "Cuntais a léann fotha gach catalóige"
+        "Accounts that read every catalogue's feed": "Cuntais a léann fotha gach catalóige",
+        "Review publications before they are published": "Athbhreithnigh foilseacháin sula bhfoilsítear iad",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Nuair atá sé ar siúl, ní mór dréacht a chur isteach agus a fhaomhadh sular féidir é a fhoilsiú. Nuair atá sé múchta, is féidir le heagarthóir dréacht a fhoilsiú go díreach."
     },
     "nplurals=2; plural=(n != 1);"
 )

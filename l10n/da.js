@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Sidst brugt",
         "This key is shown once. Copy it now: it cannot be shown again.": "Denne nøgle vises kun én gang. Kopiér den nu: den kan ikke vises igen.",
         "No feed consumers yet.": "Ingen feedmodtagere endnu.",
-        "Accounts that read every catalogue's feed": "Konti, der læser feedet for hvert katalog"
+        "Accounts that read every catalogue's feed": "Konti, der læser feedet for hvert katalog",
+        "Review publications before they are published": "Gennemgå publikationer, før de offentliggøres",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Når det er slået til, skal en kladde indsendes og godkendes, før den kan offentliggøres. Når det er slået fra, kan en redaktør offentliggøre en kladde direkte."
     },
     "nplurals=2; plural=(n != 1);"
 )

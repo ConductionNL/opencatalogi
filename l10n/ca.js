@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Darrer ús",
         "This key is shown once. Copy it now: it cannot be shown again.": "Aquesta clau només es mostra una vegada. Copieu-la ara: no es podrà tornar a mostrar.",
         "No feed consumers yet.": "Encara no hi ha consumidors del canal.",
-        "Accounts that read every catalogue's feed": "Comptes que llegeixen el canal de cada catàleg"
+        "Accounts that read every catalogue's feed": "Comptes que llegeixen el canal de cada catàleg",
+        "Review publications before they are published": "Revisa les publicacions abans de publicar-les",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Quan està activat, cal enviar i aprovar un esborrany abans de poder-lo publicar. Quan està desactivat, un editor pot publicar un esborrany directament."
     },
     "nplurals=2; plural=(n != 1);"
 )

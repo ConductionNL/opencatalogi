@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Viimati kasutatud",
         "This key is shown once. Copy it now: it cannot be shown again.": "Seda võtit näidatakse ainult üks kord. Kopeeri see kohe: seda ei saa uuesti näidata.",
         "No feed consumers yet.": "Voo tarbijaid veel pole.",
-        "Accounts that read every catalogue's feed": "Kontod, mis loevad iga kataloogi voogu"
+        "Accounts that read every catalogue's feed": "Kontod, mis loevad iga kataloogi voogu",
+        "Review publications before they are published": "Vaata väljaanded enne avaldamist üle",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Kui see on sisse lülitatud, tuleb mustand enne avaldamist esitada ja kinnitada. Kui see on välja lülitatud, saab toimetaja mustandi otse avaldada."
     },
     "nplurals=2; plural=(n != 1);"
 )

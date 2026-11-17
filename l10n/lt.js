@@ -738,7 +738,9 @@ OC.L10N.register(
         "Last used": "Paskutinį kartą naudota",
         "This key is shown once. Copy it now: it cannot be shown again.": "Šis raktas rodomas tik vieną kartą. Nukopijuokite jį dabar: jo nebebus galima parodyti.",
         "No feed consumers yet.": "Srauto naudotojų dar nėra.",
-        "Accounts that read every catalogue's feed": "Paskyros, skaitančios kiekvieno katalogo srautą"
+        "Accounts that read every catalogue's feed": "Paskyros, skaitančios kiekvieno katalogo srautą",
+        "Review publications before they are published": "Peržiūrėti leidinius prieš juos paskelbiant",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Kai įjungta, juodraštis turi būti pateiktas ir patvirtintas, kad jį būtų galima paskelbti. Kai išjungta, redaktorius gali paskelbti juodraštį tiesiogiai."
     },
     "nplurals=2; plural=(n != 1);"
 )
