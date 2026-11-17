@@ -175,9 +175,9 @@ const NON_DISPLAY_ATTRS = new Set([
 	'src',
 	'for',
 	'role',
-	// An icon component's name (e.g. `actionIconName="Delete"` on
-	// ConfirmObjectActionDialog): an identifier that resolves an icon, never
-	// rendered as text. Translating it would break the icon lookup.
+	// The name of a material-design icon component (CnDeleteDialog and friends
+	// resolve `actionIconName="Delete"` to the Delete icon). It renders an icon,
+	// never text, so translating it would break the lookup. Compared lowercased.
 	'actioniconname',
 	'action-icon-name',
 	'iconname',

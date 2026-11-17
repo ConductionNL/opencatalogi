@@ -929,6 +929,54 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery()
 
 	/**
+	 * FED-OR-001: an http URL to a public host that is not allowlisted is refused before delivery.
+	 *
+	 * @return void
+	 */
+	public function testEnqueueBroadcastRefusesPlainHttpToAPublicHost(): void {
+		$this->clientMock->expects($this->never())->method('post');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Broadcast URL must use https');
+
+		$this->broadcastService->enqueueBroadcast('http://203.0.113.10/directory', 'https://self.example.com/api/directory');
+	}//end testEnqueueBroadcastRefusesPlainHttpToAPublicHost()
+
+	/**
+	 * FED-OR-001: an allowlisted dev host passes the pre-flight on http and is delivered to.
+	 *
+	 * @return void
+	 */
+	public function testEnqueueBroadcastLetsAnAllowlistedDevHostThroughOnHttp(): void {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'local_federation_hosts' => 'nc-fed-2',
+				default => $default,
+			}
+		);
+		$config->method('getValueInt')->willReturnCallback(static fn (string $app, string $key, int $default = 0): int => $default);
+		$service = new BroadcastService(
+			$this->urlGeneratorMock,
+			$this->containerMock,
+			$this->appManagerMock,
+			$this->loggerMock,
+			$config,
+			new FederationHostPolicy($config)
+		);
+		$client = $this->createMock(Client::class);
+		$client->expects($this->once())->method('post')->with('http://nc-fed-2/apps/opencatalogi/api/directory')->willReturn(new Response(200));
+		$property = (new \ReflectionClass($service))->getProperty('client');
+		$property->setAccessible(true);
+		$property->setValue($service, $client);
+		$this->appManagerMock->method('getAppInfo')->willReturn(['version' => '1.0.0']);
+
+		$result = $service->enqueueBroadcast('http://nc-fed-2/apps/opencatalogi/api/directory', 'https://self.example.com/api/directory');
+
+		$this->assertSame(BroadcastResult::STATUS_DELIVERED, $result->status);
+	}//end testEnqueueBroadcastLetsAnAllowlistedDevHostThroughOnHttp()
+
+	/**
 	 * Internal targets written in another notation are refused before delivery.
 	 *
 	 * @return array<string, array{0: string}>
