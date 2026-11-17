@@ -22,9 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
-use OCA\OpenCatalogi\Contract\DatasetViewServiceInterface;
-use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
+use OCA\OpenCatalogi\Service\Table\DatasetViewReader;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -35,7 +33,6 @@ use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
-use Psr\Log\LoggerInterface;
 
 /**
  * Every answer first checks, as the rows endpoint does, that the catalogue
@@ -51,23 +48,17 @@ class DatasetViewController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                         $appName   The app name.
-	 * @param IRequest                       $request   The request.
-	 * @param CatalogiServiceInterface       $catalogs  Resolves the catalogue slug.
-	 * @param PublishedTableServiceInterface $tables    The tables and the publication read check.
-	 * @param DatasetViewServiceInterface    $views     The views and their data.
-	 * @param IL10N                          $l10n      Localisation.
-	 * @param LoggerInterface                $logger    Logs a view whose data could not be read.
-	 * @param IAppConfig|null                $appConfig The CORS allowlist.
+	 * @param string            $appName   The app name.
+	 * @param IRequest          $request   The request.
+	 * @param DatasetViewReader $reader    What a public view read may see, and the views.
+	 * @param IL10N             $l10n      Localisation.
+	 * @param IAppConfig|null   $appConfig The CORS allowlist.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly CatalogiServiceInterface $catalogs,
-		private readonly PublishedTableServiceInterface $tables,
-		private readonly DatasetViewServiceInterface $views,
+		private readonly DatasetViewReader $reader,
 		private readonly IL10N $l10n,
-		private readonly LoggerInterface $logger,
 		private readonly ?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
@@ -89,12 +80,12 @@ class DatasetViewController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(string $catalogSlug, string $publicationId, string $tableId): Response {
-		$table = $this->readableTable(catalogSlug: $catalogSlug, publicationId: $publicationId, tableId: $tableId);
+		$table = $this->reader->readableTable(where: ['catalogSlug' => $catalogSlug, 'publicationId' => $publicationId, 'tableId' => $tableId]);
 		if ($table === null) {
 			return $this->notFound();
 		}
 
-		$listed = $this->views->withViews(
+		$listed = $this->reader->views->withViews(
 			tables: [['id' => $tableId]],
 			where: ['catalogSlug' => $catalogSlug, 'publicationId' => $publicationId]
 		);
@@ -118,20 +109,18 @@ class DatasetViewController extends Controller {
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function data(string $catalogSlug, string $publicationId, string $tableId, string $viewId): Response {
-		$table = $this->readableTable(catalogSlug: $catalogSlug, publicationId: $publicationId, tableId: $tableId);
-		if ($table === null) {
+		$table = $this->reader->readableTable(where: ['catalogSlug' => $catalogSlug, 'publicationId' => $publicationId, 'tableId' => $tableId]);
+		$view  = null;
+		if ($table !== null) {
+			$view = $this->reader->viewOf(viewId: $viewId, tableId: $tableId);
+		}
+
+		if ($table === null || $view === null) {
 			return $this->notFound();
 		}
 
-		$view = $this->views->findView(viewId: $viewId);
-		if ($view === null || (string)($view['table'] ?? '') !== $tableId) {
-			return $this->notFound();
-		}
-
-		try {
-			$data = $this->views->data(view: $view, table: $table);
-		} catch (\Throwable $e) {
-			$this->logger->error('[DatasetViewController] The data of a view could not be read', ['view' => $viewId, 'error' => $e->getMessage()]);
+		$data = $this->reader->dataOf(view: $view, table: $table);
+		if ($data === null) {
 			return $this->withCorsHeaders(
 				response: new JSONResponse(
 					data: ['error' => 'view-unavailable', 'message' => $this->l10n->t('The data of this view could not be read.')],
@@ -156,33 +145,6 @@ class DatasetViewController extends Controller {
 	public function preflightedCors(): Response {
 		return $this->readOnlyPreflight();
 	}//end preflightedCors()
-
-	/**
-	 * The table, when the catalogue exists, the table is the publication's and
-	 * ready, and the caller may read the publication now.
-	 *
-	 * @param string $catalogSlug   The catalogue.
-	 * @param string $publicationId The publication.
-	 * @param string $tableId       The table.
-	 *
-	 * @return array<string, mixed>|null The table record, or null.
-	 */
-	private function readableTable(string $catalogSlug, string $publicationId, string $tableId): ?array {
-		if ($this->catalogs->getCatalogBySlug($catalogSlug) === null) {
-			return null;
-		}
-
-		$table = $this->tables->findTable(tableId: $tableId);
-		if ($table === null
-			|| (string)($table['publication'] ?? '') !== $publicationId
-			|| ($table['status'] ?? null) !== 'ready'
-			|| $this->tables->canReadPublication(publicationId: $publicationId) === false
-		) {
-			return null;
-		}
-
-		return $table;
-	}//end readableTable()
 
 	/**
 	 * The 404 answer, the same for a missing view, a missing table and an unreadable publication.

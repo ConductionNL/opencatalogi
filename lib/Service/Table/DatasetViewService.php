@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Table;
 
 use InvalidArgumentException;
+use JsonSerializable;
 use OCA\OpenCatalogi\Contract\DatasetViewServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
@@ -346,10 +347,6 @@ class DatasetViewService implements DatasetViewServiceInterface {
 	 * @return mixed The plain value.
 	 */
 	private static function plain(mixed $value): mixed {
-		if (is_object($value) === true && method_exists($value, 'jsonSerialize') === true) {
-			return $value->jsonSerialize();
-		}
-
-		return $value;
+		return ($value instanceof JsonSerializable) ? $value->jsonSerialize() : $value;
 	}//end plain()
 }//end class

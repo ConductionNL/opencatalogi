@@ -27,6 +27,7 @@ use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Controller\DatasetViewController;
 use OCA\OpenCatalogi\Service\Table\DatasetViewData;
+use OCA\OpenCatalogi\Service\Table\DatasetViewReader;
 use OCA\OpenCatalogi\Service\Table\DatasetViewService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery;
@@ -46,6 +47,7 @@ use Psr\Log\LoggerInterface;
  * @covers \OCA\OpenCatalogi\Controller\DatasetViewController
  * @covers \OCA\OpenCatalogi\Service\Table\DatasetViewData
  * @covers \OCA\OpenCatalogi\Service\Table\MapPoints
+ * @covers \OCA\OpenCatalogi\Service\Table\DatasetViewReader
  * @uses   \OCA\OpenCatalogi\Service\Table\DatasetViewService
  * @uses   \OCA\OpenCatalogi\Service\SchemaObjects
  * @uses   \OCA\OpenCatalogi\Controller\CorsAllowlist
@@ -93,15 +95,17 @@ class DatasetViewControllerTest extends TestCase {
 		$this->controller = new DatasetViewController(
 			appName: 'opencatalogi',
 			request: $request,
-			catalogs: $this->catalogs,
-			tables: $this->tables,
-			views: new DatasetViewService(
-				registers: $registers,
+			reader: new DatasetViewReader(
+				catalogs: $this->catalogs,
 				tables: $this->tables,
-				shapes: new DatasetViewData(tables: $this->tables, aggregation: $this->aggregation)
+				views: new DatasetViewService(
+					registers: $registers,
+					tables: $this->tables,
+					shapes: new DatasetViewData(tables: $this->tables, aggregation: $this->aggregation)
+				),
+				logger: $this->createMock(LoggerInterface::class)
 			),
 			l10n: $l10n,
-			logger: $this->createMock(LoggerInterface::class),
 			appConfig: $appConfig
 		);
 	}//end setUp()
