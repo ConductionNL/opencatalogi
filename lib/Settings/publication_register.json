@@ -94,7 +94,7 @@
         "slug": "publication",
         "x-schema-org": "schema:CreativeWork",
         "title": "Publication",
-        "version": "0.0.9",
+        "version": "0.0.10",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A single publication entry within the catalog",
         "description": "A publication represents an individual piece of content within the catalog. It can be associated with themes and schemas, and is the primary unit of content that users can view and interact with. Publications can be linked to specific organizations and can be either public or private.",
@@ -386,6 +386,16 @@
                 "approved"
               ],
               "to": "published",
+              "inputs": [
+                {
+                  "field": "publicationDate",
+                  "required": false
+                },
+                {
+                  "field": "depublicationDate",
+                  "required": false
+                }
+              ],
               "label": "Publish",
               "description": "Publish the approved publication",
               "actions": [
@@ -403,6 +413,16 @@
                 "draft"
               ],
               "to": "published",
+              "inputs": [
+                {
+                  "field": "publicationDate",
+                  "required": false
+                },
+                {
+                  "field": "depublicationDate",
+                  "required": false
+                }
+              ],
               "label": "Publish without review",
               "description": "Publish a draft directly; allowed only while review is not required",
               "requires": "OCA\\OpenCatalogi\\Lifecycle\\ReviewNotRequiredGuard",

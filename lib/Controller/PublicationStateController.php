@@ -36,6 +36,8 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
+use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
+use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -66,6 +68,7 @@ class PublicationStateController extends Controller {
 	 * @param IUserSession $userSession The current session.
 	 * @param PublicationRightsInterface $rights The update right on one publication, and the publish right.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
+ * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003).
 	 */
 	public function __construct(
 		$appName,
@@ -74,6 +77,7 @@ class PublicationStateController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly PublicationRightsInterface $rights,
 		private readonly PublicationTransitions $registers,
+		private readonly PublishTransition $publisher,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -138,13 +142,53 @@ class PublicationStateController extends Controller {
 		}
 
 		try {
-			$this->save(id: $id, record: $this->registers->publishedRecord(publication: $properties));
+			$this->publishNow(id: $id, properties: $properties);
+		} catch (PublishRefusedException $e) {
+			return $this->transitionRefused(state: $e->state);
 		} catch (\Throwable $e) {
 			return $this->refused(e: $e);
 		}
 
 		return new JSONResponse(['state' => PublicationStateServiceInterface::STATE_PUBLIC]);
 	}//end publish()
+
+	/**
+	 * Publish now: a stored `published` publication (scheduled or withdrawn) gets today's date; any other runs
+	 * the publish transition with that date in the same call, so a refused move writes no date (REQ-PLC-003).
+	 *
+	 * @param string               $id         The publication id.
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return void
+	 *
+	 * @throws PublishRefusedException When the lifecycle allows no publish from the stored state.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 */
+	private function publishNow(string $id, array $properties): void {
+		$record = $this->registers->publishedRecord(publication: $properties);
+		$stored = PublishTransition::storedState(stored: (string)($properties['status'] ?? ''));
+		if ($stored === 'published') {
+			$this->save(id: $id, record: $record);
+			return;
+		}
+
+		$this->publisher->publish(id: $id, stored: $stored, publicationDate: (string)$record['publicationDate']);
+	}//end publishNow()
+
+	/**
+	 * The 422 for a publish the lifecycle does not allow, naming the transition and the state.
+	 *
+	 * @param string $state The stored state.
+	 *
+	 * @return JSONResponse 422.
+	 */
+	private function transitionRefused(string $state): JSONResponse {
+		return new JSONResponse(
+			data: ['error' => 'transition-not-allowed', 'action' => PublishTransition::PUBLISH, 'state' => $state],
+			statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
+		);
+	}//end transitionRefused()
 
 	/**
 	 * Withdraw the publication with a reason, and tell every channel it reached.

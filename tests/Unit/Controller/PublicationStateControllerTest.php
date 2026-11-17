@@ -30,6 +30,8 @@ use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
+use OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy;
+use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
@@ -86,13 +88,35 @@ class PublicationStateControllerTest extends TestCase {
 	/** Whether the caller holds the publish right. */
 	private bool $mayPublish = true;
 
+	/** The `publication_review_required` setting the config double answers. */
+	private string $reviewRequired = 'true';
+
+	/** @var array<int, array{0: string, 1: string, 2: array<string, mixed>}> Every transition the engine double ran. */
+	private array $transitions = [];
+
+	/** A TransitionEngine double recording each transition. */
+	private object $engine;
+
 	protected function setUp(): void {
 		parent::setUp();
+		$this->engine = new class ($this) {
+			public function __construct(private readonly PublicationStateControllerTest $test) {
+			}
+
+			public function transition(string $objectId, string $action, array $data = []): object {
+				$this->test->recordTransition(id: $objectId, action: $action, data: $data);
+				return new \stdClass();
+			}
+		};
 		$this->request = $this->createMock(IRequest::class);
 
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
-			static function (string $app, string $key, string $default = '') {
+			function (string $app, string $key, string $default = '') {
+				if ($key === 'publication_review_required') {
+					return $this->reviewRequired;
+				}
+
 				return in_array($key, ['publication_register', 'publication_schema', 'depublication_schema'], true) ? $key : $default;
 			}
 		);
@@ -163,6 +187,10 @@ class PublicationStateControllerTest extends TestCase {
 
 				if ($id === IAppConfig::class) {
 					return $config;
+				}
+
+				if ($id === PublishTransition::ENGINE) {
+					return $this->engine;
 				}
 
 				if ($id === 'OCA\OpenRegister\Service\FileService') {
@@ -246,7 +274,8 @@ class PublicationStateControllerTest extends TestCase {
 			$l10n,
 			$session,
 			$this->rights,
-			new PublicationTransitions(new PublicationStateService(), new DepublicationService($this->index, $this->createMock(LoggerInterface::class)), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects))
+			new PublicationTransitions(new PublicationStateService(), new DepublicationService($this->index, $this->createMock(LoggerInterface::class)), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects)),
+			new PublishTransition($container, new PublicationReviewPolicy($config))
 		);
 	}
 
@@ -916,5 +945,58 @@ class PublicationStateControllerTest extends TestCase {
 		$this->user = null;
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $this->controller->publish('p1')->getStatus());
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $this->controller->withdraw('p1')->getStatus());
+	}
+	/**
+	 * Record one transition the engine double ran.
+	 *
+	 * @param string               $id     The object id.
+	 * @param string               $action The transition.
+	 * @param array<string, mixed> $data   The data.
+	 *
+	 * @return void
+	 */
+	public function recordTransition(string $id, string $action, array $data): void {
+		$this->transitions[] = [$id, $action, $data];
+	}
+
+	/** REQ-PLC-003: publish now on an approved publication runs `publish` with the publication date, and saves nothing itself. */
+	public function testPublishRunsTheTransition(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'approved'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+
+		$response = $this->controller->publish('p1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertCount(1, $this->transitions);
+		[$id, $action, $data] = $this->transitions[0];
+		$this->assertSame(['p1', 'publish'], [$id, $action]);
+		$this->assertSame(['publicationDate', 'depublicationDate'], array_keys($data));
+		$this->assertNotFalse(\DateTimeImmutable::createFromFormat(\DateTimeInterface::ATOM, $data['publicationDate']));
+		$this->assertNull($data['depublicationDate']);
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-PLC-003: an unreviewed draft is refused with 422 naming publish and draft while review is required; no date is written. */
+	public function testPublishRefusesAnUnreviewedDraftWhenReviewIsRequired(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'draft', 'publicationDate' => null];
+		$this->rights->method('mayUpdate')->willReturn(true);
+
+		$response = $this->controller->publish('p1');
+
+		$this->assertSame(Http::STATUS_UNPROCESSABLE_ENTITY, $response->getStatus());
+		$this->assertSame(['error' => 'transition-not-allowed', 'action' => 'publish', 'state' => 'draft'], $response->getData());
+		$this->assertSame([], $this->transitions);
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-PLC-003: while review is off a draft is published through `publishWithoutReview`. */
+	public function testPublishWithoutReviewRunsWhileReviewIsOff(): void {
+		$this->reviewRequired = 'false';
+		$this->publication = ['id' => 'p1'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->publish('p1')->getStatus());
+		$this->assertSame('publishWithoutReview', $this->transitions[0][1]);
+		$this->assertSame([], $this->saves);
 	}
 }
