@@ -1058,26 +1058,38 @@ class SettingsService implements SettingsServiceInterface {
 			$value = json_decode($value, true);
 		}
 
-		if (is_array($value) === false) {
-			$value = [];
-		}
-
 		$languages = ['nl'];
-		foreach ($value as $tag) {
-			if (is_string($tag) === false) {
-				continue;
-			}
-
-			$parts = explode('-', trim($tag));
-			$parts[0] = strtolower($parts[0]);
-			$tag = implode('-', $parts);
-			if (preg_match('/^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})*$/', $tag) === 1 && in_array($tag, $languages, true) === false) {
+		foreach (is_array($value) === true ? $value : [] as $tag) {
+			$tag = self::normalisedLanguageTag(tag: $tag);
+			if ($tag !== null && in_array($tag, $languages, true) === false) {
 				$languages[] = $tag;
 			}
 		}
 
 		return (string)json_encode($languages);
 	}//end normalisePublicationLanguages()
+
+	/**
+	 * One language tag trimmed with its primary subtag lower-cased, or null
+	 * when it is not a string or not a language tag.
+	 *
+	 * @param mixed $tag The tag the caller sent.
+	 *
+	 * @return string|null The tag to store, or null.
+	 *
+	 * @spec openspec/changes/publication-translations/design.md
+	 */
+	private static function normalisedLanguageTag(mixed $tag): ?string {
+		if (is_string($tag) === false) {
+			return null;
+		}
+
+		$parts = explode('-', trim($tag));
+		$parts[0] = strtolower($parts[0]);
+		$tag = implode('-', $parts);
+
+		return preg_match('/^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})*$/', $tag) === 1 ? $tag : null;
+	}//end normalisedLanguageTag()
 
 	/**
 	 * The public API cache time to store.

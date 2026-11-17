@@ -17,6 +17,8 @@ use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Unit\Support\ServerAwareRequest;
 
 /**
@@ -241,11 +243,21 @@ class FederationControllerTest extends TestCase {
 			});
 		$queryService->method('languageHeaders')->willReturn(['Content-Language' => 'en', 'X-Source-Language' => 'nl']);
 
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(static function (string $class) use ($queryService): object {
+			if ($class === PublicationQueryServiceInterface::class) {
+				return $queryService;
+			}
+
+			throw new class ('not registered') extends \RuntimeException implements NotFoundExceptionInterface {
+			};
+		});
+
 		return new FederationController(
 			request: $request,
 			publicationService: $this->publicationService,
 			l10n: $this->l10n,
-			queryService: $queryService
+			container: $container
 		);
 	}
 

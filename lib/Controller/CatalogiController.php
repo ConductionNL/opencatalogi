@@ -25,6 +25,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
@@ -55,7 +56,6 @@ class CatalogiController extends Controller {
 	/**
 	 * CatalogiController constructor.
 	 *
-	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
 	 * @param CatalogiServiceInterface $catalogiService The catalogi service.
 	 * @param IAppConfig $config App configuration interface.
@@ -66,7 +66,6 @@ class CatalogiController extends Controller {
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
 	public function __construct(
-		$appName,
 		IRequest $request,
 		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly IAppConfig $config,
@@ -74,7 +73,7 @@ class CatalogiController extends Controller {
 		private readonly CorsSettings $cors = new CorsSettings(),
 		private readonly ?PublicationQueryServiceInterface $queryService = null,
 	) {
-		parent::__construct(appName: $appName, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 

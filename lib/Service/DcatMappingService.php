@@ -251,24 +251,37 @@ class DcatMappingService {
 			return $value;
 		}
 
-		$ordered = $value;
-		if (array_key_exists('nl', $ordered) === true) {
-			$ordered = (['nl' => $ordered['nl']] + $ordered);
-		}
-
-		$literals = [];
-		foreach ($ordered as $language => $text) {
-			if (is_scalar($text) === true && (string)$text !== '') {
-				$literals[] = ['@value' => (string)$text, '@language' => (string)$language];
-			}
-		}
-
+		$literals = self::literalsByLanguage(value: $value);
 		if ($literals === []) {
 			return null;
 		}
 
 		return $literals;
 	}//end languageTaggedLiterals()
+
+	/**
+	 * One literal per language that has text, Dutch first.
+	 *
+	 * @param array<mixed> $value A language-keyed value.
+	 *
+	 * @return list<array{'@value': string, '@language': string}> The literals.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private static function literalsByLanguage(array $value): array {
+		if (array_key_exists('nl', $value) === true) {
+			$value = (['nl' => $value['nl']] + $value);
+		}
+
+		$literals = [];
+		foreach ($value as $language => $text) {
+			if (is_scalar($text) === true && (string)$text !== '') {
+				$literals[] = ['@value' => (string)$text, '@language' => (string)$language];
+			}
+		}
+
+		return $literals;
+	}//end literalsByLanguage()
 
 	/**
 	 * Whether a value is a non-empty map whose every key is a language tag.

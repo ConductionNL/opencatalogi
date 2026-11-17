@@ -47,7 +47,6 @@ class CatalogiControllerTest extends TestCase {
 		$this->appManager = $this->createMock(IAppManager::class);
 
 		$this->controller = new CatalogiController(
-			'opencatalogi',
 			$this->request,
 			$this->catalogiService,
 			$this->config,
@@ -381,7 +380,6 @@ class CatalogiControllerTest extends TestCase {
 	 */
 	private function controllerWithLanguage(PublicationQueryServiceInterface $queryService): CatalogiController {
 		return new CatalogiController(
-			appName: 'opencatalogi',
 			request: $this->request,
 			catalogiService: $this->catalogiService,
 			config: $this->config,

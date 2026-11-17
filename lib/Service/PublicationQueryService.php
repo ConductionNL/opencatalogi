@@ -1474,21 +1474,9 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	private function acceptedLanguageTags(string $header): array {
 		$ranges = [];
 		foreach (explode(',', $header) as $position => $part) {
-			$pieces = array_map('trim', explode(';', $part));
-			$tag = $pieces[0];
-			if ($tag === '' || $tag === '*' || preg_match(self::LANGUAGE_TAG, $tag) !== 1) {
-				continue;
-			}
-
-			$quality = 1.0;
-			foreach (array_slice($pieces, 1) as $parameter) {
-				if (str_starts_with($parameter, 'q=') === true) {
-					$quality = (float)substr($parameter, 2);
-				}
-			}
-
-			if ($quality > 0.0) {
-				$ranges[] = ['tag' => $tag, 'quality' => $quality, 'position' => $position];
+			$range = self::languageRange(part: $part, position: $position);
+			if ($range !== null) {
+				$ranges[] = $range;
 			}
 		}
 
@@ -1499,6 +1487,51 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 
 		return array_values(array_column($ranges, 'tag'));
 	}//end acceptedLanguageTags()
+
+	/**
+	 * One range of an Accept-Language header with its q-value and position.
+	 *
+	 * @param string $part     The range as written, parameters included.
+	 * @param int    $position Its position in the header.
+	 *
+	 * @return array{tag: string, quality: float, position: int}|null The range; null for `*`, a malformed tag or q=0.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private static function languageRange(string $part, int $position): ?array {
+		$pieces = array_map('trim', explode(';', $part));
+		$tag = $pieces[0];
+		if ($tag === '' || $tag === '*' || preg_match(self::LANGUAGE_TAG, $tag) !== 1) {
+			return null;
+		}
+
+		$quality = self::rangeQuality(parameters: array_slice($pieces, 1));
+		if ($quality > 0.0) {
+			return ['tag' => $tag, 'quality' => $quality, 'position' => $position];
+		}
+
+		return null;
+	}//end languageRange()
+
+	/**
+	 * The q-value among a range's parameters; the last one wins, 1.0 without one.
+	 *
+	 * @param list<string> $parameters The trimmed parameters after the tag.
+	 *
+	 * @return float The q-value.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private static function rangeQuality(array $parameters): float {
+		$quality = 1.0;
+		foreach ($parameters as $parameter) {
+			if (str_starts_with($parameter, 'q=') === true) {
+				$quality = (float)substr($parameter, 2);
+			}
+		}
+
+		return $quality;
+	}//end rangeQuality()
 
 	/**
 	 * OpenRegister's request-scoped language service, or null when OpenRegister

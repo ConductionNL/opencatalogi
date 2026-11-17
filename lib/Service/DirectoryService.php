@@ -2648,11 +2648,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			return [];
 		}
 
-		if (is_object($languageService) === false
-			|| method_exists($languageService, 'getRequestedLanguageSource') === false
-			|| method_exists($languageService, 'getPreferredLanguage') === false
-			|| $languageService->getRequestedLanguageSource() === 'default'
-		) {
+		if (self::visitorAskedForALanguage(languageService: $languageService) === false) {
 			return [];
 		}
 
@@ -2663,6 +2659,23 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		return ['Accept-Language' => $language];
 	}//end peerLanguageHeaders()
+
+	/**
+	 * Whether OpenRegister's language service can name the visitor's language
+	 * and the visitor asked for one (not OpenRegister's default).
+	 *
+	 * @param mixed $languageService OpenRegister's LanguageService.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private static function visitorAskedForALanguage(mixed $languageService): bool {
+		return is_object($languageService) === true
+			&& method_exists($languageService, 'getRequestedLanguageSource') === true
+			&& method_exists($languageService, 'getPreferredLanguage') === true
+			&& $languageService->getRequestedLanguageSource() !== 'default';
+	}//end visitorAskedForALanguage()
 
 	/**
 	 * Call one peer and parse its answer.

@@ -290,31 +290,7 @@ export function languageSummary(state, t) {
 	if (state.source) {
 		return t('opencatalogi', 'Source language, complete')
 	}
-	const parts = []
-	if (state.missing.length === 0 && state.outdated.length === 0) {
-		parts.push(t('opencatalogi', 'Complete'))
-	} else if (state.translated.length === 0 && state.outdated.length === 0) {
-		parts.push(t('opencatalogi', 'Not translated yet'))
-	} else if (state.translated.length > 0 && state.missing.length > 0) {
-		parts.push(
-			t('opencatalogi', '{translated} translated, {missing} missing', {
-				translated: fieldPhrase(state.translated, t, true),
-				missing: fieldPhrase(state.missing, t, false),
-			}),
-		)
-	} else if (state.translated.length > 0) {
-		parts.push(
-			t('opencatalogi', '{translated} translated', {
-				translated: fieldPhrase(state.translated, t, true),
-			}),
-		)
-	} else if (state.missing.length > 0) {
-		parts.push(
-			t('opencatalogi', '{missing} missing', {
-				missing: fieldPhrase(state.missing, t, true),
-			}),
-		)
-	}
+	const parts = [progressPhrase(state, t)]
 	if (state.outdated.length > 0) {
 		parts.push(
 			t('opencatalogi', 'Outdated: {fields}', {
@@ -322,7 +298,47 @@ export function languageSummary(state, t) {
 			}),
 		)
 	}
-	return parts.join('. ')
+	return parts.filter((part) => part !== '').join('. ')
+}
+
+/**
+ * How far a translation got, without its outdated fields: complete, not
+ * started, or which fields are translated and which are missing.
+ *
+ * @param {{translated: string[], missing: string[], outdated: string[]}} state The language's state.
+ * @param {Function} t The translate function.
+ * @return {string} The phrase, or '' when only outdated fields are left.
+ */
+function progressPhrase(state, t) {
+	if (state.missing.length === 0 && state.outdated.length === 0) {
+		return t('opencatalogi', 'Complete')
+	}
+	if (state.translated.length === 0 && state.outdated.length === 0) {
+		return t('opencatalogi', 'Not translated yet')
+	}
+	return partialPhrase(state, t)
+}
+
+/**
+ * Which fields are translated and which are missing.
+ *
+ * @param {{translated: string[], missing: string[]}} state The language's state.
+ * @param {Function} t The translate function.
+ * @return {string} The phrase, or '' when neither is.
+ */
+function partialPhrase(state, t) {
+	const translated = state.translated.length > 0
+	const missing = state.missing.length > 0
+	if (translated && missing) {
+		return t('opencatalogi', '{translated} translated, {missing} missing', {
+			translated: fieldPhrase(state.translated, t, true),
+			missing: fieldPhrase(state.missing, t, false),
+		})
+	}
+	if (translated) {
+		return t('opencatalogi', '{translated} translated', { translated: fieldPhrase(state.translated, t, true) })
+	}
+	return missing ? t('opencatalogi', '{missing} missing', { missing: fieldPhrase(state.missing, t, true) }) : ''
 }
 
 /**

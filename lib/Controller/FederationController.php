@@ -72,6 +72,13 @@ class FederationController extends Controller {
 	private readonly ?AppliedFilters $appliedFilters;
 
 	/**
+	 * Negotiates the visitor's language (REQ-PTR-002); null leaves the response untranslated.
+	 *
+	 * @var PublicationQueryServiceInterface|null
+	 */
+	private readonly ?PublicationQueryServiceInterface $queryService;
+
+	/**
 	 * FederationController constructor.
 	 *
 	 * @param IRequest $request The request object.
@@ -81,8 +88,8 @@ class FederationController extends Controller {
 	 * @param LocalPublicationStateInterface|null $localState Adds the withheld list (REQ-WDW-003) and the comment period state (REQ-PDP-003).
 	 * @param ContainerInterface|null $container DI container for the optional collaborators: the app config
 	 *                                           holding the CORS allowlist (without it every origin is allowed)
-	 *                                           and the request's collector of applied filters (REQ-ASF-001).
-	 * @param PublicationQueryServiceInterface|null $queryService Negotiates the visitor's language (REQ-PTR-002).
+	 *                                           and the request's collector of applied filters (REQ-ASF-001),
+	 *                                           and the query service negotiating the visitor's language (REQ-PTR-002).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -91,7 +98,6 @@ class FederationController extends Controller {
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?LocalPublicationStateInterface $localState = null,
 		?ContainerInterface $container = null,
-		private readonly ?PublicationQueryServiceInterface $queryService = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 		$appConfig = self::optional(container: $container, class: IAppConfig::class);
@@ -106,6 +112,8 @@ class FederationController extends Controller {
 
 		$this->appConfig = $appConfig;
 		$this->appliedFilters = $appliedFilters;
+		$queryService = self::optional(container: $container, class: PublicationQueryServiceInterface::class);
+		$this->queryService = $queryService instanceof PublicationQueryServiceInterface ? $queryService : null;
 
 	}//end __construct()
 

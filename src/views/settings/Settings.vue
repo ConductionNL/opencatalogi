@@ -694,6 +694,14 @@ import {
 
 import '@nextcloud/dialogs/style.css'
 
+/** The directory sync interval the page shows until the stored one has loaded, in minutes. */
+const DEFAULT_SYNC_OPTIONS = Object.freeze({
+	intervalMinutes: 60,
+	minMinutes: 15,
+	maxMinutes: 1440,
+	defaultMinutes: 60,
+})
+
 /**
  * Fetch the federation sync options.
  *
@@ -856,12 +864,7 @@ export default defineComponent({
 			syncingDirectories: false,
 			loadingSyncOptions: true,
 			savingSyncOptions: false,
-			syncOptions: {
-				intervalMinutes: 60,
-				minMinutes: 15,
-				maxMinutes: 1440,
-				defaultMinutes: 60,
-			},
+			syncOptions: { ...DEFAULT_SYNC_OPTIONS },
 		}
 	},
 
