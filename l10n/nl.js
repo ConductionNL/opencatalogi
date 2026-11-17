@@ -1689,6 +1689,7 @@ OC.L10N.register(
         "Accept": "Accepteren",
         "Discard": "Verwerpen",
         "Draft plain summary": "Eenvoudige samenvatting laten opstellen",
+        "No text assistant is installed, so a plain summary cannot be drafted here. You can still write one yourself.": "Er is geen tekstassistent geïnstalleerd, dus hier kan geen eenvoudige samenvatting worden opgesteld. U kunt er zelf een schrijven.",
         "Suggested plain language summary": "Voorgestelde samenvatting in eenvoudige taal",
         "The plain language summary is saved.": "De samenvatting in eenvoudige taal is opgeslagen.",
         "The text assistant could not write a suggestion.": "De tekstassistent kon geen voorstel schrijven.",

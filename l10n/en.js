@@ -1734,6 +1734,7 @@ OC.L10N.register(
         "Accept": "Accept",
         "Discard": "Discard",
         "Draft plain summary": "Draft plain summary",
+        "No text assistant is installed, so a plain summary cannot be drafted here. You can still write one yourself.": "No text assistant is installed, so a plain summary cannot be drafted here. You can still write one yourself.",
         "Suggested plain language summary": "Suggested plain language summary",
         "The plain language summary is saved.": "The plain language summary is saved.",
         "The text assistant could not write a suggestion.": "The text assistant could not write a suggestion.",
