@@ -38,6 +38,7 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [Plain language summary](./plain-language-summary.md) | A plain language summary with its reading level on a publication, drafted by an optional text assistant and accepted by an officer, emitted in DCAT as `dct:abstract` | [plain-language-summary.md](./plain-language-summary.md) |
 | [Publication slugs](./publication-slugs.md) | `GET /api/{catalogSlug}/{id}` resolves a publication by its OpenRegister slug as well as its UUID, within the catalogue; a stable public URL that survives a re-import | [publication-slugs.md](./publication-slugs.md) |
 | [Integration leaves](./integration-leaves.md) | A request by email becomes a draft publication from the Nextcloud Mail sidebar; calendar events plan a publication without publishing it | [integration-leaves.md](./integration-leaves.md) |
+| [Completeness webhook](./completeness-webhook.md) | A source system learns once, through an OpenRegister webhook, when its publication is complete and public | [completeness-webhook.md](./completeness-webhook.md) |
 | [Dashboard](./dashboard.md) | The app shell: deep-link routes to every page, the Nextcloud dashboard widgets, and what the app registers on start | [dashboard.md](./dashboard.md) |
 | [Directory](./directory.md) | Listings of federated catalogues, their endpoints, directory synchronisation and the scheduled sync and broadcast jobs | [directory.md](./directory.md) |
 | Publiek zoeken | Unauthenticated full-text search with filters and facets | — |
