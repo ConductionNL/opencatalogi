@@ -483,6 +483,37 @@ class PublicationsControllerTest extends TestCase {
 	}//end testUsesAndUsedAnswerWithTheReadRuleGuardedRows()
 
 	/**
+	 * REQ-PRS-003: a related publication in a /uses or /used answer carries only
+	 * its public source identifiers, as show, index and search do.
+	 *
+	 * @return void
+	 */
+	public function testUsesAndUsedAnswerOnlyPublicSourceIdentifiers(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->stubObjectInsideCatalogScope();
+
+		$rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']]);
+		$mockObjService->method('find')->willReturn($rootObject);
+		$identifiers = [
+			['system' => 'zaaksysteem', 'value' => 'Z-1', 'public' => true],
+			['system' => 'dms', 'value' => 'INTERN-7', 'public' => false],
+			['system' => 'dms', 'value' => 'INTERN-8'],
+		];
+		$raw = ['results' => [['id' => 'doc-ok', 'sourceIdentifiers' => $identifiers], ['id' => 'no-ids']], 'total' => 2];
+		$mockObjService->method('getObjectUses')->willReturn($raw);
+		$mockObjService->method('getObjectUsedBy')->willReturn($raw);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		foreach (['uses', 'used'] as $route) {
+			$data = json_decode($this->controller->$route('test-catalog', 'pub-123')->render(), true);
+			$this->assertSame(['Z-1'], array_column($data['results'][0]['sourceIdentifiers'], 'value'), $route);
+			$this->assertArrayNotHasKey('sourceIdentifiers', $data['results'][1], $route);
+			$this->assertSame(2, $data['total'], $route);
+		}
+	}//end testUsesAndUsedAnswerOnlyPublicSourceIdentifiers()
+
+	/**
 	 * WOO-581 review round 3 (f2): OR's getUses() counts every related object
 	 * and then cuts the page, so a guard over one page left the hidden rows of
 	 * the other pages in `total`. /uses now fetches the whole list and hands the

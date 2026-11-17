@@ -1890,15 +1890,35 @@ class PublicationsController extends Controller {
 	}//end placePublicRoot()
 
 	/**
-	 * The answer for a relation read: the rows, with CORS headers for public API access.
+	 * The answer for a relation read: the rows, each with only its public
+	 * source identifiers, with CORS headers for public API access.
 	 *
 	 * @param array<string, mixed> $result The guarded rows.
 	 *
 	 * @return JSONResponse The 200 answer.
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
 	 */
 	private function relationsAnswer(array $result): JSONResponse {
+		if (is_array(($result['results'] ?? null)) === true) {
+			$rules = new PublicationLinkRules();
+			$result['results'] = array_map(
+				static function (mixed $row) use ($rules): mixed {
+					if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+						$row = $row->jsonSerialize();
+					}
+
+					if (is_array($row) === false) {
+						return $row;
+					}
+
+					return $rules->withPublicSourceIdentifiers(publication: $row);
+				},
+				$result['results']
+			);
+		}
+
 		$response = new JSONResponse($result, 200);
 		$this->addCorsHeaders(response: $response);
 
