@@ -110,6 +110,8 @@ interface PublishedTableServiceInterface {
 	 * @return array<int, array<string, mixed>> The tables: id, title, file, rowCount, rowsUrl, dictionaryUrl.
 	 *
 	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 *
+	 * @contract-shift internal-only — PublishedTableService, in this app, is its only implementer; no other fleet app references the interface.
 	 */
 	public function tablesOf(string $publicationId, string $catalogSlug): array;
 
@@ -123,6 +125,8 @@ interface PublishedTableServiceInterface {
 	 * @return array<int, array<string, mixed>> The files, a table's file with its dictionary URL.
 	 *
 	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 *
+	 * @contract-shift internal-only — PublishedTableService, in this app, is its only implementer; no other fleet app references the interface.
 	 */
 	public function withDictionaryUrls(array $files, string $publicationId, string $catalogSlug): array;
 
@@ -138,6 +142,8 @@ interface PublishedTableServiceInterface {
 	 * @throws \InvalidArgumentException When the publication has no such attachment, or it is not a CSV.
 	 *
 	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-an-editor-publishes-a-csv-attachment-as-a-table-req-odt-001
+	 *
+	 * @contract-shift internal-only — PublishedTableService, in this app, is its only implementer; no other fleet app references the interface.
 	 */
 	public function publishAttachment(object $publication, string $fileId, ?IUser $user = null): array;
 
@@ -149,6 +155,8 @@ interface PublishedTableServiceInterface {
 	 * @return array<int, array<string, mixed>> The table records, each ready one with its `dictionary`.
 	 *
 	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 *
+	 * @contract-shift internal-only — PublishedTableService, in this app, is its only implementer; no other fleet app references the interface.
 	 */
 	public function tablesFor(string $publicationId): array;
 
@@ -163,6 +171,8 @@ interface PublishedTableServiceInterface {
 	 * @throws \InvalidArgumentException When a column is not one the table declares.
 	 *
 	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 *
+	 * @contract-shift internal-only — PublishedTableService, in this app, is its only implementer; no other fleet app references the interface.
 	 */
 	public function updateDictionary(array $table, array $columns): array;
 }//end interface

@@ -14,6 +14,7 @@
  *
  * @param {{name?: string, title?: string, type?: string, mimetype?: string}} file The file.
  * @return {boolean} True for a CSV.
+ * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-an-editor-publishes-a-csv-attachment-as-a-table-req-odt-001
  */
 export function isCsv(file) {
 	const name = String(file.name || file.title || '').toLowerCase()
