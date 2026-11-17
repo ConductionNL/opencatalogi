@@ -1724,7 +1724,7 @@ class SitemapServiceTest extends TestCase {
 	 */
 	public function testAPublicationWithoutATitleIsReported(): void {
 		$file = ['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf'];
-		foreach (['missing' => null, 'blank' => '   ', 'not text' => ['nl' => 'Besluit']] as $name => $title) {
+		foreach (['missing' => null, 'blank' => '   ', 'not text' => 42, 'empty language map' => ['nl' => ' ']] as $name => $title) {
 			$publication = ['id' => 'p', 'category' => 'infocat014', '@self' => ['files' => [$file]]];
 			if ($title !== null) {
 				$publication['title'] = $title;
@@ -1736,6 +1736,10 @@ class SitemapServiceTest extends TestCase {
 
 		$titled = ['id' => 'p', 'title' => 'Besluit', 'category' => 'infocat014', '@self' => ['files' => [$file]]];
 		$this->assertNotContains('officieleTitel', array_column($this->service->collectDiwooViolations([$titled]), 'axis'));
+
+		// The title is translatable: OpenRegister may hand it over as a language map.
+		$translated = ['id' => 'p', 'title' => ['nl' => 'Besluit', 'en' => 'Decision'], 'category' => 'infocat014', '@self' => ['files' => [$file]]];
+		$this->assertNotContains('officieleTitel', array_column($this->service->collectDiwooViolations([$translated]), 'axis'));
 	}
 
 	/**

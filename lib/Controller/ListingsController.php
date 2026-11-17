@@ -34,6 +34,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Exception\ValidationException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -117,6 +118,18 @@ class ListingsController extends Controller {
 	private function getListingConfiguration(): array {
 		return $this->resolveRegisterConfiguration(registerKey: 'listing_register', schemaKey: 'listing_schema');
 	}//end getListingConfiguration()
+
+	/**
+	 * The 404 answer for a listing id that is not in the listing register and schema.
+	 *
+	 * @return JSONResponse The not-found response.
+	 */
+	private function listingNotFoundResponse(): JSONResponse {
+		return new JSONResponse(
+			data: ['success' => false, 'message' => $this->l10n->t('Listing not found in scope')],
+			statusCode: Http::STATUS_NOT_FOUND
+		);
+	}//end listingNotFoundResponse()
 
 	/**
 	 * Implements a preflighted CORS response for OPTIONS requests.
@@ -263,7 +276,11 @@ class ListingsController extends Controller {
 		$listingSchema = $listingConfig['schema'];
 
 		// Fetch the listing object by its ID with register/schema context.
-		$object = $this->getObjectService()->find($id, new ObjectFindOptions(register: $listingRegister, schema: $listingSchema));
+		try {
+			$object = $this->getObjectService()->find($id, new ObjectFindOptions(register: $listingRegister, schema: $listingSchema));
+		} catch (DoesNotExistException $e) {
+			return $this->listingNotFoundResponse();
+		}
 
 		// Convert to array if it is an Entity.
 		$data = $object;
@@ -341,11 +358,18 @@ class ListingsController extends Controller {
 		$listingRegister = $listingConfig['register'];
 		$listingSchema = $listingConfig['schema'];
 
-		// Save the new listing object.
-		$object = $this->getObjectService()->saveObject(
-			object: $allowed,
-			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $listingRegister, schema: $listingSchema))
-		);
+		// Save the new listing object; a payload the listing schema refuses is the caller's error.
+		try {
+			$object = $this->getObjectService()->saveObject(
+				object: $allowed,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $listingRegister, schema: $listingSchema))
+			);
+		} catch (ValidationException $e) {
+			return new JSONResponse(
+				data: ['message' => $this->l10n->t('Invalid listing'), 'error' => $e->getMessage()],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
 
 		// Return the created object as a JSON response.
 		return new JSONResponse($object);
@@ -369,7 +393,8 @@ class ListingsController extends Controller {
 	/**
 	 * POST /api/listings allow-list (harden-listings-admin-write-surface). The
 	 * UPDATABLE set plus the identity fields legitimately set at registration time:
-	 * `directory` (validated against the SSRF guard below), `catalog`, `slug`, `status`.
+	 * `directory` (validated against the SSRF guard below), `catalog`, `catalogusId` (the
+	 * remote catalogue's UUID, required by the listing schema), `slug`, `status`.
 	 *
 	 * @var list<string>
 	 */
@@ -381,6 +406,7 @@ class ListingsController extends Controller {
 		'default',
 		'directory',
 		'catalog',
+		'catalogusId',
 		'slug',
 		'status',
 	];
@@ -430,7 +456,12 @@ class ListingsController extends Controller {
 		// only the fields they want to change without losing the rest of the
 		// listing. The merge order is (existing, allowed) so allow-listed
 		// fields win over stored values.
-		$existing = $this->getObjectService()->find($id, new ObjectFindOptions(register: $listingRegister, schema: $listingSchema));
+		try {
+			$existing = $this->getObjectService()->find($id, new ObjectFindOptions(register: $listingRegister, schema: $listingSchema));
+		} catch (DoesNotExistException $e) {
+			return $this->listingNotFoundResponse();
+		}
+
 		if ($existing instanceof \OCP\AppFramework\Db\Entity) {
 			$existingData = $existing->jsonSerialize();
 		} else {
@@ -509,10 +540,7 @@ class ListingsController extends Controller {
 				)
 			);
 		} catch (DoesNotExistException $e) {
-			return new JSONResponse(
-				data: ['success' => false, 'message' => $this->l10n->t('Listing not found in scope')],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+			return $this->listingNotFoundResponse();
 		}
 
 		// Return the result as a JSON response. Both success and fall-through-404
