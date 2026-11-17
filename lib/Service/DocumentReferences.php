@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\DocumentReferencesInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
@@ -63,13 +64,13 @@ class DocumentReferences implements DocumentReferencesInterface {
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config Holds the register and schema ids.
-	 * @param OpenRegisterLookup $openRegister OpenRegister's ObjectService.
+	 * @param OpenRegisterLookupInterface $openRegister OpenRegister's ObjectService.
 	 * @param DocumentReferenceMapper $mapper Turns a reference into a file entry.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterLookupInterface $openRegister,
 		private readonly DocumentReferenceMapper $mapper,
 		private readonly LoggerInterface $logger,
 	) {

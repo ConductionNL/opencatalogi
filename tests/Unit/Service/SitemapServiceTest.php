@@ -1164,10 +1164,11 @@ class SitemapServiceTest extends TestCase {
 	 *
 	 * @param array<int, mixed> $calls The organisation lookups, recorded by parameter name.
 	 * @param array<int, array<string, mixed>> $extra Extra fields per file position, such as labels.
+	 * @param object|null $references The document references the container hands out, or none.
 	 *
 	 * @return string
 	 */
-	private function documentsPage(array &$calls, array $extra = []): string {
+	private function documentsPage(array &$calls, array $extra = [], ?object $references = null): string {
 		$this->setupValidSitemapContext('reg-woo', 'sch-1');
 		$catalogObj = $this->createCatalogObj(['sch-1']);
 		$pubObject = $this->createSerializableObject([
@@ -1220,6 +1221,7 @@ class SitemapServiceTest extends TestCase {
 				'OCA\OpenRegister\Service\ObjectService' => $objectService,
 				'OCA\OpenRegister\Service\FileService' => $fileService,
 				'OCA\OpenRegister\Db\OrganisationMapper' => $organisations,
+				\OCA\OpenCatalogi\Service\DocumentReferences::class => $references,
 				default => null,
 			}
 		);
@@ -1574,13 +1576,12 @@ class SitemapServiceTest extends TestCase {
 			$instance,
 			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new \OCA\OpenCatalogi\Service\TooiVocabularyService(), $this->wooCategories, new OpenRegisterLookup($this->container, $this->appManager), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this), $instance),
 			$this->queryService,
-			$this->wooCategories,
-			$references
+			$this->wooCategories
 		);
 
 		$calls = [];
 		$dom = new \DOMDocument();
-		$dom->loadXML($this->documentsPage(calls: $calls));
+		$dom->loadXML($this->documentsPage(calls: $calls, references: $references));
 		$locs = [];
 		foreach ($dom->getElementsByTagNameNS(StandardsVersionService::SITEMAP_NAMESPACE, 'loc') as $loc) {
 			$locs[] = $loc->textContent;

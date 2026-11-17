@@ -92,7 +92,6 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param SitemapDocumentMapper $documentMapper Maps a file of a publication to its DiWoo document
 	 * @param PublicationQueryService $queryService The SCH-PFTS-CAT-002 read-rule guard
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local
-	 * @param DocumentReferences|null $references The publications' document references (REQ-PBR-002)
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookup $openRegister,
@@ -101,7 +100,6 @@ class SitemapService implements SitemapServiceInterface {
 		private readonly SitemapDocumentMapper $documentMapper,
 		private readonly PublicationQueryService $queryService,
 		private readonly WooCategoryRegistry $categories,
-		private readonly ?DocumentReferences $references = null,
 	) {
 	}//end __construct()
 
@@ -754,16 +752,40 @@ class SitemapService implements SitemapServiceInterface {
 			}
 
 			$files = ($fileService->formatFiles($fileService->getFiles(object: $publication['id']))['results'] ?? []);
-			if ($this->references !== null) {
-				$files = $this->references->appendTo(files: $files, publicationId: (string)$publication['id']);
-			}
-
-			$publication['@self']['files'] = $files;
+			$publication['@self']['files'] = $this->withReferences(files: $files, publicationId: (string)$publication['id']);
 			$publications[] = $publication;
 		}
 
 		return $publications;
 	}//end publicationsWithFiles()
+
+	/**
+	 * A publication's files with its public document references after them (REQ-PBR-002).
+	 *
+	 * The references are resolved through the OpenRegister lookup, because they
+	 * live in OpenRegister; without it, or when they cannot be resolved, the
+	 * files are returned as they are.
+	 *
+	 * @param array<int, array<string, mixed>> $files The publication's file entries.
+	 * @param string $publicationId The publication's id.
+	 *
+	 * @return array<int, array<string, mixed>> The files, then the references.
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-a-reference-is-published-like-a-file-pointing-at-its-source-req-pbr-002
+	 */
+	private function withReferences(array $files, string $publicationId): array {
+		try {
+			$references = $this->openRegister->installedService(DocumentReferences::class, 'OpenRegister is not available.');
+		} catch (\Throwable $e) {
+			return $files;
+		}
+
+		if ($references instanceof DocumentReferences === false) {
+			return $files;
+		}
+
+		return $references->appendTo(files: $files, publicationId: $publicationId);
+	}//end withReferences()
 
 	/**
 	 * Build a DIWOO validator error report.
