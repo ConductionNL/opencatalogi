@@ -30,6 +30,7 @@ import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
 import PlainSummaryDraftWidget from './components/widgets/PlainSummaryDraftWidget.vue'
 import PublicationAttachmentsWidget from './components/widgets/PublicationAttachmentsWidget.vue'
+import PublicationTablesWidget from './components/widgets/PublicationTablesWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import appIcons from './icons.js'
@@ -118,6 +119,16 @@ registerDashboardWidget('publication-attachments', {
 	defaultContent: { maxDisplay: 100 },
 	displayName: 'Attachments',
 	icon: 'FolderOutline',
+	surfaces: ['detail-page'],
+})
+// The publication's published tables: Publish as table on CSV attachments and
+// the editable data dictionary of each table (REQ-ODT-001, REQ-ODT-003).
+registerDashboardWidget('publication-tables', {
+	renderer: PublicationTablesWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Tables',
+	icon: 'TableColumn',
 	surfaces: ['detail-page'],
 })
 // `theme-preview` is registered with the local `ThemePreviewWidget` adapter,
