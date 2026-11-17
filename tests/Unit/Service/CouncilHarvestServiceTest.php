@@ -379,6 +379,8 @@ class CouncilHarvestServiceTest extends TestCase {
 		$status = $this->service()->status();
 
 		$this->assertTrue($status['integriq']);
+		$this->assertFalse($status['decidiq']);
+		$this->assertTrue($this->service(apps: ['integriq', 'openregister', 'decidiq'])->status()['decidiq']);
 		$this->assertSame([['slug' => 'ibabs-ris-v1', 'label' => 'iBabs', 'uuid' => 'uuid-ibabs-ris-v1']], $status['sources']);
 		$this->assertNull($status['source']);
 		$this->assertFalse($status['publishOnArrival']);

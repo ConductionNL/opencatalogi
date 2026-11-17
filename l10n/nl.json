@@ -1822,7 +1822,17 @@
         "OpenCatalogi cannot start": "OpenCatalogi kan niet starten",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vereist OpenRegister %1$s of nieuwer. Vraag je beheerder om OpenRegister bij te werken.",
         "Invalid listing": "Ongeldige vermelding",
-        "Listing not found in scope": "Vermelding niet gevonden in dit bereik"
+        "Listing not found in scope": "Vermelding niet gevonden in dit bereik",
+        "Choose a Notubiz or iBabs source": "Kies een Notubiz- of iBabs-bron",
+        "Council documents": "Raadsstukken",
+        "Not set up yet. Choose a source and press Set up.": "Nog niet ingesteld. Kies een bron en klik op Instellen.",
+        "Off: each document arrives as a concept, so someone checks it before it is public.": "Uit: elk stuk komt binnen als concept, zodat iemand het nakijkt voordat het openbaar wordt.",
+        "Publish on arrival": "Direct publiceren bij binnenkomst",
+        "Read the public documents of the council from Notubiz or iBabs into the Raadsinformatie catalogue, every night. Runs through integriq.": "Haal elke nacht de openbare stukken van de gemeenteraad uit Notubiz of iBabs op in de catalogus Raadsinformatie. Loopt via integriq.",
+        "The council documents harvest needs integriq. Install and enable integriq, then come back here.": "Het ophalen van raadsstukken heeft integriq nodig. Installeer en activeer integriq en kom dan hier terug.",
+        "The council documents harvest status could not be loaded.": "De status van het ophalen van raadsstukken kon niet worden geladen.",
+        "The harvest is on. It runs on schedule {cron}.": "Het ophalen staat aan. Het draait volgens schema {cron}.",
+        "decidiq already publishes council papers here. Running both creates duplicates.": "decidiq publiceert hier al raadsstukken. Als beide draaien, ontstaan dubbele publicaties."
     },
     "plurals": {}
 }

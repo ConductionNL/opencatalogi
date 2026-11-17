@@ -333,6 +333,18 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
+			id="section-council-harvest"
+			:name="t('opencatalogi', 'Council documents')"
+			:description="
+				t(
+					'opencatalogi',
+					'Read the public documents of the council from Notubiz or iBabs into the Raadsinformatie catalogue, every night. Runs through integriq.',
+				)
+			">
+			<CouncilHarvest />
+		</NcSettingsSection>
+
+		<NcSettingsSection
 			:name="t('opencatalogi', 'Publishing Options')"
 			:description="
 				t(
@@ -665,6 +677,7 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import CouncilHarvest from './CouncilHarvest.vue'
 import DcatFeedValidation from './DcatFeedValidation.vue'
 import DonlHarvestStatus from './DonlHarvestStatus.vue'
 import InstanceModeSection from './InstanceModeSection.vue'
@@ -797,6 +810,7 @@ export default defineComponent({
 		DcatFeedValidation,
 		DonlHarvestStatus,
 		PubliccodeHarvest,
+		CouncilHarvest,
 	},
 
 	/**

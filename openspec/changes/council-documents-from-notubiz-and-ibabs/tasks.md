@@ -16,7 +16,7 @@ Read `lib/Settings/register.d/publiccode-github-harvest.json` and `lib/Service/P
 ## 3. Settings section
 
 - [ ] 3.1 Add the "Council documents" section to the admin settings after "GitHub harvest" (board `OcInstellingen`), with the fields and actions of design D5 and the decidiq warning (REQ-CDH-001). Verify: `tests/e2e/council-documents-harvest.spec.ts` "an administrator sets up the council harvest", carrying `@e2e` REQ-CDH-001.
-- [ ] 3.2 Add the strings to `l10n/` (en, nl) and document the harvest for administrators in `docs/`. Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+- [x] 3.2 Add the strings to `l10n/` (en, nl) and document the harvest for administrators in `docs/`. Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
 
 ## 4. Verification
 

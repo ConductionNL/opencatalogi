@@ -1868,7 +1868,17 @@ OC.L10N.register(
         "OpenCatalogi cannot start": "OpenCatalogi cannot start",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.",
         "Invalid listing": "Invalid listing",
-        "Listing not found in scope": "Listing not found in scope"
+        "Listing not found in scope": "Listing not found in scope",
+        "Choose a Notubiz or iBabs source": "Choose a Notubiz or iBabs source",
+        "Council documents": "Council documents",
+        "Not set up yet. Choose a source and press Set up.": "Not set up yet. Choose a source and press Set up.",
+        "Off: each document arrives as a concept, so someone checks it before it is public.": "Off: each document arrives as a concept, so someone checks it before it is public.",
+        "Publish on arrival": "Publish on arrival",
+        "Read the public documents of the council from Notubiz or iBabs into the Raadsinformatie catalogue, every night. Runs through integriq.": "Read the public documents of the council from Notubiz or iBabs into the Raadsinformatie catalogue, every night. Runs through integriq.",
+        "The council documents harvest needs integriq. Install and enable integriq, then come back here.": "The council documents harvest needs integriq. Install and enable integriq, then come back here.",
+        "The council documents harvest status could not be loaded.": "The council documents harvest status could not be loaded.",
+        "The harvest is on. It runs on schedule {cron}.": "The harvest is on. It runs on schedule {cron}.",
+        "decidiq already publishes council papers here. Running both creates duplicates.": "decidiq already publishes council papers here. Running both creates duplicates."
     },
     "nplurals=2; plural=(n != 1);"
 )

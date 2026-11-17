@@ -110,6 +110,8 @@ class CouncilHarvestService implements CouncilHarvestServiceInterface {
 
 		return [
 			'integriq' => $this->appManager->isEnabledForAnyone('integriq'),
+			// decidiq can publish council papers into the same catalogue; the section warns about duplicates.
+			'decidiq' => $this->appManager->isEnabledForAnyone('decidiq'),
 			'sources' => $this->sourceChoices(),
 			'source' => $this->templates()[$kind]['source'] ?? null,
 			'publishOnArrival' => $this->publishesOnArrival(),
