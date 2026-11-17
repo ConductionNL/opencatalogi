@@ -1,52 +1,9 @@
 {
     "CatalogiController::index / absent": {
         "answer": {
-            "thrown": "RuntimeException: OpenRegister service is not available."
-        },
-        "log": [
-            {
-                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
-            },
-            {
-                "resolver.lookupId": [
-                    "opencatalogi",
-                    "catalog_register"
-                ]
-            },
-            {
-                "resolver.lookupId": [
-                    "opencatalogi",
-                    "catalog_schema"
-                ]
-            },
-            {
-                "IAppManager.getInstalledApps": []
-            }
-        ]
-    },
-    "CatalogiController::index / anonymous": {
-        "answer": {
             "response": "JSONResponse",
             "status": 200,
-            "data": {
-                "results": [
-                    {
-                        "id": "obj-1",
-                        "title": "One",
-                        "slug": "one",
-                        "@self": {
-                            "id": "obj-1",
-                            "register": "1",
-                            "schema": "2"
-                        }
-                    }
-                ],
-                "total": 1,
-                "limit": 5,
-                "offset": 0,
-                "page": 1,
-                "pages": 1
-            },
+            "data": [],
             "headers": {
                 "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
                 "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
@@ -75,13 +32,7 @@
                 ]
             },
             {
-                "IAppManager.getInstalledApps": []
-            },
-            {
-                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
-            },
-            {
-                "ObjectService.buildSearchQuery": {
+                "CatalogiServiceInterface.listCatalogs": {
                     "requestParams": {
                         "_limit": "5",
                         "q": "x",
@@ -92,24 +43,70 @@
                         "catalogSlug": "cat",
                         "message": "m",
                         "token": "tok"
+                    },
+                    "catalogConfig": {
+                        "register": "res-reg",
+                        "schema": "res-sch"
                     }
                 }
             },
             {
-                "IAppManager.getInstalledApps": []
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
+    "CatalogiController::index / anonymous": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 200,
+            "data": [],
+            "headers": {
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+                "resolver.lookupId": [
+                    "opencatalogi",
+                    "catalog_register"
+                ]
             },
             {
-                "ObjectService.searchObjectsPaginated": {
-                    "query": {
-                        "_schema": "res-sch",
-                        "@self": {
-                            "schema": "res-sch",
-                            "register": "res-reg"
-                        },
-                        "_register": "res-reg"
+                "resolver.lookupId": [
+                    "opencatalogi",
+                    "catalog_schema"
+                ]
+            },
+            {
+                "CatalogiServiceInterface.listCatalogs": {
+                    "requestParams": {
+                        "_limit": "5",
+                        "q": "x",
+                        "id": "id-1",
+                        "title": "T",
+                        "status": "open",
+                        "reason": "r",
+                        "catalogSlug": "cat",
+                        "message": "m",
+                        "token": "tok"
+                    },
+                    "catalogConfig": {
+                        "register": "res-reg",
+                        "schema": "res-sch"
                     }
                 }
             },
@@ -126,25 +123,7 @@
         "answer": {
             "response": "JSONResponse",
             "status": 200,
-            "data": {
-                "results": [
-                    {
-                        "id": "obj-1",
-                        "title": "One",
-                        "slug": "one",
-                        "@self": {
-                            "id": "obj-1",
-                            "register": "1",
-                            "schema": "2"
-                        }
-                    }
-                ],
-                "total": 1,
-                "limit": 5,
-                "offset": 0,
-                "page": 1,
-                "pages": 1
-            },
+            "data": [],
             "headers": {
                 "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
                 "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
@@ -178,13 +157,7 @@
                 ]
             },
             {
-                "IAppManager.getInstalledApps": []
-            },
-            {
-                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
-            },
-            {
-                "ObjectService.buildSearchQuery": {
+                "CatalogiServiceInterface.listCatalogs": {
                     "requestParams": {
                         "_limit": "5",
                         "q": "x",
@@ -195,24 +168,10 @@
                         "catalogSlug": "cat",
                         "message": "m",
                         "token": "tok"
-                    }
-                }
-            },
-            {
-                "IAppManager.getInstalledApps": []
-            },
-            {
-                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
-            },
-            {
-                "ObjectService.searchObjectsPaginated": {
-                    "query": {
-                        "_schema": "cfg-catalog_schema",
-                        "@self": {
-                            "schema": "cfg-catalog_schema",
-                            "register": "cfg-catalog_register"
-                        },
-                        "_register": "cfg-catalog_register"
+                    },
+                    "catalogConfig": {
+                        "register": "cfg-catalog_register",
+                        "schema": "cfg-catalog_schema"
                     }
                 }
             },
@@ -313,25 +272,7 @@
         "answer": {
             "response": "JSONResponse",
             "status": 200,
-            "data": {
-                "results": [
-                    {
-                        "id": "obj-1",
-                        "title": "One",
-                        "slug": "one",
-                        "@self": {
-                            "id": "obj-1",
-                            "register": "1",
-                            "schema": "2"
-                        }
-                    }
-                ],
-                "total": 1,
-                "limit": 5,
-                "offset": 0,
-                "page": 1,
-                "pages": 1
-            },
+            "data": [],
             "headers": {
                 "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
                 "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
@@ -360,13 +301,7 @@
                 ]
             },
             {
-                "IAppManager.getInstalledApps": []
-            },
-            {
-                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
-            },
-            {
-                "ObjectService.buildSearchQuery": {
+                "CatalogiServiceInterface.listCatalogs": {
                     "requestParams": {
                         "_limit": "5",
                         "q": "x",
@@ -377,24 +312,10 @@
                         "catalogSlug": "cat",
                         "message": "m",
                         "token": "tok"
-                    }
-                }
-            },
-            {
-                "IAppManager.getInstalledApps": []
-            },
-            {
-                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
-            },
-            {
-                "ObjectService.searchObjectsPaginated": {
-                    "query": {
-                        "_schema": "res-sch",
-                        "@self": {
-                            "schema": "res-sch",
-                            "register": "res-reg"
-                        },
-                        "_register": "res-reg"
+                    },
+                    "catalogConfig": {
+                        "register": "res-reg",
+                        "schema": "res-sch"
                     }
                 }
             },
