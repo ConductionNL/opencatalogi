@@ -23,11 +23,16 @@ Read `openspec/woo-build-rules.md` first. Start once `dossiq/woo-refusal-grounds
       it is a published contract, so `git grep` still finds that one line.
 - [x] 3.2 Vendor dossiq's snapshot into `lib/Settings/woo-refusal-grounds.snapshot.json` with its version, and add a test that fails when its version is older than the one dossiq ships, when dossiq is checked out beside the clone (REQ-WVC-003). Verify: `RefusalGroundsTest::testTheVendoredSnapshotMatchesDossiqsShape`.
 - [ ] 3.3 Add the repair step mapping stored codes, registered post-migration (REQ-WVC-003). Verify: `tests/Unit/Repair/MapStoredRefusalGroundsTest.php::testAKnownCodeIsMapped`, `::testAnUnmappableCodeIsFlaggedAndListed`, `::testASecondRunChangesNothing`, `::testTheStepIsRegisteredPostMigration`.
-- [ ] 3.4 Say in the Woo settings when the snapshot is in use (REQ-WVC-003). Verify: `tests/e2e/value-lists.spec.ts` "without dossiq, grounds can be picked for redaction and not edited", on a CI instance without dossiq, carrying `@e2e` REQ-WVC-003.
+- [x] 3.4 Say in the Woo settings when the snapshot is in use (REQ-WVC-003). Verify: `tests/e2e/value-lists.spec.ts` "without dossiq, grounds can be picked for redaction and not edited", on a CI instance without dossiq, carrying `@e2e` REQ-WVC-003.
+      `src/views/settings/RefusalGroundsSource.vue` in the Woo settings, with a jest spec; the e2e test is written, not
+      run here (no live stack).
 
 ## 4. One page
 
 - [ ] 4.1 Add `GET /api/value-lists` with CORS and the public page `/value-lists` (REQ-WVC-004). Verify: `tests/Unit/Controller/ValueListsControllerTest.php::testEveryUsedSchemeIsListedWithUris` (fails today) and `tests/e2e/value-lists.spec.ts` "an integrator copies a URI", carrying `@e2e` REQ-WVC-004; `OpenApiParityTest` stays green.
+      The JSON route is built (`ValueListsController`, `ValueListsService`, documented in `openapi.json`) with its unit
+      test and the e2e API tests. The public page is not: the app has no public page bundle yet, so the page test is a
+      `test.fixme` until it ships. Left unticked for the page.
 
 ## 5. Docs
 

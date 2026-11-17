@@ -1867,7 +1867,10 @@
         "OpenCatalogi cannot start": "OpenCatalogi cannot start",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.",
         "Invalid listing": "Invalid listing",
-        "Listing not found in scope": "Listing not found in scope"
+        "Listing not found in scope": "Listing not found in scope",
+        "The refusal grounds cannot be read: {error}": "The refusal grounds cannot be read: {error}",
+        "The refusal grounds come from a fixed copy of the list maintained in dossiq. They can be cited on a redacted passage, but not edited here. Install dossiq to maintain them.": "The refusal grounds come from a fixed copy of the list maintained in dossiq. They can be cited on a redacted passage, but not edited here. Install dossiq to maintain them.",
+        "The refusal grounds come from dossiq, where they are maintained.": "The refusal grounds come from dossiq, where they are maintained."
     },
     "plurals": {}
 }

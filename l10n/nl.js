@@ -1823,7 +1823,10 @@ OC.L10N.register(
         "OpenCatalogi cannot start": "OpenCatalogi kan niet starten",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vereist OpenRegister %1$s of nieuwer. Vraag je beheerder om OpenRegister bij te werken.",
         "Invalid listing": "Ongeldige vermelding",
-        "Listing not found in scope": "Vermelding niet gevonden in dit bereik"
+        "Listing not found in scope": "Vermelding niet gevonden in dit bereik",
+        "The refusal grounds cannot be read: {error}": "De weigeringsgronden kunnen niet worden gelezen: {error}",
+        "The refusal grounds come from a fixed copy of the list maintained in dossiq. They can be cited on a redacted passage, but not edited here. Install dossiq to maintain them.": "De weigeringsgronden komen uit een vaste kopie van de lijst die in dossiq wordt beheerd. U kunt ze noemen bij een gelakte passage, maar hier niet wijzigen. Installeer dossiq om ze te beheren.",
+        "The refusal grounds come from dossiq, where they are maintained.": "De weigeringsgronden komen uit dossiq, waar ze worden beheerd."
     },
     "nplurals=2; plural=(n != 1);"
 )
