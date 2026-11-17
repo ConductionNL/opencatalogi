@@ -124,7 +124,7 @@ class DepublicationControllerTest extends TestCase {
 				$service,
 				$this->container,
 				new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
-			)
+			), capabilities: new \Unit\Support\AllowingCapabilityRights()
 		);
 
 	}//end setUp()
