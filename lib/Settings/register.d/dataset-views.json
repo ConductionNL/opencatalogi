@@ -19,6 +19,7 @@
 		"schemas": {
 			"tableView": {
 				"slug": "tableView",
+				"x-openregister-demo-data": "A view shows one published table, whose rows schema the app makes when an editor publishes a CSV; a sample view would point at a table that does not exist and answer an empty chart on a public page.",
 				"title": "Table view",
 				"version": "0.1.0",
 				"published": "2026-11-17T00:00:00+00:00",

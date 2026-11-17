@@ -152,6 +152,7 @@ class DatasetViewController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 120, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->readOnlyPreflight();
 	}//end preflightedCors()
