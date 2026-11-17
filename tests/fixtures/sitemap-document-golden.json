@@ -9,9 +9,9 @@
                     "diwoo:publisher": {
                         "#text": ""
                     },
-                    "diwoo:format": {
-                        "@resource": "http://publications.europa.eu/resource/authority/file-type/XML",
-                        "#text": "xml"
+                    "diwoo:language": {
+                        "#text": "Nederlands",
+                        "@resource": "http://publications.europa.eu/resource/authority/language/NLD"
                     },
                     "diwoo:classificatiecollectie": {
                         "diwoo:informatiecategorieen": {
@@ -38,6 +38,11 @@
                 "documentLoc": "earlier",
                 "axis": "kept",
                 "reason": "appended to"
+            },
+            {
+                "documentLoc": "",
+                "axis": "format",
+                "reason": "type-unlisted"
             },
             {
                 "documentLoc": "",
@@ -70,6 +75,10 @@
                     "diwoo:format": {
                         "@resource": "http://publications.europa.eu/resource/authority/file-type/PDF",
                         "#text": "pdf"
+                    },
+                    "diwoo:language": {
+                        "#text": "Nederlands",
+                        "@resource": "http://publications.europa.eu/resource/authority/language/NLD"
                     },
                     "diwoo:classificatiecollectie": {
                         "diwoo:informatiecategorieen": {
@@ -122,6 +131,10 @@
                     "diwoo:format": {
                         "@resource": "http://publications.europa.eu/resource/authority/file-type/PDF",
                         "#text": "pdf"
+                    },
+                    "diwoo:language": {
+                        "#text": "Nederlands",
+                        "@resource": "http://publications.europa.eu/resource/authority/language/NLD"
                     },
                     "diwoo:classificatiecollectie": {
                         "diwoo:informatiecategorieen": {
@@ -179,6 +192,10 @@
                     "diwoo:format": {
                         "@resource": "http://publications.europa.eu/resource/authority/file-type/DOCX",
                         "#text": "docx"
+                    },
+                    "diwoo:language": {
+                        "#text": "Nederlands",
+                        "@resource": "http://publications.europa.eu/resource/authority/language/NLD"
                     }
                 }
             }
@@ -229,6 +246,10 @@
                     "diwoo:format": {
                         "@resource": "http://publications.europa.eu/resource/authority/file-type/PDF",
                         "#text": "pdf"
+                    },
+                    "diwoo:language": {
+                        "#text": "Nederlands",
+                        "@resource": "http://publications.europa.eu/resource/authority/language/NLD"
                     },
                     "diwoo:classificatiecollectie": {
                         "diwoo:informatiecategorieen": {
@@ -287,6 +308,10 @@
                     "diwoo:format": {
                         "@resource": "http://publications.europa.eu/resource/authority/file-type/ODT",
                         "#text": "odt"
+                    },
+                    "diwoo:language": {
+                        "#text": "Nederlands",
+                        "@resource": "http://publications.europa.eu/resource/authority/language/NLD"
                     },
                     "diwoo:documenthandelingen": {
                         "diwoo:documenthandeling": {

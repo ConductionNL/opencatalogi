@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
  */
 
 declare(strict_types=1);
@@ -32,7 +32,7 @@ use OCP\IAppConfig;
  * Keeps each user's dismissed banner ids in the app config, under
  * `banner_dismissals_<uid>` as a JSON list, and filters the banners by them.
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
  */
 class BannerDismissals {
 
@@ -57,7 +57,7 @@ class BannerDismissals {
 	 *
 	 * @return array<int, array<string, mixed>> The banners to show.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	public function forUser(array $banners, string $uid): array {
 		return $this->bannerService->forUser(
@@ -75,7 +75,7 @@ class BannerDismissals {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	public function dismiss(string $uid, string $bannerId): void {
 		$dismissed = $this->dismissed(uid: $uid);
@@ -95,7 +95,7 @@ class BannerDismissals {
 	 *
 	 * @return array<mixed> The stored ids.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	private function dismissed(string $uid): array {
 		$dismissed = json_decode($this->config->getValueString(AppIdentity::APP_ID, 'banner_dismissals_' . $uid, '[]'), true);

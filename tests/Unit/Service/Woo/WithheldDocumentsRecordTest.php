@@ -35,6 +35,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * An in-memory OpenRegister ObjectService with the four calls record() makes.
@@ -64,6 +66,7 @@ class WithheldShapedObjectService {
 	public bool $findFails = false;
 
 	public function find(string $id, mixed ...$rest): ?array {
+		$rest = LegacyObjectArgs::flatten(args: $rest);
 		if ($this->findFails === true) {
 			throw new RuntimeException('OpenRegister is down');
 		}
@@ -76,6 +79,7 @@ class WithheldShapedObjectService {
 	}//end find()
 
 	public function saveObject(array $object, mixed ...$rest): array {
+		$rest = LegacyObjectArgs::flatten(args: $rest);
 		$this->saves++;
 		if ($this->failSaveAt !== null && $this->saves === $this->failSaveAt) {
 			throw new RuntimeException('OpenRegister is down');
@@ -90,7 +94,8 @@ class WithheldShapedObjectService {
 		return ['id' => $id, 'object' => $object];
 	}//end saveObject()
 
-	public function deleteObject(string $uuid, mixed ...$rest): bool {
+	public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false, mixed ...$rest): bool {
+		$uuid = $deletion->uuid;
 		$this->deleted[] = $uuid;
 		unset($this->rows[$uuid]);
 

@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
  */
 
 declare(strict_types=1);
@@ -26,12 +26,16 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
 use OCA\OpenCatalogi\Service\ObjectInPair;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 
 /**
  * Opens an inspection window and resolves its link, and stores and reads the
  * inspection in the publication register's inspection schema.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
  */
 class InspectionRecords {
 	use ForwardsRegisterAccess;
@@ -62,7 +66,7 @@ class InspectionRecords {
 	 * @throws \DomainException When the type declares no term, or no document was chosen.
 	 * @throws \OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException When the end date cannot be rolled off a non-working day.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function open(array $parameters, string $openedBy): array {
 		return $this->inspections->open(
@@ -84,7 +88,7 @@ class InspectionRecords {
 	 *
 	 * @throws \DomainException When the window cannot be read.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function resolveLink(array $inspection, string $token): array {
 		return $this->inspections->resolveLink(inspection: $inspection, token: $token);
@@ -104,17 +108,17 @@ class InspectionRecords {
 	 *
 	 * @throws \Throwable When the register is unconfigured or unreadable, or the save fails.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function store(array $inspection): mixed {
 		$config = $this->inspectionConfiguration();
 		return $this->registers->getObjectService()->saveObject(
 			object: $inspection,
-			extend: [],
-			register: $config['register'],
-			schema: $config['schema'],
-			_rbac: false,
-			_unowned: true
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $config['register'], schema: $config['schema']),
+				actor: new SaveActor(unowned: true)
+			),
+			_rbac: false
 		);
 
 	}//end store()
@@ -133,7 +137,7 @@ class InspectionRecords {
 	 *
 	 * @throws \Throwable When the register is unconfigured or unreadable, or the inspection is unknown.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function find(string $id): array {
 		$config = $this->inspectionConfiguration();
@@ -141,8 +145,7 @@ class InspectionRecords {
 			object: ObjectInPair::require(
 				found: $this->registers->getObjectService()->find(
 					id: $id,
-					register: $config['register'],
-					schema: $config['schema'],
+					options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
 					_rbac: false
 				),
 				config: $config

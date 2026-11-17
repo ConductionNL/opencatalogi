@@ -39,9 +39,9 @@
 
 ## 6. Directory Synchronisation Verification (DIR-001..011)
 
-- [ ] 6.1 Smoke test `GET /api/directory` (unauthenticated) — confirm 200 with combined directory data
-- [ ] 6.2 Smoke test `POST /api/directory` with a directory URL — confirm `DirectoryService::syncDirectory()` is called
-- [ ] 6.3 Smoke test `POST /api/listings/sync` with a listing ID — confirm listing's directory URL is fetched and sync runs
+- [ ] 6.1 Smoke test `GET /api/directory` (unauthenticated) — confirm 200 with combined directory data (live pass, decision 139)
+- [ ] 6.2 Smoke test `POST /api/directory` with a directory URL — confirm `DirectoryService::syncDirectory()` is called (live pass, decision 139)
+- [ ] 6.3 Smoke test `POST /api/listings/sync` with a listing ID — confirm listing's directory URL is fetched and sync runs (live pass, decision 139)
 - [ ] 6.4 Verify `POST /api/listings/add` is accessible without authentication and triggers `DirectoryService::syncDirectory()`
 - [x] 6.5 Verify CORS OPTIONS endpoints exist and return correct headers for all public listing/directory endpoints
 - [x] 6.6 Verify `DirectoryService` implements anti-loop protection (5-minute TTL cache of processed directory URLs)

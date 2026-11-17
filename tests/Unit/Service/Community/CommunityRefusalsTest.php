@@ -15,7 +15,6 @@ use DomainException;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
-use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -25,7 +24,6 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\OpenCatalogi\Service\Community\BannerService
  * @covers \OCA\OpenCatalogi\Service\Community\NoticeBoardService
  * @covers \OCA\OpenCatalogi\Service\Community\AtomFeedService
- * @uses \OCA\OpenCatalogi\Service\Publication\PublicationRuleService
  */
 class CommunityRefusalsTest extends TestCase {
 
@@ -36,7 +34,7 @@ class CommunityRefusalsTest extends TestCase {
 	protected function setUp(): void {
 		$this->banners = new BannerService();
 		$this->notices = new NoticeBoardService();
-		$this->feed = new AtomFeedService(new PublicationRuleService(), $this->notices);
+		$this->feed = new AtomFeedService($this->notices);
 
 	}//end setUp()
 
@@ -147,7 +145,6 @@ class CommunityRefusalsTest extends TestCase {
 		$entries = $this->feed->entries(
 			records: [],
 			notices: ['geen notitie', ['id' => 'n1', 'title' => 'Nu', 'startDate' => '2026-09-01', 'endDate' => '2026-12-01', 'body' => 'Tekst']],
-			rules: [],
 			now: $this->at('2026-09-18T00:00:00+00:00')
 		);
 

@@ -51,6 +51,7 @@ class DcatService implements DcatServiceInterface {
 	 */
 	public const MAX_PER_PAGE = 1000;
 
+
 	/**
 	 * DcatService constructor.
 	 *
@@ -232,6 +233,72 @@ class DcatService implements DcatServiceInterface {
 			'_meta' => $this->buildCatalogMeta(etagKey: ($catalog['id'] ?? $catalogSlug), page: $scope + ['collected' => $collected]),
 		];
 	}//end buildCatalogDocument()
+
+	/**
+	 * The DCAT graph of one publication of a catalogue, for its dataset IRI.
+	 *
+	 * Built from the same search as the catalogue feed: the catalogue's own
+	 * registers and schemas, RBAC on, so a publication the caller cannot read,
+	 * one outside the scope or one whose schema opted out answers null. The
+	 * caller guards the catalogue first, as for buildCatalogDocument().
+	 *
+	 * @param array<string, mixed> $catalog The guarded catalogue.
+	 * @param string $catalogSlug The catalogue slug.
+	 * @param string $uuid The publication uuid.
+	 *
+	 * @return array<string, mixed>|null The JSON-LD document of that dataset, or null.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-catalogue-is-served-as-linked-data-and-through-sparql-req-dcc-003
+	 */
+	public function buildDatasetDocument(array $catalog, string $catalogSlug, string $uuid): ?array {
+		$scope = $this->resolveCatalogScope(catalog: $catalog, catalogSlug: $catalogSlug);
+		$publication = $this->findInScope(scope: $scope, uuid: $uuid);
+		if ($publication === null || self::schemaOptedOut(publication: $publication, scope: $scope) === true) {
+			return null;
+		}
+
+		$scope['fileService'] = $this->getFileService();
+		$source = $this->datasetSource(publication: $publication, scope: $scope);
+
+		return [
+			'@context' => $this->mappingService->context(),
+			'@graph' => [$this->mapCatalogDataset(source: $source, scope: $scope)],
+		];
+	}//end buildDatasetDocument()
+
+	/**
+	 * The publication with this uuid in the catalogue scope, as the caller may read it.
+	 *
+	 * Fails closed on an empty scope or uuid, and on a result that is not that uuid.
+	 *
+	 * @param array<string, mixed> $scope The resolved catalogue scope.
+	 * @param string $uuid The publication uuid.
+	 *
+	 * @return array<string, mixed>|null The publication, or null.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-catalogue-is-served-as-linked-data-and-through-sparql-req-dcc-003
+	 */
+	private function findInScope(array $scope, string $uuid): ?array {
+		if ($uuid === '' || $scope['schemas'] === [] || $scope['registers'] === []) {
+			return null;
+		}
+
+		$query = CallerScope::writeScope(
+			query: ['_limit' => 1, '_page' => 1, '_ids' => [$uuid]],
+			registers: $scope['registers'],
+			schemas: $scope['schemas']
+		);
+		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		foreach (array_map($this->toArray(...), ($result['results'] ?? [])) as $publication) {
+			if ((string)($publication['@self']['uuid'] ?? $publication['id'] ?? '') === $uuid) {
+				return $publication;
+			}
+		}
+
+		return null;
+	}//end findInScope()
 
 	/**
 	 * Resolve what a catalog document is built from: scope, defaults, schema mappings and options.
@@ -821,9 +888,8 @@ class DcatService implements DcatServiceInterface {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
 	 */
 	public function mandatoryViolations(array $node): array {
-		$required = ['dct:title', 'dct:publisher', 'dcat:landingPage'];
 		$missing = [];
-		foreach ($required as $property) {
+		foreach (self::MANDATORY_DATASET_PROPERTIES as $property) {
 			if (isset($node[$property]) === false || $node[$property] === '' || $node[$property] === []) {
 				$missing[] = $property;
 			}

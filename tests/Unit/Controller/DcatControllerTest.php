@@ -249,6 +249,9 @@ class DcatControllerTest extends TestCase {
 		// The report must name the profile version its verdict was measured against.
 		$this->assertSame(StandardsVersionService::DCAT_AP_NL_VERSION, $data['profile']['declared']);
 		$this->assertSame(StandardsVersionService::STATUS_CURRENT, $data['profile']['status']);
+
+		// The report says what it checked, not only what failed (DCAT-010, task 6.3).
+		$this->assertSame(['dct:title', 'dct:publisher', 'dcat:landingPage'], $data['checked']);
 	}
 
 	public function testDonlReportUnknownCatalogReturns404(): void {
