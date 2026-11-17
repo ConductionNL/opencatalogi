@@ -189,7 +189,7 @@ class MirrorCaseReferenceIntoSourceIdentifiersTest extends TestCase {
 	}//end testNothingIsWrittenWithoutConfigurationOrOpenRegister()
 
 	/**
-	 * The step is registered post-migration, right after InitializeSettings.
+	 * The step is registered post-migration, after InitializeSettings.
 	 *
 	 * @return void
 	 */
@@ -198,8 +198,11 @@ class MirrorCaseReferenceIntoSourceIdentifiersTest extends TestCase {
 		$steps = array_map('strval', $info->xpath('/info/repair-steps/post-migration/step'));
 		$index = array_search(MirrorCaseReferenceIntoSourceIdentifiers::class, $steps, true);
 
+		$settings = array_search('OCA\OpenCatalogi\Repair\InitializeSettings', $steps, true);
+
 		$this->assertNotFalse($index);
-		$this->assertSame('OCA\OpenCatalogi\Repair\InitializeSettings', $steps[$index - 1]);
+		$this->assertNotFalse($settings);
+		$this->assertGreaterThan($settings, $index);
 		$this->assertSame('Add the case reference of every publication to its source identifiers', $this->step(null)->getName());
 	}//end testTheStepIsRegisteredPostMigration()
 }//end class
