@@ -113,6 +113,12 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'wooRegistration#show', 'url' => '/api/woo/registration', 'verb' => 'GET'],
 		// The publishers group in the admin settings (operations-publish-rights, REQ-OPR-004).
 		['name' => 'publishRights#show', 'url' => '/api/settings/publish-rights', 'verb' => 'GET'],
+		// The rights table in the admin settings (woo-access-boundary-hardening, REQ-WAB-004); administrators only.
+		['name' => 'capabilityRights#index', 'url' => '/api/settings/capability-rights', 'verb' => 'GET'],
+		[
+			'name' => 'capabilityRights#update', 'url' => '/api/settings/capability-rights/{verb}', 'verb' => 'PUT',
+			'requirements' => ['verb' => '[A-Za-z]+'],
+		],
 		['name' => 'wooRegistration#request', 'url' => '/api/woo/registration', 'verb' => 'POST'],
 		['name' => 'wooRegistration#confirm', 'url' => '/api/woo/registration/confirm', 'verb' => 'POST'],
 		// The public and community surface: the admin surfaces.

@@ -1868,7 +1868,23 @@ OC.L10N.register(
         "OpenCatalogi cannot start": "OpenCatalogi cannot start",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.",
         "Invalid listing": "Invalid listing",
-        "Listing not found in scope": "Listing not found in scope"
+        "Listing not found in scope": "Listing not found in scope",
+        "Open an inspection period": "Open an inspection period",
+        "Open a comment period": "Open a comment period",
+        "Depublish and acknowledge a withdrawal": "Depublish and acknowledge a withdrawal",
+        "Announce to the national index": "Announce to the national index",
+        "Decide on retention": "Decide on retention",
+        "Process a Woo batch": "Process a Woo batch",
+        "Publish a Woo batch": "Publish a Woo batch",
+        "Request the Woo registration": "Request the Woo registration",
+        "Only an administrator can see and change these rights.": "Only an administrator can see and change these rights.",
+        "The rights could not be read or saved. Try again later.": "The rights could not be read or saved. Try again later.",
+        "Rights and the groups granted each": "Rights and the groups granted each",
+        "Right": "Right",
+        "Groups": "Groups",
+        "Administrators only": "Administrators only",
+        "Rights per group": "Rights per group",
+        "Which groups may do each of these tasks. Administrators may always do all of them; a right without a group is for administrators only.": "Which groups may do each of these tasks. Administrators may always do all of them; a right without a group is for administrators only."
     },
     "nplurals=2; plural=(n != 1);"
 )

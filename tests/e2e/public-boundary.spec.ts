@@ -35,25 +35,12 @@ import type { APIRequestContext } from '@playwright/test'
 import { expect, request, test } from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
+import { BASE_URL } from './base-url.ts'
 
 const ROOT = path.resolve(__dirname, '..', '..')
 const APP = '/index.php/apps/opencatalogi'
 const OBJECTS = '/index.php/apps/openregister/api/objects/publication'
 
-/**
- * The instance under test, from the environment; no fallback.
- */
-function baseUrl(): string {
-	for (const name of ['PLAYWRIGHT_BASE_URL', 'BASE_URL', 'NEXTCLOUD_URL', 'NC_BASE_URL']) {
-		const value = (process.env[name] ?? '').trim()
-		if (value !== '') {
-			return value.replace(/\/+$/, '')
-		}
-	}
-	throw new Error('Set PLAYWRIGHT_BASE_URL or BASE_URL to the Nextcloud instance under test.')
-}
-
-const BASE_URL = baseUrl()
 
 /** The non-public fixtures the seed makes: schema, the field holding the marker, the marker. */
 const FIXTURES: Array<{ schema: string, field: string, marker: string }> = [

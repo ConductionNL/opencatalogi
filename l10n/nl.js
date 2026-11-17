@@ -1823,7 +1823,23 @@ OC.L10N.register(
         "OpenCatalogi cannot start": "OpenCatalogi kan niet starten",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vereist OpenRegister %1$s of nieuwer. Vraag je beheerder om OpenRegister bij te werken.",
         "Invalid listing": "Ongeldige vermelding",
-        "Listing not found in scope": "Vermelding niet gevonden in dit bereik"
+        "Listing not found in scope": "Vermelding niet gevonden in dit bereik",
+        "Open an inspection period": "Een terinzagelegging openen",
+        "Open a comment period": "Een zienswijzetermijn openen",
+        "Depublish and acknowledge a withdrawal": "Depubliceren en een intrekking bevestigen",
+        "Announce to the national index": "Aanmelden bij de landelijke index",
+        "Decide on retention": "Over de bewaartermijn beslissen",
+        "Process a Woo batch": "Een Woo-batch verwerken",
+        "Publish a Woo batch": "Een Woo-batch publiceren",
+        "Request the Woo registration": "De Woo-registratie aanvragen",
+        "Only an administrator can see and change these rights.": "Alleen een beheerder kan deze rechten zien en wijzigen.",
+        "The rights could not be read or saved. Try again later.": "De rechten konden niet worden gelezen of opgeslagen. Probeer het later opnieuw.",
+        "Rights and the groups granted each": "Rechten en de groepen die ze hebben gekregen",
+        "Right": "Recht",
+        "Groups": "Groepen",
+        "Administrators only": "Alleen beheerders",
+        "Rights per group": "Rechten per groep",
+        "Which groups may do each of these tasks. Administrators may always do all of them; a right without a group is for administrators only.": "Welke groepen elk van deze taken mogen doen. Beheerders mogen ze altijd allemaal; een recht zonder groep is alleen voor beheerders."
     },
     "nplurals=2; plural=(n != 1);"
 )
