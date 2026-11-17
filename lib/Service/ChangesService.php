@@ -29,12 +29,13 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedChangesParameterException;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IURLGenerator;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -47,8 +48,8 @@ use RuntimeException;
  * public once.
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Parsing, window, cursor and the two reads are small steps of one answer.
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) OpenRegister, the DCAT mapping, the clock and the URL generator, nothing else.
- * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds, CallerScope and DateTimeImmutable::getLastErrors() are pure.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) OpenRegister, the catalogue guard, the DCAT mapping, the clock and the URL generator.
+ * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds and DateTimeImmutable::getLastErrors() are pure.
  *
  * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md
  */
@@ -79,17 +80,19 @@ class ChangesService {
 	 * Constructor.
 	 *
 	 * @param OpenRegisterLookupInterface $openRegister The guarded OpenRegister services.
+	 * @param CatalogiServiceInterface $catalogiService Resolves a catalogue by slug.
+	 * @param PublicationQueryServiceInterface $queryService The anonymous read-rule guard.
 	 * @param DcatServiceInterface $dcat The DCAT mapping the catalogue feed uses.
 	 * @param ITimeFactory $time The clock.
 	 * @param IURLGenerator $urls Builds the next-page URL.
-	 * @param LoggerInterface $logger PSR-3 logger.
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookupInterface $openRegister,
+		private readonly CatalogiServiceInterface $catalogiService,
+		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly DcatServiceInterface $dcat,
 		private readonly ITimeFactory $time,
 		private readonly IURLGenerator $urls,
-		private readonly LoggerInterface $logger,
 	) {
 
 	}//end __construct()
@@ -113,6 +116,27 @@ class ChangesService {
 
 		return $moment;
 	}//end parseSince()
+
+	/**
+	 * A catalogue by slug, guarded for anonymous reading, with its slug set.
+	 *
+	 * The same guard the catalogue list and the DCAT feed apply: an anonymous
+	 * reader never reaches a schema without read rules.
+	 *
+	 * @param string $catalogSlug The catalogue slug.
+	 *
+	 * @return array<string, mixed>|null The guarded catalogue, or null when there is none.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	public function guardedCatalog(string $catalogSlug): ?array {
+		$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
+		if ($catalog === null) {
+			return null;
+		}
+
+		return ['slug' => $catalogSlug] + $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
+	}//end guardedCatalog()
 
 	/**
 	 * A strict ISO 8601 moment in UTC, or null when the value is not one.
@@ -153,12 +177,10 @@ class ChangesService {
 	 * What changed and what was withdrawn in a catalogue since a moment.
 	 *
 	 * The catalogue must already be guarded for anonymous reading
-	 * ({@see PublicationQueryService::applyCatalogReadRuleGuard()}).
+	 * ({@see guardedCatalog()}).
 	 *
-	 * @param array<string, mixed> $catalog The guarded catalogue.
-	 * @param string $catalogSlug The catalogue slug.
-	 * @param DateTimeImmutable $since The moment, in UTC.
-	 * @param string|null $cursor The cursor of a next page, or null for the first.
+	 * @param array<string, mixed> $catalog The guarded catalogue, with its `slug`.
+	 * @param array<string, mixed> $request `since` (the moment, in UTC) and `cursor` (of a next page, or null for the first).
 	 *
 	 * @return array<string, mixed> `changed` (DCAT dataset nodes), `withdrawn` (`{id, withdrawnAt}`),
 	 *                              `since`, `until` (ISO 8601, UTC) and `next` (URL or null).
@@ -169,30 +191,26 @@ class ChangesService {
 	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
 	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-withdrawn-record-is-reported-not-shown-oai-007
 	 */
-	public function changesSince(array $catalog, string $catalogSlug, DateTimeImmutable $since, ?string $cursor = null): array {
-		$window = $this->window(cursor: $cursor);
+	public function changesSince(array $catalog, array $request): array {
+		$read = [
+			'catalog' => $catalog,
+			'scope' => CatalogScopeIds::forCatalog(catalog: $catalog),
+			'since' => $request['since'],
+		] + $this->window(cursor: ($request['cursor'] ?? null));
 		$objectService = $this->anonymousObjectService();
-		$scope = CatalogScopeIds::forCatalog(catalog: $catalog);
-		$page = $objectService->runAsAnonymous(
-			fn (): array => $this->changedPage(
-				objectService: $objectService,
-				catalog: $catalog + ['slug' => $catalogSlug],
-				scope: $scope,
-				window: ['since' => $since, 'until' => $window['until'], 'page' => $window['page']]
-			)
-		);
+		$page = $objectService->runAsAnonymous(fn (): array => $this->changedPage(objectService: $objectService, read: $read));
 
 		$withdrawn = [];
-		if ($window['page'] === 1) {
-			$withdrawn = $this->withdrawnSince(objectService: $objectService, scope: $scope, since: $since);
+		if ($read['page'] === 1) {
+			$withdrawn = $this->withdrawnSince(objectService: $objectService, read: $read);
 		}
 
 		return [
 			'changed' => $page['changed'],
 			'withdrawn' => $withdrawn,
-			'since' => self::iso(moment: $since),
-			'until' => self::iso(moment: $window['until']),
-			'next' => $this->nextUrl(catalogSlug: $catalogSlug, since: $since, window: $window, hasMore: $page['hasMore']),
+			'since' => self::iso(moment: $read['since']),
+			'until' => self::iso(moment: $read['until']),
+			'next' => $this->nextUrl(read: $read, hasMore: $page['hasMore']),
 		];
 	}//end changesSince()
 
@@ -285,24 +303,22 @@ class ChangesService {
 	 * whole register.
 	 *
 	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param array<string, mixed> $catalog The guarded catalogue, with its slug.
-	 * @param array{registers: array<int, int>, schemas: array<int, int>} $scope The catalogue scope.
-	 * @param array{since: DateTimeImmutable, until: DateTimeImmutable, page: int} $window The window and page.
+	 * @param array<string, mixed> $read The read: `catalog` (guarded, with its slug), `scope`, `since`, `until`, `page`.
 	 *
 	 * @return array{changed: array<int, array<string, mixed>>, hasMore: bool}
 	 */
-	private function changedPage(object $objectService, array $catalog, array $scope, array $window): array {
-		if (self::isEmptyScope(scope: $scope) === true) {
+	private function changedPage(object $objectService, array $read): array {
+		if (self::isEmptyScope(scope: $read['scope']) === true) {
 			return ['changed' => [], 'hasMore' => false];
 		}
 
-		$query  = self::changedQuery(scope: $scope, window: $window);
+		$query  = $this->dcat->scopedQuery(query: self::changedQuery(window: $read), scope: $read['scope']);
 		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
-		$rows   = self::changedRows(result: $result, window: $window);
+		$rows   = self::changedRows(result: $result, window: $read);
 
 		return [
-			'changed' => $this->dcat->mapDatasets(catalog: $catalog, catalogSlug: (string)$catalog['slug'], publications: $rows),
-			'hasMore' => self::hasMore(result: $result, page: $window['page']),
+			'changed' => $this->dcat->mapDatasets(catalog: $read['catalog'], publications: $rows),
+			'hasMore' => self::hasMore(result: $result, page: $read['page']),
 		];
 	}//end changedPage()
 
@@ -320,17 +336,16 @@ class ChangesService {
 	}//end isEmptyScope()
 
 	/**
-	 * The search for one page of publications in a scope updated inside a window, oldest first.
+	 * The search for one page of publications updated inside a window, oldest first, before it is scoped.
 	 *
-	 * @param array{registers: array<int, int|string>, schemas: array<int, int|string>} $scope  The catalog's scope.
-	 * @param array{since: DateTimeImmutable, until: DateTimeImmutable, page: int}       $window The window and page.
+	 * @param array{since: DateTimeImmutable, until: DateTimeImmutable, page: int} $window The window and page.
 	 *
 	 * @return array<string, mixed> The search query.
 	 *
 	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
 	 */
-	private static function changedQuery(array $scope, array $window): array {
-		$query = [
+	private static function changedQuery(array $window): array {
+		return [
 			'_limit' => self::PAGE_SIZE,
 			'_page' => $window['page'],
 			'_order' => ['updated' => 'asc', 'uuid' => 'asc'],
@@ -341,8 +356,6 @@ class ChangesService {
 				],
 			],
 		];
-
-		return CallerScope::writeScope(query: $query, registers: $scope['registers'], schemas: $scope['schemas']);
 	}//end changedQuery()
 
 	/**
@@ -430,26 +443,28 @@ class ChangesService {
 	 * publication outside this catalogue or no longer stored, is skipped.
 	 *
 	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param array{registers: array<int, int>, schemas: array<int, int>} $scope The catalogue scope.
-	 * @param DateTimeImmutable $since The moment.
+	 * @param array<string, mixed> $read The read: its catalogue `scope` and the moment `since`.
 	 *
 	 * @return array<int, array{id: string, withdrawnAt: string}>
 	 *
 	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-withdrawn-record-is-reported-not-shown-oai-007
 	 */
-	private function withdrawnSince(object $objectService, array $scope, DateTimeImmutable $since): array {
-		if (self::isEmptyScope(scope: $scope) === true) {
+	private function withdrawnSince(object $objectService, array $read): array {
+		if (self::isEmptyScope(scope: $read['scope']) === true) {
 			return [];
 		}
 
-		$latest = $this->depublishedSince(objectService: $objectService, since: $since);
+		$latest = $this->depublishedSince(objectService: $objectService, since: $read['since']);
 		if ($latest === []) {
 			return [];
 		}
 
-		$inCatalog = $this->publicationsInScope(objectService: $objectService, scope: $scope, ids: array_keys($latest));
+		// Which of them are publications in this catalogue's scope.
+		$ids    = array_map('strval', array_keys($latest));
+		$query  = $this->dcat->scopedQuery(query: ['_limit' => count($ids)], scope: $read['scope']);
+		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: false, _multitenancy: false, deleted: false, ids: $ids);
 
-		return self::withdrawnEntries(latest: $latest, inCatalog: $inCatalog);
+		return self::withdrawnEntries(latest: $latest, inCatalog: self::foundIds(result: $result, ids: $ids));
 	}//end withdrawnSince()
 
 	/**
@@ -489,9 +504,8 @@ class ChangesService {
 	private function depublishedSince(object $objectService, DateTimeImmutable $since): array {
 		try {
 			$config = $this->openRegister->registerConfiguration(registerKey: 'publication_register', schemaKey: 'depublication_schema');
-		} catch (\Throwable $e) {
+		} catch (\Throwable) {
 			// No depublication schema means no depublication was ever recorded.
-			$this->logger->debug('[ChangesService] No depublication schema configured', ['error' => $e->getMessage()]);
 			return [];
 		}
 
@@ -556,20 +570,14 @@ class ChangesService {
 	}//end depublicationMoment()
 
 	/**
-	 * Which of the given publications are stored in the catalogue's scope.
+	 * The asked-for ids a scoped search found.
 	 *
-	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param array{registers: array<int, int>, schemas: array<int, int>} $scope The catalogue scope.
-	 * @param array<int, string|int> $ids The publication ids.
+	 * @param array<string, mixed> $result The search result.
+	 * @param array<int, string> $ids The publication ids asked for.
 	 *
 	 * @return array<string, true> The ids found, as keys.
 	 */
-	private function publicationsInScope(object $objectService, array $scope, array $ids): array {
-		$ids = array_map('strval', $ids);
-		$query = CallerScope::writeScope(query: ['_limit' => count($ids)], registers: $scope['registers'], schemas: $scope['schemas']);
-
-		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: false, _multitenancy: false, deleted: false, ids: $ids);
-
+	private static function foundIds(array $result, array $ids): array {
 		$found = [];
 		foreach (array_map(self::toArray(...), (array)($result['results'] ?? [])) as $row) {
 			$id = self::rowId(row: $row);
@@ -579,26 +587,24 @@ class ChangesService {
 		}
 
 		return $found;
-	}//end publicationsInScope()
+	}//end foundIds()
 
 	/**
 	 * The URL of the next page, or null on the last.
 	 *
-	 * @param string $catalogSlug The catalogue slug.
-	 * @param DateTimeImmutable $since The moment.
-	 * @param array{until: DateTimeImmutable, page: int} $window The pinned moment and the current page.
+	 * @param array<string, mixed> $read The read: `catalog` (with its slug), `since`, the pinned `until` and the current `page`.
 	 * @param bool $hasMore Whether a further page exists.
 	 *
 	 * @return string|null
 	 */
-	private function nextUrl(string $catalogSlug, DateTimeImmutable $since, array $window, bool $hasMore): ?string {
+	private function nextUrl(array $read, bool $hasMore): ?string {
 		if ($hasMore === false) {
 			return null;
 		}
 
 		return $this->urls->linkToRouteAbsolute(
 			'opencatalogi.changes.changes',
-			['catalogSlug' => $catalogSlug, 'since' => self::iso(moment: $since), 'cursor' => self::nextCursor(window: $window)]
+			['catalogSlug' => (string)$read['catalog']['slug'], 'since' => self::iso(moment: $read['since']), 'cursor' => self::nextCursor(window: $read)]
 		);
 	}//end nextUrl()
 

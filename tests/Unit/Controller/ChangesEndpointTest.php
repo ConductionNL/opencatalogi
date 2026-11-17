@@ -214,10 +214,13 @@ class ChangesEndpointTest extends TestCase {
 
 		$this->dcat = $this->createMock(DcatServiceInterface::class);
 		$this->dcat->method('mapDatasets')->willReturnCallback(
-			static fn (array $catalog, string $slug, array $publications): array => array_map(
-				static fn (array $row): array => ['@id' => 'https://example.org/' . $slug . '/' . $row['@self']['uuid'], '@type' => 'dcat:Dataset'],
+			static fn (array $catalog, array $publications): array => array_map(
+				static fn (array $row): array => ['@id' => 'https://example.org/' . $catalog['slug'] . '/' . $row['@self']['uuid'], '@type' => 'dcat:Dataset'],
 				$publications
 			)
+		);
+		$this->dcat->method('scopedQuery')->willReturnCallback(
+			static fn (array $query, array $scope): array => CallerScope::writeScope(query: $query, registers: $scope['registers'], schemas: $scope['schemas'])
 		);
 
 		$time = $this->createMock(ITimeFactory::class);
@@ -233,12 +236,16 @@ class ChangesEndpointTest extends TestCase {
 			static fn (string $slug): ?array => ($slug === 'woo' ? self::CATALOG : null)
 		);
 
+		$guard = $this->createMock(PublicationQueryServiceInterface::class);
+		$guard->method('applyCatalogReadRuleGuard')->willReturnArgument(0);
+
 		$this->service = new ChangesService(
 			openRegister: $lookup,
+			catalogiService: $this->catalogs,
+			queryService: $guard,
 			dcat: $this->dcat,
 			time: $time,
-			urls: $this->urls,
-			logger: $this->createMock(LoggerInterface::class)
+			urls: $this->urls
 		);
 	}
 
@@ -261,9 +268,6 @@ class ChangesEndpointTest extends TestCase {
 		);
 		$request->method('getHeader')->willReturn('');
 
-		$guard = $this->createMock(PublicationQueryServiceInterface::class);
-		$guard->method('applyCatalogReadRuleGuard')->willReturnArgument(0);
-
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text, array $args = []): string => vsprintf($text, $args));
 
@@ -271,8 +275,6 @@ class ChangesEndpointTest extends TestCase {
 			'opencatalogi',
 			$request,
 			$this->service,
-			$this->catalogs,
-			$guard,
 			$l10n,
 			$this->createMock(LoggerInterface::class),
 			null
@@ -523,9 +525,8 @@ class ChangesEndpointTest extends TestCase {
 	 */
 	public function testAnEmptyScopeReadsNothing(): void {
 		$answer = $this->service->changesSince(
-			catalog: ['registers' => [], 'schemas' => []],
-			catalogSlug: 'woo',
-			since: new DateTimeImmutable('2026-11-12T00:00:00Z')
+			catalog: ['slug' => 'woo', 'registers' => [], 'schemas' => []],
+			request: ['since' => new DateTimeImmutable('2026-11-12T00:00:00Z'), 'cursor' => null]
 		);
 
 		$this->assertSame([], $answer['changed']);

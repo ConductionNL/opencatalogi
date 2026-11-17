@@ -125,8 +125,7 @@ interface DcatServiceInterface {
 	/**
 	 * Map publications of a catalog to DCAT dataset nodes, as the catalog feed does.
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $catalogSlug The catalog slug.
+	 * @param array<string, mixed> $catalog The catalog object, with its `slug`.
 	 * @param array<int, mixed> $publications The publications to map.
 	 *
 	 * @return array<int, array<string, mixed>> One dataset node per publication whose schema did not opt out.
@@ -135,7 +134,21 @@ interface DcatServiceInterface {
 	 *
 	 * @contract-shift internal-only — only DcatService implements it; no other app consumes this interface.
 	 */
-	public function mapDatasets(array $catalog, string $catalogSlug, array $publications): array;
+	public function mapDatasets(array $catalog, array $publications): array;
+
+	/**
+	 * Scope a search query to a catalog scope, as the catalog feed scopes its search.
+	 *
+	 * @param array<string, mixed> $query The search query.
+	 * @param array<string, mixed> $scope The scope: `registers` and `schemas`, each naming at least one.
+	 *
+	 * @return array<string, mixed> The scoped query.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 *
+	 * @contract-shift internal-only — only DcatService implements it; no other app consumes this interface.
+	 */
+	public function scopedQuery(array $query, array $scope): array;
 
 	/**
 	 * Build the instance-level DCAT document listing every DCAT-enabled catalog.

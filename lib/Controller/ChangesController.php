@@ -28,8 +28,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
-use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedChangesParameterException;
 use OCA\OpenCatalogi\Service\ChangesService;
 use OCP\AppFramework\Controller;
@@ -61,8 +59,6 @@ class ChangesController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param ChangesService $changes The changed-since read.
-	 * @param CatalogiServiceInterface $catalogiService Resolves a catalogue by slug.
-	 * @param PublicationQueryServiceInterface $queryService The anonymous read-rule guard.
 	 * @param IL10N $l10n Localization.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
@@ -71,8 +67,6 @@ class ChangesController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly ChangesService $changes,
-		private readonly CatalogiServiceInterface $catalogiService,
-		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly ?IAppConfig $appConfig = null,
@@ -120,20 +114,15 @@ class ChangesController extends Controller {
 		try {
 			$since = $this->changes->parseSince(since: $this->request->getParam('since'));
 
-			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
+			// Guarded as the catalogue list and the DCAT feed guard it.
+			$catalog = $this->changes->guardedCatalog(catalogSlug: $catalogSlug);
 			if ($catalog === null) {
 				return $this->withCors(response: new JSONResponse(['error' => $this->l10n->t('Catalog not found')], Http::STATUS_NOT_FOUND));
 			}
 
-			// The same guard the catalogue list and the DCAT feed apply: an anonymous
-			// reader never reaches a schema without read rules.
-			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
-
 			$answer = $this->changes->changesSince(
 				catalog: $catalog,
-				catalogSlug: $catalogSlug,
-				since: $since,
-				cursor: self::stringOrNull(value: $this->request->getParam('cursor'))
+				request: ['since' => $since, 'cursor' => self::stringOrNull(value: $this->request->getParam('cursor'))]
 			);
 
 			return $this->withCors(response: new JSONResponse($answer, Http::STATUS_OK));
