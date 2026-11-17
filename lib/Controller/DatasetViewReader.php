@@ -3,8 +3,8 @@
 /**
  * The public read of a dataset view: the readable table and a view's data.
  *
- * @category Service
- * @package  OCA\OpenCatalogi\Service\Table
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Table;
+namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\DatasetViewServiceInterface;
