@@ -10,7 +10,7 @@
  * installed, the link opens the publication page of portaliq's site
  * (`/publicatie/<id>`), which anyone may open. Only without portaliq is it
  * opencatalogi's public publication API in the catalogue named by
- * `publication_url_catalog` (default `publication`): raw data, but the one
+ * `publication_url_catalog` (default `publications`, the catalogue the app ships): raw data, but the one
  * public address there is then.
  *
  * Every link is absolute through IURLGenerator::getAbsoluteURL(). In a
@@ -51,6 +51,12 @@ class PublicationLinker {
 	public const SITE_PUBLICATION_PAGE = '/index.php/apps/portaliq/site?route=/publicatie/';
 
 	/**
+	 * The catalogue whose public API links a publication when nothing else is set:
+	 * the catalogue the app ships in `publication_register.json`.
+	 */
+	public const DEFAULT_CATALOG = 'publications';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig $appConfig Holds the template.
@@ -85,9 +91,9 @@ class PublicationLinker {
 			return $this->urlGenerator->getAbsoluteURL(self::SITE_PUBLICATION_PAGE . rawurlencode($id));
 		}
 
-		$catalog = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_catalog', 'publication'));
+		$catalog = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_catalog', self::DEFAULT_CATALOG));
 		if ($catalog === '') {
-			$catalog = 'publication';
+			$catalog = self::DEFAULT_CATALOG;
 		}
 
 		return $this->urlGenerator->getAbsoluteURL('/index.php/apps/opencatalogi/api/' . rawurlencode($catalog) . '/' . rawurlencode($id));
@@ -114,7 +120,7 @@ class PublicationLinker {
 
 		$template = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_template', ''));
 		$portaliq = ($this->appManager?->isInstalled('portaliq') === true);
-		$catalog  = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_catalog', 'publication'));
+		$catalog  = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_catalog', self::DEFAULT_CATALOG));
 		if (str_contains($template, '{id}') === false && $portaliq === false && $catalog === '') {
 			return '';
 		}

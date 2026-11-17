@@ -724,7 +724,21 @@ OC.L10N.register(
         "Open catalog": "Открыть каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Создайте свой первый каталог. Это контейнер, в котором будут ваши публикации. Выберите реестр Publication и схему Publication, чтобы каталог показывал добавляемые вами публикации.",
         "Manage your publications and their status": "Управляйте своими публикациями и их статусом",
-        "Open at the source": "Открыть в источнике"
+        "Open at the source": "Открыть в источнике",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: версия OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister содержит движок, необходимый OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi требуется OpenRegister %1$s или новее. В установленном OpenRegister нет %2$s, поэтому OpenCatalogi показывает уведомление вместо своих страниц. Обновите OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi не может запуститься",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi требуется OpenRegister %1$s или новее. Попросите администратора обновить OpenRegister.",
+        "Feed consumers": "Потребители ленты",
+        "Contact": "Контакт",
+        "Generate key": "Создать ключ",
+        "Revoke": "Отозвать",
+        "Disable": "Отключить",
+        "Last used": "Последнее использование",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Этот ключ показывается только один раз. Скопируйте его сейчас: показать его снова нельзя.",
+        "No feed consumers yet.": "Потребителей ленты пока нет.",
+        "Accounts that read every catalogue's feed": "Учётные записи, читающие ленту каждого каталога"
     },
     "nplurals=2; plural=(n != 1);"
 )

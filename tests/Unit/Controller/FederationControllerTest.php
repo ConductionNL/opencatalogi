@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Controller\FederationController;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Http\JSONResponse;
@@ -16,6 +17,9 @@ use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Unit tests for FederationController.
@@ -214,6 +218,90 @@ class FederationControllerTest extends TestCase {
 		$response = $this->controller->publicationDownload('pub-123');
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
+	}
+
+	/**
+	 * A controller over a request carrying an Accept-Language header and a
+	 * query service that records the order of the language and the read.
+	 *
+	 * @param array<int, string> $order The recorded order.
+	 *
+	 * @return FederationController The controller.
+	 */
+	private function controllerInEnglish(array &$order): FederationController {
+		$request = $this->createMock(ServerAwareRequest::class);
+		$request->method('getParams')->willReturn([]);
+		$request->server = ['HTTP_ACCEPT_LANGUAGE' => 'en'];
+
+		$queryService = $this->createMock(PublicationQueryServiceInterface::class);
+		$queryService->expects($this->once())
+			->method('applyVisitorLanguage')
+			->with([], 'en')
+			->willReturnCallback(static function () use (&$order): string {
+				$order[] = 'language';
+				return 'en';
+			});
+		$queryService->method('languageHeaders')->willReturn(['Content-Language' => 'en', 'X-Source-Language' => 'nl']);
+
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(static function (string $class) use ($queryService): object {
+			if ($class === PublicationQueryServiceInterface::class) {
+				return $queryService;
+			}
+
+			throw new class ('not registered') extends \RuntimeException implements NotFoundExceptionInterface {
+			};
+		});
+
+		return new FederationController(
+			request: $request,
+			publicationService: $this->publicationService,
+			l10n: $this->l10n,
+			container: $container
+		);
+	}
+
+	/**
+	 * The federated list sets the visitor's language before it reads locally or
+	 * asks a peer, and names the language served (REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testPublicationsAreReadInTheVisitorsLanguage(): void {
+		$order = [];
+		$controller = $this->controllerInEnglish(order: $order);
+		$this->publicationService->method('getAggregatedPublications')
+			->willReturnCallback(static function () use (&$order): array {
+				$order[] = 'read';
+				return ['results' => [], 'total' => 0];
+			});
+
+		$response = $controller->publications();
+
+		$this->assertSame(['language', 'read'], $order);
+		$this->assertSame('en', $response->getHeaders()['Content-Language']);
+		$this->assertSame('nl', $response->getHeaders()['X-Source-Language']);
+	}
+
+	/**
+	 * A federated publication is read in the visitor's language too.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testAPublicationIsReadInTheVisitorsLanguage(): void {
+		$order = [];
+		$controller = $this->controllerInEnglish(order: $order);
+		$this->publicationService->method('getFederatedPublication')
+			->willReturnCallback(static function () use (&$order): array {
+				$order[] = 'read';
+				return ['data' => ['id' => 'p1'], 'status' => 200, 'federated' => true];
+			});
+
+		$response = $controller->publication('p1');
+
+		$this->assertSame(['language', 'read'], $order);
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame('en', $response->getHeaders()['Content-Language']);
 	}
 
 	/**

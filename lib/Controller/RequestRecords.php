@@ -26,6 +26,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
+use OCA\OpenCatalogi\Contract\IntakeForwardInterface;
 
 /**
  * Builds information request records, receipts and the terms report, and
@@ -40,15 +41,33 @@ class RequestRecords {
 	 *
 	 * @param InformationRequestServiceInterface $requests Builds request records, receipts and the terms report.
 	 * @param InformationRequestStoreInterface $store Stores and reads the requests.
+	 * @param IntakeForwardInterface|null $dossiqForward Hands new requests to dossiq while it is installed.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
 		private readonly InformationRequestServiceInterface $requests,
 		private readonly InformationRequestStoreInterface $store,
+		private readonly ?IntakeForwardInterface $dossiqForward = null,
 	) {
 
 	}//end __construct()
+
+	/**
+	 * The hand-over to dossiq while dossiq is installed, else null: then
+	 * OpenCatalogi receives the request itself.
+	 *
+	 * @return IntakeForwardInterface|null
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-a-new-request-is-forwarded-to-dossiq-and-minted-only-there-req-whd-002
+	 */
+	public function dossiqForward(): ?IntakeForwardInterface {
+		if ($this->dossiqForward === null || $this->dossiqForward->isAvailable() === false) {
+			return null;
+		}
+
+		return $this->dossiqForward;
+	}//end dossiqForward()
 
 	/**
 	 * Build the record of a newly received request.

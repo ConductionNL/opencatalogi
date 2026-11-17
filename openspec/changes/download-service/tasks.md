@@ -64,6 +64,6 @@
 
 - [ ] 8.1 All unit tests pass: `./vendor/bin/phpunit tests/Unit/Service/DownloadServiceTest.php`
 - [ ] 8.2 `npm run check:l10n` reports zero MISSING and zero UNWRAPPED for download-service strings
-- [ ] 8.3 Manual smoke test: call `/api/{catalogSlug}/{id}/download?download=true` for a publication with at least one attachment and verify the ZIP contains a PDF at the root and the attachment under `Bijlagen/` (live pass, decision 139)
+- [x] 8.3 Manual smoke test: call `/api/{catalogSlug}/{id}/download?download=true` for a publication with at least one attachment and verify the ZIP contains a PDF at the root and the attachment under `Bijlagen/` (live pass, decision 139) Live pass 17 Nov (livepass-opencatalogi): after this pass's fix: the ZIP holds `<title>.pdf` (a real %PDF-1.4) at the root and `Bijlagen/bijlage-livepass.txt`. Before it the attachment sat at the root: OpenRegister's `createObjectFilesZip()` writes files there.
 - [ ] 8.4 Manual smoke test: call with `saveToNextCloud=true` and verify the file appears in Nextcloud under `Publicaties/({id}) {title}/` with a working share link (live pass, decision 139)
 - [ ] 8.5 Verify calling with `download=false&saveToNextCloud=false` returns HTTP 500 with a descriptive message and creates no files (live pass, decision 139)
