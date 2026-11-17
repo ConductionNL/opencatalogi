@@ -23,6 +23,7 @@ export function createWooBatchHandlers({ axios, generateUrl }) {
 		 * @param {object} formData The create form, carrying `caseReference`.
 		 * @return {Promise<object>} The batch the server opened.
 		 * @throws {Error} With the server's refusal, e.g. the open batch it names.
+		 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
 		 */
 		async createWooBatch(formData) {
 			const caseReference = String(formData?.caseReference || '').trim()
