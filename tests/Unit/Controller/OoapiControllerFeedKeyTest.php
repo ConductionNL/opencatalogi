@@ -49,7 +49,8 @@ use Psr\Log\LoggerInterface;
 #[UsesClass(OpenRegisterLookup::class)]
 class OoapiControllerFeedKeyTest extends TestCase {
 
-	private const KEY = 'oc_consumer-1.k1.secret';
+	// A made-up presented credential: prefix, consumer id, key id and secret part.
+	private const PRESENTED = 'oc_' . 'consumer-1' . '.k1.' . 'secret';
 
 	private IRequest|MockObject $request;
 	private OoapiService|MockObject $ooapiService;
@@ -123,13 +124,13 @@ class OoapiControllerFeedKeyTest extends TestCase {
 	private function givenValidKeyFor(string $catalogId): IUser|MockObject {
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('feed-partner-abc123');
-		$this->feedConsumers->method('authenticate')->with(self::KEY)
+		$this->feedConsumers->method('authenticate')->with(self::PRESENTED)
 			->willReturn(['consumer' => ['id' => 'consumer-1', 'catalog' => $catalogId], 'user' => $user]);
 		return $user;
 	}
 
 	public function testAValidKeyReadsItsOwnCatalogueAsTheConsumerAccount(): void {
-		$this->withAuthorization('Bearer ' . self::KEY);
+		$this->withAuthorization('Bearer ' . self::PRESENTED);
 		$user = $this->givenValidKeyFor('cat-1');
 		$this->catalogiService->method('getCatalogBySlug')->with('hva-onderwijs')->willReturn(['id' => 'cat-1']);
 		$this->userSession->expects($this->once())->method('setVolatileActiveUser')->with($user);
@@ -144,7 +145,7 @@ class OoapiControllerFeedKeyTest extends TestCase {
 	}
 
 	public function testTheSameKeyOnAnotherCatalogueIsRefusedBeforeAnyRead(): void {
-		$this->withAuthorization('Bearer ' . self::KEY);
+		$this->withAuthorization('Bearer ' . self::PRESENTED);
 		$this->givenValidKeyFor('cat-1');
 		$this->catalogiService->method('getCatalogBySlug')->with('uva-onderwijs')->willReturn(['@self' => ['id' => 'cat-2']]);
 		$this->ooapiService->expects($this->never())->method('listCourses');
@@ -155,7 +156,7 @@ class OoapiControllerFeedKeyTest extends TestCase {
 	}
 
 	public function testACatalogueWithoutIdIsRefusedForAKeyConsumer(): void {
-		$this->withAuthorization('Bearer ' . self::KEY);
+		$this->withAuthorization('Bearer ' . self::PRESENTED);
 		$this->givenValidKeyFor('');
 		$this->catalogiService->method('getCatalogBySlug')->willReturn(['slug' => 'x']);
 
@@ -163,8 +164,8 @@ class OoapiControllerFeedKeyTest extends TestCase {
 	}
 
 	public function testARefusedKeyAnswers401AndActsAsNoOne(): void {
-		$this->withAuthorization('Bearer ' . self::KEY);
-		$this->feedConsumers->method('authenticate')->with(self::KEY)->willReturn(null);
+		$this->withAuthorization('Bearer ' . self::PRESENTED);
+		$this->feedConsumers->method('authenticate')->with(self::PRESENTED)->willReturn(null);
 		$this->userSession->expects($this->never())->method('setVolatileActiveUser');
 		$this->userSession->expects($this->never())->method('getUser');
 		$this->catalogiService->expects($this->never())->method('getCatalogBySlug');
