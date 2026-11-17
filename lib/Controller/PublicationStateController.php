@@ -106,10 +106,15 @@ class PublicationStateController extends Controller {
 			return $this->notFound();
 		}
 
+		$data = $this->asArray(object: $publication);
+
 		return new JSONResponse(
 			[
-				'state' => $this->registers->stateOf(publication: $this->asArray(object: $publication)),
+				'state' => $this->registers->stateOf(publication: $data),
 				'canPublish' => $this->rights->mayPublish(),
+				// Who can read it (publications-for-signed-in-readers, REQ-PSR-001).
+				'audience' => ($data['audience'] ?? 'public') === 'signedIn' ? 'signedIn' : 'public',
+				'minimumAssurance' => ($data['minimumAssurance'] ?? 'substantial') === 'high' ? 'high' : 'substantial',
 			]
 		);
 	}//end visibility()
