@@ -460,16 +460,37 @@ class PublicationService implements PublicationServiceInterface {
 		// FAIL CLOSED on an unconfigured catalog scope. See resolveCatalogScope().
 		$scope = $this->resolveCatalogScope();
 		if ($scope === null) {
-			$this->availableRegisters = [];
-			$this->availableSchemas = [];
-			return [
-				'registers' => [],
-				'schemas' => [],
-			];
+			return $this->emptyCatalogFilters();
 		}
 
 		$catalogs = $this->scopeCatalogs(scope: $scope, catalogId: $catalogId);
 
+		return $this->storeCatalogFilters(catalogs: $catalogs, cacheKey: $cacheKey);
+	}//end getCatalogFilters()
+
+	/**
+	 * Clear the scope properties and return empty filters, for an unconfigured catalog scope.
+	 *
+	 * @return array<string, array<string>> Empty `registers` and `schemas`.
+	 */
+	private function emptyCatalogFilters(): array {
+		$this->availableRegisters = [];
+		$this->availableSchemas = [];
+		return [
+			'registers' => [],
+			'schemas' => [],
+		];
+	}//end emptyCatalogFilters()
+
+	/**
+	 * Set the scope properties from the catalogs, cache them under the key and return the filters.
+	 *
+	 * @param array  $catalogs The catalog objects of the scope.
+	 * @param string $cacheKey The cache key of this lookup.
+	 *
+	 * @return array<string, array<string>> The unique `registers` and `schemas`.
+	 */
+	private function storeCatalogFilters(array $catalogs, string $cacheKey): array {
 		// Remove duplicate values and assign to class properties.
 		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
 		$this->availableSchemas = $this->guardSchemaScope(
@@ -489,7 +510,7 @@ class PublicationService implements PublicationServiceInterface {
 		];
 
 		return $result;
-	}//end getCatalogFilters()
+	}//end storeCatalogFilters()
 
 	/**
 	 * Restore the scope properties from a cached lookup and return its result.
