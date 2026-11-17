@@ -30,6 +30,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
+use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -559,7 +560,7 @@ class EventService implements EventServiceInterface {
 				continue;
 			}
 
-			$result = $this->withSharedFile(result: $result, share: ['fileService' => $fileService, 'file' => $file]);
+			$result = $this->withSharedFile(result: $result, share: ['fileService' => $fileService, 'file' => $file, 'publication' => (string)$objectId]);
 		}
 
 		return $result;
@@ -646,12 +647,37 @@ class EventService implements EventServiceInterface {
 		$error = $this->shareFileError(fileService: $share['fileService'], file: $share['file']);
 		if ($error === null) {
 			$result['published']++;
+			$this->readingQueue()?->queue(fileId: (int)($share['file']['fileid'] ?? 0), publicationId: (string)($share['publication'] ?? ''));
 			return $result;
 		}
 
 		$result['errors'][] = $error;
 		return $result;
 	}//end withSharedFile()
+
+	/**
+	 * The queue that reads each shared attachment, or null when it cannot be resolved.
+	 *
+	 * Resolved from the container on use rather than injected, so this
+	 * service's constructor keeps its four collaborators.
+	 *
+	 * @return AttachmentReadingQueueInterface|null
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
+	 */
+	private function readingQueue(): ?AttachmentReadingQueueInterface {
+		try {
+			$queue = $this->container->get(AttachmentReadingQueueInterface::class);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		if ($queue instanceof AttachmentReadingQueueInterface) {
+			return $queue;
+		}
+
+		return null;
+	}//end readingQueue()
 
 	/**
 	 * Create the share link of one file, and say why when that failed.

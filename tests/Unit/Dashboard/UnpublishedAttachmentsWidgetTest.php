@@ -34,7 +34,7 @@ class UnpublishedAttachmentsWidgetTest extends TestCase {
 	}
 
 	public function testGetTitle(): void {
-		$this->assertSame('Concept bijlage', $this->widget->getTitle());
+		$this->assertSame('Unpublished documents', $this->widget->getTitle());
 	}
 
 	public function testGetOrder(): void {

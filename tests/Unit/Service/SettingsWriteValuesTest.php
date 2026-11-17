@@ -124,6 +124,8 @@ class SettingsWriteValuesTest extends TestCase {
 				'public_api_cache_seconds',
 				'publication_url_template',
 				'publication_url_catalog',
+				'cors_allowed_origins',
+				'search_indexing',
 			],
 			$writable
 		);

@@ -28,5 +28,5 @@ Start after `integration-feed-consumer-credentials` is merged: task 2.2 adds a f
 ## 5. Verification
 
 - [ ] 5.1 `openspec validate publications-for-signed-in-readers --strict`, `composer check:strict`, `npm run lint`.
-- [ ] 5.2 Live: create a `signedIn` publication, show the anonymous 404 and the trusted read with a key, and paste both in the PR body.
+- [ ] 5.2 Live: create a `signedIn` publication, show the anonymous 404 and the trusted read with a key, and paste both in the PR body. (live pass, decision 139)
 - [ ] 5.3 Set `pub-restricted` in `openspec/parity/capabilities.json` to `built` once the portaliq tasks land.

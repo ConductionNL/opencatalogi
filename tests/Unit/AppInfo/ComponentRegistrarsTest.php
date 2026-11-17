@@ -30,14 +30,17 @@ use OCA\OpenCatalogi\Dashboard\MostViewedPublicationsWidget;
 use OCA\OpenCatalogi\Dashboard\RetentionWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
+use OCA\OpenCatalogi\Listener\BatchReviewTaskListener;
 use OCA\OpenCatalogi\Listener\CatalogAccessListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
 use OCA\OpenCatalogi\Listener\CatalogScopePendingListener;
 use OCA\OpenCatalogi\Listener\CompletenessListener;
+use OCA\OpenCatalogi\Listener\DiwooCompletenessListener;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
+use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
@@ -132,6 +135,11 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectDeletedEvent', CatalogAccessListener::class],
 				[$e . 'ObjectCreatingEvent', TermRollListener::class],
 				[$e . 'ObjectUpdatingEvent', TermRollListener::class],
+				[$e . 'ObjectCreatingEvent', DiwooCompletenessListener::class],
+				[$e . 'ObjectUpdatingEvent', DiwooCompletenessListener::class],
+				[$e . 'ObjectCreatingEvent', PlainSummaryCheck::class],
+				[$e . 'ObjectUpdatingEvent', PlainSummaryCheck::class],
+				[$e . 'TaskTerminalEvent', BatchReviewTaskListener::class],
 				[$e . 'ObjectCreatingEvent', CompletenessListener::class],
 				[$e . 'ObjectUpdatingEvent', CompletenessListener::class],
 				[$e . 'ObjectCreatingEvent', PublicationLinksListener::class],
@@ -201,6 +209,17 @@ class ComponentRegistrarsTest extends TestCase {
 			$aliases['OCA\\OpenCatalogi\\Service\\Catalogue\\CaseTypeSourceReader'] ?? null
 		);
 		$this->assertSame([PublishedCollectionsService::class], array_keys($factories));
+
+		// The DiWoo listener, repair step and Woo controller reach the vocabulary and the
+		// completeness check through these contracts (diwoo-metadata-on-the-publication).
+		$this->assertSame(
+			'OCA\\OpenCatalogi\\Service\\TooiVocabularyService',
+			$aliases['OCA\\OpenCatalogi\\Contract\\DocumentTypeVocabularyInterface'] ?? null
+		);
+		$this->assertSame(
+			'OCA\\OpenCatalogi\\Service\\SitemapDocumentMapper',
+			$aliases['OCA\\OpenCatalogi\\Contract\\DiwooCompletenessInterface'] ?? null
+		);
 
 		$config = $this->createMock(IAppConfig::class);
 		$config->expects($this->once())
