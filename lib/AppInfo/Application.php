@@ -103,7 +103,8 @@ class Application extends App implements IBootstrap {
 		// that answer `appliedFilters` must share it (REQ-ASF-002).
 		$context->registerService(AppliedFilters::class, static fn (): AppliedFilters => new AppliedFilters(), true);
 
-		// API contract, noindex and staging middleware, in that order (REQ-WAB-003, REQ-STG-003).
+		// API contract, noindex, staging and Woo request hand-over middleware, in
+		// that order (REQ-WAB-003, REQ-STG-003, REQ-WHD-004, REQ-WHD-005).
 		(new MiddlewareRegistrar())->register($context);
 
 		// ONB-009: tells an administrator when OpenRegister is too old for the

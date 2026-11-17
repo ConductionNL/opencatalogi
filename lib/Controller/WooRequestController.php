@@ -34,6 +34,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Contract\HandedOverRoutes;
+use OCA\OpenCatalogi\Contract\IntakeForwardInterface;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
@@ -56,7 +58,12 @@ use OCP\IUserSession;
  *
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
  */
-class WooRequestController extends Controller {
+class WooRequestController extends Controller implements HandedOverRoutes {
+
+	/**
+	 * The routes that change a stored request; the hand-over middleware answers them 410 once the requests are read-only.
+	 */
+	public const WRITE_ROUTES = ['extend', 'pause', 'resume', 'attachBatch'];
 
 	/**
 	 * The status a request moves to after its term is paused or resumed.
@@ -73,7 +80,8 @@ class WooRequestController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param RequestRecords $records Builds the request records and reads and writes the stored requests.
+	 * @param RequestRecords $records Builds the request records, reads and writes the stored requests,
+	 *                                and hands new requests to dossiq while it is installed.
 	 * @param StatutoryTermInterface $terms Arms, extends, pauses and reads the statutory term.
 	 */
 	public function __construct(
@@ -155,6 +163,26 @@ class WooRequestController extends Controller {
 			);
 		}
 
+		// While dossiq is installed it mints the reference and arms the term;
+		// OpenCatalogi stores nothing and arms nothing (REQ-WHD-002).
+		$dossiqForward = $this->records->dossiqForward();
+		if ($dossiqForward !== null) {
+			return $this->forwardedResponse(
+				answer: $dossiqForward->forward(answers: $this->intakeInput(), receivedAt: '', origin: IntakeForwardInterface::ORIGIN_OPENCATALOGI)
+			);
+		}
+
+		return $this->storeAndArm();
+	}//end receive()
+
+	/**
+	 * Store a new request in OpenCatalogi and arm its statutory term.
+	 *
+	 * @return JSONResponse The receipt, or why the request was refused or not stored.
+	 *
+	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-the-requester-is-told-the-reference-and-the-due-date-at-intake-req-wri-005
+	 */
+	private function storeAndArm(): JSONResponse {
 		try {
 			$record = $this->records->receive(input: $this->intakeInput(), receivedBy: $this->actor());
 		} catch (\DomainException $e) {
@@ -171,7 +199,29 @@ class WooRequestController extends Controller {
 		}
 
 		return $this->armReceivedRequest(saved: $saved);
-	}//end receive()
+	}//end storeAndArm()
+
+	/**
+	 * dossiq's answer to a forwarded request, with the HTTP status its outcome means.
+	 *
+	 * `armed` is 201, `not-armed` 202 (the case exists, no term runs), `refused`
+	 * 400 and anything else, `unavailable` included, 503.
+	 *
+	 * @param array<string, string> $answer dossiq's answer.
+	 *
+	 * @return JSONResponse The answer.
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-a-new-request-is-forwarded-to-dossiq-and-minted-only-there-req-whd-002
+	 */
+	private function forwardedResponse(array $answer): JSONResponse {
+		$status = ([
+			'armed' => Http::STATUS_CREATED,
+			'not-armed' => Http::STATUS_ACCEPTED,
+			'refused' => Http::STATUS_BAD_REQUEST,
+		][$answer['outcome']] ?? Http::STATUS_SERVICE_UNAVAILABLE);
+
+		return new JSONResponse(data: $answer, statusCode: $status);
+	}//end forwardedResponse()
 
 	/**
 	 * Arm the statutory term of a stored request and answer with its receipt.

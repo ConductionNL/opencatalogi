@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Middleware;
 
 use OCA\OpenCatalogi\Middleware\ApiContractMiddleware;
+use OCA\OpenCatalogi\Middleware\HandoverMiddleware;
 use OCA\OpenCatalogi\Middleware\MiddlewareRegistrar;
 use OCA\OpenCatalogi\Middleware\NoIndexMiddleware;
 use OCA\OpenCatalogi\Middleware\StagingMiddleware;
@@ -25,7 +26,7 @@ class MiddlewareRegistrarTest extends TestCase {
 	public function testEveryMiddlewareIsRegisteredOnceInOrder(): void {
 		$registered = [];
 		$context    = $this->createMock(IRegistrationContext::class);
-		$context->expects(self::exactly(3))
+		$context->expects(self::exactly(4))
 			->method('registerMiddleware')
 			->willReturnCallback(
 				static function (string $class) use (&$registered): void {
@@ -41,6 +42,7 @@ class MiddlewareRegistrarTest extends TestCase {
 				ApiContractMiddleware::class,
 				NoIndexMiddleware::class,
 				StagingMiddleware::class,
+				HandoverMiddleware::class,
 			],
 			$registered
 		);

@@ -38,6 +38,7 @@ namespace OCA\OpenCatalogi\Portal;
 
 use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
+use OCA\OpenCatalogi\Contract\IntakeForwardInterface;
 use OCA\OpenCatalogi\Contract\PortalContributionProviderInterface;
 
 /**
@@ -149,11 +150,13 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 * @param CitizenCollectionServiceInterface|null $collections The dossiers.
 	 * @param InformationRequestIntakeInterface|null $wooRequests Mints a Woo request and arms its term.
 	 * @param ServiceStatusIndex|null $statusIndex The service status, for the public index.
+	 * @param IntakeForwardInterface|null $dossiqForward Hands new Woo requests to dossiq while it is installed.
 	 */
 	public function __construct(
 		private readonly ?CitizenCollectionServiceInterface $collections = null,
 		private readonly ?InformationRequestIntakeInterface $wooRequests = null,
 		private readonly ?ServiceStatusIndex $statusIndex = null,
+		private readonly ?IntakeForwardInterface $dossiqForward = null,
 	) {
 
 	}//end __construct()
@@ -212,20 +215,45 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 * @return array{outcome: string, requestId: string, reference: string, dueAt: string, message: string}
 	 *
 	 * @spec openspec/changes/portal-woo-request-intake/specs/woo-request-intake/spec.md#requirement-a-woo-request-delivered-by-the-portal-arms-its-term-req-wri-008
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-a-new-request-is-forwarded-to-dossiq-and-minted-only-there-req-whd-002
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-without-dossiq-opencatalogi-takes-no-woo-requests-req-whd-005
 	 */
 	public function receiveWooRequest(array $answers, string $receivedAt = ''): array {
+		// While dossiq is installed it mints the reference and arms the term;
+		// OpenCatalogi stores nothing (REQ-WHD-002).
+		if ($this->dossiqForward !== null && $this->dossiqForward->isAvailable() === true) {
+			$answer = $this->dossiqForward->forward(answers: $answers, receivedAt: $receivedAt, origin: IntakeForwardInterface::ORIGIN_PORTAL_FORM);
+			return array_intersect_key($answer, array_flip(IntakeForwardInterface::ANSWER_KEYS));
+		}
+
+		// Without dossiq OpenCatalogi takes no Woo requests (REQ-WHD-005).
+		if ($this->dossiqForward !== null) {
+			return self::unavailable(message: 'Woo requests are handled by dossiq, which is not installed.');
+		}
+
 		if ($this->wooRequests === null) {
-			return [
-				'outcome' => InformationRequestIntakeInterface::OUTCOME_UNAVAILABLE,
-				'requestId' => '',
-				'reference' => '',
-				'dueAt' => '',
-				'message' => 'The Woo request intake is not available.',
-			];
+			return self::unavailable(message: 'The Woo request intake is not available.');
 		}
 
 		return $this->wooRequests->receive(answers: $answers, receivedAt: $receivedAt);
 	}//end receiveWooRequest()
+
+	/**
+	 * The intake's `unavailable` answer.
+	 *
+	 * @param string $message Why.
+	 *
+	 * @return array{outcome: string, requestId: string, reference: string, dueAt: string, message: string}
+	 */
+	private static function unavailable(string $message): array {
+		return [
+			'outcome' => InformationRequestIntakeInterface::OUTCOME_UNAVAILABLE,
+			'requestId' => '',
+			'reference' => '',
+			'dueAt' => '',
+			'message' => $message,
+		];
+	}//end unavailable()
 
 	/**
 	 * The items of one dossier, for portaliq's `itemList` (hydra C7).
