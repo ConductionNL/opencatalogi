@@ -28,7 +28,6 @@ use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Dashboard\DashboardRegistrar;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Mcp\McpRegistrar;
-use OCA\OpenCatalogi\Middleware\ApiContractMiddleware;
 use OCA\OpenCatalogi\Middleware\MiddlewareRegistrar;
 use OCA\OpenCatalogi\Observability\ObservabilityRegistrar;
 use OCA\OpenCatalogi\Portal\PortalRegistrar;
@@ -98,14 +97,8 @@ class Application extends App implements IBootstrap {
 		// that answer `appliedFilters` must share it (REQ-ASF-002).
 		$context->registerService(AppliedFilters::class, static fn (): AppliedFilters => new AppliedFilters(), true);
 
-		// API-Version header and problem details on the JSON API (spec api-documentation).
-		$context->registerMiddleware(ApiContractMiddleware::class);
-
-		// Staging closes every public route to anonymous callers (instance-staging-mode REQ-STG-003).
-		$context->registerMiddleware(\OCA\OpenCatalogi\Middleware\StagingMiddleware::class);
-
-		// The Woo request routes once dossiq handles the requests: 404 without
-		// dossiq, 410 on a change once they are read-only (REQ-WHD-004, REQ-WHD-005).
+		// API contract, noindex, staging and Woo request hand-over middleware, in
+		// that order (REQ-WAB-003, REQ-STG-003, REQ-WHD-004, REQ-WHD-005).
 		(new MiddlewareRegistrar())->register($context);
 
 		// AppHost observability adoption (ADR-040). The /api/health and

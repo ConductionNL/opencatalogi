@@ -26,7 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Middleware;
 
-use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Middleware\Support\ApiPathAliases;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -144,7 +144,7 @@ class ApiContractMiddleware extends Middleware {
 			return $response;
 		}
 
-		$response->addHeader(name: 'API-Version', value: $this->appManager->getAppVersion(appId: Application::APP_ID));
+		$response->addHeader(name: 'API-Version', value: $this->appManager->getAppVersion(appId: AppIdentity::APP_ID));
 		$this->announceSuccessor(response: $response);
 		if ($response instanceof JSONResponse) {
 			$this->decorateError(response: $response);

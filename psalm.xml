@@ -27,6 +27,7 @@
              OpenRegister installed. The stubs mirror openregister/lib/Exception/. -->
         <file name="tests/Stubs/OpenRegister/Exception/RegisterNotFoundException.php" />
         <file name="tests/Stubs/OpenRegister/Exception/SchemaNotFoundException.php" />
+        <file name="tests/Stubs/OpenRegister/Exception/HookStoppedException.php" />
     </stubs>
     <issueHandlers>
         <UndefinedDocblockClass errorLevel="suppress"/>
@@ -71,6 +72,7 @@
                 <referencedClass name="OCP\Notification\IManager"/>
                 <referencedClass name="OCP\Share\IManager"/>
                 <!-- OpenRegister cross-app classes (loaded dynamically) -->
+                <referencedClass name="OCA\OpenRegister\Kernel\Contracts\RenderSelection"/>
                 <referencedClass name="OCA\OpenRegister\Service\File\FileTransfer"/>
                 <referencedClass name="OCA\OpenRegister\Service\ConfigLookup"/>
                 <referencedClass name="OCA\OpenRegister\Service\RegisterResolverService"/>
