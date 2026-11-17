@@ -237,12 +237,21 @@ class ApplicationTest extends TestCase {
 		$logger->expects($this->never())->method('warning');
 		$container = $this->container(new OpenRegisterCompatibility(markerClass: \stdClass::class), $logger);
 
-		// The generics are not installed in the unit suite, so building one
-		// fails on its class: proof the factory went for the generic, not the stand-in.
-		$this->expectException(\Error::class);
-		$this->expectExceptionMessage('OCA\\OpenRegister\\AppHost\\Controller\\GenericDashboardController');
+		$generic = 'OCA\\OpenRegister\\AppHost\\Controller\\GenericDashboardController';
+		$build = $registered['services']['OCA\\OpenCatalogi\\AppHost\\Controller\\GenericDashboardController'];
 
-		$registered['services']['OCA\\OpenCatalogi\\AppHost\\Controller\\GenericDashboardController']($container);
+		// With OpenRegister beside the app the generic builds; without it, building
+		// fails on the generic's class. Either way the factory went for the generic,
+		// not the stand-in.
+		if (class_exists($generic) === true) {
+			$this->assertInstanceOf(expected: $generic, actual: $build($container));
+			return;
+		}
+
+		$this->expectException(\Error::class);
+		$this->expectExceptionMessage($generic);
+
+		$build($container);
 
 	}//end testWithTheAppHostEngineTheGenericIsBuiltAsBefore()
 
