@@ -25,8 +25,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\AppInfo;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
-use OCA\OpenCatalogi\Controller\OpenRegisterRequiredController;
-use OCA\OpenCatalogi\Controller\OpenRegisterRequiredHealthController;
+use OCA\OpenCatalogi\AppInfo\StandIn\OpenRegisterRequiredController;
+use OCA\OpenCatalogi\AppInfo\StandIn\OpenRegisterRequiredHealthController;
 use OCA\OpenCatalogi\Dashboard\DashboardRegistrar;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Mcp\McpRegistrar;
@@ -35,7 +35,6 @@ use OCA\OpenCatalogi\Observability\ObservabilityRegistrar;
 use OCA\OpenCatalogi\Portal\PortalRegistrar;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\ServiceRegistrar;
-use OCA\OpenCatalogi\SetupCheck\OpenRegisterVersionCheck;
 use OCA\OpenCatalogi\Tool\ToolRegistrar;
 use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
 use OCA\OpenRegister\AppHost\Controller\GenericHealthController;

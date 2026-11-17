@@ -8,7 +8,7 @@
  * notice instead of the app, and this check says why and what to do.
  *
  * @category SetupCheck
- * @package  OCA\OpenCatalogi\SetupCheck
+ * @package  OCA\OpenCatalogi\AppInfo
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -26,9 +26,8 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\SetupCheck;
+namespace OCA\OpenCatalogi\AppInfo;
 
-use OCA\OpenCatalogi\AppInfo\OpenRegisterCompatibility;
 use OCP\IL10N;
 use OCP\SetupCheck\ISetupCheck;
 use OCP\SetupCheck\SetupResult;

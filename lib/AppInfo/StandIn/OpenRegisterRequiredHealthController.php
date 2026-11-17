@@ -6,8 +6,11 @@
  * The health endpoint is public, as OpenRegister's GenericHealthController is,
  * so a monitor sees the app as unhealthy with the reason instead of a 500.
  *
+ * It lives beside Application, not in lib/Controller: no route names it, only
+ * Application::standIn() builds it, in place of an AppHost generic.
+ *
  * @category Controller
- * @package  OCA\OpenCatalogi\Controller
+ * @package  OCA\OpenCatalogi\AppInfo\StandIn
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -25,7 +28,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Controller;
+namespace OCA\OpenCatalogi\AppInfo\StandIn;
 
 use OCA\OpenCatalogi\AppInfo\OpenRegisterCompatibility;
 use OCP\AppFramework\Controller;

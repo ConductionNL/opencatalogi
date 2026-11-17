@@ -9,8 +9,11 @@
  * this controller instead, so a page answers with a notice and an API with a
  * 503 naming the cause, never a fatal "Class not found" 500.
  *
+ * It lives beside Application, not in lib/Controller: no route names it, only
+ * Application::standIn() builds it, in place of an AppHost generic.
+ *
  * @category Controller
- * @package  OCA\OpenCatalogi\Controller
+ * @package  OCA\OpenCatalogi\AppInfo\StandIn
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -28,7 +31,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Controller;
+namespace OCA\OpenCatalogi\AppInfo\StandIn;
 
 use OCA\OpenCatalogi\AppInfo\OpenRegisterCompatibility;
 use OCP\AppFramework\Controller;
@@ -110,6 +113,8 @@ class OpenRegisterRequiredController extends Controller {
 	 * @return JSONResponse HTTP 503.
 	 *
 	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 *
+	 * @no-admin-idor-exempt Reads and stores nothing: it answers 503 for every caller and key while OpenRegister is too old, so no object is reached.
 	 */
 	#[NoAdminRequired]
 	public function getPreference(string $key): JSONResponse {
@@ -126,6 +131,8 @@ class OpenRegisterRequiredController extends Controller {
 	 * @return JSONResponse HTTP 503.
 	 *
 	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 *
+	 * @no-admin-idor-exempt Reads and stores nothing: it answers 503 for every caller and key while OpenRegister is too old, so no object is reached.
 	 */
 	#[NoAdminRequired]
 	public function setPreference(string $key, string $value=''): JSONResponse {
