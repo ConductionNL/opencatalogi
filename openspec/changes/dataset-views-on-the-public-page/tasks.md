@@ -22,8 +22,9 @@ Start after `open-data-table-query-and-dictionary` is merged: every task here re
 
 ## 4. portaliq (cross-repo, ConductionNL/portaliq)
 
-- [ ] 4.1 Read `views` in `src/site/components/PublicationDetailBlock.vue` and render a paged table per `table` view (REQ-DSV-003).
-- [ ] 4.2 Render `bar` and `line` as SVG with NL Design System tokens and a "Show as table" toggle; render `map` with the portal's map component when present, else the table of points (REQ-DSV-003).
+- [x] 4.1 Read `views` in `src/site/components/PublicationDetailBlock.vue` and render a paged table per `table` view (REQ-DSV-003).
+- [x] 4.2 Render `bar` and `line` as SVG with NL Design System tokens and a "Show as table" toggle; render `map` with the portal's map component when present, else the table of points (REQ-DSV-003).
+  - Built in ConductionNL/portaliq#2560 (branch `quality/build-dataset-views-on-the-public-page`): `PublicationDetailBlock.vue` loads `PublicationDatasetViews.vue` on demand when a table carries views; `PublicationDatasetView.vue` draws the paged table (later pages through the table's `rowsUrl`), the SVG bar and line charts and the map on the portal's `NlLocationMap`, each chart and map with "Show as table". Logic in `src/site/lib/datasetViews.js`, covered by `tests/dataset-views.spec.mjs`.
 - [ ] 4.3 Add `tests/e2e/publication-dataset-views.spec.ts` "a reader switches a chart to a table" (REQ-DSV-003).
 
 ## 5. Docs and strings
@@ -34,5 +35,6 @@ Start after `open-data-table-query-and-dictionary` is merged: every task here re
 ## 6. Verification
 
 - [ ] 6.1 `openspec validate dataset-views-on-the-public-page --strict`, `composer check:strict`, `npm run lint`.
+  - Run 2026-11-17: `composer phpstan` on the whole tree is clean, phpcs on the changed lib files is clean, `npm run lint` reports 13 errors, all in `src/sidebars/dashboard/DashboardSideBar.vue`, which this change does not touch (inherited). `openspec validate --strict` still refuses on three warnings in `specs/open-data-tables/spec.md` (text above the first section, two requirements over 500 characters): the spec text needs a rewrite by its author, so this stays open.
 - [ ] 6.2 Live: publish a CSV as a table on the dev instance, add a bar view and a map view, and paste both data answers in the PR body. (live pass, decision 139)
 - [x] 6.3 Set `od-visualise` in `openspec/parity/capabilities.json` to `building` while portaliq tasks are open, `built` once they land.
