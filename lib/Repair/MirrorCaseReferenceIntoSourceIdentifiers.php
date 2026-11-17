@@ -92,6 +92,22 @@ class MirrorCaseReferenceIntoSourceIdentifiers implements IRepairStep {
 			return;
 		}
 
+		$written = $this->mirrorAll(objects: $objects, register: $register, schema: $schema);
+		$output->info('Case reference added to the source identifiers of ' . $written . ' publication(s)');
+	}//end run()
+
+	/**
+	 * Mirror the case reference on every publication, page by page.
+	 *
+	 * @param object $objects  OpenRegister's object service.
+	 * @param string $register The publication register.
+	 * @param string $schema   The publication schema.
+	 *
+	 * @return int How many publications were written.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	private function mirrorAll(object $objects, string $register, string $schema): int {
 		$written = 0;
 		$page = 1;
 		do {
@@ -107,8 +123,8 @@ class MirrorCaseReferenceIntoSourceIdentifiers implements IRepairStep {
 			$page++;
 		} while ($page <= (int)($result['pages'] ?? 1));
 
-		$output->info('Case reference added to the source identifiers of ' . $written . ' publication(s)');
-	}//end run()
+		return $written;
+	}//end mirrorAll()
 
 	/**
 	 * Write one publication's mirrored identifiers when it lacks the entry.

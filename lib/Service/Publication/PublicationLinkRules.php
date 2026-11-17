@@ -60,15 +60,9 @@ final class PublicationLinkRules {
 		}
 
 		foreach (self::RELATION_PROPERTIES as $property) {
-			$items = ($data[$property] ?? []);
-			if (is_array($items) === false) {
-				$items = [$items];
-			}
-
-			foreach ($items as $item) {
-				if (self::itemId(item: $item) === $publicationId) {
-					return $property;
-				}
+			$ids = array_map(static fn (mixed $item): mixed => self::itemId(item: $item), self::asList(value: ($data[$property] ?? [])));
+			if (in_array($publicationId, $ids, true) === true) {
+				return $property;
 			}
 		}
 
@@ -94,10 +88,12 @@ final class PublicationLinkRules {
 		}
 
 		$identifiers = self::identifiers(value: ($data['sourceIdentifiers'] ?? []));
-		foreach ($identifiers as $entry) {
-			if (($entry['system'] ?? null) === self::CASE_SYSTEM && ($entry['identifier'] ?? null) === $reference) {
-				return null;
-			}
+		$mirrored    = array_filter(
+			$identifiers,
+			static fn (array $entry): bool => ($entry['system'] ?? null) === self::CASE_SYSTEM && ($entry['identifier'] ?? null) === $reference
+		);
+		if ($mirrored !== []) {
+			return null;
 		}
 
 		$identifiers[] = ['system' => self::CASE_SYSTEM, 'identifier' => $reference, 'public' => false];
@@ -146,6 +142,21 @@ final class PublicationLinkRules {
 
 		return array_values(array_filter($value, static fn (mixed $entry): bool => is_array($entry)));
 	}//end identifiers()
+
+	/**
+	 * A value as a list: an array as it is, anything else as a one-item list.
+	 *
+	 * @param mixed $value The relation value.
+	 *
+	 * @return array<int|string, mixed> The list.
+	 */
+	private static function asList(mixed $value): array {
+		if (is_array($value) === true) {
+			return $value;
+		}
+
+		return [$value];
+	}//end asList()
 
 	/**
 	 * The id a relation item names.

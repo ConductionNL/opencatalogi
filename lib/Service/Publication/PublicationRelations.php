@@ -135,31 +135,19 @@ final class PublicationRelations {
 	 * @return array{type: string, label: mixed, direction: string, id: string, title: string, url: string}|null The relation.
 	 */
 	private function relationOf(mixed $row, array $scope, bool $anonymous, string $catalogSlug): ?array {
-		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-			$row = $row->jsonSerialize();
-		}
-
-		if (is_array($row) === false || is_array($row['relation'] ?? null) === false) {
-			return null;
-		}
-
-		$type = (string)($row['relation']['property'] ?? '');
-		if (in_array($type, PublicationLinkRules::RELATION_PROPERTIES, true) === false) {
+		$row = self::relationRow(row: $row);
+		if ($row === null) {
 			return null;
 		}
 
 		$self = (array)($row['@self'] ?? []);
 		$id = (string)($self['id'] ?? $row['id'] ?? '');
-		if ($id === '' || $this->inScope(self: $self, scope: $scope) === false) {
-			return null;
-		}
-
-		if ($anonymous === true && $this->queryService->isObjectPublic(objectData: $row) === false) {
+		if ($this->isVisible(row: $row, id: $id, scope: $scope, anonymous: $anonymous) === false) {
 			return null;
 		}
 
 		return [
-			'type' => $type,
+			'type' => (string)$row['relation']['property'],
 			'label' => ($row['relation']['displayLabel'] ?? null),
 			'direction' => (string)($row['relation']['direction'] ?? ''),
 			'id' => $id,
@@ -167,6 +155,50 @@ final class PublicationRelations {
 			'url' => $this->urlGenerator->getAbsoluteURL('/index.php/apps/opencatalogi/api/' . rawurlencode($catalogSlug) . '/' . rawurlencode($id)),
 		];
 	}//end relationOf()
+
+	/**
+	 * A row as an array when it carries a publication relation, else null.
+	 *
+	 * @param mixed $row The related object with its `relation` block.
+	 *
+	 * @return array<string, mixed>|null The row.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-the-public-response-carries-the-relations-a-reader-may-see-req-prs-002
+	 */
+	private static function relationRow(mixed $row): ?array {
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$row = $row->jsonSerialize();
+		}
+
+		$relation = null;
+		if (is_array($row) === true) {
+			$relation = ($row['relation'] ?? null);
+		}
+
+		if (is_array($relation) === false || in_array((string)($relation['property'] ?? ''), PublicationLinkRules::RELATION_PROPERTIES, true) === false) {
+			return null;
+		}
+
+		return $row;
+	}//end relationRow()
+
+	/**
+	 * Whether the reader may see a related row: it has an id, sits in the catalogue scope and, for an anonymous reader, is public.
+	 *
+	 * @param array<string, mixed> $row The related object.
+	 * @param string $id The related object's id.
+	 * @param array{registers: array<int, string>, schemas: array<int, string>} $scope The catalogue scope.
+	 * @param bool $anonymous Whether the caller has no session.
+	 *
+	 * @return bool True when the relation may be shown.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-the-public-response-carries-the-relations-a-reader-may-see-req-prs-002
+	 */
+	private function isVisible(array $row, string $id, array $scope, bool $anonymous): bool {
+		return $id !== ''
+			&& $this->inScope(self: (array)($row['@self'] ?? []), scope: $scope) === true
+			&& ($anonymous === false || $this->queryService->isObjectPublic(objectData: $row) === true);
+	}//end isVisible()
 
 	/**
 	 * Whether a row's register and schema are in the catalogue scope.

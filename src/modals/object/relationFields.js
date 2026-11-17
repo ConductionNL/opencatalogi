@@ -38,14 +38,49 @@ export function refTarget(ref) {
  * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-1.4
  */
 export function isSelfRelationProperty(property, schemaSlug) {
-	if (!property || property.type !== 'array' || !property.items || typeof property.items !== 'object') {
-		return false
-	}
-	const relation = property.items['x-openregister-relation']
-	if (!relation || typeof relation !== 'object' || typeof relation.type !== 'string' || relation.type === '') {
-		return false
-	}
-	return schemaSlug !== '' && refTarget(property.items.$ref) === schemaSlug
+	const items = relationItems(property)
+	return items !== null && hasRelationType(items) && schemaSlug !== '' && refTarget(items.$ref) === schemaSlug
+}
+
+/**
+ * Whether a value is a non-null object.
+ *
+ * @param {unknown} value The value.
+ * @return {boolean} True for an object.
+ */
+function isObject(value) {
+	return value !== null && typeof value === 'object'
+}
+
+/**
+ * The items of an array property, or null for any other property.
+ *
+ * @param {object} property The schema property.
+ * @return {object|null} The items.
+ */
+function relationItems(property) {
+	return property?.type === 'array' && isObject(property.items) ? property.items : null
+}
+
+/**
+ * Whether array items carry an `x-openregister-relation` with a type.
+ *
+ * @param {object} items The array items.
+ * @return {boolean} True when the items are a typed relation.
+ */
+function hasRelationType(items) {
+	const relation = items['x-openregister-relation']
+	return isObject(relation) && typeof relation.type === 'string' && relation.type !== ''
+}
+
+/**
+ * Whether an id is missing: null, undefined or the empty string.
+ *
+ * @param {string|number|null|undefined} value The id.
+ * @return {boolean} True when there is no id.
+ */
+function isBlank(value) {
+	return value === null || value === undefined || value === ''
 }
 
 /**
@@ -57,26 +92,40 @@ export function isSelfRelationProperty(property, schemaSlug) {
  * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-1.4
  */
 export function relationFieldOverrides(schema, register) {
-	const schemaId = schema?.id
-	const slug = typeof schema?.slug === 'string' ? schema.slug : ''
-	if (register === null || register === undefined || register === '' || schemaId === null || schemaId === undefined || schemaId === '') {
+	if (isBlank(register) || isBlank(schema?.id)) {
 		return {}
 	}
 
-	const overrides = {}
-	for (const [key, property] of Object.entries(schema?.properties || {})) {
-		if (!isSelfRelationProperty(property, slug)) {
-			continue
-		}
-		overrides[key] = {
-			widget: 'select',
-			selectMultiple: true,
-			optionsFrom: {
-				register: String(register),
-				schema: String(schemaId),
-				labelField: 'title',
-			},
-		}
+	const slug = slugOf(schema)
+	const keys = Object.keys(schema.properties || {}).filter((key) => isSelfRelationProperty(schema.properties[key], slug))
+	return Object.fromEntries(keys.map((key) => [key, pickerOverride(register, schema.id)]))
+}
+
+/**
+ * The slug of a schema, or '' when it has none.
+ *
+ * @param {object} schema The schema.
+ * @return {string} The slug.
+ */
+function slugOf(schema) {
+	return typeof schema.slug === 'string' ? schema.slug : ''
+}
+
+/**
+ * The override that edits a relation property as a multi-select over one register and schema.
+ *
+ * @param {string|number} register The register id.
+ * @param {string|number} schemaId The schema id.
+ * @return {object} The override.
+ */
+function pickerOverride(register, schemaId) {
+	return {
+		widget: 'select',
+		selectMultiple: true,
+		optionsFrom: {
+			register: String(register),
+			schema: String(schemaId),
+			labelField: 'title',
+		},
 	}
-	return overrides
 }

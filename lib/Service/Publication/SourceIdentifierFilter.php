@@ -63,18 +63,16 @@ final class SourceIdentifierFilter {
 	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
 	 */
 	public static function parse(mixed $value): ?array {
-		if (is_string($value) === false || str_contains($value, ':') === false) {
+		if (is_string($value) === false || preg_match('/^([^:]*):(.*)\\z/s', $value, $parts) !== 1) {
 			return null;
 		}
 
-		[$system, $identifier] = explode(':', $value, 2);
-		$system     = trim($system);
-		$identifier = trim($identifier);
-		if ($system === '' || $identifier === '') {
+		$pair = ['system' => trim($parts[1]), 'identifier' => trim($parts[2])];
+		if (in_array('', $pair, true) === true) {
 			return null;
 		}
 
-		return ['system' => $system, 'identifier' => $identifier];
+		return $pair;
 	}//end parse()
 
 	/**
