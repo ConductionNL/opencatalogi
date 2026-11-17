@@ -175,6 +175,22 @@ interface TransparencyWorkflowServiceInterface {
 	public function updateAssessment(string $assessmentId, string $assessment, array $weigeringsgronden = [], ?string $batchId = null): array;
 
 	/**
+	 * Record that a person checked the redacted version of a partly public
+	 * document: stores `redactionVerifiedBy` and `redactionVerifiedAt`.
+	 *
+	 * @param string $batchId The batch the document belongs to.
+	 * @param string $assessmentId The document-assessment object uuid.
+	 *
+	 * @return array<string, mixed> The updated assessment object.
+	 *
+	 * @throws \OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException When the redaction is not mechanically verified or its file changed.
+	 * @throws RuntimeException When the batch or assessment is missing or OpenRegister is unavailable.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function verifyRedaction(string $batchId, string $assessmentId): array;
+
+	/**
 	 * Return a batch with a derived per-status document summary (progress).
 	 *
 	 * @param string $batchId The batch object uuid.
@@ -300,4 +316,22 @@ interface TransparencyWorkflowServiceInterface {
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 */
 	public function publishBatch(string $batchId): array;
+	/**
+	 * Run a declared `wooBatch` transition through OpenRegister's engine,
+	 * which checks the batch's state, the approval chain, the guard and the inputs.
+	 *
+	 * @param string               $batchId The batch uuid.
+	 * @param string               $action  `submit`, `approve`, `reject` or `publish`.
+	 * @param array<string, mixed> $data    The transition's inputs.
+	 *
+	 * @return array<string, mixed> The batch after the transition.
+	 *
+	 * @throws RuntimeException When the engine is unavailable; whatever the engine refuses propagates.
+	 *
+	 * @spec openspec/changes/woo-review-surface/tasks.md#task-1.2
+	 *
+	 * @contract-shift internal-only — WooService, in this app, is the only implementer and already
+	 *   declared the method; no other app implements or doubles this interface.
+	 */
+	public function runBatchTransition(string $batchId, string $action, array $data = []): array;
 }//end interface

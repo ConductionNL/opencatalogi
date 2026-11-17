@@ -28,6 +28,10 @@ namespace OCA\OpenCatalogi\Service\Portal;
 
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -104,8 +108,7 @@ class PortalObjectStore {
 		try {
 			$entity = $this->objectService()->find(
 				id: $id,
-				register: self::REGISTER,
-				schema: $schema,
+				options: new ObjectFindOptions(register: self::REGISTER, schema: $schema),
 				_rbac: false,
 				_multitenancy: false
 			);
@@ -132,9 +135,10 @@ class PortalObjectStore {
 		unset($data['@self'], $data['id']);
 		$entity = $this->objectService()->saveObject(
 			object: $data,
-			register: self::REGISTER,
-			schema: $schema,
-			uuid: $id,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: self::REGISTER, schema: $schema),
+				uuid: $id
+			),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -163,8 +167,10 @@ class PortalObjectStore {
 	public function writePortalMessage(array $message): void {
 		$entity = $this->objectService()->saveObject(
 			object: $message,
-			register: self::PORTAL_MESSAGE_REGISTER,
-			schema: self::PORTAL_MESSAGE_SCHEMA,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(
+					register: self::PORTAL_MESSAGE_REGISTER,
+					schema: self::PORTAL_MESSAGE_SCHEMA
+				)),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -187,9 +193,10 @@ class PortalObjectStore {
 	 */
 	public function delete(string $schema, string $id): bool {
 		return (bool)$this->objectService()->deleteObject(
-			uuid: $id,
-			register: self::REGISTER,
-			schema: $schema,
+			new ObjectDeletion(
+				uuid: $id,
+				target: new ObjectFindTarget(register: self::REGISTER, schema: $schema)
+			),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -271,8 +278,7 @@ class PortalObjectStore {
 			try {
 				return $service->find(
 					id: $id,
-					register: self::REGISTER,
-					schema: self::PUBLICATION_SCHEMA,
+					options: new ObjectFindOptions(register: self::REGISTER, schema: self::PUBLICATION_SCHEMA),
 					_rbac: true,
 					_multitenancy: false
 				);

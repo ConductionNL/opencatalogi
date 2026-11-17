@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * The portal's object store over OpenRegister, as the system.
@@ -132,6 +133,7 @@ final class PortalObjectStoreTest extends TestCase {
 			 * @return mixed
 			 */
 			public function find(mixed ...$args): mixed {
+				$args = LegacyObjectArgs::flatten(args: $args);
 				return $this->answer('find', $args);
 			}
 
@@ -143,6 +145,7 @@ final class PortalObjectStoreTest extends TestCase {
 			 * @return mixed
 			 */
 			public function saveObject(mixed ...$args): mixed {
+				$args = LegacyObjectArgs::flatten(args: $args);
 				return $this->answer('saveObject', $args);
 			}
 
@@ -154,6 +157,7 @@ final class PortalObjectStoreTest extends TestCase {
 			 * @return mixed
 			 */
 			public function deleteObject(mixed ...$args): mixed {
+				$args = LegacyObjectArgs::flatten(args: $args);
 				return $this->answer('deleteObject', $args);
 			}
 
@@ -348,6 +352,7 @@ final class PortalObjectStoreTest extends TestCase {
 			 * @return array<string,mixed>|null
 			 */
 			public function find(mixed ...$args): ?array {
+				$args = LegacyObjectArgs::flatten(args: $args);
 				if ($this->anonymous === false) {
 					return null;
 				}
@@ -376,4 +381,27 @@ final class PortalObjectStoreTest extends TestCase {
 		$this->expectExceptionMessage('OpenRegister is not available: container broken');
 		$this->store(new RuntimeException('container broken'))->writePortalMessage(['subject' => 'x']);
 	}//end testWithoutOpenRegisterEveryCallSaysSo()
+
+	/**
+	 * An answer that is neither an array nor serialisable to one is nothing.
+	 *
+	 * @return void
+	 */
+	public function testANonArrayAnswerIsNothing(): void {
+		$service = $this->service(['find' => 'not-an-object']);
+
+		self::assertNull($this->store($service)->find('collection', 'obj-1'));
+		self::assertCount(1, $service->calls);
+	}//end testANonArrayAnswerIsNothing()
+
+	/**
+	 * A `@self` that is not an object is ignored; the id then comes from the row.
+	 *
+	 * @return void
+	 */
+	public function testANonObjectSelfFallsBackToTheRowsUuid(): void {
+		$store = $this->store($this->service(['find' => ['title' => 'Lijst', '@self' => 'broken', 'uuid' => 'obj-2']]));
+
+		self::assertSame(['title' => 'Lijst', '@self' => 'broken', 'uuid' => 'obj-2', 'id' => 'obj-2'], $store->find('collection', 'obj-2'));
+	}//end testANonObjectSelfFallsBackToTheRowsUuid()
 }//end class

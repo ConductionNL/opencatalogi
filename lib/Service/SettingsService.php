@@ -41,6 +41,8 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -194,6 +196,12 @@ class SettingsService implements SettingsServiceInterface {
 				'document_reference_schema' => 'documentReference',
 			],
 		],
+		[
+			'register' => null,
+			'schemas' => [
+				'attachment_reading_schema' => 'attachmentReading',
+			],
+		],
 	];
 
 	/**
@@ -260,6 +268,7 @@ class SettingsService implements SettingsServiceInterface {
 	 * - Woo-index registration status (WOO-HR-003, design D3): operational config, not a publication.
 	 * - National channel sources (REQ-WND-001): a JSON map from channel to integriq source slug.
 	 * - Public API cache time in seconds (REQ-PAC-003); 0 switches the public cache headers off.
+	 * - Search indexing (REQ-WAB-003): `blocked` keeps every surface out of search engine indexes.
 	 */
 	private const SETTING_DEFAULTS = [
 		'auto_publish_attachments' => 'false',
@@ -277,6 +286,8 @@ class SettingsService implements SettingsServiceInterface {
 		'woo_index_registration_answer' => '',
 		'channel_sources' => '{}',
 		'public_api_cache_seconds' => '60',
+		'cors_allowed_origins' => '*',
+		'search_indexing' => 'allowed',
 	];
 
 	/**
@@ -301,6 +312,8 @@ class SettingsService implements SettingsServiceInterface {
 		'woo_index_registration_answer',
 		'channel_sources',
 		'public_api_cache_seconds',
+		'cors_allowed_origins',
+		'search_indexing',
 	];
 
 	/**
@@ -909,18 +922,24 @@ class SettingsService implements SettingsServiceInterface {
 	 * register per writable object type, and WRITABLE_SETTINGS. Any other key in
 	 * $data is silently ignored, preventing arbitrary app-config key injection.
 	 * A list or object value for an accepted key (except the channel sources map)
-	 * rejects the whole payload before anything is written.
+	 * rejects the whole payload before anything is written, and so does a CORS
+	 * allowlist line that is not a bare origin (REQ-SCO-003).
 	 *
 	 * @param array $data The settings data to update.
 	 *
 	 * @return array The updated settings configuration.
-	 * @throws InvalidArgumentException If an accepted key carries a list or an object.
+	 * @throws InvalidArgumentException If an accepted key carries a list or an object, or an allowlist line is not an origin.
 	 * @throws \RuntimeException If settings update fails.
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
 	 */
 	public function updateSettings(array $data): array {
 		$this->assertSingleValues(data: $data, keys: $this->writableSettingKeys());
+		if (array_key_exists('cors_allowed_origins', $data) === true) {
+			$data['cors_allowed_origins'] = CorsOriginSetting::storable(value: $data['cors_allowed_origins']);
+		}
+
 		try {
 			$updated = [];
 			foreach ($this->writableSettingKeys() as $key) {
@@ -996,6 +1015,15 @@ class SettingsService implements SettingsServiceInterface {
 
 		if ($key === 'public_api_cache_seconds') {
 			return $this->publicApiCacheSeconds(value: $value);
+		}
+
+		if ($key === 'search_indexing') {
+			// Only the two known values are stored; anything else keeps the default (REQ-WAB-003).
+			if ($value === 'blocked') {
+				return 'blocked';
+			}
+
+			return 'allowed';
 		}
 
 		return $value;
@@ -1984,11 +2012,12 @@ class SettingsService implements SettingsServiceInterface {
 		try {
 			$run->objectService->saveObject(
 				object: $patch['object'],
-				register: $run->catalogRegister,
-				schema: $run->catalogSchema,
-				uuid: $patch['uuid'],
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $run->catalogRegister, schema: $run->catalogSchema),
+					uuid: $patch['uuid']
+				),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 			if ($patch['publishedSlug'] !== null) {
 				$this->markSeedPublished(slug: $patch['publishedSlug']);

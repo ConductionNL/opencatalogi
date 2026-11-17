@@ -29,6 +29,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -175,9 +177,10 @@ class DocumentReferences {
 		try {
 			$this->openRegister->objectService()->saveObject(
 				object: $data,
-				register: $scope['register'],
-				schema: $scope['schema'],
-				uuid: $id,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $scope['register'], schema: $scope['schema']),
+					uuid: $id
+				),
 				_rbac: false,
 				_multitenancy: false
 			);

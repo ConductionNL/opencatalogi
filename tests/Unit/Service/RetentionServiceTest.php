@@ -37,6 +37,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Duck-typed fake of the consumed OpenRegister ObjectService.
@@ -63,7 +64,11 @@ class FakeObjectService {
 		return ['id' => $id];
 	}//end find()
 
-	public function saveObject(array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true) {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true) {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		$this->saved[] = $object;
 		return $object;
 	}//end saveObject()
@@ -235,6 +240,55 @@ class RetentionServiceTest extends TestCase {
 		$this->assertSame($publication, $this->service->applyDefaults($publication, 'vergunningen'));
 
 	}//end testApplyDefaultsWithoutMatchingRuleLeavesPublicationUnchanged()
+
+	/**
+	 * A category whose name holds a double quote is escaped into its rule's
+	 * cell and unescaped by the evaluator, so it still matches exactly and
+	 * does not fall through to `_fallback` (retention-defaults-on-shared-decision-tables 3.5).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/tasks.md
+	 */
+	public function testACategoryWithADoubleQuoteStillMatchesThroughTheEvaluator(): void {
+		$this->store['retention_defaults'] = json_encode(
+			[
+				'vergunningen' => [
+					'zeg "nee"' => ['termMonths' => 18, 'action' => 'archive'],
+					'x", "y' => ['termMonths' => 30, 'action' => 'archive'],
+					'_fallback' => ['termMonths' => 6, 'action' => 'review'],
+				],
+			]
+		);
+
+		$applied = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'zeg "nee"'],
+			'vergunningen'
+		);
+		$this->assertSame(18, $applied['retentionTermMonths']);
+		$this->assertSame('archive', $applied['retentionAction']);
+
+		// The same words without the quotes are another category.
+		$other = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'zeg nee'],
+			'vergunningen'
+		);
+		$this->assertSame(6, $other['retentionTermMonths']);
+
+		// A quote cannot turn a category into a list of categories: `x", "y`
+		// matches only itself, and `x` falls through to the fallback.
+		$exact = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'x", "y'],
+			'vergunningen'
+		);
+		$this->assertSame(30, $exact['retentionTermMonths']);
+		$partial = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'x'],
+			'vergunningen'
+		);
+		$this->assertSame(6, $partial['retentionTermMonths']);
+
+	}//end testACategoryWithADoubleQuoteStillMatchesThroughTheEvaluator()
 
 	public function testApplyDefaultsMatchesACategoryContainingAQuote(): void {
 		$this->store['retention_defaults'] = json_encode(
@@ -450,6 +504,48 @@ class RetentionServiceTest extends TestCase {
 		$this->assertArrayNotHasKey('status', $this->fake->saved[0]);
 
 	}//end testEvaluateReviewActionNeverChangesVisibility()
+
+	/**
+	 * A dry run plans every action the daily job would take, and saves nothing (REQ-IMC-002).
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function testEvaluateDryRunPlansWithoutSaving(): void {
+		$soon = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->modify('+3 days')->format(\DateTimeInterface::ATOM);
+		$this->fake->objects = [
+			['id' => 'd1', 'title' => 'Permit', 'retentionExpiresAt' => '2025-01-01T00:00:00+00:00', 'retentionAction' => 'depublish'],
+			['id' => 'd2', 'title' => 'Decision', 'retentionExpiresAt' => '2025-01-01T00:00:00+00:00', 'retentionAction' => 'archive'],
+			['id' => 'd3', 'title' => 'Letter', 'retentionExpiresAt' => '2025-01-01T00:00:00+00:00', 'retentionAction' => 'review'],
+			['id' => 'd4', 'title' => 'Report', 'retentionExpiresAt' => $soon, 'retentionAction' => 'archive'],
+			['id' => 'd5', 'title' => 'No expiry'],
+		];
+
+		$result = $this->service->evaluate(dryRun: true);
+
+		$this->assertSame([], $this->fake->saved, 'a dry run saves nothing');
+		$this->assertSame(
+			[
+				'expiringSoon' => 1,
+				'reviewRequired' => 1,
+				'depublished' => 1,
+				'archived' => 1,
+				'planned' => [
+					['id' => 'd1', 'title' => 'Permit', 'action' => 'depublished'],
+					['id' => 'd2', 'title' => 'Decision', 'action' => 'archived'],
+					['id' => 'd3', 'title' => 'Letter', 'action' => 'reviewRequired'],
+					['id' => 'd4', 'title' => 'Report', 'action' => 'expiringSoon'],
+				],
+			],
+			$result
+		);
+
+		// The same publications, applied, give the same counts and do save.
+		$applied = $this->service->evaluate();
+		$this->assertArrayNotHasKey('planned', $applied);
+		$this->assertSame([1, 1, 1, 1], [$applied['expiringSoon'], $applied['reviewRequired'], $applied['depublished'], $applied['archived']]);
+		$this->assertCount(4, $this->fake->saved);
+
+	}//end testEvaluateDryRunPlansWithoutSaving()
 
 	public function testEvaluateIsIdempotentForToday(): void {
 		$today = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);

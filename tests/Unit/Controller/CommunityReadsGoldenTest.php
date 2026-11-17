@@ -21,7 +21,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
+ * @spec openspec/specs/public-and-community-surface/spec.md
  *
  * @covers \OCA\OpenCatalogi\Controller\CommunityController
  * @covers \OCA\OpenCatalogi\Controller\CommunityPages
@@ -196,7 +196,9 @@ class CommunityReadsGoldenTest extends TestCase {
 					$this->createMock(StatusPageServiceInterface::class),
 					$this->createMock(AtomFeedServiceInterface::class),
 					$this->createMock(MarkupRenderServiceInterface::class),
-					new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects)
+					new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects),
+					$this->createMock(\OCA\OpenCatalogi\Contract\CatalogiServiceInterface::class),
+					$this->createMock(\OCA\OpenCatalogi\Contract\CatalogueFeedReaderInterface::class)
 				),
 				default => $this->createMock($name),
 			};

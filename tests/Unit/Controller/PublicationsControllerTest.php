@@ -13,6 +13,7 @@ use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenRegister\Kernel\Contracts\RenderSelection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -1792,8 +1793,9 @@ class PublicationsControllerTest extends TestCase {
 		// Inspect the rendered-entity call: only '@self.'-prefixed entries should survive.
 		$this->assertGreaterThan(0, count($captured));
 		$renderArgs = $captured[0];
-		// The _extend arg is the 2nd positional one.
-		$extendArg = $renderArgs[1];
+		// The extend list travels on the RenderSelection, the 2nd argument.
+		$this->assertInstanceOf(RenderSelection::class, $renderArgs[1]);
+		$extendArg = $renderArgs[1]->extend;
 		$this->assertContains('@self.files', $extendArg);
 		$this->assertContains('@self.metadata', $extendArg);
 		$this->assertNotContains('parent', $extendArg);
@@ -1832,7 +1834,8 @@ class PublicationsControllerTest extends TestCase {
 		$response = $this->controller->show('test-catalog', 'pub-123');
 
 		$this->assertEquals(200, $response->getStatus());
-		$this->assertCount(5, $captured[0][1]);
+		$this->assertInstanceOf(RenderSelection::class, $captured[0][1]);
+		$this->assertCount(5, $captured[0][1]->extend);
 	}
 
 	// =======================================================================
@@ -2334,5 +2337,92 @@ class PublicationsControllerTest extends TestCase {
 		$response = $this->showAs(signedIn: false, accept: 'application/json');
 
 		$this->assertSame(200, $response->getStatus());
+	}
+
+	/**
+	 * Fragments that would betray internals in a public error body.
+	 *
+	 * @return array<int, string>
+	 */
+	private function internalFragments(): array {
+		return ['SELECT', 'oc_openregister', 'Stack trace', '#0 ', '.php', '/lib/'];
+	}
+
+	/**
+	 * Assert a public 404 body names the problem and carries no internal detail.
+	 *
+	 * @param JSONResponse $response The answer.
+	 *
+	 * @return void
+	 */
+	private function assertCleanNotFound(JSONResponse $response): void {
+		$this->assertSame(404, $response->getStatus());
+		$data = $response->getData();
+		$this->assertArrayHasKey('message', $data);
+		$this->assertNotSame('', $data['message']);
+		$body = json_encode($data);
+		foreach ($this->internalFragments() as $fragment) {
+			$this->assertStringNotContainsString($fragment, $body);
+		}
+	}
+
+	/**
+	 * An unknown catalogue slug answers 404 with a message and nothing internal (REQ-PUB-011).
+	 *
+	 * @spec openspec/changes/publications/tasks.md#task-9
+	 *
+	 * @return void
+	 */
+	public function testUnknownCatalogSlugAnswersACleanNotFound(): void {
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(null);
+
+		$response = $this->controller->show('no-such-catalog', 'pub-1');
+
+		$this->assertCleanNotFound($response);
+		$this->assertSame('Catalog not found', $response->getData()['error']);
+		$this->assertSame('no-such-catalog', $response->getData()['catalogSlug']);
+	}
+
+	/**
+	 * An unknown UUID answers 404 with a message, and the storage error text it came from stays out (REQ-PUB-011).
+	 *
+	 * @spec openspec/changes/publications/tasks.md#task-9
+	 *
+	 * @return void
+	 */
+	public function testUnknownUuidAnswersACleanNotFound(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$mockObjService->method('searchObjects')
+			->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('SELECT * FROM oc_openregister_table_1_1 WHERE _uuid = ?'));
+		$this->request->method('getParams')->willReturn([]);
+
+		$response = $this->controller->show('test-catalog', '0b6f3a3c-0000-4000-8000-000000000001');
+
+		$this->assertCleanNotFound($response);
+		$this->assertSame('Publication not found', $response->getData()['error']);
+		$this->assertSame('0b6f3a3c-0000-4000-8000-000000000001', $response->getData()['id']);
+	}
+
+	/**
+	 * A failing read answers a generic 500: the exception text goes to the log, not the body.
+	 *
+	 * @spec openspec/changes/publications/tasks.md#task-9
+	 *
+	 * @return void
+	 */
+	public function testAFailedReadKeepsTheExceptionOutOfTheBody(): void {
+		$this->catalogiService->method('getCatalogBySlug')
+			->willThrowException(new \RuntimeException('SELECT * FROM oc_openregister_table_1_1 failed in /lib/Db/Mapper.php'));
+		$this->logger->expects($this->once())->method('error');
+
+		$response = $this->controller->show('test-catalog', 'pub-1');
+
+		$this->assertSame(500, $response->getStatus());
+		$body = json_encode($response->getData());
+		foreach ($this->internalFragments() as $fragment) {
+			$this->assertStringNotContainsString($fragment, $body);
+		}
 	}
 }

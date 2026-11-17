@@ -18,6 +18,7 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Service\DocumentReferenceMapper;
 use OCA\OpenCatalogi\Service\DocumentReferences;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -78,7 +79,10 @@ class DocumentReferencesTest extends TestCase {
 				return ['results' => array_slice($rows, ($query['_page'] - 1) * $query['_limit'], $query['_limit'])];
 			}
 
-			public function saveObject(array $object, string $register, string $schema, string $uuid, bool $_rbac, bool $_multitenancy): array {
+			public function saveObject(array $object, ObjectSaveOptions $options, bool $_rbac, bool $_multitenancy): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$this->saves[] = compact('object', 'register', 'schema', 'uuid', '_rbac', '_multitenancy');
 				return $object;
 			}

@@ -56,7 +56,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl. Voor een Service Level Agreement (SLA), neem contact op via sales@conduction.nl.
     ]]></description>
-	<version>2.1.16-unstable.20261010175130</version>
+	<version>2.1.16-unstable.20261116231500</version>
 	<licence>EUPL-1.2</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
@@ -140,6 +140,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 		<job>OCA\OpenCatalogi\BackgroundJob\SavedSearchMatchingJob</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\CommentPeriodWithdrawal</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\DocumentReferenceCheck</job>
+		<job>OCA\OpenCatalogi\BackgroundJob\DonlHarvestCheck</job>
 		<!--
 			Broadcast was written but never registered here, so the 4-hourly
 			directory broadcast required by dashboard/spec.md DIR-007 silently
@@ -155,6 +156,13 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 	<repair-steps>
 		<post-migration>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+			<!--
+				Moves a document type written into a publication's summary to its own
+				field, and records once when the DiWoo fields were introduced
+				(diwoo-metadata-on-the-publication, REQ-DWP-005). After InitializeSettings,
+				which imports the schema that carries the field. Idempotent.
+			-->
+			<step>OCA\OpenCatalogi\Repair\MoveDocumentsoortOutOfSummary</step>
 			<!--
 				Must run AFTER the register sync that adds the English columns, so it
 				can tell the rename case from the back-fill case. Idempotent and
@@ -219,12 +227,21 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			-->
 			<step>OCA\OpenCatalogi\Repair\WOO536RepairReadRules</step>
 			<!--
+				woo-review-surface REQ-WRV-002: every Woo batch in a state of the
+				declared wooBatch lifecycle. After InitializeSettings, which imports
+				the lifecycle. Idempotent.
+			-->
+			<step>OCA\OpenCatalogi\Repair\BatchStatusRepair</step>
+			<!--
 				Writes each catalogue's staff access onto the schemas it covers
 				(catalogue-staff-access). After InitializeSettings and the read-rule
 				backfill, either of which may reset a schema's authorization to the
 				bundled one. Idempotent: a schema whose rules already match is not written.
 			-->
 			<step>OCA\OpenCatalogi\Repair\RecomputeCatalogAccess</step>
+			<!-- Hands depublication, inspection, comment-period, community and Woo-request records an
+			     editor came to own to the system. Needs OpenRegister's release-to-system call; idempotent. -->
+			<step>OCA\OpenCatalogi\Repair\HandRecordsToSystem</step>
 			<!--
 				Written but never registered, so it had never run once: a class that
 				exists is not a class that runs. gate-98 found it.
@@ -246,6 +263,12 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				the step is idempotent either way.
 			-->
 			<step>OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings</step>
+			<!--
+				Creates the group opencatalogi-publishers when it is missing, without
+				members (operations-publish-rights, REQ-OPR-004). Until someone is added,
+				only administrators can publish. Idempotent.
+			-->
+			<step>OCA\OpenCatalogi\Repair\CreatePublishersGroup</step>
 		</post-migration>
 		<!--
 			Nextcloud runs migrateSchemaOnly() on a FIRST install, so NEITHER
@@ -260,12 +283,18 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 		-->
 		<install>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+			<step>OCA\OpenCatalogi\Repair\CreatePublishersGroup</step>
 		</install>
 	</repair-steps>
 
 	<commands>
 		<command>OCA\OpenCatalogi\Command\AttachDocumentsToPublicationsCommand</command>
 		<command>OCA\OpenCatalogi\Command\MigrateCmsToPortaliqCommand</command>
+		<command>OCA\OpenCatalogi\Command\DirectorySyncCommand</command>
+		<command>OCA\OpenCatalogi\Command\DirectoryBroadcastCommand</command>
+		<command>OCA\OpenCatalogi\Command\RetentionEvaluateCommand</command>
+		<command>OCA\OpenCatalogi\Command\WooReadinessCommand</command>
+		<command>OCA\OpenCatalogi\Command\CatalogCacheCommand</command>
 	</commands>
 
 	<!-- The app-menu navigation entry is registered in PHP (lib/AppInfo/Application.php::boot),

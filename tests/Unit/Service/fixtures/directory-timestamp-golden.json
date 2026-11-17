@@ -1,0 +1,111 @@
+{
+    "empty": {
+        "result": null
+    },
+    "updated": {
+        "result": "2026-03-01T10:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "updated wins over @self": {
+        "result": "2026-03-01T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "@self updated": {
+        "result": "2025-05-05T05:05:05.000000+02:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "created after a bad updated": {
+        "result": "2021-02-02T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "@self created": {
+        "result": "2019-09-09T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "lastSync": {
+        "result": "2024-12-31T23:59:59.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "serialised DateTime": {
+        "result": "2023-03-03T03:03:03.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "array without date": {
+        "result": "2022-02-02T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "integer value skipped": {
+        "result": "2022-01-01T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "null values skipped": {
+        "result": "2018-08-08T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "@self is a string": {
+        "result": "2017-07-07T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "@self is a list": {
+        "result": "2017-07-07T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "literal dotted key ignored": {
+        "result": "2016-06-06T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "empty string": {
+        "result": "(now)",
+        "class": "DateTime",
+        "same": false
+    },
+    "all invalid": {
+        "result": null
+    },
+    "serialised date invalid": {
+        "result": "2014-04-04T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "serialised date not text": {
+        "result": null
+    },
+    "immutable skipped": {
+        "result": "2013-03-03T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "DateTime instance": {
+        "result": "2001-01-01T01:01:01.000000+00:00",
+        "class": "DateTime",
+        "same": true
+    },
+    "false is a value": {
+        "result": "2011-01-01T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "created wins over @self created": {
+        "result": "2008-08-08T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    },
+    "@self with a date key only": {
+        "result": "2006-06-06T00:00:00.000000+00:00",
+        "class": "DateTime",
+        "same": false
+    }
+}

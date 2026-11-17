@@ -41,6 +41,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 class DirectorySyncDirectoryTest extends TestCase {
 	private const PEER = 'https://peer.example.org/api/directory';
@@ -88,6 +89,7 @@ class DirectorySyncDirectoryTest extends TestCase {
 			'broadcastService' => $this->broadcastService,
 			'request' => $this->request,
 			'connectionReporter' => null,
+			'dryRuns' => null,
 			'uniqueDirectories' => [self::PEER, 'https://other.example.org/api/directory'],
 			'cachedUniqueDirs' => null,
 			'cacheTimestamp' => 0,
@@ -195,6 +197,7 @@ class DirectorySyncDirectoryTest extends TestCase {
 		$saved = [];
 		$this->objectService->expects($this->once())->method('saveObject')->willReturnCallback(
 			static function (...$args) use (&$saved) {
+				$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 				$saved = $args;
 				return new \OCA\OpenRegister\Db\ObjectEntity();
 			}
@@ -225,6 +228,7 @@ class DirectorySyncDirectoryTest extends TestCase {
 		$saved = [];
 		$this->objectService->expects($this->once())->method('saveObject')->willReturnCallback(
 			static function (...$args) use (&$saved) {
+				$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 				$saved = $args;
 				return new \OCA\OpenRegister\Db\ObjectEntity();
 			}

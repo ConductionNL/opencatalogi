@@ -147,11 +147,17 @@ interface RetentionServiceInterface {
 	 * Idempotent via retentionLastEvaluatedAt: an object already actioned today is
 	 * skipped. Every save is audited by OpenRegister's immutable audit trail.
 	 *
-	 * @return array<string, int> Counts: expiringSoon, reviewRequired, depublished, archived.
+	 * With `$dryRun` nothing is saved, and the result also holds `planned`: each
+	 * publication with the action the evaluation would take (REQ-IMC-002).
+	 *
+	 * @param bool $dryRun Report the planned actions without saving anything.
+	 *
+	 * @return array<string, mixed> Counts: expiringSoon, reviewRequired, depublished, archived; plus `planned` on a dry run.
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
-	public function evaluate(): array;
+	public function evaluate(bool $dryRun = false): array;
 
 	/**
 	 * Build a retention review-queue summary for the dashboard widget.
@@ -181,6 +187,15 @@ interface RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 	 */
 	public function recordHumanDecision(string $publicationId, string $decision, string $rationale, int $extendMonths = 0): array;
+
+	/**
+	 * Bring every archived publication's pending e-depot transfer up to date with OpenRegister.
+	 *
+	 * @return int How many publications got a new transfer status.
+	 *
+	 * @spec openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
+	 */
+	public function refreshEdepotTransfers(): int;
 
 	/**
 	 * Build a retention report (rows) for a catalog and date range.
