@@ -165,6 +165,14 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			-->
 			<step>OCA\OpenCatalogi\Repair\MoveDocumentsoortOutOfSummary</step>
 			<!--
+				Sets audience public on every publication that has none
+				(publications-for-signed-in-readers, REQ-PSR-001). Right after
+				InitializeSettings, which imports both the audience field and the
+				public read rule that matches on it, and before anything else reads
+				publications. Idempotent.
+			-->
+			<step>OCA\OpenCatalogi\Repair\SetPublicationAudiencePublic</step>
+			<!--
 				Must run AFTER the register sync that adds the English columns, so it
 				can tell the rename case from the back-fill case. Idempotent and
 				non-destructive; safe to re-run.
