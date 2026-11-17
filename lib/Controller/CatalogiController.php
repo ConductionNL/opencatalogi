@@ -29,7 +29,6 @@ use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
-use OCA\OpenCatalogi\Service\CallerScope;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -44,8 +43,7 @@ use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Controller for handling catalog-related operations.
- *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One over the limit since index() strips caller scope via CallerScope (WOO-581).
+
  */
 class CatalogiController extends Controller {
 	use AnswersCrossOriginListRequests;
@@ -76,17 +74,6 @@ class CatalogiController extends Controller {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Attempts to retrieve the OpenRegister ObjectService from the container.
-	 *
-	 * @return \OCA\OpenRegister\Service\ObjectService|null The ObjectService.
-	 *
-	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-	 */
-	private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
-		return $this->registers->installedObjectService();
-	}//end getObjectService()
 
 	/**
 	 * Get the schema and register configuration for catalogs.
@@ -141,7 +128,6 @@ class CatalogiController extends Controller {
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 * @spec openspec/changes/catalogs/tasks.md#task-3
-	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -158,38 +144,8 @@ class CatalogiController extends Controller {
 			return $this->withListCorsHeaders(response: $this->registerConfigErrorResponse(e: $e));
 		}
 
-		// Retrieve all request parameters.
-		$requestParams = $this->request->getParams();
-
-		// Build search query for searchObjectsPaginated.
-		$searchQuery = $this->getObjectService()->buildSearchQuery($requestParams);
-
-		// The configured scope below wins for the rows, but OR's facet path reads
-		// `@self.schemas ?? _schemas` first; drop every caller scope key (WOO-581).
-		$searchQuery = CallerScope::strip(query: $searchQuery);
-
-		// Constrain the query to the configured catalog register/schema.
-		// Set the top-level _register/_schema keys directly: the @self keys produced
-		// by buildSearchQuery are overwritten/normalized downstream, so the configured
-		// scope must be pinned via the magic-mapper routing keys to actually take effect.
-		if (empty($catalogConfig['schema']) === false) {
-			$searchQuery['_schema'] = $catalogConfig['schema'];
-			$searchQuery['@self']['schema'] = $catalogConfig['schema'];
-		}
-
-		if (empty($catalogConfig['register']) === false) {
-			$searchQuery['_register'] = $catalogConfig['register'];
-			$searchQuery['@self']['register'] = $catalogConfig['register'];
-		}
-
-		// Fetch catalog objects using searchObjectsPaginated.
-		// _rbac: true enforces schema authorization rules (anonymous callers only see
-		// what RBAC permits); multitenancy is left enabled so org scoping is not bypassed.
-		$result = $this->getObjectService()->searchObjectsPaginated(
-			query: $searchQuery,
-			_rbac: true,
-			deleted: false
-		);
+		// Scope pinning, the WOO-581 caller-scope strip and the RBAC'd search live in the service.
+		$result = $this->catalogiService->listCatalogs(requestParams: $this->request->getParams(), catalogConfig: $catalogConfig);
 
 		// Visibility is governed by OpenRegister RBAC (the catalog schema grants the public
 		// group read only when published <= $now); the search above runs with _rbac: true.
