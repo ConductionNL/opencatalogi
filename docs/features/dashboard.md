@@ -37,10 +37,33 @@ The app registers these widgets on the Nextcloud dashboard (`lib/Dashboard/Dashb
 | Widget | Shows |
 |---|---|
 | Catalogi Overview | The catalogues of this instance |
-| Concept publicaties | Publications that are not published yet |
-| Concept bijlage | Attachments that are not published yet |
+| Concept publicaties | Publications that are not published yet (see below) |
+| Unpublished documents | Files on a publication that are not published yet (see below) |
 | Most viewed publications | The publications read most often |
 | Retention review | Publications whose retention term needs a decision |
+
+### Unpublished publications and documents
+
+Both widgets read `GET /api/dashboard/unpublished` (`kind=publications` or
+`kind=documents`, `limit` up to 50). The list holds only what the signed-in
+user may read, newest first, with the total above it.
+
+- **Concept publicaties** lists a publication that has no publication date,
+  or one in the future (scheduled), and has not been withdrawn. A public or a
+  withdrawn publication is not listed.
+- **Unpublished documents** lists a file on a publication whose published
+  time is empty or in the future, with the title of its publication.
+- A row opens its publication in the app, under the catalogue it belongs to.
+  A publication outside every catalogue shows, but its row opens nothing.
+- With nothing to show, the widgets say "No concept publications found" and
+  "No unpublished documents".
+- To stay fast, both lists look at the 200 most recently changed
+  publications. When there are more, the answer says so (`scope: recent-200`).
+
+The demo data (installed on request) carries one scheduled example
+publication, the council agenda of the fictional Gemeente Voorbeeld, so the
+widget shows a row after installing it; its withdrawn example quarterly report
+is not listed.
 
 ## What the app does on start
 

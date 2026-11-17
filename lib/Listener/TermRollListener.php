@@ -34,7 +34,7 @@ namespace OCA\OpenCatalogi\Listener;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\OpenCatalogi\Service\Publication\TermRoll;
+use OCA\OpenCatalogi\Contract\TermRollInterface;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
@@ -60,11 +60,11 @@ class TermRollListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param TermRoll $roll Rolls a date off a non-working day, through OpenRegister.
+	 * @param TermRollInterface $roll Rolls a date off a non-working day, through OpenRegister.
 	 * @param IAppConfig $config Names the inspection and comment period schemas.
 	 */
 	public function __construct(
-		private readonly TermRoll $roll,
+		private readonly TermRollInterface $roll,
 		private readonly IAppConfig $config,
 	) {
 

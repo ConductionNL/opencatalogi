@@ -152,6 +152,23 @@ class NationalIndexServiceTest extends TestCase {
 		$this->service(['national-woo-index' => 'woo-index'])->registerWithWooIndex(request: ['robotsTxt' => 'https://woo.example.nl/robots.txt']);
 	}
 
+	/**
+	 * REQ-DWP-001: without an effective date from the editor, the notice takes the stored
+	 * validFrom; the editor's own date still wins, and without either it is the publication date.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-publication-stores-its-diwoo-metadata-req-dwp-001
+	 */
+	public function testTheNoticeTakesTheStoredValidFromAsItsEffectiveDate(): void {
+		$service = $this->service([]);
+		$decision = ['id' => 'dec-1', 'title' => 'Besluit', 'publicationDate' => '2026-11-02', 'validFrom' => '2027-01-01'];
+
+		$this->assertSame('2027-01-01', $service->composeNotice(decision: $decision + ['effectiveDate' => ''], channel: NationalIndexService::CHANNEL_NATIONAL)['effectiveDate']);
+		$this->assertSame('2027-01-01', $service->composeNotice(decision: $decision, channel: NationalIndexService::CHANNEL_LOCAL)['effectiveDate']);
+		$this->assertSame('2027-02-01', $service->composeNotice(decision: $decision + ['effectiveDate' => '2027-02-01'], channel: NationalIndexService::CHANNEL_NATIONAL)['effectiveDate']);
+		unset($decision['validFrom']);
+		$this->assertSame('2026-11-02', $service->composeNotice(decision: $decision, channel: NationalIndexService::CHANNEL_NATIONAL)['effectiveDate']);
+	}
+
 	/** REQ-WND-002: a notice for the national platform is a `publicatie` delivery request by reference. */
 	public function testANoticeIsDispatchedToThePublicationGatewayByReference(): void {
 		$this->callService->expects($this->never())->method('call');

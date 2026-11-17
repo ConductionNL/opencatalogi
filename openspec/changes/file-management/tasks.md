@@ -67,8 +67,8 @@
 
 - **Status**: todo
 - **Acceptance criteria**:
-  - [ ] 6.1 In a running dev environment, upload a file attachment to a publication via the OpenCatalogi UI and confirm the file appears under `Publicaties/{id} {title}/Bijlagen/` in Nextcloud Files.
-  - [ ] 6.2 Confirm a public share link is generated and accessible in a browser (unauthenticated).
-  - [ ] 6.3 Run WOO sitemap generation as a background job and confirm share URLs are correctly formed (not empty or `://example.nl/...` artifacts from missing `$_SERVER`).
-  - [ ] 6.4 Download a publication as ZIP and confirm the archive contains the expected files and the temp file is deleted after download.
-  - [ ] 6.5 Tail the Nextcloud log during all operations and confirm no PHP warnings, `ini_set` failures, or Mpdf class-not-found errors appear.
+  - [ ] 6.1 In a running dev environment, upload a file attachment to a publication via the OpenCatalogi UI and confirm the file appears under `Publicaties/{id} {title}/Bijlagen/` in Nextcloud Files. (live pass, decision 139)
+  - [ ] 6.2 Confirm a public share link is generated and accessible in a browser (unauthenticated). (live pass, decision 139)
+  - [ ] 6.3 Run WOO sitemap generation as a background job and confirm share URLs are correctly formed (not empty or `://example.nl/...` artifacts from missing `$_SERVER`). (live pass, decision 139)
+  - [ ] 6.4 Download a publication as ZIP and confirm the archive contains the expected files and the temp file is deleted after download. (live pass, decision 139)
+  - [ ] 6.5 Tail the Nextcloud log during all operations and confirm no PHP warnings, `ini_set` failures, or Mpdf class-not-found errors appear. (live pass, decision 139)
