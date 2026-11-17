@@ -11,7 +11,7 @@
 
 - [x] 2.1 Add `canPublish` to `GET /api/publications/{id}/visibility` and gate the action `visibleWhen` on it (REQ-OPR-002). Verify: `tests/Unit/Controller/PublicationVisibilityTest.php` and `tests/e2e/publish-rights.spec.ts`.
   - Done: `PublishRight::mayPublish()` (publisher or admin) feeds `canPublish`. The actions are buttons in `PublicationVisibilityWidget`, not manifest `visibleWhen`, so they are gated through `visibilityActions()` in `src/services/publicationVisibility.js`. Covered by `tests/Unit/Controller/PublicationStateControllerTest.php` (the existing visibility tests) and `tests/vitest/publishRights.spec.js`.
-  - [ ] e2e `tests/e2e/publish-rights.spec.ts`: needs a live stack with an editor and a publisher account.
+  - [ ] e2e `tests/e2e/publish-rights.spec.ts`: written (an editor and a publisher account it provisions; the editor's canPublish, the 403s naming the group, a title change allowed and a publicationDate change refused, the publisher publishing, no Publish now on the editor's page); left: running it on a live stack.
 - [x] 2.2 Make the publish and withdraw endpoints answer 403 for a caller outside the group (REQ-OPR-003). Verify: controller tests, three callers: editor, publisher, admin.
   - Done: `guardPublish()` runs after the existing guard (401 / 404 / update-right 403), then answers 403 `not-a-publisher` naming the group. Editor: `PublicationStateControllerTest`. Publisher: the existing publish/withdraw tests and the withdraw golden. Admin: `PublishRightTest::testAnAdministratorMayPublishOutsideTheGroup`. The single-document withdrawal is not one of the two endpoints and is unchanged.
 
@@ -19,5 +19,5 @@
 
 - [x] 3.1 Add the settings line for the group and its member count (REQ-OPR-004). Verify: e2e spec from 2.1.
   - Done: `GET /api/settings/publish-rights` (`PublishRightsController`, admin setting) and `PublishRightsLine.vue` in the Woo section. Covered by `PublishRightsControllerTest` and `tests/vitest/publishRightsLine.spec.js`. The e2e check is the open item under 2.1.
-- [ ] 3.2 English and Dutch strings, release note, docs, `openspec validate operations-publish-rights --strict`.
-  - Done: en/nl strings (`l10n/*.json`, `.js` regenerated), the CHANGELOG `[Unreleased]` entry and `docs/features/publish-rights.md`. Open: `openspec validate`, because the CLI is not installed in the build container.
+- [x] 3.2 English and Dutch strings, release note, docs, `openspec validate operations-publish-rights --strict`.
+  - Done: en/nl strings (`l10n/*.json`, `.js` regenerated), the CHANGELOG `[Unreleased]` entry and `docs/features/publish-rights.md`. `openspec validate --strict` failed on the front matter and title above the first section of the delta spec; with those removed it reports the change valid (17 Nov 2026).
