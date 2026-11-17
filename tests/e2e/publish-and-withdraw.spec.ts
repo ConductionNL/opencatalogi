@@ -102,6 +102,7 @@ test.describe('Publish and withdraw in one action', () => {
 		)
 		const anonymous = await playwright.request.newContext({
 			baseURL: BASE,
+			storageState: { cookies: [], origins: [] },
 		})
 		const refused = await anonymous.post(
 			`${API_BASE}/publications/${publication.id}/withdraw`,

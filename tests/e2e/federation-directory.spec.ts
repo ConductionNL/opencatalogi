@@ -21,6 +21,7 @@
  * @e2e openspec/changes/federation-connection-last-success/specs/federation/spec.md#scenario-an-administrator-checks-a-failing-peer
  * @e2e openspec/changes/federation-connection-last-success/specs/federation/spec.md#scenario-a-user-who-is-not-an-administrator
  */
+import { randomUUID } from 'node:crypto'
 import { expect, test } from './authenticated-request.ts'
 
 /** The app's base path and API. */
@@ -42,8 +43,10 @@ test.describe('Federation directory: last successful sync', () => {
 		const created = await admin.post(`${API_BASE}/listings`, {
 			data: {
 				title: 'E2E failing peer',
+				summary: 'A peer whose directory cannot be reached',
+				catalogusId: randomUUID(),
 				directory: FAILING_DIRECTORY,
-				integrationLevel: 'sync',
+				integrationLevel: 'search',
 			},
 		})
 		expect(created.ok(), await created.text()).toBe(true)
@@ -96,7 +99,7 @@ test.describe('Federation directory: last successful sync', () => {
 		)
 		await expect(row.locator('.federation-directory__node-error')).toBeVisible()
 
-		await row.getByRole('button', { name: /Actions for|Acties voor/ }).click()
+		await row.getByRole('button', { name: /^Actions|^Acties/ }).click()
 		await expect(
 			page.getByRole('menuitem', { name: /Sync now|Nu synchroniseren/ }),
 		).toBeVisible()
@@ -125,7 +128,7 @@ test.describe('Federation directory: last successful sync', () => {
 		})
 		if ((await row.count()) > 0) {
 			await row
-				.getByRole('button', { name: /Actions for|Acties voor/ })
+				.getByRole('button', { name: /^Actions|^Acties/ })
 				.click()
 		}
 		await expect(
