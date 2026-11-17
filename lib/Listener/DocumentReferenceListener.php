@@ -27,8 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\DocumentReferences;
-use OCA\OpenCatalogi\Service\DocumentReferenceUrlPolicy;
+use OCA\OpenCatalogi\Contract\DocumentReferencesInterface;
+use OCA\OpenCatalogi\Contract\DocumentReferenceUrlPolicyInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
@@ -53,12 +53,12 @@ class DocumentReferenceListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param DocumentReferenceUrlPolicy $policy Decides the URL.
+	 * @param DocumentReferenceUrlPolicyInterface $policy Decides the URL.
 	 * @param IAppConfig $config Holds the schema id.
 	 * @param IUserSession $userSession The caller.
 	 */
 	public function __construct(
-		private readonly DocumentReferenceUrlPolicy $policy,
+		private readonly DocumentReferenceUrlPolicyInterface $policy,
 		private readonly IAppConfig $config,
 		private readonly IUserSession $userSession,
 	) {
@@ -110,7 +110,7 @@ class DocumentReferenceListener implements IEventListener {
 	 * @return bool True when it is.
 	 */
 	private function isReference(ObjectEntity $object): bool {
-		$schema = $this->config->getValueString('opencatalogi', DocumentReferences::SCHEMA_KEY, '');
+		$schema = $this->config->getValueString('opencatalogi', DocumentReferencesInterface::SCHEMA_KEY, '');
 		return $schema !== '' && (string)$object->getSchema() === $schema;
 	}//end isReference()
 }//end class

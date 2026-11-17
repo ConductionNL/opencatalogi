@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\DocumentReferencesInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
@@ -44,14 +45,9 @@ use Throwable;
  *
  * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-a-reference-is-published-like-a-file-pointing-at-its-source-req-pbr-002
  */
-class DocumentReferences {
+class DocumentReferences implements DocumentReferencesInterface {
 	use ChecksPublicationWindow;
 	use ReadsObjectProperties;
-
-	/**
-	 * The app config key of the documentReference schema.
-	 */
-	public const SCHEMA_KEY = 'document_reference_schema';
 
 	/**
 	 * The app config key of the publication register.

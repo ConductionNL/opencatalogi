@@ -93,10 +93,14 @@ class DocumentReferenceSchemaTest extends TestCase {
 			}
 		}
 
-		$this->assertCount(1, $references);
-		$this->assertContains($references[0]['publication'], $publications);
+		$this->assertCount(3, $references);
+		foreach ($references as $reference) {
+			$this->assertContains($reference['publication'], $publications);
+			$this->assertStringStartsWith('https://', $reference['url']);
+			$this->assertSame('pdf', $reference['format']);
+		}
+
 		$this->assertSame('https://documenten.voorbeeldgemeente.nl/besluit-2026-001.pdf', $references[0]['url']);
-		$this->assertSame('pdf', $references[0]['format']);
 	}//end testTheSeedReferencePointsAtADemoPublication()
 
 	public function testTheSchemaHasAConfigurationKey(): void {

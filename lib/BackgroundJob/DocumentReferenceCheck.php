@@ -27,8 +27,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\BackgroundJob;
 
-use OCA\OpenCatalogi\Service\DocumentReferenceProbe;
-use OCA\OpenCatalogi\Service\DocumentReferences;
+use OCA\OpenCatalogi\Contract\DocumentReferenceProbeInterface;
+use OCA\OpenCatalogi\Contract\DocumentReferencesInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -50,14 +50,14 @@ class DocumentReferenceCheck extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time The clock.
-	 * @param DocumentReferences $references Reads the references and records the result.
-	 * @param DocumentReferenceProbe $probe Asks the source system.
+	 * @param DocumentReferencesInterface $references Reads the references and records the result.
+	 * @param DocumentReferenceProbeInterface $probe Asks the source system.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly DocumentReferences $references,
-		private readonly DocumentReferenceProbe $probe,
+		private readonly DocumentReferencesInterface $references,
+		private readonly DocumentReferenceProbeInterface $probe,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);
@@ -93,7 +93,7 @@ class DocumentReferenceCheck extends TimedJob {
 
 		foreach ($this->references->inWindow(cap: self::PER_RUN_CAP) as $reference) {
 			$status = $this->probe->status(url: (string)($reference['url'] ?? ''));
-			$reachable = DocumentReferenceProbe::isReachable(status: $status);
+			$reachable = $this->probe::isReachable(status: $status);
 			$this->references->recordCheck(reference: $reference, reachable: $reachable, status: $status, checkedAt: $checkedAt);
 			$checked++;
 			if ($reachable === false) {

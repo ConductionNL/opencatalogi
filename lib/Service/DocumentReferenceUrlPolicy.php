@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\DocumentReferenceUrlPolicyInterface;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard;
 
@@ -37,7 +38,7 @@ use OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard;
  *
  * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-an-editor-adds-a-document-by-its-public-url-req-pbr-001
  */
-class DocumentReferenceUrlPolicy {
+class DocumentReferenceUrlPolicy implements DocumentReferenceUrlPolicyInterface {
 
 	/**
 	 * The refusal for a URL that is not https.

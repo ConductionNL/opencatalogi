@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\DocumentReferenceProbeInterface;
 use OCP\Http\Client\IClientService;
 use Throwable;
 
@@ -35,7 +36,7 @@ use Throwable;
  *
  * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-broken-references-are-shown-before-readers-find-them-req-pbr-003
  */
-class DocumentReferenceProbe {
+class DocumentReferenceProbe implements DocumentReferenceProbeInterface {
 
 	/**
 	 * Seconds a request may take.
