@@ -29,6 +29,7 @@ use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
+use OCA\OpenRegister\Event\TaskTerminalEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
@@ -146,6 +147,19 @@ class ListenerRegistrar {
 		// provenance is the server's to write (publication-plain-language-and-translation, REQ-PPL-001).
 		$context->registerEventListener(ObjectCreatingEvent::class, PlainSummaryCheck::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PlainSummaryCheck::class);
+
+		// A Woo batch whose review task is rejected in OpenRegister goes back to its
+		// author with the task's comment (woo-review-surface, REQ-WRV-002).
+		$context->registerEventListener(TaskTerminalEvent::class, BatchReviewTaskListener::class);
+
+		// A publication records whether it is complete and public; a source
+		// system subscribes to the move to complete (publication-tells-its-source, REQ-PTS-002).
+		$context->registerEventListener(ObjectCreatingEvent::class, CompletenessListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, CompletenessListener::class);
+
+		// A publication carries its public page and its officer page (REQ-PTS-001).
+		$context->registerEventListener(ObjectCreatingEvent::class, PublicationLinksListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationLinksListener::class);
 
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is
