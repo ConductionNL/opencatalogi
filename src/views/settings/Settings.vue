@@ -265,6 +265,8 @@
 
 				<RecordHandover />
 
+				<WooIncidents />
+
 				<h3 class="woo-registration-heading">
 					{{ t('opencatalogi', 'National delivery channels') }}
 				</h3>
@@ -671,6 +673,7 @@ import InstanceModeSection from './InstanceModeSection.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
 import RecordHandover from './RecordHandover.vue'
+import WooIncidents from './WooIncidents.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
@@ -794,6 +797,7 @@ export default defineComponent({
 		PublishRightsLine,
 		RecordHandover,
 		WooIndexConnection,
+		WooIncidents,
 		DcatFeedValidation,
 		DonlHarvestStatus,
 		PubliccodeHarvest,

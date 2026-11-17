@@ -35,6 +35,7 @@ use DOMDocument;
 use OCA\OpenCatalogi\BackgroundJob\DiwooSitemapReconciliation;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
 use OCA\OpenCatalogi\Service\Handover\HandoverState;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidentSettings;
 use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
 use OCP\Http\Client\IClientService;
@@ -204,6 +205,9 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 
 		$registration = $this->getRegistrationConfig();
 		$checks[] = $this->checkRegistration(registration: $registration, baseUrl: $baseUrl);
+		if ($this->incidents !== null) {
+			$checks[] = $this->checkIncidentGroup();
+		}
 
 		$report = [
 			'verdict' => $this->computeVerdict(checks: $checks),
@@ -231,6 +235,21 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 
 		return $report;
 	}//end runCheck()
+
+	/**
+	 * Fail while nobody receives the pipeline incidents: a failure then reaches no one (REQ-WNO-004).
+	 *
+	 * @return array<string, mixed> The check.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	private function checkIncidentGroup(): array {
+		if (trim($this->config->getValueString(self::APP_NAME, PipelineIncidentSettings::GROUP_KEY, '')) === '') {
+			return $this->buildCheck(id: 'incident-group', status: 'fail', reason: 'nobody receives pipeline failures');
+		}
+
+		return $this->buildCheck(id: 'incident-group', status: 'pass');
+	}//end checkIncidentGroup()
 
 	/**
 	 * Raise a pipeline incident naming the failing checks of a report that is not ready.

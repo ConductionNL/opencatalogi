@@ -103,6 +103,9 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// Woo-index harvester-readiness self-check (woo-index-harvester-readiness)
 		['name' => 'wooReadiness#report', 'url' => '/api/woo/readiness', 'verb' => 'GET'],
 		['name' => 'wooReadiness#run', 'url' => '/api/woo/readiness/run', 'verb' => 'POST'],
+		// Who receives the Woo pipeline incidents, and the open ones (woo-national-output-assurance REQ-WNO-004).
+		['name' => 'wooIncidents#index', 'url' => '/api/woo/incidents', 'verb' => 'GET'],
+		['name' => 'wooIncidents#setGroup', 'url' => '/api/woo/incidents/group', 'verb' => 'PUT'],
 		// GitHub publiccode harvest (publiccode-github-harvest). Admin only.
 		['name' => 'publiccodeHarvest#status', 'url' => '/api/settings/publiccode-harvest', 'verb' => 'GET'],
 		['name' => 'publiccodeHarvest#setup', 'url' => '/api/settings/publiccode-harvest/setup', 'verb' => 'POST'],

@@ -1871,7 +1871,25 @@
         "OpenCatalogi cannot start": "OpenCatalogi cannot start",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.",
         "Invalid listing": "Invalid listing",
-        "Listing not found in scope": "Listing not found in scope"
+        "Listing not found in scope": "Listing not found in scope",
+        "Pipeline failures": "Pipeline failures",
+        "A failed delivery, a refused sitemap or a gap in the sitemap is sent to the members of this group by notification and e-mail.": "A failed delivery, a refused sitemap or a gap in the sitemap is sent to the members of this group by notification and e-mail.",
+        "Nobody receives pipeline failures. Set a group.": "Nobody receives pipeline failures. Set a group.",
+        "Group that receives pipeline failures": "Group that receives pipeline failures",
+        "Open pipeline failures": "Open pipeline failures",
+        "The open pipeline failures could not be read.": "The open pipeline failures could not be read.",
+        "No open pipeline failures.": "No open pipeline failures.",
+        "The group is saved.": "The group is saved.",
+        "The group could not be saved.": "The group could not be saved.",
+        "Woo pipeline incident": "Woo pipeline incident",
+        "Subject": "Subject",
+        "Raised at": "Raised at",
+        "Resolved at": "Resolved at",
+        "The reason, as a person reads it.": "The reason, as a person reads it.",
+        "What failed, such as plooi-delivery or diwoo-version.": "What failed, such as plooi-delivery or diwoo-version.",
+        "What it failed for, such as a publication or a catalogue.": "What it failed for, such as a publication or a catalogue.",
+        "When someone marked it resolved; empty while it is open.": "When someone marked it resolved; empty while it is open.",
+        "When the failure was raised.": "When the failure was raised."
     },
     "plurals": {}
 }

@@ -527,6 +527,40 @@ XML;
 		$this->assertSame('woo', $report['reconciliation'][0]['catalog']);
 	}
 
+	/**
+	 * REQ-WNO-004: while no incident group is set, nobody receives pipeline failures and readiness fails.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	public function testNoIncidentGroupFailsReadiness(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+		$group = '';
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$group): string {
+				return $key === 'woo_incident_group' ? $group : $default;
+			}
+		);
+		$service = new WooReadinessService(
+			$this->clientService,
+			$this->directoryService,
+			new SitemapStandards($this->sitemapService, $this->standardsVersionService),
+			$this->settingsService,
+			$this->config,
+			$this->urlGenerator,
+			incidents: $this->createMock(\OCA\OpenCatalogi\Service\Woo\PipelineIncidents::class)
+		);
+
+		$report = $service->runCheck();
+		$checks = array_column($report['checks'], null, 'id');
+		$this->assertSame('not-ready', $report['verdict']);
+		$this->assertSame(['id' => 'incident-group', 'status' => 'fail', 'reason' => 'nobody receives pipeline failures'], $checks['incident-group']);
+
+		$group = 'woo-team';
+		$checks = array_column($service->runCheck()['checks'], null, 'id');
+		$this->assertSame(['id' => 'incident-group', 'status' => 'pass'], $checks['incident-group']);
+	}
+
 	public function testBeingBehindTheDiwooStandardFailsTheReport(): void {
 		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
 		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));

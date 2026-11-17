@@ -1827,7 +1827,25 @@ OC.L10N.register(
         "OpenCatalogi cannot start": "OpenCatalogi kan niet starten",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vereist OpenRegister %1$s of nieuwer. Vraag je beheerder om OpenRegister bij te werken.",
         "Invalid listing": "Ongeldige vermelding",
-        "Listing not found in scope": "Vermelding niet gevonden in dit bereik"
+        "Listing not found in scope": "Vermelding niet gevonden in dit bereik",
+        "Pipeline failures": "Storingen in de publicatieketen",
+        "A failed delivery, a refused sitemap or a gap in the sitemap is sent to the members of this group by notification and e-mail.": "Een mislukte aflevering, een geweigerde sitemap of een gat in de sitemap gaat per melding en e-mail naar de leden van deze groep.",
+        "Nobody receives pipeline failures. Set a group.": "Niemand ontvangt storingen in de publicatieketen. Stel een groep in.",
+        "Group that receives pipeline failures": "Groep die storingen in de publicatieketen ontvangt",
+        "Open pipeline failures": "Openstaande storingen in de publicatieketen",
+        "The open pipeline failures could not be read.": "De openstaande storingen in de publicatieketen konden niet worden gelezen.",
+        "No open pipeline failures.": "Geen openstaande storingen in de publicatieketen.",
+        "The group is saved.": "De groep is opgeslagen.",
+        "The group could not be saved.": "De groep kon niet worden opgeslagen.",
+        "Woo pipeline incident": "Storing in de Woo-publicatieketen",
+        "Subject": "Onderwerp",
+        "Raised at": "Gemeld op",
+        "Resolved at": "Opgelost op",
+        "The reason, as a person reads it.": "De reden, zoals een mens die leest.",
+        "What failed, such as plooi-delivery or diwoo-version.": "Wat mislukte, zoals plooi-delivery of diwoo-version.",
+        "What it failed for, such as a publication or a catalogue.": "Waarvoor het mislukte, zoals een publicatie of een catalogus.",
+        "When someone marked it resolved; empty while it is open.": "Wanneer iemand de storing als opgelost markeerde; leeg zolang die openstaat.",
+        "When the failure was raised.": "Wanneer de storing werd gemeld."
     },
     "nplurals=2; plural=(n != 1);"
 )
