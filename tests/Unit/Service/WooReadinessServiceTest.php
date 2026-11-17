@@ -502,6 +502,36 @@ XML;
 		$this->assertArrayNotHasKey('wooRequests', $this->service->runCheck());
 	}
 
+	/**
+	 * The report carries how many Woo reads fell back to the unclassified activity, without it deciding the verdict (REQ-WAB-001).
+	 *
+	 * @return void
+	 */
+	public function testFallbackAttributedReadsAreReported(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+		$versions = $this->createMock(StandardsVersionService::class);
+		$versions->method('diwooVersion')->willReturn(['declared' => '0.9.8', 'published' => '0.9.8', 'status' => StandardsVersionService::STATUS_CURRENT]);
+		$attribution = $this->createMock(\OCA\OpenCatalogi\Service\WooReadAttribution::class);
+		$attribution->method('report')->willReturn(['fallbackAttributedReads' => 3, 'days' => 30]);
+		$service = new WooReadinessService(
+			$this->clientService,
+			$this->directoryService,
+			new SitemapStandards($this->sitemapService, $versions),
+			$this->settingsService,
+			$this->config,
+			$this->urlGenerator,
+			readAttribution: $attribution
+		);
+
+		$report = $service->runCheck();
+
+		$this->assertSame(['fallbackAttributedReads' => 3, 'days' => 30], $report['readLogging']);
+		$this->assertNotContains('read-logging', array_column($report['checks'], 'id'));
+		$this->assertArrayNotHasKey('readLogging', $this->service->runCheck());
+
+	}//end testFallbackAttributedReadsAreReported()
+
 	public function testBeingBehindTheDiwooStandardFailsTheReport(): void {
 		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
 		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));

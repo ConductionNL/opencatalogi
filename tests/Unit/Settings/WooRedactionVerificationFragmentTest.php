@@ -68,6 +68,7 @@ class WooRedactionVerificationFragmentTest extends TestCase {
 			}
 		}
 
-		$this->assertSame($bumped, end($versions));
+		// A later fragment may bump it again (woo-access-boundary-hardening); the winner never drops below this bump.
+		$this->assertTrue(version_compare((string)end($versions), $bumped, '>='), end($versions) . ' is below ' . $bumped);
 	}//end testTheSchemaVersionIsBumpedAndMergedLast()
 }//end class

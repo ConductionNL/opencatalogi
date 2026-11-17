@@ -128,6 +128,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator (public base URL).
 	 * @param WooIndexFieldMapper|null $fieldMapper Where the Woo-index fields come from (REQ-WIM-004).
 	 * @param HandoverState|null $handover What the hand-over of the Woo requests to dossiq left; null reports nothing.
+	 * @param WooReadAttribution|null $readAttribution Counts the reads logged under the fallback activity.
 	 */
 	public function __construct(
 		private readonly IClientService $clientService,
@@ -138,6 +139,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		private readonly IURLGenerator $urlGenerator,
 		private readonly ?WooIndexFieldMapper $fieldMapper = null,
 		private readonly ?HandoverState $handover = null,
+		private readonly ?WooReadAttribution $readAttribution = null,
 	) {
 
 	}//end __construct()
@@ -212,6 +214,12 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		// a check: they say nothing about whether the index can harvest.
 		if ($this->handover !== null) {
 			$report['wooRequests'] = $this->handover->report();
+		}
+
+		// Reads of the Woo schemas OpenRegister logged under its unclassified
+		// activity in the last 30 days (REQ-WAB-001). Reported, not a check.
+		if ($this->readAttribution !== null) {
+			$report['readLogging'] = $this->readAttribution->report();
 		}
 
 		$this->persistReport(report: $report);
