@@ -109,6 +109,13 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publiccodeHarvest#enable', 'url' => '/api/settings/publiccode-harvest/enable', 'verb' => 'POST'],
 		['name' => 'publiccodeHarvest#disable', 'url' => '/api/settings/publiccode-harvest/disable', 'verb' => 'POST'],
 		['name' => 'publiccodeHarvest#run', 'url' => '/api/settings/publiccode-harvest/run', 'verb' => 'POST'],
+		// Council documents harvest (council-documents-from-notubiz-and-ibabs, REQ-CDH-001): admin only.
+		['name' => 'councilHarvest#status', 'url' => '/api/settings/council-harvest', 'verb' => 'GET'],
+		['name' => 'councilHarvest#setup', 'url' => '/api/settings/council-harvest/setup', 'verb' => 'POST'],
+		['name' => 'councilHarvest#enable', 'url' => '/api/settings/council-harvest/enable', 'verb' => 'POST'],
+		['name' => 'councilHarvest#disable', 'url' => '/api/settings/council-harvest/disable', 'verb' => 'POST'],
+		['name' => 'councilHarvest#publishOnArrival', 'url' => '/api/settings/council-harvest/publish-on-arrival', 'verb' => 'POST'],
+		['name' => 'councilHarvest#run', 'url' => '/api/settings/council-harvest/run', 'verb' => 'POST'],
 		// Woo-index registration and the root robots.txt rules (woo-index-harvester-connection).
 		['name' => 'wooRegistration#show', 'url' => '/api/woo/registration', 'verb' => 'GET'],
 		// The publishers group in the admin settings (operations-publish-rights, REQ-OPR-004).

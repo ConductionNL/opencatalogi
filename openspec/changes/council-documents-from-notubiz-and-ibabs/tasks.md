@@ -9,8 +9,8 @@ Read `lib/Settings/register.d/publiccode-github-harvest.json` and `lib/Service/P
 
 ## 2. Service and routes
 
-- [ ] 2.1 Add `CouncilHarvestService` with `status()`, `setUp(string $sourceSlug)`, `setEnabled(bool)`, `runNow()` and the refusals of design D5 risks (REQ-CDH-001). Verify: `tests/Unit/Service/CouncilHarvestServiceTest.php::testSetUpWritesTheSynchronizationAndRuleForNotubiz`, `::testSetUpRefusesAnIbabsSourceWithoutAKey`, `::testSetUpRefusesWithoutIntegriq`.
-- [ ] 2.2 Add `CouncilHarvestController` and the admin-only routes `/api/settings/council-harvest`, `/setup`, `/enable`, `/disable`, `/run` next to the publiccode harvest routes. Verify: a controller test per route and a route-table test.
+- [x] 2.1 Add `CouncilHarvestService` with `status()`, `setUp(string $sourceSlug)`, `setEnabled(bool)`, `runNow()` and the refusals of design D5 risks (REQ-CDH-001). Verify: `tests/Unit/Service/CouncilHarvestServiceTest.php::testSetUpWritesTheSynchronizationAndRuleForNotubiz`, `::testSetUpRefusesAnIbabsSourceWithoutAKey`, `::testSetUpRefusesWithoutIntegriq`.
+- [x] 2.2 Add `CouncilHarvestController` and the admin-only routes `/api/settings/council-harvest`, `/setup`, `/enable`, `/disable`, `/run` next to the publiccode harvest routes. Verify: a controller test per route and a route-table test.
 - [ ] 2.3 Upsert on the source identifier (REQ-CDH-003). Verify: `tests/Unit/Flow/CouncilHarvestFlowTest.php::testASecondRunUpdatesAndCreatesNothing`, `::testAPublicDocumentBecomesAConceptPublicationWithItsFile`, `::testADocumentNotMarkedPublicIsNotWritten`, run over a recorded Notubiz page fixture.
 
 ## 3. Settings section
