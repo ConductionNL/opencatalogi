@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
@@ -296,7 +297,7 @@ class BatchPublicationWriter {
 					_multitenancy: false
 				);
 				if ($entity !== null) {
-					return ['id' => $earlier, 'entity' => $entity, 'title' => $this->titleOf(entity: $entity)];
+					return ['id' => $earlier, 'entity' => $this->published(entity: $entity, id: $earlier, now: $now), 'title' => $this->titleOf(entity: $entity)];
 				}
 			} catch (Throwable) {
 				// Gone since the last attempt: make a new one below.
@@ -311,8 +312,52 @@ class BatchPublicationWriter {
 			_multitenancy: false
 		);
 
-		return ['id' => $this->idOf(entity: $entity), 'entity' => $entity, 'title' => $payload['title']];
+		$id = $this->idOf(entity: $entity);
+
+		return ['id' => $id, 'entity' => $this->published(entity: $entity, id: $id, now: $now), 'title' => $payload['title']];
 	}//end publication()
+
+	/**
+	 * Publish the batch's publication through its lifecycle: the batch review is its approval, so it is created
+	 * `approved` and runs `publish` with the date in the same call (REQ-PLC-003). One already published stays.
+	 *
+	 * @param mixed  $entity The publication as saved or found.
+	 * @param string $id     The publication uuid.
+	 * @param string $now    The moment of publishing.
+	 *
+	 * @return mixed The publication as saved or found: files attach to it by id, which the move does not change.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 */
+	private function published(mixed $entity, string $id, string $now): mixed {
+		$stored = PublishTransition::storedState(stored: (string)(self::propertiesOf(entity: $entity)['status'] ?? ''));
+		if ($stored === 'published') {
+			return $entity;
+		}
+
+		$this->container->get(PublishTransition::class)->publish(id: $id, stored: $stored, publicationDate: $now, asSystem: true);
+
+		return $entity;
+	}//end published()
+
+	/**
+	 * The properties of a saved or found publication.
+	 *
+	 * @param mixed $entity The entity or array.
+	 *
+	 * @return array<string, mixed> The properties.
+	 */
+	private static function propertiesOf(mixed $entity): array {
+		if (is_object($entity) === true && method_exists($entity, 'getObject') === true) {
+			return (array)$entity->getObject();
+		}
+
+		if (is_object($entity) === true && method_exists($entity, 'jsonSerialize') === true) {
+			return (array)$entity->jsonSerialize();
+		}
+
+		return (array)$entity;
+	}//end propertiesOf()
 
 	/**
 	 * The publication a batch becomes.
@@ -335,8 +380,7 @@ class BatchPublicationWriter {
 			'title' => $title,
 			'wooCategory' => $this->category(batch: $batch),
 			'publicationKind' => 'actief',
-			'publicationDate' => $now,
-			'status' => 'published',
+			'status' => 'approved',
 		];
 		if ($caseReference !== '') {
 			$payload['caseReference'] = $caseReference;

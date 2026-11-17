@@ -110,6 +110,7 @@ class PublishTransition {
 	 * @param string $id              The publication uuid.
 	 * @param string $stored          The stored `status`.
 	 * @param string $publicationDate The publication date to write (ATOM).
+	 * @param bool   $asSystem        Run as opencatalogi itself, for a publish no caller makes (a reviewed Woo batch).
 	 *
 	 * @return object The publication as the engine answers it.
 	 *
@@ -118,14 +119,18 @@ class PublishTransition {
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
 	 */
-	public function publish(string $id, string $stored, string $publicationDate): object {
+	public function publish(string $id, string $stored, string $publicationDate, bool $asSystem = false): object {
 		$action = $this->actionFor(stored: $stored);
 		if ($action === null) {
 			throw new PublishRefusedException(state: self::storedState(stored: $stored));
 		}
 
 		$engine = $this->container->get(self::ENGINE);
+		$data   = ['publicationDate' => $publicationDate, 'depublicationDate' => null];
+		if ($asSystem === true) {
+			return $engine->transitionAsSystem($id, $action, 'opencatalogi', $data);
+		}
 
-		return $engine->transition($id, $action, ['publicationDate' => $publicationDate, 'depublicationDate' => null]);
+		return $engine->transition($id, $action, $data);
 	}//end publish()
 }//end class
