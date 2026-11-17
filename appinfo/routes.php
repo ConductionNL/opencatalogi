@@ -128,6 +128,10 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publicationState#visibility', 'url' => '/api/publications/{id}/visibility', 'verb' => 'GET'],
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
+		// Published tables, editor side: list, publish a CSV attachment, edit the dictionary (REQ-ODT-001, REQ-ODT-003).
+		['name' => 'publishedTableEdit#index', 'url' => '/api/publications/{id}/tables', 'verb' => 'GET'],
+		['name' => 'publishedTableEdit#create', 'url' => '/api/publications/{id}/tables', 'verb' => 'POST'],
+		['name' => 'publishedTableEdit#updateDictionary', 'url' => '/api/publications/{id}/tables/{tableId}/dictionary', 'verb' => 'PUT'],
 		['name' => 'publicationState#withdrawFile', 'url' => '/api/publications/{id}/files/{fileId}/withdraw', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		['name' => 'publicationState#republishFile', 'url' => '/api/publications/{id}/files/{fileId}/republish', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		// A plain language summary an officer writes, or drafts with a text assistant and accepts
