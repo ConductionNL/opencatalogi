@@ -181,6 +181,7 @@ class DcatMappingService {
 			],
 			$this->mapProperties(source: $source, mapping: $profile->mapping),
 			$this->hvdProperties(publication: $source->publication, profile: $profile),
+			$this->plainSummaryProperties(publication: $source->publication),
 			$this->mandatoryProperties(source: $source),
 			$this->completionProperties(source: $source, profile: $profile)
 		);
@@ -347,6 +348,32 @@ class DcatMappingService {
 	}//end mandatoryProperties()
 
 	/**
+	 * The plain language summary as `dct:abstract`, tagged with the publication's language.
+	 *
+	 * The language is the publication's own `language` when it carries one, and
+	 * `nl` otherwise.
+	 *
+	 * @param array<string, mixed> $publication The publication object.
+	 *
+	 * @return array<string, mixed> The abstract, or nothing without a plain summary.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 */
+	private function plainSummaryProperties(array $publication): array {
+		$text = ($publication['plainSummary'] ?? null);
+		if (is_string($text) === false || trim($text) === '') {
+			return [];
+		}
+
+		$language = ($publication['language'] ?? null);
+		if (is_string($language) === false || preg_match('/^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/', $language) !== 1) {
+			$language = 'nl';
+		}
+
+		return ['dct:abstract' => ['@value' => trim($text), '@language' => strtolower($language)]];
+	}//end plainSummaryProperties()
+
+	/**
 	 * Publisher, contact point and distributions, each only when it resolves.
 	 *
 	 * The publisher chain runs object, then catalog defaults, then Organisation.
@@ -383,6 +410,11 @@ class DcatMappingService {
 		$defaultLicense = ($source->publication['license'] ?? $defaults['license'] ?? null);
 		$distributions = [];
 		foreach ($source->files as $file) {
+			// REQ-ATT-103: a file whose own publication window has ended is withdrawn.
+			if (self::windowEnded(file: $file) === true) {
+				continue;
+			}
+
 			$distribution = $this->mapDistribution(file: $file, defaultLicense: $defaultLicense);
 			if ($distribution !== null) {
 				$distributions[] = $distribution;
@@ -494,6 +526,30 @@ class DcatMappingService {
 	private function filled(mixed $value): bool {
 		return $value !== null && $value !== '';
 	}//end filled()
+
+	/**
+	 * Whether a file's own publication window has ended: its `depublished` moment is now or past.
+	 *
+	 * A file without a window, or with an end that cannot be read, has not ended.
+	 *
+	 * @param array<string, mixed> $file A formatFiles-shape file entry.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+	 */
+	public static function windowEnded(array $file): bool {
+		$end = ($file['depublished'] ?? null);
+		if (is_string($end) === false || trim($end) === '') {
+			return false;
+		}
+
+		try {
+			return new \DateTimeImmutable($end) <= new \DateTimeImmutable();
+		} catch (\Throwable) {
+			return false;
+		}
+	}//end windowEnded()
 
 	/**
 	 * Map a single published file attachment to a `dcat:Distribution`.

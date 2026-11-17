@@ -44,8 +44,10 @@ namespace OCA\OpenCatalogi\Service;
 use Exception;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Service\Publication\AttachmentOrder;
 use OCA\OpenRegister\Exception\RegisterNotFoundException;
 use OCA\OpenRegister\Exception\SchemaNotFoundException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -302,23 +304,7 @@ class PublicationService implements PublicationServiceInterface {
 			// Derive allowed registers/schemas from the catalogs configured on this
 			// instance. getCatalogFilters() returns the union of all catalog scopes,
 			// which is the safe upper-bound for any request that reaches this path.
-			$context = $this->getCatalogFilters();
-			$allowedRegisters = array_map('intval', $context['registers']);
-			$allowedSchemas = array_map('intval', $context['schemas']);
-
-			if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
-				// No catalog scope configured — refuse to do a platform-wide scan.
-				return;
-			}
-
-			// Delegate to the scoped helper that routes the lookup through OpenRegister's
-			// ObjectService, never a raw DBMS-catalog probe, and only within a
-			// constrained (register × schema) set.
-			$location = $this->getQueryService()->findObjectLocation(
-				uuid: $objectId,
-				allowedRegisters: $allowedRegisters,
-				allowedSchemas: $allowedSchemas
-			);
+			$location = $this->locationInCatalogScope(objectId: $objectId);
 
 			if ($location !== null) {
 				$objectService->setRegister(register: (string)$location['register']);
@@ -451,13 +437,8 @@ class PublicationService implements PublicationServiceInterface {
 			$cacheKey = (string)$catalogId;
 		}
 
-		// Return cached result if available.
 		if (isset($this->cachedCatalogFilters[$cacheKey]) === true) {
-			// Restore class properties from cache.
-			$cached = $this->cachedCatalogFilters[$cacheKey];
-			$this->availableRegisters = $cached['availableRegisters'];
-			$this->availableSchemas = $cached['availableSchemas'];
-			return $cached['result'];
+			return $this->restoredCatalogFilters(cached: $this->cachedCatalogFilters[$cacheKey]);
 		}
 
 		// FAIL CLOSED on an unconfigured catalog scope. See resolveCatalogScope().
@@ -471,26 +452,7 @@ class PublicationService implements PublicationServiceInterface {
 			];
 		}
 
-		// Setup the config array for searchObjects.
-		$query = [
-			'@self' => [
-				'register' => $scope['register'],
-				'schema' => $scope['schema'],
-			],
-		];
-
-		// Get all catalogs using searchObjects. Its declared return type is
-		// `array|int` — it yields an int when the query asks for a count. This query
-		// does not, but narrow explicitly so a count-shaped result can never reach
-		// the foreach below as a non-iterable.
-		$catalogs = $this->getObjectService()->searchObjects($query);
-		if (is_array($catalogs) === false) {
-			$catalogs = [];
-		}
-
-		if ($catalogId !== null) {
-			$catalogs = $this->findCatalogInScope(catalogId: $catalogId, scope: $scope);
-		}
+		$catalogs = $this->scopeCatalogs(scope: $scope, catalogId: $catalogId);
 
 		// Remove duplicate values and assign to class properties.
 		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
@@ -514,6 +476,51 @@ class PublicationService implements PublicationServiceInterface {
 	}//end getCatalogFilters()
 
 	/**
+	 * Restore the scope properties from a cached lookup and return its result.
+	 *
+	 * @param array $cached The cached `result`, `availableRegisters` and `availableSchemas`.
+	 *
+	 * @return array The cached result.
+	 */
+	private function restoredCatalogFilters(array $cached): array {
+		$this->availableRegisters = $cached['availableRegisters'];
+		$this->availableSchemas = $cached['availableSchemas'];
+		return $cached['result'];
+	}//end restoredCatalogFilters()
+
+	/**
+	 * The catalogs that make up the scope: all catalogs in the configured
+	 * register and schema, or only the given catalog.
+	 *
+	 * The search runs even when a catalog id is given. Its declared return type is
+	 * `array|int` (an int for a count query); a count-shaped result reads as no catalogs.
+	 *
+	 * @param array{register: string, schema: string} $scope The configured catalog register and schema.
+	 * @param string|int|null $catalogId The catalog to narrow to, or null for all.
+	 *
+	 * @return array The catalog objects.
+	 */
+	private function scopeCatalogs(array $scope, null|string|int $catalogId): array {
+		$catalogs = $this->getObjectService()->searchObjects(
+			[
+				'@self' => [
+					'register' => $scope['register'],
+					'schema' => $scope['schema'],
+				],
+			]
+		);
+		if (is_array($catalogs) === false) {
+			$catalogs = [];
+		}
+
+		if ($catalogId !== null) {
+			$catalogs = $this->findCatalogInScope(catalogId: $catalogId, scope: $scope);
+		}
+
+		return $catalogs;
+	}//end scopeCatalogs()
+
+	/**
 	 * Find one catalog, but only when it lives in the configured catalog register and schema.
 	 *
 	 * OpenRegister's find() falls back to a cross-table lookup for a UUID it cannot
@@ -530,8 +537,7 @@ class PublicationService implements PublicationServiceInterface {
 	private function findCatalogInScope(string|int $catalogId, array $scope): array {
 		$catalog = $this->getObjectService()->find(
 			id: $catalogId,
-			register: $scope['register'],
-			schema: $scope['schema']
+			options: new ObjectFindOptions(register: $scope['register'], schema: $scope['schema'])
 		);
 
 		if ($catalog === null
@@ -1133,7 +1139,7 @@ class PublicationService implements PublicationServiceInterface {
 			// Use positional parameters for compatibility with different ObjectService versions.
 			// find() enforces OpenRegister RBAC: anonymous callers only receive objects the
 			// public group may read (e.g. published publications via the $now conditional rule).
-			$object = $this->getObjectService()->find($id, $extend);
+			$object = $this->getObjectService()->find($id, new ObjectFindOptions(extend: $extend));
 
 			return new JSONResponse($object);
 		} catch (DoesNotExistException $exception) {
@@ -1157,27 +1163,44 @@ class PublicationService implements PublicationServiceInterface {
 	 */
 	private function isObjectInCatalogScope(string $objectId): bool {
 		try {
-			$context = $this->getCatalogFilters();
-			$allowedRegisters = array_map('intval', $context['registers']);
-			$allowedSchemas = array_map('intval', $context['schemas']);
-
-			if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
-				return false;
-			}
-
-			$location = $this->getQueryService()->findObjectLocation(
-				uuid: $objectId,
-				allowedRegisters: $allowedRegisters,
-				allowedSchemas: $allowedSchemas
-			);
-
-			return $location !== null;
+			return $this->locationInCatalogScope(objectId: $objectId) !== null;
 		} catch (\Exception $e) {
 			// Fail closed — if we cannot verify scope, deny.
 			return false;
 		}//end try
 
 	}//end isObjectInCatalogScope()
+
+	/**
+	 * Where an object lives, looked up only within the (register × schema) pairs
+	 * of the catalogs configured on this instance.
+	 *
+	 * Delegates to the scoped helper that routes the lookup through OpenRegister's
+	 * ObjectService, never a raw DBMS-catalog probe. With no catalog scope
+	 * configured there is no lookup at all: no platform-wide scan.
+	 *
+	 * @param string $objectId The UUID of the object to locate
+	 *
+	 * @return array|null The register and schema of the object, or null when it is not in scope.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function locationInCatalogScope(string $objectId): ?array {
+		$context = $this->getCatalogFilters();
+		$allowedRegisters = array_map('intval', $context['registers']);
+		$allowedSchemas = array_map('intval', $context['schemas']);
+
+		if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
+			return null;
+		}
+
+		return $this->getQueryService()->findObjectLocation(
+			uuid: $objectId,
+			allowedRegisters: $allowedRegisters,
+			allowedSchemas: $allowedSchemas
+		);
+
+	}//end locationInCatalogScope()
 
 	/**
 	 * Shows attachments of a publication
@@ -1193,6 +1216,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
 	 */
 	public function attachments(string $id): JSONResponse {
 		// Catalog-scope gate (C-1 / wave-7): verify the requested object belongs to one
@@ -1209,7 +1233,7 @@ class PublicationService implements PublicationServiceInterface {
 
 		// Validate existence and enforce RBAC: find() denies objects the caller may not read
 		// (anonymous callers are limited to public-group reads).
-		$object = $objectService->find(id: $id, _extend: []);
+		$object = $objectService->find(id: $id);
 		if ($object === null) {
 			return new JSONResponse(['error' => 'Not Found'], 404);
 		}
@@ -1220,10 +1244,14 @@ class PublicationService implements PublicationServiceInterface {
 			// Get the raw files from the file service.
 			$files = $fileService->getFiles(object: $id, sharedFilesOnly: true);
 
+			// The officer's order first, then the rest by upload time (REQ-PDP-001),
+			// before paging so every page continues the same sequence.
+			$files = AttachmentOrder::sort(files: $files, order: AttachmentOrder::storedOrder(publication: $object));
+
 			// Format the files with pagination using request parameters.
 			$formattedFiles = $fileService->formatFiles($files, $this->request->getParams());
 
-			return new JSONResponse($formattedFiles);
+			return new JSONResponse(AttachmentOrder::withPositions(page: $formattedFiles));
 		} catch (DoesNotExistException $e) {
 			return new JSONResponse(['error' => 'Object not found'], 404);
 		} catch (NotFoundException $e) {
@@ -1273,7 +1301,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			// Validate existence and enforce RBAC before serving any file content: find()
 			// denies objects the caller may not read (anonymous → public-group reads only).
-			$object = $objectService->find(id: $id, _extend: []);
+			$object = $objectService->find(id: $id);
 			if ($object === null) {
 				return new JSONResponse(['error' => 'Not Found'], 404);
 			}
@@ -1560,7 +1588,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			// The find() call enforces OpenRegister RBAC: an anonymous caller can only
 			// traverse the relation graph of objects the public group may read (C-3 / wave-7).
-			$rootObject = $objectService->find(id: $id, _extend: []);
+			$rootObject = $objectService->find(id: $id);
 
 			// Object not found or not readable by the caller — return 404 before traversal.
 			if ($rootObject === null) {
@@ -1617,7 +1645,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			// The find() call enforces OpenRegister RBAC: an anonymous caller can only
 			// traverse the relation graph of objects the public group may read (C-3 / wave-7).
-			$rootObject = $objectService->find(id: $id, _extend: []);
+			$rootObject = $objectService->find(id: $id);
 
 			// Object not found or not readable by the caller — return 404 before traversal.
 			if ($rootObject === null) {

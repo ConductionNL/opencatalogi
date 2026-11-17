@@ -27,7 +27,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 
 declare(strict_types=1);
@@ -36,11 +36,12 @@ namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
+use OCA\OpenCatalogi\Service\WooCategory;
 
 /**
  * Decides what publishes and what an anonymous reader may read of it.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 class PublicationRuleService implements PublicationRuleServiceInterface {
 
@@ -63,7 +64,7 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 *
 	 * @return array{valid: boolean, errors: array<int, string>}
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function validateRule(array $rule): array {
 		$errors = array_merge(
@@ -97,8 +98,43 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 			$errors[] = 'A publication rule must name the properties an anonymous reader may read, even if that is none.';
 		}
 
+		if (self::categoryOf(rule: $rule) === null) {
+			$errors[] = 'A publication rule must name, in wooCategory, one of the Woo information categories this app serves.';
+		}
+
 		return $errors;
 	}//end ruleErrors()
+
+	/**
+	 * The Woo information category a rule files its records under, or null when it names none this app serves.
+	 *
+	 * @param array<string, mixed> $rule The publication rule.
+	 *
+	 * @return string|null The category code, such as `infocat004`.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 */
+	public static function categoryOf(array $rule): ?string {
+		$code = ($rule['wooCategory'] ?? null);
+		if (is_string($code) === false || array_key_exists($code, WooCategory::ALL) === false) {
+			return null;
+		}
+
+		return $code;
+	}//end categoryOf()
+
+	/**
+	 * How a preview names a rule's category: its Dutch name with the code, as in "Adviezen (infocat010)".
+	 *
+	 * @param string $code The category code.
+	 *
+	 * @return string The label.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 */
+	public static function categoryLabel(string $code): string {
+		return WooCategory::ALL[$code]['nl'] . ' (' . $code . ')';
+	}//end categoryLabel()
 
 	/**
 	 * The errors of every condition, in order.
@@ -218,7 +254,7 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 *
 	 * @throws UnreadableRuleException When a condition cannot be evaluated.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function publishes(array $record, array $rule): bool {
 		if ((bool)($rule['enabled'] ?? false) === false) {
@@ -255,7 +291,7 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 *
 	 * @return array<string, mixed> The properties the set allows, and no others.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function projectForAnonymous(array $record, array $rule): array {
 		$allowed = ($rule['anonymousProperties'] ?? []);
@@ -274,6 +310,12 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 		$publicationText = trim((string)($rule['publicationText'] ?? ''));
 		if ($publicationText !== '') {
 			$projected['publicationText'] = $publicationText;
+		}
+
+		// REQ-CVS-003: a record the rule publishes is filed under the rule's category.
+		$category = self::categoryOf(rule: $rule);
+		if ($category !== null) {
+			$projected['wooCategory'] = $category;
 		}
 
 		return $projected;
@@ -298,7 +340,7 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 *     sampleSize: integer
 	 * }
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function preview(array $rule, array $sample): array {
 		$validation = $this->validateRule(rule: $rule);
@@ -350,8 +392,11 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 			$wouldPublish[] = $this->projectForAnonymous(record: $record, rule: $rule);
 		}
 
+		// REQ-CVS-003: each record is shown with the category it would be filed under.
+		$label = self::categoryLabel(code: (string)self::categoryOf(rule: $rule));
+
 		return [
-			'wouldPublish' => $wouldPublish,
+			'wouldPublish' => array_map(static fn (array $view): array => $view + ['wooCategoryLabel' => $label], $wouldPublish),
 			'wouldNotPublish' => $wouldNot,
 			'exposedProperties' => $this->exposedProperties(projections: $wouldPublish),
 			'sampleSize' => count($sample),
@@ -390,7 +435,7 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 *
 	 * @return array<int, array<string, mixed>> The anonymous views.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
 	 */
 	public function projectList(array $records, array $rulesByType): array {
 		$projected = [];
@@ -434,7 +479,7 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 *
 	 * @return array<int, array<string, mixed>> The matching anonymous views.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
 	 */
 	public function searchPublic(array $records, array $rulesByType, string $terms): array {
 		$needle = trim(mb_strtolower($terms));
@@ -464,7 +509,7 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 *
 	 * @return array<string, array<string, mixed>> The rules keyed by record type.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function indexByRecordType(array $rules): array {
 		$indexed = [];

@@ -24,6 +24,7 @@ use OCA\OpenCatalogi\Controller\PublicationStateController;
 use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Service\Publication\CompletenessSweepService;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
@@ -43,6 +44,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for publish, withdraw, publish again and withdraw one document.
@@ -71,12 +73,18 @@ class PublicationStateControllerTest extends TestCase {
 	/** @var string|null The schema whose save throws, null when every save succeeds. */
 	private ?string $failingSchema = null;
 
+	/** The completeness re-evaluation, null when the container holds none. */
+	private (CompletenessSweepService&MockObject)|null $sweeps = null;
+
 	private const GOLDEN = __DIR__ . '/fixtures/publication-withdraw-depublication-golden.json';
 
 	/** @var array<int, string> Every channel a withdrawal was sent to. */
 	private array $sent = [];
 
 	private ?IUser $user = null;
+
+	/** Whether the caller holds the publish right. */
+	private bool $mayPublish = true;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -95,6 +103,13 @@ class PublicationStateControllerTest extends TestCase {
 
 			public function unpublishFile(object $object, string|int $filePath): object {
 				$this->unpublished[] = $filePath;
+				return new \stdClass();
+			}
+
+			public array $published = [];
+
+			public function publishFile(object $object, string|int $file): object {
+				$this->published[] = $file;
 				return new \stdClass();
 			}
 		};
@@ -123,8 +138,15 @@ class PublicationStateControllerTest extends TestCase {
 		};
 
 		$container = $this->createMock(ContainerInterface::class);
+		$container->method('has')->willReturnCallback(
+			fn (string $id): bool => $id === CompletenessSweepService::class && $this->sweeps !== null
+		);
 		$container->method('get')->willReturnCallback(
 			function (string $id) use ($config) {
+				if ($id === CompletenessSweepService::class && $this->sweeps !== null) {
+					return $this->sweeps;
+				}
+
 				if ($id === IAppConfig::class) {
 					return $config;
 				}
@@ -155,7 +177,11 @@ class PublicationStateControllerTest extends TestCase {
 			}
 		);
 		$this->objectService->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true) {
+			function (array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true) {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$this->saves[] = ['object' => $object, 'schema' => $schema, 'uuid' => $uuid, 'rbac' => $_rbac];
 				if ($schema === $this->failingSchema) {
 					throw new \RuntimeException('The save was refused.');
@@ -173,8 +199,9 @@ class PublicationStateControllerTest extends TestCase {
 
 		$this->rights = $this->getMockBuilder(PublicationRights::class)
 			->disableOriginalConstructor()
-			->onlyMethods(['mayUpdate'])
+			->onlyMethods(['mayUpdate', 'mayPublish'])
 			->getMock();
+		$this->rights->method('mayPublish')->willReturnCallback(fn (): bool => $this->mayPublish);
 
 		$this->index = $this->getMockBuilder(NationalIndexService::class)
 			->disableOriginalConstructor()
@@ -239,7 +266,74 @@ class PublicationStateControllerTest extends TestCase {
 		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$response = $this->controller->visibility('p1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(['state' => 'public'], $response->getData());
+		$this->assertSame(['state' => 'public', 'canPublish' => true], $response->getData());
+	}
+
+	/** REQ-OPR-002: an editor outside the publishers group is told it cannot publish. */
+	public function testVisibilityTellsAnEditorItCannotPublish(): void {
+		$this->publication = ['id' => 'p1'];
+		$this->mayPublish = false;
+		$response = $this->controller->visibility('p1');
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['state' => 'draft', 'canPublish' => false], $response->getData());
+	}
+
+	/** REQ-OPR-003: an editor who may edit but not publish gets 403 naming the group, and nothing is saved. */
+	public function testAnEditorOutsideThePublishersGroupCannotPublish(): void {
+		$this->publication = ['id' => 'p1'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->mayPublish = false;
+
+		$response = $this->controller->publish('p1');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame('not-a-publisher', $response->getData()['error']);
+		$this->assertSame('opencatalogi-publishers', $response->getData()['group']);
+		$this->assertSame('Only members of the group %s may publish or withdraw a publication.', $response->getData()['message']);
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-OPR-003 "A direct call by an editor": withdraw answers 403 naming the group; nothing is saved or sent. */
+	public function testAnEditorOutsideThePublishersGroupCannotWithdraw(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'plooiStatus' => 'delivered'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->mayPublish = false;
+		$this->withParams(['reason' => 'Wrong annex attached']);
+
+		$response = $this->controller->withdraw('p1');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame('opencatalogi-publishers', $response->getData()['group']);
+		$this->assertSame([], $this->saves);
+		$this->assertSame([], $this->sent);
+	}
+
+	/** REQ-OPR-003: the update right is still asked first, so a reader without it gets the old 403, not the group message. */
+	public function testTheUpdateRightIsCheckedBeforeThePublishRight(): void {
+		$this->publication = ['id' => 'p1'];
+		$this->rights->method('mayUpdate')->willReturn(false);
+		$this->mayPublish = false;
+
+		$this->assertSame('forbidden', $this->controller->publish('p1')->getData()['error']);
+	}
+
+	/** REQ-OPR-003: an unreadable publication stays 404 for a non-publisher, so its existence is not confirmed. */
+	public function testAnUnreadablePublicationStays404ForANonPublisher(): void {
+		$this->publication = [];
+		$this->mayPublish = false;
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller->withdraw('p1')->getStatus());
+	}
+
+	/** The single-document withdrawal is not one of the two gated endpoints. */
+	public function testAFileWithdrawalDoesNotAskThePublishRight(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->mayPublish = false;
+		$this->withParams(['reason' => 'Contains a home address']);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->withdrawFile('p1', '4711')->getStatus());
+		$this->assertSame([4711], $this->fileService->unpublished);
 	}
 
 	/** REQ-PPW-001: a publication the caller cannot read answers 404. */
@@ -526,6 +620,35 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
 	}
 
+	/** REQ-PTS-002: withdrawing a file re-evaluates the publication's completeness, after the share is gone. */
+	public function testWithdrawingAFileReevaluatesTheCompleteness(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Bevat een woonadres']);
+		$this->sweeps = $this->createMock(CompletenessSweepService::class);
+		$this->sweeps->expects($this->once())->method('reevaluate')->willReturnCallback(
+			function (string $id): string {
+				$this->assertSame('p1', $id);
+				$this->assertSame([4711], $this->fileService->unpublished);
+				$this->assertCount(1, $this->fileMapper->windows);
+				return 'changed';
+			}
+		);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->withdrawFile('p1', '4711')->getStatus());
+	}
+
+	/** REQ-PTS-002: a refused file withdrawal re-evaluates nothing. */
+	public function testARefusedFileWithdrawalReevaluatesNothing(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(false);
+		$this->withParams(['reason' => 'Bevat een woonadres']);
+		$this->sweeps = $this->createMock(CompletenessSweepService::class);
+		$this->sweeps->expects($this->never())->method('reevaluate');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->withdrawFile('p1', '4711')->getStatus());
+	}
+
 	/** REQ-ATT-103: a file that never had a window gets one that only ends. */
 	public function testWithdrawingAFileWithoutAWindowEndsANewOne(): void {
 		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
@@ -576,6 +699,114 @@ class PublicationStateControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->withdrawFile('p1', '4711')->getStatus());
 		$this->assertSame([], $this->fileService->unpublished);
+	}
+
+	/** REQ-ATT-104: republishing needs a reason, shares the file again, reopens its window and records why. */
+	public function testRepublishFileNeedsAReasonAndReopensTheWindow(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$start = new \DateTime('2026-09-01T09:00:00+00:00');
+		$this->fileMapper->records[4711] = new class($start) {
+			public function __construct(private \DateTime $start) {
+			}
+
+			public function getPublished(): \DateTime {
+				return $this->start;
+			}
+		};
+
+		$this->withParams(['reason' => 'Woonadres is weggelakt']);
+		$response = $this->controller->republishFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus(), json_encode($response->getData()));
+		$this->assertSame([4711], $this->fileService->published);
+		[$fileId, $window] = $this->fileMapper->windows[0];
+		$this->assertSame(4711, $fileId);
+		$this->assertSame($start, $window->published);
+		$this->assertNull($window->depublished);
+		$this->assertCount(1, $this->saves);
+		$this->assertSame('depublication_schema', $this->saves[0]['schema']);
+		$this->assertFalse($this->saves[0]['rbac']);
+		$this->assertTrue($this->saves[0]['object']['republished']);
+		$this->assertSame('4711', $this->saves[0]['object']['file']);
+		$this->assertSame('Woonadres is weggelakt', $this->saves[0]['object']['reason']);
+		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
+		$this->assertSame(['id' => 'p1'], $this->saves[0]['object']['publication']);
+	}
+
+	/** REQ-ATT-104: without a reason nothing is shared or reopened. */
+	public function testRepublishFileWithoutAReasonChangesNothing(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => '  ']);
+
+		$response = $this->controller->republishFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('reason-missing', $response->getData()['error']);
+		$this->assertSame([], $this->fileService->published);
+		$this->assertSame([], $this->fileMapper->windows);
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-ATT-104: only a user who may update the publication puts a file back. */
+	public function testRepublishFileWithoutRightsIsRefused(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(false);
+		$this->withParams(['reason' => 'Woonadres is weggelakt']);
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->republishFile('p1', '4711')->getStatus());
+		$this->assertSame([], $this->fileService->published);
+		$this->assertSame([], $this->fileMapper->windows);
+		$this->user = null;
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $this->controller->republishFile('p1', '4711')->getStatus());
+	}
+
+	/** REQ-ATT-104: a file the file service cannot find on this publication keeps its window, and nothing is recorded. */
+	public function testRepublishingAFileNotOnThePublicationChangesNothing(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Woonadres is weggelakt']);
+		$this->fileService = new class {
+			public function publishFile(object $object, string|int $file): object {
+				throw new \RuntimeException('File not found on this object');
+			}
+		};
+
+		$response = $this->controller->republishFile('p1', '9999');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame('file-not-republished', $response->getData()['error']);
+		$this->assertSame([], $this->fileMapper->windows);
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-ATT-104: a window that cannot be reopened is reported and not recorded. */
+	public function testAWindowThatCannotReopenIsReported(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Woonadres is weggelakt']);
+		$this->fileMapper->failure = new \RuntimeException('database is down');
+
+		$response = $this->controller->republishFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		$this->assertSame(['error' => 'file-window-not-reopened', 'message' => 'database is down'], $response->getData());
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-ATT-104: the republish route is a POST beside the withdraw route, with a numeric file id. */
+	public function testTheRepublishRouteIsAPost(): void {
+		$routes = require __DIR__ . '/../../../appinfo/routes.php';
+		$found = array_values(array_filter(
+			$routes['routes'],
+			static fn (array $route): bool => $route['name'] === 'publicationState#republishFile' && str_starts_with($route['url'], '/api/v1/') === false
+		));
+
+		$this->assertCount(1, $found);
+		$this->assertSame('/api/publications/{id}/files/{fileId}/republish', $found[0]['url']);
+		$this->assertSame('POST', $found[0]['verb']);
+		$this->assertSame(['fileId' => '\d+'], $found[0]['requirements']);
 	}
 
 	/** Every write refuses a caller without a session. */

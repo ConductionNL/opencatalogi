@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\EventService;
+use OCA\OpenCatalogi\Service\Publication\CompletenessSweepService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Files\Db\FileMapper;
@@ -34,6 +35,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\EventService
@@ -54,10 +56,11 @@ final class EventServiceAutoPublishingTest extends TestCase {
 	 * @param array<int, array<string, mixed>> $files   The files the mapper lists.
 	 * @param array<string, mixed>             $options The publishing options.
 	 * @param ObjectService|null               $objects An object service to use instead.
+	 * @param CompletenessSweepService|null    $sweeps  The completeness re-evaluation, none when null.
 	 *
 	 * @return EventService
 	 */
-	private function service(array $files, array $options, ?ObjectService $objects = null): EventService {
+	private function service(array $files, array $options, ?ObjectService $objects = null, ?CompletenessSweepService $sweeps = null): EventService {
 		$fileService = $this->createMock(FileService::class);
 		$fileService->method('createShareLink')->willReturnCallback(
 			function (string $path): string {
@@ -75,8 +78,12 @@ final class EventServiceAutoPublishingTest extends TestCase {
 		}
 
 		$container = $this->createMock(ContainerInterface::class);
+		$container->method('has')->willReturnCallback(
+			static fn (string $id): bool => $id === CompletenessSweepService::class && $sweeps !== null
+		);
 		$container->method('get')->willReturnCallback(
 			static fn (string $id): object => match ($id) {
+				CompletenessSweepService::class => $sweeps,
 				'OCA\OpenRegister\Service\FileService' => $fileService,
 				'OCA\OpenRegister\Files\Db\FileMapper' => $fileMapper,
 				default => $objects,
@@ -102,7 +109,9 @@ final class EventServiceAutoPublishingTest extends TestCase {
 	 */
 	private function objectServiceFinding(ObjectEntity $entity): ObjectService&MockObject {
 		$objects = $this->createMock(ObjectService::class);
-		$objects->expects($this->once())->method('find')->with('obj-uuid')->willReturn($entity);
+		$objects->expects($this->once())->method('find')->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'obj-uuid',
+			]))->willReturn($entity);
 		return $objects;
 	}//end objectServiceFinding()
 
@@ -160,6 +169,46 @@ final class EventServiceAutoPublishingTest extends TestCase {
 		$this->assertSame(['/OpenRegister/files/obj-uuid/a.pdf', '/OpenRegister/files/obj-uuid/b.pdf'], $this->sharedPaths);
 		$this->assertSame(['attachments_processed'], $result['details'][0]['actions']);
 	}//end testAnUpdateSharesTheRealFileList()
+
+	/**
+	 * REQ-PTS-002: sharing files re-evaluates the publication's completeness once, after the shares exist.
+	 *
+	 * @return void
+	 */
+	public function testSharingFilesReevaluatesTheCompleteness(): void {
+		$sweeps = $this->createMock(CompletenessSweepService::class);
+		$sweeps->expects($this->once())->method('reevaluate')->willReturnCallback(
+			function (string $id): string {
+				$this->assertSame('obj-uuid', $id);
+				$this->assertCount(1, $this->sharedPaths);
+				return 'changed';
+			}
+		);
+		$service = $this->service(
+			files: [['name' => 'a.pdf', 'path' => 'files/obj-uuid/a.pdf', 'share_token' => null]],
+			options: ['auto_publish_objects' => false, 'auto_publish_attachments' => true],
+			sweeps: $sweeps
+		);
+
+		$this->assertSame(1, $service->handleObjectUpdateEvents([self::publishedObject()])['attachmentsPublished']);
+	}//end testSharingFilesReevaluatesTheCompleteness()
+
+	/**
+	 * REQ-PTS-002: a run that shares nothing re-evaluates nothing, so the save a re-evaluation causes does not loop.
+	 *
+	 * @return void
+	 */
+	public function testARunThatSharesNothingReevaluatesNothing(): void {
+		$sweeps = $this->createMock(CompletenessSweepService::class);
+		$sweeps->expects($this->never())->method('reevaluate');
+		$service = $this->service(
+			files: [['name' => 'a.pdf', 'path' => 'files/obj-uuid/a.pdf', 'share_token' => 'abc123']],
+			options: ['auto_publish_objects' => false, 'auto_publish_attachments' => true],
+			sweeps: $sweeps
+		);
+
+		$this->assertSame(0, $service->handleObjectUpdateEvents([self::publishedObject()])['attachmentsPublished']);
+	}//end testARunThatSharesNothingReevaluatesNothing()
 
 	/**
 	 * APB-011: a file that already has a share token is skipped.

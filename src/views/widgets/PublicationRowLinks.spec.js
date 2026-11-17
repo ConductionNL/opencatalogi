@@ -17,6 +17,7 @@ jest.mock('@conduction/nextcloud-vue', () => ({
 }))
 jest.mock('@nextcloud/router', () => ({ generateUrl: (path) => '/nc' + path }))
 jest.mock('axios', () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn() } }))
+jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn() } }))
 jest.mock('../../composables/UseFileSelection.js', () => ({
 	useFileSelection: () => ({ openFileUpload: () => {}, files: { value: [] }, reset: () => {}, setTags: () => {} }),
 }))
@@ -47,22 +48,23 @@ const CASES = [
 	[{ catalog: 1 }, undefined],
 ]
 
+// The widget's rows carry the catalogue slug the server resolved
+// (publications-unpublished-overview); a row without one opens nothing.
 describe('UnpublishedPublicationsWidget onRowClick', () => {
 	beforeEach(() => {
-		objectStore.collections = { catalog: { results: CATALOGS } }
 		delete window.location
 		window.location = { href: '' }
 	})
 
-	it.each(CASES)('links %j to the catalog %s', (publication, slug) => {
-		UnpublishedPublicationsWidget.methods.onRowClick({ publication })
-		expect(window.location.href).toBe(slug ? `/nc/apps/opencatalogi/publications/${slug}/p` : '')
+	it('opens the publication under the catalogue the server named', () => {
+		UnpublishedPublicationsWidget.methods.onRowClick({ item: { publicationId: 'p', catalogSlug: 'one' } })
+		expect(window.location.href).toBe('/nc/apps/opencatalogi/publications/one/p')
 	})
 
-	it('does nothing without catalogs', () => {
-		objectStore.collections = {}
-		UnpublishedPublicationsWidget.methods.onRowClick({ publication: { id: 'p', catalog: { slug: 's' } } })
-		expect(window.location.href).toBe('/nc/apps/opencatalogi/publications/s/p')
+	it('does nothing without a catalogue or a publication id', () => {
+		UnpublishedPublicationsWidget.methods.onRowClick({ item: { publicationId: 'p', catalogSlug: null } })
+		UnpublishedPublicationsWidget.methods.onRowClick({ item: { catalogSlug: 'one' } })
+		expect(window.location.href).toBe('')
 	})
 })
 

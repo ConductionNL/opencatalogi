@@ -32,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for CatalogiService.
@@ -127,6 +128,34 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->assertSame([], $this->service->getCatalogSlugs());
 	}//end testGetCatalogSlugsIsEmptyWhenUnconfigured()
+
+	/**
+	 * The slug of the first catalogue whose schemas include the schema, read outside RBAC.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	public function testGetCatalogSlugForSchemaFindsTheFirstListingCatalogue(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'catalog_schema' => '5',
+				'catalog_register' => '2',
+				default => $default,
+			}
+		);
+		$entity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$entity->method('jsonSerialize')->willReturn(['slug' => 'woo', 'schemas' => ['12', 7]]);
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')
+			->with(['@self' => ['register' => '2', 'schema' => '5']], false, false)
+			->willReturn([['slug' => 'open-data', 'schemas' => [3]], ['slug' => '', 'schemas' => [12]], $entity, ['slug' => 'later', 'schemas' => [12]]]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$this->assertSame('woo', $this->service->getCatalogSlugForSchema(schemaId: '12'));
+		$this->assertSame('woo', $this->service->getCatalogSlugForSchema(schemaId: '7'));
+		$this->assertNull($this->service->getCatalogSlugForSchema(schemaId: '99'));
+		$this->assertNull($this->service->getCatalogSlugForSchema(schemaId: ''));
+	}//end testGetCatalogSlugForSchemaFindsTheFirstListingCatalogue()
 
 	// ──────────────────────────────────────────────────────────
 	// getObjectService
@@ -656,8 +685,9 @@ class CatalogiServiceTest extends TestCase {
 		$finds = [];
 		$objectService->method('find')->willReturnCallback(
 			static function (...$args) use (&$finds, $catalogEntity) {
+				$args = LegacyObjectArgs::positional(method: 'find', args: $args);
 				$named = [];
-				foreach ((new \ReflectionMethod(ObjectService::class, 'find'))->getParameters() as $i => $param) {
+				foreach (LegacyObjectArgs::parameters(ObjectService::class, 'find') as $i => $param) {
 					$named[$param->getName()] = ($args[$param->getName()] ?? $args[$i] ?? null);
 				}
 
@@ -1675,7 +1705,9 @@ class CatalogiServiceTest extends TestCase {
 			->with(['title' => 'C', 'registers' => [21], 'schemas' => ['7']]);
 
 		$objectService = $this->createMock(ObjectService::class);
-		$objectService->expects($this->once())->method('saveObject')->with($entity);
+		$objectService->expects($this->once())->method('saveObject')->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+				'object' => $entity,
+			]));
 
 		$this->injectAll($registerMapper, $schemaMapper, $objectService);
 
@@ -2088,4 +2120,55 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame(['results' => [], 'total' => 0], $response->getData());
 	}//end testIndexFailsClosedWhenTheGuardEmptiesTheScope()
+
+	/**
+	 * A catalogue id that matches no catalogue answers 404 with a static message, and no publication search runs.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 */
+	public function testIndexAnswers404ForAnUnknownCatalogId(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+		$this->injectObjectService($objectService);
+
+		$response = $this->service->index('no-such-catalog');
+
+		$this->assertSame(404, $response->getStatus());
+		$this->assertSame(['message' => 'Catalog not found'], $response->getData());
+	}//end testIndexAnswers404ForAnUnknownCatalogId()
+
+	/**
+	 * Without a catalogue id, no catalogues at all is still an empty list, not a 404.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 */
+	public function testIndexWithoutAnIdAndNoCatalogsIsAnEmptyList(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([]);
+		$this->injectObjectService($objectService);
+
+		$response = $this->service->index();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['results' => [], 'total' => 0], $response->getData());
+	}//end testIndexWithoutAnIdAndNoCatalogsIsAnEmptyList()
 }//end class

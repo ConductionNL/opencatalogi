@@ -57,7 +57,7 @@ class UnpublishedAttachmentsWidget implements IWidget {
 	 * @return string
 	 */
 	public function getTitle(): string {
-		return $this->l10n->t('Concept bijlage');
+		return $this->l10n->t('Unpublished documents');
 	}//end getTitle()
 
 	/**

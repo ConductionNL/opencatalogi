@@ -12,6 +12,7 @@ namespace Unit\Controller;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Controller\FederationController;
 use OCA\OpenCatalogi\Controller\PublicationsController;
@@ -286,9 +287,15 @@ class AppliedFiltersResponseTest extends TestCase {
 		$schemas = $this->mapper(slugs: [1 => 'publication', 2 => 'besluit']);
 		$registers = $this->mapper(slugs: [7 => 'woo-register']);
 
+		// The anonymous record view is not what these tests are about: pass every record through.
+		$view = $this->createMock(PublishedRecordViewInterface::class);
+		$view->method('view')->willReturnArgument(0);
+		$view->method('viewList')->willReturnArgument(0);
+
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			static fn (string $id): object => match ($id) {
+				PublishedRecordViewInterface::class => $view,
 				'OCA\OpenRegister\Service\ObjectService' => $objects,
 				'OCA\OpenRegister\Db\SchemaMapper' => $schemas,
 				'OCA\OpenRegister\Db\RegisterMapper' => $registers,
@@ -388,7 +395,19 @@ class AppliedFiltersResponseTest extends TestCase {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParams')->willReturn([]);
 
-		return new FederationController($request, $publications, $this->l10n(), appliedFilters: $filters);
+		$container = $this->createMock(\Psr\Container\ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id) use ($filters): object {
+				if ($id === AppliedFilters::class) {
+					return $filters;
+				}
+
+				throw new class ('No ' . $id) extends \RuntimeException implements \Psr\Container\NotFoundExceptionInterface {
+				};
+			}
+		);
+
+		return new FederationController($request, $publications, $this->l10n(), container: $container);
 	}//end federationController()
 
 	/**
