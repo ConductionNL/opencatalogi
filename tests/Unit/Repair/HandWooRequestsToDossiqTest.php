@@ -24,6 +24,8 @@ use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Repair\HandWooRequestsToDossiq;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Handover\HandoverState;
+use OCA\OpenRegister\Kernel\Contracts\TimerChange;
+use OCA\OpenRegister\Kernel\Contracts\TimerSubjectRef;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
@@ -286,15 +288,13 @@ class HandWooRequestsToDossiqTest extends TestCase {
 			/**
 			 * OpenRegister's FlowTimerService::cancelForSubject().
 			 *
-			 * @param string $subjectType The subject type.
-			 * @param string $subjectUuid The subject.
-			 * @param string $reason Why.
-			 * @param string|null $actor Who.
+			 * @param TimerSubjectRef $subject The subject.
+			 * @param TimerChange $change Why and who.
 			 *
 			 * @return int
 			 */
-			public function cancelForSubject(string $subjectType, string $subjectUuid, string $reason, ?string $actor): int {
-				$this->seen->cancelled[] = [$subjectType, $subjectUuid, $reason];
+			public function cancelForSubject(TimerSubjectRef $subject, TimerChange $change): int {
+				$this->seen->cancelled[] = [$subject->type, $subject->uuid, $change->reason];
 				return 1;
 			}
 		};

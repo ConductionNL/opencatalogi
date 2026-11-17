@@ -44,6 +44,8 @@ namespace OCA\OpenCatalogi\Repair;
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\HandoverStateInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
+use OCA\OpenRegister\Kernel\Contracts\TimerChange;
+use OCA\OpenRegister\Kernel\Contracts\TimerSubjectRef;
 use OCP\App\IAppManager;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -301,10 +303,8 @@ class HandWooRequestsToDossiq implements IRepairStep {
 	 */
 	private function cancelTimer(object $timers, array $row): int {
 		return (int)$timers->cancelForSubject(
-			subjectType: self::TIMER_SUBJECT_TYPE,
-			subjectUuid: $row['requestId'],
-			reason: 'Handed over to dossiq case ' . (string)($row['caseId'] ?? ''),
-			actor: null
+			subject: new TimerSubjectRef(type: self::TIMER_SUBJECT_TYPE, uuid: $row['requestId']),
+			change: new TimerChange(reason: 'Handed over to dossiq case ' . (string)($row['caseId'] ?? ''), actor: null)
 		);
 	}//end cancelTimer()
 }//end class
