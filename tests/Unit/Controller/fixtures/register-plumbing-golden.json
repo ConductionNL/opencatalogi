@@ -6102,6 +6102,10 @@
                 "detail": "Resolver config key \"listing_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
@@ -6129,6 +6133,13 @@
                     "listing_schema",
                     ""
                 ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
             }
         ]
     },
@@ -6141,6 +6152,10 @@
                 "detail": "Cannot resolve register configuration for listing_register: IAppConfig unavailable"
             },
             "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
@@ -6154,6 +6169,13 @@
             },
             {
                 "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
             }
         ]
     },
@@ -6210,6 +6232,10 @@
                 "detail": "Resolver config key \"listing_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
@@ -6236,6 +6262,13 @@
                     "opencatalogi",
                     "listing_schema",
                     ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
                 ]
             }
         ]

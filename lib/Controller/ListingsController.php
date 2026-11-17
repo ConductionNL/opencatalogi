@@ -260,9 +260,25 @@ class ListingsController extends Controller {
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
+	 * @spec openspec/changes/dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string|int $id): JSONResponse {
+		// DIR-008: an external OpenCatalogi frontend reads this answer from another
+		// origin, so every answer carries the CORS headers, the 404 and 503 too.
+		return $this->withShowCorsHeaders(response: $this->listing(id: $id));
+	}//end show()
+
+	/**
+	 * The answer of show(): the listing, a 404 out of scope, or a 503 when unconfigured.
+	 *
+	 * @param string|integer $id The ID of the listing to retrieve
+	 *
+	 * @return JSONResponse The answer, without CORS headers.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function listing(string|int $id): JSONResponse {
 		// Get listing register/schema from configuration; 503 if unconfigured.
 		// An `''` here would reach OR's setRegister('') and surface as an uncaught
 		// DoesNotExistException — a 500 that tells an operator nothing.
@@ -290,7 +306,28 @@ class ListingsController extends Controller {
 
 		// Return the listing as a JSON response.
 		return new JSONResponse($data);
-	}//end show()
+	}//end listing()
+
+	/**
+	 * Add the CORS headers of the public listing read to an answer (DIR-008).
+	 *
+	 * The origin follows the `cors_allowed_origins` allowlist, as the preflight
+	 * does; an arbitrary Origin is never reflected.
+	 *
+	 * @param JSONResponse $response The answer.
+	 *
+	 * @return JSONResponse The answer with the CORS headers.
+	 *
+	 * @spec openspec/changes/dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
+	 */
+	private function withShowCorsHeaders(JSONResponse $response): JSONResponse {
+		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$response->addHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+		$response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
+		$response->addHeader('Access-Control-Allow-Credentials', 'false');
+
+		return $response;
+	}//end withShowCorsHeaders()
 
 	/**
 	 * Create a new listing. Admin-only, allow-listed (LST-003 / harden-listings-admin-write-surface):
