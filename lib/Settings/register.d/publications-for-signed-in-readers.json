@@ -8,7 +8,7 @@
 					"audience": {
 						"type": "string",
 						"title": "Who can read it",
-						"description": "Everyone, or only readers who log in with DigiD or eHerkenning through a trusted portal. Every public surface (the public API, search, the sitemaps, DCAT, OOAPI and federation) leaves a signedIn publication out (REQ-PSR-001, REQ-PSR-002).",
+						"description": "Everyone, or only readers who log in with DigiD or eHerkenning through a trusted portal. The public website, search, the sitemaps and the feeds leave a publication for signed-in readers out.",
 						"enum": [
 							"public",
 							"signedIn"
@@ -23,7 +23,7 @@
 					"minimumAssurance": {
 						"type": "string",
 						"title": "Minimum login level",
-						"description": "The lowest login assurance level a portal must vouch for before a signedIn publication is served to its reader. Only meaningful when audience is signedIn (REQ-PSR-003).",
+						"description": "The lowest login level a portal must vouch for before its reader is shown a publication for signed-in readers.",
 						"enum": [
 							"substantial",
 							"high"
@@ -42,7 +42,7 @@
 					"actForSignedInReaders": {
 						"type": "boolean",
 						"title": "May act for signed-in readers",
-						"description": "Whether a portal holding this consumer's key may read a publication limited to signed-in readers on behalf of a reader whose login level it sends. Set by an administrator (REQ-PSR-003).",
+						"description": "Whether a portal holding this consumer's key may read a publication for signed-in readers on behalf of a reader whose login level it sends.",
 						"default": false
 					}
 				}

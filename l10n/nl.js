@@ -1808,7 +1808,23 @@ OC.L10N.register(
         "Send the columns as a list.": "Stuur de kolommen als lijst.",
         "The table could not be published.": "De tabel kon niet worden gepubliceerd.",
         "This table has no column named %s.": "Deze tabel heeft geen kolom met de naam %s.",
-        "The table \"%s\" does not exist or is not accessible.": "De tabel \"%s\" bestaat niet of is niet toegankelijk."
+        "The table \"%s\" does not exist or is not accessible.": "De tabel \"%s\" bestaat niet of is niet toegankelijk.",
+        "Who can read it": "Wie kan het lezen",
+        "Everyone": "Iedereen",
+        "Readers who log in with DigiD or eHerkenning": "Lezers die inloggen met DigiD of eHerkenning",
+        "Readers who log in with DigiD or eHerkenning, level Substantial": "Lezers die inloggen met DigiD of eHerkenning, niveau Substantieel",
+        "Readers who log in with DigiD or eHerkenning, level High": "Lezers die inloggen met DigiD of eHerkenning, niveau Hoog",
+        "The link works for readers who log in": "De link werkt voor lezers die inloggen",
+        "May read publications for readers who log in with DigiD or eHerkenning": "Mag publicaties lezen voor lezers die inloggen met DigiD of eHerkenning",
+        "actForSignedInReaders must be true or false": "actForSignedInReaders moet true of false zijn",
+        "A Woo publication is public by law. Remove the Woo category or make it readable for everyone.": "Een Woo-publicatie is wettelijk openbaar. Verwijder de Woo-categorie of maak de publicatie leesbaar voor iedereen.",
+        "Minimum login level": "Minimaal inlogniveau",
+        "Substantial": "Substantieel",
+        "High": "Hoog",
+        "May act for signed-in readers": "Mag optreden voor ingelogde lezers",
+        "Everyone, or only readers who log in with DigiD or eHerkenning through a trusted portal. The public website, search, the sitemaps and the feeds leave a publication for signed-in readers out.": "Iedereen, of alleen lezers die via een vertrouwd portaal inloggen met DigiD of eHerkenning. De openbare website, het zoeken, de sitemaps en de feeds laten een publicatie voor ingelogde lezers weg.",
+        "The lowest login level a portal must vouch for before its reader is shown a publication for signed-in readers.": "Het laagste inlogniveau waarvoor een portaal moet instaan voordat zijn lezer een publicatie voor ingelogde lezers te zien krijgt.",
+        "Whether a portal holding this consumer's key may read a publication for signed-in readers on behalf of a reader whose login level it sends.": "Of een portaal met de sleutel van deze afnemer een publicatie voor ingelogde lezers mag lezen namens een lezer van wie het het inlogniveau meestuurt."
     },
     "nplurals=2; plural=(n != 1);"
 )
