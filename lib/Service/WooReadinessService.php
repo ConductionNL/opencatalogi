@@ -34,6 +34,7 @@ use DateTime;
 use DOMDocument;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
 use OCA\OpenCatalogi\Service\Handover\HandoverState;
+use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
@@ -126,6 +127,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @param IAppConfig $config App configuration (report persistence + registration status).
 	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator (public base URL).
 	 * @param HandoverState|null $handover What the hand-over of the Woo requests to dossiq left; null reports nothing.
+	 * @param WooIndexFieldMapper|null $fieldMapper Where the Woo-index fields come from (REQ-WIM-004).
 	 */
 	public function __construct(
 		private readonly IClientService $clientService,
@@ -135,6 +137,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		private readonly IAppConfig $config,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly ?HandoverState $handover = null,
+		private readonly ?WooIndexFieldMapper $fieldMapper = null,
 	) {
 
 	}//end __construct()
@@ -202,6 +205,8 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 			'baseUrl' => $baseUrl,
 			'checks' => $checks,
 			'registration' => $registration,
+			// REQ-WIM-004: where the Woo-index fields come from.
+			'mapping' => ($this->fieldMapper?->source() ?? WooIndexFieldMapper::BUILT_IN_SOURCE),
 		];
 		// The Woo requests not yet handed to dossiq (REQ-WHD-003). Reported, not
 		// a check: they say nothing about whether the index can harvest.

@@ -29,6 +29,7 @@ use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\Table\PublishedTableService;
 use OCA\OpenCatalogi\Contract\TableFile;
 use OCA\OpenRegister\Service\Import\ImportCommit;
+use OCP\IURLGenerator;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
@@ -179,6 +180,21 @@ class TableFakeOpenRegister {
 		return ['id' => 't1'] + $object;
 	}
 
+	public mixed $file = null;
+
+	public string $tempPath = '';
+
+	/** FileService. */
+	public function getFile(mixed $object = null, string|int $file = ''): mixed {
+		$this->finds[] = ['getFile' => [$object, $file]];
+		return $this->file;
+	}
+
+	/** Temp manager. */
+	public function getTemporaryFile(string $postFix = ''): string {
+		return $this->tempPath;
+	}
+
 	/** ObjectService search. */
 	public function searchObjectsPaginated(array $query, mixed ...$options): array {
 		$this->searches[] = ['query' => $query] + $options;
@@ -192,6 +208,7 @@ class TableFakeOpenRegister {
  * @covers \OCA\OpenCatalogi\Service\Table\PublishedTableService
  * @uses   \OCA\OpenCatalogi\Service\Table\ColumnTypes
  * @uses   \OCA\OpenCatalogi\Contract\TableFile
+ * @uses   \OCA\OpenCatalogi\Service\Table\TableImportRun
  * @uses   \OCA\OpenCatalogi\Service\SchemaObjects
  */
 class PublishedTableServiceTest extends TestCase {
@@ -199,6 +216,10 @@ class PublishedTableServiceTest extends TestCase {
 	private TableFakeOpenRegister $openRegister;
 
 	private PublishedTableService $service;
+
+	private ContainerInterface $container;
+
+	private OpenRegisterLookupInterface $registers;
 
 	/**
 	 * Wire the service to the fakes.
@@ -228,14 +249,32 @@ class PublishedTableServiceTest extends TestCase {
 						'OCA\OpenRegister\Db\RegisterMapper',
 						'OCA\OpenRegister\Db\SchemaMapper',
 						'OCA\OpenRegister\Service\Import\ImportPreviewServiceInterface',
+						'OCA\OpenRegister\Service\FileService',
+						'OCP\ITempManager',
 					]
 				);
 				return $this->openRegister;
 			}
 		);
 
+		$this->container = $container;
+		$this->registers = $registers;
 		$this->service = new PublishedTableService(registers: $registers, container: $container);
 	}//end setUp()
+
+	/**
+	 * The service with a URL generator that spells out each route and its arguments.
+	 *
+	 * @return PublishedTableService
+	 */
+	private function serviceWithUrls(): PublishedTableService {
+		$urls = $this->createMock(IURLGenerator::class);
+		$urls->method('linkToRouteAbsolute')->willReturnCallback(
+			static fn (string $route, array $args): string => 'https://example.org/'.$route.'/'.$args['catalogSlug'].'/'.$args['publicationId'].'/'.$args['tableId']
+		);
+
+		return new PublishedTableService(registers: $this->registers, container: $this->container, urls: $urls);
+	}//end serviceWithUrls()
 
 	/**
 	 * Publish the playground list.
@@ -447,6 +486,202 @@ class PublishedTableServiceTest extends TestCase {
 		$this->openRegister->found = new \RuntimeException('forbidden');
 		$this->assertFalse($this->service->canReadPublication(publicationId: 'p1'));
 	}//end testAPublicationIsReadableOnlyWhenFoundWithRbac()
+
+	/**
+	 * A publication's ready tables are listed with their rows and dictionary URLs.
+	 *
+	 * @return void
+	 */
+	public function testTablesOfListsReadyTablesWithTheirUrls(): void {
+		$this->openRegister->searchAnswer = [
+			'results' => [
+				['id' => 't1', 'title' => 'speeltuinen.csv', 'file' => '77', 'rowCount' => 2, 'status' => 'ready'],
+				['id' => 't2', 'title' => 'oud.csv', 'file' => '78', 'status' => 'failed'],
+			],
+		];
+
+		$tables = $this->serviceWithUrls()->tablesOf(publicationId: 'p1', catalogSlug: 'speeltuinen');
+
+		$this->assertSame(
+			[
+				[
+					'id' => 't1',
+					'title' => 'speeltuinen.csv',
+					'file' => '77',
+					'rowCount' => 2,
+					'rowsUrl' => 'https://example.org/opencatalogi.publishedTable.rows/speeltuinen/p1/t1',
+					'dictionaryUrl' => 'https://example.org/opencatalogi.publishedTable.dictionary/speeltuinen/p1/t1',
+				],
+			],
+			$tables
+		);
+		$this->assertSame(
+			[
+				'query' => ['@self' => ['register' => 'pub', 'schema' => 'tbl'], 'publication' => 'p1', 'status' => 'ready', '_limit' => 100],
+				'_rbac' => false,
+				'_multitenancy' => false,
+			],
+			$this->openRegister->searches[0]
+		);
+	}//end testTablesOfListsReadyTablesWithTheirUrls()
+
+	/**
+	 * Without a publication nothing is searched; without a URL generator the URLs are empty.
+	 *
+	 * @return void
+	 */
+	public function testTablesOfWithoutAPublicationOrUrlGenerator(): void {
+		$this->assertSame([], $this->service->tablesOf(publicationId: '', catalogSlug: 'c'));
+		$this->assertSame([], $this->openRegister->searches);
+
+		$this->openRegister->searchAnswer = ['results' => [['id' => 't1', 'file' => '77', 'status' => 'ready']]];
+		$tables = $this->service->tablesOf(publicationId: 'p1', catalogSlug: 'c');
+		$this->assertSame('', $tables[0]['rowsUrl']);
+		$this->assertSame('', $tables[0]['dictionaryUrl']);
+		$this->assertSame(0, $tables[0]['rowCount']);
+	}//end testTablesOfWithoutAPublicationOrUrlGenerator()
+
+	/**
+	 * Only the file published as a table gets its dictionary URL.
+	 *
+	 * @return void
+	 */
+	public function testWithDictionaryUrlsMarksTheTablesFile(): void {
+		$this->openRegister->searchAnswer = ['results' => [['id' => 't1', 'file' => '77', 'status' => 'ready']]];
+		$files = [['id' => 77, 'title' => 'speeltuinen.csv'], ['id' => 80, 'title' => 'toelichting.pdf']];
+
+		$this->assertSame(
+			[
+				['id' => 77, 'title' => 'speeltuinen.csv', 'dataDictionaryUrl' => 'https://example.org/opencatalogi.publishedTable.dictionary/c/p1/t1'],
+				['id' => 80, 'title' => 'toelichting.pdf'],
+			],
+			$this->serviceWithUrls()->withDictionaryUrls(files: $files, publicationId: 'p1', catalogSlug: 'c')
+		);
+	}//end testWithDictionaryUrlsMarksTheTablesFile()
+
+	/**
+	 * Without tables, or without URLs, the files come back unchanged.
+	 *
+	 * @return void
+	 */
+	public function testWithDictionaryUrlsLeavesFilesWithoutTablesAlone(): void {
+		$files = [['id' => 77]];
+		$this->assertSame($files, $this->serviceWithUrls()->withDictionaryUrls(files: $files, publicationId: 'p1', catalogSlug: 'c'));
+
+		$this->openRegister->searchAnswer = ['results' => [['id' => 't1', 'file' => '77', 'status' => 'ready']]];
+		$this->assertSame($files, $this->service->withDictionaryUrls(files: $files, publicationId: 'p1', catalogSlug: 'c'));
+	}//end testWithDictionaryUrlsLeavesFilesWithoutTablesAlone()
+
+	/**
+	 * A CSV attachment is copied to a temporary file and imported as the publication's table.
+	 *
+	 * @return void
+	 */
+	public function testPublishAttachmentImportsTheCsv(): void {
+		$this->openRegister->tempPath = (string)tempnam(sys_get_temp_dir(), 'odt');
+		$this->openRegister->file = new TableFakeEntity(['name' => 'speeltuinen.CSV', 'id' => 77, 'content' => "naam,wijk\nPark,Centrum\n"]);
+		$publication = new TableFakeEntity(['uuid' => 'p1']);
+
+		$table = $this->service->publishAttachment(publication: $publication, fileId: '77');
+
+		$this->assertSame(['getFile' => [$publication, 77]], $this->openRegister->finds[0]);
+		$this->assertSame("naam,wijk\nPark,Centrum\n", file_get_contents($this->openRegister->tempPath));
+		$this->assertSame(['read' => [$this->openRegister->tempPath, 'csv']], $this->openRegister->finds[1]);
+		$this->assertSame('p1', $table['publication']);
+		$this->assertSame('77', $table['file']);
+		$this->assertSame('speeltuinen.CSV', $table['title']);
+		$this->assertSame('table-p1-77', $this->openRegister->createdSchemas[0]['slug']);
+		unlink($this->openRegister->tempPath);
+	}//end testPublishAttachmentImportsTheCsv()
+
+	/**
+	 * A missing attachment or one that is not a CSV is refused before anything is imported.
+	 *
+	 * @return void
+	 */
+	public function testPublishAttachmentRefusesMissingAndNonCsvFiles(): void {
+		$publication = new TableFakeEntity(['uuid' => 'p1']);
+		try {
+			$this->service->publishAttachment(publication: $publication, fileId: '9');
+			$this->fail('A missing attachment was published.');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('The publication has no attachment 9.', $e->getMessage());
+		}
+
+		$this->openRegister->file = new TableFakeEntity(['name' => 'besluit.pdf', 'id' => 9]);
+		try {
+			$this->service->publishAttachment(publication: $publication, fileId: '9');
+			$this->fail('A PDF was published as a table.');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('Only a CSV attachment can be published as a table; "besluit.pdf" is not one.', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->openRegister->createdSchemas);
+	}//end testPublishAttachmentRefusesMissingAndNonCsvFiles()
+
+	/**
+	 * Editors see every table of the publication; a ready one carries its dictionary.
+	 *
+	 * @return void
+	 */
+	public function testTablesForListsEveryStatus(): void {
+		$this->openRegister->schema = new TableFakeEntity(['properties' => ['naam' => ['type' => 'string', 'title' => 'Naam']]]);
+		$this->openRegister->searchAnswer = [
+			'results' => [
+				['id' => 't1', 'status' => 'ready', 'schema' => '42'],
+				['id' => 't2', 'status' => 'failed', 'lastError' => 'Row 350: not a number'],
+			],
+		];
+
+		$tables = $this->service->tablesFor(publicationId: 'p1');
+
+		$this->assertSame([['name' => 'naam', 'title' => 'Naam', 'description' => '', 'type' => 'string']], $tables[0]['dictionary']);
+		$this->assertSame(['id' => 't2', 'status' => 'failed', 'lastError' => 'Row 350: not a number'], $tables[1]);
+		$this->assertSame(['@self' => ['register' => 'pub', 'schema' => 'tbl'], 'publication' => 'p1', '_limit' => 100], $this->openRegister->searches[0]['query']);
+		$this->assertSame([], $this->service->tablesFor(publicationId: ''));
+	}//end testTablesForListsEveryStatus()
+
+	/**
+	 * An editor's titles and descriptions are written to the schema; names and types stay.
+	 *
+	 * @return void
+	 */
+	public function testUpdateDictionaryWritesTitlesAndDescriptions(): void {
+		$this->openRegister->schema = new TableFakeEntity(
+			['properties' => ['naam' => ['type' => 'string', 'title' => 'naam'], 'toestellen' => ['type' => 'integer', 'title' => 'toestellen']]]
+		);
+
+		$dictionary = $this->service->updateDictionary(
+			table: ['schema' => '42'],
+			columns: [
+				['name' => 'toestellen', 'title' => '  Toestellen ', 'description' => 'Number of play devices on the site', 'type' => 'string'],
+				['name' => 'naam', 'title' => '', 'description' => str_repeat('x', 2100)],
+			]
+		);
+
+		$this->assertSame(['type' => 'integer', 'title' => 'Toestellen', 'description' => 'Number of play devices on the site'], $this->openRegister->schema->fields['properties']['toestellen']);
+		$this->assertSame('naam', $this->openRegister->schema->fields['properties']['naam']['title']);
+		$this->assertSame(2000, mb_strlen($this->openRegister->schema->fields['properties']['naam']['description']));
+		$this->assertSame([$this->openRegister->schema], $this->openRegister->updatedRegisters);
+		$this->assertSame('Number of play devices on the site', $dictionary[1]['description']);
+	}//end testUpdateDictionaryWritesTitlesAndDescriptions()
+
+	/**
+	 * A column the table does not declare is refused and nothing is written.
+	 *
+	 * @return void
+	 */
+	public function testUpdateDictionaryRefusesAnUnknownColumn(): void {
+		$this->openRegister->schema = new TableFakeEntity(['properties' => ['naam' => ['type' => 'string']]]);
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('This table has no column named kleur.');
+		try {
+			$this->service->updateDictionary(table: ['schema' => '42'], columns: [['name' => 'kleur', 'title' => 'Kleur']]);
+		} finally {
+			$this->assertSame([], $this->openRegister->updatedRegisters);
+		}
+	}//end testUpdateDictionaryRefusesAnUnknownColumn()
 
 	/**
 	 * A failed preview is stored importing first, with who started it, and
