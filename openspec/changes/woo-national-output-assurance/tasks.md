@@ -9,7 +9,8 @@ Read `openspec/woo-build-rules.md` first. Start once `diwoo-metadata-on-the-publ
 ## 2. Validation at render time
 
 - [ ] 2.1 Ship the XSD files in `lib/Settings/diwoo/` and validate each document in `SitemapService` (REQ-WNO-002). Verify: `tests/Unit/Service/SitemapServiceTest.php::testAnXsdInvalidDocumentIsLeftOutAndReported` (fails today) and `::testARenderedPageValidatesAgainstTheShippedXsd`.
-- [ ] 2.2 Add `DiwooStandardCheck`, registered in `appinfo/info.xml`, and its readiness result (REQ-WNO-002). Verify: `tests/Unit/BackgroundJob/DiwooStandardCheckTest.php::testANewerVersionFailsReadiness`, `::testAnUnreachableAuthorityIsNotCurrent`, `::testTheJobIsRegistered`.
+- [x] 2.2 Add `DiwooStandardCheck`, registered in `appinfo/info.xml`, and its readiness result (REQ-WNO-002). Verify: `tests/Unit/BackgroundJob/DiwooStandardCheckTest.php::testANewerVersionFailsReadiness`, `::testAnUnreachableAuthorityIsNotCurrent`, `::testTheJobIsRegistered`.
+  - Done: `lib/BackgroundJob/DiwooStandardCheck.php`, daily, registered in `appinfo/info.xml`. It reads the version index through `StandardsVersionService` and stores `{declared, published, status, ready, message, checkedAt}` in app config `diwoo_standard_check`: "DiWoo <new> is current; this instance emits <ours>" when behind, "could not verify" when the authority cannot be read. Tests over a recorded index (`tests/fixtures/diwoo-version-index-0.9.9.html`). Raising an incident from it waits for 4.1 and 4.2.
 
 ## 3. Reconciliation
 
