@@ -29,6 +29,7 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -208,8 +209,7 @@ class PublishedTableEditController extends Controller {
 			$config = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
 			$publication = $this->registers->objectService()->find(
 				id: $id,
-				register: $config['register'],
-				schema: $config['schema'],
+				options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
 				_rbac: true
 			);
 		} catch (\Throwable $e) {

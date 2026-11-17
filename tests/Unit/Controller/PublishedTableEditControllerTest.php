@@ -25,6 +25,7 @@ use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Controller\PublishedTableEditController;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
@@ -139,7 +140,12 @@ class PublishedTableEditControllerTest extends TestCase {
 
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame(['results' => [self::TABLE]], $response->getData());
-		$this->assertSame(['id' => 'p1', 'register' => 'pub', 'schema' => 'publication', '_rbac' => true], $this->objects->finds[0]);
+		$find = $this->objects->finds[0];
+		$this->assertSame(expected: ['id', 'options', '_rbac'], actual: array_keys($find));
+		$this->assertSame(expected: 'p1', actual: $find['id']);
+		$this->assertInstanceOf(expected: ObjectFindOptions::class, actual: $find['options']);
+		$this->assertSame(expected: ['pub', 'publication'], actual: [$find['options']->register, $find['options']->schema]);
+		$this->assertTrue(condition: $find['_rbac']);
 	}//end testAnEditorListsTheTables()
 
 	/**
