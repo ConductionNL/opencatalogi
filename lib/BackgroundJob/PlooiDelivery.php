@@ -41,6 +41,20 @@ use Psr\Log\LoggerInterface;
 class PlooiDelivery extends QueuedJob {
 
 	/**
+	 * Deliver the changed publication again (REQ-WNO-001).
+	 *
+	 * @var string
+	 */
+	public const MODE_UPDATE = 'update';
+
+	/**
+	 * Withdraw the whole record from PLOOI (REQ-WNO-001).
+	 *
+	 * @var string
+	 */
+	public const MODE_WITHDRAW = 'withdraw';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory.
@@ -74,7 +88,8 @@ class PlooiDelivery extends QueuedJob {
 			$this->deliveryService->deliver(
 				uuid: (string)$argument['uuid'],
 				register: (string)($argument['register'] ?? ''),
-				schema: (string)($argument['schema'] ?? '')
+				schema: (string)($argument['schema'] ?? ''),
+				withdraw: ((string)($argument['mode'] ?? '') === self::MODE_WITHDRAW)
 			);
 		} catch (\Throwable $e) {
 			$this->logger->error('[PlooiDelivery] Delivery of ' . (string)$argument['uuid'] . ' failed: ' . $e->getMessage());

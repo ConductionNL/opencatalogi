@@ -4,7 +4,7 @@ Read `openspec/woo-build-rules.md` first. Start once `diwoo-metadata-on-the-publ
 
 ## 1. Re-delivery
 
-- [ ] 1.1 Extend `PlooiDeliveryListener::handle()` and `PlooiDeliveryService` for updates and withdrawals of delivered publications (REQ-WNO-001, REQ-WND-003). Verify: `tests/Unit/Listener/PlooiDeliveryListenerTest.php::testAChangedTitleOnADeliveredPublicationQueuesAnUpdate` (fails today), `::testAChangeOutsideDiwooQueuesNothing`, `::testDepublishingADeliveredPublicationQueuesAWithdrawal`; `tests/Unit/Service/Publication/PlooiDeliveryServiceTest.php::testADocumentNoLongerPublicIsWithdrawn`.
+- [x] 1.1 Extend `PlooiDeliveryListener::handle()` and `PlooiDeliveryService` for updates and withdrawals of delivered publications (REQ-WNO-001, REQ-WND-003). Verify: `tests/Unit/Listener/PlooiDeliveryListenerTest.php::testAChangedTitleOnADeliveredPublicationQueuesAnUpdate` (fails today), `::testAChangeOutsideDiwooQueuesNothing`, `::testDepublishingADeliveredPublicationQueuesAWithdrawal`; `tests/Unit/Service/Publication/PlooiDeliveryServiceTest.php::testADocumentNoLongerPublicIsWithdrawn`.
 
 ## 2. Validation at render time
 

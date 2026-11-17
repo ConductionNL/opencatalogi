@@ -53,7 +53,7 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 	 *
 	 * @var array<int, string>
 	 */
-	public const FIELDS = ['plooiStatus', 'plooiDeliveredAt', 'plooiIdentifier', 'plooiReason'];
+	public const FIELDS = ['plooiStatus', 'plooiDeliveredAt', 'plooiIdentifier', 'plooiReason', 'plooiDocuments'];
 
 	/**
 	 * Constructor.
@@ -75,17 +75,25 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 	}//end __construct()
 
 	/**
-	 * Deliver one publication to PLOOI when a catalogue that holds it asks for it.
+	 * Deliver one publication to PLOOI, deliver its update, or withdraw it.
 	 *
-	 * @param string $uuid The publication.
+	 * A delivery carries the documents PLOOI held from the last delivery that
+	 * are no longer public as `withdrawnDocuments`, so a removed annex is
+	 * withdrawn by the same call that sends the update (REQ-WNO-001). A
+	 * withdrawal of the whole record goes through the PLOOI channel's
+	 * withdrawal and leaves `plooiStatus` `withdrawn`.
+	 *
+	 * @param string $uuid     The publication.
 	 * @param string $register Its register id.
-	 * @param string $schema Its schema id.
+	 * @param string $schema   Its schema id.
+	 * @param bool   $withdraw True to withdraw the whole record.
 	 *
 	 * @return array<string, mixed>|null The PLOOI fields stored, the dry run in staging (nothing stored), or null when no catalogue asks for PLOOI.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-publication-that-turns-public-is-delivered-to-plooi-when-the-catalogue-asks-for-it-req-wnd-003
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-change-to-a-delivered-publication-is-delivered-again-req-wno-001
 	 */
-	public function deliver(string $uuid, string $register, string $schema): ?array {
+	public function deliver(string $uuid, string $register, string $schema, bool $withdraw=false): ?array {
 		if ($this->isInPlooiCatalogue(register: $register, schema: $schema) === false) {
 			return null;
 		}
@@ -102,9 +110,10 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		}
 
 		$publication = $entity->jsonSerialize();
+		$document = $this->document(publication: $publication, uuid: $uuid);
 		// In staging the document is kept as a dry run, and the publication is left as it is:
 		// no plooiStatus and no plooiDeliveredAt claim a delivery that never happened.
-		$held = $this->dryRuns?->hold(channel: 'plooi', payload: $this->document(publication: $publication, uuid: $uuid));
+		$held = $this->dryRuns?->hold(channel: 'plooi', payload: $document);
 		if ($held !== null) {
 			return $held;
 		}
@@ -113,9 +122,26 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		$fields = ['plooiDeliveredAt' => $now];
 
 		try {
-			$result = $this->indexService->deliverToPlooi(document: $this->document(publication: $publication, uuid: $uuid));
-			$fields['plooiStatus'] = 'delivered';
-			$fields['plooiIdentifier'] = (string)($result['identifier'] ?? '');
+			if ($withdraw === true) {
+				$reference = (string)($publication['plooiIdentifier'] ?? '');
+				if ($reference === '') {
+					$reference = $uuid;
+				}
+
+				$this->indexService->withdraw(
+					channel: NationalIndexService::CHANNEL_PLOOI,
+					publicationId: $reference,
+					reason: 'The publication is no longer public.'
+				);
+				$fields['plooiStatus'] = 'withdrawn';
+				$fields['plooiDocuments'] = [];
+			} else {
+				$result = $this->indexService->deliverToPlooi(document: $document);
+				$fields['plooiStatus'] = 'delivered';
+				$fields['plooiIdentifier'] = (string)($result['identifier'] ?? '');
+				$fields['plooiDocuments'] = array_column($document['documents'], 'url');
+			}
+
 			$fields['plooiReason'] = '';
 		} catch (IndexUnreachableException $e) {
 			$fields['plooiStatus'] = 'failed';
@@ -155,7 +181,12 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 			}
 		}
 
-		return [
+		$current = array_column($links, 'url');
+		$withdrawn = array_values(
+			array_diff(array_map('strval', (array)($publication['plooiDocuments'] ?? [])), $current)
+		);
+
+		$document = [
 			'identifier' => $uuid,
 			'title' => (string)($publication['title'] ?? ''),
 			'description' => (string)($publication['summary'] ?? ($publication['description'] ?? '')),
@@ -163,6 +194,11 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 			'organisation' => (string)($publication['organization'] ?? ''),
 			'documents' => $links,
 		];
+		if ($withdrawn !== []) {
+			$document['withdrawnDocuments'] = $withdrawn;
+		}
+
+		return $document;
 
 	}//end document()
 

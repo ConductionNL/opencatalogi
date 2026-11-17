@@ -56,7 +56,31 @@ class PlooiDeliveryListener implements IEventListener {
 	}//end __construct()
 
 	/**
-	 * Queue a delivery when the publication has just become public.
+	 * The publication fields a DiWoo document or the PLOOI delivery carries.
+	 *
+	 * A change to any other field (an internal note, a retention date) does
+	 * not change what PLOOI holds, so it queues nothing.
+	 *
+	 * @var list<string>
+	 */
+	public const DIWOO_FIELDS = [
+		'title',
+		'summary',
+		'description',
+		'publicationDate',
+		'organization',
+		'category',
+		'wooCategory',
+		'soortHandeling',
+		'tooiCategorieNaam',
+		'tooiCategorieUri',
+		'tooiIdentifier',
+	];
+
+	/**
+	 * Queue a delivery when the publication has just become public, an update
+	 * when a delivered publication changed what PLOOI holds, and a withdrawal
+	 * when a delivered publication stopped being public.
 	 *
 	 * Whether a catalogue asks for PLOOI is decided in the job, not here, so
 	 * this handler reads nothing and writes nothing on the save path.
@@ -66,6 +90,7 @@ class PlooiDeliveryListener implements IEventListener {
 	 * @return void
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-publication-that-turns-public-is-delivered-to-plooi-when-the-catalogue-asks-for-it-req-wnd-003
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-change-to-a-delivered-publication-is-delivered-again-req-wno-001
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatedEvent === false) {
@@ -74,24 +99,99 @@ class PlooiDeliveryListener implements IEventListener {
 
 		$new = $event->getNewObject();
 		$old = $event->getOldObject();
-		if ($this->isPublic(entity: $new) === false) {
+		$newPublic = $this->isPublic(entity: $new);
+		$oldPublic = ($old !== null && $this->isPublic(entity: $old) === true);
+
+		if ($newPublic === true && $oldPublic === false) {
+			$this->queue(entity: $new, mode: null);
 			return;
 		}
 
-		if ($old !== null && $this->isPublic(entity: $old) === true) {
+		if ($old === null || $oldPublic === false || $this->isDelivered(entity: $new) === false) {
 			return;
 		}
 
-		$this->jobList->add(
-			PlooiDelivery::class,
-			[
-				'uuid' => (string)$new->getUuid(),
-				'register' => (string)$new->getRegister(),
-				'schema' => (string)$new->getSchema(),
-			]
-		);
+		if ($newPublic === false) {
+			$this->queue(entity: $new, mode: PlooiDelivery::MODE_WITHDRAW);
+			return;
+		}
+
+		if ($this->carriedChange(old: $old, new: $new) === true) {
+			$this->queue(entity: $new, mode: PlooiDelivery::MODE_UPDATE);
+		}
 
 	}//end handle()
+
+	/**
+	 * Queue one PLOOI delivery job for a publication.
+	 *
+	 * @param ObjectEntity $entity The publication.
+	 * @param string|null  $mode   The update or withdrawal mode; null for a first delivery.
+	 *
+	 * @return void
+	 */
+	private function queue(ObjectEntity $entity, ?string $mode): void {
+		$argument = [
+			'uuid' => (string)$entity->getUuid(),
+			'register' => (string)$entity->getRegister(),
+			'schema' => (string)$entity->getSchema(),
+		];
+		if ($mode !== null) {
+			$argument['mode'] = $mode;
+		}
+
+		$this->jobList->add(PlooiDelivery::class, $argument);
+	}//end queue()
+
+	/**
+	 * Whether PLOOI holds the publication: its last delivery succeeded.
+	 *
+	 * @param ObjectEntity $entity The publication.
+	 *
+	 * @return bool True when `plooiStatus` is `delivered`.
+	 */
+	private function isDelivered(ObjectEntity $entity): bool {
+		return (string)($entity->jsonSerialize()['plooiStatus'] ?? '') === 'delivered';
+	}//end isDelivered()
+
+	/**
+	 * Whether an update changed a field PLOOI carries, or the set of public files.
+	 *
+	 * @param ObjectEntity $old The publication before.
+	 * @param ObjectEntity $new The publication after.
+	 *
+	 * @return bool True when PLOOI must hear of it.
+	 */
+	private function carriedChange(ObjectEntity $old, ObjectEntity $new): bool {
+		$before = $old->jsonSerialize();
+		$after = $new->jsonSerialize();
+		foreach (self::DIWOO_FIELDS as $field) {
+			if (($before[$field] ?? null) !== ($after[$field] ?? null)) {
+				return true;
+			}
+		}
+
+		return self::fileLinks(data: $before) !== self::fileLinks(data: $after);
+	}//end carriedChange()
+
+	/**
+	 * The download links of a publication's files, sorted, as PLOOI receives them.
+	 *
+	 * @param array<string, mixed> $data The serialised publication.
+	 *
+	 * @return list<string> The links.
+	 */
+	private static function fileLinks(array $data): array {
+		$links = [];
+		foreach ((array)($data['@self']['files'] ?? []) as $file) {
+			if (is_array($file) === true && (string)($file['downloadUrl'] ?? '') !== '') {
+				$links[] = (string)$file['downloadUrl'];
+			}
+		}
+
+		sort($links);
+		return $links;
+	}//end fileLinks()
 
 	/**
 	 * Whether an object is public now: a publication date reached and no depublication date passed.
