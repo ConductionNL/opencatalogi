@@ -32,6 +32,8 @@ jest.mock('../../store/store.js', () => ({
 }))
 
 const stubs = {
+	CnDetailCard: { props: ['title'], template: '<section class="card"><h2>{{ title }}</h2><slot /></section>' },
+	CnDetailGrid: { props: ['items', 'layout'], template: '<dl :data-layout="layout"><div v-for="item in items" :key="item.label" class="propertyItem">{{ item.label }}:{{ item.value }}</div></dl>' },
 	NcDialog: { props: ['name'], template: '<div class="dialog" :data-name="name"><slot /><div class="footer"><slot name="actions" /></div></div>' },
 	NcEmptyContent: { props: ['name', 'description'], template: '<div class="empty">{{ name }}|{{ description }}<slot name="icon" /></div>' },
 	NcActions: { template: '<div class="actions"><slot /></div>' },

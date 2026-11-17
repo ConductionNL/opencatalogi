@@ -58,6 +58,43 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	private FileService&MockObject $fileService;
 
 	/**
+	 * An IL10N that answers the English text unchanged.
+	 *
+	 * @return \OCP\IL10N The translator.
+	 */
+	private function passthroughL10n(): \OCP\IL10N {
+		$l10n = $this->createMock(\OCP\IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+		return $l10n;
+	}//end passthroughL10n()
+
+	/**
+	 * The error messages are fixed texts in the caller's language (download-service task 6).
+	 *
+	 * @spec openspec/changes/download-service/tasks.md
+	 *
+	 * @return void
+	 */
+	public function testTheErrorMessagesAreTranslated(): void {
+		$l10n = $this->createMock(\OCP\IL10N::class);
+		$l10n->method('t')->willReturnMap([
+			['At least one output option must be enabled; "download" was false', [], 'Er moet minstens één uitvoeroptie aan staan; "download" stond uit'],
+			['Publication not found', [], 'Publicatie niet gevonden'],
+		]);
+		$service = new DownloadService($this->fileService, $l10n);
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('find')->willReturn(null);
+
+		$refused = $service->createPublicationFile(objectService: $objectService, id: 'p1', options: ['download' => false]);
+		$this->assertSame(400, $refused->getStatus());
+		$this->assertSame('Er moet minstens één uitvoeroptie aan staan; "download" stond uit', $refused->getData()['error']);
+
+		$missing = $service->createPublicationFile(objectService: $objectService, id: 'p1');
+		$this->assertSame(404, $missing->getStatus());
+		$this->assertSame('Publicatie niet gevonden', $missing->getData()['error']);
+	}//end testTheErrorMessagesAreTranslated()
+
+	/**
 	 * Sets up mocks and instantiates DownloadService.
 	 *
 	 * @return void
@@ -66,7 +103,8 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->fileService = $this->createMock(FileService::class);
 
 		$this->downloadService = new DownloadService(
-			$this->fileService
+			$this->fileService,
+			$this->passthroughL10n()
 		);
 
 	}//end setUp()
@@ -576,7 +614,7 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 			$this->createMock(\Psr\Container\ContainerInterface::class)
 		);
 
-		$downloadService = new DownloadService($fileService);
+		$downloadService = new DownloadService($fileService, $this->passthroughL10n());
 		$objectService = $this->createObjectServiceMock();
 
 		$publication = [
