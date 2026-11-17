@@ -403,7 +403,7 @@ class DcatServiceTest extends TestCase {
 			new InstanceSettings($this->urlGenerator, $this->appConfig),
 			$this->createMock(LoggerInterface::class),
 			new DcatAssurance($this->standardsVersions),
-			$tables
+			tables: $tables
 		);
 
 		$document = $service->buildCatalogDocument(

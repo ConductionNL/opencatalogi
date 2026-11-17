@@ -1,5 +1,11 @@
 {
     "translations": {
+        "Document references": "Document references",
+        "This publication has no document references yet.": "This publication has no document references yet.",
+        "Format": "Format",
+        "URL": "URL",
+        "Reachable": "Reachable",
+        "Last status": "Last status",
         "Attachment reading": "Attachment reading",
         "File": "File",
         "Reading state": "Reading state",

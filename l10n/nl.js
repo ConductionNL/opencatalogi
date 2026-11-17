@@ -1,6 +1,12 @@
 OC.L10N.register(
     "opencatalogi",
     {
+        "Document references": "Documentverwijzingen",
+        "This publication has no document references yet.": "Deze publicatie heeft nog geen documentverwijzingen.",
+        "Format": "Formaat",
+        "URL": "URL",
+        "Reachable": "Bereikbaar",
+        "Last status": "Laatste status",
         "Attachment reading": "Leesbaarheid van bijlage",
         "File": "Bestand",
         "Reading state": "Leesstatus",

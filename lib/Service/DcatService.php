@@ -63,6 +63,7 @@ class DcatService implements DcatServiceInterface {
 	 * @param InstanceSettings $instance The base URL (absolute IRIs) and app config (publisher defaults).
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param DcatAssurance $assurance The profile-version check and the optional DQV quality scorer.
+	 * @param DocumentReferences|null $references The publications' document references (REQ-PBR-002).
 	 * @param PublishedTableServiceInterface|null $tables The published tables, whose CSVs conform to their data dictionary; null links none.
 	 */
 	public function __construct(
@@ -72,6 +73,7 @@ class DcatService implements DcatServiceInterface {
 		private readonly InstanceSettings $instance,
 		private readonly LoggerInterface $logger,
 		private readonly DcatAssurance $assurance,
+		private readonly ?DocumentReferences $references = null,
 		private readonly ?PublishedTableServiceInterface $tables = null,
 	) {
 
@@ -477,6 +479,10 @@ class DcatService implements DcatServiceInterface {
 			);
 		} catch (\Throwable $e) {
 			$this->logger->debug('[DcatService] Could not load files for publication', ['uuid' => $uuid, 'error' => $e->getMessage()]);
+		}
+
+		if ($this->references !== null) {
+			$files = $this->references->appendTo(files: $files, publicationId: (string)($publication['id'] ?? $uuid));
 		}
 
 		return new DcatDatasetSource(
