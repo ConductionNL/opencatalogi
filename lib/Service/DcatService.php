@@ -29,6 +29,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
+use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -63,6 +64,7 @@ class DcatService implements DcatServiceInterface {
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param DcatAssurance $assurance The profile-version check and the optional DQV quality scorer.
 	 * @param DocumentReferences|null $references The publications' document references (REQ-PBR-002).
+	 * @param PublishedTableServiceInterface|null $tables The published tables, whose CSVs conform to their data dictionary; null links none.
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookup $openRegister,
@@ -72,6 +74,7 @@ class DcatService implements DcatServiceInterface {
 		private readonly LoggerInterface $logger,
 		private readonly DcatAssurance $assurance,
 		private readonly ?DocumentReferences $references = null,
+		private readonly ?PublishedTableServiceInterface $tables = null,
 	) {
 
 	}//end __construct()
@@ -439,6 +442,11 @@ class DcatService implements DcatServiceInterface {
 		try {
 			$fileService = $scope['fileService'];
 			$files = ($fileService->formatFiles($fileService->getFiles(object: ($publication['id'] ?? $uuid)))['results'] ?? []);
+			$files = $this->withDictionaryUrls(
+				files: (array)$files,
+				publicationId: (string)($publication['id'] ?? $uuid),
+				catalogSlug: (string)$scope['catalogSlug']
+			);
 		} catch (\Throwable $e) {
 			$this->logger->debug('[DcatService] Could not load files for publication', ['uuid' => $uuid, 'error' => $e->getMessage()]);
 		}
@@ -453,6 +461,25 @@ class DcatService implements DcatServiceInterface {
 			files: $files
 		);
 	}//end datasetSource()
+
+	/**
+	 * The files, with a data dictionary URL on each one published as a table (REQ-ODT-003).
+	 *
+	 * @param array<int, mixed> $files         The publication's published attachments.
+	 * @param string            $publicationId The publication.
+	 * @param string            $catalogSlug   The catalogue the URLs are under.
+	 *
+	 * @return array<int, mixed> The files; unchanged without published tables.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	private function withDictionaryUrls(array $files, string $publicationId, string $catalogSlug): array {
+		if ($this->tables === null || $files === []) {
+			return $files;
+		}
+
+		return $this->tables->withDictionaryUrls(files: $files, publicationId: $publicationId, catalogSlug: $catalogSlug);
+	}//end withDictionaryUrls()
 
 	/**
 	 * Map one publication to a DCAT dataset; its violations are left on the source.
