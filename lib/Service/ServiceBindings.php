@@ -57,6 +57,7 @@ use OCA\OpenCatalogi\Contract\DonlRegistrationServiceInterface;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
+use OCA\OpenCatalogi\Contract\FeedConsumerServiceInterface;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
 use OCA\OpenCatalogi\Contract\IndexRegistrationServiceInterface;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
@@ -198,6 +199,7 @@ final class ServiceBindings {
 		CaseTypeCatalogueServiceInterface::class => CaseTypeCatalogueService::class,
 		IndexRegistrationServiceInterface::class => WooRegistrationService::class,
 		SavedSearchServiceInterface::class => SavedSearchService::class,
+		FeedConsumerServiceInterface::class => FeedConsumerService::class,
 		DemoDataServiceInterface::class => DemoDataService::class,
 		WithheldFromPublicationInterface::class => WithheldFromPublication::class,
 		LocalPublicationStateInterface::class => LocalPublicationState::class,

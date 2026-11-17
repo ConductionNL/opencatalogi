@@ -958,12 +958,47 @@ class SettingsService implements SettingsServiceInterface {
 				}
 			}
 
+			$this->refreshFeedReadRule(updated: $updated);
+
 			return $updated;
 		} catch (\Exception $e) {
 			throw new RuntimeException('Failed to update settings: ' . $e->getMessage());
 		}
 
 	}//end updateSettings()
+
+	/**
+	 * Write the OOAPI read rule again when the consumer list or an OOAPI schema changed.
+	 *
+	 * A failure is logged, not raised: the setting is saved, and the OOAPI gate
+	 * still checks the consumer list on every request.
+	 *
+	 * @param array<string, string> $updated The settings just written.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/integration-feed-consumer-credentials/specs/ooapi-catalog-publication/spec.md#requirement-account-based-access-keeps-working-and-is-visible-req-fcc-004
+	 */
+	private function refreshFeedReadRule(array $updated): void {
+		$keys = ['ooapi_consumers'];
+		foreach (FeedReadRule::CONTEXTS as $context) {
+			$keys[] = $context . '_schema';
+		}
+
+		if (array_intersect_key($updated, array_flip($keys)) === []) {
+			return;
+		}
+
+		try {
+			$rule = $this->container->get(FeedReadRule::class);
+			if ($rule instanceof FeedReadRule === true) {
+				$rule->apply();
+			}
+		} catch (\Throwable $e) {
+			$this->logger->warning('[SettingsService] the OOAPI read rule was not written: ' . $e->getMessage());
+		}
+
+	}//end refreshFeedReadRule()
 
 	/**
 	 * Reject a payload that gives an accepted key a list or an object, which would be stored as the text "Array".

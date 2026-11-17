@@ -724,7 +724,16 @@ OC.L10N.register(
         "Open catalog": "Abrir catálogo",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Crie o seu primeiro catálogo. É o contentor onde ficarão as suas publicações. Escolha o registo Publication e o esquema Publication, para que o catálogo liste as publicações que adicionar.",
         "Manage your publications and their status": "Faça a gestão das suas publicações e do respetivo estado",
-        "Open at the source": "Abrir na origem"
+        "Open at the source": "Abrir na origem",
+        "Feed consumers": "Consumidores do feed",
+        "Contact": "Contacto",
+        "Generate key": "Gerar chave",
+        "Revoke": "Revogar",
+        "Disable": "Desativar",
+        "Last used": "Última utilização",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Esta chave é mostrada uma única vez. Copie-a agora: não poderá ser mostrada de novo.",
+        "No feed consumers yet.": "Ainda não há consumidores do feed.",
+        "Accounts that read every catalogue's feed": "Contas que leem o feed de cada catálogo"
     },
     "nplurals=2; plural=(n != 1);"
 )

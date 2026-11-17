@@ -1,7 +1,5 @@
-<!--
-  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
-  - SPDX-License-Identifier: EUPL-1.2
--->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl> -->
 <script setup>
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { navigationStore, objectStore } from '../../store/store.js'
