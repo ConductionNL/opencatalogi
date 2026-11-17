@@ -17,37 +17,12 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		:canClose="false">
 		<div class="formContainer viewCatalogiDialog">
 			<!-- Catalog Details -->
-			<div class="catalogDetailsGrid">
-				<div class="catalogMainInfo">
-					<h2>{{ activeCatalog?.title }}</h2>
-					<p v-if="activeCatalog?.summary" class="catalogSummary">
-						{{ activeCatalog.summary }}
-					</p>
-				</div>
-
-				<div class="catalogProperties">
-					<div class="propertyItem">
-						<strong>{{ t('opencatalogi', 'Status') }}:</strong>
-						<span>{{
-							activeCatalog?.listed
-								? t('opencatalogi', 'Publicly findable')
-								: t('opencatalogi', 'Not publicly findable')
-						}}</span>
-					</div>
-					<div v-if="activeCatalog?.description" class="propertyItem">
-						<strong>{{ t('opencatalogi', 'Description') }}:</strong>
-						<span>{{ activeCatalog.description }}</span>
-					</div>
-					<div class="propertyItem">
-						<strong>{{ t('opencatalogi', 'Registers') }}:</strong>
-						<span>{{ activeCatalog?.registers?.length || 0 }}</span>
-					</div>
-					<div class="propertyItem">
-						<strong>{{ t('opencatalogi', 'Schemas') }}:</strong>
-						<span>{{ activeCatalog?.schemas?.length || 0 }}</span>
-					</div>
-				</div>
-			</div>
+			<CnDetailCard :title="activeCatalog?.title || t('opencatalogi', 'Unknown')">
+				<p v-if="activeCatalog?.summary" class="catalogSummary">
+					{{ activeCatalog.summary }}
+				</p>
+				<CnDetailGrid layout="horizontal" :items="catalogDetails" />
+			</CnDetailCard>
 
 			<!-- Tabs for additional information -->
 			<div class="tabContainer">
@@ -213,12 +188,14 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 <script>
 import {
+	CnDetailCard,
+	CnDetailGrid,
 	NcActionButton,
 	NcActions,
 	NcButton,
 	NcDialog,
 	NcEmptyContent,
-} from '@nextcloud/vue'
+} from '@conduction/nextcloud-vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import DatabaseOutline from 'vue-material-design-icons/DatabaseOutline.vue'
 import FileTreeOutline from 'vue-material-design-icons/FileTreeOutline.vue'
@@ -235,6 +212,8 @@ import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 export default {
 	name: 'ViewCatalogi',
 	components: {
+		CnDetailCard,
+		CnDetailGrid,
 		NcDialog,
 		NcButton,
 		NcActions,
@@ -261,6 +240,27 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The label/value rows of the catalog's detail card; the description only when set.
+		 *
+		 * @spec openspec/changes/catalogs/tasks.md#task-9
+		 * @return {Array<{label: string, value: string|number}>} The rows.
+		 */
+		catalogDetails() {
+			const catalog = this.activeCatalog
+			return [
+				{
+					label: this.t('opencatalogi', 'Status'),
+					value: catalog?.listed
+						? this.t('opencatalogi', 'Publicly findable')
+						: this.t('opencatalogi', 'Not publicly findable'),
+				},
+				...(catalog?.description ? [{ label: this.t('opencatalogi', 'Description'), value: catalog.description }] : []),
+				{ label: this.t('opencatalogi', 'Registers'), value: catalog?.registers?.length || 0 },
+				{ label: this.t('opencatalogi', 'Schemas'), value: catalog?.schemas?.length || 0 },
+			]
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-2 */
 		activeCatalog() {
 			return objectStore.getActiveObject('catalog')
@@ -346,39 +346,9 @@ export default {
 	gap: 1.5rem;
 }
 
-.catalogDetailsGrid {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.catalogMainInfo h2 {
-	margin: 0 0 0.5rem 0;
-	color: var(--color-main-text);
-}
-
 .catalogSummary {
 	color: var(--color-text-lighter);
-	margin: 0;
-}
-
-.catalogProperties {
-	display: flex;
-	flex-direction: column;
-	gap: 0.75rem;
-	padding: 1rem;
-	background-color: var(--color-background-hover);
-	border-radius: var(--border-radius);
-}
-
-.propertyItem {
-	display: flex;
-	gap: 0.5rem;
-}
-
-.propertyItem strong {
-	min-width: 120px;
-	color: var(--color-text-lighter);
+	margin: 0 0 1rem 0;
 }
 
 .tabContainer {
