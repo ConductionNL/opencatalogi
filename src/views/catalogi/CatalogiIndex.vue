@@ -1,7 +1,5 @@
-<!--
-  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
-  - SPDX-License-Identifier: EUPL-1.2
--->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl> -->
 <template>
 	<CnIndexPage
 		ref="indexPage"
@@ -85,9 +83,8 @@
 </template>
 
 <script>
-import { CnIndexPage, CnStatusBadge, useListView } from '@conduction/nextcloud-vue'
+import { CnIndexPage, CnStatusBadge, NcNoteCard, useListView } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
-import { NcNoteCard } from '@nextcloud/vue'
 import { inject } from 'vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'

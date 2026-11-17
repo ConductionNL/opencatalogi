@@ -413,6 +413,61 @@ class DcatMappingServiceTest extends TestCase {
 	}
 
 	/**
+	 * A title and description read with all their translations become one
+	 * language-tagged literal per language, Dutch first; an empty translation
+	 * is left out and a plain value stays plain (publication-translations REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testEachLanguageIsATaggedLiteral(): void {
+		$dataset = $this->mapDataset(
+			publication: [
+				'id' => 'uuid-3',
+				'title' => ['en' => 'Annual report', 'nl' => 'Jaarverslag'],
+				'description' => ['nl' => 'Het verslag', 'en' => ''],
+				'@self' => ['uuid' => 'uuid-3'],
+			],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: [],
+			datasetIri: 'https://host/api/cat/uuid-3',
+			defaults: []
+		);
+
+		$this->assertSame(
+			[['@value' => 'Jaarverslag', '@language' => 'nl'], ['@value' => 'Annual report', '@language' => 'en']],
+			$dataset['dct:title']
+		);
+		$this->assertSame([['@value' => 'Het verslag', '@language' => 'nl']], $dataset['dct:description']);
+
+		$plain = $this->mapDataset(
+			publication: ['id' => 'uuid-4', 'title' => 'Jaarverslag', 'description' => ['nl' => '', 'en' => '']],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: [],
+			datasetIri: 'https://host/api/cat/uuid-4',
+			defaults: []
+		);
+		$this->assertSame('Jaarverslag', $plain['dct:title']);
+		$this->assertArrayNotHasKey('dct:description', $plain);
+	}
+
+	/**
+	 * An array that is not keyed by language is not turned into literals.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testAnArrayNotKeyedByLanguageStaysAsItIs(): void {
+		$dataset = $this->mapDataset(
+			publication: ['id' => 'uuid-5', 'title' => ['Title' => 'x', 'nl' => 'y']],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: [],
+			datasetIri: 'https://host/api/cat/uuid-5',
+			defaults: []
+		);
+
+		$this->assertSame(['Title' => 'x', 'nl' => 'y'], $dataset['dct:title']);
+	}
+
+	/**
 	 * REQ-PFF-001: the distribution's media type is the stored bytes' type, not
 	 * the listed name or type, and bytes that cannot be read give no media type
 	 * rather than one from the extension.

@@ -1086,6 +1086,53 @@ class CatalogiService implements CatalogiServiceInterface {
 	}//end index()
 
 	/**
+	 * Lists the catalog objects themselves for the public `GET /api/catalogi`.
+	 *
+	 * The caller's own register/schema scope keys are dropped first (WOO-581) and
+	 * the configured catalog register/schema is pinned on both the top-level
+	 * magic-mapper routing keys (`_register`/`_schema`) and the `@self` filter, so
+	 * a query parameter can never widen the scope. RBAC decides which catalogs the
+	 * caller may read (the catalog schema grants the public group read only when
+	 * `published <= $now`); multitenancy stays enabled and deleted objects are left out.
+	 *
+	 * @param array<string, mixed>  $requestParams The request parameters.
+	 * @param array<string, string> $catalogConfig The resolved `register`/`schema` pair.
+	 *
+	 * @return array<string, mixed> The paginated result of searchObjectsPaginated().
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function listCatalogs(array $requestParams, array $catalogConfig): array {
+		$objectService = $this->getObjectService();
+
+		// The configured scope below wins for the rows, but OR's facet path reads
+		// `@self.schemas ?? _schemas` first; drop every caller scope key (WOO-581).
+		$searchQuery = CallerScope::strip(query: $objectService->buildSearchQuery($requestParams));
+
+		// The @self keys produced by buildSearchQuery are normalised downstream, so the
+		// configured scope is pinned via the magic-mapper routing keys as well.
+		if (empty($catalogConfig['schema']) === false) {
+			$searchQuery['_schema'] = $catalogConfig['schema'];
+			$searchQuery['@self']['schema'] = $catalogConfig['schema'];
+		}
+
+		if (empty($catalogConfig['register']) === false) {
+			$searchQuery['_register'] = $catalogConfig['register'];
+			$searchQuery['@self']['register'] = $catalogConfig['register'];
+		}
+
+		return $objectService->searchObjectsPaginated(
+			query: $searchQuery,
+			_rbac: true,
+			deleted: false
+		);
+	}//end listCatalogs()
+
+	/**
 	 * The answer for a catalogue id that matches no catalogue.
 	 *
 	 * The message is static: no id, query or internal detail is echoed back.

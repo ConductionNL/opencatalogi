@@ -2074,6 +2074,46 @@
       {
         "@self": {
           "register": "publication",
+          "schema": "documentReference",
+          "slug": "documentreference-1"
+        },
+        "publication": "@ref:publication:example-municipality-annual-report",
+        "url": "https://documenten.voorbeeldgemeente.nl/besluit-2026-001.pdf",
+        "title": "Besluit 2026-001",
+        "format": "pdf",
+        "sourceSystem": "Documentsysteem Voorbeeldgemeente",
+        "publicationDate": "2026-01-01T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "documentReference",
+          "slug": "documentreference-2"
+        },
+        "publication": "@ref:publication:example-municipality-council-agenda",
+        "url": "https://documenten.voorbeeldgemeente.nl/raadsvoorstel-2026-014.pdf",
+        "title": "Raadsvoorstel 2026-014",
+        "format": "pdf",
+        "sourceSystem": "Documentsysteem Voorbeeldgemeente",
+        "publicationDate": "2026-02-12T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "documentReference",
+          "slug": "documentreference-3"
+        },
+        "publication": "@ref:publication:example-conduction-quarterly-report",
+        "url": "https://documenten.voorbeeldgemeente.nl/bijlage-kwartaalrapportage-q1.pdf",
+        "title": "Bijlage kwartaalrapportage Q1",
+        "format": "pdf",
+        "sourceSystem": "Documentsysteem Voorbeeldgemeente",
+        "publicationDate": "2026-04-01T00:00:00+00:00",
+        "depublicationDate": "2027-04-01T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
           "schema": "publication",
           "slug": "example-municipality-annual-report"
         },

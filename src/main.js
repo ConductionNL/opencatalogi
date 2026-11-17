@@ -31,6 +31,8 @@ import MetadataSuggestionsWidget from './components/widgets/MetadataSuggestionsW
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
 import PlainSummaryDraftWidget from './components/widgets/PlainSummaryDraftWidget.vue'
 import PublicationAttachmentsWidget from './components/widgets/PublicationAttachmentsWidget.vue'
+import PublicationLanguagesWidget from './components/widgets/PublicationLanguagesWidget.vue'
+import PublicationTablesWidget from './components/widgets/PublicationTablesWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import appIcons from './icons.js'
@@ -112,6 +114,16 @@ registerDashboardWidget('metadata-suggestions', {
 	icon: 'LightbulbOnOutline',
 	surfaces: ['detail-page'],
 })
+// Per enabled language what is translated, with Translate in the editor
+// (publication-translations REQ-PTR-004, board OcPublicatie).
+registerDashboardWidget('publication-languages', {
+	renderer: PublicationLanguagesWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Languages',
+	icon: 'Translate',
+	surfaces: ['detail-page'],
+})
 // Draft a plain language summary with the text assistant and accept it
 // (publication-plain-language-and-translation, REQ-PPL-002).
 registerDashboardWidget('plain-summary-draft', {
@@ -130,6 +142,16 @@ registerDashboardWidget('publication-attachments', {
 	defaultContent: { maxDisplay: 100 },
 	displayName: 'Attachments',
 	icon: 'FolderOutline',
+	surfaces: ['detail-page'],
+})
+// The publication's published tables: Publish as table on CSV attachments and
+// the editable data dictionary of each table (REQ-ODT-001, REQ-ODT-003).
+registerDashboardWidget('publication-tables', {
+	renderer: PublicationTablesWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Tables',
+	icon: 'TableColumn',
 	surfaces: ['detail-page'],
 })
 // `theme-preview` is registered with the local `ThemePreviewWidget` adapter,

@@ -38,6 +38,11 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'dcat#donlReport', 'url' => '/api/catalogs/{catalogSlug}/dcat/donl-validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// OOAPI 5.0 feed validation (admin-only — auditable via AuthorizedAdminSetting)
 		['name' => 'ooapi#validate', 'url' => '/api/catalogs/{catalogSlug}/ooapi/validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#index', 'url' => '/api/catalogs/{catalogSlug}/consumers', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#create', 'url' => '/api/catalogs/{catalogSlug}/consumers', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#generateKey', 'url' => '/api/catalogs/{catalogSlug}/consumers/{id}/keys', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#revokeKey', 'url' => '/api/catalogs/{catalogSlug}/consumers/{id}/keys/{keyId}/revoke', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#disable', 'url' => '/api/catalogs/{catalogSlug}/consumers/{id}/disable', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// Robots
 		['name' => 'robots#index', 'url' => '/api/robots.txt', 'verb' => 'GET'],
 		// Global Configuration
@@ -126,6 +131,10 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publicationState#visibility', 'url' => '/api/publications/{id}/visibility', 'verb' => 'GET'],
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
+		// Published tables, editor side: list, publish a CSV attachment, edit the dictionary (REQ-ODT-001, REQ-ODT-003).
+		['name' => 'publishedTableEdit#index', 'url' => '/api/publications/{id}/tables', 'verb' => 'GET'],
+		['name' => 'publishedTableEdit#create', 'url' => '/api/publications/{id}/tables', 'verb' => 'POST'],
+		['name' => 'publishedTableEdit#updateDictionary', 'url' => '/api/publications/{id}/tables/{tableId}/dictionary', 'verb' => 'PUT'],
 		['name' => 'publicationState#withdrawFile', 'url' => '/api/publications/{id}/files/{fileId}/withdraw', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		['name' => 'publicationState#republishFile', 'url' => '/api/publications/{id}/files/{fileId}/republish', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		// A plain language summary an officer writes, or drafts with a text assistant and accepts
