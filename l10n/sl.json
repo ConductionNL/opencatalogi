@@ -728,7 +728,16 @@
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister vsebuje pogon, ki ga OpenCatalogi potrebuje.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi zahteva OpenRegister %1$s ali novejši. V nameščenem OpenRegister manjka %2$s, zato OpenCatalogi namesto svojih strani prikaže obvestilo. Posodobite OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi se ne more zagnati",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi zahteva OpenRegister %1$s ali novejši. Prosite skrbnika, naj posodobi OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi zahteva OpenRegister %1$s ali novejši. Prosite skrbnika, naj posodobi OpenRegister.",
+        "Feed consumers": "Prejemniki vira",
+        "Contact": "Stik",
+        "Generate key": "Ustvari ključ",
+        "Revoke": "Prekliči",
+        "Disable": "Onemogoči",
+        "Last used": "Nazadnje uporabljeno",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ta ključ je prikazan samo enkrat. Kopirajte ga zdaj: znova ga ni mogoče prikazati.",
+        "No feed consumers yet.": "Prejemnikov vira še ni.",
+        "Accounts that read every catalogue's feed": "Računi, ki berejo vir vsakega kataloga"
     },
     "plurals": {}
 }

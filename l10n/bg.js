@@ -729,7 +729,16 @@ OC.L10N.register(
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister съдържа двигателя, от който OpenCatalogi се нуждае.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi изисква OpenRegister %1$s или по-нова версия. В инсталирания OpenRegister липсва %2$s, затова OpenCatalogi показва известие вместо страниците си. Обновете OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi не може да стартира",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi изисква OpenRegister %1$s или по-нова версия. Помолете администратора да обнови OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi изисква OpenRegister %1$s или по-нова версия. Помолете администратора да обнови OpenRegister.",
+        "Feed consumers": "Потребители на емисията",
+        "Contact": "Контакт",
+        "Generate key": "Генериране на ключ",
+        "Revoke": "Отнемане",
+        "Disable": "Деактивиране",
+        "Last used": "Последно използван",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Този ключ се показва само веднъж. Копирайте го сега: не може да бъде показан отново.",
+        "No feed consumers yet.": "Все още няма потребители на емисията.",
+        "Accounts that read every catalogue's feed": "Профили, които четат емисията на всеки каталог"
     },
     "nplurals=2; plural=(n != 1);"
 )

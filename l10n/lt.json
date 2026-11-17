@@ -728,7 +728,16 @@
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister turi variklį, kurio reikia OpenCatalogi.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi reikia OpenRegister %1$s arba naujesnės versijos. Įdiegtame OpenRegister trūksta %2$s, todėl OpenCatalogi vietoj savo puslapių rodo pranešimą. Atnaujinkite OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi negali paleisti",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi reikia OpenRegister %1$s arba naujesnės versijos. Paprašykite administratoriaus atnaujinti OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi reikia OpenRegister %1$s arba naujesnės versijos. Paprašykite administratoriaus atnaujinti OpenRegister.",
+        "Feed consumers": "Srauto naudotojai",
+        "Contact": "Kontaktai",
+        "Generate key": "Sukurti raktą",
+        "Revoke": "Atšaukti",
+        "Disable": "Išjungti",
+        "Last used": "Paskutinį kartą naudota",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Šis raktas rodomas tik vieną kartą. Nukopijuokite jį dabar: jo nebebus galima parodyti.",
+        "No feed consumers yet.": "Srauto naudotojų dar nėra.",
+        "Accounts that read every catalogue's feed": "Paskyros, skaitančios kiekvieno katalogo srautą"
     },
     "plurals": {}
 }

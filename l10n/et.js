@@ -729,7 +729,16 @@ OC.L10N.register(
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister sisaldab mootorit, mida OpenCatalogi vajab.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi vajab OpenRegisteri versiooni %1$s või uuemat. Paigaldatud OpenRegisterist puudub %2$s, seega näitab OpenCatalogi oma lehtede asemel teadet. Uuenda OpenRegisterit.",
         "OpenCatalogi cannot start": "OpenCatalogi ei saa käivituda",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vajab OpenRegisteri versiooni %1$s või uuemat. Palu administraatoril OpenRegister uuendada."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vajab OpenRegisteri versiooni %1$s või uuemat. Palu administraatoril OpenRegister uuendada.",
+        "Feed consumers": "Voo tarbijad",
+        "Contact": "Kontakt",
+        "Generate key": "Loo võti",
+        "Revoke": "Tühista",
+        "Disable": "Keela",
+        "Last used": "Viimati kasutatud",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Seda võtit näidatakse ainult üks kord. Kopeeri see kohe: seda ei saa uuesti näidata.",
+        "No feed consumers yet.": "Voo tarbijaid veel pole.",
+        "Accounts that read every catalogue's feed": "Kontod, mis loevad iga kataloogi voogu"
     },
     "nplurals=2; plural=(n != 1);"
 )

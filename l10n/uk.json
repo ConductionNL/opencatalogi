@@ -728,7 +728,16 @@
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister містить рушій, потрібний OpenCatalogi.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi потребує OpenRegister %1$s або новішої версії. У встановленому OpenRegister бракує %2$s, тому OpenCatalogi показує повідомлення замість своїх сторінок. Оновіть OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi не може запуститися",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi потребує OpenRegister %1$s або новішої версії. Попросіть адміністратора оновити OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi потребує OpenRegister %1$s або новішої версії. Попросіть адміністратора оновити OpenRegister.",
+        "Feed consumers": "Споживачі стрічки",
+        "Contact": "Контакт",
+        "Generate key": "Створити ключ",
+        "Revoke": "Відкликати",
+        "Disable": "Вимкнути",
+        "Last used": "Востаннє використано",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Цей ключ показується лише один раз. Скопіюйте його зараз: його не можна буде показати знову.",
+        "No feed consumers yet.": "Споживачів стрічки ще немає.",
+        "Accounts that read every catalogue's feed": "Облікові записи, що читають стрічку кожного каталогу"
     },
     "plurals": {}
 }

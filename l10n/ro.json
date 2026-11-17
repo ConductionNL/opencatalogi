@@ -728,7 +728,16 @@
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister conține motorul de care are nevoie OpenCatalogi.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi necesită OpenRegister %1$s sau mai nou. Din OpenRegister instalat lipsește %2$s, așa că OpenCatalogi afișează o notificare în locul paginilor sale. Actualizați OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi nu poate porni",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi necesită OpenRegister %1$s sau mai nou. Rugați administratorul să actualizeze OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi necesită OpenRegister %1$s sau mai nou. Rugați administratorul să actualizeze OpenRegister.",
+        "Feed consumers": "Consumatori ai fluxului",
+        "Contact": "Contact",
+        "Generate key": "Generează cheie",
+        "Revoke": "Revocă",
+        "Disable": "Dezactivează",
+        "Last used": "Ultima utilizare",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Această cheie este afișată o singură dată. Copiați-o acum: nu mai poate fi afișată.",
+        "No feed consumers yet.": "Încă nu există consumatori ai fluxului.",
+        "Accounts that read every catalogue's feed": "Conturi care citesc fluxul fiecărui catalog"
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

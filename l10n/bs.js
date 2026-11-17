@@ -729,7 +729,16 @@ OC.L10N.register(
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister sadrži pogon koji je potreban OpenCatalogiju.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi zahtijeva OpenRegister %1$s ili noviji. U instaliranom OpenRegisteru nedostaje %2$s, pa OpenCatalogi umjesto svojih stranica prikazuje obavještenje. Ažurirajte OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi se ne može pokrenuti",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi zahtijeva OpenRegister %1$s ili noviji. Zamolite administratora da ažurira OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi zahtijeva OpenRegister %1$s ili noviji. Zamolite administratora da ažurira OpenRegister.",
+        "Feed consumers": "Korisnici feeda",
+        "Contact": "Kontakt",
+        "Generate key": "Generiši ključ",
+        "Revoke": "Opozovi",
+        "Disable": "Onemogući",
+        "Last used": "Zadnje korišteno",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ovaj ključ se prikazuje samo jednom. Kopirajte ga sada: ne može se ponovo prikazati.",
+        "No feed consumers yet.": "Još nema korisnika feeda.",
+        "Accounts that read every catalogue's feed": "Računi koji čitaju feed svakog kataloga"
     },
     "nplurals=2; plural=(n != 1);"
 )

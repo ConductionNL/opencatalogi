@@ -729,7 +729,16 @@ OC.L10N.register(
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister enthält die Engine, die OpenCatalogi benötigt.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi benötigt OpenRegister %1$s oder neuer. Dem installierten OpenRegister fehlt %2$s, daher zeigt OpenCatalogi einen Hinweis statt seiner Seiten. Aktualisieren Sie OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi kann nicht starten",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi benötigt OpenRegister %1$s oder neuer. Bitten Sie Ihre Administration, OpenRegister zu aktualisieren."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi benötigt OpenRegister %1$s oder neuer. Bitten Sie Ihre Administration, OpenRegister zu aktualisieren.",
+        "Feed consumers": "Feed-Abnehmer",
+        "Contact": "Kontakt",
+        "Generate key": "Schlüssel erzeugen",
+        "Revoke": "Widerrufen",
+        "Disable": "Deaktivieren",
+        "Last used": "Zuletzt verwendet",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Dieser Schlüssel wird nur einmal angezeigt. Kopieren Sie ihn jetzt: Er kann nicht erneut angezeigt werden.",
+        "No feed consumers yet.": "Noch keine Feed-Abnehmer.",
+        "Accounts that read every catalogue's feed": "Konten, die den Feed jedes Katalogs lesen"
     },
     "nplurals=2; plural=(n != 1);"
 )

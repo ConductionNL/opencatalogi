@@ -729,7 +729,16 @@ OC.L10N.register(
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister fih il-magna li għandu bżonn OpenCatalogi.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi jeħtieġ OpenRegister %1$s jew aktar ġdid. Fl-OpenRegister installat jonqos %2$s, għalhekk OpenCatalogi juri avviż minflok il-paġni tiegħu. Aġġorna OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi ma jistax jibda",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi jeħtieġ OpenRegister %1$s jew aktar ġdid. Itlob lill-amministratur tiegħek jaġġorna OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi jeħtieġ OpenRegister %1$s jew aktar ġdid. Itlob lill-amministratur tiegħek jaġġorna OpenRegister.",
+        "Feed consumers": "Konsumaturi tal-feed",
+        "Contact": "Kuntatt",
+        "Generate key": "Iġġenera ċavetta",
+        "Revoke": "Irrevoka",
+        "Disable": "Iddiżattiva",
+        "Last used": "L-aħħar użat",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Din iċ-ċavetta tintwera darba biss. Ikkopjaha issa: ma tistax terġa' tintwera.",
+        "No feed consumers yet.": "Għad m'hemmx konsumaturi tal-feed.",
+        "Accounts that read every catalogue's feed": "Kontijiet li jaqraw il-feed ta' kull katalgu"
     },
     "nplurals=2; plural=(n != 1);"
 )

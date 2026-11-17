@@ -728,7 +728,16 @@
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister zawiera silnik, którego potrzebuje OpenCatalogi.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi wymaga OpenRegister %1$s lub nowszego. W zainstalowanym OpenRegister brakuje %2$s, dlatego OpenCatalogi zamiast swoich stron pokazuje komunikat. Zaktualizuj OpenRegister.",
         "OpenCatalogi cannot start": "Nie można uruchomić OpenCatalogi",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi wymaga OpenRegister %1$s lub nowszego. Poproś administratora o aktualizację OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi wymaga OpenRegister %1$s lub nowszego. Poproś administratora o aktualizację OpenRegister.",
+        "Feed consumers": "Odbiorcy kanału",
+        "Contact": "Kontakt",
+        "Generate key": "Wygeneruj klucz",
+        "Revoke": "Unieważnij",
+        "Disable": "Wyłącz",
+        "Last used": "Ostatnio użyty",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ten klucz jest wyświetlany tylko raz. Skopiuj go teraz: nie będzie można go ponownie wyświetlić.",
+        "No feed consumers yet.": "Brak jeszcze odbiorców kanału.",
+        "Accounts that read every catalogue's feed": "Konta, które czytają kanał każdego katalogu"
     },
     "plurals": {}
 }

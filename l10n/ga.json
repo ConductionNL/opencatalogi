@@ -728,7 +728,16 @@
         "OpenRegister carries the engine OpenCatalogi needs.": "Tá an t-inneall atá de dhíth ar OpenCatalogi in OpenRegister.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "Teastaíonn OpenRegister %1$s nó níos nuaí ó OpenCatalogi. Tá %2$s in easnamh ar an OpenRegister suiteáilte, mar sin taispeánann OpenCatalogi fógra in ionad a leathanach. Nuashonraigh OpenRegister.",
         "OpenCatalogi cannot start": "Ní féidir OpenCatalogi a thosú",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "Teastaíonn OpenRegister %1$s nó níos nuaí ó OpenCatalogi. Iarr ar do riarthóir OpenRegister a nuashonrú."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "Teastaíonn OpenRegister %1$s nó níos nuaí ó OpenCatalogi. Iarr ar do riarthóir OpenRegister a nuashonrú.",
+        "Feed consumers": "Tomhaltóirí fotha",
+        "Contact": "Teagmháil",
+        "Generate key": "Gin eochair",
+        "Revoke": "Cúlghair",
+        "Disable": "Díchumasaigh",
+        "Last used": "Úsáidte go deireanach",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ní thaispeántar an eochair seo ach uair amháin. Cóipeáil anois í: ní féidir í a thaispeáint arís.",
+        "No feed consumers yet.": "Níl aon tomhaltóirí fotha fós.",
+        "Accounts that read every catalogue's feed": "Cuntais a léann fotha gach catalóige"
     },
     "plurals": {}
 }

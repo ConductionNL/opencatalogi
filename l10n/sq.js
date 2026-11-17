@@ -729,7 +729,16 @@ OC.L10N.register(
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister përmban motorin që i nevojitet OpenCatalogi.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi kërkon OpenRegister %1$s ose më të ri. Në OpenRegister e instaluar mungon %2$s, ndaj OpenCatalogi shfaq një njoftim në vend të faqeve të tij. Përditësoni OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi nuk mund të niset",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi kërkon OpenRegister %1$s ose më të ri. Kërkojini administratorit të përditësojë OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi kërkon OpenRegister %1$s ose më të ri. Kërkojini administratorit të përditësojë OpenRegister.",
+        "Feed consumers": "Konsumatorët e furnizimit",
+        "Contact": "Kontakti",
+        "Generate key": "Krijo çelës",
+        "Revoke": "Revoko",
+        "Disable": "Çaktivizo",
+        "Last used": "Përdorur së fundi",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ky çelës shfaqet vetëm një herë. Kopjojeni tani: nuk mund të shfaqet përsëri.",
+        "No feed consumers yet.": "Ende nuk ka konsumatorë të furnizimit.",
+        "Accounts that read every catalogue's feed": "Llogaritë që lexojnë furnizimin e çdo katalogu"
     },
     "nplurals=2; plural=(n != 1);"
 )

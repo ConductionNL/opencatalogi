@@ -728,7 +728,16 @@
         "OpenRegister carries the engine OpenCatalogi needs.": "Το OpenRegister περιέχει τη μηχανή που χρειάζεται το OpenCatalogi.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "Το OpenCatalogi απαιτεί OpenRegister %1$s ή νεότερο. Στο εγκατεστημένο OpenRegister λείπει το %2$s, οπότε το OpenCatalogi εμφανίζει μια ειδοποίηση αντί για τις σελίδες του. Ενημερώστε το OpenRegister.",
         "OpenCatalogi cannot start": "Το OpenCatalogi δεν μπορεί να ξεκινήσει",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "Το OpenCatalogi απαιτεί OpenRegister %1$s ή νεότερο. Ζητήστε από τον διαχειριστή να ενημερώσει το OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "Το OpenCatalogi απαιτεί OpenRegister %1$s ή νεότερο. Ζητήστε από τον διαχειριστή να ενημερώσει το OpenRegister.",
+        "Feed consumers": "Καταναλωτές ροής",
+        "Contact": "Επικοινωνία",
+        "Generate key": "Δημιουργία κλειδιού",
+        "Revoke": "Ανάκληση",
+        "Disable": "Απενεργοποίηση",
+        "Last used": "Τελευταία χρήση",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Αυτό το κλειδί εμφανίζεται μία φορά. Αντιγράψτε το τώρα: δεν μπορεί να εμφανιστεί ξανά.",
+        "No feed consumers yet.": "Δεν υπάρχουν ακόμη καταναλωτές ροής.",
+        "Accounts that read every catalogue's feed": "Λογαριασμοί που διαβάζουν τη ροή κάθε καταλόγου"
     },
     "plurals": {}
 }

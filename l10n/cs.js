@@ -729,7 +729,16 @@ OC.L10N.register(
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister obsahuje jádro, které OpenCatalogi potřebuje.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi vyžaduje OpenRegister %1$s nebo novější. V nainstalovaném OpenRegister chybí %2$s, proto OpenCatalogi místo svých stránek zobrazuje upozornění. Aktualizujte OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi nelze spustit",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vyžaduje OpenRegister %1$s nebo novější. Požádejte správce o aktualizaci OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vyžaduje OpenRegister %1$s nebo novější. Požádejte správce o aktualizaci OpenRegister.",
+        "Feed consumers": "Odběratelé kanálu",
+        "Contact": "Kontakt",
+        "Generate key": "Vygenerovat klíč",
+        "Revoke": "Odvolat",
+        "Disable": "Zakázat",
+        "Last used": "Naposledy použito",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Tento klíč se zobrazí jen jednou. Zkopírujte si ho hned: znovu ho zobrazit nelze.",
+        "No feed consumers yet.": "Zatím žádní odběratelé kanálu.",
+        "Accounts that read every catalogue's feed": "Účty, které čtou kanál každého katalogu"
     },
     "nplurals=2; plural=(n != 1);"
 )

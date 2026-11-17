@@ -728,7 +728,16 @@
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister inniheldur vélina sem OpenCatalogi þarf.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi krefst OpenRegister %1$s eða nýrra. Í uppsettu OpenRegister vantar %2$s, svo OpenCatalogi sýnir tilkynningu í stað síðna sinna. Uppfærðu OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi getur ekki ræst",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi krefst OpenRegister %1$s eða nýrra. Biddu kerfisstjórann þinn að uppfæra OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi krefst OpenRegister %1$s eða nýrra. Biddu kerfisstjórann þinn að uppfæra OpenRegister.",
+        "Feed consumers": "Notendur straums",
+        "Contact": "Tengiliður",
+        "Generate key": "Búa til lykil",
+        "Revoke": "Afturkalla",
+        "Disable": "Óvirkja",
+        "Last used": "Síðast notað",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Þessi lykill er aðeins sýndur einu sinni. Afritaðu hann núna: ekki er hægt að sýna hann aftur.",
+        "No feed consumers yet.": "Engir notendur straums enn.",
+        "Accounts that read every catalogue's feed": "Aðgangar sem lesa straum hverrar skrár"
     },
     "plurals": {}
 }
