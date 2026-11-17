@@ -1522,6 +1522,35 @@ class SettingsService implements SettingsServiceInterface {
 	}//end withSourceTracking()
 
 	/**
+	 * One schema of the shipped register, as it is imported: the base register with every fragment merged.
+	 *
+	 * Read from the app's own files, so a caller that publishes a declaration
+	 * (the publication lifecycle table) never answers from a copy.
+	 *
+	 * @param string $settingsDir The app's lib/Settings directory.
+	 * @param string $slug        The schema key under components.schemas.
+	 *
+	 * @return array<string, mixed> The merged schema, empty when the register or the schema is missing.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-the-publication-declares-one-lifecycle-with-named-transitions-req-plc-001
+	 */
+	public static function shippedSchema(string $settingsDir, string $slug): array {
+		$raw = @file_get_contents($settingsDir . '/publication_register.json');
+		$base = json_decode((string)$raw, true);
+		if (is_array($base) === false) {
+			return [];
+		}
+
+		$merged = self::mergeRegisterFragments(data: $base, fragmentDir: $settingsDir . '/register.d');
+		$schema = ($merged['components']['schemas'][$slug] ?? []);
+		if (is_array($schema) === false) {
+			return [];
+		}
+
+		return $schema;
+	}//end shippedSchema()
+
+	/**
 	 * Deep-merge a register fragment onto the base config (ADR-037).
 	 *
 	 * Associative arrays (OpenAPI objects like `components.schemas`, `paths`) are

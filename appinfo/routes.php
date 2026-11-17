@@ -128,6 +128,9 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'depublication#acknowledgeWithdrawal', 'url' => '/api/publications/depublish/acknowledge', 'verb' => 'POST'],
 		// Publish now, withdraw with a reason, publish again, withdraw one document
 		// (publications-publish-and-withdraw-action, REQ-PPW-001..004).
+		// The publication lifecycle (publication-lifecycle-on-or REQ-PLC-001): literal
+		// paths, declared before every /api/{catalogSlug}/{id} route so they are not read as an id.
+		['name' => 'publicationLifecycle#index', 'url' => '/api/publications/lifecycle', 'verb' => 'GET'],
 		['name' => 'publicationState#visibility', 'url' => '/api/publications/{id}/visibility', 'verb' => 'GET'],
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
