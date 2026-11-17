@@ -38,6 +38,7 @@ use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
+use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
@@ -45,6 +46,7 @@ use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Http\DcatNegotiation;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
 use OCA\OpenRegister\Kernel\Contracts\RenderSelection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -108,6 +110,7 @@ class PublicationsController extends Controller {
 	 * @param IAppConfig|null $appConfig App config for CORS allowlist (optional)
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
+	 * @param PublishedTableServiceInterface|null $tables The published tables listed on the publication answer (REQ-ODT-003); null lists none.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -125,6 +128,7 @@ class PublicationsController extends Controller {
 		private readonly ?IAppConfig $appConfig = null,
 		private readonly CorsSettings $cors = new CorsSettings(),
 		private readonly ?AppliedFilters $appliedFilters = null,
+		private readonly ?PublishedTableServiceInterface $tables = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -1301,6 +1305,37 @@ class PublicationsController extends Controller {
 	}//end inCatalogScope()
 
 	/**
+	 * A rendered publication with its public and officer pages computed now.
+	 *
+	 * The stored values were computed when it was created; a setting changed
+	 * since then shows here at once (REQ-PTS-001). Only an object of the
+	 * publication schema carries them. When they cannot be computed the stored
+	 * values are answered.
+	 *
+	 * @param array<string, mixed> $result The rendered publication.
+	 * @param object               $object The publication entity.
+	 *
+	 * @return array<string, mixed> The publication.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	private function withFreshLinks(array $result, object $object): array {
+		$schema = (string)($this->appConfig?->getValueString('opencatalogi', 'publication_schema', '') ?? '');
+		if ($schema === '' || (string)$object->getSchema() !== $schema) {
+			return $result;
+		}
+
+		try {
+			$links = $this->container->get(PublicationLinks::class)->for(uuid: (string)$object->getUuid(), schema: $schema);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[PublicationsController::show] The publication pages could not be computed: ' . $e->getMessage());
+			return $result;
+		}
+
+		return array_merge($result, $links);
+	}//end withFreshLinks()
+
+	/**
 	 * Render a publication with the sanitised extend list and answer it as JSON or schema.org JSON-LD.
 	 *
 	 * A catalogue that opted in shows what was withheld and why
@@ -1324,6 +1359,10 @@ class PublicationsController extends Controller {
 		if ($this->wantsSchemaOrg() === true) {
 			$response = $this->schemaOrgResponse(read: $read, result: $result);
 		} else {
+			if (is_array($result) === true) {
+				$result = $this->withFreshLinks(result: $result, object: $found->object);
+			}
+
 			if (($read->catalog['showWithheld'] ?? false) === true && is_array($result) === true) {
 				$result = $this->container->get(WithheldFromPublicationInterface::class)->addForCatalog(
 					response: $result,
@@ -1332,6 +1371,7 @@ class PublicationsController extends Controller {
 				);
 			}
 
+			$result   = $this->withTables(result: $result, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 			if (is_array($result) === true) {
 				$result = $this->withCommentPeriod(publication: $result);
 			}
@@ -1344,6 +1384,38 @@ class PublicationsController extends Controller {
 
 		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 	}//end renderedPublication()
+
+	/**
+	 * Add the publication's published tables, with their rows and dictionary URLs (REQ-ODT-003).
+	 *
+	 * A publication without tables, or a failing lookup, answers as before.
+	 *
+	 * @param mixed  $result        The rendered publication.
+	 * @param string $publicationId The publication UUID.
+	 * @param string $catalogSlug   The catalogue slug from the URL.
+	 *
+	 * @return mixed The publication, with `tables` when it has any.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	private function withTables(mixed $result, string $publicationId, string $catalogSlug): mixed {
+		if (is_array($result) === false || $this->tables === null) {
+			return $result;
+		}
+
+		try {
+			$tables = $this->tables->tablesOf(publicationId: $publicationId, catalogSlug: $catalogSlug);
+		} catch (\Throwable $e) {
+			$this->logger->debug('[PublicationsController::show] Could not list the published tables', ['id' => $publicationId, 'error' => $e->getMessage()]);
+			return $result;
+		}
+
+		if ($tables !== []) {
+			$result['tables'] = $tables;
+		}
+
+		return $result;
+	}//end withTables()
 
 	/**
 	 * The publication with the state of its comment period (REQ-PDP-003).

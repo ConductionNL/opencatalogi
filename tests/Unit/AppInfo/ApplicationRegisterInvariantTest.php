@@ -286,6 +286,29 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	}//end testRegisterCallsEveryComponentRegistrar()
 
 	/**
+	 * The listener that writes a publication's public and officer pages runs on every create (REQ-PTS-001).
+	 *
+	 * @return void
+	 */
+	public function testThePublicationLinksListenerIsRegistered(): void {
+		$pairs   = [];
+		$context = $this->createMock(\OCP\AppFramework\Bootstrap\IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$pairs): void {
+				$pairs[] = [$event, $listener];
+			}
+		);
+
+		(new \OCA\OpenCatalogi\Listener\ListenerRegistrar())->register($context);
+
+		$this->assertContains(
+			['OCA\OpenRegister\Event\ObjectCreatingEvent', \OCA\OpenCatalogi\Listener\PublicationLinksListener::class],
+			$pairs
+		);
+		$this->assertStringContainsString('(new ListenerRegistrar())->register($context);', $this->methodBody($this->source(), 'public function register('));
+	}//end testThePublicationLinksListenerIsRegistered()
+
+	/**
 	 * Application::register() subscribes the DiWoo completeness listener to both pre-save events.
 	 *
 	 * Without it on ObjectCreatingEvent, a new Woo publication goes public with its

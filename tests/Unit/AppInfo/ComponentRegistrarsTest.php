@@ -35,6 +35,7 @@ use OCA\OpenCatalogi\Listener\CatalogAccessListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
 use OCA\OpenCatalogi\Listener\CatalogScopePendingListener;
+use OCA\OpenCatalogi\Listener\CompletenessListener;
 use OCA\OpenCatalogi\Listener\DiwooCompletenessListener;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
@@ -43,6 +44,7 @@ use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
+use OCA\OpenCatalogi\Listener\PublicationLinksListener;
 use OCA\OpenCatalogi\Listener\TermRollListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Listener\WooReadinessTriggerListener;
@@ -138,6 +140,10 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectCreatingEvent', PlainSummaryCheck::class],
 				[$e . 'ObjectUpdatingEvent', PlainSummaryCheck::class],
 				[$e . 'TaskTerminalEvent', BatchReviewTaskListener::class],
+				[$e . 'ObjectCreatingEvent', CompletenessListener::class],
+				[$e . 'ObjectUpdatingEvent', CompletenessListener::class],
+				[$e . 'ObjectCreatingEvent', PublicationLinksListener::class],
+				[$e . 'ObjectUpdatingEvent', PublicationLinksListener::class],
 				[$e . 'RegisterCreatedEvent', CatalogScopePendingListener::class],
 				[$e . 'RegisterUpdatedEvent', CatalogScopePendingListener::class],
 				[$e . 'ToolRegistrationEvent', ToolRegistrationListener::class],

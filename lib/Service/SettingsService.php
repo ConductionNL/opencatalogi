@@ -288,6 +288,8 @@ class SettingsService implements SettingsServiceInterface {
 		'channel_sources' => '{}',
 		'public_api_cache_seconds' => '60',
 		'publication_languages' => '["nl","en"]',
+		'publication_url_template' => '',
+		'publication_url_catalog' => 'publication',
 		'cors_allowed_origins' => '*',
 		'search_indexing' => 'allowed',
 	];
@@ -315,6 +317,8 @@ class SettingsService implements SettingsServiceInterface {
 		'channel_sources',
 		'public_api_cache_seconds',
 		'publication_languages',
+		'publication_url_template',
+		'publication_url_catalog',
 		'cors_allowed_origins',
 		'search_indexing',
 	];

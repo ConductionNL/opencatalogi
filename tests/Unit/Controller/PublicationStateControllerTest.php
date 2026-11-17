@@ -24,6 +24,7 @@ use OCA\OpenCatalogi\Controller\PublicationStateController;
 use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Service\Publication\CompletenessSweepService;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
@@ -72,6 +73,9 @@ class PublicationStateControllerTest extends TestCase {
 	/** @var string|null The schema whose save throws, null when every save succeeds. */
 	private ?string $failingSchema = null;
 
+	/** The completeness re-evaluation, null when the container holds none. */
+	private (CompletenessSweepService&MockObject)|null $sweeps = null;
+
 	private const GOLDEN = __DIR__ . '/fixtures/publication-withdraw-depublication-golden.json';
 
 	/** @var array<int, string> Every channel a withdrawal was sent to. */
@@ -108,6 +112,20 @@ class PublicationStateControllerTest extends TestCase {
 				$this->published[] = $file;
 				return new \stdClass();
 			}
+
+			/** @var array<int, object> The metadata changes written. */
+			public array $metadata = [];
+
+			public ?\Throwable $metadataFailure = null;
+
+			public function changeFileMetadata(object $change): object {
+				if ($this->metadataFailure !== null) {
+					throw $this->metadataFailure;
+				}
+
+				$this->metadata[] = $change;
+				return new \stdClass();
+			}
 		};
 
 		$this->fileMapper = new class {
@@ -134,8 +152,15 @@ class PublicationStateControllerTest extends TestCase {
 		};
 
 		$container = $this->createMock(ContainerInterface::class);
+		$container->method('has')->willReturnCallback(
+			fn (string $id): bool => $id === CompletenessSweepService::class && $this->sweeps !== null
+		);
 		$container->method('get')->willReturnCallback(
 			function (string $id) use ($config) {
+				if ($id === CompletenessSweepService::class && $this->sweeps !== null) {
+					return $this->sweeps;
+				}
+
 				if ($id === IAppConfig::class) {
 					return $config;
 				}
@@ -607,6 +632,71 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertLessThanOrEqual($after, $window->depublished);
 		$this->assertSame('Bevat een woonadres', $this->saves[0]['object']['reason']);
 		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
+		$this->assertCount(1, $this->fileService->metadata);
+		$this->assertSame(4711, $this->fileService->metadata[0]->fileId);
+		$this->assertSame(['withdrawn-reason:Bevat een woonadres', 'withdrawn-by:redacteur'], $this->fileService->metadata[0]->labels);
+		$this->assertNull($this->fileService->metadata[0]->description);
+		$this->assertNull($this->fileService->metadata[0]->category);
+	}
+
+	/** REQ-ATT-103: the publisher's own labels stay, and an earlier withdrawal's pair is replaced. */
+	public function testAWithdrawalKeepsThePublishersLabelsAndReplacesAnEarlierOne(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Bevat een BSN']);
+		$this->fileMapper->records[4711] = $this->labelledFile(['bijlage', 'withdrawn-reason:Oud', 'withdrawn-by:iemand', 'besluit']);
+
+		$response = $this->controller->withdrawFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus(), json_encode($response->getData()));
+		$this->assertSame(
+			['bijlage', 'besluit', 'withdrawn-reason:Bevat een BSN', 'withdrawn-by:redacteur'],
+			$this->fileService->metadata[0]->labels
+		);
+	}
+
+	/** REQ-ATT-103: when the reason cannot be kept on the file the withdrawal is reported as failed and not recorded. */
+	public function testAWithdrawalThatCannotBeKeptOnTheFileIsReported(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Bevat een woonadres']);
+		$this->fileService->metadataFailure = new \RuntimeException('metadata store down');
+
+		$response = $this->controller->withdrawFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		$this->assertSame(['error' => 'file-withdrawal-not-recorded', 'message' => 'metadata store down'], $response->getData());
+		$this->assertCount(1, $this->fileMapper->windows);
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-PTS-002: withdrawing a file re-evaluates the publication's completeness, after the share is gone. */
+	public function testWithdrawingAFileReevaluatesTheCompleteness(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Bevat een woonadres']);
+		$this->sweeps = $this->createMock(CompletenessSweepService::class);
+		$this->sweeps->expects($this->once())->method('reevaluate')->willReturnCallback(
+			function (string $id): string {
+				$this->assertSame('p1', $id);
+				$this->assertSame([4711], $this->fileService->unpublished);
+				$this->assertCount(1, $this->fileMapper->windows);
+				return 'changed';
+			}
+		);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->withdrawFile('p1', '4711')->getStatus());
+	}
+
+	/** REQ-PTS-002: a refused file withdrawal re-evaluates nothing. */
+	public function testARefusedFileWithdrawalReevaluatesNothing(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(false);
+		$this->withParams(['reason' => 'Bevat een woonadres']);
+		$this->sweeps = $this->createMock(CompletenessSweepService::class);
+		$this->sweeps->expects($this->never())->method('reevaluate');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->withdrawFile('p1', '4711')->getStatus());
 	}
 
 	/** REQ-ATT-103: a file that never had a window gets one that only ends. */
@@ -692,6 +782,58 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertSame('Woonadres is weggelakt', $this->saves[0]['object']['reason']);
 		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
 		$this->assertSame(['id' => 'p1'], $this->saves[0]['object']['publication']);
+		$this->assertSame([], $this->fileService->metadata, 'a file without withdrawal labels is not written');
+	}
+
+	/** REQ-ATT-104: putting a file back removes its withdrawal labels and keeps the others. */
+	public function testRepublishClearsTheWithdrawalLabelsOnly(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->fileMapper->records[4711] = $this->labelledFile(['bijlage', 'withdrawn-reason:Bevat een woonadres', 'withdrawn-by:redacteur']);
+		$this->withParams(['reason' => 'Woonadres is weggelakt']);
+
+		$response = $this->controller->republishFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus(), json_encode($response->getData()));
+		$this->assertCount(1, $this->fileService->metadata);
+		$this->assertSame(['bijlage'], $this->fileService->metadata[0]->labels);
+	}
+
+	/** REQ-ATT-104: when the labels cannot be cleared the put-back is reported and not recorded. */
+	public function testARepublishThatCannotClearTheLabelsIsReported(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->fileMapper->records[4711] = $this->labelledFile(['withdrawn-reason:Bevat een woonadres']);
+		$this->fileService->metadataFailure = new \RuntimeException('metadata store down');
+		$this->withParams(['reason' => 'Woonadres is weggelakt']);
+
+		$response = $this->controller->republishFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		$this->assertSame('file-withdrawal-not-cleared', $response->getData()['error']);
+		$this->assertSame([], $this->saves);
+	}
+
+	/**
+	 * A file metadata row with a window start and these labels.
+	 *
+	 * @param array<string> $labels The labels.
+	 *
+	 * @return object The row.
+	 */
+	private function labelledFile(array $labels): object {
+		return new class($labels) {
+			public function __construct(private array $labels) {
+			}
+
+			public function getPublished(): ?\DateTime {
+				return null;
+			}
+
+			public function getLabels(): ?array {
+				return $this->labels;
+			}
+		};
 	}
 
 	/** REQ-ATT-104: without a reason nothing is shared or reopened. */

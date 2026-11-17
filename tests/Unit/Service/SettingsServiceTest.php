@@ -2565,6 +2565,11 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => '-5'])['public_api_cache_seconds']);
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => 'soon'])['public_api_cache_seconds']);
 		$this->assertSame('3600', $this->service->updateSettings(['public_api_cache_seconds' => 31536000])['public_api_cache_seconds']);
+		// REQ-PTS-001: the two settings that shape a publication's pages can be saved.
+		$this->assertSame(
+			['publication_url_template' => 'https://open.gemeente.nl/p/{id}', 'publication_url_catalog' => 'woo'],
+			$this->service->updateSettings(['publication_url_template' => 'https://open.gemeente.nl/p/{id}', 'publication_url_catalog' => 'woo'])
+		);
 
 	}//end testTheAdministratorSetsThePublicCacheTime()
 
