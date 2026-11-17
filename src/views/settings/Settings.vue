@@ -251,6 +251,10 @@
 
 				<WooIndexConnection />
 
+				<DonlHarvestStatus />
+
+				<DcatFeedValidation />
+
 				<PublishRightsLine />
 
 				<h3 class="woo-registration-heading">
@@ -294,6 +298,18 @@
 					</NcButton>
 				</div>
 			</div>
+		</NcSettingsSection>
+
+		<NcSettingsSection
+			id="section-instance-mode"
+			:name="t('opencatalogi', 'Instance mode')"
+			:description="
+				t(
+					'opencatalogi',
+					'In staging nothing leaves this instance: every hand-over to the national index, PLOOI and federation partners is kept as a dry run, and the public pages answer only to signed-in users.',
+				)
+			">
+			<InstanceModeSection />
 		</NcSettingsSection>
 
 		<NcSettingsSection
@@ -448,6 +464,70 @@
 						</NcButton>
 					</div>
 				</div>
+
+				<!-- Websites that may call the public API from a browser (REQ-SCO-003) -->
+				<div class="option-section" data-testid="cors-allowed-origins">
+					<NcTextArea
+						v-model="corsOrigins"
+						:label="t('opencatalogi', 'Websites that may call the public API')"
+						:disabled="savingCors"
+						rows="4" />
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'One website per line, as scheme and host with an optional port and no path, for example https://www.example.nl. A browser on one of these websites may call the search and the other public endpoints. * allows every website.',
+							)
+						}}
+					</p>
+					<NcNoteCard v-if="corsError" type="error">
+						{{ corsError }}
+					</NcNoteCard>
+					<div class="button-container">
+						<NcButton
+							variant="secondary"
+							:disabled="savingCors"
+							@click="saveCorsOrigins">
+							<template #icon>
+								<NcLoadingIcon v-if="savingCors" :size="20" />
+								<Save v-else :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Save websites') }}
+						</NcButton>
+					</div>
+				</div>
+
+				<!-- Search engine indexing (REQ-WAB-003) -->
+				<div class="option-section" data-testid="search-indexing">
+					<NcCheckboxRadioSwitch
+						v-model="searchIndexingBlocked"
+						:disabled="savingSearchIndexing">
+						{{ t('opencatalogi', 'Keep this install out of search engines') }}
+					</NcCheckboxRadioSwitch>
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'For an acceptance or test install. Every page answers with noindex and robots.txt disallows everything. The public side is still served.',
+							)
+						}}
+					</p>
+					<NcNoteCard v-if="searchIndexingError" type="error">
+						{{ searchIndexingError }}
+					</NcNoteCard>
+					<div class="button-container">
+						<NcButton
+							variant="secondary"
+							:disabled="savingSearchIndexing"
+							@click="saveSearchIndexing">
+							<template #icon>
+								<NcLoadingIcon v-if="savingSearchIndexing" :size="20" />
+								<Save v-else :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Save search indexing') }}
+						</NcButton>
+					</div>
+				</div>
 			</div>
 
 			<!-- Loading State -->
@@ -566,6 +646,7 @@ import {
 	NcNoteCard,
 	NcSelect,
 	NcSettingsSection,
+	NcTextArea,
 	NcTextField,
 } from '@nextcloud/vue'
 import { defineComponent } from 'vue'
@@ -576,11 +657,16 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import DcatFeedValidation from './DcatFeedValidation.vue'
+import DonlHarvestStatus from './DonlHarvestStatus.vue'
+import InstanceModeSection from './InstanceModeSection.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
+	corsOriginLines,
+	corsSaveRefusal,
 	directorySyncCounts,
 	directorySyncFailed,
 	directorySyncFailure,
@@ -674,6 +760,7 @@ export default defineComponent({
 		NcSettingsSection,
 		NcNoteCard,
 		NcSelect,
+		NcTextArea,
 		NcTextField,
 		NcButton,
 		NcLoadingIcon,
@@ -686,8 +773,11 @@ export default defineComponent({
 		CloseCircle,
 		MinusCircle,
 		InformationOutline,
+		InstanceModeSection,
 		PublishRightsLine,
 		WooIndexConnection,
+		DcatFeedValidation,
+		DonlHarvestStatus,
 		PubliccodeHarvest,
 	},
 
@@ -749,6 +839,14 @@ export default defineComponent({
 			publicationLanguages: ['nl', 'en'],
 			savingPublicationLanguages: false,
 			publicationLanguagesError: '',
+			// Websites that may call the public API, one per line (REQ-SCO-003).
+			corsOrigins: '*',
+			savingCors: false,
+			corsError: '',
+			// Search engine indexing switch (REQ-WAB-003).
+			searchIndexingBlocked: false,
+			savingSearchIndexing: false,
+			searchIndexingError: '',
 			syncingDirectories: false,
 			loadingSyncOptions: true,
 			savingSyncOptions: false,
@@ -921,12 +1019,13 @@ export default defineComponent({
 		},
 
 		/**
-		 * Take the channel sources and the public cache time from the stored
-		 * configuration.
+		 * Take the channel sources, the public cache time and the websites that
+		 * may call the public API from the stored configuration.
 		 *
 		 * @param {object|undefined} configuration - The stored configuration
 		 * @return {void}
 		 * @spec openspec/changes/publication-translations/design.md
+		 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
 		 */
 		applyStoredConfiguration(configuration) {
 			this.channelSources = {
@@ -947,6 +1046,13 @@ export default defineComponent({
 
 			this.publicationLanguages = publicationLanguagesFrom(
 				configuration && configuration.publication_languages,
+			)
+
+			if (configuration && configuration.cors_allowed_origins !== undefined) {
+				this.corsOrigins = corsOriginLines(configuration.cors_allowed_origins)
+			}
+			this.showStoredSearchIndexing(
+				configuration && configuration.search_indexing,
 			)
 		},
 
@@ -1547,6 +1653,32 @@ export default defineComponent({
 		},
 
 		/**
+		 * Saves the websites that may call the public API from a browser. The
+		 * server refuses a line that is not a bare origin and names it; what it
+		 * stored is shown back.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+		 */
+		async saveCorsOrigins() {
+			this.savingCors = true
+			this.corsError = ''
+
+			try {
+				const response = await putSettings({ cors_allowed_origins: this.corsOrigins })
+				const stored = response && response.data && response.data.cors_allowed_origins
+				if (stored !== undefined) {
+					this.corsOrigins = corsOriginLines(stored)
+				}
+			} catch (error) {
+				this.corsError = corsSaveRefusal(error)
+					|| this.t('opencatalogi', 'The websites could not be saved. Try again.')
+			} finally {
+				this.savingCors = false
+			}
+		},
+
+		/**
 		 * Show the cache time the server stored, when it sent one back.
 		 *
 		 * @param {object} response The save response.
@@ -1556,6 +1688,47 @@ export default defineComponent({
 			const stored = response.data && response.data.public_api_cache_seconds
 			if (stored !== undefined) {
 				this.publicCacheSeconds = String(stored)
+			}
+		},
+
+		/**
+		 * Saves whether this install is kept out of search engines. The
+		 * server stores `blocked` or `allowed`, which is shown back.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+		 */
+		async saveSearchIndexing() {
+			this.savingSearchIndexing = true
+			this.searchIndexingError = ''
+
+			try {
+				const response = await putSettings({
+					search_indexing: this.searchIndexingBlocked ? 'blocked' : 'allowed',
+				})
+				this.showStoredSearchIndexing(
+					response.data && response.data.search_indexing,
+				)
+			} catch {
+				this.searchIndexingError = this.t(
+					'opencatalogi',
+					'The search indexing setting could not be saved. Try again.',
+				)
+			} finally {
+				this.savingSearchIndexing = false
+			}
+		},
+
+		/**
+		 * Shows the search indexing value the server stored, when it sent one.
+		 *
+		 * @param {string|undefined} stored `blocked`, `allowed`, or undefined when absent.
+		 * @return {void}
+		 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+		 */
+		showStoredSearchIndexing(stored) {
+			if (stored !== undefined) {
+				this.searchIndexingBlocked = stored === 'blocked'
 			}
 		},
 

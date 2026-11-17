@@ -4751,6 +4751,27 @@ class DirectoryServiceTest extends TestCase {
 	}
 
 	/**
+	 * A peer listing that names no directory is synced.
+	 *
+	 * @return void
+	 */
+	public function testAListingWithoutADirectoryIsSyncable(): void {
+		$this->assertTrue($this->invokePrivateMethod('isSyncableListing', [['id' => 'l-1']]));
+	}
+
+	/**
+	 * A listing without a title takes the name from its metadata.
+	 *
+	 * @return void
+	 */
+	public function testAListingWithoutATitleTakesItsMetadataName(): void {
+		$listing = $this->invokePrivateMethod('withListingIdentity', [['id' => 'l-1', '@self' => ['name' => 'Catalogus A']]]);
+
+		$this->assertSame('Catalogus A', $listing['title']);
+		$this->assertSame('l-1', $listing['catalog']);
+	}
+
+	/**
 	 * The attachments of a remote publication come from the peer's federation
 	 * endpoint, without further aggregation, keep the peer's download URL and
 	 * say which instance they came from; the loopback entry is never called.

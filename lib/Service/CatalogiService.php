@@ -36,6 +36,7 @@ use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Common\Exception\NotFoundException;
 use OCP\IAppConfig;
@@ -128,6 +129,13 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @var array<string> List of available schemas from catalogs
 	 */
 	private array $availableSchemas = [];
+
+	/**
+	 * Whether the last getCatalogFilters() search found a catalogue; null when no scope is configured.
+	 *
+	 * @var boolean|null
+	 */
+	private ?bool $catalogFound = null;
 
 	/**
 	 * Cache instance for storing catalog data.
@@ -519,6 +527,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	public function getCatalogFilters(null|string|int $catalogId = null): array {
 		$resolver = new CatalogScopeResolver(config: $this->config, logger: $this->logger);
 		$scope = $resolver->configuredScope();
+		$this->catalogFound = null;
 		if ($scope === null) {
 			return $this->storeCatalogFilters(registers: [], schemas: []);
 		}
@@ -526,6 +535,7 @@ class CatalogiService implements CatalogiServiceInterface {
 		// Get catalogs using searchObjects (handles deleted field correctly).
 		$query = $resolver->searchQuery(scope: $scope, catalogId: $catalogId);
 		$catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
+		$this->catalogFound = (empty($catalogs) === false);
 
 		// SCH-PFTS-CAT-002 (WOO-581): this scope serves `#[PublicPage]`
 		// `/api/catalogi/{id}`, which searched it with `_rbac: true` unguarded, so an
@@ -1002,6 +1012,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+	 * @spec openspec/changes/catalogs/tasks.md#task-4
 	 */
 	public function index(null|string|int $catalogId = null): JSONResponse {
 		// Get config and fetch objects.
@@ -1009,6 +1020,11 @@ class CatalogiService implements CatalogiServiceInterface {
 
 		// Get the context for the catalog.
 		$context = $this->getCatalogFilters(catalogId: $catalogId);
+
+		// CAT-002: a named catalogue that does not exist is a 404 with a static message.
+		if ($catalogId !== null && $this->catalogFound === false) {
+			return $this->catalogNotFound();
+		}
 
 		// FAIL CLOSED on an empty schema or register scope (WOO-581): nothing
 		// configured, or every schema dropped by the read-rule guard. Without this the
@@ -1035,6 +1051,19 @@ class CatalogiService implements CatalogiServiceInterface {
 		// Return paginated results.
 		return new JSONResponse($result);
 	}//end index()
+
+	/**
+	 * The answer for a catalogue id that matches no catalogue.
+	 *
+	 * The message is static: no id, query or internal detail is echoed back.
+	 *
+	 * @return JSONResponse A 404 with a `message` field.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 */
+	private function catalogNotFound(): JSONResponse {
+		return new JSONResponse(['message' => 'Catalog not found'], Http::STATUS_NOT_FOUND);
+	}//end catalogNotFound()
 
 	/**
 	 * Build the search query for index() from the request config and the catalogue scope.

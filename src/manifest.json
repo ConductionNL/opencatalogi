@@ -763,6 +763,8 @@
 							"include": [
 								"title",
 								"summary",
+								"plainSummary",
+								"plainSummaryLevel",
 								"description",
 								"publicationDate",
 								"depublicationDate",
@@ -925,6 +927,12 @@
 						"type": "publication-languages",
 						"title": "Languages",
 						"icon": "Translate"
+					},
+					{
+						"id": "pub-plain-summary",
+						"type": "plain-summary-draft",
+						"title": "Plain language summary",
+						"icon": "FileDocument"
 					}
 				],
 				"layout": [
@@ -1017,18 +1025,26 @@
 						"gridHeight": 3
 					},
 					{
-						"id": "13",
-						"widgetId": "pub-calendar",
+						"id": "14",
+						"widgetId": "pub-plain-summary",
 						"gridX": 0,
 						"gridY": 29,
 						"gridWidth": 12,
 						"gridHeight": 4
 					},
 					{
-						"id": "14",
-						"widgetId": "pub-languages",
+						"id": "13",
+						"widgetId": "pub-calendar",
 						"gridX": 0,
 						"gridY": 33,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
+						"id": "15",
+						"widgetId": "pub-languages",
+						"gridX": 0,
+						"gridY": 37,
 						"gridWidth": 12,
 						"gridHeight": 4
 					}

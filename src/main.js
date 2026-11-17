@@ -28,6 +28,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
+import PlainSummaryDraftWidget from './components/widgets/PlainSummaryDraftWidget.vue'
 import PublicationAttachmentsWidget from './components/widgets/PublicationAttachmentsWidget.vue'
 import PublicationLanguagesWidget from './components/widgets/PublicationLanguagesWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
@@ -108,6 +109,16 @@ registerDashboardWidget('publication-languages', {
 	defaultContent: {},
 	displayName: 'Languages',
 	icon: 'Translate',
+	surfaces: ['detail-page'],
+})
+// Draft a plain language summary with the text assistant and accept it
+// (publication-plain-language-and-translation, REQ-PPL-002).
+registerDashboardWidget('plain-summary-draft', {
+	renderer: PlainSummaryDraftWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Plain language summary',
+	icon: 'FileDocument',
 	surfaces: ['detail-page'],
 })
 // The publication's attachments with Add attachment, which opens the app's

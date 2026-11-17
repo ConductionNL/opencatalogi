@@ -1,0 +1,51 @@
+{
+	"components": {
+		"schemas": {
+			"publication": {
+				"slug": "publication",
+				"version": "0.0.8",
+				"properties": {
+					"documentsoort": {
+						"type": "string",
+						"title": "Document type",
+						"description": "The kind of document, from the national list of document types. The national Woo index reads it. Stored as the resource address of the list member.",
+						"facetable": true
+					},
+					"fileDocumentsoorten": {
+						"type": "object",
+						"title": "Document type per file",
+						"description": "A different document type for one attached file, for example an annex to a decision. Keyed by the file id; each value is a member of the national list of document types.",
+						"additionalProperties": {
+							"type": "string"
+						}
+					},
+					"language": {
+						"type": "string",
+						"title": "Language",
+						"description": "The language the document is written in.",
+						"default": "nl",
+						"facetable": true
+					},
+					"creationDate": {
+						"type": "string",
+						"format": "date",
+						"title": "Creation date",
+						"description": "The day the document was made. This is not the day it was published."
+					},
+					"validFrom": {
+						"type": "string",
+						"format": "date",
+						"title": "Valid from",
+						"description": "The day the content takes legal effect. This can differ from the publication date."
+					},
+					"validUntil": {
+						"type": "string",
+						"format": "date",
+						"title": "Valid until",
+						"description": "The day the content loses legal effect. Leave it empty when it has no end."
+					}
+				}
+			}
+		}
+	}
+}

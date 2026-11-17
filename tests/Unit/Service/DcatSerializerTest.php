@@ -163,4 +163,24 @@ class DcatSerializerTest extends TestCase {
 		$this->assertStringContainsString('<dct:title xml:lang="en">Annual &quot;report&quot;</dct:title>', $xml);
 		$this->assertStringNotContainsString('@value', $xml);
 	}
+
+	public function testALanguageTaggedLiteralKeepsItsLanguageInEveryFormat(): void {
+		$document = [
+			'@context' => ['dcat' => 'http://www.w3.org/ns/dcat#', 'dct' => 'http://purl.org/dc/terms/'],
+			'@graph' => [
+				[
+					'@id' => 'https://host/api/woo/u1',
+					'@type' => 'dcat:Dataset',
+					'dct:abstract' => ['@value' => 'U kreeg "geen" vergunning & bezwaar.', '@language' => 'nl'],
+				],
+			],
+		];
+
+		$this->assertStringContainsString('dct:abstract "U kreeg \\"geen\\" vergunning & bezwaar."@nl', $this->serializer->toTurtle($document));
+		$this->assertStringContainsString(
+			'<dct:abstract xml:lang="nl">U kreeg &quot;geen&quot; vergunning &amp; bezwaar.</dct:abstract>',
+			$this->serializer->toRdfXml($document)
+		);
+		$this->assertStringContainsString('"@language": "nl"', $this->serializer->toJsonLd($document));
+	}
 }

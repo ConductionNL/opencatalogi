@@ -31,6 +31,9 @@ use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Service\CallerScope;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -117,7 +120,10 @@ class CatalogiController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 * @spec openspec/changes/catalogs/tasks.md#task-5
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->withListPreflightHeaders(response: new Response());
@@ -135,17 +141,22 @@ class CatalogiController extends Controller {
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
 	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
 		$this->negotiateVisitorLanguage(queryService: $this->queryService);
 
 		// Get catalog configuration from settings (resolved via OpenRegister; 503 if unconfigured).
+		// The 503 carries the CORS headers too, so a cross-origin caller can read it (CAT-001).
 		try {
 			$catalogConfig = $this->getCatalogConfiguration();
 		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
+			return $this->withListCorsHeaders(response: $this->registerConfigErrorResponse(e: $e));
 		}
 
 		// Retrieve all request parameters.
@@ -202,7 +213,11 @@ class CatalogiController extends Controller {
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/catalogs/tasks.md#task-4
 	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[NoAdminRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string|int $id): JSONResponse {
 		$this->negotiateVisitorLanguage(queryService: $this->queryService);

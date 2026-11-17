@@ -57,7 +57,9 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "60",
-                "publication_languages": "[\"nl\",\"en\"]"
+                "publication_languages": "[\"nl\",\"en\"]",
+                "cors_allowed_origins": "*",
+                "search_indexing": "allowed"
             }
         },
         "enabled": [],
@@ -127,7 +129,9 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "60",
-                "publication_languages": "[\"nl\",\"en\"]"
+                "publication_languages": "[\"nl\",\"en\"]",
+                "cors_allowed_origins": "*",
+                "search_indexing": "allowed"
             }
         },
         "enabled": [],
@@ -199,7 +203,9 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "0",
-                "publication_languages": "[\"nl\",\"en\"]"
+                "publication_languages": "[\"nl\",\"en\"]",
+                "cors_allowed_origins": "*",
+                "search_indexing": "allowed"
             }
         },
         "enabled": [],

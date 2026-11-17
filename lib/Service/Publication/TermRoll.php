@@ -34,6 +34,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\OpenCatalogi\Contract\TermRollInterface;
 use OCA\OpenRegister\Service\Flow\Timer\RollRule;
 use OCA\OpenRegister\Service\Flow\Timer\SlaCalculatorInterface;
 use OCP\App\IAppManager;
@@ -44,7 +45,7 @@ use Psr\Container\ContainerInterface;
  *
  * @spec openspec/specs/publication-comment-periods/spec.md#requirement-the-period-ends-on-a-working-day-req-pcp-002
  */
-class TermRoll {
+class TermRoll implements TermRollInterface {
 
 	/**
 	 * Cached OpenRegister SlaCalculator.

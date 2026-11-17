@@ -123,6 +123,8 @@ class SettingsWriteValuesTest extends TestCase {
 				'channel_sources',
 				'public_api_cache_seconds',
 				'publication_languages',
+				'cors_allowed_origins',
+				'search_indexing',
 			],
 			$writable
 		);
