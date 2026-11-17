@@ -724,7 +724,16 @@ OC.L10N.register(
         "Open catalog": "Åpne katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Opprett din første katalog. Den er beholderen publikasjonene dine skal ligge i. Velg registeret Publication og skjemaet Publication, slik at katalogen viser publikasjonene du legger til.",
         "Manage your publications and their status": "Administrer publikasjonene dine og statusen deres",
-        "Open at the source": "Åpne ved kilden"
+        "Open at the source": "Åpne ved kilden",
+        "Feed consumers": "Feedmottakere",
+        "Contact": "Kontakt",
+        "Generate key": "Lag nøkkel",
+        "Revoke": "Tilbakekall",
+        "Disable": "Deaktiver",
+        "Last used": "Sist brukt",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Denne nøkkelen vises bare én gang. Kopier den nå: den kan ikke vises igjen.",
+        "No feed consumers yet.": "Ingen feedmottakere ennå.",
+        "Accounts that read every catalogue's feed": "Kontoer som leser feeden til hver katalog"
     },
     "nplurals=2; plural=(n != 1);"
 )

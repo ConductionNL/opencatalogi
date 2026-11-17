@@ -110,12 +110,13 @@
 - **Acceptance criteria**:
   - [x] `CatalogiIndex.vue` uses `CnIndexPage` (or equivalent `@conduction/nextcloud-vue` list component) — no bespoke table. (verified: src/views/catalogi/CatalogiIndex.vue)
   - [ ] `CatalogModal.vue` uses `CnFormDialog` or `CnAdvancedFormDialog` for create/edit — no bespoke form component.
+    - Left open (17 Nov): the modal's register-dependent schema picker (options narrow to the chosen registers and drop the chosen ones) and its entity validation have no equivalent in CnFormDialog's field model, and the rewrite needs a browser check this build session does not have.
   - [ ] `ViewCatalogi.vue` uses `CnDetailPage` or `CnDetailCard` sections.
-  - [ ] `CatalogiWidget.vue` uses `CnWidgetWrapper` / `CnInfoWidget` or equivalent — no custom widget shell.
+  - [x] `CatalogiWidget.vue` uses `CnWidgetWrapper` / `CnInfoWidget` or equivalent — no custom widget shell. (verified: the ADR-049 CnDataTable list-widget with CnWidgetEmptyState for the empty case; no import from @nextcloud/vue left in the widget)
   - [x] All user-visible strings are wrapped in `t('opencatalogi', '...')`. No hardcoded Dutch or English strings in templates.
   - [ ] All components import from `@conduction/nextcloud-vue`, not `@nextcloud/vue`.
   - [x] Every `<NcFoo>` and `<CnFoo>` used in a template is imported AND listed in `components: {}`. (verified: every Nc*/Cn* tag in CatalogiIndex.vue, CatalogModal.vue, ViewCatalogi.vue and CatalogiWidget.vue is registered)
-  - [ ] SPDX header `<!-- SPDX-License-Identifier: EUPL-1.2 -->` present as first line of each `.vue` file.
+  - [x] SPDX header `<!-- SPDX-License-Identifier: EUPL-1.2 -->` present as first line of each `.vue` file. (verified: the first line of CatalogiIndex.vue, CatalogModal.vue, ViewCatalogi.vue and CatalogiWidget.vue; the copyright line follows it)
 
 ## Task 10: Seed data in publication_register.json
 
@@ -123,6 +124,7 @@
 - **Status**: todo
 - **Files**: `lib/Settings/publication_register.json`
 - **Acceptance criteria**:
+  - Left open (17 Nov): `publication_register.json` is imported on every install, so these five fictional government catalogs would appear in every production catalogue list and on the public `/api/catalogi`; the app keeps example data in the opt-in example sets (`lib/Settings/example-sets/`). Needs a decision on where the seed belongs before it is built.
   - [ ] 5 seed catalog objects are defined under `components.objects[]` using the `@self` envelope with `register: "publication"`, `schema: "catalog"`, and a unique `slug`.
   - [ ] Seed objects use realistic Dutch government values (see `design.md` for the full list).
   - [ ] Seed objects are loaded via `ConfigurationService::importFromApp()` on install; re-importing with `force: false` MUST NOT create duplicates (matched by slug).
@@ -136,6 +138,7 @@
   - [ ] `grep -rn 'findObject\|saveObject\|findObjects' lib/Service/CatalogiService.php` — every call has 3 positional args.
   - [x] `grep -rn 'getMessage()' lib/Controller/CatalogiController.php` returns no output (static error strings only).
   - [ ] `npm run check:l10n` reports zero MISSING and zero UNWRAPPED.
+    - Measured: zero MISSING and zero UNUSED; the 3 UNWRAPPED are `actionIconName="Delete"` in the delete dialogs, an icon name and not prose, so they stay unwrapped and this item stays open.
   - [x] `npm run find:unwrapped` — no prose-shaped literals remain outside `t()` in the catalog Vue components.
   - [ ] Catalog list and detail endpoints tested with a real browser `GET` and `OPTIONS` (curl or browser DevTools) against a running dev instance.
   - [ ] Tail Nextcloud logs during a catalog update — confirm no recursive listener lines appear.

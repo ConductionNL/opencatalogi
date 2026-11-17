@@ -132,6 +132,11 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationRelationsListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationRelationsListener::class);
 
+		// Document references (integration-publish-by-reference): refuse a URL
+		// that is not a public https address before OpenRegister stores it.
+		$context->registerEventListener(ObjectCreatingEvent::class, DocumentReferenceListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, DocumentReferenceListener::class);
+
 		// A Woo publication does not go public without its mandatory DiWoo metadata,
 		// and a document type is stored as its list member's URI (REQ-DWP-002, REQ-DWP-003).
 		$context->registerEventListener(ObjectCreatingEvent::class, DiwooCompletenessListener::class);
