@@ -24,6 +24,7 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [Federatie & Synchronisatie](./register-i18n.md) | Cross-organization catalogue synchronization with source configuration and directory sync | — |
 | [WOO Transparantie](./woo-transparency.md) | WOO/FOIA document queue, redaction workflow, weigeringsgronden, inventarislijst | [woo-transparency.md](./woo-transparency.md) |
 | [Woo compliance](./woo-compliance.md) | DiWoo sitemap index and pages per catalogue and information category, `robots.txt` for catalogues with `hasWooSitemap`, and where every DiWoo field comes from | [woo-compliance.md](./woo-compliance.md) |
+| [Agent tools (MCP)](./agent-tools.md) | Read-only MCP tools for AI assistants: publication, catalog and theme search/get derived from the register, plus catalog-scoped search and publication files; no write tool | [agent-tools.md](./agent-tools.md) |
 | [Meertalige content](./register-i18n.md) | Multi-language publications and catalogs (NL + EN minimum), EU SDG-compliant | [register-i18n.md](./register-i18n.md) |
 | [GEMMA ArchiMate Export](./org-archimate-export.md) | Export organization-enriched AMEFF XML for Archi/BiZZdesign/ADOIT with modules, gebruik, deelnames | [org-archimate-export.md](./org-archimate-export.md) |
 | [DCAT linked data and data.overheid.nl](./dcat-linked-data-and-donl.md) | Dataset IRIs answer Turtle and RDF/XML; the admin settings track whether data.overheid.nl harvests the feed | [dcat-linked-data-and-donl.md](./dcat-linked-data-and-donl.md) |

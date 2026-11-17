@@ -44,10 +44,12 @@ namespace OCA\OpenCatalogi\Service;
 use Exception;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Service\Publication\AgentToolAnswer;
 use OCA\OpenCatalogi\Service\Publication\AttachmentOrder;
 use OCA\OpenRegister\Exception\RegisterNotFoundException;
 use OCA\OpenRegister\Exception\SchemaNotFoundException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Mcp\Attribute\McpTool;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -1266,6 +1268,106 @@ class PublicationService implements PublicationServiceInterface {
 		}//end try
 
 	}//end attachments()
+
+	/**
+	 * Agent tool: search the publications inside one catalog.
+	 *
+	 * A catalog spans a set of registers, schemas and filters, so no schema
+	 * filter can express "inside catalog X"; this delegates to index(), which
+	 * resolves the catalog's scope and searches with OpenRegister RBAC on every
+	 * row. The catalog is required, so the tool never duplicates the derived
+	 * `opencatalogi.publication.search`.
+	 *
+	 * @param string  $catalog The catalog's id, uuid or slug.
+	 * @param string  $query   The full-text query.
+	 * @param integer $limit   How many publications to answer, 1 to 50.
+	 *
+	 * @return array<string, mixed> The publications and their total, or an `error` envelope.
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-catalog-scoped-search-survives-as-a-curated-service-tool-req-004
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AgentToolAnswer is a set of pure answer shapers.
+	 */
+	#[McpTool(
+		name: 'searchCatalogPublications',
+		description: 'Search publications inside one catalog. A catalog spans a set of registers and schemas, so this searches '
+			. 'across all of them; use it when the question names a catalog. The catalog is required. For a plain '
+			. 'publication search, use opencatalogi.publication.search.',
+		readOnlyHint: true,
+		destructiveHint: false,
+		idempotentHint: true,
+		scope: 'read',
+		subject: 'publication',
+		action: 'search',
+		reach: 'user',
+	)]
+	public function searchCatalogPublications(string $catalog, string $query, int $limit = 20): array {
+		$catalogId = AgentToolAnswer::text(value: $catalog);
+		if ($catalogId === null) {
+			return AgentToolAnswer::missingCatalog();
+		}
+
+		$text = AgentToolAnswer::text(value: $query);
+		if ($text === null) {
+			return AgentToolAnswer::missingArgument(name: 'query');
+		}
+
+		$refusal = AgentToolAnswer::limitRefusal(limit: $limit);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		try {
+			$response = $this->index(catalogId: $catalogId, customParams: AgentToolAnswer::searchParams(query: $text, limit: $limit));
+		} catch (\Throwable) {
+			return AgentToolAnswer::searchFailed();
+		}
+
+		return AgentToolAnswer::searchAnswer(catalog: $catalogId, query: $text, limit: $limit, response: $response);
+	}//end searchCatalogPublications()
+
+	/**
+	 * Agent tool: the Nextcloud file attachments stored on a publication.
+	 *
+	 * Delegates to attachments(), so the catalog-scope gate and the RBAC read
+	 * check on the publication both run before any file is listed. These are
+	 * the files in Nextcloud, not the document objects of a publication.
+	 *
+	 * @param string $id The publication's id or uuid.
+	 *
+	 * @return array<string, mixed> The files and their total, or an `error` envelope.
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-the-publication-file-attachment-list-survives-as-a-curated-service-tool-req-005
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AgentToolAnswer is a set of pure answer shapers.
+	 */
+	#[McpTool(
+		name: 'listPublicationFiles',
+		description: 'List the Nextcloud file attachments stored on one publication (name, type, size, download link). '
+			. 'These are files in Nextcloud, not structured document objects; a publication outside this instance\'s '
+			. 'catalogs, or one the caller may not read, answers not_found.',
+		readOnlyHint: true,
+		destructiveHint: false,
+		idempotentHint: true,
+		scope: 'read',
+		subject: 'publication',
+		action: 'listFiles',
+		reach: 'user',
+	)]
+	public function listPublicationFiles(string $id): array {
+		$publication = AgentToolAnswer::text(value: $id);
+		if ($publication === null) {
+			return AgentToolAnswer::missingArgument(name: 'id');
+		}
+
+		try {
+			$response = $this->attachments(id: $publication);
+		} catch (\Throwable) {
+			return AgentToolAnswer::filesFailed();
+		}
+
+		return AgentToolAnswer::filesAnswer(publication: $publication, response: $response);
+	}//end listPublicationFiles()
 
 	/**
 	 * The formatted files with the publication's public document references after them (REQ-PBR-002).
