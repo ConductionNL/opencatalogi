@@ -724,7 +724,16 @@ OC.L10N.register(
         "Open catalog": "Avaa luettelo",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Luo ensimmäinen luettelosi. Se on säiliö, johon julkaisusi tallentuvat. Valitse rekisteri Publication ja skeema Publication, jotta luettelo näyttää lisäämäsi julkaisut.",
         "Manage your publications and their status": "Hallitse julkaisujasi ja niiden tilaa",
-        "Open at the source": "Avaa lähteessä"
+        "Open at the source": "Avaa lähteessä",
+        "Feed consumers": "Syötteen käyttäjät",
+        "Contact": "Yhteystieto",
+        "Generate key": "Luo avain",
+        "Revoke": "Peru",
+        "Disable": "Poista käytöstä",
+        "Last used": "Viimeksi käytetty",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Tämä avain näytetään vain kerran. Kopioi se nyt: sitä ei voi näyttää uudelleen.",
+        "No feed consumers yet.": "Ei vielä syötteen käyttäjiä.",
+        "Accounts that read every catalogue's feed": "Tilit, jotka lukevat jokaisen luettelon syötettä"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Controller\CatalogiController;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
@@ -46,7 +47,6 @@ class CatalogiControllerTest extends TestCase {
 		$this->appManager = $this->createMock(IAppManager::class);
 
 		$this->controller = new CatalogiController(
-			'opencatalogi',
 			$this->request,
 			$this->catalogiService,
 			$this->config,
@@ -369,6 +369,125 @@ class CatalogiControllerTest extends TestCase {
 			'https://other.example',
 			$response->getHeaders()['Access-Control-Allow-Origin']
 		);
+	}
+
+	/**
+	 * A controller over this test's doubles with a language-negotiating query service.
+	 *
+	 * @param PublicationQueryServiceInterface $queryService The query service.
+	 *
+	 * @return CatalogiController The controller.
+	 */
+	private function controllerWithLanguage(PublicationQueryServiceInterface $queryService): CatalogiController {
+		return new CatalogiController(
+			request: $this->request,
+			catalogiService: $this->catalogiService,
+			config: $this->config,
+			registers: new OpenRegisterLookup($this->container, $this->appManager),
+			queryService: $queryService
+		);
+	}
+
+	/**
+	 * The catalogue list hands the visitor's language to OpenRegister before it
+	 * searches, and its answer names the language served (REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testIndexPassesTheVisitorsLanguageBeforeTheSearch(): void {
+		$order = [];
+		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$mockObjService->method('buildSearchQuery')->willReturn([]);
+		$mockObjService->method('searchObjectsPaginated')
+			->willReturnCallback(static function () use (&$order): array {
+				$order[] = 'search';
+				return ['results' => [], 'total' => 0];
+			});
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')
+			->willReturnCallback(
+				static function (string $id) use ($mockObjService) {
+					if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
+						return new class {
+							public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+								return '5';
+							}
+						};
+					}
+					return $mockObjService;
+				}
+			);
+		$this->request->method('getParams')->willReturn(['_lang' => 'en']);
+		$this->request->server = ['HTTP_ACCEPT_LANGUAGE' => 'de'];
+
+		$queryService = $this->createMock(PublicationQueryServiceInterface::class);
+		$queryService->expects($this->once())
+			->method('applyVisitorLanguage')
+			->with(['_lang' => 'en'], 'de')
+			->willReturnCallback(static function () use (&$order): string {
+				$order[] = 'language';
+				return 'en';
+			});
+		$queryService->method('languageHeaders')
+			->willReturn(['Content-Language' => 'en', 'X-Source-Language' => 'nl']);
+
+		$response = $this->controllerWithLanguage(queryService: $queryService)->index();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['language', 'search'], $order);
+		$this->assertSame('en', $response->getHeaders()['Content-Language']);
+		$this->assertSame('nl', $response->getHeaders()['X-Source-Language']);
+	}
+
+	/**
+	 * A catalogue's publication list is read in the visitor's language and says
+	 * when a field fell back to Dutch (REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testShowPassesTheVisitorsLanguageAndNamesTheFallback(): void {
+		$order = [];
+		$this->catalogiService->method('index')
+			->with('123')
+			->willReturnCallback(static function () use (&$order): JSONResponse {
+				$order[] = 'read';
+				return new JSONResponse(['results' => []]);
+			});
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = ['HTTP_ACCEPT_LANGUAGE' => 'en-GB,en;q=0.8'];
+
+		$queryService = $this->createMock(PublicationQueryServiceInterface::class);
+		$queryService->expects($this->once())
+			->method('applyVisitorLanguage')
+			->with([], 'en-GB,en;q=0.8')
+			->willReturnCallback(static function () use (&$order): string {
+				$order[] = 'language';
+				return 'en-GB';
+			});
+		$queryService->method('languageHeaders')->willReturn(
+			['Content-Language' => 'en-GB', 'X-Source-Language' => 'nl', 'X-Content-Language-Fallback' => 'true']
+		);
+
+		$headers = $this->controllerWithLanguage(queryService: $queryService)->show('123')->getHeaders();
+
+		$this->assertSame(['language', 'read'], $order);
+		$this->assertSame('en-GB', $headers['Content-Language']);
+		$this->assertSame('true', $headers['X-Content-Language-Fallback']);
+	}
+
+	/**
+	 * A controller built without a query service answers without language headers.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testWithoutAQueryServiceTheAnswerCarriesNoLanguageHeaders(): void {
+		$this->catalogiService->method('index')->willReturn(new JSONResponse([]));
+		$this->request->method('getParams')->willReturn([]);
+
+		$headers = $this->controller->show('1')->getHeaders();
+
+		$this->assertArrayNotHasKey('Content-Language', $headers);
+		$this->assertArrayNotHasKey('X-Source-Language', $headers);
 	}
 
 	/**

@@ -724,7 +724,16 @@ OC.L10N.register(
         "Open catalog": "Отвори каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Направите свој први каталог. То је контејнер у којем ће бити ваше објаве. Изаберите регистар Publication и схему Publication како би каталог приказивао објаве које додате.",
         "Manage your publications and their status": "Управљајте својим публикацијама и њиховим статусом",
-        "Open at the source": "Отвори на извору"
+        "Open at the source": "Отвори на извору",
+        "Feed consumers": "Корисници фида",
+        "Contact": "Контакт",
+        "Generate key": "Генериши кључ",
+        "Revoke": "Опозови",
+        "Disable": "Онемогући",
+        "Last used": "Последње коришћено",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Овај кључ се приказује само једном. Копирајте га сада: не може се поново приказати.",
+        "No feed consumers yet.": "Још нема корисника фида.",
+        "Accounts that read every catalogue's feed": "Налози који читају фид сваког каталога"
     },
     "nplurals=2; plural=(n != 1);"
 )
