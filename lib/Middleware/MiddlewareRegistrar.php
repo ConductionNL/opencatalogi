@@ -25,7 +25,10 @@ namespace OCA\OpenCatalogi\Middleware;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
- * Registers the app's middleware, in the order the framework runs them.
+ * Registers the app's middleware, in the order the framework runs them,
+ * including the hand-over middleware: the Woo request routes answer 404
+ * without dossiq, and 410 on a change once the requests are read-only
+ * (woo-request-intake-hands-over-to-dossiq, REQ-WHD-004 and REQ-WHD-005).
  *
  * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
  */
@@ -49,5 +52,9 @@ class MiddlewareRegistrar {
 
 		// Staging closes every public route to anonymous callers (instance-staging-mode REQ-STG-003).
 		$context->registerMiddleware(StagingMiddleware::class);
+
+		// The Woo request routes once dossiq handles them: 404 without dossiq,
+		// 410 on a change once they are read-only (REQ-WHD-004, REQ-WHD-005).
+		$context->registerMiddleware(HandoverMiddleware::class);
 	}//end register()
 }//end class
