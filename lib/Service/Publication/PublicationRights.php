@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
+use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -39,7 +40,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
  */
-class PublicationRights {
+class PublicationRights implements PublicationRightsInterface {
 
 	/**
 	 * Constructor.
@@ -47,14 +48,28 @@ class PublicationRights {
 	 * @param ContainerInterface $container Server container, for OpenRegister's schema mapper.
 	 * @param ServiceCatalogueService $objects The OpenRegister reader.
 	 * @param LoggerInterface $logger Logger.
+	 * @param PublishRight|null $publishRight The publish right: publishers and administrators only. Without it nobody may publish.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly ServiceCatalogueService $objects,
 		private readonly LoggerInterface $logger,
+		private readonly ?PublishRight $publishRight=null,
 	) {
 
 	}//end __construct()
+
+	/**
+	 * Whether the current user may publish and withdraw: a publisher or an
+	 * administrator. Fails closed when the publish right is not wired.
+	 *
+	 * @return boolean
+	 *
+	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+	 */
+	public function mayPublish(): bool {
+		return $this->publishRight?->mayPublish() === true;
+	}//end mayPublish()
 
 	/**
 	 * Whether the current user may update this publication.

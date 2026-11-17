@@ -20,16 +20,20 @@ use OCA\OpenCatalogi\Service\InstanceSettings;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Service\SitemapDocumentMapper;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
+use OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+
+require_once __DIR__ . '/Support/FileFactsByExtension.php';
 
 /**
  * Tests for the per-type category fallback of the DiWoo document mapping.
@@ -42,6 +46,8 @@ use Psr\Log\LoggerInterface;
  * @uses \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry
  * @uses \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission
  * @uses \OCA\OpenCatalogi\Service\WooCategory
+ * @uses \OCA\OpenCatalogi\Service\FileFacts
+ * @uses \OCA\OpenCatalogi\Service\SitemapDocumentFields
  */
 class SitemapCategoryMappingTest extends TestCase {
 
@@ -110,13 +116,15 @@ class SitemapCategoryMappingTest extends TestCase {
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('getInstalledApps')->willReturn(['openregister']);
 		$settings = $this->createMock(SettingsService::class);
+		$lookup = new OpenRegisterLookup($container, $apps);
+		$categories = new WooCategoryRegistry(new TooiVocabularyService(), $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission(new TooiVocabularyService()));
 		$service = new SitemapService(
-			new OpenRegisterLookup($container, $apps),
+			$lookup,
 			$settings,
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
-			new TooiVocabularyService(),
+			new SitemapDocumentMapper(new TooiVocabularyService(), $categories, $lookup, FileFactsByExtension::make($this)),
 			$this->createMock(PublicationQueryService::class),
-			new WooCategoryRegistry(new TooiVocabularyService(), $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission(new TooiVocabularyService()))
+			$categories
 		);
 
 		$method = new \ReflectionMethod(SitemapService::class, 'mapDiwooDocument');

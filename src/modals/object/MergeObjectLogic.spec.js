@@ -11,6 +11,8 @@
 import axios from '@nextcloud/axios'
 import MergeObject from './MergeObject.vue'
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'csrf-token' }))
+
 jest.mock('@nextcloud/axios', () => ({
 	__esModule: true,
 	default: { get: jest.fn(), post: jest.fn() },
