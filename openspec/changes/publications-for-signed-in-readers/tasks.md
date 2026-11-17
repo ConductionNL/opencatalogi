@@ -23,6 +23,7 @@ Start after `integration-feed-consumer-credentials` is merged: task 2.2 adds a f
 
 - [ ] 3.1 Add "Who can read it" to the Visibility card on the publication page and in the editor, as design D5 (boards `OcPublicatie`, `OcPublicatieBewerken`) (REQ-PSR-001). Verify: `tests/e2e/publications-for-signed-in-readers.spec.ts` "an editor limits a publication to signed-in readers", carrying `@e2e` REQ-PSR-001.
   - Code built: the Visibility card shows who can read it and the sign-in link line (`PublicationVisibilityWidget`), and the editable Publication card includes `audience` and `minimumAssurance` (manifest). Left open: the e2e spec, which needs a live instance, and the D5 radio-pair layout, which the shared Data widget renders as a select.
+  - Round 2 (17 Nov): the e2e spec is written, `tests/e2e/publications-for-signed-in-readers.spec.ts`: a draft without a Woo category, saved with `audience: signedIn` and level Substantial through the object endpoint, the Visibility card wording and link line, and the anonymous public read answering 404. Not run here (no live instance); tick after a live run.
 - [x] 3.2 Add the strings to `l10n/` (en, nl). Verify: `npm run check:l10n`, `npm run check:schema-l10n`.
 
 ## 4. portaliq (cross-repo, ConductionNL/portaliq)
@@ -33,5 +34,6 @@ Start after `integration-feed-consumer-credentials` is merged: task 2.2 adds a f
 ## 5. Verification
 
 - [ ] 5.1 `openspec validate publications-for-signed-in-readers --strict`, `composer check:strict`, `npm run lint`.
+  - Run 17 Nov: phpstan clean; phpmd's two findings in this change's own files fixed (`SignedInReadService::read()` complexity, `count()` in the repair step's loop). Left red, not this change's: psalm's UndefinedClass on openregister main classes absent from the vendored stub, phpcs errors in FederationController, SettingsService and PublishedTableService, phpmd findings elsewhere, eslint errors in `DashboardSideBar.vue`; `openspec validate --strict` warns only on the spec's `status:` front matter, which every change in this repo carries. Unit suite: no failures beyond the branch's own baseline.
 - [ ] 5.2 Live: create a `signedIn` publication, show the anonymous 404 and the trusted read with a key, and paste both in the PR body. (live pass, decision 139)
 - [ ] 5.3 Set `pub-restricted` in `openspec/parity/capabilities.json` to `built` once the portaliq tasks land.

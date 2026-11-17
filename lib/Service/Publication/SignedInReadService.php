@@ -103,11 +103,11 @@ class SignedInReadService {
 	 */
 	public function read(string $catalogId, array $registers, array $schemas, string $id, ?string $key, ?string $level): ?object {
 		$level = strtolower(trim((string)$level));
-		if ($key === null || $key === '' || isset(self::LEVELS[$level]) === false || $catalogId === '' || $id === '') {
+		if ($this->isWellFormed(catalogId: $catalogId, id: $id, key: $key, level: $level) === false) {
 			return null;
 		}
 
-		$consumer = $this->trustedConsumer(key: $key, catalogId: $catalogId);
+		$consumer = $this->trustedConsumer(key: (string)$key, catalogId: $catalogId);
 		if ($consumer === null) {
 			return null;
 		}
@@ -123,6 +123,21 @@ class SignedInReadService {
 
 		return $object;
 	}//end read()
+
+	/**
+	 * Whether the request names a catalogue, a publication, a key and a known
+	 * login level; anything missing refuses the read.
+	 *
+	 * @param string      $catalogId The catalogue the URL names.
+	 * @param string      $id        The publication's UUID.
+	 * @param string|null $key       The feed consumer key the request carries.
+	 * @param string      $level     The reader's login level, trimmed and lower-cased.
+	 *
+	 * @return bool
+	 */
+	private function isWellFormed(string $catalogId, string $id, ?string $key, string $level): bool {
+		return $key !== null && $key !== '' && isset(self::LEVELS[$level]) === true && $catalogId !== '' && $id !== '';
+	}//end isWellFormed()
 
 	/**
 	 * Whether a publication may be served at a login level: it is limited to

@@ -166,7 +166,8 @@ class SetPublicationAudiencePublic implements IRepairStep {
 			}
 
 			$page++;
-		} while (count($rows) === self::PAGE_SIZE);
+			$full = (count($rows) === self::PAGE_SIZE);
+		} while ($full === true);
 	}//end setInScope()
 
 	/**
