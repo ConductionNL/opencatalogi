@@ -347,6 +347,10 @@ class DatasetViewService implements DatasetViewServiceInterface {
 	 * @return mixed The plain value.
 	 */
 	private static function plain(mixed $value): mixed {
-		return ($value instanceof JsonSerializable) ? $value->jsonSerialize() : $value;
+		if ($value instanceof JsonSerializable) {
+			return $value->jsonSerialize();
+		}
+
+		return $value;
 	}//end plain()
 }//end class
