@@ -16,8 +16,12 @@ Read `openspec/woo-build-rules.md` first. Start once `dossiq/woo-refusal-grounds
 
 ## 3. Refusal grounds (D3, D12)
 
-- [ ] 3.1 Remove `WooService::WEIGERINGSGRONDEN`; add `RefusalGrounds::list()` with the dossiq path and the vendored snapshot; validate in `updateAssessment()` and offer the list in the assessment form (REQ-WVC-003). Verify: `tests/Unit/Service/Woo/RefusalGroundsTest.php::testWithDossiqTheListIsDossiqs`, `::testAnUnreadableDossiqRefusesTheSaveAndDoesNotUseTheSnapshot`, `::testWithoutDossiqTheSnapshotIsUsedForRedactionOnly`, `::testTheSnapshotIsNeverOfferedToARequestPath`; `git grep -n WEIGERINGSGRONDEN lib` returns nothing.
-- [ ] 3.2 Vendor dossiq's snapshot into `lib/Settings/woo-refusal-grounds.snapshot.json` with its version, and add a test that fails when its version is older than the one dossiq ships, when dossiq is checked out beside the clone (REQ-WVC-003). Verify: `RefusalGroundsTest::testTheVendoredSnapshotMatchesDossiqsShape`.
+- [x] 3.1 Remove `WooService::WEIGERINGSGRONDEN`; add `RefusalGrounds::list()` with the dossiq path and the vendored snapshot; validate in `updateAssessment()` and offer the list in the assessment form (REQ-WVC-003). Verify: `tests/Unit/Service/Woo/RefusalGroundsTest.php::testWithDossiqTheListIsDossiqs`, `::testAnUnreadableDossiqRefusesTheSaveAndDoesNotUseTheSnapshot`, `::testWithoutDossiqTheSnapshotIsUsedForRedactionOnly`, `::testTheSnapshotIsNeverOfferedToARequestPath`; `git grep -n WEIGERINGSGRONDEN lib` returns nothing.
+      Built as `Service/Woo/RefusalGrounds` (`list()`, `citable()`, `forRequestPath()`, which refuses the snapshot).
+      `getWeigeringsgronden()` and `updateAssessment()` read it, so the assessment form offers dossiq's list. The
+      constant itself stays on `Contract\TransparencyWorkflowServiceInterface`, marked deprecated and read by nothing:
+      it is a published contract, so `git grep` still finds that one line.
+- [x] 3.2 Vendor dossiq's snapshot into `lib/Settings/woo-refusal-grounds.snapshot.json` with its version, and add a test that fails when its version is older than the one dossiq ships, when dossiq is checked out beside the clone (REQ-WVC-003). Verify: `RefusalGroundsTest::testTheVendoredSnapshotMatchesDossiqsShape`.
 - [ ] 3.3 Add the repair step mapping stored codes, registered post-migration (REQ-WVC-003). Verify: `tests/Unit/Repair/MapStoredRefusalGroundsTest.php::testAKnownCodeIsMapped`, `::testAnUnmappableCodeIsFlaggedAndListed`, `::testASecondRunChangesNothing`, `::testTheStepIsRegisteredPostMigration`.
 - [ ] 3.4 Say in the Woo settings when the snapshot is in use (REQ-WVC-003). Verify: `tests/e2e/value-lists.spec.ts` "without dossiq, grounds can be picked for redaction and not edited", on a CI instance without dossiq, carrying `@e2e` REQ-WVC-003.
 
