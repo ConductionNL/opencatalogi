@@ -380,6 +380,7 @@
             {
               "group": "public",
               "match": {
+                "audience": "public",
                 "publicationDate": {
                   "$lte": "$now"
                 },
@@ -392,6 +393,7 @@
             {
               "group": "public",
               "match": {
+                "audience": "public",
                 "publicationDate": {
                   "$lte": "$now"
                 },

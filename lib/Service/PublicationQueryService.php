@@ -1588,11 +1588,21 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @param array $objectData The serialized object data (own fields + `@self` envelope).
 	 *
+	 * A publication limited to signed-in readers (`audience` set to anything but
+	 * `public`) is never public, the same check the `group: public` read rule
+	 * makes (REQ-PSR-002). An object without `audience` takes the schema default,
+	 * `public`.
+	 *
 	 * @return boolean True when the object is currently published.
 	 *
 	 * @spec openspec/specs/auto-publishing/spec.md#APB-006
+	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-every-public-surface-leaves-a-sign-in-publication-out-req-psr-002
 	 */
 	public function isObjectPublic(array $objectData): bool {
+		if (($objectData['audience'] ?? 'public') !== 'public') {
+			return false;
+		}
+
 		$publicationDate = ($objectData['publicationDate'] ?? null);
 		$depublicationDate = ($objectData['depublicationDate'] ?? null);
 
