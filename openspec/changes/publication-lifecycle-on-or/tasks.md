@@ -43,7 +43,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy the `env
 
 ## 8. Coordination
 
-- [ ] 8.1 The open change `publications-unpublished-overview` (0 of 7 tasks) defines "not yet published" by dates. Add a note to its proposal that it reads `stateOf()` once this change merges. Verify: the note in the diff.
+- [x] 8.1 The open change `publications-unpublished-overview` (0 of 7 tasks) defines "not yet published" by dates. Add a note to its proposal that it reads `stateOf()` once this change merges. Verify: the note in the diff.
 
 ## 9. Verification
 
