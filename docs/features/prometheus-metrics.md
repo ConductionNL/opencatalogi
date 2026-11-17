@@ -52,7 +52,12 @@ opencatalogi_federation_unreachable_total 2
 **Content-Type:** `application/json`
 **Authentication:** none (no metrics data is exposed)
 
-The health response carries two checks: `database` (critical) and `filesystem` (degraded). OpenCatalogi searches through OpenRegister and has no search backend of its own, so there is no separate search-backend check.
+The health response carries three checks: `database` (critical), `filesystem` (degraded) and `search_backend` (degraded). OpenCatalogi searches through OpenRegister on the database by default (`search_backend` app config `database`), and the `search_backend` check then simply passes: the database check already covers it. When an administrator sets `search_backend` to `elasticsearch` and `search_backend_url` to the cluster address, the check pings that address with a 3-second timeout; an unreachable or erroring cluster degrades the response (HTTP 200, status `degraded`) with a generic message, never connection details.
+
+```bash
+occ config:app:set opencatalogi search_backend --value=elasticsearch
+occ config:app:set opencatalogi search_backend_url --value=https://search.internal:9200/
+```
 
 | Database | Filesystem | HTTP | `status` |
 |----------|------------|------|----------|

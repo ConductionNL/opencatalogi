@@ -17,15 +17,18 @@ jest.mock('@conduction/nextcloud-vue', () => ({
 	registerIcons: () => {},
 }))
 
+jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: { get: jest.fn() } }))
+
 jest.mock('../../store/store.js', () => ({
 	objectStore: { getCollection: () => ({ results: [] }), fetchCollection: jest.fn() },
 }))
 
+// The unpublished widgets also hold the overview they read (publications-unpublished-overview).
 describe.each([
-	['CatalogiWidget', CatalogiWidget],
-	['UnpublishedAttachmentsWidget', UnpublishedAttachmentsWidget],
-	['UnpublishedPublicationsWidget', UnpublishedPublicationsWidget],
-])('%s', (name, widget) => {
+	['CatalogiWidget', CatalogiWidget, {}],
+	['UnpublishedAttachmentsWidget', UnpublishedAttachmentsWidget, { overview: [] }],
+	['UnpublishedPublicationsWidget', UnpublishedPublicationsWidget, { overview: [] }],
+])('%s', (name, widget, extra) => {
 	it('keeps its name and requires a string title', () => {
 		expect(widget.name).toBe(name)
 		expect(widget.props).toEqual({ title: { type: String, required: true } })
@@ -33,7 +36,7 @@ describe.each([
 
 	it('starts not loading, with the list columns', () => {
 		const first = widget.data.call({})
-		expect(first).toEqual({ loading: false, columns: LIST_COLUMNS })
+		expect(first).toEqual({ loading: false, columns: LIST_COLUMNS, ...extra })
 		expect(first.columns).toBe(LIST_COLUMNS)
 		expect(widget.data.call({})).not.toBe(first)
 	})

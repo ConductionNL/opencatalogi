@@ -26,7 +26,13 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\DcatDatasetSource;
 use OCA\OpenCatalogi\Service\DcatMappingProfile;
+use OCA\OpenCatalogi\Service\DcatDistributionMapper;
 use OCA\OpenCatalogi\Service\DcatMappingService;
+use OCA\OpenCatalogi\Service\DcatVocabularyService;
+use OCA\OpenCatalogi\Service\FileFacts;
+use OCP\Files\File;
+use OCP\Files\IMimeTypeDetector;
+use OCP\Files\IRootFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -371,5 +377,73 @@ class DcatMappingServiceTest extends TestCase {
 		$context = $this->service->context();
 		$this->assertSame('http://www.w3.org/ns/dcat#', $context['dcat']);
 		$this->assertArrayHasKey('profile', $context);
+	}
+	public function testThePlainSummaryIsEmittedAsAbstractWithItsLanguage(): void {
+		$publication = [
+			'id' => 'uuid-p',
+			'title' => 'Besluit op bezwaar parkeervergunning',
+			'plainSummary' => 'U kreeg geen parkeervergunning. De gemeente blijft bij het besluit.',
+			'plainSummaryLevel' => 'B1',
+			'language' => 'nl',
+			'@self' => ['uuid' => 'uuid-p', 'updated' => '2026-11-14T10:00:00+00:00'],
+		];
+
+		$dataset = $this->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/uuid-p', []);
+
+		$this->assertSame(
+			['@value' => 'U kreeg geen parkeervergunning. De gemeente blijft bij het besluit.', '@language' => 'nl'],
+			$dataset['dct:abstract'] ?? null
+		);
+	}
+
+	public function testTheAbstractTakesThePublicationsLanguageAndDefaultsToDutch(): void {
+		$english = $this->mapDataset(['id' => 'e', 'plainSummary' => 'You got no permit.', 'language' => 'EN'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/e', []);
+		$this->assertSame('en', $english['dct:abstract']['@language']);
+
+		$unset = $this->mapDataset(['id' => 'u', 'plainSummary' => 'Kort.'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/u', []);
+		$this->assertSame('nl', $unset['dct:abstract']['@language']);
+
+		$garbage = $this->mapDataset(['id' => 'g', 'plainSummary' => 'Kort.', 'language' => 'not a tag'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/g', []);
+		$this->assertSame('nl', $garbage['dct:abstract']['@language']);
+	}
+
+	public function testNoAbstractWithoutAPlainSummary(): void {
+		$dataset = $this->mapDataset(['id' => 'x', 'title' => 'T', 'plainSummary' => '  '], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/x', []);
+		$this->assertArrayNotHasKey('dct:abstract', $dataset);
+	}
+
+	/**
+	 * REQ-PFF-001: the distribution's media type is the stored bytes' type, not
+	 * the listed name or type, and bytes that cannot be read give no media type
+	 * rather than one from the extension.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	public function testTheMediaTypeComesFromTheBytes(): void {
+		$pdf = $this->createMock(File::class);
+		$pdf->method('fopen')->willReturnCallback(static function () {
+			$handle = fopen('php://memory', 'r+');
+			fwrite($handle, "%PDF-1.7\n");
+			rewind($handle);
+			return $handle;
+		});
+		$unreadable = $this->createMock(File::class);
+		$unreadable->method('fopen')->willThrowException(new \RuntimeException('storage gone'));
+		$root = $this->createMock(IRootFolder::class);
+		$root->method('getFirstNodeById')->willReturnMap([[11, $pdf], [12, $unreadable]]);
+		$detector = $this->createMock(IMimeTypeDetector::class);
+		$detector->method('detectString')->willReturnCallback(static fn (string $bytes): string => str_starts_with($bytes, '%PDF') ? 'application/pdf' : 'text/plain');
+		$service = new DcatMappingService(new DcatVocabularyService(), new DcatDistributionMapper(new FileFacts($detector, $root)));
+
+		$named = $service->mapDistribution(['id' => 11, 'downloadUrl' => 'https://host/d/11', 'extension' => 'docx', 'mimetype' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], null);
+		$this->assertSame('application/pdf', $named['dcat:mediaType']);
+		$this->assertSame(['@id' => 'http://publications.europa.eu/resource/authority/file-type/PDF'], $named['dct:format']);
+
+		$broken = $service->mapDistribution(['id' => 12, 'downloadUrl' => 'https://host/d/12', 'extension' => 'pdf', 'mimetype' => 'application/pdf'], null);
+		$this->assertArrayNotHasKey('dcat:mediaType', $broken);
+		$this->assertArrayNotHasKey('dct:format', $broken);
+		$this->assertSame('https://host/d/12', $broken['@id']);
 	}
 }//end class

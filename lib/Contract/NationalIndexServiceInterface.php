@@ -43,7 +43,7 @@ interface NationalIndexServiceInterface {
 	 *
 	 * @return array<string, mixed> The notice.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
 	 */
 	public function composeNotice(array $decision, string $channel, ?DateTimeInterface $now = null): array;
 
@@ -55,7 +55,7 @@ interface NationalIndexServiceInterface {
 	 *
 	 * @return array<int, array<string, mixed>> The two notices.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
 	 */
 	public function composeNotices(array $decision, ?DateTimeInterface $now = null): array;
 
@@ -69,7 +69,7 @@ interface NationalIndexServiceInterface {
 	 * `publicatie` gateway by reference; every other channel is called through
 	 * its configured source.
 	 *
-	 * @return array{channel: string, deliveredAt: string, answer: string, delivery?: array<string, mixed>}
+	 * @return array{channel: string, deliveredAt: ?string, answer: string, delivery?: array<string, mixed>, dryRun?: true, reason?: string}
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\IndexUnreachableException When the delivery could not be made.
 	 *
@@ -95,11 +95,11 @@ interface NationalIndexServiceInterface {
 	 * @param array<string, mixed> $request The composed registration request.
 	 * @param DateTimeInterface|null $now The moment.
 	 *
-	 * @return array{channel: string, registeredAt: string, answer: string}
+	 * @return array{channel: string, registeredAt: ?string, answer: string, dryRun?: true, reason?: string}
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\IndexUnreachableException When the index could not be asked.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
 	 */
 	public function registerWithWooIndex(array $request, ?DateTimeInterface $now = null): array;
 
@@ -124,11 +124,11 @@ interface NationalIndexServiceInterface {
 	 * @param string $reason Why it is coming down.
 	 * @param DateTimeInterface|null $now The moment.
 	 *
-	 * @return array{channel: string, acknowledgedAt: string, answer: string}
+	 * @return array{channel: string, acknowledgedAt: ?string, answer: string, dryRun?: true, reason?: string}
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\IndexUnreachableException When the channel could not be reached.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
 	 */
 	public function withdraw(string $channel, string $publicationId, string $reason, ?DateTimeInterface $now = null): array;
 }//end interface

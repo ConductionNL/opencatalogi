@@ -18,7 +18,7 @@ status: proposed
 - **AND** Approve is enabled only after both public views were opened
 
 #### Scenario: Approving without having seen a document
-<!-- @e2e exclude Server-side guard; proven by WooBatchReviewTest::testApproveIsRefusedUntilEveryPreviewWasSeen, which fails on today's code because no approve step exists. -->
+<!-- @e2e exclude Server-side guard; proven by BatchReviewTest::testApproveIsRefusedUntilEveryPreviewWasSeen, which fails on today's code because no approve step exists. -->
 
 - **GIVEN** a reviewer who opened one of two previews
 - **WHEN** the reviewer calls `approve`

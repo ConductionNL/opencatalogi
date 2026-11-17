@@ -35,7 +35,7 @@ interface PlooiDeliveryServiceInterface {
 	 * @param string $register Its register id.
 	 * @param string $schema Its schema id.
 	 *
-	 * @return array<string, string>|null The PLOOI fields stored, or null when no catalogue asks for PLOOI.
+	 * @return array<string, mixed>|null The PLOOI fields stored, the dry run in staging (nothing stored), or null when no catalogue asks for PLOOI.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-publication-that-turns-public-is-delivered-to-plooi-when-the-catalogue-asks-for-it-req-wnd-003
 	 */

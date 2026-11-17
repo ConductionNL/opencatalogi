@@ -43,6 +43,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for PublicationStateController::withdraw().
@@ -167,7 +168,9 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($user);
 
-		$rights = $this->getMockBuilder(PublicationRights::class)->disableOriginalConstructor()->onlyMethods(['mayUpdate'])->getMock();
+		$rights = $this->getMockBuilder(PublicationRights::class)->disableOriginalConstructor()->onlyMethods(['mayUpdate', 'mayPublish'])->getMock();
+		// The recorded withdrawals were made by publishers.
+		$rights->method('mayPublish')->willReturn(true);
 		$rights->method('mayUpdate')->willReturnCallback(
 			static function (object $publication) use (&$calls, $session, $case): bool {
 				$calls[] = ['mayUpdate', $publication->jsonSerialize()];
@@ -357,6 +360,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$objectService = $this->createMock(ObjectService::class);
 		$objectService->method('find')->willReturnCallback(
 			function (...$args) use (&$calls, $found): ?ObjectEntity {
+				$args = LegacyObjectArgs::positional(method: 'find', args: $args);
 				$calls[] = ['find', self::passedArguments(method: 'find', args: $args)];
 				if (is_string($found) === true) {
 					throw self::failure(kind: $found);
@@ -367,6 +371,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		);
 		$objectService->method('saveObject')->willReturnCallback(
 			function (...$args) use (&$calls, $case): ObjectEntity {
+				$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 				$named = self::passedArguments(method: 'saveObject', args: $args);
 				$calls[] = ['saveObject', $named];
 				$fails = ($case['saveFails'][$named['schema'] ?? ''] ?? null);
@@ -428,7 +433,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 	 */
 	private static function passedArguments(string $method, array $args): array {
 		$named = [];
-		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $position => $parameter) {
+		foreach (LegacyObjectArgs::parameters(ObjectService::class, $method) as $position => $parameter) {
 			if (array_key_exists($position, $args) === false) {
 				continue;
 			}

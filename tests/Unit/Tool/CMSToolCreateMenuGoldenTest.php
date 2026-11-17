@@ -33,6 +33,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for CMSTool::createMenu().
@@ -88,6 +89,7 @@ class CMSToolCreateMenuGoldenTest extends TestCase {
 		$objects = $this->createMock(ObjectService::class);
 		$objects->method('saveObject')->willReturnCallback(
 			static function (...$args) use (&$saved): ObjectEntity {
+				$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 				$saved[] = self::passedArguments(method: 'saveObject', args: $args);
 				$menu = new ObjectEntity();
 				$menu->setUuid('menu-1');
@@ -143,7 +145,7 @@ class CMSToolCreateMenuGoldenTest extends TestCase {
 	 */
 	private static function passedArguments(string $method, array $args): array {
 		$named = [];
-		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $position => $parameter) {
+		foreach (LegacyObjectArgs::parameters(ObjectService::class, $method) as $position => $parameter) {
 			if (array_key_exists($position, $args) === false) {
 				continue;
 			}

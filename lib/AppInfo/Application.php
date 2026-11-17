@@ -30,7 +30,7 @@ use OCA\OpenCatalogi\Controller\OpenRegisterRequiredHealthController;
 use OCA\OpenCatalogi\Dashboard\DashboardRegistrar;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Mcp\McpRegistrar;
-use OCA\OpenCatalogi\Middleware\ApiContractMiddleware;
+use OCA\OpenCatalogi\Middleware\MiddlewareRegistrar;
 use OCA\OpenCatalogi\Observability\ObservabilityRegistrar;
 use OCA\OpenCatalogi\Portal\PortalRegistrar;
 use OCA\OpenCatalogi\Service\AppliedFilters;
@@ -104,11 +104,8 @@ class Application extends App implements IBootstrap {
 		// that answer `appliedFilters` must share it (REQ-ASF-002).
 		$context->registerService(AppliedFilters::class, static fn (): AppliedFilters => new AppliedFilters(), true);
 
-		// API-Version header and problem details on the JSON API (spec api-documentation).
-		$context->registerMiddleware(ApiContractMiddleware::class);
-
-		// Staging closes every public route to anonymous callers (instance-staging-mode REQ-STG-003).
-		$context->registerMiddleware(\OCA\OpenCatalogi\Middleware\StagingMiddleware::class);
+		// API contract, noindex and staging middleware, in that order (REQ-WAB-003, REQ-STG-003).
+		(new MiddlewareRegistrar())->register($context);
 
 		// ONB-009: tells an administrator when OpenRegister is too old for the
 		// AppHost bindings below. Registering the class probes nothing.
