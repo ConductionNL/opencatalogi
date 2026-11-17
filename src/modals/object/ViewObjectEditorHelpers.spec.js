@@ -9,6 +9,8 @@
 import ViewObject from './ViewObject.vue'
 import { objectStore } from '../../store/store.js'
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'csrf-token' }))
+
 jest.mock('@toast-ui/editor/dist/toastui-editor.css', () => ({}))
 jest.mock('../../store/store.js', () => ({
 	navigationStore: {},

@@ -17,7 +17,7 @@ Read `openspec/woo-build-rules.md` first. Start once `openregister/anonymisation
 - [ ] 3.1 Add the text layer, the second verification and the text check, and block in `assertPublishable()` (REQ-WRT-003). Verify: `ScanReaderTest::testTheRedactedScanGetsATextLayerAndASecondCleanVerdict` (fails today), `DocumentRedactorTest::testARedactedFileWithoutTextIsNotPublishable`, `::testAMissingSecondVerdictBlocks`.
 - [ ] 3.2 Order `EmbeddedTitleWriter` before the final verification when it exists (REQ-WRT-003). Verify: `tests/Unit/Service/Woo/BatchPublicationWriterTest.php::testTheTitleIsWrittenBeforeTheFinalVerdict`.
 - [ ] 3.3 Show OCR, verdict and text state per document on the batch page (REQ-WRT-003). Verify: `tests/e2e/woo-redaction-scans.spec.ts` "the officer sees the state per document", carrying `@e2e` REQ-WRT-003.
-- [ ] 3.4 Live: redact the scanned letter fixture on the dev instance with filinq installed, and paste the verdicts, the OCR confidence and a text extraction of the output (name absent) in the PR body. Verify: the pasted output.
+- [ ] 3.4 Live: redact the scanned letter fixture on the dev instance with filinq installed, and paste the verdicts, the OCR confidence and a text extraction of the output (name absent) in the PR body. Verify: the pasted output. (live pass, decision 139)
 
 ## 4. Verification
 

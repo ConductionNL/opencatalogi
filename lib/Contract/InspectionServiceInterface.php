@@ -49,7 +49,7 @@ interface InspectionServiceInterface {
 	 * @throws DomainException When the type declares no term, or no document was chosen.
 	 * @throws \OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException When the end date cannot be rolled off a non-working day.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function open(
 		array $record,
@@ -69,7 +69,7 @@ interface InspectionServiceInterface {
 	 *
 	 * @throws DomainException When the window's dates cannot be read.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function isOpen(array $inspection, ?DateTimeInterface $now = null): bool;
 
@@ -87,7 +87,7 @@ interface InspectionServiceInterface {
 	 *
 	 * @return array{readable: boolean, documents: array<int, string>, reason: string|null, endDate: string|null}
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function resolveLink(array $inspection, string $token, ?DateTimeInterface $now = null): array;
 }//end interface

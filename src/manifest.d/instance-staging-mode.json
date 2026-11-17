@@ -1,0 +1,65 @@
+{
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"_note": "instance-staging-mode (REQ-STG-002): Dry runs lists what each held hand-over would have sent while the instance was in staging, newest first, with its channel, time, user and reason. The rows are dryRunDelivery objects in the publication register; opening one shows the payload. They are read only: a dry run is never sent, also not after switching back to production.",
+	"menu": [
+		{
+			"id": "DryRunsMenu",
+			"label": "Dry runs",
+			"icon": "History",
+			"route": "DryRuns",
+			"section": "settings",
+			"order": 96
+		}
+	],
+	"pages": [
+		{
+			"id": "DryRuns",
+			"route": "/dry-runs",
+			"type": "index",
+			"title": "Dry runs",
+			"config": {
+				"register": "@resolve:publication_register",
+				"schema": "dryRunDelivery",
+				"description": "What would have left this instance while it was in staging",
+				"defaultSort": {
+					"field": "at",
+					"direction": "desc"
+				},
+				"columns": [
+					{
+						"key": "channel",
+						"label": "Channel",
+						"sortable": true
+					},
+					{
+						"key": "at",
+						"label": "Held at",
+						"formatter": "datetime",
+						"sortable": true
+					},
+					{
+						"key": "user",
+						"label": "User"
+					},
+					{
+						"key": "reason",
+						"label": "Reason"
+					}
+				],
+				"actionToggles": {
+					"showAdd": false,
+					"showViewAction": true,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": true,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": false,
+					"selectable": false
+				}
+			}
+		}
+	]
+}

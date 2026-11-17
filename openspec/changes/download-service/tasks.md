@@ -7,9 +7,9 @@
 
 ## 1. Bug Fix: Temporary File Cleanup (REQ-DWN-009)
 
-- [ ] 1.1 Replace `rmdir('/tmp/mpdf')` in `DownloadService.createPublicationFile()` with a recursive delete (e.g. `array_map('unlink', glob('/tmp/mpdf/*')); rmdir('/tmp/mpdf')`) so cleanup succeeds even when mPDF leaves files in the directory
+- [x] 1.1 Replace `rmdir('/tmp/mpdf')` in `DownloadService.createPublicationFile()` with a recursive delete (e.g. `array_map('unlink', glob('/tmp/mpdf/*')); rmdir('/tmp/mpdf')`) so cleanup succeeds even when mPDF leaves files in the directory (verified: lib/Service/DownloadService.php, tests/Unit/Service/DownloadServiceTest.php::testCreatePublicationFileRemovesTemporaryFile; temp file removed in a finally block, no rmdir of /tmp/mpdf any more)
 - [ ] 1.2 Verify the ZIP temp folder `publicatie_{title}` is recursively removed after `FileService.downloadZip()` in `createPublicationZip()`
-- [ ] 1.3 Add cleanup to error paths (ensure temp files are removed even if an exception is thrown mid-generation)
+- [x] 1.3 Add cleanup to error paths (ensure temp files are removed even if an exception is thrown mid-generation) (verified: lib/Service/DownloadService.php, tests/Unit/Service/DownloadServiceTest.php::testCreatePublicationFileRemovesTemporaryFile)
 
 ## 2. Modernise Attachment Retrieval (Tech Debt)
 
@@ -19,12 +19,12 @@
 ## 3. Controller Wiring (REQ-DWN-001 – REQ-DWN-008)
 
 - [ ] 3.1 Confirm `PublicationsController` has a `download()` action that reads `download` and `saveToNextCloud` query/body parameters and passes them to `DownloadService`
-- [ ] 3.2 Confirm the `/download` sub-resource route is present in `appinfo/routes.php` with correct HTTP method and authentication annotations (`@NoCSRFRequired`, `@PublicPage` if public, or `@NoAdminRequired` if auth-required)
-- [ ] 3.3 Verify CORS headers are present on the download endpoint (required by `config.yaml` rules for public endpoints)
+- [x] 3.2 Confirm the `/download` sub-resource route is present in `appinfo/routes.php` with correct HTTP method and authentication annotations (`@NoCSRFRequired`, `@PublicPage` if public, or `@NoAdminRequired` if auth-required) (verified: appinfo/routes.php:285, lib/Controller/PublicationsController.php download() with PublicPage and NoCSRFRequired)
+- [x] 3.3 Verify CORS headers are present on the download endpoint (required by `config.yaml` rules for public endpoints) (verified: appinfo/routes.php:127 OPTIONS preflight route)
 
 ## 4. Unit Tests (ADR-008)
 
-- [ ] 4.1 Write `DownloadServiceTest` covering `createPublicationFile()`:
+- [x] 4.1 Write `DownloadServiceTest` covering `createPublicationFile()`: (verified: tests/Unit/Service/DownloadServiceTest.php)
   - Happy path: `download=true`, `saveToNextCloud=true`
   - Download-only mode (`saveToNextCloud=false`)
   - Save-only mode (`download=false`)
@@ -33,7 +33,7 @@
 - [ ] 4.2 Write `DownloadServiceTest` covering `createPublicationZip()`:
   - Happy path: publication with 2 attachments produces correct ZIP structure
   - Publication not found
-- [ ] 4.3 Write `DownloadServiceTest` covering `publicationAttachments()`:
+- [x] 4.3 Write `DownloadServiceTest` covering `publicationAttachments()`: (verified: tests/Unit/Service/DownloadServiceTest.php::testPublicationAttachmentsSuccess)
   - Returns attachment list for a publication with 3 attachments
   - Returns empty array when publication has no attachments
 - [ ] 4.4 Mock `FileService` and `ObjectService` in all tests — no real file system or database calls
@@ -64,6 +64,6 @@
 
 - [ ] 8.1 All unit tests pass: `./vendor/bin/phpunit tests/Unit/Service/DownloadServiceTest.php`
 - [ ] 8.2 `npm run check:l10n` reports zero MISSING and zero UNWRAPPED for download-service strings
-- [ ] 8.3 Manual smoke test: call `/api/{catalogSlug}/{id}/download?download=true` for a publication with at least one attachment and verify the ZIP contains a PDF at the root and the attachment under `Bijlagen/`
-- [ ] 8.4 Manual smoke test: call with `saveToNextCloud=true` and verify the file appears in Nextcloud under `Publicaties/({id}) {title}/` with a working share link
-- [ ] 8.5 Verify calling with `download=false&saveToNextCloud=false` returns HTTP 500 with a descriptive message and creates no files
+- [ ] 8.3 Manual smoke test: call `/api/{catalogSlug}/{id}/download?download=true` for a publication with at least one attachment and verify the ZIP contains a PDF at the root and the attachment under `Bijlagen/` (live pass, decision 139)
+- [ ] 8.4 Manual smoke test: call with `saveToNextCloud=true` and verify the file appears in Nextcloud under `Publicaties/({id}) {title}/` with a working share link (live pass, decision 139)
+- [ ] 8.5 Verify calling with `download=false&saveToNextCloud=false` returns HTTP 500 with a descriptive message and creates no files (live pass, decision 139)

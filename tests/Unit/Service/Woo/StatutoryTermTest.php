@@ -37,6 +37,7 @@ use DateTimeImmutable;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
+use OCA\OpenRegister\Db\FlowTimer\TimerSubject;
 use OCA\OpenRegister\Service\Flow\Timer\FlowTimerAct;
 use OCA\OpenRegister\Service\Flow\Timer\TimerDecision;
 use OCA\OpenRegister\Service\Flow\Timer\TimerExtensionRequest;
@@ -201,7 +202,15 @@ class FakeTermStore {
 		return $this->engine->terms[$uuid];
 	}//end findByUuid()
 
-	public function findBySubject(string $subjectType, string $subjectUuid, array $states = []): array {
+	/**
+	 * The subjects the store was asked for.
+	 *
+	 * @var array<int, object>
+	 */
+	public array $subjects = [];
+
+	public function findBySubject(object $subject, array $states = []): array {
+		$this->subjects[] = $subject;
 		return array_values($this->engine->terms);
 	}//end findBySubject()
 }//end class
@@ -212,6 +221,13 @@ class FakeTermStore {
 class StatutoryTermTest extends TestCase {
 
 	private FakeTermEngine $engine;
+
+	/**
+	 * The fake store, to read the subjects it was asked for.
+	 *
+	 * @var FakeTermStore
+	 */
+	private FakeTermStore $store;
 	private StatutoryTerm $terms;
 
 	/**
@@ -223,6 +239,7 @@ class StatutoryTermTest extends TestCase {
 	protected function setUp(): void {
 		$this->engine = new FakeTermEngine();
 		$store = new FakeTermStore($this->engine);
+		$this->store = $store;
 
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
@@ -637,6 +654,14 @@ class StatutoryTermTest extends TestCase {
 		$this->assertSame(0, $rows[0]['extensionCount']);
 		$this->assertSame(1, $rows[0]['extensionMax']);
 		$this->assertTrue($rows[0]['extendable']);
+		$this->assertCount(expectedCount: 1, haystack: $this->store->subjects);
+		$this->assertInstanceOf(
+			expected: TimerSubject::class,
+			actual: $this->store->subjects[0],
+			message: 'The store is asked by the subject openregister main takes.'
+		);
+		$this->assertSame(expected: 'object', actual: $this->store->subjects[0]->type);
+		$this->assertSame(expected: 'req-1', actual: $this->store->subjects[0]->uuid);
 
 	}//end testEveryTermOfOneRequestIsReported()
 
@@ -665,7 +690,7 @@ class StatutoryTermTest extends TestCase {
 				}
 
 				return new class {
-					public function findBySubject(string $subjectType, string $subjectUuid, array $states = []): array {
+					public function findBySubject(object $subject, array $states = []): array {
 						return ['not a term at all'];
 					}
 				};
@@ -695,7 +720,7 @@ class StatutoryTermTest extends TestCase {
 				}
 
 				return new class {
-					public function findBySubject(string $subjectType, string $subjectUuid, array $states = []): mixed {
+					public function findBySubject(object $subject, array $states = []): mixed {
 						return null;
 					}
 				};

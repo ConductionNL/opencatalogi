@@ -209,12 +209,13 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 		try {
 			$answer = $this->index->registerWithWooIndex(request: $request, now: $now);
 		} catch (IndexUnreachableException $e) {
-			return [
-				'sent' => false,
-				'reason' => $e->getMessage(),
-				'request' => $request,
-				'registration' => $this->registration(),
-			];
+			return $this->unsent(request: $request, why: ['reason' => $e->getMessage()]);
+		}
+
+		// In staging the index keeps the request as a dry run (instance-staging-mode
+		// REQ-STG-002); the stored registration is left as it is.
+		if (($answer['dryRun'] ?? false) === true) {
+			return $this->unsent(request: $request, why: ['dryRun' => true, 'reason' => (string)($answer['reason'] ?? '')]);
 		}
 
 		$this->config->setValueString(self::APP_NAME, self::STATUS_KEY, 'requested');
@@ -224,6 +225,18 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 
 		return ['sent' => true, 'request' => $request, 'registration' => $this->registration()];
 	}//end request()
+
+	/**
+	 * The answer for a request that was not sent: why, the request and the stored registration.
+	 *
+	 * @param array<string, mixed> $request The composed request.
+	 * @param array<string, mixed> $why     Why it was not sent (reason, and dryRun in staging).
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function unsent(array $request, array $why): array {
+		return ['sent' => false] + $why + ['request' => $request, 'registration' => $this->registration()];
+	}//end unsent()
 
 	/**
 	 * Record that the Woo-index confirmed the registration.

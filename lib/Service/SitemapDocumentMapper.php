@@ -25,6 +25,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
+use OCA\OpenCatalogi\Contract\DiwooCompletenessInterface;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
 
@@ -35,7 +36,7 @@ use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
  *
  * @spec openspec/specs/woo-compliance/spec.md
  */
-class SitemapDocumentMapper {
+class SitemapDocumentMapper implements DiwooCompletenessInterface {
 
 	/**
 	 * The optional DiWoo axes: the element key, the violation axis and the reason it is omitted.
@@ -49,6 +50,16 @@ class SitemapDocumentMapper {
 	];
 
 	/**
+	 * The reported axes whose absence does not hold a document back: the element is optional in the XSD.
+	 */
+	private const OPTIONAL_GAPS = ['documentsoort'];
+
+	/**
+	 * The app-config key holding the moment the DiWoo fields were introduced (written by the repair step).
+	 */
+	public const FIELDS_INTRODUCED_AT = 'diwoo_fields_introduced_at';
+
+	/**
 	 * Per-request cache of organisation rows, by organisation uuid; an empty array when not found.
 	 *
 	 * @var array<string, array<string, mixed>>
@@ -56,11 +67,20 @@ class SitemapDocumentMapper {
 	private array $organisationCache = [];
 
 	/**
+	 * The fields the publication stores for its DiWoo document.
+	 *
+	 * @var SitemapDocumentFields
+	 */
+	private readonly SitemapDocumentFields $fields;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param TooiVocabularyService $tooiVocabulary Resolves organisations and handling types to TOOI.
 	 * @param WooCategoryRegistry $categories Resolves a publication's category.
 	 * @param OpenRegisterLookup $openRegister Reaches OpenRegister for the organisation lookup.
+	 * @param FileFacts|null $fileFacts Reads each file's type from its bytes (REQ-PFF-001); without it no format is emitted.
+	 * @param InstanceSettings|null $instance Holds the moment the DiWoo fields were introduced; without it every record is legacy.
 	 * @param WooIndexFieldMapper|null $fieldMapper Reads the four Woo-index fields from integriq's
 	 *                                              mapping; without it every field is the built-in read.
 	 */
@@ -68,8 +88,11 @@ class SitemapDocumentMapper {
 		private readonly TooiVocabularyService $tooiVocabulary,
 		private readonly WooCategoryRegistry $categories,
 		private readonly OpenRegisterLookup $openRegister,
+		private readonly ?FileFacts $fileFacts = null,
+		?InstanceSettings $instance = null,
 		private readonly ?WooIndexFieldMapper $fieldMapper = null,
 	) {
+		$this->fields = new SitemapDocumentFields(tooiVocabulary: $tooiVocabulary, instance: $instance);
 	}//end __construct()
 
 	/**
@@ -97,23 +120,131 @@ class SitemapDocumentMapper {
 	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
 	 */
 	public function map(array $publication, array $file, array &$violations = [], array $relations = []): array {
+		$document = $this->document(publication: $publication, file: $file);
+		array_push($violations, ...$document['violations']);
+
+		return self::withRelations(entry: $document['entry'], relations: $relations);
+	}//end map()
+
+	/**
+	 * The url entry of one file, or null when the document misses a mandatory DiWoo
+	 * element: the Woo-index would refuse it, so it is held back and the rest of the
+	 * page is served (REQ-DWP-004). Violations are appended as {@see map()} does.
+	 *
+	 * @param array $publication The publication as returned from ObjectService
+	 * @param array $file The file metadata belonging to that publication
+	 * @param array<int, array<string, string>> $violations Per-document unresolved-axis report (by reference)
+	 * @param array<string, array<string, mixed>> $relations The document's `isPartOf` or `hasParts` element, if any.
+	 *
+	 * @return array{loc: string, lastmod: string, 'diwoo:Document': array}|null The url entry, or null.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 */
+	public function mapComplete(array $publication, array $file, array &$violations = [], array $relations = []): ?array {
+		$document = $this->document(publication: $publication, file: $file);
+		array_push($violations, ...$document['violations']);
+		if ($document['complete'] === false) {
+			return null;
+		}
+
+		return self::withRelations(entry: $document['entry'], relations: $relations);
+	}//end mapComplete()
+
+	/**
+	 * A url entry with the document's relations added to its DiWoo element.
+	 *
+	 * @param array{loc: string, lastmod: string, 'diwoo:Document': array} $entry     The url entry.
+	 * @param array<string, array<string, mixed>>                          $relations The document's `isPartOf` or `hasParts` element, if any.
+	 *
+	 * @return array{loc: string, lastmod: string, 'diwoo:Document': array} The entry.
+	 */
+	private static function withRelations(array $entry, array $relations): array {
+		$entry['diwoo:Document']['diwoo:DiWoo'] = array_merge($entry['diwoo:Document']['diwoo:DiWoo'], $relations);
+
+		return $entry;
+	}//end withRelations()
+
+	/**
+	 * The url entry of one file without its relations, whether it carries every
+	 * mandatory element, and the unresolved axes it reports.
+	 *
+	 * @param array $publication The publication.
+	 * @param array $file The file.
+	 *
+	 * @return array{entry: array, complete: bool, violations: array<int, array<string, string>>} The entry, its completeness and its violations.
+	 */
+	private function document(array $publication, array $file): array {
+		$violations = [];
 		$loc = ($file['downloadUrl'] ?? '');
 		$mapped = $this->mappedFields(publication: $publication);
-		$diwoo = $this->diwooCore(publication: $publication, file: $file, mapped: $mapped);
+		$format = $this->formatOf(file: $file);
+		$diwoo = $this->diwooCore(publication: $publication, format: $format['element'], mapped: $mapped);
+		if ($format['reason'] !== null) {
+			$this->addViolation(violations: $violations, loc: $loc, axis: 'format', reason: $format['reason']);
+		}
+
 		// Each optional axis is its element, or null with the violation that omits it.
 		$elements = $this->optionalAxes(publication: $publication, file: $file, mapped: $mapped);
-		foreach ($this->axisGaps(diwoo: $diwoo, elements: $elements) as $gap) {
+		$gaps = $this->axisGaps(diwoo: $diwoo, elements: $elements);
+		foreach ($gaps as $gap) {
 			$this->addViolation(violations: $violations, loc: $loc, axis: $gap[0], reason: $gap[1]);
 		}
 
-		$diwoo = array_merge($diwoo, array_filter($elements, static fn (?array $element): bool => $element !== null), $relations);
+		$complete = (array_diff(array_column($gaps, 0), self::OPTIONAL_GAPS) === []);
 
-		return [
+		$elements = $this->fields->withoutUnresolvedType(elements: $elements);
+		$diwoo = array_merge($diwoo, array_filter($elements, static fn (?array $element): bool => $element !== null));
+
+		$entry = [
 			'loc' => $loc,
 			'lastmod' => self::lastModified(publication: $publication, file: $file),
 			'diwoo:Document' => ['diwoo:DiWoo' => $diwoo],
 		];
-	}//end map()
+
+		return ['entry' => $entry, 'complete' => $complete, 'violations' => $violations];
+	}//end document()
+
+	/**
+	 * The mandatory DiWoo elements a publication cannot fill, keyed by the publication
+	 * field an editor sets, each with the reason (REQ-DWP-003).
+	 *
+	 * The mandatory set is the one the DiWoo metadata XSD requires under `diwoo:DiWoo`
+	 * (tests/fixtures/diwoo/0.9.8-mandatory-elements.json): the publisher, the official
+	 * title, the informatiecategorie and the documenthandeling. `atTime` is always
+	 * filled from the publication date. The same resolution as {@see map()} decides,
+	 * so a publication this accepts is one the sitemap can emit.
+	 *
+	 * @param array<string, mixed> $publication The publication, with `@self.organisation`.
+	 *
+	 * @return array<string, string> The missing fields and why, empty when complete.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication
+	 */
+	public function mandatoryGaps(array $publication): array {
+		$gaps = [];
+		$publisher = $this->publisherElement(publication: $publication);
+		if ($publisher['#text'] === '') {
+			$gaps['publisher'] = 'organisation has no name';
+		}
+
+		if (isset($publisher['@resource']) === false) {
+			$gaps['publisher'] = 'organisation has no TOOI identifier';
+		}
+
+		if ($this->titleElement(publication: $publication) === null) {
+			$gaps['title'] = self::OPTIONAL_AXES['diwoo:titelcollectie'][1];
+		}
+
+		if ($this->categoryElement(publication: $publication) === null) {
+			$gaps['wooCategory'] = self::OPTIONAL_AXES['diwoo:classificatiecollectie'][1];
+		}
+
+		if ($this->handlingElement(publication: $publication, handlingTime: '') === null) {
+			$gaps['soortHandeling'] = self::OPTIONAL_AXES['diwoo:documenthandelingen'][1];
+		}
+
+		return $gaps;
+	}//end mandatoryGaps()
 
 	/**
 	 * The Woo-index fields integriq's mapping filled for a publication; none
@@ -187,33 +318,75 @@ class SitemapDocumentMapper {
 			$gaps[] = self::OPTIONAL_AXES[$key];
 		}
 
-		return $gaps;
+		return array_merge($gaps, $this->fields->storedGaps(diwoo: $diwoo, elements: $elements));
 
 	}//end axisGaps()
 
 	/**
-	 * The DiWoo creation date, publisher and format of one file's document.
+	 * The DiWoo creation date, publisher, responsible organisation, format, language
+	 * and validity of one file's document, from the fields the publication stores.
 	 *
 	 * @param array $publication The publication.
-	 * @param array $file The file.
+	 * @param array{'@resource': string, '#text': string}|null $format The file's format, read from its bytes ({@see formatOf()}); null omits it.
 	 * @param array<string, string> $mapped The fields integriq's mapping filled.
 	 *
 	 * @return array<string, mixed>
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function diwooCore(array $publication, array $file, array $mapped = []): array {
-		$created = ($publication['@self']['created'] ?? 'now');
-
-		return [
-			'diwoo:creatiedatum' => date('Y-m-d', strtotime($created)),
-			'diwoo:publisher' => $this->publisherElement(publication: $publication, mappedPublisher: ($mapped['publisher'] ?? null)),
-			'diwoo:format' => [
-				'@resource' => 'http://publications.europa.eu/resource/authority/file-type/' . strtoupper($file['extension']),
-				'#text' => strtolower($file['extension']),
-			],
+	private function diwooCore(array $publication, ?array $format, array $mapped = []): array {
+		$stored = $this->fields->storedElements(publication: $publication);
+		$publisher = $this->publisherElement(publication: $publication, mappedPublisher: ($mapped['publisher'] ?? null));
+		$core = [
+			'diwoo:creatiedatum' => $stored['diwoo:creatiedatum'],
+			'diwoo:publisher' => $publisher,
+			'diwoo:verantwoordelijke' => $this->fields->responsible(publisher: $publisher),
+			'diwoo:format' => $format,
+			'diwoo:language' => $stored['diwoo:language'],
+			'diwoo:geldigheid' => $stored['diwoo:geldigheid'],
 		];
+
+		return array_filter($core, static fn (mixed $element): bool => $element !== null);
 	}//end diwooCore()
+
+	/**
+	 * The DiWoo format of a file, taken from its bytes, never from its name
+	 * (REQ-PFF-001), and why it is missing or doubtful.
+	 *
+	 * Unreadable bytes give no format and the reason `type-unreadable`. A
+	 * format that differs from the one the file's extension claims is still
+	 * emitted, with the reason `type-mismatch`.
+	 *
+	 * @param array $file The file metadata, with its Nextcloud `id`.
+	 *
+	 * @return array{element: array{'@resource': string, '#text': string}|null, reason: string|null}
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) FileFacts::diwooFormat() is a pure lookup.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	private function formatOf(array $file): array {
+		$mimeType = $this->fileFacts?->mimeTypeOfListedFile(file: $file);
+		if ($mimeType === null) {
+			return ['element' => null, 'reason' => 'type-unreadable'];
+		}
+
+		$code = FileFacts::diwooFormat(mimeType: $mimeType);
+		if ($code === null) {
+			return ['element' => null, 'reason' => 'type-unlisted'];
+		}
+
+		$element = [
+			'@resource' => 'http://publications.europa.eu/resource/authority/file-type/' . $code,
+			'#text' => strtolower($code),
+		];
+		$claimed = strtolower(trim((string)($file['extension'] ?? '')));
+		if ($claimed !== strtolower($code)) {
+			return ['element' => $element, 'reason' => 'type-mismatch'];
+		}
+
+		return ['element' => $element, 'reason' => null];
+	}//end formatOf()
 
 	/**
 	 * The optional axes of one file's document, each its element or null.
@@ -241,9 +414,14 @@ class SitemapDocumentMapper {
 			$read['soortHandeling'] = $mapped['soortHandeling'];
 		}
 
+		$classification = $this->categoryElement(publication: $publication, mappedCategory: ($mapped['informatiecategorie'] ?? null));
+		if ($classification !== null) {
+			$classification['diwoo:documentsoorten'] = $this->fields->documentTypeElement(publication: $publication, file: $file);
+		}
+
 		return [
 			'diwoo:titelcollectie' => $this->titleElement(publication: $read),
-			'diwoo:classificatiecollectie' => $this->categoryElement(publication: $publication, mappedCategory: ($mapped['informatiecategorie'] ?? null)),
+			'diwoo:classificatiecollectie' => $classification,
 			'diwoo:documenthandelingen' => $this->handlingElement(publication: $read, handlingTime: $handlingTime),
 		];
 	}//end optionalAxes()
