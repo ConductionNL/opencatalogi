@@ -305,7 +305,7 @@ export default {
 				const position = this.savedId ? (this.view?.position ?? null) : this.position
 				const { data } = await axios.post(
 					generateUrl('/apps/opencatalogi/api/publications/{id}/tables/{tableId}/views', { id: this.publicationId, tableId: this.table.id }),
-					viewPayload(this.form, this.savedId, position),
+					viewPayload(this.form, { viewId: this.savedId, position }),
 				)
 				this.savedId = String(data.id || this.savedId)
 				this.$emit('saved', data)

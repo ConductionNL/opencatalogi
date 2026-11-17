@@ -45,7 +45,7 @@ describe('datasetViews', () => {
 		const summed = { ...counted, aggregate: 'sum' }
 
 		expect(viewPayload(counted)).toEqual({ kind: 'line', title: 'Trend', x: 'wijk', aggregate: 'count' })
-		expect(viewPayload(summed, 'v7', 0)).toEqual({ kind: 'line', title: 'Trend', x: 'wijk', y: 'toestellen', aggregate: 'sum', position: 0, viewId: 'v7' })
+		expect(viewPayload(summed, { viewId: 'v7', position: 0 })).toEqual({ kind: 'line', title: 'Trend', x: 'wijk', y: 'toestellen', aggregate: 'sum', position: 0, viewId: 'v7' })
 	})
 
 	it('names what a form still lacks, in the order the dialog asks for it', () => {
@@ -64,10 +64,10 @@ describe('datasetViews', () => {
 	it('swaps a view with its neighbour, and refuses a move off the list', () => {
 		const views = [{ id: 'a' }, { id: 'b' }, { id: 'c' }]
 
-		expect(movedViews(views, 1, -1)).toEqual([{ view: { id: 'b' }, position: 0 }, { view: { id: 'a' }, position: 1 }])
-		expect(movedViews(views, 1, 1)).toEqual([{ view: { id: 'b' }, position: 2 }, { view: { id: 'c' }, position: 1 }])
-		expect(movedViews(views, 0, -1)).toBeNull()
-		expect(movedViews(views, 2, 1)).toBeNull()
+		expect(movedViews(views, { index: 1, delta: -1 })).toEqual([{ view: { id: 'b' }, position: 0 }, { view: { id: 'a' }, position: 1 }])
+		expect(movedViews(views, { index: 1, delta: 1 })).toEqual([{ view: { id: 'b' }, position: 2 }, { view: { id: 'c' }, position: 1 }])
+		expect(movedViews(views, { index: 0, delta: -1 })).toBeNull()
+		expect(movedViews(views, { index: 2, delta: 1 })).toBeNull()
 	})
 
 	it('reads the figures of each kind of data answer', () => {

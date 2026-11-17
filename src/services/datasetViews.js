@@ -75,30 +75,41 @@ export function viewForm(view) {
  * an empty optional field left out, plus the view id when it changes a saved view.
  *
  * @param {object} form The form.
- * @param {string} [viewId] The saved view's id.
- * @param {number|null} [position] The view's place on the page.
+ * @param {{viewId?: string, position?: number|null}} [saved] The saved view's id and its place on the page.
  * @return {object} The record.
  * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-an-editor-adds-a-table-chart-or-map-view-to-a-published-table-req-dsv-001
  */
-export function viewPayload(form, viewId = '', position = null) {
+export function viewPayload(form, saved = {}) {
 	const kind = VIEW_KINDS.includes(form.kind) ? form.kind : 'table'
-	const payload = { kind, title: String(form.title || '').trim() }
-	for (const field of KIND_FIELDS[kind]) {
-		const value = form[field]
-		if (Array.isArray(value) ? value.length : value) {
-			payload[field] = Array.isArray(value) ? [...value] : value
-		}
-	}
+	const payload = { kind, title: String(form.title || '').trim(), ...filledFields(form, KIND_FIELDS[kind]) }
 	if (payload.aggregate === 'count') {
 		delete payload.y
 	}
-	if (position !== null) {
-		payload.position = position
+	if ((saved.position ?? null) !== null) {
+		payload.position = saved.position
 	}
-	if (viewId) {
-		payload.viewId = viewId
+	if (saved.viewId) {
+		payload.viewId = saved.viewId
 	}
 	return payload
+}
+
+/**
+ * The fields of a form that hold a value, an array copied.
+ *
+ * @param {object} form The form.
+ * @param {Array<string>} fields The fields the view's kind uses.
+ * @return {object} The filled fields.
+ */
+function filledFields(form, fields) {
+	const filled = {}
+	for (const field of fields) {
+		const value = form[field]
+		if (Array.isArray(value) ? value.length : value) {
+			filled[field] = Array.isArray(value) ? [...value] : value
+		}
+	}
+	return filled
 }
 
 /**
@@ -132,12 +143,11 @@ export function missingField(form) {
  * position it gets, or null when the move leaves the list.
  *
  * @param {Array<object>} views The views in page order.
- * @param {number} index The view to move.
- * @param {number} delta -1 for up, 1 for down.
+ * @param {{index: number, delta: number}} move The view to move, and -1 for up or 1 for down.
  * @return {Array<{view: object, position: number}>|null} The two views that change place.
  * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-an-editor-adds-a-table-chart-or-map-view-to-a-published-table-req-dsv-001
  */
-export function movedViews(views, index, delta) {
+export function movedViews(views, { index, delta }) {
 	const other = index + delta
 	if (index < 0 || other < 0 || index >= views.length || other >= views.length) {
 		return null

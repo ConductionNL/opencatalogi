@@ -118,7 +118,7 @@
 								:disabled="busy || index === 0"
 								:aria-label="t('opencatalogi', 'Move {title} up', { title: view.title })"
 								:data-testid="'publication-table-view-up-' + view.id"
-								@click="moveView(table, index, -1)">
+								@click="moveView(table, { index, delta: -1 })">
 								{{ t('opencatalogi', 'Move up') }}
 							</NcButton>
 							<NcButton
@@ -126,7 +126,7 @@
 								:disabled="busy || index === views[table.id].length - 1"
 								:aria-label="t('opencatalogi', 'Move {title} down', { title: view.title })"
 								:data-testid="'publication-table-view-down-' + view.id"
-								@click="moveView(table, index, 1)">
+								@click="moveView(table, { index, delta: 1 })">
 								{{ t('opencatalogi', 'Move down') }}
 							</NcButton>
 							<NcButton
@@ -429,20 +429,19 @@ export default {
 		 * Swap a view with its neighbour and save both positions.
 		 *
 		 * @param {{id: string}} table The table.
-		 * @param {number} index The view to move.
-		 * @param {number} delta -1 for up, 1 for down.
+		 * @param {{index: number, delta: number}} move The view to move, and -1 for up or 1 for down.
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-an-editor-adds-a-table-chart-or-map-view-to-a-published-table-req-dsv-001
 		 */
-		async moveView(table, index, delta) {
-			const moved = movedViews(this.views[table.id] || [], index, delta)
+		async moveView(table, move) {
+			const moved = movedViews(this.views[table.id] || [], move)
 			if (moved === null) {
 				return
 			}
 			this.busy = true
 			try {
 				for (const { view, position } of moved) {
-					await axios.post(this.url('/' + encodeURIComponent(table.id) + '/views'), viewPayload(view, String(view.id), position))
+					await axios.post(this.url('/' + encodeURIComponent(table.id) + '/views'), viewPayload(view, { viewId: String(view.id), position }))
 				}
 			} catch (error) {
 				this.showError(error)
