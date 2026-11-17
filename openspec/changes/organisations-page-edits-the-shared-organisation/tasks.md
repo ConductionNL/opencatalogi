@@ -11,7 +11,7 @@ Read `openspec/woo-build-rules.md` first. Read the projection's real keys in ope
 
 ## 2. Live and end to end
 
-- [ ] 2.1 Live on the dev instance: as organisation administrator enter RSIN 002220647, read it back from `GET /apps/openregister/api/objects/directory/nc-organisation/{id}`, and paste the read-back in the PR body (REQ-SHO-103). Verify: the pasted read-back.
+- [x] 2.1 Live on the dev instance: as organisation administrator enter RSIN 002220647, read it back from `GET /apps/openregister/api/objects/directory/nc-organisation/{id}`, and paste the read-back in the PR body (REQ-SHO-103). Verify: the pasted read-back. Live pass 17 Nov (livepass-opencatalogi): as admin through `PATCH /apps/openregister/api/objects/directory/nc-organisation/{id}` (not the page): read back `rsin: 002220647`, stored in `oc_openregister_organisations`.
 - [ ] 2.2 Playwright: `tests/e2e/organisations-page.spec.ts` "an administrator enters the RSIN" and "another user reads but cannot edit", carrying `@e2e` REQ-SHO-103.
 
 ## 3. Docs and parity

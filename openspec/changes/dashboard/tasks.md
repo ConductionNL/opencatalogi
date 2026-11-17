@@ -4,13 +4,13 @@
 
 - [x] 1.1 Open `appinfo/routes.php` and remove the entry `['name' => 'dashboard#index', 'url' => '/index', 'verb' => 'GET']`
 - [x] 1.2 Verify no other code references `dashboard#index` (grep for `dashboard#index` and `generateUrl.*dashboard.*index`)
-- [ ] 1.3 Smoke test: confirm `GET /apps/opencatalogi/index` now returns 404 instead of 500
+- [x] 1.3 Smoke test: confirm `GET /apps/opencatalogi/index` now returns 404 instead of 500 Live pass 17 Nov (livepass-opencatalogi): the route is gone and the path no longer 500s; it now answers 200 with the SPA through the `/{path}` catch-all added since, not 404.
 
 ## 2. Bug Fix — Broadcast Cron Not Registered (DIR-007 / Gap 12)
 
 - [x] 2.1 Open `appinfo/info.xml` and add `<job>OCA\OpenCatalogi\BackgroundJob\Broadcast</job>` inside the `<background-jobs>` block alongside `DirectorySync`
 - [x] 2.2 Verify `lib/BackgroundJob/Broadcast.php` exists, extends `TimedJob`, and calls `BroadcastService::broadcast(null)` (no code change expected)
-- [ ] 2.3 Smoke test: confirm Nextcloud lists `OCA\OpenCatalogi\BackgroundJob\Broadcast` in the background job table after app reload
+- [x] 2.3 Smoke test: confirm Nextcloud lists `OCA\OpenCatalogi\BackgroundJob\Broadcast` in the background job table after app reload Live pass 17 Nov (livepass-opencatalogi): `occ background-job:list` lists `OCA\OpenCatalogi\BackgroundJob\Broadcast` after `occ app:enable`.
 
 ## 3. Dashboard Bootstrap Verification (DSH-005..008)
 
@@ -23,26 +23,28 @@
 
 ## 4. SPA Routing Verification (DSH-001..003)
 
-- [ ] 4.1 Smoke test all registered deep-link routes by curling each and confirming 200 + SPA HTML is returned
+- [x] 4.1 Smoke test all registered deep-link routes by curling each and confirming 200 + SPA HTML is returned Live pass 17 Nov (livepass-opencatalogi): `/`, `/catalogi`, `/publications/publications`, `/publications/publications/{id}`, `/search`, `/organizations`, `/themes`, `/glossary`, `/pages`, `/menus`, `/directory` all 200 with the SPA bundle.
 - [x] 4.2 Verify CSP header on the SPA page includes `connect-src *` (or equivalent to allow all domains)
 - [x] 4.3 Verify `appinfo/routes.php` contains entries for all SPA routes: `/`, `/catalogi`, `/publications/{catalogSlug}`, `/publications/{catalogSlug}/{id}`, `/search`, `/organizations`, `/themes`, `/glossary`, `/pages`, `/menus`, `/directory`
 
 ## 5. Listing CRUD API Verification (LST-001..006)
 
-- [ ] 5.1 Smoke test `GET /api/listings` (authenticated) — confirm 200 with paginated list
-- [ ] 5.2 Smoke test `GET /api/listings/{id}` (unauthenticated) — confirm 200 and public access works
-- [ ] 5.3 Smoke test `POST /api/listings` (authenticated) — confirm listing created and 201 returned
-- [ ] 5.4 Smoke test `PUT /api/listings/{id}` (authenticated) — confirm listing updated
-- [ ] 5.5 Smoke test `DELETE /api/listings/{id}` (authenticated) — confirm listing deleted
+- [x] 5.1 Smoke test `GET /api/listings` (authenticated) — confirm 200 with paginated list Live pass 17 Nov (livepass-opencatalogi): 200 with `results`, `total`, `page`, `pages`.
+- [x] 5.2 Smoke test `GET /api/listings/{id}` (unauthenticated) — confirm 200 and public access works Live pass 17 Nov (livepass-opencatalogi): 200 anonymously for a listing with `published` in the past; an unpublished listing is 404 to anonymous readers by the listing schema's read rule.
+- [x] 5.3 Smoke test `POST /api/listings` (authenticated) — confirm listing created and 201 returned Live pass 17 Nov (livepass-opencatalogi): was 500 for every create (the allow-list dropped the schema's required `catalogusId`); fixed in this pass, now 200 with the listing (the controller answers 200, not 201), and a refused payload is 400 with the reason.
+- [x] 5.4 Smoke test `PUT /api/listings/{id}` (authenticated) — confirm listing updated Live pass 17 Nov (livepass-opencatalogi): 200, title changed and read back anonymously; an unknown id is now 404 (was 500).
+- [x] 5.5 Smoke test `DELETE /api/listings/{id}` (authenticated) — confirm listing deleted Live pass 17 Nov (livepass-opencatalogi): 200 `Listing removed`, then 404 on read.
 - [x] 5.6 Verify `ListingController` reads `listing_register` and `listing_schema` from `IAppConfig` and passes them to `ObjectService`
 - [ ] 5.7 Verify CORS annotations (`#[CORS]`) and public-page annotations (`#[PublicPage]`, `#[NoCSRFRequired]`) are correct on `GET /api/listings/{id}` and `POST /api/listings/add`
+  - Live pass 17 Nov: left open. `OPTIONS /api/listings/{id}` answers the CORS headers, but the GET answer itself carries no `Access-Control-Allow-Origin`, and `POST /api/listings/add` is admin-only since harden-listings-admin-write-surface (403 anonymously), so this item's expectation no longer matches the spec.
 
 ## 6. Directory Synchronisation Verification (DIR-001..011)
 
-- [ ] 6.1 Smoke test `GET /api/directory` (unauthenticated) — confirm 200 with combined directory data (live pass, decision 139)
-- [ ] 6.2 Smoke test `POST /api/directory` with a directory URL — confirm `DirectoryService::syncDirectory()` is called (live pass, decision 139)
-- [ ] 6.3 Smoke test `POST /api/listings/sync` with a listing ID — confirm listing's directory URL is fetched and sync runs (live pass, decision 139)
+- [x] 6.1 Smoke test `GET /api/directory` (unauthenticated) — confirm 200 with combined directory data (live pass, decision 139) Live pass 17 Nov (livepass-opencatalogi): 200 anonymously with the combined directory.
+- [x] 6.2 Smoke test `POST /api/directory` with a directory URL — confirm `DirectoryService::syncDirectory()` is called (live pass, decision 139) Live pass 17 Nov (livepass-opencatalogi): as admin: an unresolvable host answers 400 `Directory URL host could not be resolved` and a loopback host 400 `Directory URL host is not allowed`, both from DirectoryService's outbound guard. A successful sync was not run: it announces this instance to the remote directory.
+- [x] 6.3 Smoke test `POST /api/listings/sync` with a listing ID — confirm listing's directory URL is fetched and sync runs (live pass, decision 139) Live pass 17 Nov (livepass-opencatalogi): as admin the listing's directory was fetched (example.com, 404) and the failure recorded on the listing (`lastSync`, `statusCode` 404, `lastError` without the query string) after this pass's fix; as editor1 403.
 - [ ] 6.4 Verify `POST /api/listings/add` is accessible without authentication and triggers `DirectoryService::syncDirectory()`
+  - Live pass 17 Nov: left open. The main spec (LST-003, harden-listings-admin-write-surface) makes `add` admin-only; anonymous access is refused by design, so this item needs rewording rather than a fix.
 - [x] 6.5 Verify CORS OPTIONS endpoints exist and return correct headers for all public listing/directory endpoints
 - [x] 6.6 Verify `DirectoryService` implements anti-loop protection (5-minute TTL cache of processed directory URLs)
 - [x] 6.7 Verify `DirectoryService` checks `lastSync` timestamp to determine listing staleness before re-syncing

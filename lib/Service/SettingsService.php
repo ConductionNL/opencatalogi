@@ -291,7 +291,7 @@ class SettingsService implements SettingsServiceInterface {
 		'public_api_cache_seconds' => '60',
 		'publication_languages' => '["nl","en"]',
 		'publication_url_template' => '',
-		'publication_url_catalog' => 'publication',
+		'publication_url_catalog' => 'publications',
 		'cors_allowed_origins' => '*',
 		'search_indexing' => 'allowed',
 	];

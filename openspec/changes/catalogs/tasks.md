@@ -62,7 +62,7 @@
 - **Acceptance criteria**:
   - [x] `OPTIONS /api/catalogi` and `OPTIONS /api/catalogi/{id}` are registered in `appinfo/routes.php` BEFORE any wildcard `{slug}` routes.
   - [x] Both OPTIONS handlers return `200 OK` with `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`.
-  - [ ] Verified with a real browser preflight (or curl `--request OPTIONS`) against a running Nextcloud instance.
+  - [x] Verified with a real browser preflight (or curl `--request OPTIONS`) against a running Nextcloud instance. Live pass 17 Nov (livepass-opencatalogi): `curl -X OPTIONS` on `/api/catalogi` and `/api/catalogi/publications`: 200 with Allow-Origin, -Methods, -Headers.
 
 ## Task 6: Distributed slug cache (CAT-005, CAT-006, CAT-007)
 
@@ -140,5 +140,5 @@
   - [ ] `npm run check:l10n` reports zero MISSING and zero UNWRAPPED.
     - Measured: zero MISSING and zero UNUSED; the 3 UNWRAPPED are `actionIconName="Delete"` in the delete dialogs, an icon name and not prose, so they stay unwrapped and this item stays open.
   - [x] `npm run find:unwrapped` — no prose-shaped literals remain outside `t()` in the catalog Vue components.
-  - [ ] Catalog list and detail endpoints tested with a real browser `GET` and `OPTIONS` (curl or browser DevTools) against a running dev instance.
-  - [ ] Tail Nextcloud logs during a catalog update — confirm no recursive listener lines appear.
+  - [x] Catalog list and detail endpoints tested with a real browser `GET` and `OPTIONS` (curl or browser DevTools) against a running dev instance. Live pass 17 Nov (livepass-opencatalogi): anonymous GET of both answers 200 with `Access-Control-Allow-Origin: *`; OPTIONS as above.
+  - [x] Tail Nextcloud logs during a catalog update — confirm no recursive listener lines appear. Live pass 17 Nov (livepass-opencatalogi): a PATCH of the publications catalogue's summary wrote no log line at all.

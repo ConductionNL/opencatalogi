@@ -1908,7 +1908,9 @@ OC.L10N.register(
         "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister carries the engine OpenCatalogi needs.",
         "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.",
         "OpenCatalogi cannot start": "OpenCatalogi cannot start",
-        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister."
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.",
+        "Invalid listing": "Invalid listing",
+        "Listing not found in scope": "Listing not found in scope"
     },
     "nplurals=2; plural=(n != 1);"
 )
