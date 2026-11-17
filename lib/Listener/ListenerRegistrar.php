@@ -31,6 +31,8 @@ use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
+use OCA\OpenCatalogi\BackgroundJob\MetadataSuggestionQueue;
+use OCA\OpenCatalogi\Contract\MetadataSuggestionQueueInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 
@@ -66,6 +68,9 @@ class ListenerRegistrar {
 			event: ObjectCreatedEvent::class,
 			listener: MetadataSuggestionListener::class
 		);
+		// The listener queues through this contract; bound here, beside its only
+		// caller, so the service bindings take no further dependency on BackgroundJob/.
+		$context->registerServiceAlias(MetadataSuggestionQueueInterface::class, MetadataSuggestionQueue::class);
 		$context->registerEventListener(
 			event: ObjectUpdatedEvent::class,
 			listener: ObjectUpdatedEventListener::class

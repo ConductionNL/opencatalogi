@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Unit\Listener;
 
+use OCA\OpenCatalogi\BackgroundJob\MetadataSuggestionQueue;
 use OCA\OpenCatalogi\BackgroundJob\SuggestPublicationMetadata;
 use OCA\OpenCatalogi\Listener\MetadataSuggestionListener;
 use OCA\OpenRegister\Db\ObjectEntity;
@@ -21,6 +22,7 @@ use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\BackgroundJob\IJobList;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -28,6 +30,7 @@ use Psr\Log\LoggerInterface;
  * A new publication queues the rules floor; nothing else does.
  */
 #[CoversClass(MetadataSuggestionListener::class)]
+#[UsesClass(MetadataSuggestionQueue::class)]
 final class MetadataSuggestionListenerTest extends TestCase {
 
 	/**
@@ -38,7 +41,8 @@ final class MetadataSuggestionListenerTest extends TestCase {
 	private array $queued = [];
 
 	/**
-	 * The listener, with the publication register 7, suggestion schema 30 and catalogue schema 31.
+	 * The listener, with the publication register 7, suggestion schema 30 and catalogue schema 31,
+	 * queueing through the real queue over the job list.
 	 *
 	 * @param IJobList|null $jobList A job list to use instead of the recording one.
 	 *
@@ -63,7 +67,7 @@ final class MetadataSuggestionListenerTest extends TestCase {
 			);
 		}
 
-		return new MetadataSuggestionListener($config, $jobList, $this->createMock(LoggerInterface::class));
+		return new MetadataSuggestionListener($config, new MetadataSuggestionQueue($jobList), $this->createMock(LoggerInterface::class));
 	}//end listener()
 
 	/**

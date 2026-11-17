@@ -26,9 +26,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\MetadataSuggestionDecisionsInterface;
 use OCA\OpenCatalogi\Exception\MetadataSuggestionRefusedException;
 use OCA\OpenCatalogi\Contract\MetadataRuleSuggesterInterface;
-use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionDecisions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -51,14 +51,14 @@ class MetadataSuggestionController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param MetadataSuggestionDecisions $decisions The suggestions and the decisions on them.
+	 * @param MetadataSuggestionDecisionsInterface $decisions The suggestions and the decisions on them.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly MetadataSuggestionDecisions $decisions,
+		private readonly MetadataSuggestionDecisionsInterface $decisions,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

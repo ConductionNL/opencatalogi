@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\MetadataSuggestion;
 
+use OCA\OpenCatalogi\Contract\MetadataSuggestionDecisionsInterface;
 use OCA\OpenCatalogi\Exception\MetadataSuggestionRefusedException;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
@@ -46,7 +47,7 @@ use Throwable;
  *
  * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
  */
-class MetadataSuggestionDecisions {
+class MetadataSuggestionDecisions implements MetadataSuggestionDecisionsInterface {
 	use ReadsObjectProperties;
 
 	/**

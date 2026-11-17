@@ -36,6 +36,8 @@ use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Contract\AttachmentReadingStoreInterface;
 use OCA\OpenCatalogi\Contract\MetadataRuleSuggesterInterface;
 use OCA\OpenCatalogi\Contract\MetadataSuggestionStoreInterface;
+use OCA\OpenCatalogi\Contract\MetadataSuggestionDecisionsInterface;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionDecisions;
 use OCA\OpenCatalogi\Contract\SingleLawfulValueInterface;
 use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionService;
 use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionStore;
@@ -232,6 +234,7 @@ final class ServiceBindings {
 		AttachmentReadingStoreInterface::class => AttachmentReadingStore::class,
 		MetadataRuleSuggesterInterface::class => MetadataSuggestionService::class,
 		MetadataSuggestionStoreInterface::class => MetadataSuggestionStore::class,
+		MetadataSuggestionDecisionsInterface::class => MetadataSuggestionDecisions::class,
 		SingleLawfulValueInterface::class => SingleLawfulValue::class,
 		RedactedOriginalGuardInterface::class => RedactedOriginalGuard::class,
 		PlainSummaryDrafterInterface::class => PlainLanguageDrafter::class,

@@ -159,6 +159,22 @@ class ComponentRegistrarsTest extends TestCase {
 	}//end testListenerRegistrarSubscribesEveryListener()
 
 	/**
+	 * The metadata suggestion listener's queue contract is bound beside it.
+	 *
+	 * @return void
+	 */
+	public function testListenerRegistrarBindsTheSuggestionQueue(): void {
+		$context = $this->createMock(IRegistrationContext::class);
+		$context->expects($this->once())->method('registerServiceAlias')->with(
+			'OCA\\OpenCatalogi\\Contract\\MetadataSuggestionQueueInterface',
+			'OCA\\OpenCatalogi\\BackgroundJob\\MetadataSuggestionQueue'
+		);
+
+		(new ListenerRegistrar())->register($context);
+
+	}//end testListenerRegistrarBindsTheSuggestionQueue()
+
+	/**
 	 * The MCP and metrics providers are bound under the keys OpenRegister enumerates.
 	 *
 	 * @return void

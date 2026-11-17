@@ -24,9 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\BackgroundJob\SuggestPublicationMetadata;
+use OCA\OpenCatalogi\Contract\MetadataSuggestionQueueInterface;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
-use OCP\BackgroundJob\IJobList;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
@@ -47,12 +46,12 @@ class MetadataSuggestionListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config Holds the publication register and the schemas to skip.
-	 * @param IJobList $jobList Where the job is queued.
+	 * @param MetadataSuggestionQueueInterface $queue Where the job is queued.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly IJobList $jobList,
+		private readonly MetadataSuggestionQueueInterface $queue,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -106,10 +105,7 @@ class MetadataSuggestionListener implements IEventListener {
 			return;
 		}
 
-		$this->jobList->add(
-			SuggestPublicationMetadata::class,
-			['register' => $register, 'schema' => $schema, 'id' => $uuid]
-		);
+		$this->queue->queue(register: $register, schema: $schema, id: $uuid);
 	}//end queue()
 
 	/**
