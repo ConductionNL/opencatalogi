@@ -23,13 +23,6 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\CouncilHarvestServiceInterface;
-use OCA\OpenRegister\Db\FlowRunFilter;
-use OCA\OpenRegister\Db\FlowRunListing;
-use OCA\OpenRegister\Db\FlowRunMapper;
-use OCA\OpenRegister\Db\FlowRunViewer;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -70,11 +63,6 @@ class CouncilHarvestService implements CouncilHarvestServiceInterface {
 	private const MAPPING_PREFIX = 'council-document-to-publication-';
 
 	/**
-	 * The object service id in the container.
-	 */
-	private const OBJECTS = 'OCA\OpenRegister\Service\ObjectService';
-
-	/**
 	 * The flow service id in the container.
 	 */
 	private const FLOWS = 'OCA\OpenRegister\Service\Flow\FlowService';
@@ -110,10 +98,10 @@ class CouncilHarvestService implements CouncilHarvestServiceInterface {
 
 		return [
 			'integriq' => $this->appManager->isEnabledForAnyone('integriq'),
-			// decidiq can publish council papers into the same catalogue; the section warns about duplicates.
+			// Decidiq can publish council papers into the same catalogue; the section warns about duplicates.
 			'decidiq' => $this->appManager->isEnabledForAnyone('decidiq'),
 			'sources' => $this->sourceChoices(),
-			'source' => $this->templates()[$kind]['source'] ?? null,
+			'source' => $this->sources()->all()[$kind]['source'] ?? null,
 			'publishOnArrival' => $this->publishesOnArrival(),
 			'flow' => $this->flowSummary(flow: $flow),
 			'lastRun' => $this->lastRun(flow: $flow),
@@ -133,13 +121,13 @@ class CouncilHarvestService implements CouncilHarvestServiceInterface {
 	 */
 	public function setUp(string $sourceSlug): array {
 		$this->assertAvailable();
-		$kind = $this->kindOfSource(sourceSlug: $sourceSlug);
-		$template = $this->templates()[$kind];
+		$kind = $this->sources()->kindOf(sourceSlug: $sourceSlug);
+		$template = $this->sources()->all()[$kind];
 		$this->assertSourceReady(template: $template);
 
 		$written = [
-			'synchronization' => $this->writeIntegriq(schema: 'synchronization', object: $template['synchronization']),
-			'rule' => $this->writeIntegriq(schema: 'rule', object: $template['rule']),
+			'synchronization' => $this->integriq()->write(schema: 'synchronization', object: $template['synchronization']),
+			'rule' => $this->integriq()->write(schema: 'rule', object: $template['rule']),
 		];
 		$this->appConfig->setValueString('opencatalogi', self::KIND_KEY, $kind);
 
@@ -257,38 +245,11 @@ class CouncilHarvestService implements CouncilHarvestServiceInterface {
 	/**
 	 * The templates per council system.
 	 *
-	 * @return array<string, array<string, mixed>> The templates, keyed by system.
-	 *
-	 * @throws RuntimeException When the template file is missing or broken.
+	 * @return CouncilSourceTemplates The template reader.
 	 */
-	private function templates(): array {
-		$path = $this->appManager->getAppPath('opencatalogi') . self::SOURCES_FILE;
-		$decoded = json_decode((string)@file_get_contents($path), true);
-		if (is_array($decoded['kinds'] ?? null) === false) {
-			throw new RuntimeException('The council source file ' . self::SOURCES_FILE . ' is missing or not valid.');
-		}
-
-		return $decoded['kinds'];
-	}//end templates()
-
-	/**
-	 * The system an integriq source belongs to.
-	 *
-	 * @param string $sourceSlug The integriq source.
-	 *
-	 * @return string The system.
-	 *
-	 * @throws RuntimeException When the source is no council system this harvest knows.
-	 */
-	private function kindOfSource(string $sourceSlug): string {
-		foreach ($this->templates() as $kind => $template) {
-			if ($template['source'] === $sourceSlug) {
-				return (string)$kind;
-			}
-		}
-
-		throw new RuntimeException('Choose a Notubiz or iBabs source: "' . $sourceSlug . '" is not one.');
-	}//end kindOfSource()
+	private function sources(): CouncilSourceTemplates {
+		return new CouncilSourceTemplates(appRoot: $this->appManager->getAppPath('opencatalogi'), file: self::SOURCES_FILE);
+	}//end sources()
 
 	/**
 	 * Refuse when the source is missing in integriq or lacks a setting the system needs.
@@ -302,7 +263,7 @@ class CouncilHarvestService implements CouncilHarvestServiceInterface {
 	 * @spec openspec/changes/council-documents-from-notubiz-and-ibabs/specs/council-documents-harvest/spec.md#scenario-ibabs-without-a-key-is-refused
 	 */
 	private function assertSourceReady(array $template): void {
-		$source = $this->integriqObject(schema: 'source', slug: (string)$template['source']);
+		$source = $this->integriq()->find(schema: 'source', slug: (string)$template['source']);
 		if ($source === null) {
 			throw new RuntimeException('The source ' . $template['source'] . ' does not exist in integriq. Import it there first.');
 		}
@@ -333,52 +294,13 @@ class CouncilHarvestService implements CouncilHarvestServiceInterface {
 	}//end assertAvailable()
 
 	/**
-	 * Write an integriq object by slug, over the stored one when it exists.
+	 * The integriq register's objects, by slug.
 	 *
-	 * @param string               $schema The integriq schema.
-	 * @param array<string, mixed> $object The object.
-	 *
-	 * @return string 'created' or 'updated'.
+	 * @return RegisterObjectsBySlug The reader and writer.
 	 */
-	private function writeIntegriq(string $schema, array $object): string {
-		$existing = $this->integriqObject(schema: $schema, slug: (string)$object['slug']);
-		$this->container->get(self::OBJECTS)->saveObject(
-			object: $object,
-			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'integriq', schema: $schema), uuid: $existing?->getUuid())
-		);
-
-		if ($existing === null) {
-			return 'created';
-		}
-
-		return 'updated';
-	}//end writeIntegriq()
-
-	/**
-	 * An integriq object by slug, or null.
-	 *
-	 * @param string $schema The integriq schema.
-	 * @param string $slug   The object slug.
-	 *
-	 * @return object|null The object entity.
-	 */
-	private function integriqObject(string $schema, string $slug): ?object {
-		try {
-			$found = $this->container->get(self::OBJECTS)->find(
-				id: $slug,
-				options: new ObjectFindOptions(register: 'integriq', schema: $schema),
-				_multitenancy: false
-			);
-		} catch (Throwable) {
-			return null;
-		}
-
-		if (is_object($found) === false) {
-			return null;
-		}
-
-		return $found;
-	}//end integriqObject()
+	private function integriq(): RegisterObjectsBySlug {
+		return new RegisterObjectsBySlug(container: $this->container, register: 'integriq');
+	}//end integriq()
 
 	/**
 	 * The integriq sources the section offers: those of the known council systems that exist.
@@ -391,8 +313,8 @@ class CouncilHarvestService implements CouncilHarvestServiceInterface {
 		}
 
 		$choices = [];
-		foreach ($this->templates() as $template) {
-			$source = $this->integriqObject(schema: 'source', slug: (string)$template['source']);
+		foreach ($this->sources()->all() as $template) {
+			$source = $this->integriq()->find(schema: 'source', slug: (string)$template['source']);
 			if ($source !== null) {
 				$choices[] = ['slug' => (string)$template['source'], 'label' => (string)$template['label'], 'uuid' => (string)$source->getUuid()];
 			}
@@ -454,7 +376,7 @@ class CouncilHarvestService implements CouncilHarvestServiceInterface {
 	 * @return void
 	 */
 	private function switchOffOthers(string $kind): void {
-		foreach (array_keys($this->templates()) as $other) {
+		foreach (array_keys($this->sources()->all()) as $other) {
 			$flow = $this->flowOf(kind: (string)$other);
 			if ($other !== $kind && $flow !== null && $flow->getEnabled() === true) {
 				$this->container->get(self::FLOWS)->save(['enabled' => false], (string)$flow->getUuid());
@@ -470,7 +392,7 @@ class CouncilHarvestService implements CouncilHarvestServiceInterface {
 	 * @return object|null The flow entity.
 	 */
 	private function flowOf(string $kind): ?object {
-		$name = (string)($this->templates()[$kind]['flow'] ?? '');
+		$name = (string)($this->sources()->all()[$kind]['flow'] ?? '');
 		if ($name === '' || $this->appManager->isEnabledForAnyone('openregister') === false) {
 			return null;
 		}
@@ -514,20 +436,11 @@ class CouncilHarvestService implements CouncilHarvestServiceInterface {
 			return null;
 		}
 
-		try {
-			// A system read of the app's own harvest flow: no requester, so no per-user scoping.
-			$runs = $this->container->get(FlowRunMapper::class)->findAllRuns(
-				listing: new FlowRunListing(filter: new FlowRunFilter(flowId: (string)$flow->getUuid()), limit: 1),
-				viewer: new FlowRunViewer(requesterUid: null, ownedFlowIds: [])
-			);
-		} catch (Throwable) {
+		$run = (new LatestFlowRun(container: $this->container))->find(flowUuid: (string)$flow->getUuid());
+		if ($run === null) {
 			return null;
 		}
 
-		if ($runs === []) {
-			return null;
-		}
-
-		return (new FlowReport())->runSummary(run: $runs[0]);
+		return (new FlowReport())->runSummary(run: $run);
 	}//end lastRun()
 }//end class

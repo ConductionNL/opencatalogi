@@ -38,6 +38,9 @@ use RuntimeException;
 /**
  * @covers \OCA\OpenCatalogi\Service\CouncilHarvestService
  * @uses \OCA\OpenCatalogi\Service\FlowReport
+ * @uses \OCA\OpenCatalogi\Service\CouncilSourceTemplates
+ * @uses \OCA\OpenCatalogi\Service\LatestFlowRun
+ * @uses \OCA\OpenCatalogi\Service\RegisterObjectsBySlug
  */
 class CouncilHarvestServiceTest extends TestCase {
 

@@ -22,6 +22,6 @@ Read `lib/Settings/register.d/publiccode-github-harvest.json` and `lib/Service/P
 
 ## 4. Verification
 
-- [ ] 4.1 `openspec validate council-documents-from-notubiz-and-ibabs --strict`, `composer check:strict`, `npm run lint`.
+- [ ] 4.1 `openspec validate council-documents-from-notubiz-and-ibabs --strict`, `composer check:strict`, `npm run lint`. The change's own files are clean on 17 Nov: phpcs, phpmd (CouncilHarvestService split into `CouncilSourceTemplates`, `RegisterObjectsBySlug` and `LatestFlowRun` to stay under the complexity and coupling limits, error-control operator removed) and phpstan, eslint on the settings section and its specs. Left unticked: `check:strict` and `npm run lint` still fail app-wide on findings outside this change (psalm cannot see OpenRegister main's value classes in a bare checkout, phpcs/phpmd in other files, eslint in `DashboardSideBar.vue`), and `openspec validate` was not run in the cloud session.
 - [ ] 4.2 Live: point the Notubiz source at a municipality with a public feed, run the harvest once, and paste the run counts and one publication in the PR body. (live pass, decision 139)
 - [ ] 4.3 Set `int-council` in `openspec/parity/capabilities.json` to `built` with this change.
