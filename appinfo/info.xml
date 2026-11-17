@@ -157,6 +157,8 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 	<repair-steps>
 		<post-migration>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+			<!-- Right after InitializeSettings: the imported read rule requires the stored state published, so every legacy publication gets its state before anything reads it (publication-lifecycle-on-or REQ-PLC-007). Idempotent. -->
+			<step>OCA\OpenCatalogi\Repair\BackfillPublicationLifecycleState</step>
 			<!-- After InitializeSettings: hands the stored Woo requests to dossiq and stops their timers here (woo-request-intake-hands-over-to-dossiq REQ-WHD-003). -->
 			<step>OCA\OpenCatalogi\Repair\HandWooRequestsToDossiq</step>
 			<!--

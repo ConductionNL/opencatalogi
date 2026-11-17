@@ -38,7 +38,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy the `env
 
 ## 7. Upgrade
 
-- [ ] 7.1 Add `BackfillPublicationLifecycleState`, registered post-migration after `InitializeSettings` (REQ-PLC-007). Verify: `tests/Unit/Repair/BackfillPublicationLifecycleStateTest.php::testALegacyPublicationWithADateBecomesPublished`, `::testALegacyPublicationWithoutADateBecomesADraft`, `::testASecondRunChangesNothing`, `::testTheStepIsRegisteredPostMigration` (reads `appinfo/info.xml`).
+- [x] 7.1 Add `BackfillPublicationLifecycleState`, registered post-migration after `InitializeSettings` (REQ-PLC-007). Verify: `tests/Unit/Repair/BackfillPublicationLifecycleStateTest.php::testALegacyPublicationWithADateBecomesPublished`, `::testALegacyPublicationWithoutADateBecomesADraft`, `::testASecondRunChangesNothing`, `::testTheStepIsRegisteredPostMigration` (reads `appinfo/info.xml`).
 - [ ] 7.2 Upgrade the dev instance with `appstoreenabled=false` set first, then count public publications before and after on the public API and paste both numbers in the PR body; they must match (REQ-PLC-007). Verify: the two counts. (live pass, decision 139)
 
 ## 8. Coordination
