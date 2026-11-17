@@ -110,17 +110,44 @@ class AgentToolAnswer {
 	}//end limitRefusal()
 
 	/**
+	 * The checked arguments of one search, or the refusal of the first bad one.
+	 *
+	 * @param array{catalog: string, query: string, limit: int} $asked The arguments as the tool received them.
+	 *
+	 * @return array{search?: array{catalog: string, query: string, limit: int}, refusal?: array{error: array{code: string, message: string}}}
+	 *         `search` with the trimmed catalog and query, or `refusal`.
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-catalog-scoped-search-survives-as-a-curated-service-tool-req-004
+	 */
+	public static function searchRequest(array $asked): array {
+		$search = ['catalog' => self::text(value: $asked['catalog']), 'query' => self::text(value: $asked['query']), 'limit' => $asked['limit']];
+		if ($search['catalog'] === null) {
+			return ['refusal' => self::missingCatalog()];
+		}
+
+		if ($search['query'] === null) {
+			return ['refusal' => self::missingArgument(name: 'query')];
+		}
+
+		$refusal = self::limitRefusal(limit: $search['limit']);
+		if ($refusal !== null) {
+			return ['refusal' => $refusal];
+		}
+
+		return ['search' => $search];
+	}//end searchRequest()
+
+	/**
 	 * The index() parameters of one search: the query, the limit and the first page.
 	 *
-	 * @param string $query The trimmed query.
-	 * @param int    $limit The checked limit.
+	 * @param array{catalog: string, query: string, limit: int} $search The checked search.
 	 *
 	 * @return array{_search: string, _limit: int, _page: int} The parameters.
 	 *
 	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-catalog-scoped-search-survives-as-a-curated-service-tool-req-004
 	 */
-	public static function searchParams(string $query, int $limit): array {
-		return ['_search' => $query, '_limit' => $limit, '_page' => 1];
+	public static function searchParams(array $search): array {
+		return ['_search' => $search['query'], '_limit' => $search['limit'], '_page' => 1];
 	}//end searchParams()
 
 	/**
@@ -129,35 +156,51 @@ class AgentToolAnswer {
 	 * A 4xx from index() (an invalid search parameter) becomes an
 	 * `invalid_arguments` error; any other failure an `internal_error`.
 	 *
-	 * @param string       $catalog  The catalog searched.
-	 * @param string       $query    The query.
-	 * @param int          $limit    The checked limit.
-	 * @param JSONResponse $response What index() answered.
+	 * @param array{catalog: string, query: string, limit: int} $search   The checked search.
+	 * @param JSONResponse                                   $response What index() answered.
 	 *
 	 * @return array<string, mixed> The answer, or the error envelope.
 	 *
 	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-catalog-scoped-search-survives-as-a-curated-service-tool-req-004
 	 */
-	public static function searchAnswer(string $catalog, string $query, int $limit, JSONResponse $response): array {
+	public static function searchAnswer(array $search, JSONResponse $response): array {
+		$refusal = self::searchStatusRefusal(status: $response->getStatus());
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		$data = $response->getData();
-		if ($response->getStatus() >= 500) {
-			return self::searchFailed();
-		}
-
-		if ($response->getStatus() >= 400) {
-			return self::error(code: 'invalid_arguments', message: 'The search parameters were refused.');
-		}
-
 		$rows = self::rows(data: $data, key: 'results');
 
 		return [
 			'success' => true,
-			'catalog' => $catalog,
-			'query' => $query,
-			'publications' => array_slice($rows, 0, $limit),
+			'catalog' => $search['catalog'],
+			'query' => $search['query'],
+			'publications' => array_slice($rows, 0, $search['limit']),
 			'total' => self::total(data: $data, rows: $rows),
 		];
 	}//end searchAnswer()
+
+	/**
+	 * The error envelope of a failed search status, or null for a success.
+	 *
+	 * @param int $status The status index() answered.
+	 *
+	 * @return array{error: array{code: string, message: string}}|null The envelope, or null.
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-catalog-scoped-search-survives-as-a-curated-service-tool-req-004
+	 */
+	private static function searchStatusRefusal(int $status): ?array {
+		if ($status >= 500) {
+			return self::searchFailed();
+		}
+
+		if ($status >= 400) {
+			return self::error(code: 'invalid_arguments', message: 'The search parameters were refused.');
+		}
+
+		return null;
+	}//end searchStatusRefusal()
 
 	/**
 	 * The answer of a search that threw.
@@ -184,12 +227,9 @@ class AgentToolAnswer {
 	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-the-publication-file-attachment-list-survives-as-a-curated-service-tool-req-005
 	 */
 	public static function filesAnswer(string $publication, JSONResponse $response): array {
-		if ($response->getStatus() === 404) {
-			return self::error(code: 'not_found', message: 'Publication not found.');
-		}
-
-		if ($response->getStatus() >= 400) {
-			return self::filesFailed();
+		$refusal = self::filesStatusRefusal(status: $response->getStatus());
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$data = $response->getData();
@@ -202,6 +242,27 @@ class AgentToolAnswer {
 			'total' => self::total(data: $data, rows: $rows),
 		];
 	}//end filesAnswer()
+
+	/**
+	 * The error envelope of a failed file lookup status, or null for a success.
+	 *
+	 * @param int $status The status attachments() answered.
+	 *
+	 * @return array{error: array{code: string, message: string}}|null The envelope, or null.
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-the-publication-file-attachment-list-survives-as-a-curated-service-tool-req-005
+	 */
+	private static function filesStatusRefusal(int $status): ?array {
+		if ($status === 404) {
+			return self::error(code: 'not_found', message: 'Publication not found.');
+		}
+
+		if ($status >= 400) {
+			return self::filesFailed();
+		}
+
+		return null;
+	}//end filesStatusRefusal()
 
 	/**
 	 * The answer of a file lookup that threw.

@@ -1302,28 +1302,19 @@ class PublicationService implements PublicationServiceInterface {
 		reach: 'user',
 	)]
 	public function searchCatalogPublications(string $catalog, string $query, int $limit = 20): array {
-		$catalogId = AgentToolAnswer::text(value: $catalog);
-		if ($catalogId === null) {
-			return AgentToolAnswer::missingCatalog();
+		$request = AgentToolAnswer::searchRequest(asked: ['catalog' => $catalog, 'query' => $query, 'limit' => $limit]);
+		if (isset($request['refusal']) === true) {
+			return $request['refusal'];
 		}
 
-		$text = AgentToolAnswer::text(value: $query);
-		if ($text === null) {
-			return AgentToolAnswer::missingArgument(name: 'query');
-		}
-
-		$refusal = AgentToolAnswer::limitRefusal(limit: $limit);
-		if ($refusal !== null) {
-			return $refusal;
-		}
-
+		$search = $request['search'];
 		try {
-			$response = $this->index(catalogId: $catalogId, customParams: AgentToolAnswer::searchParams(query: $text, limit: $limit));
+			$response = $this->index(catalogId: $search['catalog'], customParams: AgentToolAnswer::searchParams(search: $search));
 		} catch (\Throwable) {
 			return AgentToolAnswer::searchFailed();
 		}
 
-		return AgentToolAnswer::searchAnswer(catalog: $catalogId, query: $text, limit: $limit, response: $response);
+		return AgentToolAnswer::searchAnswer(search: $search, response: $response);
 	}//end searchCatalogPublications()
 
 	/**
@@ -1901,7 +1892,7 @@ class PublicationService implements PublicationServiceInterface {
 	 */
 	public function getAggregatedPublications(array $queryParams = [], array $requestParams = [], string $baseUrl = ''): array {
 		$startTime = microtime(true);
-		$context = $this->buildListingContext(queryParams: $queryParams, requestParams: $requestParams, baseUrl: $baseUrl);
+		$context = $this->buildListingContext(queryParams: $queryParams, links: ['requestParams' => $requestParams, 'baseUrl' => $baseUrl]);
 		$queryParams = $this->withPagination(queryParams: $queryParams, pagination: $context);
 
 		if ($this->hasFederatedSources(aggregate: $context['aggregate']) === false) {
@@ -1926,22 +1917,21 @@ class PublicationService implements PublicationServiceInterface {
 	 * Resolve the clamped pagination and the switches of a listing request.
 	 *
 	 * @param array $queryParams The request query.
-	 * @param array $requestParams The original request parameters, for the pagination links.
-	 * @param string $baseUrl The base URL of the pagination links.
+	 * @param array{requestParams: array, baseUrl: string} $links The original request parameters and the base URL, for the pagination links.
 	 *
 	 * @return array Limit, page, offset, the listing switches, requestParams and baseUrl.
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function buildListingContext(array $queryParams, array $requestParams, string $baseUrl): array {
+	private function buildListingContext(array $queryParams, array $links): array {
 		$pagination = $this->readPagination(queryParams: $queryParams);
 
 		return [
 			'limit' => max(0, $pagination['limit']),
 			'page' => max(1, $pagination['page']),
 			'offset' => max(0, $pagination['offset']),
-			'requestParams' => $requestParams,
-			'baseUrl' => $baseUrl,
+			'requestParams' => $links['requestParams'],
+			'baseUrl' => $links['baseUrl'],
 		] + $this->readListingOptions(queryParams: $queryParams);
 	}//end buildListingContext()
 
@@ -1964,9 +1954,9 @@ class PublicationService implements PublicationServiceInterface {
 			offset: $context['offset'],
 			context: $context
 		);
-		$responseData = $this->withListingFacets(responseData: $responseData, facets: $this->unwrapFacetsOf(data: $localData), context: $context);
+		$responseData = array_merge($responseData, $this->listingFacets(facets: $this->unwrapFacetsOf(data: $localData), context: $context));
 
-		return $this->withMergedFacetable(responseData: $responseData, sources: [$localData, []], include: $context['includeFacets']);
+		return array_merge($responseData, $this->mergedFacetable(sources: [$localData, []], include: $context['includeFacets']));
 	}//end buildLocalAggregateListing()
 
 	/**
@@ -2239,20 +2229,19 @@ class PublicationService implements PublicationServiceInterface {
 	}//end unwrapFacets()
 
 	/**
-	 * Set the response facets, adding the virtual directory and catalog facets when requested.
+	 * The response facets, adding the virtual directory and catalog facets when requested.
 	 *
-	 * @param array $responseData The response.
 	 * @param mixed|null $facets The facets to set, or null when the sources had none.
 	 * @param array $context Holds reqDirFacets and reqCatFacets.
 	 *
-	 * @return array The response.
+	 * @return array `facets` to merge into the response, or nothing when there are none.
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function withListingFacets(array $responseData, $facets, array $context): array {
+	private function listingFacets($facets, array $context): array {
 		$virtual = ($context['reqDirFacets'] === true || $context['reqCatFacets'] === true);
 		if ($facets === null && $virtual === false) {
-			return $responseData;
+			return [];
 		}
 
 		if ($virtual === true) {
@@ -2263,36 +2252,28 @@ class PublicationService implements PublicationServiceInterface {
 			);
 		}
 
-		$responseData['facets'] = $facets;
-
-		return $responseData;
-	}//end withListingFacets()
+		return ['facets' => $facets];
+	}//end listingFacets()
 
 	/**
-	 * Set the merged facetable metadata of a local and a federated source.
+	 * The merged facetable metadata of a local and a federated source.
 	 *
-	 * @param array $responseData The response.
 	 * @param array $sources The local and the federated search response, in that order.
 	 * @param bool $include Whether facetable metadata was requested.
 	 *
-	 * @return array The response.
+	 * @return array `facetable` to merge into the response, or nothing when there is none.
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function withMergedFacetable(array $responseData, array $sources, bool $include): array {
+	private function mergedFacetable(array $sources, bool $include): array {
 		$local = ($sources[0]['facetable'] ?? null);
 		$federated = ($sources[1]['facetable'] ?? null);
 		if ($local === null && $federated === null && $include === false) {
-			return $responseData;
+			return [];
 		}
 
-		$responseData['facetable'] = $this->mergeFacetableData(
-			localFacetable: ($local ?? []),
-			federatedFacetable: ($federated ?? [])
-		);
-
-		return $responseData;
-	}//end withMergedFacetable()
+		return ['facetable' => $this->mergeFacetableData(localFacetable: ($local ?? []), federatedFacetable: ($federated ?? []))];
+	}//end mergedFacetable()
 
 	/**
 	 * Build one page of the merged local and federated listing.
@@ -2335,13 +2316,12 @@ class PublicationService implements PublicationServiceInterface {
 			context: $context
 		);
 
-		$responseData = $this->withListingFacets(
-			responseData: $responseData,
-			facets: $this->mergeSourceFacets(localData: $allLocalData, federationResult: $federationResult),
-			context: $context
+		$responseData = array_merge(
+			$responseData,
+			$this->listingFacets(facets: $this->mergeSourceFacets(localData: $allLocalData, federationResult: $federationResult), context: $context)
 		);
 
-		return $this->withMergedFacetable(responseData: $responseData, sources: [$allLocalData, $federationResult], include: $context['includeFacets']);
+		return array_merge($responseData, $this->mergedFacetable(sources: [$allLocalData, $federationResult], include: $context['includeFacets']));
 	}//end buildFederatedListing()
 
 	/**
@@ -2541,7 +2521,7 @@ class PublicationService implements PublicationServiceInterface {
 			offset: $pageContext['offset'],
 			context: $pageContext
 		);
-		$responseData = $this->withListingFacets(responseData: $responseData, facets: $this->unwrapFacetsOf(data: $localData), context: $context);
+		$responseData = array_merge($responseData, $this->listingFacets(facets: $this->unwrapFacetsOf(data: $localData), context: $context));
 		if (isset($localData['facetable']) === true) {
 			$responseData['facetable'] = $localData['facetable'];
 		}
@@ -2744,11 +2724,7 @@ class PublicationService implements PublicationServiceInterface {
 
 		$responseData = $this->buildListingPage(results: $results, total: ($result['total'] ?? 0), offset: $pageContext['offset'], context: $pageContext);
 		if (isset($result['facets']) === true) {
-			$responseData = $this->withListingFacets(
-				responseData: $responseData,
-				facets: $this->unwrapFacets(facets: $result['facets']),
-				context: $switches
-			);
+			$responseData = array_merge($responseData, $this->listingFacets(facets: $this->unwrapFacets(facets: $result['facets']), context: $switches));
 		}
 
 		if (isset($result['facetable']) === true) {
