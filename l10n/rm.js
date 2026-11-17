@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Duvrà l'ultima giada",
         "This key is shown once. Copy it now: it cannot be shown again.": "Questa clav vegn mussada mo ina giada. Copiai ella ussa: ella na po betg vegnir mussada anc ina giada.",
         "No feed consumers yet.": "Anc nagins consumaders dal feed.",
-        "Accounts that read every catalogue's feed": "Contos che leggian il feed da mintga catalog"
+        "Accounts that read every catalogue's feed": "Contos che leggian il feed da mintga catalog",
+        "Delete publication": "Stizzar la publicaziun",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Vulais Vus stizzar \"{name}\"? Questa acziun na po betg vegnir revocada.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicaziun e ses agiunts svaneschan da la pagina publica e da la mappa da la website Woo. L’archivaziun als conserva percunter per il termin da conservaziun."
     },
     "nplurals=2; plural=(n != 1);"
 )

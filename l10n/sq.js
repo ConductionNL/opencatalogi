@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Përdorur së fundi",
         "This key is shown once. Copy it now: it cannot be shown again.": "Ky çelës shfaqet vetëm një herë. Kopjojeni tani: nuk mund të shfaqet përsëri.",
         "No feed consumers yet.": "Ende nuk ka konsumatorë të furnizimit.",
-        "Accounts that read every catalogue's feed": "Llogaritë që lexojnë furnizimin e çdo katalogu"
+        "Accounts that read every catalogue's feed": "Llogaritë që lexojnë furnizimin e çdo katalogu",
+        "Delete publication": "Fshi botimin",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Dëshironi të fshini \"{name}\"? Ky veprim nuk mund të zhbëhet.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Botimi dhe bashkëngjitjet e tij zhduken nga faqja publike dhe nga harta e sajtit Woo. Arkivimi, përkundrazi, i ruan ato për afatin e ruajtjes."
     },
     "nplurals=2; plural=(n != 1);"
 )

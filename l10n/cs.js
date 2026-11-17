@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Naposledy použito",
         "This key is shown once. Copy it now: it cannot be shown again.": "Tento klíč se zobrazí jen jednou. Zkopírujte si ho hned: znovu ho zobrazit nelze.",
         "No feed consumers yet.": "Zatím žádní odběratelé kanálu.",
-        "Accounts that read every catalogue's feed": "Účty, které čtou kanál každého katalogu"
+        "Accounts that read every catalogue's feed": "Účty, které čtou kanál každého katalogu",
+        "Delete publication": "Odstranit publikaci",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Chcete odstranit \"{name}\"? Tuto akci nelze vrátit zpět.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikace a její přílohy zmizí z veřejné stránky a z mapy stránek Woo. Archivace je naopak uchová po dobu skartační lhůty."
     },
     "nplurals=2; plural=(n != 1);"
 )

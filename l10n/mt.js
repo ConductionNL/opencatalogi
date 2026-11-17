@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "L-aħħar użat",
         "This key is shown once. Copy it now: it cannot be shown again.": "Din iċ-ċavetta tintwera darba biss. Ikkopjaha issa: ma tistax terġa' tintwera.",
         "No feed consumers yet.": "Għad m'hemmx konsumaturi tal-feed.",
-        "Accounts that read every catalogue's feed": "Kontijiet li jaqraw il-feed ta' kull katalgu"
+        "Accounts that read every catalogue's feed": "Kontijiet li jaqraw il-feed ta' kull katalgu",
+        "Delete publication": "Ħassar il-pubblikazzjoni",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Trid tħassar \"{name}\"? Din l-azzjoni ma tistax titreġġa' lura.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Il-pubblikazzjoni u l-annessi tagħha jisparixxu mill-paġna pubblika u mill-mappa tas-sit Woo. L-arkivjar, minflok, iżommhom għall-perjodu taż-żamma."
     },
     "nplurals=2; plural=(n != 1);"
 )
