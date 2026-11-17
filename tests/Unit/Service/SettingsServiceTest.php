@@ -2517,6 +2517,100 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => '-5'])['public_api_cache_seconds']);
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => 'soon'])['public_api_cache_seconds']);
 		$this->assertSame('3600', $this->service->updateSettings(['public_api_cache_seconds' => 31536000])['public_api_cache_seconds']);
+		// REQ-PTS-001: the two settings that shape a publication's pages can be saved.
+		$this->assertSame(
+			['publication_url_template' => 'https://open.gemeente.nl/p/{id}', 'publication_url_catalog' => 'woo'],
+			$this->service->updateSettings(['publication_url_template' => 'https://open.gemeente.nl/p/{id}', 'publication_url_catalog' => 'woo'])
+		);
 
 	}//end testTheAdministratorSetsThePublicCacheTime()
+
+	/**
+	 * The administrator saves a valid list of websites; it is stored as the CSV the allowlist reads (REQ-SCO-003).
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+	 *
+	 * @return void
+	 */
+	public function testTheAdministratorSavesTheAllowedWebsites(): void {
+		$stored = [];
+		$this->config->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key) use (&$stored): string {
+				return ($stored[$key] ?? '');
+			}
+		);
+
+		$result = $this->service->updateSettings(['cors_allowed_origins' => "https://www.voorbeeldgemeente.nl
+https://andere.example"]);
+
+		$this->assertSame(['cors_allowed_origins' => 'https://www.voorbeeldgemeente.nl,https://andere.example'], $result);
+
+	}//end testTheAdministratorSavesTheAllowedWebsites()
+
+	/**
+	 * A line with a path refuses the save before anything is written, naming the line (REQ-SCO-003).
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+	 *
+	 * @return void
+	 */
+	public function testALineWithAPathIsRefusedByName(): void {
+		$this->config->expects($this->never())->method('setValueString');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('"https://www.voorbeeldgemeente.nl/zoeken" is not a website origin');
+
+		$this->service->updateSettings(['public_api_cache_seconds' => 30, 'cors_allowed_origins' => 'https://www.voorbeeldgemeente.nl/zoeken']);
+
+	}//end testALineWithAPathIsRefusedByName()
+
+	/**
+	 * The allowlist is reported with the other settings, `*` until an administrator sets it.
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+	 *
+	 * @return void
+	 */
+	public function testTheAllowlistIsReportedWithItsDefault(): void {
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+		$this->config->method('getValueString')->willReturnArgument(2);
+
+		$this->assertSame('*', $this->service->getSettings()['configuration']['cors_allowed_origins']);
+
+	}//end testTheAllowlistIsReportedWithItsDefault()
+
+	/**
+	 * Search indexing defaults to allowed, and only `blocked` is stored as blocked (REQ-WAB-003).
+	 *
+	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 *
+	 * @return void
+	 */
+	public function testTheAdministratorSwitchesSearchIndexing(): void {
+		$stored = [];
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+		$this->config->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored) {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+		$this->config->method('getValueString')->willReturnCallback(
+			function (string $app, string $key, string $default = '') use (&$stored) {
+				return ($stored[$key] ?? $default);
+			}
+		);
+
+		$this->assertSame('allowed', $this->service->getSettings()['configuration']['search_indexing']);
+		$this->assertSame('blocked', $this->service->updateSettings(['search_indexing' => 'blocked'])['search_indexing']);
+		$this->assertSame('allowed', $this->service->updateSettings(['search_indexing' => 'allowed'])['search_indexing']);
+		$this->assertSame('allowed', $this->service->updateSettings(['search_indexing' => 'BLOCK'])['search_indexing']);
+
+	}//end testTheAdministratorSwitchesSearchIndexing()
 }//end class

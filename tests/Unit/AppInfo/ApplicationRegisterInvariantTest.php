@@ -284,4 +284,96 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		}
 
 	}//end testRegisterCallsEveryComponentRegistrar()
+
+	/**
+	 * The listener that writes a publication's public and officer pages runs on every create (REQ-PTS-001).
+	 *
+	 * @return void
+	 */
+	public function testThePublicationLinksListenerIsRegistered(): void {
+		$pairs   = [];
+		$context = $this->createMock(\OCP\AppFramework\Bootstrap\IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$pairs): void {
+				$pairs[] = [$event, $listener];
+			}
+		);
+
+		(new \OCA\OpenCatalogi\Listener\ListenerRegistrar())->register($context);
+
+		$this->assertContains(
+			['OCA\OpenRegister\Event\ObjectCreatingEvent', \OCA\OpenCatalogi\Listener\PublicationLinksListener::class],
+			$pairs
+		);
+		$this->assertStringContainsString('(new ListenerRegistrar())->register($context);', $this->methodBody($this->source(), 'public function register('));
+	}//end testThePublicationLinksListenerIsRegistered()
+
+	/**
+	 * Application::register() subscribes the DiWoo completeness listener to both pre-save events.
+	 *
+	 * Without it on ObjectCreatingEvent, a new Woo publication goes public with its
+	 * mandatory metadata missing; without it on ObjectUpdatingEvent, an edit does
+	 * (REQ-DWP-003). Recorded through the context register() is handed, so the
+	 * registrar it delegates to is followed as Nextcloud follows it.
+	 *
+	 * @return void
+	 */
+	public function testTheDiwooCompletenessListenerIsRegisteredOnBothPreSaveEvents(): void {
+		$listeners = [];
+		$context = $this->createMock(\OCP\AppFramework\Bootstrap\IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$listeners): void {
+				$listeners[$listener][] = $event;
+			}
+		);
+
+		$application = (new \ReflectionClass(\OCA\OpenCatalogi\AppInfo\Application::class))->newInstanceWithoutConstructor();
+		$application->register($context);
+
+		$this->assertSame(
+			['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'],
+			($listeners[\OCA\OpenCatalogi\Listener\DiwooCompletenessListener::class] ?? [])
+		);
+
+	}//end testTheDiwooCompletenessListenerIsRegisteredOnBothPreSaveEvents()
+
+	/**
+	 * The no-index middleware is registered, so officer responses carry noindex (REQ-WAB-003).
+	 *
+	 * @return void
+	 */
+	public function testRegisterRegistersTheNoIndexMiddleware(): void {
+		$file = $this->registrars()['MiddlewareRegistrar'] ?? null;
+		$this->assertIsString($file, 'lib/Middleware/MiddlewareRegistrar.php must exist');
+
+		$body = $this->methodBody($this->source($file), 'public function register(');
+
+		$this->assertStringContainsString(
+			'$context->registerMiddleware(NoIndexMiddleware::class);',
+			$body,
+			'MiddlewareRegistrar::register() does not register NoIndexMiddleware, so officer responses are not marked noindex'
+		);
+
+	}//end testRegisterRegistersTheNoIndexMiddleware()
+
+	/**
+	 * register() subscribes the batch review listener to OpenRegister's task terminal event,
+	 * by name and unconditionally (woo-review-surface REQ-WRV-002).
+	 *
+	 * The event class is named, never probed: at register() time the OpenRegister
+	 * prefix is not on the autoloader yet, and a probe would silently drop the
+	 * subscription, leaving a rejected review task without effect on its batch.
+	 *
+	 * @return void
+	 */
+	public function testRegisterSubscribesTheBatchReviewListener(): void {
+		$body = $this->methodBody($this->source($this->registrars()['ListenerRegistrar']), 'public function register(');
+
+		$this->assertStringContainsString(
+			'registerEventListener(TaskTerminalEvent::class, BatchReviewTaskListener::class)',
+			$body,
+			'ListenerRegistrar::register() does not subscribe BatchReviewTaskListener to TaskTerminalEvent'
+		);
+
+	}//end testRegisterSubscribesTheBatchReviewListener()
 }//end class

@@ -43,6 +43,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * A row OpenRegister hands back as an entity rather than an array.
@@ -112,7 +113,11 @@ class GoldenSearchObjectService {
 		return $this->script['main'];
 	}
 
-	public function find(string $id, array $_extend = [], bool $files = false, ?int $register = null, ?int $schema = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+	public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
 		$this->calls[] = ['find' => $id, 'register' => $register, 'schema' => $schema, 'depth' => $this->depth];
 		$answer = ($this->script['finds'][$id] ?? 'throw');
 		if ($answer === 'throw') {

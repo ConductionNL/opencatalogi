@@ -49,6 +49,8 @@ use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
 use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IL10N;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -111,7 +113,15 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 *
 	 * @var array<int, string>
 	 */
-	public const BATCH_STATUSES = ['in_progress', 'ready_for_review', 'published'];
+	public const BATCH_STATUSES = ['in_progress', 'ready_for_review', 'approved', 'published'];
+
+	/**
+	 * OpenRegister's lifecycle engine, which runs the declared `wooBatch`
+	 * transitions (woo-review-surface REQ-WRV-002).
+	 *
+	 * @var string
+	 */
+	public const TRANSITION_ENGINE = 'OCA\OpenRegister\Service\Lifecycle\TransitionEngine';
 
 	/**
 	 * Cached OpenRegister ObjectService instance.
@@ -135,6 +145,13 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	private ?object $taskSequenceMapper = null;
 
 	/**
+	 * Cached OpenRegister TransitionEngine instance.
+	 *
+	 * @var object|null
+	 */
+	private ?object $transitionEngine = null;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param RegisterBindings $bindings The configured register ids and the OpenRegister services.
@@ -143,6 +160,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @param IL10N $l10n Translated refusal messages for the publish gate.
 	 * @param BatchPublicationWriter $publications Makes the batch's publication (woo-batch-creates-publications).
 	 * @param DocumentRedactor $redactor Redacts a partly public document through OpenRegister (woo-redaction-pipeline).
+	 * @param FileFacts|null $fileFacts Reads a document's type from its stored bytes (REQ-PFF-001).
 	 */
 	public function __construct(
 		private readonly RegisterBindings $bindings,
@@ -151,6 +169,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		private readonly IL10N $l10n,
 		private readonly BatchPublicationWriter $publications,
 		private readonly DocumentRedactor $redactor,
+		private readonly ?FileFacts $fileFacts = null,
 	) {
 
 	}//end __construct()
@@ -216,6 +235,49 @@ class WooService implements TransparencyWorkflowServiceInterface {
 
 		return $this->taskSequenceMapper;
 	}//end getTaskSequenceMapper()
+
+	/**
+	 * Resolve OpenRegister's TransitionEngine from the container.
+	 *
+	 * @return object|null The engine, or null when OpenRegister is unavailable.
+	 *
+	 * @spec openspec/changes/woo-review-surface/tasks.md#task-1.2
+	 */
+	public function getTransitionEngine(): ?object {
+		if ($this->transitionEngine === null) {
+			try {
+				$this->transitionEngine = $this->bindings->service(self::TRANSITION_ENGINE);
+			} catch (\Throwable $e) {
+				$this->logger->warning('[WooService] OpenRegister TransitionEngine unavailable: ' . $e->getMessage());
+				return null;
+			}
+		}
+
+		return $this->transitionEngine;
+	}//end getTransitionEngine()
+
+	/**
+	 * Run a declared `wooBatch` transition through OpenRegister's engine,
+	 * which checks the batch's state, the approval chain and the inputs.
+	 *
+	 * @param string               $batchId The batch uuid.
+	 * @param string               $action  `submit`, `approve`, `reject` or `publish`.
+	 * @param array<string, mixed> $data    The transition's inputs.
+	 *
+	 * @return array<string, mixed> The batch after the transition.
+	 *
+	 * @throws RuntimeException When the engine is unavailable; whatever the engine refuses propagates.
+	 *
+	 * @spec openspec/changes/woo-review-surface/tasks.md#task-1.2
+	 */
+	public function runBatchTransition(string $batchId, string $action, array $data = []): array {
+		$engine = $this->getTransitionEngine();
+		if ($engine === null || method_exists($engine, 'transition') === false) {
+			throw new RuntimeException('OpenRegister lifecycle engine unavailable: the batch cannot change state');
+		}
+
+		return $this->plainArray(object: $engine->transition($batchId, $action, $data));
+	}//end runBatchTransition()
 
 	/**
 	 * The configured WOO register id/uuid (shared by batch + assessment objects).
@@ -413,10 +475,11 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
 	 */
 	private function newAssessment(array $document, string $caseReference): array {
+		$reference = (string)($document['documentReference'] ?? ($document['id'] ?? ''));
 		return [
-			'documentReference' => (string)($document['documentReference'] ?? ($document['id'] ?? '')),
+			'documentReference' => $reference,
 			'fileName' => (string)($document['fileName'] ?? ''),
-			'fileType' => (string)($document['fileType'] ?? ''),
+			...$this->assessedFileType(reference: $reference, claimed: (string)($document['fileType'] ?? '')),
 			'assessment' => 'te_beoordelen',
 			'weigeringsgronden' => [],
 			'redactionInstructions' => '',
@@ -427,6 +490,41 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		];
 
 	}//end newAssessment()
+
+	/**
+	 * The assessment's `fileType` from the document's stored bytes, and the
+	 * caller's value as `fileTypeClaimed` when it differs (REQ-PFF-001).
+	 *
+	 * Bytes that cannot be read, or a document that cannot be found, give an
+	 * empty `fileType`: the caller's value is kept only as the claim, never
+	 * taken as the type.
+	 *
+	 * @param string $reference The document reference (file id or path).
+	 * @param string $claimed   The type the caller sent.
+	 *
+	 * @return array{fileType: string, fileTypeClaimed?: string} The assessment fields.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	private function assessedFileType(string $reference, string $claimed): array {
+		if ($this->fileFacts === null) {
+			return ['fileType' => $claimed];
+		}
+
+		$owner = (string)$this->userSession->getUser()?->getUID();
+		$file = $this->publications->resolve(reference: $reference, owner: $owner);
+		$detected = null;
+		if ($file !== null) {
+			$detected = $this->fileFacts->mimeTypeOf(file: $file);
+		}
+
+		$fields = ['fileType' => (string)$detected];
+		if ($claimed !== '' && $claimed !== $detected) {
+			$fields['fileTypeClaimed'] = $claimed;
+		}
+
+		return $fields;
+	}//end assessedFileType()
 
 	/**
 	 * A new batch object, in progress, for its saved assessments.
@@ -1018,18 +1116,8 @@ class WooService implements TransparencyWorkflowServiceInterface {
 			throw new RuntimeException('All documents must be assessed before review');
 		}
 
-		$objectService = $this->getObjectService();
-		$register = $this->getRegister();
-		$batchSchema = $this->getBatchSchema();
-		if ($objectService === null || $register === null || $batchSchema === null) {
-			throw new RuntimeException('OpenRegister WOO register/schema unavailable');
-		}
-
-		$batch = $this->plainArray(object: $objectService->find($batchId));
-		$batch['status'] = 'ready_for_review';
-		$batch['updatedAt'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
-
-		return $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		// The declared `submit` transition moves in_progress to ready_for_review (REQ-WRV-002).
+		return $this->runBatchTransition(batchId: $batchId, action: 'submit');
 	}//end markReadyForReview()
 
 	/**
@@ -1105,6 +1193,36 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	}//end assertPublishApproved()
 
 	/**
+	 * Refuse to publish a batch that is not approved, that the lifecycle engine
+	 * cannot move, or whose approval chain has not completed (all fail closed).
+	 *
+	 * @param array<string, mixed> $batch   The batch.
+	 * @param string               $batchId The batch uuid.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When the batch may not be published.
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication
+	 */
+	private function assertMayPublish(array $batch, string $batchId): void {
+		// REQ-WRV-002: only an approved batch is published, whatever path calls this.
+		if ((string)($batch['status'] ?? '') !== 'approved') {
+			throw new RuntimeException('Batch must be approved before publishing');
+		}
+
+		// The status moves through the declared `publish` transition; without the
+		// engine nothing is published (fail closed).
+		if ($this->getTransitionEngine() === null) {
+			throw new RuntimeException('OpenRegister lifecycle engine unavailable: the batch cannot be published');
+		}
+
+		// The actual approval gate: status only says a review CAN start (fail closed).
+		$this->assertPublishApproved(batchId: $batchId);
+
+	}//end assertMayPublish()
+
+	/**
 	 * Publish a completed WOO batch to a public reading room.
 	 *
 	 * The reading room is built on the existing Catalog/Publication infrastructure
@@ -1133,12 +1251,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		}
 
 		$batch = $this->getBatch(batchId: $batchId);
-		if ((string)($batch['status'] ?? '') !== 'ready_for_review') {
-			throw new RuntimeException('Batch must be ready_for_review (passed the approval gate) before publishing');
-		}
-
-		// The actual approval gate: status only says a review CAN start (fail closed).
-		$this->assertPublishApproved(batchId: $batchId);
+		$this->assertMayPublish(batch: $batch, batchId: $batchId);
 
 		$assessments = $this->loadAssessments(batch: $batch);
 		$listings = $this->publications->listings(assessments: $assessments);
@@ -1147,11 +1260,20 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
 		// The batch becomes a real publication with its documents attached (woo-batch-creates-publications).
-		$publication = $this->publications->publishDocuments(
-			batch: $batch,
-			listings: $listings,
-			now: $now,
-			keepProgress: fn (array $progress): mixed => $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $progress)
+		// A publication OpenRegister refuses (its DiWoo metadata is incomplete, REQ-DWP-003)
+		// leaves the batch unpublished, with the missing fields named.
+		$publication = $this->unlessRefused(
+			publish: fn (): mixed => $this->publications->publishDocuments(
+				batch: $batch,
+				listings: $listings,
+				now: $now,
+				keepProgress: fn (array $progress): mixed => $this->save(
+					objectService: $objectService,
+					register: $register,
+					schema: $batchSchema,
+					data: $progress
+				)
+			)
 		);
 
 		$publishedCount = count($listings);
@@ -1162,6 +1284,8 @@ class WooService implements TransparencyWorkflowServiceInterface {
 			'publication' => $publication['id'],
 			'publicationUrl' => $publication['url'],
 			'attached' => $publication['attached'],
+			// What was written into each attached copy, by file name (published-file-carries-its-facts, REQ-PFF-002).
+			'embeddedTitles' => ($publication['embeddedTitles'] ?? []),
 			'documentCount' => (int)($batch['documentSummary']['total'] ?? 0),
 			'publishedCount' => $publishedCount,
 			'decisionLetter' => (string)($batch['decisionLetter'] ?? ''),
@@ -1175,18 +1299,56 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		$readingRoomCatalog = (string)($batch['readingRoomCatalog'] ?? $batchId);
 		$publicationMeta['readingRoomUrl'] = '/index.php/apps/opencatalogi/' . $readingRoomCatalog;
 
-		$batch['status'] = 'published';
 		$batch['publishedAt'] = $now;
 		$batch['publishedCount'] = $publishedCount;
 		$batch['updatedAt'] = $now;
 		$batch['wooPublication'] = $publicationMeta;
 		unset($batch['documentSummary']);
 
-		$saved = $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		$this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch);
+		$saved = $this->runBatchTransition(batchId: $batchId, action: 'publish');
 		$saved['wooPublication'] = $publicationMeta;
 
 		return $saved;
 	}//end publishBatch()
+
+	/**
+	 * Run the batch's publication; a publication OpenRegister refuses becomes a
+	 * RuntimeException naming what the refusal names.
+	 *
+	 * @param callable(): mixed $publish Publishes the batch.
+	 *
+	 * @return mixed What $publish returns.
+	 *
+	 * @throws RuntimeException When OpenRegister refuses the publication.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
+	 */
+	private function unlessRefused(callable $publish): mixed {
+		try {
+			return $publish();
+		} catch (\OCA\OpenRegister\Exception\HookStoppedException $e) {
+			throw new RuntimeException($this->refusedPublication(refusal: $e), 0, $e);
+		}
+	}//end unlessRefused()
+
+	/**
+	 * Why the batch's publication was refused, naming the fields the refusal names.
+	 *
+	 * @param \OCA\OpenRegister\Exception\HookStoppedException $refusal The refused save.
+	 *
+	 * @return string The message.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
+	 */
+	private function refusedPublication(\OCA\OpenRegister\Exception\HookStoppedException $refusal): string {
+		$fields = array_keys((array)($refusal->getErrors()['fields'] ?? []));
+		if ($fields === []) {
+			return $this->l10n->t('The batch was not published: %s', [$refusal->getMessage()]);
+		}
+
+		return $this->l10n->t('The batch was not published. Its publication is missing: %s', [implode(', ', $fields)]);
+	}//end refusedPublication()
 
 	/**
 	 * Persist an object through the consumed OpenRegister ObjectService.
@@ -1206,11 +1368,12 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	private function save(object $objectService, string $register, string $schema, array $data): mixed {
 		return $objectService->saveObject(
 			object: $data,
-			register: $register,
-			schema: $schema,
-			uuid: (string)($data['id'] ?? ($data['uuid'] ?? '')),
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $register, schema: $schema),
+				uuid: (string)($data['id'] ?? ($data['uuid'] ?? ''))
+			),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 
 	}//end save()

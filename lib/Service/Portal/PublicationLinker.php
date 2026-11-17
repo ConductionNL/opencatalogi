@@ -92,4 +92,33 @@ class PublicationLinker {
 
 		return $this->urlGenerator->getAbsoluteURL('/index.php/apps/opencatalogi/api/' . rawurlencode($catalog) . '/' . rawurlencode($id));
 	}//end url()
+
+	/**
+	 * The public page of a publication, or empty when no public link can be built.
+	 *
+	 * Like url(), but it never falls back to a guessed catalogue: with no
+	 * template, no portaliq and an empty `publication_url_catalog` there is no
+	 * public page, so the answer is empty rather than an API address
+	 * (publication-tells-its-source, REQ-PTS-001).
+	 *
+	 * @param string $id The publication uuid.
+	 *
+	 * @return string The absolute link, or ''.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	public function publicUrl(string $id): string {
+		if ($id === '') {
+			return '';
+		}
+
+		$template = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_template', ''));
+		$portaliq = ($this->appManager?->isInstalled('portaliq') === true);
+		$catalog  = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_catalog', 'publication'));
+		if (str_contains($template, '{id}') === false && $portaliq === false && $catalog === '') {
+			return '';
+		}
+
+		return $this->url(id: $id);
+	}//end publicUrl()
 }//end class

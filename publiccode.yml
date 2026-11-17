@@ -22,6 +22,7 @@ description:
       in een open data ecosysteem. De app synchroniseert bronnen met meerdere
       catalogi en ondersteunt automatische publicatie van open data conform het
       DIWOO-standaard.
+      Conduction onderhoudt dit component in opdracht van Gemeente Rotterdam.
     features:
       - Gefedereerde catalogi
       - Automatische publicatie van open data
@@ -34,6 +35,7 @@ description:
       in an open data ecosystem. The app synchronises sources with multiple
       catalogs and supports automatic publication of open data following the
       DIWOO metadata standard.
+      Conduction maintains this component on behalf of the Municipality of Rotterdam.
     features:
       - Federated catalogs
       - Automatic open data publication
@@ -50,7 +52,12 @@ localisation:
     - en
 
 maintenance:
-  type: internal
+  type: contract
+  contractors:
+    - name: Conduction B.V.
+      until: "2026-12-31"
+      email: info@conduction.nl
+      website: https://conduction.nl
   contacts:
     - name: Conduction Development Team
       email: info@conduction.nl

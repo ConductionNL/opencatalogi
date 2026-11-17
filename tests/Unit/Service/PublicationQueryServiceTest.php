@@ -46,6 +46,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * Fake OpenRegister ObjectService double for `assemblePublicSearchResults`
@@ -121,13 +122,14 @@ class FakeLegacySearchObjectService {
 
 	public function find(
 		string $id,
-		array $_extend = [],
-		bool $files = false,
-		?int $register = null,
-		?int $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
+		bool $_multitenancy = true
 	): ?array {
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
 		if ($this->scopeDepth === 0) {
 			$this->readsOutsideScope[] = 'find';
 		}
@@ -1243,7 +1245,11 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$entity = $this->createMock(ObjectEntity::class);
 		$this->objectService->method('find')->willReturnCallback(
-			function (int|string $id, ?array $_extend, bool $files, $register, $schema) use ($entity) {
+			function (int|string $id, ?ObjectFindOptions $options = null) use ($entity) {
+				$_extend = $options?->extend;
+				$files = $options?->files;
+				$register = $options?->register;
+				$schema = $options?->schema;
 				return ((int)$register === 21 && (int)$schema === 11) ? $entity : null;
 			}
 		);
@@ -1268,7 +1274,11 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$entity = $this->createMock(ObjectEntity::class);
 		$this->objectService->method('find')->willReturnCallback(
-			function (int|string $id, ?array $_extend, bool $files, $register, $schema) use ($entity) {
+			function (int|string $id, ?ObjectFindOptions $options = null) use ($entity) {
+				$_extend = $options?->extend;
+				$files = $options?->files;
+				$register = $options?->register;
+				$schema = $options?->schema;
 				if ((int)$register === 1 && (int)$schema === 2) {
 					throw new \OCP\AppFramework\Db\DoesNotExistException('missing table');
 				}

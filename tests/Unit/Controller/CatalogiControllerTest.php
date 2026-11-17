@@ -17,6 +17,9 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IRequest;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\PublicPage;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -366,5 +369,66 @@ class CatalogiControllerTest extends TestCase {
 			'https://other.example',
 			$response->getHeaders()['Access-Control-Allow-Origin']
 		);
+	}
+
+	/**
+	 * The 503 for an unconfigured catalogue register carries the CORS headers, so a cross-origin caller can read it.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function testThe503CarriesTheCorsHeaders(): void {
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+		$this->container->method('get')->willThrowException(new RuntimeException('not available'));
+		$this->config->method('getValueString')
+			->willReturnCallback(fn (string $app, string $key, string $default = '') => $default);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$response = $this->controller->index();
+
+		$this->assertSame(503, $response->getStatus());
+		$headers = $response->getHeaders();
+		$this->assertArrayHasKey('Access-Control-Allow-Origin', $headers);
+		$this->assertArrayHasKey('Access-Control-Allow-Methods', $headers);
+		$this->assertArrayHasKey('Access-Control-Allow-Headers', $headers);
+	}
+
+	/**
+	 * The preflight answers 200 with the origin, methods and headers a browser checks.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-5
+	 */
+	public function testThePreflightAnswers200WithTheCorsHeaders(): void {
+		$this->request->method('getHeader')->willReturn('');
+
+		$response = $this->controller->preflightedCors();
+
+		$this->assertSame(200, $response->getStatus());
+		$headers = $response->getHeaders();
+		$this->assertArrayHasKey('Access-Control-Allow-Origin', $headers);
+		$this->assertNotSame('', $headers['Access-Control-Allow-Methods']);
+		$this->assertNotSame('', $headers['Access-Control-Allow-Headers']);
+	}
+
+	/**
+	 * The public catalogue routes declare their posture as attributes: public, without CSRF, without admin.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function testThePublicRoutesDeclareTheirAuthPosture(): void {
+		$expected = [
+			'index' => [PublicPage::class, NoCSRFRequired::class, NoAdminRequired::class],
+			'show' => [PublicPage::class, NoCSRFRequired::class, NoAdminRequired::class],
+			'preflightedCors' => [PublicPage::class, NoCSRFRequired::class],
+		];
+		foreach ($expected as $method => $attributes) {
+			$declared = array_map(
+				static fn (\ReflectionAttribute $attribute): string => $attribute->getName(),
+				(new \ReflectionMethod(CatalogiController::class, $method))->getAttributes()
+			);
+			foreach ($attributes as $attribute) {
+				$this->assertContains($attribute, $declared, $method . ' lacks ' . $attribute);
+			}
+		}
 	}
 }

@@ -45,6 +45,7 @@ import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
 import CatalogsIndexView from './views/catalogi/CatalogiIndex.vue'
 import DashboardView from './views/dashboard/Dashboard.vue'
 import FederationDirectory from './views/directory/FederationDirectory.vue'
+import FederatedPublicationView from './views/federation/FederatedPublicationView.vue'
 import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
 import CatalogPublicationsIndex from './views/publications/CatalogPublicationsIndex.vue'
 import FederationSearch from './views/search/FederationSearch.vue'
@@ -106,6 +107,7 @@ export default {
 	CnFederationStatus,
 	FederationDirectory,
 	FederationSearch,
+	FederatedPublicationView,
 
 	// --- Detail-page widgets (referenced by `widgetKey` in manifest pages). ---
 	// NOTE: this map is passed to CnAppRoot as the `customComponents` prop,
