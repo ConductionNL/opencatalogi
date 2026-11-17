@@ -92,6 +92,8 @@ class SetPublicationAudiencePublic implements IRepairStep {
 	 * The name of the step.
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-publication-says-who-can-read-it-req-psr-001
 	 */
 	public function getName(): string {
 		return 'Make every existing publication readable by everyone (audience public)';

@@ -67,20 +67,26 @@ class PublicationAudienceCheck implements IEventListener {
 	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-woo-publication-stays-public-req-psr-004
 	 */
 	public function handle(Event $event): void {
-		$object = null;
 		if ($event instanceof ObjectCreatingEvent === true) {
-			$object = $event->getObject();
-		}
-
-		if ($event instanceof ObjectUpdatingEvent === true) {
-			$object = $event->getNewObject();
-		}
-
-		if ($object === null) {
+			$this->check(event: $event, publication: ($event->getObject()->getObject() ?? []));
 			return;
 		}
 
-		$refusal = $this->validation->refusal(publication: ($object->getObject() ?? []));
+		if ($event instanceof ObjectUpdatingEvent === true) {
+			$this->check(event: $event, publication: ($event->getNewObject()->getObject() ?? []));
+		}
+	}//end handle()
+
+	/**
+	 * Stop the save when the publication breaks one of its own rules.
+	 *
+	 * @param ObjectCreatingEvent|ObjectUpdatingEvent $event       The event.
+	 * @param array<string, mixed>                    $publication The publication as it would be stored.
+	 *
+	 * @return void
+	 */
+	private function check(ObjectCreatingEvent|ObjectUpdatingEvent $event, array $publication): void {
+		$refusal = $this->validation->refusal(publication: $publication);
 		if ($refusal === null) {
 			return;
 		}
@@ -92,5 +98,5 @@ class PublicationAudienceCheck implements IEventListener {
 			]
 		);
 		$event->stopPropagation();
-	}//end handle()
+	}//end check()
 }//end class
