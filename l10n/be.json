@@ -723,7 +723,16 @@
         "Open catalog": "Адкрыць каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Стварыце свой першы каталог. Гэта кантэйнер, у якім будуць вашы публікацыі. Выберыце рэестр Publication і схему Publication, каб каталог паказваў публікацыі, якія вы дадаеце.",
         "Manage your publications and their status": "Кіруйце сваімі публікацыямі і іх статусам",
-        "Open at the source": "Адкрыць у крыніцы"
+        "Open at the source": "Адкрыць у крыніцы",
+        "Feed consumers": "Спажыўцы стужкі",
+        "Contact": "Кантакт",
+        "Generate key": "Стварыць ключ",
+        "Revoke": "Адклікаць",
+        "Disable": "Адключыць",
+        "Last used": "Апошняе выкарыстанне",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Гэты ключ паказваецца толькі адзін раз. Скапіруйце яго зараз: паказаць яго зноў нельга.",
+        "No feed consumers yet.": "Спажыўцоў стужкі пакуль няма.",
+        "Accounts that read every catalogue's feed": "Уліковыя запісы, якія чытаюць стужку кожнага каталога"
     },
     "plurals": {}
 }

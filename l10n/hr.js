@@ -724,7 +724,16 @@ OC.L10N.register(
         "Open catalog": "Otvori katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Izradite svoj prvi katalog. To je spremnik u kojem će biti vaše objave. Odaberite registar Publication i shemu Publication kako bi katalog prikazivao objave koje dodate.",
         "Manage your publications and their status": "Upravljajte svojim publikacijama i njihovim statusom",
-        "Open at the source": "Otvori na izvoru"
+        "Open at the source": "Otvori na izvoru",
+        "Feed consumers": "Korisnici feeda",
+        "Contact": "Kontakt",
+        "Generate key": "Generiraj ključ",
+        "Revoke": "Opozovi",
+        "Disable": "Onemogući",
+        "Last used": "Zadnje korišteno",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ovaj se ključ prikazuje samo jednom. Kopirajte ga sada: ne može se ponovno prikazati.",
+        "No feed consumers yet.": "Još nema korisnika feeda.",
+        "Accounts that read every catalogue's feed": "Računi koji čitaju feed svakog kataloga"
     },
     "nplurals=2; plural=(n != 1);"
 )

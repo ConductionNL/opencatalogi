@@ -139,6 +139,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 		<job>OCA\OpenCatalogi\BackgroundJob\WooReadinessCheck</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\SavedSearchMatchingJob</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\CommentPeriodWithdrawal</job>
+		<job>OCA\OpenCatalogi\BackgroundJob\DocumentReferenceCheck</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\CompletenessSweep</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\DonlHarvestCheck</job>
 		<!--
@@ -244,6 +245,14 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			<!-- Hands depublication, inspection, comment-period, community and Woo-request records an
 			     editor came to own to the system. Needs OpenRegister's release-to-system call; idempotent. -->
 			<step>OCA\OpenCatalogi\Repair\HandRecordsToSystem</step>
+			<!--
+				Writes who may read the OOAPI course, program and offering objects
+				(integration-feed-consumer-credentials 3.1): the enabled feed consumers
+				of the object's catalogue and the instance-wide consumer list. After the
+				register import and the staff access, which may reset the bundled rule.
+				Idempotent.
+			-->
+			<step>OCA\OpenCatalogi\Repair\ApplyFeedReadRule</step>
 			<!--
 				Written but never registered, so it had never run once: a class that
 				exists is not a class that runs. gate-98 found it.
