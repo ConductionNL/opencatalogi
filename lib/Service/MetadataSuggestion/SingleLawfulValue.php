@@ -26,7 +26,7 @@ namespace OCA\OpenCatalogi\Service\MetadataSuggestion;
 
 use OCA\OpenCatalogi\Contract\SingleLawfulValueInterface;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use OCP\IUser;
@@ -82,14 +82,14 @@ class SingleLawfulValue implements SingleLawfulValueInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param OpenRegisterLookup $openRegister OpenRegister's organisations and schemas.
+	 * @param OpenRegisterServicesInterface $openRegister OpenRegister's organisations and schemas.
 	 * @param InformationCategoryRegistryInterface $categories The categories and the schemas each one declares.
 	 * @param IAppConfig $config Names the publication register and schema.
 	 * @param ITimeFactory $time The clock a fill is dated by.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterServicesInterface $openRegister,
 		private readonly InformationCategoryRegistryInterface $categories,
 		private readonly IAppConfig $config,
 		private readonly ITimeFactory $time,
@@ -124,6 +124,20 @@ class SingleLawfulValue implements SingleLawfulValueInterface {
 			$sets['wooCategory'] = [$this->categoriesDeclaring(slug: $slug), self::RULE_ONE_CATEGORY];
 		}
 
+		return $this->withFills(publication: $publication, sets: $sets);
+	}//end fill()
+
+	/**
+	 * The publication with every field that has exactly one lawful value filled and recorded.
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param array<string, array{0: array<int, string>|null, 1: string}> $sets The lawful values and rule by field.
+	 *
+	 * @return array<string, mixed> The publication, with the fills and their `filledByRule` records.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-a-field-with-one-lawful-value-for-this-officer-fills-itself-req-wms-004
+	 */
+	private function withFills(array $publication, array $sets): array {
 		$at = $this->time->now()->setTimezone(new \DateTimeZone('UTC'))->format('c');
 		foreach ($sets as $field => [$values, $rule]) {
 			if ($values === null || count($values) !== 1) {
@@ -138,7 +152,7 @@ class SingleLawfulValue implements SingleLawfulValueInterface {
 		}
 
 		return $publication;
-	}//end fill()
+	}//end withFills()
 
 	/**
 	 * The slug of the publication's schema, or null when this is not a publication.
@@ -152,13 +166,12 @@ class SingleLawfulValue implements SingleLawfulValueInterface {
 	 * @return string|null The slug, or null.
 	 */
 	private function publicationSchemaSlug(array $publication): ?string {
-		$register = (string)($publication['@self']['register'] ?? '');
-		$schema = (string)($publication['@self']['schema'] ?? '');
-		if ($register === '' || $schema === '' || $register !== $this->setting(key: 'publication_register')) {
-			return null;
+		$schema = $this->publicationRegisterSchema(publication: $publication);
+		$slug   = null;
+		if ($schema !== null) {
+			$slug = $this->schemaSlug(schema: $schema);
 		}
 
-		$slug = $this->schemaSlug(schema: $schema);
 		if ($slug === null) {
 			return null;
 		}
@@ -175,6 +188,25 @@ class SingleLawfulValue implements SingleLawfulValueInterface {
 
 		return null;
 	}//end publicationSchemaSlug()
+
+	/**
+	 * The object's schema id when it lives in the publication register, else null.
+	 *
+	 * @param array<string, mixed> $publication The object as it would be written.
+	 *
+	 * @return string|null The schema id, or null.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-a-field-with-one-lawful-value-for-this-officer-fills-itself-req-wms-004
+	 */
+	private function publicationRegisterSchema(array $publication): ?string {
+		$register = (string)($publication['@self']['register'] ?? '');
+		$schema = (string)($publication['@self']['schema'] ?? '');
+		if ($register === '' || $schema === '' || $register !== $this->setting(key: 'publication_register')) {
+			return null;
+		}
+
+		return $schema;
+	}//end publicationRegisterSchema()
 
 	/**
 	 * The uuids of the organisations the user is a member of, or null when they cannot be read.

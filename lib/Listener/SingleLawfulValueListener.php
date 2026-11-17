@@ -29,6 +29,7 @@ use OCA\OpenCatalogi\Contract\SingleLawfulValueInterface;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
+use OCP\IUser;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
@@ -81,18 +82,7 @@ class SingleLawfulValueListener implements IEventListener {
 		}
 
 		try {
-			$entity = $event->getObject();
-			$before = array_merge(($entity->getObject() ?? []), $event->getModifiedData());
-			$before['@self'] = ['register' => (string)$entity->getRegister(), 'schema' => (string)$entity->getSchema()];
-			$after = $this->lawfulValue->fill(publication: $before, officer: $officer);
-
-			$filled = [];
-			foreach (['organization', 'wooCategory', 'filledByRule'] as $field) {
-				if (($after[$field] ?? null) !== ($before[$field] ?? null)) {
-					$filled[$field] = $after[$field];
-				}
-			}
-
+			$filled = $this->filledFields(event: $event, officer: $officer);
 			if ($filled !== []) {
 				$event->setModifiedData(array_merge($event->getModifiedData(), $filled));
 			}
@@ -102,4 +92,30 @@ class SingleLawfulValueListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * The fields the single-lawful-value rule fills on the object being created.
+	 *
+	 * @param ObjectCreatingEvent $event The OpenRegister pre-save event.
+	 * @param IUser $officer The officer creating the object.
+	 *
+	 * @return array<string, mixed> The filled fields and their values.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-a-field-with-one-lawful-value-for-this-officer-fills-itself-req-wms-004
+	 */
+	private function filledFields(ObjectCreatingEvent $event, IUser $officer): array {
+		$entity = $event->getObject();
+		$before = array_merge(($entity->getObject() ?? []), $event->getModifiedData());
+		$before['@self'] = ['register' => (string)$entity->getRegister(), 'schema' => (string)$entity->getSchema()];
+		$after = $this->lawfulValue->fill(publication: $before, officer: $officer);
+
+		$filled = [];
+		foreach (['organization', 'wooCategory', 'filledByRule'] as $field) {
+			if (($after[$field] ?? null) !== ($before[$field] ?? null)) {
+				$filled[$field] = $after[$field];
+			}
+		}
+
+		return $filled;
+	}//end filledFields()
 }//end class

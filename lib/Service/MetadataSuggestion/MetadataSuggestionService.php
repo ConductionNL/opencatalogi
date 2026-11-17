@@ -63,6 +63,21 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 	];
 
 	/**
+	 * Why the handling type is proposed, by how the record arrived.
+	 *
+	 * @var array<string, string>
+	 */
+	private const HANDLING_REASON_BY_ORIGIN = [
+		'synchronisation' => 'The record was brought in by a synchronisation, so the document was received.',
+		'case' => 'The record was handed over by a case application, so the document was adopted there.',
+	];
+
+	/**
+	 * Why a Hermiq value is proposed.
+	 */
+	private const HERMIQ_REASON = 'Hermiq proposed this value from the text of the publication\'s documents.';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param TooiVocabularyService $tooiVocabulary The TOOI and DiWoo value lists.
@@ -170,27 +185,40 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 	 */
 	public function fromHermiq(array $publication, array $values, array $existing=[]): array {
 		$asked = array_column($this->hermiqFields(publication: $publication), 'key');
-		$taken = [];
-		foreach ($existing as $suggestion) {
-			$taken[] = ($suggestion['field'] ?? '') . "\0" . ($suggestion['value'] ?? '');
-		}
+		$taken = array_map(
+			fn (array $suggestion): string => ($suggestion['field'] ?? '') . "\0" . ($suggestion['value'] ?? ''),
+			$existing
+		);
 
 		$out = [];
 		foreach ($values as $field => $value) {
-			if (in_array($field, $asked, true) === false || is_string($value) === false) {
-				continue;
+			$proposal = $this->askedHermiqProposal(asked: $asked, field: $field, value: $value);
+			if ($proposal !== null && in_array($proposal['field'] . "\0" . $proposal['value'], $taken, true) === false) {
+				$out[] = $proposal;
 			}
-
-			$proposal = $this->hermiqProposal(field: (string)$field, value: $value);
-			if ($proposal === null || in_array($proposal['field'] . "\0" . $proposal['value'], $taken, true) === true) {
-				continue;
-			}
-
-			$out[] = $proposal;
 		}
 
 		return $out;
 	}//end fromHermiq()
+
+	/**
+	 * One Hermiq value as a proposal, or null when the field was not asked or the value is no string.
+	 *
+	 * @param array<int, mixed> $asked The field keys Hermiq was asked for.
+	 * @param int|string $field The field.
+	 * @param mixed $value The value Hermiq chose.
+	 *
+	 * @return array{field: string, value: string, valueLabel: string, source: string, reason: string}|null The proposal.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
+	 */
+	private function askedHermiqProposal(array $asked, int|string $field, mixed $value): ?array {
+		if (in_array($field, $asked, true) === false || is_string($value) === false) {
+			return null;
+		}
+
+		return $this->hermiqProposal(field: (string)$field, value: $value);
+	}//end askedHermiqProposal()
 
 	/**
 	 * One Hermiq value as a proposal, or null when it does not resolve against its value list.
@@ -201,27 +229,57 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 	 * @return array{field: string, value: string, valueLabel: string, source: string, reason: string}|null The proposal.
 	 */
 	private function hermiqProposal(string $field, string $value): ?array {
-		$reason = 'Hermiq proposed this value from the text of the publication\'s documents.';
 		if ($field === 'soortHandeling') {
-			$member = $this->tooiVocabulary->resolveSoortHandeling(trim($value));
-			if ($member === null || trim($value) === '') {
-				return null;
-			}
-
-			return $this->proposal(field: $field, value: $member['label'], valueLabel: $member['label'], reason: $reason, source: self::SOURCE_HERMIQ);
+			return $this->hermiqHandlingProposal(field: $field, value: $value);
 		}
 
 		$record = ($this->categoriesByLabel()[$value] ?? null);
+		if ($this->resolvedCategory(record: $record) === null) {
+			return null;
+		}
+
+		$code = (string)$record['code'];
+
+		return $this->proposal(field: $field, value: $code, valueLabel: $value, reason: self::HERMIQ_REASON, source: self::SOURCE_HERMIQ);
+	}//end hermiqProposal()
+
+	/**
+	 * Hermiq's handling type as a proposal, or null when it does not resolve against the TOOI list.
+	 *
+	 * @param string $field The field.
+	 * @param string $value The value Hermiq chose.
+	 *
+	 * @return array{field: string, value: string, valueLabel: string, source: string, reason: string}|null The proposal.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
+	 */
+	private function hermiqHandlingProposal(string $field, string $value): ?array {
+		$member = $this->tooiVocabulary->resolveSoortHandeling(trim($value));
+		if ($member === null || trim($value) === '') {
+			return null;
+		}
+
+		$label = $member['label'];
+
+		return $this->proposal(field: $field, value: $label, valueLabel: $label, reason: self::HERMIQ_REASON, source: self::SOURCE_HERMIQ);
+	}//end hermiqHandlingProposal()
+
+	/**
+	 * The TOOI member of a category record, or null without a record or a resolvable URI.
+	 *
+	 * @param array<string, mixed>|null $record The category record.
+	 *
+	 * @return array<string, mixed>|null The TOOI member.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
+	 */
+	private function resolvedCategory(?array $record): ?array {
 		if ($record === null) {
 			return null;
 		}
 
-		if ($this->tooiVocabulary->resolveInformatiecategorie((string)($record['tooiUri'] ?? '')) === null) {
-			return null;
-		}
-
-		return $this->proposal(field: $field, value: (string)$record['code'], valueLabel: $value, reason: $reason, source: self::SOURCE_HERMIQ);
-	}//end hermiqProposal()
+		return $this->tooiVocabulary->resolveInformatiecategorie((string)($record['tooiUri'] ?? ''));
+	}//end resolvedCategory()
 
 	/**
 	 * The information categories by label.
@@ -255,6 +313,28 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 			return null;
 		}
 
+		$record = $this->soleCategoryFor(schemaSlug: $schemaSlug);
+		$member = $this->resolvedCategory(record: $record);
+		if ($member === null) {
+			return null;
+		}
+
+		$label  = (string)($record['label'] ?? $member['label']);
+		$reason = sprintf('The publication is in schema "%s", which only the category "%s" publishes.', $schemaSlug, $label);
+
+		return $this->proposal(field: 'wooCategory', value: (string)$record['code'], valueLabel: $label, reason: $reason);
+	}//end categoryProposal()
+
+	/**
+	 * The one category whose sitemap covers the schema, or null when none or several do.
+	 *
+	 * @param string $schemaSlug The schema slug.
+	 *
+	 * @return array<string, mixed>|null The category record.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
+	 */
+	private function soleCategoryFor(string $schemaSlug): ?array {
 		$matches = [];
 		foreach ($this->categories->all() as $code => $record) {
 			if (in_array($schemaSlug, $this->categories->schemasFor(code: (string)$code), true) === true) {
@@ -266,23 +346,8 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 			return null;
 		}
 
-		$record = $matches[0];
-		$member = $this->tooiVocabulary->resolveInformatiecategorie((string)($record['tooiUri'] ?? ''));
-		if ($member === null) {
-			return null;
-		}
-
-		return $this->proposal(
-			field: 'wooCategory',
-			value: (string)$record['code'],
-			valueLabel: (string)($record['label'] ?? $member['label']),
-			reason: sprintf(
-				'The publication is in schema "%s", which only the category "%s" publishes.',
-				$schemaSlug,
-				(string)($record['label'] ?? $member['label'])
-			)
-		);
-	}//end categoryProposal()
+		return $matches[0];
+	}//end soleCategoryFor()
 
 	/**
 	 * Propose the catalogue's organisation, when it has a valid TOOI identifier.
@@ -299,26 +364,36 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 			return null;
 		}
 
-		$id = (string)($organisation['id'] ?? '');
-		$tooiIdentifier = null;
-		if (isset($organisation['tooiIdentifier']) === true) {
-			$tooiIdentifier = (string)$organisation['tooiIdentifier'];
-		}
-
-		$tooi = $this->tooiVocabulary->resolveOrganisatie($tooiIdentifier);
+		$id   = (string)($organisation['id'] ?? '');
+		$tooi = $this->organisationTooi(organisation: $organisation);
 		if ($id === '' || $tooi === null) {
 			return null;
 		}
 
 		$name = (string)($organisation['name'] ?? $id);
 
-		return $this->proposal(
-			field: 'organization',
-			value: $id,
-			valueLabel: $name,
-			reason: sprintf('The catalogue is published by "%s" (%s).', $name, $tooi)
-		);
+		$reason = sprintf('The catalogue is published by "%s" (%s).', $name, $tooi);
+
+		return $this->proposal(field: 'organization', value: $id, valueLabel: $name, reason: $reason);
 	}//end organisationProposal()
+
+	/**
+	 * The organisation's resolved TOOI URI, or null when it has no valid identifier.
+	 *
+	 * @param array<string, mixed> $organisation The organisation.
+	 *
+	 * @return string|null The TOOI URI.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
+	 */
+	private function organisationTooi(array $organisation): ?string {
+		$tooiIdentifier = null;
+		if (isset($organisation['tooiIdentifier']) === true) {
+			$tooiIdentifier = (string)$organisation['tooiIdentifier'];
+		}
+
+		return $this->tooiVocabulary->resolveOrganisatie($tooiIdentifier);
+	}//end organisationTooi()
 
 	/**
 	 * Propose the handling type implied by how the record arrived.
@@ -340,12 +415,9 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 			return null;
 		}
 
-		$reason = 'The record was brought in by a synchronisation, so the document was received.';
-		if ($origin === 'case') {
-			$reason = 'The record was handed over by a case application, so the document was adopted there.';
-		}
+		$label = $member['label'];
 
-		return $this->proposal(field: 'soortHandeling', value: $member['label'], valueLabel: $member['label'], reason: $reason);
+		return $this->proposal(field: 'soortHandeling', value: $label, valueLabel: $label, reason: self::HANDLING_REASON_BY_ORIGIN[$origin]);
 	}//end handlingProposal()
 
 	/**

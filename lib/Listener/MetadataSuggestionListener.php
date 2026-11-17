@@ -73,23 +73,7 @@ class MetadataSuggestionListener implements IEventListener {
 		}
 
 		try {
-			$object = $event->getObject();
-			$register = (string)$object->getRegister();
-			$schema = (string)$object->getSchema();
-			$uuid = (string)$object->getUuid();
-			if ($uuid === '' || $register === '' || $register !== $this->setting(key: 'publication_register')) {
-				return;
-			}
-
-			$skip = [$this->setting(key: 'metadata_suggestion_schema'), $this->setting(key: 'catalog_schema')];
-			if (in_array($schema, $skip, true) === true) {
-				return;
-			}
-
-			$this->jobList->add(
-				SuggestPublicationMetadata::class,
-				['register' => $register, 'schema' => $schema, 'id' => $uuid]
-			);
+			$this->queue(object: $event->getObject());
 		} catch (\Throwable $e) {
 			// The save goes on whatever happens here.
 			$this->logger->error(
@@ -99,6 +83,34 @@ class MetadataSuggestionListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * Queue the job for the object when it is a publication-register object other than a suggestion or catalogue.
+	 *
+	 * @param object $object The created object entity.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
+	 */
+	private function queue(object $object): void {
+		$register = (string)$object->getRegister();
+		$schema = (string)$object->getSchema();
+		$uuid = (string)$object->getUuid();
+		if ($uuid === '' || $register === '' || $register !== $this->setting(key: 'publication_register')) {
+			return;
+		}
+
+		$skip = [$this->setting(key: 'metadata_suggestion_schema'), $this->setting(key: 'catalog_schema')];
+		if (in_array($schema, $skip, true) === true) {
+			return;
+		}
+
+		$this->jobList->add(
+			SuggestPublicationMetadata::class,
+			['register' => $register, 'schema' => $schema, 'id' => $uuid]
+		);
+	}//end queue()
 
 	/**
 	 * One trimmed app setting.

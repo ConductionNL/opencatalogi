@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\BackgroundJob;
 
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenCatalogi\Contract\MetadataRuleSuggesterInterface;
 use OCA\OpenCatalogi\Contract\MetadataSuggestionStoreInterface;
@@ -58,7 +58,7 @@ class SuggestPublicationMetadata extends QueuedJob {
 	 * @param ITimeFactory $time The clock.
 	 * @param MetadataRuleSuggesterInterface $suggestions The rules floor.
 	 * @param MetadataSuggestionStoreInterface $store Where suggestions are stored.
-	 * @param OpenRegisterLookup $openRegister OpenRegister's services.
+	 * @param OpenRegisterServicesInterface $openRegister OpenRegister's services.
 	 * @param IAppConfig $config Holds the catalogue register and schema.
 	 * @param LoggerInterface $logger Logger.
 	 */
@@ -66,7 +66,7 @@ class SuggestPublicationMetadata extends QueuedJob {
 		ITimeFactory $time,
 		private readonly MetadataRuleSuggesterInterface $suggestions,
 		private readonly MetadataSuggestionStoreInterface $store,
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterServicesInterface $openRegister,
 		private readonly IAppConfig $config,
 		private readonly LoggerInterface $logger,
 	) {
@@ -84,13 +84,12 @@ class SuggestPublicationMetadata extends QueuedJob {
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
 	 */
 	protected function run($argument): void {
-		$register = (string)($argument['register'] ?? '');
-		$schema = (string)($argument['schema'] ?? '');
-		$id = (string)($argument['id'] ?? '');
-		if ($register === '' || $schema === '' || $id === '' || $this->store->isConfigured() === false) {
+		$ref = $this->publicationRef(argument: $argument);
+		if ($ref === null || $this->store->isConfigured() === false) {
 			return;
 		}
 
+		[$register, $schema, $id] = $ref;
 		try {
 			$this->suggestFor(register: $register, schema: $schema, id: $id);
 		} catch (\Throwable $e) {
@@ -101,6 +100,28 @@ class SuggestPublicationMetadata extends QueuedJob {
 		}
 
 	}//end run()
+
+	/**
+	 * The publication's register, schema and id from the job argument, null when one is missing.
+	 *
+	 * @param mixed $argument `register`, `schema` and `id` of the publication.
+	 *
+	 * @return array{0: string, 1: string, 2: string}|null The register, schema and id.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
+	 */
+	private function publicationRef($argument): ?array {
+		$ref = [
+			(string)($argument['register'] ?? ''),
+			(string)($argument['schema'] ?? ''),
+			(string)($argument['id'] ?? ''),
+		];
+		if (in_array('', $ref, true) === true) {
+			return null;
+		}
+
+		return $ref;
+	}//end publicationRef()
 
 	/**
 	 * Read the publication and its surroundings, then store each proposal.
@@ -168,23 +189,7 @@ class SuggestPublicationMetadata extends QueuedJob {
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
 	 */
 	private function catalogOrganisation(string $schema): ?array {
-		$catalogRegister = trim($this->config->getValueString('opencatalogi', 'catalog_register', ''));
-		$catalogSchema = trim($this->config->getValueString('opencatalogi', 'catalog_schema', ''));
-		if ($catalogRegister === '' || $catalogSchema === '') {
-			return null;
-		}
-
-		try {
-			$result = $this->openRegister->objectService()->searchObjectsPaginated(
-				query: ['@self' => ['register' => $catalogRegister, 'schema' => $catalogSchema], '_limit' => self::CATALOG_PAGE],
-				_rbac: false,
-				_multitenancy: false
-			);
-		} catch (\Throwable $e) {
-			return null;
-		}
-
-		foreach ((array)($result['results'] ?? []) as $row) {
+		foreach ($this->catalogRows() as $row) {
 			$catalog = $this->asArray(object: $row);
 			$schemas = array_map('strval', (array)($catalog['schemas'] ?? []));
 			$organisation = (string)($catalog['organization'] ?? '');
@@ -195,6 +200,33 @@ class SuggestPublicationMetadata extends QueuedJob {
 
 		return null;
 	}//end catalogOrganisation()
+
+	/**
+	 * The first page of catalogues, empty when the catalogue register is not configured or cannot be read.
+	 *
+	 * @return array<int, mixed> The catalogue rows.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
+	 */
+	private function catalogRows(): array {
+		$catalogRegister = trim($this->config->getValueString('opencatalogi', 'catalog_register', ''));
+		$catalogSchema = trim($this->config->getValueString('opencatalogi', 'catalog_schema', ''));
+		if ($catalogRegister === '' || $catalogSchema === '') {
+			return [];
+		}
+
+		try {
+			$result = $this->openRegister->objectService()->searchObjectsPaginated(
+				query: ['@self' => ['register' => $catalogRegister, 'schema' => $catalogSchema], '_limit' => self::CATALOG_PAGE],
+				_rbac: false,
+				_multitenancy: false
+			);
+		} catch (\Throwable $e) {
+			return [];
+		}
+
+		return (array)($result['results'] ?? []);
+	}//end catalogRows()
 
 	/**
 	 * One OpenRegister organisation, null when it cannot be read.

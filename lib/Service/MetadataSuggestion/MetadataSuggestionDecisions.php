@@ -26,7 +26,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\MetadataSuggestion;
 
 use OCA\OpenCatalogi\Exception\MetadataSuggestionRefusedException;
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
@@ -61,7 +61,7 @@ class MetadataSuggestionDecisions {
 	 *
 	 * @param MetadataSuggestionStore $store The stored suggestions.
 	 * @param PublicationRights $rights The update right on one publication.
-	 * @param OpenRegisterLookup $openRegister OpenRegister's ObjectService and the publication register.
+	 * @param OpenRegisterLookupInterface $openRegister OpenRegister's ObjectService and the publication register.
 	 * @param MetadataSuggestionService $suggestions The fields Hermiq is asked about, and its answers checked.
 	 * @param HermiqMetadataClient $hermiq Hermiq, when installed.
 	 * @param PublicationDocumentText $documents The text of the publication's documents.
@@ -70,7 +70,7 @@ class MetadataSuggestionDecisions {
 	public function __construct(
 		private readonly MetadataSuggestionStore $store,
 		private readonly PublicationRights $rights,
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterLookupInterface $openRegister,
 		private readonly MetadataSuggestionService $suggestions,
 		private readonly HermiqMetadataClient $hermiq,
 		private readonly PublicationDocumentText $documents,

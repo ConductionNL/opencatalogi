@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\MetadataSuggestion;
 
 use OCA\OpenCatalogi\Contract\MetadataSuggestionStoreInterface;
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -80,11 +80,11 @@ class MetadataSuggestionStore implements MetadataSuggestionStoreInterface {
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config Holds the register and schema identifiers.
-	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
+	 * @param OpenRegisterLookupInterface $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterLookupInterface $openRegister,
 	) {
 
 	}//end __construct()

@@ -76,6 +76,7 @@ use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
 use OCA\OpenCatalogi\Contract\ObligationReadServiceInterface;
 use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
@@ -224,6 +225,7 @@ final class ServiceBindings {
 		PublishedRecordViewInterface::class => PublishedRecordView::class,
 		SitemapServiceInterface::class => SitemapService::class,
 		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
+		OpenRegisterServicesInterface::class => OpenRegisterLookup::class,
 		AttachmentReadingQueueInterface::class => AttachmentReadingQueue::class,
 		AttachmentReadingStoreInterface::class => AttachmentReadingStore::class,
 		MetadataRuleSuggesterInterface::class => MetadataSuggestionService::class,

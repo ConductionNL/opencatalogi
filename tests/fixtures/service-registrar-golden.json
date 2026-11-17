@@ -336,6 +336,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\OpenRegisterServicesInterface",
+        "OCA\\OpenCatalogi\\Service\\OpenRegisterLookup"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\AttachmentReadingQueueInterface",
         "OCA\\OpenCatalogi\\BackgroundJob\\AttachmentReadingQueue"
     ],
