@@ -724,7 +724,16 @@ OC.L10N.register(
         "Open catalog": "Avrir il catalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creescha tes emprim catalog. El è il container, en il qual vegnan a star tias publicaziuns. Tscherna il register Publication ed il schema Publication, uschia ch'il catalog mussa las publicaziuns che ti agiuntas.",
         "Manage your publications and their status": "Administrai Vossas publicaziuns e lur status",
-        "Open at the source": "Avrir tar la funtauna"
+        "Open at the source": "Avrir tar la funtauna",
+        "Feed consumers": "Consumaders dal feed",
+        "Contact": "Contact",
+        "Generate key": "Generar clav",
+        "Revoke": "Revocar",
+        "Disable": "Deactivar",
+        "Last used": "Duvrà l'ultima giada",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Questa clav vegn mussada mo ina giada. Copiai ella ussa: ella na po betg vegnir mussada anc ina giada.",
+        "No feed consumers yet.": "Anc nagins consumaders dal feed.",
+        "Accounts that read every catalogue's feed": "Contos che leggian il feed da mintga catalog"
     },
     "nplurals=2; plural=(n != 1);"
 )

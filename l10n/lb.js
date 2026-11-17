@@ -724,7 +724,16 @@ OC.L10N.register(
         "Open catalog": "Katalog opmaachen",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Maacht Ären éischte Katalog. Et ass de Container, an deem Är Verëffentlechunge stinn. Wielt de Register Publication an d'Schema Publication, sou datt de Katalog d'Verëffentlechungen weist, déi Dir bäisetzt.",
         "Manage your publications and their status": "Verwalt Är Publikatiounen an hire Status",
-        "Open at the source": "Bei der Quell opmaachen"
+        "Open at the source": "Bei der Quell opmaachen",
+        "Feed consumers": "Feed-Empfänger",
+        "Contact": "Kontakt",
+        "Generate key": "Schlëssel erstellen",
+        "Revoke": "Zréckzéien",
+        "Disable": "Desaktivéieren",
+        "Last used": "Lescht benotzt",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Dëse Schlëssel gëtt nëmmen eemol ugewisen. Kopéiert e lo: hie kann net nach eng Kéier ugewise ginn.",
+        "No feed consumers yet.": "Nach keng Feed-Empfänger.",
+        "Accounts that read every catalogue's feed": "Konten, déi de Feed vun all Katalog liesen"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -403,7 +403,7 @@ class DcatServiceTest extends TestCase {
 			new InstanceSettings($this->urlGenerator, $this->appConfig),
 			$this->createMock(LoggerInterface::class),
 			new DcatAssurance($this->standardsVersions),
-			$tables
+			tables: $tables
 		);
 
 		$document = $service->buildCatalogDocument(
@@ -422,4 +422,65 @@ class DcatServiceTest extends TestCase {
 		);
 		$this->assertSame(['https://host/apps/opencatalogi/api/woo/u1/tables/t1/dictionary'], $conforms);
 	}//end testATableCsvDistributionConformsToItsDictionary()
+
+	/**
+	 * The feed reads publications with all their translations and resets that
+	 * afterwards, so each language becomes its own literal and later reads in
+	 * the request are not affected (publication-translations REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testTheFeedReadsEveryTranslationAndResetsItAfter(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			static fn ($app, $key, $default = '') => $default
+		);
+		$languageService = new class {
+			/** @var list<bool> */
+			public array $calls = [];
+
+			public function setReturnAllTranslations(bool $returnAll): void {
+				$this->calls[] = $returnAll;
+			}
+		};
+		$seenDuringSearch = null;
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjectsPaginated')
+			->willReturnCallback(static function () use ($languageService, &$seenDuringSearch): array {
+				$seenDuringSearch = $languageService->calls;
+				return [
+					'results' => [[
+						'@self' => ['uuid' => 'u1', 'schema' => 28],
+						'id' => 'u1',
+						'title' => ['nl' => 'Besluit', 'en' => 'Decision'],
+					]],
+					'next' => null,
+				];
+			});
+		$fileService = $this->createMock(FileService::class);
+		$fileService->method('getFiles')->willReturn([]);
+		$fileService->method('formatFiles')->willReturn(['results' => []]);
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->method('find')->willThrowException(new \RuntimeException('not needed'));
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				'OCA\\OpenRegister\\Service\\ObjectService' => $objectService,
+				'OCA\\OpenRegister\\Service\\FileService' => $fileService,
+				'OCA\\OpenRegister\\Db\\SchemaMapper' => $schemaMapper,
+				'OCA\\OpenRegister\\Service\\LanguageService' => $languageService,
+			}
+		);
+
+		$document = $this->service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [20], 'schemas' => [28]],
+			catalogSlug: 'woo'
+		);
+
+		$this->assertSame([true], $seenDuringSearch);
+		$this->assertSame([true, false], $languageService->calls);
+		$this->assertSame(
+			[['@value' => 'Besluit', '@language' => 'nl'], ['@value' => 'Decision', '@language' => 'en']],
+			$document['@graph'][1]['dct:title']
+		);
+	}//end testTheFeedReadsEveryTranslationAndResetsItAfter()
 }//end class

@@ -61,6 +61,21 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentReferencesInterface",
+        "OCA\\OpenCatalogi\\Service\\DocumentReferences"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentReferenceProbeInterface",
+        "OCA\\OpenCatalogi\\Service\\DocumentReferenceProbe"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentReferenceUrlPolicyInterface",
+        "OCA\\OpenCatalogi\\Service\\DocumentReferenceUrlPolicy"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\DonlRegistrationServiceInterface",
         "OCA\\OpenCatalogi\\Service\\DonlRegistrationService"
     ],
@@ -228,6 +243,11 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\SavedSearchServiceInterface",
         "OCA\\OpenCatalogi\\Service\\Portal\\SavedSearchService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\FeedConsumerServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\FeedConsumerService"
     ],
     [
         "alias",
