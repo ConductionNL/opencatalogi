@@ -383,5 +383,10 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\InstanceModeInterface",
         "OCA\\OpenCatalogi\\Service\\InstanceMode"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\BatchReviewInterface",
+        "OCA\\OpenCatalogi\\Service\\Review\\BatchReview"
     ]
 ]
