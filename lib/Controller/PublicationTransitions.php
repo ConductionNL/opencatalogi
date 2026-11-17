@@ -276,4 +276,107 @@ class PublicationTransitions {
 
 		return null;
 	}//end reopenFileWindow()
+
+	/**
+	 * The label a file's withdrawal reason is kept under, followed by the reason.
+	 */
+	public const WITHDRAWN_REASON_LABEL = 'withdrawn-reason:';
+
+	/**
+	 * The label the withdrawing editor is kept under, followed by their user id.
+	 */
+	public const WITHDRAWN_BY_LABEL = 'withdrawn-by:';
+
+	/**
+	 * Keep why and by whom a file was withdrawn in its OpenRegister labels.
+	 *
+	 * OpenRegister's file metadata is a description, a category and labels.
+	 * The description and category are the publisher's, so the withdrawal is
+	 * kept as two labels next to the labels the file already has, which stay.
+	 * A later withdrawal replaces the earlier pair.
+	 *
+	 * @param int    $fileId The file id.
+	 * @param string $reason Why the file is withdrawn.
+	 * @param string $editor Who withdrew it.
+	 *
+	 * @return string|null Null when kept (or OpenRegister has no file metadata), else why not.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+	 */
+	public function recordFileWithdrawal(int $fileId, string $reason, string $editor): ?string {
+		return $this->writeWithdrawalLabels(
+			fileId: $fileId,
+			withdrawal: [self::WITHDRAWN_REASON_LABEL.$reason, self::WITHDRAWN_BY_LABEL.$editor]
+		);
+	}//end recordFileWithdrawal()
+
+	/**
+	 * Remove a file's withdrawal labels when it is put back; its other labels stay.
+	 *
+	 * @param int $fileId The file id.
+	 *
+	 * @return string|null Null when cleared (or there was nothing to clear), else why not.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
+	 */
+	public function clearFileWithdrawal(int $fileId): ?string {
+		return $this->writeWithdrawalLabels(fileId: $fileId, withdrawal: []);
+	}//end clearFileWithdrawal()
+
+	/**
+	 * Write a file's labels as its own labels without any withdrawal, plus these.
+	 *
+	 * Nothing is written when there is nothing to add and nothing to remove.
+	 *
+	 * @param int           $fileId     The file id.
+	 * @param array<string> $withdrawal The withdrawal labels to add.
+	 *
+	 * @return string|null Null when written or not needed, else why it failed.
+	 */
+	private function writeWithdrawalLabels(int $fileId, array $withdrawal): ?string {
+		$change = 'OCA\OpenRegister\Service\File\FileMetadataChange';
+		try {
+			$service = $this->container->get('OCA\OpenRegister\Service\FileService');
+			$labels  = $this->currentLabels(fileId: $fileId);
+			$kept    = array_values(array_filter($labels, fn (string $label): bool => $this->isWithdrawalLabel(label: $label) === false));
+			if (method_exists($service, 'changeFileMetadata') === false || class_exists($change) === false
+				|| ($withdrawal === [] && $kept === $labels)
+			) {
+				return null;
+			}
+
+			$service->changeFileMetadata(new $change(fileId: $fileId, labels: array_merge($kept, $withdrawal)));
+		} catch (\Throwable $e) {
+			return $e->getMessage();
+		}
+
+		return null;
+	}//end writeWithdrawalLabels()
+
+	/**
+	 * A file's OpenRegister labels, as strings; none when it has no metadata row.
+	 *
+	 * @param int $fileId The file id.
+	 *
+	 * @return array<string> The labels.
+	 */
+	private function currentLabels(int $fileId): array {
+		$current = ($this->container->get('OCA\OpenRegister\Files\Db\FileMapper')->findByFileIds([$fileId])[$fileId] ?? null);
+		if (is_object($current) === false || is_callable([$current, 'getLabels']) === false) {
+			return [];
+		}
+
+		return array_values(array_map('strval', array_filter((array)($current->getLabels() ?? []), 'is_scalar')));
+	}//end currentLabels()
+
+	/**
+	 * Whether a label is one of the two a withdrawal is kept under.
+	 *
+	 * @param string $label The label.
+	 *
+	 * @return boolean
+	 */
+	private function isWithdrawalLabel(string $label): bool {
+		return str_starts_with($label, self::WITHDRAWN_REASON_LABEL) || str_starts_with($label, self::WITHDRAWN_BY_LABEL);
+	}//end isWithdrawalLabel()
 }//end class
