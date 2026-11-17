@@ -555,6 +555,58 @@
     }
   },
   "paths": {
+    "/value-lists": {
+      "get": {
+        "operationId": "value-lists-index",
+        "summary": "Every controlled-list entry",
+        "description": "Every entry of every controlled list OpenCatalogi uses (the TOOI and DiWoo lists, the DCAT lists and the Woo refusal grounds) as scheme, scheme URI, code, label, resource URI, status and the moment of the last refresh. A list that cannot be read is named in `unavailable` rather than answered empty.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "scheme",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "informatiecategorieen",
+                "soortHandeling",
+                "documentsoorten",
+                "talen",
+                "hvdCategories",
+                "dataThemes",
+                "weigeringsgronden"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown scheme"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/catalogi": {
       "get": {
         "operationId": "catalogi-index",
