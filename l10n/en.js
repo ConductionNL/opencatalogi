@@ -1835,6 +1835,14 @@ OC.L10N.register(
         "The user who sent the document back.": "The user who sent the document back.",
         "Sent back at": "Sent back at",
         "When the document was sent back.": "When the document was sent back.",
+        "Woo requests": "Woo requests",
+        "Woo requests are handled by dossiq, which is not installed.": "Woo requests are handled by dossiq, which is not installed.",
+        "Install dossiq from the app store": "Install dossiq from the app store",
+        "The Woo requests stored here have not been handed to dossiq yet.": "The Woo requests stored here have not been handed to dossiq yet.",
+        "Woo requests not yet moved to dossiq: {count}": "Woo requests not yet moved to dossiq: {count}",
+        "Of those, dossiq could not move: {count}": "Of those, dossiq could not move: {count}",
+        "Counted on {date}": "Counted on {date}",
+        "Every Woo request has moved to dossiq; the requests stored here are read-only.": "Every Woo request has moved to dossiq; the requests stored here are read-only.",
         "Column": "Column",
         "Description of {column}": "Description of {column}",
         "Importing the rows…": "Importing the rows…",
@@ -1895,7 +1903,12 @@ OC.L10N.register(
         "Rows left off the map without usable coordinates: {count}": "Rows left off the map without usable coordinates: {count}",
         "Points on the map: {count}": "Points on the map: {count}",
         "Groups in the chart: {count}": "Groups in the chart: {count}",
-        "Rows on the first page: {count} of {total}": "Rows on the first page: {count} of {total}"
+        "Rows on the first page: {count} of {total}": "Rows on the first page: {count} of {total}",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegister version",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister carries the engine OpenCatalogi needs.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi cannot start",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister."
     },
     "nplurals=2; plural=(n != 1);"
 )

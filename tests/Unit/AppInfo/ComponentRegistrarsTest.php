@@ -47,6 +47,7 @@ use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\PublicationLinksListener;
 use OCA\OpenCatalogi\Listener\TermRollListener;
+use OCA\OpenCatalogi\Listener\HandedOverRecordsListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Listener\WooReadinessTriggerListener;
 use OCA\OpenCatalogi\Mcp\McpRegistrar;
@@ -136,6 +137,8 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectDeletedEvent', CatalogAccessListener::class],
 				[$e . 'ObjectCreatingEvent', TermRollListener::class],
 				[$e . 'ObjectUpdatingEvent', TermRollListener::class],
+				[$e . 'ObjectCreatingEvent', HandedOverRecordsListener::class],
+				[$e . 'ObjectUpdatingEvent', HandedOverRecordsListener::class],
 				[$e . 'ObjectCreatingEvent', DocumentReferenceListener::class],
 				[$e . 'ObjectUpdatingEvent', DocumentReferenceListener::class],
 				[$e . 'ObjectCreatingEvent', DiwooCompletenessListener::class],

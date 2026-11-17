@@ -276,6 +276,16 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\HandoverStateInterface",
+        "OCA\\OpenCatalogi\\Service\\Handover\\HandoverState"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\IntakeForwardInterface",
+        "OCA\\OpenCatalogi\\Service\\Woo\\DossiqWooForward"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\PlooiDeliveryServiceInterface",
         "OCA\\OpenCatalogi\\Service\\Publication\\PlooiDeliveryService"
     ],

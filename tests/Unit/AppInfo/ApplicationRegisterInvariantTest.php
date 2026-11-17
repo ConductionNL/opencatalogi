@@ -286,6 +286,59 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	}//end testRegisterCallsEveryComponentRegistrar()
 
 	/**
+	 * The read-only guard of the Woo request schema listens on OpenRegister's real pre-save events.
+	 *
+	 * A listener on an event OpenRegister never dispatches, or on the post-save
+	 * events, refuses nothing: the write would already have happened.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-4.1
+	 */
+	public function testTheWooRequestReadOnlyGuardListensOnTheRealPreSaveEvents(): void {
+		$src = $this->source($this->registrars()['ListenerRegistrar']);
+		$this->assertStringContainsString(
+			'$this->registerWriteGuards(context: $context);',
+			$this->methodBody($src, 'public function register('),
+			'register() must register the write guards'
+		);
+		$body = $this->methodBody($src, 'private function registerWriteGuards(');
+
+		foreach (['ObjectCreatingEvent', 'ObjectUpdatingEvent'] as $event) {
+			$this->assertMatchesRegularExpression(
+				'/registerEventListener\(\s*' . $event . '::class,\s*HandedOverRecordsListener::class\s*\)/',
+				$body,
+				'the Woo request read-only guard must listen on ' . $event
+			);
+			$this->assertStringContainsString('use OCA\\OpenRegister\\Event\\' . $event . ';', $src, $event . ' must be OpenRegister\'s own event');
+		}
+
+		$this->assertDoesNotMatchRegularExpression(
+			'/registerEventListener\(\s*Object(Created|Updated)Event::class,\s*HandedOverRecordsListener::class/',
+			$body,
+			'on a post-save event the guard would refuse a write that already happened'
+		);
+	}//end testTheWooRequestReadOnlyGuardListensOnTheRealPreSaveEvents()
+
+	/**
+	 * The Woo request routes are guarded by the hand-over middleware.
+	 *
+	 * Without it the routes keep answering without dossiq and keep changing
+	 * requests that moved to dossiq.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-5.1
+	 */
+	public function testTheWooRequestRoutesAreGuardedByTheHandoverMiddleware(): void {
+		$this->assertMatchesRegularExpression(
+			'/registerMiddleware\(\s*HandoverMiddleware::class\s*\)/',
+			$this->methodBody($this->source($this->registrars()['MiddlewareRegistrar']), 'public function register('),
+			'MiddlewareRegistrar::register() must register HandoverMiddleware'
+		);
+	}//end testTheWooRequestRoutesAreGuardedByTheHandoverMiddleware()
+
+	/**
 	 * The listener that writes a publication's public and officer pages runs on every create (REQ-PTS-001).
 	 *
 	 * @return void
