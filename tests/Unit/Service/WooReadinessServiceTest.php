@@ -32,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\OpenCatalogi\Service\WooReadinessService
  * @covers \OCA\OpenCatalogi\Service\SitemapStandards
  * @uses \OCA\OpenCatalogi\Service\CatalogReadinessChecks
+ * @uses \OCA\OpenCatalogi\BackgroundJob\DiwooSitemapReconciliation
  * @uses \OCA\OpenCatalogi\Service\Handover\HandoverState
  */
 class WooReadinessServiceTest extends TestCase {
@@ -500,6 +501,30 @@ XML;
 		);
 		$this->assertNotContains('woo-requests', array_column($report['checks'], 'id'));
 		$this->assertArrayNotHasKey('wooRequests', $this->service->runCheck());
+	}
+
+	/**
+	 * REQ-WNO-003: the readiness report shows the last reconciliation, and leaves it out before the first run.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 */
+	public function testTheReportShowsTheLastReconciliation(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+		$stored = '';
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$stored): string {
+				return $key === \OCA\OpenCatalogi\BackgroundJob\DiwooSitemapReconciliation::CONFIG_KEY ? $stored : $default;
+			}
+		);
+
+		$this->assertArrayNotHasKey('reconciliation', $this->service->runCheck());
+
+		$stored = '[{"catalog":"woo","category":"sitemapindex-diwoo-infocat012.xml","missing":["https://example.com/b.pdf"],"extra":[],"complete":true}]';
+		$report = $this->service->runCheck();
+
+		$this->assertSame(['https://example.com/b.pdf'], $report['reconciliation'][0]['missing']);
+		$this->assertSame('woo', $report['reconciliation'][0]['catalog']);
 	}
 
 	public function testBeingBehindTheDiwooStandardFailsTheReport(): void {

@@ -1507,6 +1507,40 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	/**
+	 * REQ-WNO-003: the register side of the reconciliation lists every public document,
+	 * also the one the page holds back, so the difference shows as missing.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 */
+	public function testTheRegisterSideListsADocumentThePageHoldsBack(): void {
+		$publications = [
+			['id' => 'goed', 'wooCategory' => 'infocat012', 'creationDate' => '2026-09-30'],
+			['id' => 'fout', 'wooCategory' => 'infocat012', 'creationDate' => '0000-01-01'],
+		];
+		$xml = $this->storedValuesPage($publications);
+
+		$register = $this->service->publicDocumentLocations('woo', 'sitemapindex-diwoo-infocat012.xml');
+
+		$this->assertSame(2, $register['publications']);
+		$this->assertSame(['https://example.com/goed.pdf', 'https://example.com/fout.pdf'], $register['locations']);
+		$listed = self::documentsOf($xml)->evaluate('string(//s:url/s:loc)');
+		$this->assertSame(['https://example.com/fout.pdf'], array_values(array_diff($register['locations'], [$listed])));
+	}
+
+	/**
+	 * REQ-WNO-003: a category the registry does not know is a failed read, not an empty one.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 */
+	public function testTheRegisterSideRefusesAnUnknownCategory(): void {
+		$this->storedValuesPage([]);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('the category cannot be read: HTTP 400');
+		$this->service->publicDocumentLocations('woo', 'sitemapindex-diwoo-infocat999.xml');
+	}
+
+	/**
 	 * REQ-WNO-002: the XSD the app ships and validates with at render time is the
 	 * authority's file, and a rendered page validates against it.
 	 *

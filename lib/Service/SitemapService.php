@@ -270,6 +270,64 @@ class SitemapService implements SitemapServiceInterface {
 	}//end buildSitemap()
 
 	/**
+	 * The location of every public document of a category, read the way the sitemap
+	 * reads it but before any document is held back (REQ-WNO-003).
+	 *
+	 * The searches are the sitemap's own, with RBAC on, so from a background job they
+	 * are the anonymous public read. Every page is read until the searches run dry.
+	 * A document the sitemap holds back for a missing field or for its XSD errors is
+	 * still listed here; that difference is what the reconciliation reports.
+	 *
+	 * @param string $catalogSlug The catalog slug.
+	 * @param string $categoryCode The sitemap file of the category.
+	 *
+	 * @return array{publications: int, locations: list<string>} The public publications counted and their document locations.
+	 *
+	 * @throws \RuntimeException When the catalogue or the category cannot be read.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SitemapDocumentRelations is a pure static helper.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 */
+	public function publicDocumentLocations(string $catalogSlug, string $categoryCode): array {
+		$objectService = $this->getObjectService();
+		if ($objectService === null) {
+			throw new \RuntimeException('OpenRegister is not available');
+		}
+
+		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
+		$error = $this->resolveSitemapRequest(request: $request, objectService: $objectService);
+		if ($error !== null) {
+			throw new \RuntimeException('the category cannot be read: HTTP ' . $error->getStatus());
+		}
+
+		$builder = new SitemapIndexBuilder(objectService: $objectService, perPage: $this->getMaxPerPage());
+		$queries = $this->sitemapQueries(request: $request);
+		$apiBase = $this->instance->baseUrl() . '/apps/opencatalogi/api/' . rawurlencode($catalogSlug);
+		$count = 0;
+		$locations = [];
+		for ($page = 1; $queries !== []; $page++) {
+			$batch = $builder->page(queries: $queries, page: $page);
+			if ($batch['results'] === []) {
+				break;
+			}
+
+			foreach ($this->publicationsWithFiles(rows: $batch['results']) as $publication) {
+				$count++;
+				foreach (SitemapDocumentRelations::forPublication(publication: $publication, apiBase: $apiBase) as [$file]) {
+					$locations[] = (string)($file['downloadUrl'] ?? '');
+				}
+			}
+
+			$queries = $batch['continuing'];
+		}
+
+		$locations = array_filter($locations, static fn (string $loc): bool => $loc !== '');
+
+		return ['publications' => $count, 'locations' => array_values(array_unique($locations))];
+	}//end publicDocumentLocations()
+
+	/**
 	 * Whether a url entry's DiWoo document validates against the shipped XSD; a document
 	 * that does not is logged with the XSD errors and left out of the page (REQ-WNO-002).
 	 *

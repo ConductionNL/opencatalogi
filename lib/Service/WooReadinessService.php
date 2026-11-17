@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
 use DOMDocument;
+use OCA\OpenCatalogi\BackgroundJob\DiwooSitemapReconciliation;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
 use OCA\OpenCatalogi\Service\Handover\HandoverState;
 use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
@@ -187,6 +188,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @return array<string, mixed> The report (verdict, checks, registration, baseUrl, checkedAt).
 	 *
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
 	 */
 	public function runCheck(): array {
 		$this->requestCount = 0;
@@ -212,6 +214,12 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		// a check: they say nothing about whether the index can harvest.
 		if ($this->handover !== null) {
 			$report['wooRequests'] = $this->handover->report();
+		}
+
+		// The last daily reconciliation of the sitemaps against the register (REQ-WNO-003).
+		$reconciliation = DiwooSitemapReconciliation::lastResults(config: $this->config);
+		if ($reconciliation !== null) {
+			$report['reconciliation'] = $reconciliation;
 		}
 
 		$this->persistReport(report: $report);
