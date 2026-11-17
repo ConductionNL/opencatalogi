@@ -86,7 +86,79 @@
 				@click="saveDictionary(table)">
 				{{ t('opencatalogi', 'Save dictionary') }}
 			</NcButton>
+
+			<div
+				v-if="table.status === 'ready'"
+				class="publication-tables__views"
+				:data-testid="'publication-table-views-' + table.id">
+				<h4 class="publication-tables__title">
+					{{ t('opencatalogi', 'Views on the public page') }}
+				</h4>
+				<p v-if="!(views[table.id] || []).length" class="publication-tables__status">
+					{{ t('opencatalogi', 'No views yet. Readers see the rows only through the query link.') }}
+				</p>
+				<ol v-else class="publication-tables__view-list">
+					<li
+						v-for="(view, index) in views[table.id]"
+						:key="view.id"
+						class="publication-tables__view"
+						:data-testid="'publication-table-view-' + view.id">
+						<span>{{ view.title }} ({{ kindLabel(view.kind) }})</span>
+						<span class="publication-tables__view-actions">
+							<NcButton
+								variant="tertiary"
+								:disabled="busy"
+								:aria-label="t('opencatalogi', 'Edit {title}', { title: view.title })"
+								:data-testid="'publication-table-view-edit-' + view.id"
+								@click="openDialog(table, view)">
+								{{ t('opencatalogi', 'Edit') }}
+							</NcButton>
+							<NcButton
+								variant="tertiary"
+								:disabled="busy || index === 0"
+								:aria-label="t('opencatalogi', 'Move {title} up', { title: view.title })"
+								:data-testid="'publication-table-view-up-' + view.id"
+								@click="moveView(table, index, -1)">
+								{{ t('opencatalogi', 'Move up') }}
+							</NcButton>
+							<NcButton
+								variant="tertiary"
+								:disabled="busy || index === views[table.id].length - 1"
+								:aria-label="t('opencatalogi', 'Move {title} down', { title: view.title })"
+								:data-testid="'publication-table-view-down-' + view.id"
+								@click="moveView(table, index, 1)">
+								{{ t('opencatalogi', 'Move down') }}
+							</NcButton>
+							<NcButton
+								variant="tertiary"
+								:disabled="busy"
+								:aria-label="t('opencatalogi', 'Remove {title}', { title: view.title })"
+								:data-testid="'publication-table-view-remove-' + view.id"
+								@click="removeView(table, view)">
+								{{ t('opencatalogi', 'Remove') }}
+							</NcButton>
+						</span>
+					</li>
+				</ol>
+				<NcButton
+					:disabled="busy"
+					:data-testid="'publication-table-add-view-' + table.id"
+					@click="openDialog(table, null)">
+					{{ t('opencatalogi', 'Show on the public page') }}
+				</NcButton>
+			</div>
 		</section>
+
+		<DatasetViewDialog
+			v-if="dialog.table"
+			:open="dialog.open"
+			:publicationId="resolvedObjectId"
+			:catalogSlug="catalogSlug"
+			:table="dialog.table"
+			:view="dialog.view"
+			:position="(views[dialog.table.id] || []).length"
+			@saved="loadViews(dialog.table)"
+			@close="dialog.open = false" />
 
 		<NcNoteCard
 			v-if="message"
@@ -101,6 +173,8 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard, NcTextField } from '@nextcloud/vue'
+import DatasetViewDialog from '../../modals/DatasetViewDialog.vue'
+import { movedViews, viewPayload } from '../../services/datasetViews.js'
 import { filesRouteParams } from '../../services/publicationVisibility.js'
 import { csvAttachments, dictionaryChanges } from '../../services/publishedTables.js'
 import { injectedObjectContext } from './objectContext.js'
@@ -114,7 +188,7 @@ import { injectedObjectContext } from './objectContext.js'
  */
 export default {
 	name: 'PublicationTablesWidget',
-	components: { NcButton, NcNoteCard, NcTextField },
+	components: { DatasetViewDialog, NcButton, NcNoteCard, NcTextField },
 	inject: {
 		cnObjectContext: { default: null },
 		cnDetailObjectContext: { default: null },
@@ -132,6 +206,8 @@ export default {
 			tables: [],
 			attachments: [],
 			edits: {},
+			views: {},
+			dialog: { open: false, table: null, view: null },
 			busy: false,
 			message: '',
 			messageType: 'success',
@@ -235,6 +311,7 @@ export default {
 			this.edits = Object.fromEntries(
 				this.tables.map((table) => [table.id, (table.dictionary || []).map((column) => ({ ...column }))]),
 			)
+			await Promise.all(this.tables.filter((table) => table.status === 'ready').map((table) => this.loadViews(table)))
 
 			try {
 				const { data } = await axios.get(generateUrl(
@@ -299,6 +376,105 @@ export default {
 		},
 
 		/**
+		 * Read the saved views of one table, in page order.
+		 *
+		 * @param {{id: string}} table The table.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-an-editor-adds-a-table-chart-or-map-view-to-a-published-table-req-dsv-001
+		 */
+		async loadViews(table) {
+			let results
+			try {
+				const { data } = await axios.get(this.url('/' + encodeURIComponent(table.id) + '/views'))
+				results = data.results || []
+			} catch {
+				results = []
+			}
+			this.views = { ...this.views, [table.id]: results }
+		},
+
+		/**
+		 * A view's kind in words.
+		 *
+		 * @param {string} kind The kind.
+		 * @return {string} The label.
+		 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-an-editor-adds-a-table-chart-or-map-view-to-a-published-table-req-dsv-001
+		 */
+		kindLabel(kind) {
+			const labels = {
+				table: this.t('opencatalogi', 'Table'),
+				bar: this.t('opencatalogi', 'Bar chart'),
+				line: this.t('opencatalogi', 'Line chart'),
+				map: this.t('opencatalogi', 'Map'),
+			}
+			return labels[kind] || kind
+		},
+
+		/**
+		 * Open the view dialog for a table, to add a view or change one.
+		 *
+		 * @param {object} table The table.
+		 * @param {object|null} view The view to change, or null to add one.
+		 * @return {void}
+		 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-an-editor-adds-a-table-chart-or-map-view-to-a-published-table-req-dsv-001
+		 */
+		openDialog(table, view) {
+			this.dialog = { open: false, table, view }
+			this.$nextTick(() => {
+				this.dialog.open = true
+			})
+		},
+
+		/**
+		 * Swap a view with its neighbour and save both positions.
+		 *
+		 * @param {{id: string}} table The table.
+		 * @param {number} index The view to move.
+		 * @param {number} delta -1 for up, 1 for down.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-an-editor-adds-a-table-chart-or-map-view-to-a-published-table-req-dsv-001
+		 */
+		async moveView(table, index, delta) {
+			const moved = movedViews(this.views[table.id] || [], index, delta)
+			if (moved === null) {
+				return
+			}
+			this.busy = true
+			try {
+				for (const { view, position } of moved) {
+					await axios.post(this.url('/' + encodeURIComponent(table.id) + '/views'), viewPayload(view, String(view.id), position))
+				}
+			} catch (error) {
+				this.showError(error)
+			} finally {
+				await this.loadViews(table)
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Remove one view from the public page.
+		 *
+		 * @param {{id: string}} table The table.
+		 * @param {{id: string, title: string}} view The view.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-an-editor-adds-a-table-chart-or-map-view-to-a-published-table-req-dsv-001
+		 */
+		async removeView(table, view) {
+			this.busy = true
+			try {
+				await axios.delete(this.url('/' + encodeURIComponent(table.id) + '/views/' + encodeURIComponent(view.id)))
+				this.messageType = 'success'
+				this.message = this.t('opencatalogi', 'The view "{title}" is removed.', { title: view.title })
+			} catch (error) {
+				this.showError(error)
+			} finally {
+				await this.loadViews(table)
+				this.busy = false
+			}
+		},
+
+		/**
 		 * Put a refusal into words.
 		 *
 		 * @param {object} error The axios error.
@@ -358,6 +534,37 @@ export default {
 	gap: 8px;
 	padding-top: 8px;
 	border-top: 1px solid var(--color-border);
+}
+
+.publication-tables__views {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	align-items: flex-start;
+}
+
+.publication-tables__view-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	width: 100%;
+	margin: 0;
+	padding-inline-start: 20px;
+}
+
+.publication-tables__view {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	color: var(--color-main-text);
+}
+
+.publication-tables__view-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
 }
 
 .publication-tables__dictionary {

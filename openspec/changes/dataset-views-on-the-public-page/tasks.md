@@ -16,8 +16,9 @@ Start after `open-data-table-query-and-dictionary` is merged: every task here re
 
 ## 3. The editor
 
-- [ ] 3.1 Add "Show on the public page" to a published table's actions menu in the file list, opening `src/modals/DatasetViewDialog.vue` with `NcSelect` column pickers that carry `inputLabel` and a data preview (REQ-DSV-001). Verify: `tests/e2e/dataset-views.spec.ts` "an editor adds a bar chart", carrying `@e2e` REQ-DSV-001.
-- [ ] 3.2 List saved views under their table on the publication page with edit, move and remove. Verify: the same e2e file, "an editor reorders and removes a view".
+- [x] 3.1 Add "Show on the public page" to a published table's actions menu in the file list, opening `src/modals/DatasetViewDialog.vue` with `NcSelect` column pickers that carry `inputLabel` and a data preview (REQ-DSV-001). Verify: `tests/e2e/dataset-views.spec.ts` "an editor adds a bar chart", carrying `@e2e` REQ-DSV-001.
+- [x] 3.2 List saved views under their table on the publication page with edit, move and remove. Verify: the same e2e file, "an editor reorders and removes a view".
+  - Built: the action sits on each ready table in `PublicationTablesWidget` (the publication's tables widget, where a published table and its dictionary live), and opens `src/modals/DatasetViewDialog.vue` over the editor routes. The preview reads the saved view's public data answer, so it follows the save rather than preceding it: the editor route has no unsaved-view data. Helpers in `src/services/datasetViews.js`. Covered by `src/services/datasetViews.spec.js`, `src/modals/DatasetViewDialog.spec.js` and the views cases of `PublicationTablesWidget.spec.js` (jest). `tests/e2e/dataset-views.spec.ts` is not written yet: it needs a live Nextcloud with a ready table.
 
 ## 4. portaliq (cross-repo, ConductionNL/portaliq)
 

@@ -77,6 +77,18 @@ a column the table does not have, sums or averages a column that does not hold
 numbers, or uses a coordinate column that does not hold numbers is refused with
 `400`, and the message names the column.
 
+On the publication page, each ready table lists its views under "Views on the
+public page", in the order readers see them. "Show on the public page" opens the
+view dialog: choose how to show the table, give the view the title readers see,
+and pick the columns for that kind. The pickers for a sum, an average and the map
+coordinates offer only the columns that hold numbers. After a save the dialog
+previews what readers get: the rows on the first page, the groups in the chart or
+the points on the map, with a warning when a chart is cut at 200 groups or a map
+at 5,000 points, and the number of rows a map leaves out for want of usable
+coordinates. The preview reads the public data answer, so it shows only while
+the publication is public. Each listed view has Edit, Move up, Move down and
+Remove.
+
 Anyone reads the views of a public publication:
 
 ```bash
