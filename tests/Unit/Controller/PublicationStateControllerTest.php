@@ -277,7 +277,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-PPW-001: the page asks, the server answers public. */
 	public function testVisibilityAnswersPublic(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$response = $this->controller->visibility('p1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 		$this->assertSame(['state' => 'public', 'canPublish' => true], $response->getData());
@@ -309,7 +309,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-OPR-003 "A direct call by an editor": withdraw answers 403 naming the group; nothing is saved or sent. */
 	public function testAnEditorOutsideThePublishersGroupCannotWithdraw(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'plooiStatus' => 'delivered'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'plooiStatus' => 'delivered'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->mayPublish = false;
 		$this->withParams(['reason' => 'Wrong annex attached']);
@@ -341,7 +341,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** The single-document withdrawal is not one of the two gated endpoints. */
 	public function testAFileWithdrawalDoesNotAskThePublishRight(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->mayPublish = false;
 		$this->withParams(['reason' => 'Contains a home address']);
@@ -364,7 +364,7 @@ class PublicationStateControllerTest extends TestCase {
 	 * is stored; the answer names the channel that did not confirm.
 	 */
 	public function testAnEditorWithdrawsAPublicationPublishedByMistake(): void {
-		$this->publication = ['id' => 'p1', 'title' => 'Besluit', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'plooiStatus' => 'delivered'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'title' => 'Besluit', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'plooiStatus' => 'delivered'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Wrong annex attached']);
 
@@ -389,7 +389,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-PPW-002: a reader without update rights is refused and nothing is sent or saved. */
 	public function testAReaderWithoutUpdateRightsIsRefused(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(false);
 		$this->withParams(['reason' => 'Wrong annex attached']);
 
@@ -404,9 +404,9 @@ class PublicationStateControllerTest extends TestCase {
 	 * @return array<string, array{0: string, 1: array<string, mixed>, 2: bool, 3: array<string, mixed>, 4: bool, 5: string|null}>
 	 */
 	public static function withdrawWorlds(): array {
-		$public = ['id' => 'p1', 'title' => 'Besluit', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'plooiStatus' => 'delivered'];
-		$scheduled = ['id' => 'p1', 'publicationDate' => '2099-09-01T09:00:00+00:00'];
-		$withdrawn = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'depublicationDate' => '2026-09-29T09:00:00+00:00'];
+		$public = ['id' => 'p1', 'status' => 'published', 'title' => 'Besluit', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'plooiStatus' => 'delivered'];
+		$scheduled = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2099-09-01T09:00:00+00:00'];
+		$withdrawn = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'depublicationDate' => '2026-09-29T09:00:00+00:00'];
 		$reason = ['reason' => 'Wrong annex attached'];
 		$forged = ['reason' => 'Wrong annex attached', 'depublishedBy' => 'someone-else', 'userId' => 'someone-else', 'actor' => 'someone-else'];
 
@@ -510,7 +510,7 @@ class PublicationStateControllerTest extends TestCase {
 	 * withdrawal stores its record through the app after the update check.
 	 */
 	public function testTheDepublicationIsStoredWithoutRbacAfterTheGuard(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Wrong annex attached', 'depublishedBy' => 'someone-else']);
 
@@ -529,7 +529,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** A caller the guard refuses stores no depublication, for either withdrawal. */
 	public function testARefusedCallerStoresNoDepublication(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(false);
 		$this->withParams(['reason' => 'Wrong annex attached', 'depublishedBy' => 'redacteur']);
 
@@ -545,7 +545,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-PPW-002: a withdrawal without a reason is refused. */
 	public function testAWithdrawalWithoutAReasonIsRefused(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => '  ']);
 
@@ -555,7 +555,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** Design risk: a second withdraw finds it withdrawn and answers 409 without a second depublication. */
 	public function testASecondWithdrawAnswers409(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'depublicationDate' => '2026-09-29T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'depublicationDate' => '2026-09-29T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Wrong annex attached']);
 
@@ -566,7 +566,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-PPW-003: publish again makes a withdrawn publication public and stores no new depublication. */
 	public function testAnEditorPublishesAgain(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'depublicationDate' => '2026-09-29T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'depublicationDate' => '2026-09-29T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 
 		$response = $this->controller->publish('p1');
@@ -580,7 +580,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-PPW-002: publish now on a public publication answers 409; without rights 403. */
 	public function testPublishRefusals(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturnOnConsecutiveCalls(true, false);
 
 		$this->assertSame(Http::STATUS_CONFLICT, $this->controller->publish('p1')->getStatus());
@@ -590,7 +590,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-PPW-004: one annex comes down, the publication stays, and the depublication names the annex. */
 	public function testAnAnnexWithPersonalDataIsWithdrawnAlone(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Contains a home address']);
 
@@ -606,7 +606,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-103: the withdrawal ends the file's own window now and keeps when it became public. */
 	public function testWithdrawFileSetsTheFilesDepublicationAndReason(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Bevat een woonadres']);
 		$start = new \DateTime('2026-09-01T09:00:00+00:00');
@@ -641,7 +641,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-103: the publisher's own labels stay, and an earlier withdrawal's pair is replaced. */
 	public function testAWithdrawalKeepsThePublishersLabelsAndReplacesAnEarlierOne(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Bevat een BSN']);
 		$this->fileMapper->records[4711] = $this->labelledFile(['bijlage', 'withdrawn-reason:Oud', 'withdrawn-by:iemand', 'besluit']);
@@ -657,7 +657,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-103: when the reason cannot be kept on the file the withdrawal is reported as failed and not recorded. */
 	public function testAWithdrawalThatCannotBeKeptOnTheFileIsReported(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Bevat een woonadres']);
 		$this->fileService->metadataFailure = new \RuntimeException('metadata store down');
@@ -672,7 +672,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-PTS-002: withdrawing a file re-evaluates the publication's completeness, after the share is gone. */
 	public function testWithdrawingAFileReevaluatesTheCompleteness(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Bevat een woonadres']);
 		$this->sweeps = $this->createMock(CompletenessSweepService::class);
@@ -690,7 +690,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-PTS-002: a refused file withdrawal re-evaluates nothing. */
 	public function testARefusedFileWithdrawalReevaluatesNothing(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(false);
 		$this->withParams(['reason' => 'Bevat een woonadres']);
 		$this->sweeps = $this->createMock(CompletenessSweepService::class);
@@ -701,7 +701,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-103: a file that never had a window gets one that only ends. */
 	public function testWithdrawingAFileWithoutAWindowEndsANewOne(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Bevat een woonadres']);
 
@@ -712,7 +712,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-103: a file the share removal cannot find on this publication keeps its window. */
 	public function testAFileNotOnThePublicationKeepsItsWindow(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Bevat een woonadres']);
 		$this->fileService = new class {
@@ -728,7 +728,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-103: when the window cannot be ended the withdrawal is reported as failed and not recorded. */
 	public function testAWindowThatCannotEndIsReported(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Bevat een woonadres']);
 		$this->fileMapper->failure = new \RuntimeException('database is down');
@@ -743,7 +743,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-PPW-004: without the update right the file keeps its share. */
 	public function testAFileWithdrawalWithoutRightsIsRefused(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(false);
 		$this->withParams(['reason' => 'Contains a home address']);
 
@@ -753,7 +753,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-104: republishing needs a reason, shares the file again, reopens its window and records why. */
 	public function testRepublishFileNeedsAReasonAndReopensTheWindow(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$start = new \DateTime('2026-09-01T09:00:00+00:00');
 		$this->fileMapper->records[4711] = new class($start) {
@@ -787,7 +787,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-104: putting a file back removes its withdrawal labels and keeps the others. */
 	public function testRepublishClearsTheWithdrawalLabelsOnly(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->fileMapper->records[4711] = $this->labelledFile(['bijlage', 'withdrawn-reason:Bevat een woonadres', 'withdrawn-by:redacteur']);
 		$this->withParams(['reason' => 'Woonadres is weggelakt']);
@@ -801,7 +801,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-104: when the labels cannot be cleared the put-back is reported and not recorded. */
 	public function testARepublishThatCannotClearTheLabelsIsReported(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->fileMapper->records[4711] = $this->labelledFile(['withdrawn-reason:Bevat een woonadres']);
 		$this->fileService->metadataFailure = new \RuntimeException('metadata store down');
@@ -838,7 +838,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-104: without a reason nothing is shared or reopened. */
 	public function testRepublishFileWithoutAReasonChangesNothing(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => '  ']);
 
@@ -853,7 +853,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-104: only a user who may update the publication puts a file back. */
 	public function testRepublishFileWithoutRightsIsRefused(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(false);
 		$this->withParams(['reason' => 'Woonadres is weggelakt']);
 
@@ -866,7 +866,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-104: a file the file service cannot find on this publication keeps its window, and nothing is recorded. */
 	public function testRepublishingAFileNotOnThePublicationChangesNothing(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Woonadres is weggelakt']);
 		$this->fileService = new class {
@@ -885,7 +885,7 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** REQ-ATT-104: a window that cannot be reopened is reported and not recorded. */
 	public function testAWindowThatCannotReopenIsReported(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->withParams(['reason' => 'Woonadres is weggelakt']);
 		$this->fileMapper->failure = new \RuntimeException('database is down');

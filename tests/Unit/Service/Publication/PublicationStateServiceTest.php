@@ -77,22 +77,22 @@ class PublicationStateServiceTest extends TestCase {
 
 	/** REQ-PPW-001: a publication date last week and no depublication date reads public. */
 	public function testAPublicationWithAPastPublicationDateIsPublic(): void {
-		$this->assertSame('public', $this->states->stateOf(['publicationDate' => '2026-09-23T09:00:00+00:00'], $this->now));
+		$this->assertSame('public', $this->states->stateOf(['publicationDate' => '2026-09-23T09:00:00+00:00', 'status' => 'published'], $this->now));
 	}
 
 	/** REQ-PPW-001: a depublication date that has passed reads withdrawn. */
 	public function testAPassedDepublicationDateIsWithdrawn(): void {
-		$publication = ['publicationDate' => '2026-09-01T09:00:00+00:00', 'depublicationDate' => '2026-09-29T09:00:00+00:00'];
+		$publication = ['publicationDate' => '2026-09-01T09:00:00+00:00', 'depublicationDate' => '2026-09-29T09:00:00+00:00', 'status' => 'published'];
 		$this->assertSame('withdrawn', $this->states->stateOf($publication, $this->now));
 	}
 
 	/** REQ-PPW-001: no publication date is a draft, a future one is scheduled, archived wins. */
 	public function testDraftScheduledAndArchived(): void {
 		$this->assertSame('draft', $this->states->stateOf(['title' => 'Besluit'], $this->now));
-		$this->assertSame('scheduled', $this->states->stateOf(['publicationDate' => '2026-10-10T09:00:00+00:00'], $this->now));
+		$this->assertSame('scheduled', $this->states->stateOf(['publicationDate' => '2026-10-10T09:00:00+00:00', 'status' => 'published'], $this->now));
 		$this->assertSame('archived', $this->states->stateOf(['publicationDate' => '2026-09-01T09:00:00+00:00', 'status' => 'archived'], $this->now));
 		// A depublication date still ahead does not withdraw it yet.
-		$this->assertSame('public', $this->states->stateOf(['publicationDate' => '2026-09-01T09:00:00+00:00', 'depublicationDate' => '2026-12-01T09:00:00+00:00'], $this->now));
+		$this->assertSame('public', $this->states->stateOf(['publicationDate' => '2026-09-01T09:00:00+00:00', 'depublicationDate' => '2026-12-01T09:00:00+00:00', 'status' => 'published'], $this->now));
 	}
 
 	/** REQ-PPW-003: publish again clears the depublication date, and the register accepts the record. */
@@ -114,7 +114,7 @@ class PublicationStateServiceTest extends TestCase {
 
 	/** REQ-PPW-002: withdraw sets the depublication date to now, and the register accepts the record. */
 	public function testWithdrawSetsTheDepublicationDateToNow(): void {
-		$record = $this->states->withdrawnRecord(['title' => 'Besluit', 'publicationDate' => '2026-09-01T09:00:00+00:00'], $this->now);
+		$record = $this->states->withdrawnRecord(['title' => 'Besluit', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'status' => 'published'], $this->now);
 
 		$this->assertSame('withdrawn', $this->states->stateOf($record, $this->now));
 		$this->assertTrue($this->validates($record, $this->schema('publication_register.json', 'publication')));
@@ -151,6 +151,43 @@ class PublicationStateServiceTest extends TestCase {
 		$schema = $this->schema('register.d/publication-inspection-and-the-national-indexes.json', 'depublication');
 		$this->assertFalse($this->validates($raw, $schema), 'The raw record with nulls should be refused, or this test proves nothing.');
 		$this->assertTrue($this->validates($this->states->storable($raw), $schema));
+	}
+
+	/**
+	 * Publication-lifecycle-on-or REQ-PLC-002: a stored draft stays a draft whatever its dates say.
+	 *
+	 * @return void
+	 */
+	public function testAStoredDraftWithAPastPublicationDateIsADraft(): void {
+		$this->assertSame('draft', $this->states->stateOf(['status' => 'draft', 'publicationDate' => '2026-09-23T09:00:00+00:00'], $this->now));
+		// No stored state at all is a draft too, even with a past date (fail closed).
+		$this->assertSame('draft', $this->states->stateOf(['publicationDate' => '2026-09-23T09:00:00+00:00'], $this->now));
+	}
+
+	/**
+	 * Every stored state maps to exactly one visible state; only `published` reads the dates.
+	 *
+	 * @return void
+	 */
+	public function testEveryStoredStateMapsToOneVisibleState(): void {
+		$past = '2026-09-01T09:00:00+00:00';
+		$future = '2026-10-10T09:00:00+00:00';
+		$cases = [
+			'draft' => [['status' => 'draft', 'publicationDate' => $past], 'draft'],
+			'in review' => [['status' => 'in_review', 'publicationDate' => $past], 'in_review'],
+			'approved' => [['status' => 'approved', 'publicationDate' => $past], 'approved'],
+			'published, past date' => [['status' => 'published', 'publicationDate' => $past], 'public'],
+			'published, future date' => [['status' => 'published', 'publicationDate' => $future], 'scheduled'],
+			'published, withdrawn' => [['status' => 'published', 'publicationDate' => $past, 'depublicationDate' => $past], 'withdrawn'],
+			'published, no date' => [['status' => 'published'], 'draft'],
+			'archived' => [['status' => 'archived', 'publicationDate' => $past], 'archived'],
+			'empty' => [['status' => '', 'publicationDate' => $past], 'draft'],
+			'unknown' => [['status' => 'concept', 'publicationDate' => $past], 'draft'],
+		];
+
+		foreach ($cases as $name => [$publication, $expected]) {
+			$this->assertSame($expected, $this->states->stateOf($publication, $this->now), $name);
+		}
 	}
 
 	/** REQ-PPW-003: the demo data carries one withdrawn example publication and its depublication, so Publish again shows. */

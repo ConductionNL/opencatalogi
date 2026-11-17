@@ -147,7 +147,7 @@ class DelegatedAdminSavesTest extends TestCase {
 				// Already withdrawn, so depublishing it saves only the depublication:
 				// the flows below count one save. Taking a public one down is
 				// DepublicationControllerTest's.
-				'pub-1' => ['schema' => 'publication', 'object' => ['title' => 'Besluit', 'publicationDate' => '2020-01-01T00:00:00+00:00', 'depublicationDate' => '2020-02-01T00:00:00+00:00']],
+				'pub-1' => ['schema' => 'publication', 'object' => ['title' => 'Besluit', 'status' => 'published', 'publicationDate' => '2020-01-01T00:00:00+00:00', 'depublicationDate' => '2020-02-01T00:00:00+00:00']],
 				'ct-1' => ['schema' => 'caseTypeDefinition', 'object' => self::IMPORTED_CASE_TYPE],
 			]
 		);

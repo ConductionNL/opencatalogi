@@ -14,7 +14,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy the `env
 
 ## 2. One state
 
-- [ ] 2.1 Extend `PublicationStateService::stateOf()` with the stored states and add a `state` key per row to the publications list endpoint (REQ-PLC-002, REQ-PPW-001). Verify: `tests/Unit/Service/Publication/PublicationStateServiceTest.php::testAStoredDraftWithAPastPublicationDateIsADraft` (fails today: `stateOf` reads only the dates) and `::testEveryStoredStateMapsToOneVisibleState`.
+- [x] 2.1 Extend `PublicationStateService::stateOf()` with the stored states and add a `state` key per row to the publications list endpoint (REQ-PLC-002, REQ-PPW-001). Verify: `tests/Unit/Service/Publication/PublicationStateServiceTest.php::testAStoredDraftWithAPastPublicationDateIsADraft` (fails today: `stateOf` reads only the dates) and `::testEveryStoredStateMapsToOneVisibleState`.
+  - Done: `stateOf()` answers draft, in review and approved as stored, reads the dates only for a stored `published`, and answers draft for an empty or unknown status (fail closed). `PublicationsController` adds `state` to every row for a signed-in caller; an anonymous page is unchanged. Test fixtures that stood for published publications now carry `status: published`, as do the three dated demo publications in `opencatalogi_mock_register.json`; three goldens re-recorded (the stored status in a saved record, and the per-row state).
 - [ ] 2.2 Show the state as a column and a facet on the publications list and in the detail header, from the server value (REQ-PLC-002). Verify: `tests/e2e/publication-lifecycle.spec.ts` "one state on the list and the page", carrying `@e2e` REQ-PLC-002.
 
 ## 3. Public only when published; every publish path moves the lifecycle

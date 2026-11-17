@@ -294,6 +294,57 @@ class PublicationsControllerTest extends TestCase {
 		$this->assertEquals(200, $response->getStatus());
 	}
 
+	/**
+	 * Publication-lifecycle-on-or REQ-PLC-002: a signed-in caller gets the server-computed state on every row.
+	 *
+	 * @return void
+	 */
+	public function testIndexAddsTheStateToEveryRowForASignedInCaller(): void {
+		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id): object => $id === \OCA\OpenCatalogi\Contract\PublicationStateServiceInterface::class
+				? new \OCA\OpenCatalogi\Service\Publication\PublicationStateService()
+				: $mockObjService
+		);
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['title' => 'Test Catalog', 'schemas' => [1], 'registers' => [1]]);
+		$this->queryService->method('isAnonymous')->willReturn(false);
+		$mockObjService->method('searchObjectsPaginated')->willReturn([
+			'results' => [
+				['id' => 'a', 'status' => 'draft', 'publicationDate' => '2020-01-01T00:00:00+00:00'],
+				['id' => 'b', 'status' => 'in_review'],
+				['id' => 'c', 'status' => 'published', 'publicationDate' => '2020-01-01T00:00:00+00:00'],
+				['id' => 'd', 'status' => 'published', 'publicationDate' => '2099-01-01T00:00:00+00:00'],
+			],
+			'total' => 4,
+		]);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$rows = $this->controller->index('test-catalog')->getData()['results'];
+
+		$this->assertSame(['draft', 'in_review', 'public', 'scheduled'], array_column($rows, 'state'));
+	}
+
+	/**
+	 * An anonymous caller's page carries no state key: it only ever sees public rows.
+	 *
+	 * @return void
+	 */
+	public function testIndexLeavesAnAnonymousPageWithoutState(): void {
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface::class);
+		$queryService->method('isAnonymous')->willReturn(true);
+		$state = $this->createMock(\OCA\OpenCatalogi\Contract\PublicationStateServiceInterface::class);
+		$state->expects($this->never())->method('stateOf');
+		$method = new \ReflectionMethod(PublicationsController::class, 'withStates');
+		$controller = (new \ReflectionClass(PublicationsController::class))->newInstanceWithoutConstructor();
+		(new \ReflectionProperty(PublicationsController::class, 'queryService'))->setValue($controller, $queryService);
+
+		$page = ['results' => [['id' => 'c', 'status' => 'published']]];
+
+		$this->assertSame($page, $method->invoke($controller, $page));
+	}
+
 	public function testIndexReturns500OnException(): void {
 		$this->catalogiService->method('getCatalogBySlug')
 			->willThrowException(new \Exception('DB error'));
