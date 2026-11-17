@@ -4,8 +4,8 @@ Read `lib/Settings/register.d/publiccode-github-harvest.json` and `lib/Service/P
 
 ## 1. Flow, mapping and catalogue
 
-- [ ] 1.1 Add `lib/Settings/register.d/council-documents-harvest.json` with the flow of design D1 (`enabled: false`), the mapping `council-document-to-publication` of design D2, and the seeded catalogue `raadsinformatie` (REQ-CDH-001, REQ-CDH-002). Verify: `tests/Unit/Settings/CouncilHarvestFragmentTest.php::testTheFlowShipsDisabled`, `::testTheMappingSetsCategoryInfocat008`.
-- [ ] 1.2 Add `lib/Settings/council-documents-sources.json` with the Notubiz and iBabs synchronization and `fetch_file` rule templates that `setUp()` writes (REQ-CDH-001). Verify: a fixture test that every template names an existing integriq source slug.
+- [x] 1.1 Add `lib/Settings/register.d/council-documents-harvest.json` with the flow of design D1 (`enabled: false`), the mapping `council-document-to-publication` of design D2, and the seeded catalogue `raadsinformatie` (REQ-CDH-001, REQ-CDH-002). Verify: `tests/Unit/Settings/CouncilHarvestFragmentTest.php::testTheFlowShipsDisabled`, `::testTheMappingSetsCategoryInfocat008`.
+- [x] 1.2 Add `lib/Settings/council-documents-sources.json` with the Notubiz and iBabs synchronization and `fetch_file` rule templates that `setUp()` writes (REQ-CDH-001). Verify: a fixture test that every template names an existing integriq source slug.
 
 ## 2. Service and routes
 
