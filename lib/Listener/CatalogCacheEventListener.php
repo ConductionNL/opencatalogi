@@ -42,6 +42,8 @@ use Psr\Log\LoggerInterface;
  * the catalog cache accordingly through invalidation and warmup operations.
  *
  * @template-implements IEventListener<Event>
+ *
+ * @spec openspec/changes/catalogs/tasks.md#task-7
  */
 class CatalogCacheEventListener implements IEventListener {
 	/**

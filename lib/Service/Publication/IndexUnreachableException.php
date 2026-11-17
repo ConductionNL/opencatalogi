@@ -31,7 +31,7 @@ use RuntimeException;
  * that answered nothing. A withdrawal or a registration that was never
  * delivered is outstanding, never done.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
  */
 class IndexUnreachableException extends RuntimeException {
 

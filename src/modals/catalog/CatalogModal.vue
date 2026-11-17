@@ -151,6 +151,18 @@ const { isAdmin } = useIsAdmin()
 					}}
 				</NcCheckboxRadioSwitch>
 				<NcCheckboxRadioSwitch
+					v-model="catalogi.hasDcat"
+					:disabled="objectStore.isLoading('catalog')"
+					:label="t('opencatalogi', 'Has DCAT feed')"
+					data-testid="catalog-has-dcat">
+					{{
+						t(
+							'opencatalogi',
+							"Publish this catalog's datasets as a DCAT-AP-NL feed that data.overheid.nl can harvest",
+						)
+					}}
+				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch
 					v-model="catalogi.showWithheld"
 					:disabled="objectStore.isLoading('catalog')"
 					data-testid="catalog-show-withheld">
@@ -247,6 +259,7 @@ function emptyCatalogForm() {
 		status: { id: 'development', label: 'Development' },
 		hasWooSitemap: false,
 		hasOoapi: false,
+		hasDcat: false,
 		showWithheld: false,
 		staffAccess: null,
 	}
