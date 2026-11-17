@@ -1196,7 +1196,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		$existingListingData = $existingListings[0]->jsonSerialize();
-		$existingObject = ($existingListingData['object'] ?? []);
+		$existingObject = ($existingListingData['object'] ?? $existingListingData);
 		$listingData['default'] = ($existingObject['default'] ?? $listingData['default']);
 		$listingData['status'] = ($existingObject['status'] ?? 'development');
 		$listingData['integrationLevel'] = ($existingObject['integrationLevel'] ?? 'search');
@@ -1256,7 +1256,7 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		try {
 			$existingListingData = $existingListings[0]->jsonSerialize();
-			$errorData = ($existingListingData['object'] ?? []);
+			$errorData = ($existingListingData['object'] ?? $existingListingData);
 			$errorData['statusCode'] = 500;
 			$errorData['lastSync'] = (new DateTime())->format('c');
 			$errorData['lastError'] = self::sanitizeSyncError(message: $exception->getMessage());
@@ -1607,7 +1607,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	private function isListingDataOutdated(array $incomingData, array $existingData): bool {
 		try {
 			// Get existing object data.
-			$existingObject = ($existingData['object'] ?? []);
+			$existingObject = ($existingData['object'] ?? $existingData);
 
 			// Get the last sync time from existing data.
 			$existingLastSync = $existingObject['lastSync'] ?? null;
@@ -1778,7 +1778,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			// Update each listing with error status.
 			foreach ($existingListings as $listing) {
 				$listingData = $listing->jsonSerialize();
-				$errorData = ($listingData['object'] ?? []);
+				$errorData = ($listingData['object'] ?? $listingData);
 
 				// Update with error status. lastSuccessAt is left as it was.
 				$errorData['statusCode'] = $statusCode;

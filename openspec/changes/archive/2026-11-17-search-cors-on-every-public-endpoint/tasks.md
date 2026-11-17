@@ -12,7 +12,7 @@
 ## 3. The settings screen
 
 - [x] 3.1 Add `cors_allowed_origins` to `SettingsService` `allowedKeys` with origin validation (REQ-SCO-003). Verify: `tests/Unit/Service/SettingsServiceTest.php` with a valid list and a line with a path.
-- [ ] 3.2 Add the field to the publishing section of the admin settings (REQ-SCO-003). Verify: `tests/e2e/cors-allowlist.spec.ts` saves two origins and reads them back.
+- [x] 3.2 Add the field to the publishing section of the admin settings (REQ-SCO-003). Verify: `tests/e2e/cors-allowlist.spec.ts` saves two origins and reads them back. Live pass 17 Nov (livepass-opencatalogi): `tests/e2e/cors-allowlist.spec.ts` written and green: two origins saved and read back after a reload, the search answers `Access-Control-Allow-Origin` for one, a line with a path is refused naming it.
 
 ## 4. Docs and strings
 
