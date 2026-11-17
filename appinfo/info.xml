@@ -56,7 +56,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl. Voor een Service Level Agreement (SLA), neem contact op via sales@conduction.nl.
     ]]></description>
-	<version>2.1.16-unstable.20261116231500</version>
+	<version>2.1.16-unstable.20261117071500</version>
 	<licence>EUPL-1.2</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
@@ -139,6 +139,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 		<job>OCA\OpenCatalogi\BackgroundJob\WooReadinessCheck</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\SavedSearchMatchingJob</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\CommentPeriodWithdrawal</job>
+		<job>OCA\OpenCatalogi\BackgroundJob\DocumentReferenceCheck</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\CompletenessSweep</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\DonlHarvestCheck</job>
 		<!--
@@ -156,6 +157,8 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 	<repair-steps>
 		<post-migration>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+			<!-- After InitializeSettings: hands the stored Woo requests to dossiq and stops their timers here (woo-request-intake-hands-over-to-dossiq REQ-WHD-003). -->
+			<step>OCA\OpenCatalogi\Repair\HandWooRequestsToDossiq</step>
 			<!--
 				Moves a document type written into a publication's summary to its own
 				field, and records once when the DiWoo fields were introduced
@@ -242,6 +245,14 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			<!-- Hands depublication, inspection, comment-period, community and Woo-request records an
 			     editor came to own to the system. Needs OpenRegister's release-to-system call; idempotent. -->
 			<step>OCA\OpenCatalogi\Repair\HandRecordsToSystem</step>
+			<!--
+				Writes who may read the OOAPI course, program and offering objects
+				(integration-feed-consumer-credentials 3.1): the enabled feed consumers
+				of the object's catalogue and the instance-wide consumer list. After the
+				register import and the staff access, which may reset the bundled rule.
+				Idempotent.
+			-->
+			<step>OCA\OpenCatalogi\Repair\ApplyFeedReadRule</step>
 			<!--
 				Written but never registered, so it had never run once: a class that
 				exists is not a class that runs. gate-98 found it.

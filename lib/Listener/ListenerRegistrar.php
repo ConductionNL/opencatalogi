@@ -123,10 +123,12 @@ class ListenerRegistrar {
 			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
 		}
 
-		// A statutory end date written through any API lands on a working day
-		// (inspection-period-rolls-on-the-calendar, REQ-IPR-002).
-		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
-		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
+		$this->registerWriteGuards(context: $context);
+
+		// Document references (integration-publish-by-reference): refuse a URL
+		// that is not a public https address before OpenRegister stores it.
+		$context->registerEventListener(ObjectCreatingEvent::class, DocumentReferenceListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, DocumentReferenceListener::class);
 
 		// A Woo publication does not go public without its mandatory DiWoo metadata,
 		// and a document type is stored as its list member's URI (REQ-DWP-002, REQ-DWP-003).
@@ -177,4 +179,25 @@ class ListenerRegistrar {
 		);
 
 	}//end register()
+
+	/**
+	 * The listeners that check an object before OpenRegister writes it.
+	 *
+	 * A statutory end date written through any API lands on a working day
+	 * (inspection-period-rolls-on-the-calendar, REQ-IPR-002). Once every stored
+	 * Woo request moved to dossiq, the request schema is read-only here except
+	 * for dossiq's stamp (woo-request-intake-hands-over-to-dossiq, REQ-WHD-004).
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-with-nothing-left-to-migrate-the-request-schema-is-read-only-req-whd-004
+	 */
+	private function registerWriteGuards(IRegistrationContext $context): void {
+		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
+		$context->registerEventListener(ObjectCreatingEvent::class, HandedOverRecordsListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, HandedOverRecordsListener::class);
+	}//end registerWriteGuards()
 }//end class

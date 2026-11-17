@@ -724,7 +724,21 @@ OC.L10N.register(
         "Open catalog": "Åbn katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Opret dit første katalog. Det er beholderen, som dine publikationer skal ligge i. Vælg registret Publication og skemaet Publication, så kataloget viser de publikationer, du tilføjer.",
         "Manage your publications and their status": "Administrer dine publikationer og deres status",
-        "Open at the source": "Åbn ved kilden"
+        "Open at the source": "Åbn ved kilden",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegister-version",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister indeholder den motor, OpenCatalogi har brug for.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi kræver OpenRegister %1$s eller nyere. Den installerede OpenRegister mangler %2$s, så OpenCatalogi viser en meddelelse i stedet for sine sider. Opdater OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi kan ikke starte",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi kræver OpenRegister %1$s eller nyere. Bed din administrator om at opdatere OpenRegister.",
+        "Feed consumers": "Feedmodtagere",
+        "Contact": "Kontakt",
+        "Generate key": "Opret nøgle",
+        "Revoke": "Tilbagekald",
+        "Disable": "Deaktiver",
+        "Last used": "Sidst brugt",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Denne nøgle vises kun én gang. Kopiér den nu: den kan ikke vises igen.",
+        "No feed consumers yet.": "Ingen feedmodtagere endnu.",
+        "Accounts that read every catalogue's feed": "Konti, der læser feedet for hvert katalog"
     },
     "nplurals=2; plural=(n != 1);"
 )

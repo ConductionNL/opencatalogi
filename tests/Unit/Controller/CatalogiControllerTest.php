@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Controller\CatalogiController;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
@@ -46,7 +47,6 @@ class CatalogiControllerTest extends TestCase {
 		$this->appManager = $this->createMock(IAppManager::class);
 
 		$this->controller = new CatalogiController(
-			'opencatalogi',
 			$this->request,
 			$this->catalogiService,
 			$this->config,
@@ -74,168 +74,106 @@ class CatalogiControllerTest extends TestCase {
 		$this->assertInstanceOf(Response::class, $response);
 	}
 
-	public function testIndexReturnsJsonResponse(): void {
-		// Mock getObjectService via appManager + container
-		$this->appManager->method('getInstalledApps')
-			->willReturn(['openregister']);
-
-		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
-
-		$mockObjService->method('buildSearchQuery')
-			->willReturn([]);
-
-		$mockObjService->method('searchObjectsPaginated')
-			->willReturn(['results' => [], 'total' => 0]);
-
-		// Configure catalog scope so the RegisterResolverService resolves it.
-		$this->config->method('getValueString')
-			->willReturnCallback(
-				static fn (string $app, string $key, string $default = '') => match ($key) {
-					'catalog_schema' => '5',
-					'catalog_register' => '3',
-					default => $default,
-				}
-			);
-
+	/**
+	 * Make OpenRegister's register resolver answer register 3 and schema 5.
+	 *
+	 * @return void
+	 */
+	private function resolveCatalogScope(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 		$this->container->method('get')
 			->willReturnCallback(
-				function (string $id) use ($mockObjService) {
-					if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
-						// RegisterResolverService is final; use a hand-rolled double.
-						return new class {
-							public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
-								if (str_ends_with($lookup->configKey, '_register') === true) {
-									return '3';
-								}
-
-								return '5';
-							}
-						};
+				static function (string $id) {
+					if ($id !== 'OCA\OpenRegister\Service\RegisterResolverService') {
+						throw new RuntimeException('unexpected container lookup: ' . $id);
 					}
-					return $mockObjService;
+
+					// RegisterResolverService is final; use a hand-rolled double.
+					return new class {
+						public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+							if (str_ends_with($lookup->configKey, '_register') === true) {
+								return '3';
+							}
+
+							return '5';
+						}
+					};
 				}
 			);
+		$this->config->method('getValueString')
+			->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => $default);
+	}//end resolveCatalogScope()
 
-		$this->request->method('getParams')
-			->willReturn([]);
-
+	/**
+	 * The list hands the request parameters and the resolved catalog scope to the
+	 * service and answers its result as JSON.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function testIndexReturnsJsonResponse(): void {
+		$this->resolveCatalogScope();
+		$this->request->method('getParams')->willReturn(['_search' => 'woo']);
 		$this->request->server = [];
+		$this->catalogiService->expects($this->once())->method('listCatalogs')
+			->with(['_search' => 'woo'], ['register' => '3', 'schema' => '5'])
+			->willReturn(['results' => [['id' => 1]], 'total' => 1]);
 
 		$response = $this->controller->index();
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
-		$this->assertEquals(200, $response->getStatus());
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['results' => [['id' => 1]], 'total' => 1], $response->getData());
 	}
 
+	/**
+	 * A cross-origin list answer carries the CORS headers.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
 	public function testIndexWithCatalogConfiguration(): void {
-		$this->appManager->method('getInstalledApps')
-			->willReturn(['openregister']);
-
-		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
-
-		$mockObjService->method('buildSearchQuery')
-			->willReturn([]);
-
-		$mockObjService->method('searchObjectsPaginated')
-			->willReturn(['results' => [['id' => 1]], 'total' => 1]);
-
-		$this->container->method('get')
-			->willReturnCallback(
-				function (string $id) use ($mockObjService) {
-					if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
-						// RegisterResolverService is final; use a hand-rolled double.
-						return new class {
-							public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
-								if (str_ends_with($lookup->configKey, '_register') === true) {
-									return '3';
-								}
-
-								return '5';
-							}
-						};
-					}
-					return $mockObjService;
-				}
-			);
-
-		// Configure catalog scope and leave CORS allowlist at its default '*'.
-		$this->config->method('getValueString')
-			->willReturnCallback(function (string $app, string $key, string $default = '') {
-				return match ($key) {
-					'catalog_schema' => '5',
-					'catalog_register' => '3',
-					'cors_allowed_origins' => $default,
-					default => $default,
-				};
-			});
-
-		$this->request->method('getParams')
-			->willReturn([]);
-
+		$this->resolveCatalogScope();
+		$this->catalogiService->method('listCatalogs')->willReturn(['results' => [['id' => 1]], 'total' => 1]);
+		$this->request->method('getParams')->willReturn([]);
 		$this->request->server = ['HTTP_ORIGIN' => 'https://test.com'];
 
 		$response = $this->controller->index();
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertArrayHasKey('Access-Control-Allow-Origin', $response->getHeaders());
 	}
 
 	/**
-	 * WOO-581 review round 2 (f4): the configured `@self.schema` won for the rows,
-	 * but OR's facet path reads `@self.schemas ?? _schemas` first, so a caller's
-	 * scope keys steered the facets to any schema. None reaches OR now; a
-	 * non-scope `@self` filter does.
+	 * WOO-581: the caller's scope keys reach the service untouched; the service drops
+	 * them and pins the resolved scope (CatalogiServiceTest covers that half).
 	 *
 	 * @return void
 	 */
 	public function testIndexStripsTheCallersScopeKeys(): void {
-		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
-		$caller = [
-			'_schemas' => [56],
-			'_registers' => [99],
-			'_schema' => 56,
-			'schema' => 56,
-			'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
-		];
-
-		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
-		// OR's buildSearchQuery() keeps these keys; the strip after it is the control.
-		$mockObjService->method('buildSearchQuery')->willReturn($caller);
-		$mockObjService->expects($this->once())
-			->method('searchObjectsPaginated')
-			->with($this->callback(static fn (array $q): bool => array_intersect(['_schemas', '_registers', 'schema', 'register'], array_keys($q)) === []
-				&& isset($q['@self']['schemas'], $q['@self']['registers']) === false
-				&& ($q['@self']['owner'] ?? null) === 'alice'
-				&& ($q['@self']['schema'] ?? null) === '5'
-				&& ($q['_schema'] ?? null) === '5'))
-			->willReturn(['results' => [], 'total' => 0]);
-
-		$this->container->method('get')
-			->willReturnCallback(
-				function (string $id) use ($mockObjService) {
-					if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
-						return new class {
-							public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
-								if (str_ends_with($lookup->configKey, '_register') === true) {
-									return '3';
-								}
-
-								return '5';
-							}
-						};
-					}
-					return $mockObjService;
-				}
-			);
-		$this->config->method('getValueString')
-			->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => match ($key) {
-				'catalog_schema' => '5',
-				'catalog_register' => '3',
-				default => $default,
-			});
+		$this->resolveCatalogScope();
+		$caller = ['_schemas' => [56], '@self' => ['schemas' => [56], 'owner' => 'alice']];
 		$this->request->method('getParams')->willReturn($caller);
 		$this->request->server = [];
+		$this->catalogiService->expects($this->once())->method('listCatalogs')
+			->with($caller, ['register' => '3', 'schema' => '5'])
+			->willReturn(['results' => [], 'total' => 0]);
 
 		$this->assertEquals(200, $this->controller->index()->getStatus());
+	}
+
+	/**
+	 * An unconfigured catalog scope answers 503 without reaching the service.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function testIndexDoesNotSearchWithoutAResolvedScope(): void {
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+		$this->container->method('get')->willThrowException(new RuntimeException('not available'));
+		$this->config->method('getValueString')
+			->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => $default);
+		$this->request->server = [];
+		$this->catalogiService->expects($this->never())->method('listCatalogs');
+
+		$this->assertSame(503, $this->controller->index()->getStatus());
 	}
 
 	public function testIndexReturns503WhenOpenRegisterNotInstalled(): void {
@@ -369,6 +307,110 @@ class CatalogiControllerTest extends TestCase {
 			'https://other.example',
 			$response->getHeaders()['Access-Control-Allow-Origin']
 		);
+	}
+
+	/**
+	 * A controller over this test's doubles with a language-negotiating query service.
+	 *
+	 * @param PublicationQueryServiceInterface $queryService The query service.
+	 *
+	 * @return CatalogiController The controller.
+	 */
+	private function controllerWithLanguage(PublicationQueryServiceInterface $queryService): CatalogiController {
+		return new CatalogiController(
+			request: $this->request,
+			catalogiService: $this->catalogiService,
+			config: $this->config,
+			registers: new OpenRegisterLookup($this->container, $this->appManager),
+			queryService: $queryService
+		);
+	}
+
+	/**
+	 * The catalogue list hands the visitor's language to OpenRegister before it
+	 * searches, and its answer names the language served (REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testIndexPassesTheVisitorsLanguageBeforeTheSearch(): void {
+		$order = [];
+		$this->catalogiService->method('listCatalogs')
+			->willReturnCallback(static function () use (&$order): array {
+				$order[] = 'search';
+				return ['results' => [], 'total' => 0];
+			});
+		$this->resolveCatalogScope();
+		$this->request->method('getParams')->willReturn(['_lang' => 'en']);
+		$this->request->server = ['HTTP_ACCEPT_LANGUAGE' => 'de'];
+
+		$queryService = $this->createMock(PublicationQueryServiceInterface::class);
+		$queryService->expects($this->once())
+			->method('applyVisitorLanguage')
+			->with(['_lang' => 'en'], 'de')
+			->willReturnCallback(static function () use (&$order): string {
+				$order[] = 'language';
+				return 'en';
+			});
+		$queryService->method('languageHeaders')
+			->willReturn(['Content-Language' => 'en', 'X-Source-Language' => 'nl']);
+
+		$response = $this->controllerWithLanguage(queryService: $queryService)->index();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['language', 'search'], $order);
+		$this->assertSame('en', $response->getHeaders()['Content-Language']);
+		$this->assertSame('nl', $response->getHeaders()['X-Source-Language']);
+	}
+
+	/**
+	 * A catalogue's publication list is read in the visitor's language and says
+	 * when a field fell back to Dutch (REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testShowPassesTheVisitorsLanguageAndNamesTheFallback(): void {
+		$order = [];
+		$this->catalogiService->method('index')
+			->with('123')
+			->willReturnCallback(static function () use (&$order): JSONResponse {
+				$order[] = 'read';
+				return new JSONResponse(['results' => []]);
+			});
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = ['HTTP_ACCEPT_LANGUAGE' => 'en-GB,en;q=0.8'];
+
+		$queryService = $this->createMock(PublicationQueryServiceInterface::class);
+		$queryService->expects($this->once())
+			->method('applyVisitorLanguage')
+			->with([], 'en-GB,en;q=0.8')
+			->willReturnCallback(static function () use (&$order): string {
+				$order[] = 'language';
+				return 'en-GB';
+			});
+		$queryService->method('languageHeaders')->willReturn(
+			['Content-Language' => 'en-GB', 'X-Source-Language' => 'nl', 'X-Content-Language-Fallback' => 'true']
+		);
+
+		$headers = $this->controllerWithLanguage(queryService: $queryService)->show('123')->getHeaders();
+
+		$this->assertSame(['language', 'read'], $order);
+		$this->assertSame('en-GB', $headers['Content-Language']);
+		$this->assertSame('true', $headers['X-Content-Language-Fallback']);
+	}
+
+	/**
+	 * A controller built without a query service answers without language headers.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testWithoutAQueryServiceTheAnswerCarriesNoLanguageHeaders(): void {
+		$this->catalogiService->method('index')->willReturn(new JSONResponse([]));
+		$this->request->method('getParams')->willReturn([]);
+
+		$headers = $this->controller->show('1')->getHeaders();
+
+		$this->assertArrayNotHasKey('Content-Language', $headers);
+		$this->assertArrayNotHasKey('X-Source-Language', $headers);
 	}
 
 	/**

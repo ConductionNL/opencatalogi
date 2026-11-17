@@ -193,6 +193,7 @@ class SettingsService implements SettingsServiceInterface {
 				'notice_board_schema' => 'noticeBoard',
 				'notice_schema' => 'notice',
 				'record_vote_schema' => 'recordVote',
+				'document_reference_schema' => 'documentReference',
 			],
 		],
 		[
@@ -267,6 +268,8 @@ class SettingsService implements SettingsServiceInterface {
 	 * - Woo-index registration status (WOO-HR-003, design D3): operational config, not a publication.
 	 * - National channel sources (REQ-WND-001): a JSON map from channel to integriq source slug.
 	 * - Public API cache time in seconds (REQ-PAC-003); 0 switches the public cache headers off.
+	 * - The languages offered to editors (publication-translations D6): a JSON list of
+	 *   BCP 47 tags, Dutch (the source language) always first.
 	 * - Search indexing (REQ-WAB-003): `blocked` keeps every surface out of search engine indexes.
 	 */
 	private const SETTING_DEFAULTS = [
@@ -285,8 +288,9 @@ class SettingsService implements SettingsServiceInterface {
 		'woo_index_registration_answer' => '',
 		'channel_sources' => '{}',
 		'public_api_cache_seconds' => '60',
+		'publication_languages' => '["nl","en"]',
 		'publication_url_template' => '',
-		'publication_url_catalog' => 'publication',
+		'publication_url_catalog' => 'publications',
 		'cors_allowed_origins' => '*',
 		'search_indexing' => 'allowed',
 	];
@@ -313,6 +317,7 @@ class SettingsService implements SettingsServiceInterface {
 		'woo_index_registration_answer',
 		'channel_sources',
 		'public_api_cache_seconds',
+		'publication_languages',
 		'publication_url_template',
 		'publication_url_catalog',
 		'cors_allowed_origins',
@@ -954,6 +959,8 @@ class SettingsService implements SettingsServiceInterface {
 				}
 			}
 
+			$this->refreshFeedReadRule(updated: $updated);
+
 			return $updated;
 		} catch (\Exception $e) {
 			throw new RuntimeException('Failed to update settings: ' . $e->getMessage());
@@ -962,9 +969,42 @@ class SettingsService implements SettingsServiceInterface {
 	}//end updateSettings()
 
 	/**
+	 * Write the OOAPI read rule again when the consumer list or an OOAPI schema changed.
+	 *
+	 * A failure is logged, not raised: the setting is saved, and the OOAPI gate
+	 * still checks the consumer list on every request.
+	 *
+	 * @param array<string, string> $updated The settings just written.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/integration-feed-consumer-credentials/specs/ooapi-catalog-publication/spec.md#requirement-account-based-access-keeps-working-and-is-visible-req-fcc-004
+	 */
+	private function refreshFeedReadRule(array $updated): void {
+		$keys = ['ooapi_consumers'];
+		foreach (FeedReadRule::CONTEXTS as $context) {
+			$keys[] = $context . '_schema';
+		}
+
+		if (array_intersect_key($updated, array_flip($keys)) === []) {
+			return;
+		}
+
+		try {
+			$rule = $this->container->get(FeedReadRule::class);
+			if ($rule instanceof FeedReadRule === true) {
+				$rule->apply();
+			}
+		} catch (\Throwable $e) {
+			$this->logger->warning('[SettingsService] the OOAPI read rule was not written: ' . $e->getMessage());
+		}
+
+	}//end refreshFeedReadRule()
+
+	/**
 	 * Reject a payload that gives an accepted key a list or an object, which would be stored as the text "Array".
 	 *
-	 * The channel sources setting is the one map a caller may send.
+	 * The channel sources map and the publication languages list are the values a caller may send as such.
 	 *
 	 * @param array $data The settings data to update.
 	 * @param array<int,string> $keys The accepted keys.
@@ -976,7 +1016,7 @@ class SettingsService implements SettingsServiceInterface {
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	private function assertSingleValues(array $data, array $keys): void {
-		foreach (array_intersect_key($data, array_flip(array_diff($keys, ['channel_sources']))) as $key => $value) {
+		foreach (array_intersect_key($data, array_flip(array_diff($keys, ['channel_sources', 'publication_languages']))) as $key => $value) {
 			if (is_array($value) === true || is_object($value) === true) {
 				throw new InvalidArgumentException('Setting ' . $key . ' takes a single value, not a list or an object');
 			}
@@ -1020,6 +1060,10 @@ class SettingsService implements SettingsServiceInterface {
 			return $this->publicApiCacheSeconds(value: $value);
 		}
 
+		if ($key === 'publication_languages') {
+			return $this->normalisePublicationLanguages(value: $value);
+		}
+
 		if ($key === 'search_indexing') {
 			// Only the two known values are stored; anything else keeps the default (REQ-WAB-003).
 			if ($value === 'blocked') {
@@ -1031,6 +1075,57 @@ class SettingsService implements SettingsServiceInterface {
 
 		return $value;
 	}//end storableSetting()
+
+	/**
+	 * The publication languages to store: a JSON list of BCP 47 tags, Dutch first.
+	 *
+	 * Accepts a list or its JSON text. Tags are trimmed and their primary subtag
+	 * lower-cased; a value that is not a language tag and a repeat are dropped.
+	 * Dutch is the source language of every publication, so it is always offered.
+	 *
+	 * @param mixed $value The languages the caller sent.
+	 *
+	 * @return string The JSON list to store.
+	 *
+	 * @spec openspec/changes/publication-translations/design.md
+	 */
+	private function normalisePublicationLanguages(mixed $value): string {
+		if (is_string($value) === true) {
+			$value = json_decode($value, true);
+		}
+
+		$languages = ['nl'];
+		foreach (is_array($value) === true ? $value : [] as $tag) {
+			$tag = self::normalisedLanguageTag(tag: $tag);
+			if ($tag !== null && in_array($tag, $languages, true) === false) {
+				$languages[] = $tag;
+			}
+		}
+
+		return (string)json_encode($languages);
+	}//end normalisePublicationLanguages()
+
+	/**
+	 * One language tag trimmed with its primary subtag lower-cased, or null
+	 * when it is not a string or not a language tag.
+	 *
+	 * @param mixed $tag The tag the caller sent.
+	 *
+	 * @return string|null The tag to store, or null.
+	 *
+	 * @spec openspec/changes/publication-translations/design.md
+	 */
+	private static function normalisedLanguageTag(mixed $tag): ?string {
+		if (is_string($tag) === false) {
+			return null;
+		}
+
+		$parts = explode('-', trim($tag));
+		$parts[0] = strtolower($parts[0]);
+		$tag = implode('-', $parts);
+
+		return preg_match('/^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})*$/', $tag) === 1 ? $tag : null;
+	}//end normalisedLanguageTag()
 
 	/**
 	 * The public API cache time to store.

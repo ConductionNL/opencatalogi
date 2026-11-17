@@ -51,6 +51,9 @@ use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
 use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
+use OCA\OpenCatalogi\Contract\DocumentReferenceProbeInterface;
+use OCA\OpenCatalogi\Contract\DocumentReferencesInterface;
+use OCA\OpenCatalogi\Contract\DocumentReferenceUrlPolicyInterface;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
 use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
@@ -58,12 +61,17 @@ use OCA\OpenCatalogi\Contract\DonlRegistrationServiceInterface;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
+use OCA\OpenCatalogi\Contract\FeedConsumerServiceInterface;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
 use OCA\OpenCatalogi\Contract\IndexRegistrationServiceInterface;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
+use OCA\OpenCatalogi\Contract\HandoverStateInterface;
+use OCA\OpenCatalogi\Contract\IntakeForwardInterface;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
+use OCA\OpenCatalogi\Service\Woo\DossiqWooForward;
 use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
 use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
 use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
@@ -167,6 +175,9 @@ final class ServiceBindings {
 		DcatServiceInterface::class => DcatService::class,
 		ChangesServiceInterface::class => ChangesService::class,
 		DcatDereferenceInterface::class => DcatDereference::class,
+		DocumentReferencesInterface::class => DocumentReferences::class,
+		DocumentReferenceProbeInterface::class => DocumentReferenceProbe::class,
+		DocumentReferenceUrlPolicyInterface::class => DocumentReferenceUrlPolicy::class,
 		DonlRegistrationServiceInterface::class => DonlRegistrationService::class,
 		UsageCounterServiceInterface::class => UsageCounterService::class,
 		UnpublishedOverviewServiceInterface::class => UnpublishedOverviewService::class,
@@ -200,11 +211,14 @@ final class ServiceBindings {
 		CaseTypeCatalogueServiceInterface::class => CaseTypeCatalogueService::class,
 		IndexRegistrationServiceInterface::class => WooRegistrationService::class,
 		SavedSearchServiceInterface::class => SavedSearchService::class,
+		FeedConsumerServiceInterface::class => FeedConsumerService::class,
 		DemoDataServiceInterface::class => DemoDataService::class,
 		WithheldFromPublicationInterface::class => WithheldFromPublication::class,
 		LocalPublicationStateInterface::class => LocalPublicationState::class,
 		PublicationCommentPeriodInterface::class => PublicationCommentPeriod::class,
 		InformationRequestStoreInterface::class => WooRequestStore::class,
+		HandoverStateInterface::class => HandoverState::class,
+		IntakeForwardInterface::class => DossiqWooForward::class,
 		PlooiDeliveryServiceInterface::class => PlooiDeliveryService::class,
 		MarkupRenderServiceInterface::class => MarkupRenderService::class,
 		DepublicationServiceInterface::class => DepublicationService::class,

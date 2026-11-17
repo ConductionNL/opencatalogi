@@ -724,7 +724,21 @@ OC.L10N.register(
         "Open catalog": "Iftaħ il-katalgu",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Oħloq l-ewwel katalgu tiegħek. Huwa l-kontenitur fejn se jkunu l-pubblikazzjonijiet tiegħek. Agħżel ir-reġistru Publication u l-iskema Publication, biex il-katalgu juri l-pubblikazzjonijiet li żżid.",
         "Manage your publications and their status": "Immaniġġja l-pubblikazzjonijiet tiegħek u l-istatus tagħhom",
-        "Open at the source": "Iftaħ fis-sors"
+        "Open at the source": "Iftaħ fis-sors",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: verżjoni ta' OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister fih il-magna li għandu bżonn OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi jeħtieġ OpenRegister %1$s jew aktar ġdid. Fl-OpenRegister installat jonqos %2$s, għalhekk OpenCatalogi juri avviż minflok il-paġni tiegħu. Aġġorna OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi ma jistax jibda",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi jeħtieġ OpenRegister %1$s jew aktar ġdid. Itlob lill-amministratur tiegħek jaġġorna OpenRegister.",
+        "Feed consumers": "Konsumaturi tal-feed",
+        "Contact": "Kuntatt",
+        "Generate key": "Iġġenera ċavetta",
+        "Revoke": "Irrevoka",
+        "Disable": "Iddiżattiva",
+        "Last used": "L-aħħar użat",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Din iċ-ċavetta tintwera darba biss. Ikkopjaha issa: ma tistax terġa' tintwera.",
+        "No feed consumers yet.": "Għad m'hemmx konsumaturi tal-feed.",
+        "Accounts that read every catalogue's feed": "Kontijiet li jaqraw il-feed ta' kull katalgu"
     },
     "nplurals=2; plural=(n != 1);"
 )
