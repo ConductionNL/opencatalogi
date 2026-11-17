@@ -715,6 +715,11 @@ class WooService implements TransparencyWorkflowServiceInterface {
 			$data['weigeringsgronden'] = array_values(array_unique(array_map('strval', $weigeringsgronden)));
 		}
 
+		// The codes just saved are dossiq's settled codes: mark them so the
+		// repair step that maps earlier codes never shifts them (REQ-WVC-003).
+		$data['groundsListVersion'] = RefusalGrounds::SETTLED_LIST_VERSION;
+		$data['unmappedGrounds'] = [];
+
 		$assessedBy = 'system';
 		if ($user !== null) {
 			$assessedBy = $user->getUID();

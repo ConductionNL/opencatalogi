@@ -55,6 +55,12 @@ class RefusalGrounds {
 	public const SOURCE_SNAPSHOT = 'snapshot';
 
 	/**
+	 * The version of dossiq's settled list of codes, as dossiq's own repair
+	 * step marks a mapped assessment (`WooRefusalGrounds::LIST_VERSION`).
+	 */
+	public const SETTLED_LIST_VERSION = '2026-10-09';
+
+	/**
 	 * The vendored copy of dossiq's snapshot (dossiq REQ-WRG-008).
 	 */
 	public const SNAPSHOT_PATH = __DIR__ . '/../../Settings/woo-refusal-grounds.snapshot.json';

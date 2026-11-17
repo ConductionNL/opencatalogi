@@ -167,6 +167,14 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			-->
 			<step>OCA\OpenCatalogi\Repair\MoveDocumentsoortOutOfSummary</step>
 			<!--
+				Maps the refusal grounds stored on Woo assessments to dossiq's settled
+				codes, flags a code it cannot map and lists it
+				(woo-value-lists-on-the-concept-register, REQ-WVC-003). After
+				InitializeSettings, which imports the assessment schema's marker field.
+				Idempotent: a mapped assessment carries the list version.
+			-->
+			<step>OCA\OpenCatalogi\Repair\MapStoredRefusalGrounds</step>
+			<!--
 				Must run AFTER the register sync that adds the English columns, so it
 				can tell the rename case from the back-fill case. Idempotent and
 				non-destructive; safe to re-run.

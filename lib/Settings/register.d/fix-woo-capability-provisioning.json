@@ -341,7 +341,7 @@
       "wooAssessment": {
         "slug": "wooAssessment",
         "title": "WooAssessment",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "published": null,
         "summary": "A per-document openbaarheid assessment within a Woo disclosure batch",
         "description": "A document-assessment object represents the openbaarheid (public disclosure) decision for a single document collected in a Woo disclosure batch: which weigeringsgronden (WOO Art. 5.1/5.2 refusal grounds) apply, any redaction instructions, and the resulting anonymized document when partially disclosed. Each assessment is linked to a Deck card via the consumed deck leaf so its status is reflected on the document queue board.",
@@ -399,6 +399,19 @@
             "description": "Selected WOO Art. 5.1/5.2 refusal ground article references (required when the assessment is \"niet_openbaar\")",
             "facetable": true,
             "title": "Weigeringsgronden"
+          },
+          "groundsListVersion": {
+            "type": "string",
+            "description": "The version of dossiq's refusal grounds list the codes in weigeringsgronden belong to. Set on every save; an assessment without it still carries OpenCatalogi's earlier codes, which the MapStoredRefusalGrounds repair step maps once.",
+            "title": "Grounds list version"
+          },
+          "unmappedGrounds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Stored ground codes the repair step could not map unambiguously to dossiq's list. They are kept in weigeringsgronden as they were and listed here for an officer to settle.",
+            "title": "Unmapped grounds"
           },
           "redactionInstructions": {
             "type": "string",

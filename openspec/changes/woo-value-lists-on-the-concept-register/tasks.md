@@ -22,7 +22,11 @@ Read `openspec/woo-build-rules.md` first. Start once `dossiq/woo-refusal-grounds
       constant itself stays on `Contract\TransparencyWorkflowServiceInterface`, marked deprecated and read by nothing:
       it is a published contract, so `git grep` still finds that one line.
 - [x] 3.2 Vendor dossiq's snapshot into `lib/Settings/woo-refusal-grounds.snapshot.json` with its version, and add a test that fails when its version is older than the one dossiq ships, when dossiq is checked out beside the clone (REQ-WVC-003). Verify: `RefusalGroundsTest::testTheVendoredSnapshotMatchesDossiqsShape`.
-- [ ] 3.3 Add the repair step mapping stored codes, registered post-migration (REQ-WVC-003). Verify: `tests/Unit/Repair/MapStoredRefusalGroundsTest.php::testAKnownCodeIsMapped`, `::testAnUnmappableCodeIsFlaggedAndListed`, `::testASecondRunChangesNothing`, `::testTheStepIsRegisteredPostMigration`.
+- [x] 3.3 Add the repair step mapping stored codes, registered post-migration (REQ-WVC-003). Verify: `tests/Unit/Repair/MapStoredRefusalGroundsTest.php::testAKnownCodeIsMapped`, `::testAnUnmappableCodeIsFlaggedAndListed`, `::testASecondRunChangesNothing`, `::testTheStepIsRegisteredPostMigration`.
+      `Repair/MapStoredRefusalGrounds`. dossiq's REQ-WRG-006 table maps dossiq's own earlier codes and would
+      mis-map OpenCatalogi's, so the step maps OpenCatalogi's earlier codes by meaning (five shifted codes; 5.2.e has
+      no single meaning and is flagged). `wooAssessment` 0.4.0 carries `groundsListVersion` and `unmappedGrounds`;
+      `updateAssessment()` sets the marker on every save so the step never shifts a settled code.
 - [x] 3.4 Say in the Woo settings when the snapshot is in use (REQ-WVC-003). Verify: `tests/e2e/value-lists.spec.ts` "without dossiq, grounds can be picked for redaction and not edited", on a CI instance without dossiq, carrying `@e2e` REQ-WVC-003.
       `src/views/settings/RefusalGroundsSource.vue` in the Woo settings, with a jest spec; the e2e test is written, not
       run here (no live stack).
