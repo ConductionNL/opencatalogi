@@ -1788,7 +1788,26 @@ OC.L10N.register(
         "Sent back by": "Sent back by",
         "The user who sent the document back.": "The user who sent the document back.",
         "Sent back at": "Sent back at",
-        "When the document was sent back.": "When the document was sent back."
+        "When the document was sent back.": "When the document was sent back.",
+        "Column": "Column",
+        "Description of {column}": "Description of {column}",
+        "Importing the rows…": "Importing the rows…",
+        "No tables yet. Add a CSV attachment to publish it as a table.": "No tables yet. Add a CSV attachment to publish it as a table.",
+        "Not published: {error}": "Not published: {error}",
+        "Nothing changed.": "Nothing changed.",
+        "Publish as table": "Publish as table",
+        "Rows: {count}": "Rows: {count}",
+        "Save dictionary": "Save dictionary",
+        "Tables": "Tables",
+        "The dictionary is saved.": "The dictionary is saved.",
+        "The table is published.": "The table is published.",
+        "Title of {column}": "Title of {column}",
+        "Try the query in the browser": "Try the query in the browser",
+        "Choose the CSV attachment to publish as a table.": "Choose the CSV attachment to publish as a table.",
+        "Send the columns as a list.": "Send the columns as a list.",
+        "The table could not be published.": "The table could not be published.",
+        "This table has no column named %s.": "This table has no column named %s.",
+        "The table \"%s\" does not exist or is not accessible.": "The table \"%s\" does not exist or is not accessible."
     },
     "nplurals=2; plural=(n != 1);"
 )
