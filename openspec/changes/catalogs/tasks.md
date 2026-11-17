@@ -115,7 +115,7 @@
   - [x] All user-visible strings are wrapped in `t('opencatalogi', '...')`. No hardcoded Dutch or English strings in templates.
   - [ ] All components import from `@conduction/nextcloud-vue`, not `@nextcloud/vue`.
   - [x] Every `<NcFoo>` and `<CnFoo>` used in a template is imported AND listed in `components: {}`. (verified: every Nc*/Cn* tag in CatalogiIndex.vue, CatalogModal.vue, ViewCatalogi.vue and CatalogiWidget.vue is registered)
-  - [ ] SPDX header `<!-- SPDX-License-Identifier: EUPL-1.2 -->` present as first line of each `.vue` file.
+  - [x] SPDX header `<!-- SPDX-License-Identifier: EUPL-1.2 -->` present as first line of each `.vue` file. (verified: the first line of CatalogiIndex.vue, CatalogModal.vue, ViewCatalogi.vue and CatalogiWidget.vue; the copyright line follows it)
 
 ## Task 10: Seed data in publication_register.json
 
@@ -136,6 +136,7 @@
   - [ ] `grep -rn 'findObject\|saveObject\|findObjects' lib/Service/CatalogiService.php` — every call has 3 positional args.
   - [x] `grep -rn 'getMessage()' lib/Controller/CatalogiController.php` returns no output (static error strings only).
   - [ ] `npm run check:l10n` reports zero MISSING and zero UNWRAPPED.
+    - Measured: zero MISSING and zero UNUSED; the 3 UNWRAPPED are `actionIconName="Delete"` in the delete dialogs, an icon name and not prose, so they stay unwrapped and this item stays open.
   - [x] `npm run find:unwrapped` — no prose-shaped literals remain outside `t()` in the catalog Vue components.
   - [ ] Catalog list and detail endpoints tested with a real browser `GET` and `OPTIONS` (curl or browser DevTools) against a running dev instance.
   - [ ] Tail Nextcloud logs during a catalog update — confirm no recursive listener lines appear.

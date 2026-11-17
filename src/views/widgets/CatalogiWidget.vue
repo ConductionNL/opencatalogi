@@ -1,7 +1,5 @@
-<!--
-  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
-  - SPDX-License-Identifier: EUPL-1.2
--->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl> -->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 import { objectStore } from '../../store/store.js'
