@@ -38,6 +38,7 @@ use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
+use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
@@ -109,6 +110,7 @@ class PublicationsController extends Controller {
 	 * @param IAppConfig|null $appConfig App config for CORS allowlist (optional)
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
+	 * @param PublishedTableServiceInterface|null $tables The published tables listed on the publication answer (REQ-ODT-003); null lists none.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -126,6 +128,7 @@ class PublicationsController extends Controller {
 		private readonly ?IAppConfig $appConfig = null,
 		private readonly CorsSettings $cors = new CorsSettings(),
 		private readonly ?AppliedFilters $appliedFilters = null,
+		private readonly ?PublishedTableServiceInterface $tables = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -1332,6 +1335,7 @@ class PublicationsController extends Controller {
 				);
 			}
 
+			$result   = $this->withTables(result: $result, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 			if (is_array($result) === true) {
 				$result = $this->withCommentPeriod(publication: $result);
 			}
@@ -1343,6 +1347,38 @@ class PublicationsController extends Controller {
 
 		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 	}//end renderedPublication()
+
+	/**
+	 * Add the publication's published tables, with their rows and dictionary URLs (REQ-ODT-003).
+	 *
+	 * A publication without tables, or a failing lookup, answers as before.
+	 *
+	 * @param mixed  $result        The rendered publication.
+	 * @param string $publicationId The publication UUID.
+	 * @param string $catalogSlug   The catalogue slug from the URL.
+	 *
+	 * @return mixed The publication, with `tables` when it has any.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	private function withTables(mixed $result, string $publicationId, string $catalogSlug): mixed {
+		if (is_array($result) === false || $this->tables === null) {
+			return $result;
+		}
+
+		try {
+			$tables = $this->tables->tablesOf(publicationId: $publicationId, catalogSlug: $catalogSlug);
+		} catch (\Throwable $e) {
+			$this->logger->debug('[PublicationsController::show] Could not list the published tables', ['id' => $publicationId, 'error' => $e->getMessage()]);
+			return $result;
+		}
+
+		if ($tables !== []) {
+			$result['tables'] = $tables;
+		}
+
+		return $result;
+	}//end withTables()
 
 	/**
 	 * The publication with the state of its comment period (REQ-PDP-003).
