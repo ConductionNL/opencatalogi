@@ -121,6 +121,19 @@ class DirectoryService implements DirectoryServiceInterface {
 	];
 
 	/**
+	 * Where a listing keeps its freshness timestamp, most relevant first.
+	 *
+	 * @var list<list<string>>
+	 */
+	private const array TIMESTAMP_PATHS = [
+		['updated'],
+		['@self', 'updated'],
+		['created'],
+		['@self', 'created'],
+		['lastSync'],
+	];
+
+	/**
 	 * The per-catalog harvest endpoints: the catalog flag that enables one, the
 	 * listing field that advertises it and its path under the catalog.
 	 *
@@ -159,6 +172,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @param IRequest $request Request interface for accessing HTTP headers
 	 * @param LoggerInterface|null $logger PSR-3 logger for the SSRF-allowance warning
 	 * @param ConnectionReporter|null $connectionReporter Tells integriq what a sync met, or nothing when absent.
+	 * @param DryRunRecorder|null $dryRuns Holds the announcement to a peer as a dry run in staging (REQ-STG-002).
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
@@ -178,6 +192,8 @@ class DirectoryService implements DirectoryServiceInterface {
 		// The integriq connection report (adopt-connection-registry). Nullable
 		// and last for the same reason as the logger above.
 		private readonly ?ConnectionReporter $connectionReporter = null,
+		// Holds the announcement to a peer in staging (instance-staging-mode REQ-STG-002).
+		private readonly ?DryRunRecorder $dryRuns = null,
 	) {
 		$this->appName = 'opencatalogi';
 		$this->client = new Client([]);
@@ -790,12 +806,31 @@ class DirectoryService implements DirectoryServiceInterface {
 			return;
 		}
 
+		// In staging the announcement is kept as a dry run and the peer is not told.
+		if ($this->announcementHeld(directoryUrl: $directoryUrl, ourDirectoryUrl: $ourDirectoryUrl) === true) {
+			return;
+		}
+
 		try {
 			$this->broadcastService->broadcast($directoryUrl);
 		} catch (\Exception $e) {
 			// A peer that cannot be reached learns about us on its own next sync.
 		}
 	}//end broadcastToDirectory()
+
+	/**
+	 * Whether the announcement to a peer is held as a dry run (staging) instead of sent.
+	 *
+	 * @param string $directoryUrl    The peer's directory.
+	 * @param string $ourDirectoryUrl Our directory.
+	 *
+	 * @return bool
+	 */
+	private function announcementHeld(string $directoryUrl, string $ourDirectoryUrl): bool {
+		$announcement = ['directoryUrl' => $directoryUrl, 'ourDirectoryUrl' => $ourDirectoryUrl];
+
+		return $this->dryRuns?->hold(channel: 'directory-announce', payload: $announcement) !== null;
+	}//end announcementHeld()
 
 	/**
 	 * Mark the directory's listings with a failed fetch and build the exception to rethrow.
@@ -1613,63 +1648,86 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * @return \DateTime|null The extracted timestamp or null if not found
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function extractTimestamp(array $data): ?\DateTime {
-		// Priority order for timestamp fields.
-		$timestampFields = [
-			'updated',
-			// Standard updated field.
-			'@self.updated',
-			// Metadata updated field.
-			'created',
-			// Creation timestamp.
-			'@self.created',
-			// Metadata creation timestamp.
-			'lastSync',
-			// Last sync timestamp.
-		];
-
-		foreach ($timestampFields as $field) {
-			$value = null;
-
-			// Handle nested field notation (e.g., '@self.updated').
-			$value = $data[$field] ?? null;
-			if (str_contains($field, '.') === true) {
-				$parts = explode('.', $field);
-				$value = $data;
-				foreach ($parts as $part) {
-					if (isset($value[$part]) === false) {
-						$value = null;
-						break;
-					}
-
-					$value = $value[$part];
-				}
+		foreach (self::TIMESTAMP_PATHS as $path) {
+			$timestamp = $this->timestampFrom(value: $this->valueAtPath(data: $data, path: $path));
+			if ($timestamp !== null) {
+				return $timestamp;
 			}
-
-			if ($value !== null) {
-				try {
-					// Handle different timestamp formats.
-					if (is_string($value) === true) {
-						return new DateTime($value);
-					} elseif (is_array($value) === true && isset($value['date']) === true) {
-						// Handle DateTime object serialized as array.
-						return new DateTime($value['date']);
-					} elseif ($value instanceof \DateTime) {
-						return $value;
-					}
-				} catch (\Exception $e) {
-					// Continue to next field if this one is invalid.
-					continue;
-				}
-			}
-		}//end foreach
+		}
 
 		return null;
 	}//end extractTimestamp()
+
+	/**
+	 * Read a nested value from listing data.
+	 *
+	 * @param array<string, mixed> $data The listing data.
+	 * @param list<string>         $path The keys to follow, outermost first.
+	 *
+	 * @return mixed The value, or null when a key on the path is not set.
+	 */
+	private function valueAtPath(array $data, array $path): mixed {
+		$value = $data;
+		foreach ($path as $part) {
+			if (isset($value[$part]) === false) {
+				return null;
+			}
+
+			$value = $value[$part];
+		}
+
+		return $value;
+	}//end valueAtPath()
+
+	/**
+	 * Turn one timestamp value into a DateTime.
+	 *
+	 * Accepts a date string, a DateTime serialised as an array with a `date`
+	 * key, or a DateTime itself.
+	 *
+	 * @param mixed $value The stored value.
+	 *
+	 * @return \DateTime|null The timestamp, or null when the value is missing,
+	 *                        of another kind, or not a valid date.
+	 */
+	private function timestampFrom(mixed $value): ?\DateTime {
+		if ($value instanceof \DateTime) {
+			return $value;
+		}
+
+		$text = $this->timestampText(value: $value);
+		if ($text === null) {
+			return null;
+		}
+
+		try {
+			return new DateTime($text);
+		} catch (\Exception $e) {
+			return null;
+		}
+	}//end timestampFrom()
+
+	/**
+	 * The date text of a timestamp value: a string itself, or the `date` of a serialised DateTime.
+	 *
+	 * @param mixed $value The stored value.
+	 *
+	 * @return mixed The date text, or null when the value holds none.
+	 */
+	private function timestampText(mixed $value): mixed {
+		if (is_string($value) === true) {
+			return $value;
+		}
+
+		if (is_array($value) === true && isset($value['date']) === true) {
+			return $value['date'];
+		}
+
+		return null;
+	}//end timestampText()
 
 	/**
 	 * Update directory status on error

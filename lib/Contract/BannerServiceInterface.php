@@ -40,7 +40,7 @@ interface BannerServiceInterface {
 	 *
 	 * @throws DomainException When it carries no body, no readable period, or an unknown severity.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	public function validate(array $banner): array;
 
@@ -55,7 +55,7 @@ interface BannerServiceInterface {
 	 *
 	 * @return boolean True while it should be shown.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	public function isCurrent(array $banner, ?DateTimeInterface $now = null): bool;
 
@@ -68,7 +68,7 @@ interface BannerServiceInterface {
 	 *
 	 * @return array<int, array<string, mixed>> The banners for this user.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	public function forUser(array $banners, array $dismissedIds, ?DateTimeInterface $now = null): array;
 }//end interface

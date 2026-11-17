@@ -31,6 +31,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\InstanceModeSwitchInterface",
+        "OCA\\OpenCatalogi\\Service\\InstanceModeSwitch"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\RetentionServiceInterface",
         "OCA\\OpenCatalogi\\Service\\RetentionService"
     ],
@@ -51,8 +56,23 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\DcatDereferenceInterface",
+        "OCA\\OpenCatalogi\\Service\\DcatDereference"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DonlRegistrationServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\DonlRegistrationService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\UsageCounterServiceInterface",
         "OCA\\OpenCatalogi\\Service\\UsageCounterService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\UnpublishedOverviewServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\UnpublishedOverviewService"
     ],
     [
         "alias",
@@ -166,6 +186,16 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentTypeVocabularyInterface",
+        "OCA\\OpenCatalogi\\Service\\TooiVocabularyService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DiwooCompletenessInterface",
+        "OCA\\OpenCatalogi\\Service\\SitemapDocumentMapper"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\CmsMigrationServiceInterface",
         "OCA\\OpenCatalogi\\Service\\CmsMigrationService"
     ],
@@ -211,6 +241,16 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\LocalPublicationStateInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\LocalPublicationState"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\InformationRequestStoreInterface",
         "OCA\\OpenCatalogi\\Service\\Woo\\WooRequestStore"
     ],
@@ -243,6 +283,11 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\AtomFeedServiceInterface",
         "OCA\\OpenCatalogi\\Service\\Community\\AtomFeedService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\CatalogueFeedReaderInterface",
+        "OCA\\OpenCatalogi\\Service\\Community\\CatalogueFeedReader"
     ],
     [
         "alias",
@@ -293,5 +338,50 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface",
         "OCA\\OpenCatalogi\\Service\\OpenRegisterLookup"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\AttachmentReadingQueueInterface",
+        "OCA\\OpenCatalogi\\BackgroundJob\\AttachmentReadingQueue"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\AttachmentReadingStoreInterface",
+        "OCA\\OpenCatalogi\\Service\\AttachmentReading\\AttachmentReadingStore"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\RedactedOriginalGuardInterface",
+        "OCA\\OpenCatalogi\\Service\\AttachmentReading\\RedactedOriginalGuard"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PlainSummaryDrafterInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PlainLanguageDrafter"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PlainSummaryProvenanceInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PlainSummaryProvenance"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\TermRollInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\TermRoll"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublicationRightsInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRights"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\InstanceModeInterface",
+        "OCA\\OpenCatalogi\\Service\\InstanceMode"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\BatchReviewInterface",
+        "OCA\\OpenCatalogi\\Service\\Review\\BatchReview"
     ]
 ]

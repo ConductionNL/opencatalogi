@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\InstanceModeInterface;
 use OCP\IAppConfig;
 use Throwable;
 
@@ -33,7 +34,7 @@ use Throwable;
  *
  * @spec openspec/changes/instance-staging-mode
  */
-class InstanceMode {
+class InstanceMode implements InstanceModeInterface {
 
 	public const KEY = 'instance_mode';
 
