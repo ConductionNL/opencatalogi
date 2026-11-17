@@ -163,6 +163,8 @@
         "Property \"url\" is required": "Eigenschap \"url\" is verplicht",
         "Public": "Openbaar",
         "Publication not found": "Publicatie niet gevonden",
+        "At least one output option must be enabled; \"download\" was false": "Er moet minstens één uitvoeroptie aan staan; \"download\" stond uit",
+        "Failed to read the rendered publication metadata PDF": "De gemaakte metadata-PDF van de publicatie kon niet worden gelezen",
         "Publication types": "Publicatietypen",
         "Publications": "Publicaties",
         "publications": "publicaties",
