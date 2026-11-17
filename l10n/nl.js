@@ -1808,7 +1808,9 @@ OC.L10N.register(
         "Send the columns as a list.": "Stuur de kolommen als lijst.",
         "The table could not be published.": "De tabel kon niet worden gepubliceerd.",
         "This table has no column named %s.": "Deze tabel heeft geen kolom met de naam %s.",
-        "The table \"%s\" does not exist or is not accessible.": "De tabel \"%s\" bestaat niet of is niet toegankelijk."
+        "The table \"%s\" does not exist or is not accessible.": "De tabel \"%s\" bestaat niet of is niet toegankelijk.",
+        "Invalid listing": "Ongeldige vermelding",
+        "Listing not found in scope": "Vermelding niet gevonden in dit bereik"
     },
     "nplurals=2; plural=(n != 1);"
 )

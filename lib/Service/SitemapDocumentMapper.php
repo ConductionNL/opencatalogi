@@ -512,6 +512,9 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	/**
 	 * The titelcollectie element with the publication's title as officieleTitel, or null without a title.
 	 *
+	 * The title is translatable, so OpenRegister may hand it over as a language map
+	 * (`{nl: ..., en: ...}`); the Dutch title is the official one.
+	 *
 	 * @param array $publication The publication as returned from ObjectService
 	 *
 	 * @return array|null The titelcollectie element, or null.
@@ -519,7 +522,12 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
 	 */
 	private function titleElement(array $publication): ?array {
-		$title = $this->stringOrNull(value: ($publication['title'] ?? null));
+		$title = $publication['title'] ?? null;
+		if (is_array($title) === true) {
+			$title = ($this->stringOrNull(value: ($title['nl'] ?? null)) ?? $this->firstString(values: $title));
+		}
+
+		$title = $this->stringOrNull(value: $title);
 		if ($title === null) {
 			return null;
 		}
@@ -569,6 +577,26 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 
 		return null;
 	}//end stringOrNull()
+
+	/**
+	 * The first non-empty string among the values, or null.
+	 *
+	 * @param array<mixed> $values The candidate values.
+	 *
+	 * @return string|null The string, or null.
+	 *
+	 * @spec exclude Type-narrowing plumbing.
+	 */
+	private function firstString(array $values): ?string {
+		foreach ($values as $value) {
+			$text = $this->stringOrNull(value: $value);
+			if ($text !== null) {
+				return $text;
+			}
+		}
+
+		return null;
+	}//end firstString()
 
 	/**
 	 * Append a DIWOO value-list violation record.

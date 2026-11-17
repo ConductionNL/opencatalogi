@@ -277,6 +277,32 @@ class DiwooCompletenessListenerTest extends TestCase {
 	}//end testACompleteWooPublicationIsAccepted()
 
 	/**
+	 * REQ-DWP-003: the title is translatable, so OpenRegister hands it over as a language map; that is a title.
+	 *
+	 * @return void
+	 */
+	public function testATitleInALanguageMapCountsAsATitle(): void {
+		$creating = $this->creating(data: self::publication(['title' => ['nl' => 'Besluit parkeerregulering', 'en' => 'Parking decision']]));
+		$this->listener()->handle($creating);
+
+		$this->assertFalse($creating->isPropagationStopped());
+		$this->assertSame([], $creating->getErrors());
+	}//end testATitleInALanguageMapCountsAsATitle()
+
+	/**
+	 * REQ-DWP-003: a language map with no text in it is still no title.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyLanguageMapIsNoTitle(): void {
+		$creating = $this->creating(data: self::publication(['title' => ['nl' => '', 'en' => ' ']]));
+		$this->listener()->handle($creating);
+
+		$this->assertTrue($creating->isPropagationStopped());
+		$this->assertSame(['title'], array_keys($creating->getErrors()['fields']));
+	}//end testAnEmptyLanguageMapIsNoTitle()
+
+	/**
 	 * REQ-DWP-003: a publication without a category in a schema no category declares is not held to DiWoo.
 	 *
 	 * @return void
