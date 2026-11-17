@@ -489,7 +489,7 @@ XML;
 			$this->settingsService,
 			$this->config,
 			$this->urlGenerator,
-			new HandoverState(config: $this->config, appManager: $apps)
+			handover: new HandoverState(config: $this->config, appManager: $apps)
 		);
 
 		$report = $service->runCheck();

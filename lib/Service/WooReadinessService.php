@@ -126,8 +126,8 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @param SettingsService $settingsService The settings service, used to resolve WOO-enabled catalogs.
 	 * @param IAppConfig $config App configuration (report persistence + registration status).
 	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator (public base URL).
-	 * @param HandoverState|null $handover What the hand-over of the Woo requests to dossiq left; null reports nothing.
 	 * @param WooIndexFieldMapper|null $fieldMapper Where the Woo-index fields come from (REQ-WIM-004).
+	 * @param HandoverState|null $handover What the hand-over of the Woo requests to dossiq left; null reports nothing.
 	 */
 	public function __construct(
 		private readonly IClientService $clientService,
@@ -136,8 +136,8 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		private readonly SettingsService $settingsService,
 		private readonly IAppConfig $config,
 		private readonly IURLGenerator $urlGenerator,
-		private readonly ?HandoverState $handover = null,
 		private readonly ?WooIndexFieldMapper $fieldMapper = null,
+		private readonly ?HandoverState $handover = null,
 	) {
 
 	}//end __construct()
