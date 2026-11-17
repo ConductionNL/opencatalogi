@@ -26,17 +26,13 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use InvalidArgumentException;
-use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
-use OCA\OpenCatalogi\Service\Publication\PublicationRights;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
-use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -49,22 +45,18 @@ class PublishedTableEditController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                         $appName     The app name.
-	 * @param IRequest                       $request     The request.
-	 * @param PublishedTableServiceInterface $tables      The published tables.
-	 * @param OpenRegisterLookupInterface    $registers   The OpenRegister ObjectService and register configuration.
-	 * @param PublicationRights              $rights      Whether the user may update a publication.
-	 * @param IUserSession                   $userSession The signed-in user.
-	 * @param IL10N                          $l10n        Translations.
-	 * @param LoggerInterface                $logger      PSR-3 logger.
+	 * @param string                         $appName The app name.
+	 * @param IRequest                       $request The request.
+	 * @param PublishedTableServiceInterface $tables  The published tables.
+	 * @param PublicationWriteGuard          $guard   Loads the publication for a write by the signed-in user, or refuses it.
+	 * @param IL10N                          $l10n    Translations.
+	 * @param LoggerInterface                $logger  PSR-3 logger.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly PublishedTableServiceInterface $tables,
-		private readonly OpenRegisterLookupInterface $registers,
-		private readonly PublicationRights $rights,
-		private readonly IUserSession $userSession,
+		private readonly PublicationWriteGuard $guard,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {
@@ -83,7 +75,7 @@ class PublishedTableEditController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function index(string $id): JSONResponse {
-		[$publication, $refusal] = $this->guardWrite(id: $id);
+		[$publication, $refusal] = $this->guard->guard(id: $id);
 		if ($refusal !== null) {
 			return $refusal;
 		}
@@ -102,29 +94,12 @@ class PublishedTableEditController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function create(string $id): JSONResponse {
-		[$publication, $refusal] = $this->guardWrite(id: $id);
+		[$publication, $refusal] = $this->guard->guard(id: $id);
 		if ($refusal !== null) {
 			return $refusal;
 		}
 
-		$fileId = (string)$this->request->getParam('fileId', '');
-		if (preg_match('/^\d+$/', $fileId) !== 1) {
-			return $this->badRequest(message: $this->l10n->t('Choose the CSV attachment to publish as a table.'));
-		}
-
-		try {
-			$table = $this->tables->publishAttachment(publication: $publication, fileId: $fileId, user: $this->userSession->getUser());
-		} catch (InvalidArgumentException $e) {
-			return $this->badRequest(message: $e->getMessage());
-		} catch (\Throwable $e) {
-			$this->logger->error('[PublishedTableEditController] The table could not be published', ['publication' => $id, 'error' => $e->getMessage()]);
-			return new JSONResponse(
-				data: ['error' => 'table-not-published', 'message' => $this->l10n->t('The table could not be published.')],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
-		}
-
-		return new JSONResponse(data: $table, statusCode: Http::STATUS_CREATED);
+		return $this->publish(id: $id, publication: $publication);
 	}//end create()
 
 	/**
@@ -139,17 +114,14 @@ class PublishedTableEditController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function updateDictionary(string $id, string $tableId): JSONResponse {
-		[$publication, $refusal] = $this->guardWrite(id: $id);
+		[$publication, $refusal] = $this->guard->guard(id: $id);
 		if ($refusal !== null) {
 			return $refusal;
 		}
 
-		$table = $this->tables->findTable(tableId: $tableId);
-		if ($table === null || (string)($table['publication'] ?? '') !== $id || ($table['status'] ?? null) !== 'ready') {
-			return new JSONResponse(
-				data: ['error' => 'unknown-table', 'message' => $this->l10n->t('The table "%s" does not exist or is not accessible.', [$tableId])],
-				statusCode: Http::STATUS_NOT_FOUND
-			);
+		$table = $this->readyTable(id: $id, tableId: $tableId);
+		if ($table === null) {
+			return $this->unknownTable(tableId: $tableId);
 		}
 
 		$columns = $this->request->getParam('columns', []);
@@ -165,63 +137,80 @@ class PublishedTableEditController extends Controller {
 	}//end updateDictionary()
 
 	/**
-	 * Load the publication for a write, or the answer that refuses it.
+	 * Publish the requested attachment as a table and answer with the table record.
 	 *
-	 * Not signed in is 401; missing or unreadable is 404, so an id nobody may
-	 * read does not confirm that it exists; readable without the update right is 403.
+	 * @param string $id          The publication.
+	 * @param object $publication The publication, loaded for the write.
 	 *
-	 * @param string $id The publication.
-	 *
-	 * @return array{0: object|null, 1: JSONResponse|null} The publication, or null and the refusal.
+	 * @return JSONResponse The table record (201), or why it was not published.
 	 */
-	private function guardWrite(string $id): array {
-		if ($this->userSession->getUser() === null) {
-			return [null, new JSONResponse(data: ['error' => 'not-logged-in'], statusCode: Http::STATUS_UNAUTHORIZED)];
+	private function publish(string $id, object $publication): JSONResponse {
+		$fileId = (string)$this->request->getParam('fileId', '');
+		if (preg_match('/^\d+$/', $fileId) !== 1) {
+			return $this->badRequest(message: $this->l10n->t('Choose the CSV attachment to publish as a table.'));
 		}
 
-		$publication = $this->load(id: $id);
-		if ($publication === null) {
-			return [
-				null,
-				new JSONResponse(
-					data: ['error' => 'not-found', 'message' => $this->l10n->t('Publication not found')],
-					statusCode: Http::STATUS_NOT_FOUND
-				),
-			];
+		try {
+			$table = $this->tables->publishAttachment(publication: $publication, fileId: $fileId, user: $this->guard->user());
+		} catch (InvalidArgumentException $e) {
+			return $this->badRequest(message: $e->getMessage());
+		} catch (\Throwable $e) {
+			return $this->notPublished(id: $id, exception: $e);
 		}
 
-		if ($this->rights->mayUpdate(publication: $publication) === false) {
-			return [null, new JSONResponse(data: ['error' => 'forbidden'], statusCode: Http::STATUS_FORBIDDEN)];
-		}
-
-		return [$publication, null];
-	}//end guardWrite()
+		return new JSONResponse(data: $table, statusCode: Http::STATUS_CREATED);
+	}//end publish()
 
 	/**
-	 * The publication as the signed-in user may read it.
+	 * Log why a table could not be published and answer 500.
 	 *
-	 * @param string $id The publication.
+	 * @param string     $id        The publication.
+	 * @param \Throwable $exception The failure.
 	 *
-	 * @return object|null The publication, or null when it is missing or unreadable.
+	 * @return JSONResponse The answer.
 	 */
-	private function load(string $id): ?object {
-		try {
-			$config = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
-			$publication = $this->registers->objectService()->find(
-				id: $id,
-				options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
-				_rbac: true
-			);
-		} catch (\Throwable $e) {
+	private function notPublished(string $id, \Throwable $exception): JSONResponse {
+		$this->logger->error(
+			'[PublishedTableEditController] The table could not be published',
+			['publication' => $id, 'error' => $exception->getMessage()]
+		);
+
+		return new JSONResponse(
+			data: ['error' => 'table-not-published', 'message' => $this->l10n->t('The table could not be published.')],
+			statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end notPublished()
+
+	/**
+	 * One of the publication's ready tables, or null.
+	 *
+	 * @param string $id      The publication.
+	 * @param string $tableId The table.
+	 *
+	 * @return array<string, mixed>|null The table.
+	 */
+	private function readyTable(string $id, string $tableId): ?array {
+		$table = $this->tables->findTable(tableId: $tableId);
+		if ($table === null || (string)($table['publication'] ?? '') !== $id || ($table['status'] ?? null) !== 'ready') {
 			return null;
 		}
 
-		if (is_object($publication) === false) {
-			return null;
-		}
+		return $table;
+	}//end readyTable()
 
-		return $publication;
-	}//end load()
+	/**
+	 * The 404 for a table that does not exist, is not this publication's, or is not ready.
+	 *
+	 * @param string $tableId The table.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function unknownTable(string $tableId): JSONResponse {
+		return new JSONResponse(
+			data: ['error' => 'unknown-table', 'message' => $this->l10n->t('The table "%s" does not exist or is not accessible.', [$tableId])],
+			statusCode: Http::STATUS_NOT_FOUND
+		);
+	}//end unknownTable()
 
 	/**
 	 * A 400 answer.

@@ -208,6 +208,7 @@ class TableFakeOpenRegister {
  * @covers \OCA\OpenCatalogi\Service\Table\PublishedTableService
  * @uses   \OCA\OpenCatalogi\Service\Table\ColumnTypes
  * @uses   \OCA\OpenCatalogi\Contract\TableFile
+ * @uses   \OCA\OpenCatalogi\Service\Table\TableImportRun
  * @uses   \OCA\OpenCatalogi\Service\SchemaObjects
  */
 class PublishedTableServiceTest extends TestCase {

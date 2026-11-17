@@ -23,6 +23,7 @@ namespace Unit\Controller;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
+use OCA\OpenCatalogi\Controller\PublicationWriteGuard;
 use OCA\OpenCatalogi\Controller\PublishedTableEditController;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
@@ -71,6 +72,7 @@ class EditFakeObjects {
  * The editor side of published tables: every action needs the update right.
  *
  * @covers \OCA\OpenCatalogi\Controller\PublishedTableEditController
+ * @covers \OCA\OpenCatalogi\Controller\PublicationWriteGuard
  */
 class PublishedTableEditControllerTest extends TestCase {
 
@@ -119,9 +121,7 @@ class PublishedTableEditControllerTest extends TestCase {
 			appName: 'opencatalogi',
 			request: $this->request,
 			tables: $this->tables,
-			registers: $registers,
-			rights: $this->rights,
-			userSession: $this->session,
+			guard: new PublicationWriteGuard(registers: $registers, rights: $this->rights, userSession: $this->session, l10n: $l10n),
 			l10n: $l10n,
 			logger: $this->createMock(LoggerInterface::class)
 		);
