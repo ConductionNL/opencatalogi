@@ -30,6 +30,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\ChangesServiceInterface;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
@@ -49,11 +50,11 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Parsing, window, cursor and the two reads are small steps of one answer.
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) OpenRegister, the catalogue guard, the DCAT mapping, the clock and the URL generator.
- * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds and DateTimeImmutable::getLastErrors() are pure.
+ * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds, CallerScope::writeScope() and DateTimeImmutable::getLastErrors() are pure.
  *
  * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md
  */
-class ChangesService {
+class ChangesService implements ChangesServiceInterface {
 
 	/**
 	 * Most entries on one page.
@@ -312,7 +313,11 @@ class ChangesService {
 			return ['changed' => [], 'hasMore' => false];
 		}
 
-		$query  = $this->dcat->scopedQuery(query: self::changedQuery(window: $read), scope: $read['scope']);
+		$query  = CallerScope::writeScope(
+			query: self::changedQuery(window: $read),
+			registers: $read['scope']['registers'],
+			schemas: $read['scope']['schemas']
+		);
 		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
 		$rows   = self::changedRows(result: $result, window: $read);
 
@@ -461,7 +466,7 @@ class ChangesService {
 
 		// Which of them are publications in this catalogue's scope.
 		$ids    = array_map('strval', array_keys($latest));
-		$query  = $this->dcat->scopedQuery(query: ['_limit' => count($ids)], scope: $read['scope']);
+		$query  = CallerScope::writeScope(query: ['_limit' => count($ids)], registers: $read['scope']['registers'], schemas: $read['scope']['schemas']);
 		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: false, _multitenancy: false, deleted: false, ids: $ids);
 
 		return self::withdrawnEntries(latest: $latest, inCatalog: self::foundIds(result: $result, ids: $ids));

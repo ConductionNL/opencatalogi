@@ -38,7 +38,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
- * @SuppressWarnings(PHPMD.TooManyPublicMethods) mapDatasets() and scopedQuery() let the changed-since read reuse the feed instead of copying it.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) mapDatasets() lets the changed-since read reuse the feed instead of copying it.
  * @SuppressWarnings(PHPMD.TooManyMethods) Document building is split into small private steps to stay under the unit size and complexity limits.
  *
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-3-serializer-public-endpoints
@@ -260,22 +260,6 @@ class DcatService implements DcatServiceInterface {
 
 		return $this->mapCatalogDatasets(publications: $publications, scope: $scope)['datasets'];
 	}//end mapDatasets()
-
-	/**
-	 * Scope a search query to a catalog scope, as the catalog feed scopes its search.
-	 *
-	 * @param array<string, mixed> $query The search query.
-	 * @param array<string, mixed> $scope The scope: `registers` and `schemas`, each naming at least one.
-	 *
-	 * @return array<string, mixed> The scoped query.
-	 *
-	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
-	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
-	 */
-	public function scopedQuery(array $query, array $scope): array {
-		return CallerScope::writeScope(query: $query, registers: $scope['registers'], schemas: $scope['schemas']);
-	}//end scopedQuery()
 
 	/**
 	 * The DCAT graph of one publication of a catalogue, for its dataset IRI.

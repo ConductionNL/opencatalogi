@@ -219,9 +219,6 @@ class ChangesEndpointTest extends TestCase {
 				$publications
 			)
 		);
-		$this->dcat->method('scopedQuery')->willReturnCallback(
-			static fn (array $query, array $scope): array => CallerScope::writeScope(query: $query, registers: $scope['registers'], schemas: $scope['schemas'])
-		);
 
 		$time = $this->createMock(ITimeFactory::class);
 		$time->method('now')->willReturn(new DateTimeImmutable(self::NOW));

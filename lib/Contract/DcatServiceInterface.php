@@ -137,20 +137,6 @@ interface DcatServiceInterface {
 	public function mapDatasets(array $catalog, array $publications): array;
 
 	/**
-	 * Scope a search query to a catalog scope, as the catalog feed scopes its search.
-	 *
-	 * @param array<string, mixed> $query The search query.
-	 * @param array<string, mixed> $scope The scope: `registers` and `schemas`, each naming at least one.
-	 *
-	 * @return array<string, mixed> The scoped query.
-	 *
-	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
-	 *
-	 * @contract-shift internal-only — only DcatService implements it; no other app consumes this interface.
-	 */
-	public function scopedQuery(array $query, array $scope): array;
-
-	/**
 	 * Build the instance-level DCAT document listing every DCAT-enabled catalog.
 	 *
 	 * @return array<string, mixed> The JSON-LD document plus `_meta`.

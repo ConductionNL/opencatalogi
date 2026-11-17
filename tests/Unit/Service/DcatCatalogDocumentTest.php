@@ -221,35 +221,6 @@ class DcatCatalogDocumentTest extends TestCase {
 		$this->assertSame([], $searched);
 	}
 
-	/**
-	 * scopedQuery() writes a single-register, single-schema scope into the query's `@self` block.
-	 *
-	 * @return void
-	 */
-	public function testScopedQueryWritesTheCatalogScope(): void {
-		$searched = [];
-		$query    = $this->service($searched)->scopedQuery(
-			query: ['_limit' => 5, '@self' => ['updated' => ['gte' => '2026-11-12 00:00:00']]],
-			scope: ['registers' => [20], 'schemas' => [28]]
-		);
-
-		$this->assertSame(5, $query['_limit']);
-		$this->assertSame(['gte' => '2026-11-12 00:00:00'], $query['@self']['updated']);
-		$this->assertSame(28, $query['@self']['schema']);
-		$this->assertArrayNotHasKey('_schemas', $query);
-	}
-
-	/**
-	 * scopedQuery() refuses an empty scope instead of reading the whole register.
-	 *
-	 * @return void
-	 */
-	public function testScopedQueryRefusesAnEmptyScope(): void {
-		$searched = [];
-		$this->expectException(\InvalidArgumentException::class);
-		$this->service($searched)->scopedQuery(query: [], scope: ['registers' => [20], 'schemas' => []]);
-	}
-
 	public function testWithoutOpenRegisterTheDocumentIsRefused(): void {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('getInstalledApps')->willReturn([]);

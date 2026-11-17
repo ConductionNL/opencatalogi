@@ -28,8 +28,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\ChangesServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedChangesParameterException;
-use OCA\OpenCatalogi\Service\ChangesService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -58,7 +58,7 @@ class ChangesController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param ChangesService $changes The changed-since read.
+	 * @param ChangesServiceInterface $changes The changed-since read.
 	 * @param IL10N $l10n Localization.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
@@ -66,7 +66,7 @@ class ChangesController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly ChangesService $changes,
+		private readonly ChangesServiceInterface $changes,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly ?IAppConfig $appConfig = null,
