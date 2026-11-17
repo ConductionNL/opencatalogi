@@ -1817,7 +1817,9 @@ OC.L10N.register(
         "Send the columns as a list.": "Send the columns as a list.",
         "The table could not be published.": "The table could not be published.",
         "This table has no column named %s.": "This table has no column named %s.",
-        "The table \"%s\" does not exist or is not accessible.": "The table \"%s\" does not exist or is not accessible."
+        "The table \"%s\" does not exist or is not accessible.": "The table \"%s\" does not exist or is not accessible.",
+        "This view does not exist or is not accessible.": "This view does not exist or is not accessible.",
+        "The data of this view could not be read.": "The data of this view could not be read."
     },
     "nplurals=2; plural=(n != 1);"
 )

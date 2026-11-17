@@ -182,6 +182,7 @@ class SettingsService implements SettingsServiceInterface {
 				'woo_request_schema' => 'wooRequest',
 				'comment_period_schema' => 'commentPeriod',
 				'published_table_schema' => 'publishedTable',
+				'table_view_schema' => 'tableView',
 			],
 		],
 		[

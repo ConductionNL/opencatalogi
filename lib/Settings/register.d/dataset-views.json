@@ -1,0 +1,132 @@
+{
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"tableView"
+				],
+				"configuration": {
+					"schemas": {
+						"tableView": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "A table, chart or map view of a published table, shown on the public publication page"
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"tableView": {
+				"slug": "tableView",
+				"title": "Table view",
+				"version": "0.1.0",
+				"published": "2026-11-17T00:00:00+00:00",
+				"summary": "A table, chart or map of a published table",
+				"description": "How a published table is shown on the public publication page: a table of chosen columns, a bar or line chart of one column against another, or a map of points from a latitude and a longitude column (dataset-views-on-the-public-page REQ-DSV-001). Readers never read this object directly; the public view endpoints answer its data while the publication is public.",
+				"icon": "ChartBar",
+				"type": "object",
+				"required": [
+					"table",
+					"kind",
+					"title"
+				],
+				"authorization": {
+					"read": [
+						"authenticated"
+					],
+					"create": [
+						"admin"
+					],
+					"update": [
+						"admin"
+					],
+					"delete": [
+						"admin"
+					]
+				},
+				"properties": {
+					"table": {
+						"type": "string",
+						"title": "Table",
+						"description": "The published table this view shows.",
+						"$ref": "#/components/schemas/publishedTable",
+						"facetable": true
+					},
+					"kind": {
+						"type": "string",
+						"title": "Kind",
+						"description": "How the view is drawn: table, bar, line or map.",
+						"enum": [
+							"table",
+							"bar",
+							"line",
+							"map"
+						],
+						"facetable": true
+					},
+					"title": {
+						"type": "string",
+						"title": "Title",
+						"description": "The heading readers see above the view.",
+						"maxLength": 255
+					},
+					"columns": {
+						"type": "array",
+						"title": "Columns",
+						"description": "For a table view: the columns shown, in order.",
+						"items": {
+							"type": "string"
+						}
+					},
+					"x": {
+						"type": "string",
+						"title": "Horizontal axis",
+						"description": "For a bar or line chart: the column on the horizontal axis.",
+						"maxLength": 255
+					},
+					"y": {
+						"type": "string",
+						"title": "Value column",
+						"description": "For a bar or line chart: the column summed or averaged. Empty counts the rows.",
+						"maxLength": 255
+					},
+					"aggregate": {
+						"type": "string",
+						"title": "Aggregate",
+						"description": "For a bar or line chart: count the rows, or sum or average the value column.",
+						"enum": [
+							"count",
+							"sum",
+							"avg"
+						]
+					},
+					"latitude": {
+						"type": "string",
+						"title": "Latitude column",
+						"description": "For a map: the column holding the latitude (WGS84).",
+						"maxLength": 255
+					},
+					"longitude": {
+						"type": "string",
+						"title": "Longitude column",
+						"description": "For a map: the column holding the longitude (WGS84).",
+						"maxLength": 255
+					},
+					"label": {
+						"type": "string",
+						"title": "Marker label",
+						"description": "For a map: the column shown on a marker.",
+						"maxLength": 255
+					},
+					"position": {
+						"type": "integer",
+						"title": "Position",
+						"description": "The order of the view on the page, lowest first.",
+						"minimum": 0
+					}
+				}
+			}
+		}
+	}
+}

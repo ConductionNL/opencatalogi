@@ -146,6 +146,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\DatasetViewServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\Table\\DatasetViewService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\CatalogAccessServiceInterface",
         "OCA\\OpenCatalogi\\Service\\CatalogAccessService"
     ],

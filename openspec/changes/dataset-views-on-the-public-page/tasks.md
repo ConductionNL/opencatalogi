@@ -4,14 +4,15 @@ Start after `open-data-table-query-and-dictionary` is merged: every task here re
 
 ## 1. The view
 
-- [ ] 1.1 Add `lib/Settings/register.d/dataset-views.json` with the `tableView` schema of design D1, a `slug`, and no public read rule (REQ-DSV-001). Verify: `tests/Unit/Settings/DatasetViewSchemaTest.php::testTheFragmentHasASlugAndNoPublicReadRule`.
-- [ ] 1.2 Add `lib/Service/DatasetViewService.php::save()` with the column checks of design D2 (REQ-DSV-001). Verify: `tests/Unit/Service/DatasetViewServiceTest.php::testABarViewOverAKnownColumnIsSaved`, `::testAViewOverAnUnknownColumnIsRefusedWithItsName`, `::testASumOverATextColumnIsRefused`.
+- [x] 1.1 Add `lib/Settings/register.d/dataset-views.json` with the `tableView` schema of design D1, a `slug`, and no public read rule (REQ-DSV-001). Verify: `tests/Unit/Settings/DatasetViewSchemaTest.php::testTheFragmentHasASlugAndNoPublicReadRule`.
+- [x] 1.2 Add `lib/Service/DatasetViewService.php::save()` with the column checks of design D2 (REQ-DSV-001). Verify: `tests/Unit/Service/DatasetViewServiceTest.php::testABarViewOverAKnownColumnIsSaved`, `::testAViewOverAnUnknownColumnIsRefusedWithItsName`, `::testASumOverATextColumnIsRefused`.
 
 ## 2. The data endpoint
 
-- [ ] 2.1 Add the `views` and `views/{viewId}/data` routes in `appinfo/routes.php` before the wildcard catalog routes, with CORS preflight, on a new `DatasetViewController` (REQ-DSV-002). Verify: a route-table test and `tests/Unit/Controller/DatasetViewControllerTest.php::testAViewOfANonPublicPublicationIs404` (uses the same public-read check as `PublicationsController::show()`).
-- [ ] 2.2 Shape `table`, `bar`, `line` and `map` data as design D3, with the 200-group and 5,000-point caps (REQ-DSV-002). Verify: `DatasetViewControllerTest::testABarViewAnswersOneValuePerGroup`, `::testAMapViewSkipsRowsWithoutCoordinates`, `::testMoreThan200GroupsAnswersTruncated`.
-- [ ] 2.3 List each table's views with data URLs in the public publication answer (REQ-DSV-002). Verify: `tests/Unit/Controller/PublicationsControllerTest.php::testThePublicAnswerListsTheViewsOfEachTable`.
+- [x] 2.1 Add the `views` and `views/{viewId}/data` routes in `appinfo/routes.php` before the wildcard catalog routes, with CORS preflight, on a new `DatasetViewController` (REQ-DSV-002). Verify: a route-table test and `tests/Unit/Controller/DatasetViewControllerTest.php::testAViewOfANonPublicPublicationIs404` (uses the same public-read check as `PublicationsController::show()`).
+- [x] 2.2 Shape `table`, `bar`, `line` and `map` data as design D3, with the 200-group and 5,000-point caps (REQ-DSV-002). Verify: `DatasetViewControllerTest::testABarViewAnswersOneValuePerGroup`, `::testAMapViewSkipsRowsWithoutCoordinates`, `::testMoreThan200GroupsAnswersTruncated`.
+- [x] 2.3 List each table's views with data URLs in the public publication answer (REQ-DSV-002). Verify: `tests/Unit/Controller/PublicationsControllerTest.php::testThePublicAnswerListsTheViewsOfEachTable`.
+  - Built: the service is `lib/Service/Table/DatasetViewService.php` (beside `PublishedTableService`), with the column rules in `ViewColumnRules` and the data in `DatasetViewData` / `MapPoints`. Charts call OpenRegister's in-process `AggregationRunnerInterface::runAdhocByRef()`, no HTTP. The editor routes `GET|POST /api/publications/{id}/tables/{tableId}/views` and `DELETE .../views/{viewId}` (`DatasetViewEditController`, behind `PublicationWriteGuard`) are what the dialog of 3.1 will call.
 
 ## 3. The editor
 
@@ -26,10 +27,11 @@ Start after `open-data-table-query-and-dictionary` is merged: every task here re
 
 ## 5. Docs and strings
 
-- [ ] 5.1 Document views for editors in `docs/` and add the strings to `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+- [x] 5.1 Document views for editors in `docs/` and add the strings to `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+  - The API side is documented in `docs/features/open-data-tables.md`; the editor dialog's strings follow with task 3.1.
 
 ## 6. Verification
 
 - [ ] 6.1 `openspec validate dataset-views-on-the-public-page --strict`, `composer check:strict`, `npm run lint`.
 - [ ] 6.2 Live: publish a CSV as a table on the dev instance, add a bar view and a map view, and paste both data answers in the PR body. (live pass, decision 139)
-- [ ] 6.3 Set `od-visualise` in `openspec/parity/capabilities.json` to `building` while portaliq tasks are open, `built` once they land.
+- [x] 6.3 Set `od-visualise` in `openspec/parity/capabilities.json` to `building` while portaliq tasks are open, `built` once they land.

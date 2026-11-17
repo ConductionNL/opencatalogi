@@ -58,3 +58,40 @@ The public publication answer (`GET /api/{catalogSlug}/{publicationId}`) lists
 its tables under `tables`, each with `rowsUrl` and `dictionaryUrl`. In the DCAT
 feed the CSV's distribution carries `dct:conformsTo` with the dictionary URL, so
 harvesters find it.
+
+## Views: a table, chart or map on the public page
+
+An editor can show a published table on the public publication page in one or
+more views (dataset-views-on-the-public-page). A view is one of four kinds:
+
+| Kind | What it shows | What it needs |
+|---|---|---|
+| `table` | the rows, with only the chosen columns | `columns`, in order |
+| `bar`, `line` | one value per group of a column | `x`, and `aggregate` `count`, `sum` or `avg`; `y` for a sum or an average |
+| `map` | a point per row | `latitude` and `longitude` (WGS84), optionally `label` |
+
+Editors who may change the publication add, change and remove views through
+`GET|POST /api/publications/{id}/tables/{tableId}/views` and
+`DELETE /api/publications/{id}/tables/{tableId}/views/{viewId}`. A view that names
+a column the table does not have, sums or averages a column that does not hold
+numbers, or uses a coordinate column that does not hold numbers is refused with
+`400`, and the message names the column.
+
+Anyone reads the views of a public publication:
+
+```bash
+curl -s "https://example.org/index.php/apps/opencatalogi/api/speeltuinen/{publicationId}/tables/{tableId}/views"
+curl -s "https://example.org/index.php/apps/opencatalogi/api/speeltuinen/{publicationId}/tables/{tableId}/views/{viewId}/data"
+```
+
+- A `table` view answers the first page of rows with only its `columns`.
+- A `bar` or `line` view answers `points`, one `{x, value}` per group, from
+  OpenRegister's grouped aggregation; more than 200 groups answers the first 200
+  with `truncated: true`.
+- A `map` view answers a GeoJSON `FeatureCollection` of at most 5,000 points.
+  Rows with an empty or out-of-range coordinate are left out and counted in
+  `skipped`.
+- Both routes answer `404` unless the publication is public at that moment.
+
+The public publication answer lists each table's `views`, each with its
+`dataUrl`. The portal draws them and offers every chart and map as a table too.

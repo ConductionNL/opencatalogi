@@ -189,7 +189,10 @@ class PublicationsControllerTest extends TestCase {
 	 * Rebuilds the controller using the current $this->queryService mock. Used by
 	 * tests that need to re-stub query-service behaviour after setUp().
 	 */
-	private function controllerWithTables(\OCA\OpenCatalogi\Contract\PublishedTableServiceInterface $tables): PublicationsController {
+	private function controllerWithTables(
+		\OCA\OpenCatalogi\Contract\PublishedTableServiceInterface $tables,
+		?\OCA\OpenCatalogi\Contract\DatasetViewServiceInterface $views = null,
+	): PublicationsController {
 		return new PublicationsController(
 			appName: 'opencatalogi',
 			request: $this->request,
@@ -202,7 +205,8 @@ class PublicationsControllerTest extends TestCase {
 			l10n: $this->l10n,
 			usageCounterService: $this->usageCounterService,
 			appConfig: $this->appConfig,
-			tables: $tables
+			tables: $tables,
+			views: $views
 		);
 	}
 
@@ -1079,6 +1083,33 @@ class PublicationsControllerTest extends TestCase {
 
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication', 'tables' => [$entry]], $response->getData());
+	}
+
+	/**
+	 * Each listed table carries its views with their data URLs (REQ-DSV-002).
+	 *
+	 * @return void
+	 */
+	public function testThePublicAnswerListsTheViewsOfEachTable(): void {
+		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$tables = $this->createMock(\OCA\OpenCatalogi\Contract\PublishedTableServiceInterface::class);
+		$entry = ['id' => 't1', 'title' => 'speeltuinen.csv'];
+		$tables->method('tablesOf')->willReturn([$entry]);
+		$views = $this->createMock(\OCA\OpenCatalogi\Contract\DatasetViewServiceInterface::class);
+		$withViews = [$entry + ['views' => [['id' => 'v1', 'kind' => 'bar', 'title' => 'Per wijk', 'dataUrl' => 'https://h/data']]]];
+		$views->expects($this->once())->method('withViews')
+			->with([$entry], ['catalogSlug' => 'test-catalog', 'publicationId' => 'pub-123'])
+			->willReturn($withViews);
+		$this->container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($mockObjService);
+		$controller = $this->controllerWithTables(tables: $tables, views: $views);
+
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$mockObjService->method('searchObjects')->willReturn([$this->createObjectEntityMock()]);
+		$mockObjService->method('renderEntity')->willReturn(['id' => 'pub-123', 'title' => 'Test Publication']);
+		$this->request->method('getParams')->willReturn([]);
+
+		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication', 'tables' => $withViews], $controller->show('test-catalog', 'pub-123')->getData());
 	}
 
 	/**
