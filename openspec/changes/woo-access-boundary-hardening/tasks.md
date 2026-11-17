@@ -11,8 +11,10 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 ## 2. Boundary suite
 
 - [ ] 2.1 Extend `tests/e2e/ci-seed.sh` and the PHPUnit fixture with one object of every non-public kind (REQ-WAB-002). Verify: the seed run in CI lists them.
+  - Seed built 17 Nov: `ci-seed.sh` step 2c makes a draft, a scheduled, a withdrawn and an archived publication, a `wooAssessment`, a `wooBatch`, a `wooRequest`, a `depublication` and an unshared file on a public publication, each under a fixed `Boundary fixture:` marker, idempotent, and prints each id. The publication schema has no "unlisted" property. Left unchecked: the PHPUnit fixture comes with 2.2, and the seed has not run in CI yet.
 - [ ] 2.2 Add `tests/Unit/Boundary/PublicBoundaryTest.php` reading the route table (REQ-WAB-002). Verify: `::testNoPublicRouteReturnsANonPublicRecord`, `::testEveryNonPublicRouteRefusesAnonymous`, `::testTheRouteListIsReadFromTheRouteTable`. Before relying on it, break one route on purpose locally (return a draft) and confirm the test fails; say so in the PR body.
 - [ ] 2.3 Add `tests/e2e/public-boundary.spec.ts` running the same anonymously over HTTP (REQ-WAB-002). Verify: the spec in CI.
+  - Written 17 Nov: reads `appinfo/routes.php` and the controllers' `#[PublicPage]` / `@PublicPage` markers on every run (237 routes, 107 public), calls every public GET and the public POST search with each fixture id (and each catalog slug for `{catalogSlug}`) without credentials, and fails on a fixture id in a 2xx body or a fixture title or file name in any body; every non-public route must answer 401, 403 or the login redirect. Left unchecked until it has run in CI.
 
 ## 3. Search indexes
 
