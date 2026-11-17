@@ -25,6 +25,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Repair;
 
 use OCA\OpenCatalogi\Service\Publication\PublicationLinkRules;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -92,8 +94,12 @@ class MirrorCaseReferenceIntoSourceIdentifiers implements IRepairStep {
 			return;
 		}
 
-		$written = $this->mirrorAll(objects: $objects, register: $register, schema: $schema);
+		$failed = 0;
+		$written = $this->mirrorAll(objects: $objects, register: $register, schema: $schema, failed: $failed);
 		$output->info('Case reference added to the source identifiers of ' . $written . ' publication(s)');
+		if ($failed > 0) {
+			$output->warning('Source identifiers of ' . $failed . ' publication(s) could not be saved; they are mirrored on their next save');
+		}
 	}//end run()
 
 	/**
@@ -102,12 +108,13 @@ class MirrorCaseReferenceIntoSourceIdentifiers implements IRepairStep {
 	 * @param object $objects  OpenRegister's object service.
 	 * @param string $register The publication register.
 	 * @param string $schema   The publication schema.
+	 * @param int    $failed   Set to how many publications could not be saved.
 	 *
 	 * @return int How many publications were written.
 	 *
 	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
 	 */
-	private function mirrorAll(object $objects, string $register, string $schema): int {
+	private function mirrorAll(object $objects, string $register, string $schema, int &$failed): int {
 		$written = 0;
 		$page = 1;
 		do {
@@ -117,7 +124,13 @@ class MirrorCaseReferenceIntoSourceIdentifiers implements IRepairStep {
 				_multitenancy: false
 			);
 			foreach (($result['results'] ?? []) as $object) {
-				$written += $this->mirror(objects: $objects, object: $object, scope: ['register' => $register, 'schema' => $schema]);
+				try {
+					$written += $this->mirror(objects: $objects, object: $object, scope: ['register' => $register, 'schema' => $schema]);
+				} catch (\Throwable $e) {
+					// One publication that cannot be saved must not abort the upgrade;
+					// the pre-save listener mirrors its entry on its next save.
+					$failed++;
+				}
 			}
 
 			$page++;
@@ -152,9 +165,10 @@ class MirrorCaseReferenceIntoSourceIdentifiers implements IRepairStep {
 		$object['sourceIdentifiers'] = $identifiers;
 		$objects->saveObject(
 			object: $object,
-			register: $scope['register'],
-			schema: $scope['schema'],
-			uuid: (string)($object['id'] ?? $object['@self']['id'] ?? ''),
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $scope['register'], schema: $scope['schema']),
+				uuid: (string)($object['id'] ?? $object['@self']['id'] ?? '')
+			),
 			_rbac: false,
 			_multitenancy: false
 		);

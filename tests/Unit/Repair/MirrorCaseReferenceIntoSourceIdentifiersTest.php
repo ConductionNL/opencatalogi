@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Unit\Repair;
 
 use OCA\OpenCatalogi\Repair\MirrorCaseReferenceIntoSourceIdentifiers;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +32,8 @@ use Psr\Container\ContainerInterface;
  *
  * @covers \OCA\OpenCatalogi\Repair\MirrorCaseReferenceIntoSourceIdentifiers
  * @uses \OCA\OpenCatalogi\Service\Publication\PublicationLinkRules
+ * @uses \OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions
+ * @uses \OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget
  */
 class MirrorCaseReferenceIntoSourceIdentifiersTest extends TestCase {
 
@@ -58,8 +61,16 @@ class MirrorCaseReferenceIntoSourceIdentifiersTest extends TestCase {
 				return ['results' => ($pages[$query['_page'] - 1] ?? []), 'pages' => count($pages)];
 			}
 
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null, string $uuid = '', bool $_rbac = true, bool $_multitenancy = true): array {
-				$this->saves[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid];
+			/** @var array<int, string> Ids whose save throws. */
+			public array $failing = [];
+
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$uuid = $options->uuid;
+				if (in_array($uuid, $this->failing, true) === true) {
+					throw new \RuntimeException('validation failed');
+				}
+
+				$this->saves[] = ['object' => $object, 'register' => $options->target->register, 'schema' => $options->target->schema, 'uuid' => $uuid, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 				foreach ($this->publications as $index => $stored) {
 					if (is_array($stored) === true && ($stored['id'] ?? null) === $uuid) {
 						$this->publications[$index] = $object;
@@ -126,6 +137,8 @@ class MirrorCaseReferenceIntoSourceIdentifiersTest extends TestCase {
 		$this->assertSame([['system' => 'case', 'identifier' => 'Z-1', 'public' => false]], $store->saves[0]['object']['sourceIdentifiers']);
 		$this->assertSame('7', $store->saves[0]['register']);
 		$this->assertSame('12', $store->saves[0]['schema']);
+		$this->assertFalse($store->saves[0]['rbac']);
+		$this->assertFalse($store->saves[0]['multitenancy']);
 		$this->assertSame([1, 2, 3], array_column($store->queries, '_page'));
 		$this->assertSame(['register' => '7', 'schema' => '12'], $store->queries[0]['@self']);
 		$this->assertFalse($store->queries[0]['rbac']);
@@ -136,6 +149,27 @@ class MirrorCaseReferenceIntoSourceIdentifiersTest extends TestCase {
 		$this->assertSame([], $store->saves);
 		$this->assertSame(['Case reference added to the source identifiers of 2 publication(s)', 'Case reference added to the source identifiers of 0 publication(s)'], $messages);
 	}//end testEveryCaseReferenceIsMirroredOnce()
+
+	/**
+	 * A publication whose save throws is counted and warned about; the others are still written.
+	 *
+	 * @return void
+	 */
+	public function testAFailingSaveDoesNotAbortTheStep(): void {
+		$store = self::store([
+			['id' => 'p1', 'caseReference' => 'Z-1'],
+			['id' => 'p2', 'caseReference' => 'Z-2'],
+			['id' => 'p3', 'caseReference' => 'Z-3'],
+		]);
+		$store->failing = ['p2'];
+		$output = $this->createMock(IOutput::class);
+		$output->expects($this->once())->method('info')->with('Case reference added to the source identifiers of 2 publication(s)');
+		$output->expects($this->once())->method('warning')->with('Source identifiers of 1 publication(s) could not be saved; they are mirrored on their next save');
+
+		$this->step($store)->run($output);
+
+		$this->assertSame(['p1', 'p3'], array_column($store->saves, 'uuid'));
+	}//end testAFailingSaveDoesNotAbortTheStep()
 
 	/**
 	 * Without configuration or OpenRegister nothing is written.
