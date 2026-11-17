@@ -540,7 +540,11 @@
 							"label": "Name",
 							"sortable": true
 						},
-						"status",
+						{
+							"key": "state",
+							"label": "State",
+							"formatter": "publicationState"
+						},
 						{
 							"key": "@self.files",
 							"label": "Files",

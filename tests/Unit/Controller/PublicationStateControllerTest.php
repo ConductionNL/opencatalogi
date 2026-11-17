@@ -307,9 +307,37 @@ class PublicationStateControllerTest extends TestCase {
 	/** REQ-PPW-001: the page asks, the server answers public. */
 	public function testVisibilityAnswersPublic(): void {
 		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
 		$response = $this->controller->visibility('p1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(['state' => 'public', 'canPublish' => true], $response->getData());
+		$this->assertSame(['state' => 'public', 'canPublish' => true, 'unlisted' => false, 'canUpdate' => true], $response->getData());
+	}
+
+	/** REQ-PLC-006: unlist stores the flag only, with the caller's rights; list again clears it; no depublication is sent. */
+	public function testUnlistAndListAgainStoreTheFlagOnly(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+
+		$this->assertSame(['unlisted' => true], $this->controller->unlist('p1')->getData());
+		$this->assertSame(['unlisted' => false], $this->controller->relist('p1')->getData());
+
+		$this->assertCount(2, $this->saves);
+		$this->assertTrue($this->saves[0]['object']['unlisted']);
+		$this->assertFalse($this->saves[1]['object']['unlisted']);
+		$this->assertSame('2026-09-01T09:00:00+00:00', $this->saves[0]['object']['publicationDate']);
+		$this->assertArrayNotHasKey('depublicationDate', $this->saves[0]['object']);
+		$this->assertTrue($this->saves[0]['rbac']);
+		$this->assertSame([], $this->sent);
+		$this->assertSame([], $this->transitions);
+	}
+
+	/** REQ-PLC-006: a caller without the update right cannot unlist. */
+	public function testUnlistWithoutTheUpdateRightIsRefused(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'published'];
+		$this->rights->method('mayUpdate')->willReturn(false);
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->unlist('p1')->getStatus());
+		$this->assertSame([], $this->saves);
 	}
 
 	/** REQ-OPR-002: an editor outside the publishers group is told it cannot publish. */
@@ -318,7 +346,7 @@ class PublicationStateControllerTest extends TestCase {
 		$this->mayPublish = false;
 		$response = $this->controller->visibility('p1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(['state' => 'draft', 'canPublish' => false], $response->getData());
+		$this->assertSame(['state' => 'draft', 'canPublish' => false], array_intersect_key($response->getData(), ['state' => 1, 'canPublish' => 1]));
 	}
 
 	/** REQ-OPR-003: an editor who may edit but not publish gets 403 naming the group, and nothing is saved. */

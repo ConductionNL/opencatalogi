@@ -9,6 +9,12 @@
 			data-testid="publication-visibility-state">
 			{{ stateLabel }}
 		</p>
+		<p
+			v-if="unlisted"
+			class="publication-visibility__state"
+			data-testid="publication-visibility-unlisted">
+			{{ t('opencatalogi', 'Unlisted: reachable by its link, left out of search and feeds.') }}
+		</p>
 
 		<div class="publication-visibility__actions">
 			<NcButton
@@ -26,6 +32,20 @@
 				data-testid="publication-publish-again"
 				@click="publish">
 				{{ t('opencatalogi', 'Publish again') }}
+			</NcButton>
+			<NcButton
+				v-if="lists.unlist"
+				:disabled="busy"
+				data-testid="publication-unlist"
+				@click="setListed(false)">
+				{{ t('opencatalogi', 'Unlist') }}
+			</NcButton>
+			<NcButton
+				v-if="lists.listAgain"
+				:disabled="busy"
+				data-testid="publication-list-again"
+				@click="setListed(true)">
+				{{ t('opencatalogi', 'List again') }}
 			</NcButton>
 			<NcButton
 				v-if="actions.withdraw"
@@ -101,6 +121,7 @@ import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublica
 import {
 	documentOptions,
 	filesRouteParams,
+	listActions,
 	publishRefusalMessage,
 	visibilityActions,
 	withdrawnDocuments,
@@ -146,6 +167,8 @@ export default {
 		return {
 			state: '',
 			canPublish: false,
+			canUpdate: false,
+			unlisted: false,
 			documents: [],
 			withdrawn: [],
 			republishing: null,
@@ -160,6 +183,11 @@ export default {
 		/** @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002 */
 		actions() {
 			return visibilityActions(this.state, this.canPublish)
+		},
+
+		/** @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006 */
+		lists() {
+			return listActions(this.state, this.unlisted, this.canUpdate)
 		},
 
 		/** @spec exclude presentational widget adapter; resolves the object context from inject. */
@@ -187,6 +215,8 @@ export default {
 		stateLabel() {
 			const labels = {
 				draft: this.t('opencatalogi', 'Not published yet.'),
+				in_review: this.t('opencatalogi', 'In review: waiting for a reviewer.'),
+				approved: this.t('opencatalogi', 'Approved: ready to publish.'),
 				scheduled: this.t(
 					'opencatalogi',
 					'Scheduled: it becomes public on its publication date.',
@@ -249,6 +279,8 @@ export default {
 				const { data } = await axios.get(this.url('visibility'))
 				this.state = data.state || ''
 				this.canPublish = data.canPublish === true
+				this.canUpdate = data.canUpdate === true
+				this.unlisted = data.unlisted === true
 			} catch {
 				this.state = ''
 				this.canPublish = false
@@ -301,6 +333,27 @@ export default {
 				this.message = this.t('opencatalogi', 'The publication is public.')
 			} catch (error) {
 				this.showError(error)
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Unlist the publication, or list it again (REQ-PLC-006).
+		 *
+		 * @param {boolean} listed True to put it back on every surface.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+		 */
+		async setListed(listed) {
+			this.busy = true
+			this.message = ''
+			try {
+				const { data } = await axios.post(this.url(listed ? 'list' : 'unlist'))
+				this.unlisted = data.unlisted === true
+			} catch {
+				this.messageType = 'error'
+				this.message = this.t('opencatalogi', 'The list status could not be changed.')
 			} finally {
 				this.busy = false
 			}

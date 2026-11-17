@@ -110,13 +110,71 @@ class PublicationStateController extends Controller {
 			return $this->notFound();
 		}
 
+		$properties = $this->asArray(object: $publication);
+
 		return new JSONResponse(
 			[
-				'state' => $this->registers->stateOf(publication: $this->asArray(object: $publication)),
+				'state' => $this->registers->stateOf(publication: $properties),
 				'canPublish' => $this->rights->mayPublish(),
+				'unlisted' => ($properties['unlisted'] ?? false) === true,
+				'canUpdate' => $this->rights->mayUpdate(publication: $publication),
 			]
 		);
 	}//end visibility()
+
+	/**
+	 * Unlist a publication: it stays readable at its own link and leaves search, feeds and sitemaps (REQ-PLC-006).
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return JSONResponse `{unlisted: true}`, 403 without the update right.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+	 */
+	#[NoAdminRequired]
+	public function unlist(string $id): JSONResponse {
+		return $this->setUnlisted(id: $id, unlisted: true);
+	}//end unlist()
+
+	/**
+	 * Put an unlisted publication back on every surface (REQ-PLC-006).
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return JSONResponse `{unlisted: false}`, 403 without the update right.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+	 */
+	#[NoAdminRequired]
+	public function relist(string $id): JSONResponse {
+		return $this->setUnlisted(id: $id, unlisted: false);
+	}//end relist()
+
+	/**
+	 * Store the unlisted flag only: no depublication, no withdrawal sent.
+	 *
+	 * @param string $id       The publication id.
+	 * @param bool   $unlisted The flag.
+	 *
+	 * @return JSONResponse The flag, or the refusal.
+	 */
+	private function setUnlisted(string $id, bool $unlisted): JSONResponse {
+		[$publication, $refusal] = $this->guardWrite(id: $id);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$record = $this->asArray(object: $publication);
+		unset($record['@self']);
+		$record['unlisted'] = $unlisted;
+		try {
+			$this->save(id: $id, record: $record);
+		} catch (\Throwable $e) {
+			return $this->refused(e: $e);
+		}
+
+		return new JSONResponse(['unlisted' => $unlisted]);
+	}//end setUnlisted()
 
 	/**
 	 * Publish now, or publish again after a withdrawal.

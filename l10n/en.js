@@ -1870,7 +1870,17 @@ OC.L10N.register(
         "Invalid listing": "Invalid listing",
         "Listing not found in scope": "Listing not found in scope",
         "Review publications before they are published": "Review publications before they are published",
-        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly."
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.",
+        "In review": "In review",
+        "Approved": "Approved",
+        "Scheduled": "Scheduled",
+        "Withdrawn": "Withdrawn",
+        "Unlist": "Unlist",
+        "List again": "List again",
+        "In review: waiting for a reviewer.": "In review: waiting for a reviewer.",
+        "Approved: ready to publish.": "Approved: ready to publish.",
+        "Unlisted: reachable by its link, left out of search and feeds.": "Unlisted: reachable by its link, left out of search and feeds.",
+        "The list status could not be changed.": "The list status could not be changed."
     },
     "nplurals=2; plural=(n != 1);"
 )

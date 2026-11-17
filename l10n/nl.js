@@ -1825,7 +1825,17 @@ OC.L10N.register(
         "Invalid listing": "Ongeldige vermelding",
         "Listing not found in scope": "Vermelding niet gevonden in dit bereik",
         "Review publications before they are published": "Publicaties beoordelen voordat ze worden gepubliceerd",
-        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Als dit aan staat, moet een concept worden ingediend en goedgekeurd voordat het kan worden gepubliceerd. Als dit uit staat, kan een redacteur een concept direct publiceren."
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Als dit aan staat, moet een concept worden ingediend en goedgekeurd voordat het kan worden gepubliceerd. Als dit uit staat, kan een redacteur een concept direct publiceren.",
+        "In review": "In beoordeling",
+        "Approved": "Goedgekeurd",
+        "Scheduled": "Gepland",
+        "Withdrawn": "Ingetrokken",
+        "Unlist": "Uit de lijsten halen",
+        "List again": "Weer opnemen in de lijsten",
+        "In review: waiting for a reviewer.": "In beoordeling: wacht op een beoordelaar.",
+        "Approved: ready to publish.": "Goedgekeurd: klaar om te publiceren.",
+        "Unlisted: reachable by its link, left out of search and feeds.": "Niet in de lijsten: bereikbaar via de link, niet in zoeken en feeds.",
+        "The list status could not be changed.": "Opnemen in de lijsten kon niet worden gewijzigd."
     },
     "nplurals=2; plural=(n != 1);"
 )

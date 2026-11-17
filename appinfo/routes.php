@@ -136,6 +136,9 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publicationState#visibility', 'url' => '/api/publications/{id}/visibility', 'verb' => 'GET'],
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
+		// Unlist and list again (publication-lifecycle-on-or REQ-PLC-006): readable by link, off search and feeds.
+		['name' => 'publicationState#unlist', 'url' => '/api/publications/{id}/unlist', 'verb' => 'POST'],
+		['name' => 'publicationState#relist', 'url' => '/api/publications/{id}/list', 'verb' => 'POST'],
 		// Published tables, editor side: list, publish a CSV attachment, edit the dictionary (REQ-ODT-001, REQ-ODT-003).
 		['name' => 'publishedTableEdit#index', 'url' => '/api/publications/{id}/tables', 'verb' => 'GET'],
 		['name' => 'publishedTableEdit#create', 'url' => '/api/publications/{id}/tables', 'verb' => 'POST'],
