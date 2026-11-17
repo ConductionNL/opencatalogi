@@ -36,6 +36,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use RuntimeException;
 
 /**
  * Service for generating DIWOO-compliant sitemaps.
@@ -47,6 +48,8 @@ use Psr\Log\NullLogger;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
  * @spec openspec/specs/woo-compliance/spec.md
+ *
+ * @SuppressWarnings(PHPMD.TooManyMethods) The sitemap, its validator and the register side of the reconciliation share one request resolution.
  */
 class SitemapService implements SitemapServiceInterface {
 
@@ -297,13 +300,13 @@ class SitemapService implements SitemapServiceInterface {
 	public function publicDocumentLocations(string $catalogSlug, string $categoryCode): array {
 		$objectService = $this->getObjectService();
 		if ($objectService === null) {
-			throw new \RuntimeException('OpenRegister is not available');
+			throw new RuntimeException('OpenRegister is not available');
 		}
 
 		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
 		$error = $this->resolveSitemapRequest(request: $request, objectService: $objectService);
 		if ($error !== null) {
-			throw new \RuntimeException('the category cannot be read: HTTP ' . $error->getStatus());
+			throw new RuntimeException('the category cannot be read: HTTP ' . $error->getStatus());
 		}
 
 		$builder = new SitemapIndexBuilder(objectService: $objectService, perPage: $this->getMaxPerPage());

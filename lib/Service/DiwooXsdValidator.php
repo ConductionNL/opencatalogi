@@ -22,6 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use DOMDocument;
+use DOMElement;
+use LibXMLError;
 use OCA\OpenCatalogi\Http\XMLResponse;
 
 /**
@@ -114,9 +117,11 @@ class DiwooXsdValidator
     {
         $previous = libxml_use_internal_errors(true);
         libxml_clear_errors();
+        // Put back whatever loader was set before, rather than clearing someone else's.
+        $previousLoader = libxml_get_external_entity_loader();
         libxml_set_external_entity_loader($this->entityLoader(...));
         try {
-            $dom = new \DOMDocument();
+            $dom = new DOMDocument();
             if ($xml === '' || $dom->loadXML($xml) === false) {
                 return [self::messages(fallback: 'the XML cannot be parsed')];
             }
@@ -129,7 +134,7 @@ class DiwooXsdValidator
             return $errors;
         } finally {
             libxml_clear_errors();
-            libxml_set_external_entity_loader(null);
+            libxml_set_external_entity_loader($previousLoader);
             libxml_use_internal_errors($previous);
         }//end try
 
@@ -139,13 +144,14 @@ class DiwooXsdValidator
     /**
      * The XSD messages of one `diwoo:Document` element.
      *
-     * @param \DOMElement $document The element.
+     * @param DOMElement $document The element.
      *
      * @return list<string> The messages, empty when valid.
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) The error handler signature PHP calls.
      */
-    private function validateOne(\DOMElement $document): array
+    private function validateOne(DOMElement $document): array
     {
-        $one = new \DOMDocument();
+        $one = new DOMDocument();
         $one->appendChild($one->importNode($document, true));
         // Reparse, so the namespace declarations sit on the new root as the XSD reads them.
         $one->loadXML((string) $one->saveXML());
@@ -189,7 +195,7 @@ class DiwooXsdValidator
     {
         $messages = array_values(
             array_filter(
-                array_map(static fn (\LibXMLError $error): string => trim($error->message), libxml_get_errors()),
+                array_map(static fn (LibXMLError $error): string => trim($error->message), libxml_get_errors()),
                 static fn (string $message): bool => $message !== ''
             )
         );

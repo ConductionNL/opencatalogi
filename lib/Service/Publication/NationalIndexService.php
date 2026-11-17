@@ -519,6 +519,7 @@ class NationalIndexService implements NationalIndexServiceInterface {
 	 * @throws IndexUnreachableException When PLOOI has no source, could not be reached, or refused.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-publication-that-turns-public-is-delivered-to-plooi-when-the-catalogue-asks-for-it-req-wnd-003
+	 * @SuppressWarnings(PHPMD.StaticAccess) PipelineIncidents::plooiFailure() is a pure message helper.
 	 */
 	public function deliverToPlooi(array $document): array {
 		$held = $this->dryRuns?->hold(channel: 'plooi', payload: $document);

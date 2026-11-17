@@ -50,6 +50,8 @@ use OCP\IURLGenerator;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
  * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+ *
+ * @SuppressWarnings(PHPMD.TooManyMethods) One private method per readiness check.
  */
 class WooReadinessService implements HarvesterReadinessServiceInterface {
 
@@ -194,6 +196,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 *
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
 	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 * @SuppressWarnings(PHPMD.StaticAccess) DiwooSitemapReconciliation::lastResults() reads the stored results.
 	 */
 	public function runCheck(): array {
 		$this->requestCount = 0;

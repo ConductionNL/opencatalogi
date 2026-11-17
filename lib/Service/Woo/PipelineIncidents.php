@@ -94,21 +94,16 @@ class PipelineIncidents {
 	 * Both the delivery service and the national channel raise with it, so one
 	 * failure coalesces into one incident.
 	 *
-	 * @param string $title      The publication's title.
-	 * @param string $reason     The platform's or the transport's reason.
-	 * @param bool   $withdrawal True for a withdrawal.
+	 * @param string $title  The publication's title.
+	 * @param string $reason The platform's or the transport's reason.
+	 * @param string $action What failed: `delivery` or `withdrawal`.
 	 *
 	 * @return string The message.
 	 *
 	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
-	public static function plooiFailure(string $title, string $reason, bool $withdrawal = false): string {
-		$what = 'PLOOI delivery';
-		if ($withdrawal === true) {
-			$what = 'PLOOI withdrawal';
-		}
-
-		return $what . " of '" . $title . "' failed: " . $reason;
+	public static function plooiFailure(string $title, string $reason, string $action = 'delivery'): string {
+		return 'PLOOI ' . $action . " of '" . $title . "' failed: " . $reason;
 	}//end plooiFailure()
 
 	/**
@@ -169,8 +164,8 @@ class PipelineIncidents {
 				continue;
 			}
 
-			$at = strtotime((string)($incident['at'] ?? ''));
-			if ($at !== false && $at >= $since) {
+			$raisedAt = strtotime((string)($incident['at'] ?? ''));
+			if ($raisedAt !== false && $raisedAt >= $since) {
 				return true;
 			}
 		}

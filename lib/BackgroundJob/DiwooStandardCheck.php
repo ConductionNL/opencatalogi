@@ -78,6 +78,7 @@ class DiwooStandardCheck extends TimedJob {
 	 * @return void
 	 *
 	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The job signature; the job takes no argument.
 	 */
 	protected function run($argument): void {
 		$result = $this->check();

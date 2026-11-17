@@ -96,6 +96,7 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-publication-that-turns-public-is-delivered-to-plooi-when-the-catalogue-asks-for-it-req-wnd-003
 	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-change-to-a-delivered-publication-is-delivered-again-req-wno-001
+	 * @SuppressWarnings(PHPMD.StaticAccess) PipelineIncidents::plooiFailure() is a pure message helper.
 	 */
 	public function deliver(string $uuid, string $register, string $schema, bool $withdraw=false): ?array {
 		if ($this->isInPlooiCatalogue(register: $register, schema: $schema) === false) {
@@ -152,13 +153,18 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 			$fields['plooiReason'] = $e->getMessage();
 			$this->logger->warning('[PlooiDeliveryService] PLOOI delivery of ' . $uuid . ' failed: ' . $e->getMessage());
 			// The same kind, subject and message as deliverToPlooi() raises, so one failure is one incident.
+			$action = 'delivery';
+			if ($withdraw === true) {
+				$action = 'withdrawal';
+			}
+
 			$this->incidents?->raise(
 				kind: PipelineIncidents::KIND_PLOOI,
 				subject: $uuid,
 				message: PipelineIncidents::plooiFailure(
 					title: (string)($publication['title'] ?? ''),
 					reason: $e->getMessage(),
-					withdrawal: $withdraw
+					action: $action
 				)
 			);
 		}
