@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Unit test for the data half of the dashboard widgets: the rows each list
- * widget shapes from the object store, what it fetches, where a row click
+ * widget shapes from the object store or the unpublished overview, what it fetches, where a row click
  * goes, the most-viewed widget's period and fetch, the retention widget's
  * fetch, and the shared list-widget options.
  */
@@ -74,35 +74,27 @@ describe('list widget rows', () => {
 		])
 	})
 
-	it('lists only the concept attachments', () => {
-		useCollections({
-			attachment: [
-				{ id: 1, title: 'Draft', summary: 's', status: 'Concept' },
-				{ id: 2, title: 'Done', status: 'Published' },
-			],
-		})
+	it('lists the overview\'s documents, each under its publication\'s title', () => {
+		const item = { publicationId: 'p1', fileId: 3, title: 'besluit.pdf', publicationTitle: 'Draft' }
 
-		expect(UnpublishedAttachmentsWidget.computed.items.call(vm(UnpublishedAttachmentsWidget))).toEqual([
-			{ id: 1, mainText: 'Draft', subText: 's' },
+		expect(UnpublishedAttachmentsWidget.computed.items.call(vm(UnpublishedAttachmentsWidget, { overview: [item] }))).toEqual([
+			{ id: 'p1-3', mainText: 'besluit.pdf', subText: 'Draft', item },
 		])
 	})
 
-	it('lists only the concept publications and keeps each one on its row', () => {
-		const draft = { id: 'p1', title: 'Draft', summary: 's', status: 'Concept' }
-		useCollections({ publication: [draft, { id: 'p2', status: 'Published' }] })
+	it('lists the overview\'s publications and keeps each item on its row', () => {
+		const item = { publicationId: 'p1', title: 'Draft', publicationDate: '2026-11-01' }
+		const undated = { publicationId: 'p2', title: 'Undated' }
 
-		expect(UnpublishedPublicationsWidget.computed.items.call(vm(UnpublishedPublicationsWidget))).toEqual([
-			{ id: 'p1', mainText: 'Draft', subText: 's', publication: draft },
+		expect(UnpublishedPublicationsWidget.computed.items.call(vm(UnpublishedPublicationsWidget, { overview: [item, undated] }))).toEqual([
+			{ id: 'p1', mainText: 'Draft', subText: '2026-11-01', item },
+			{ id: 'p2', mainText: 'Undated', subText: '', item: undated },
 		])
 	})
 
-	it.each([
-		[CatalogiWidget, ['catalog']],
-		[UnpublishedAttachmentsWidget, ['attachment']],
-		[UnpublishedPublicationsWidget, ['publication', 'catalog']],
-	])('%# fetches its collections and clears the loading flag', async (widget, names) => {
+	it('fetches the catalog collection and clears the loading flag', async () => {
 		useCollections({})
-		const instance = vm(widget)
+		const instance = vm(CatalogiWidget)
 		let during
 		objectStore.fetchCollection.mockImplementation(async () => {
 			during = instance.loading
@@ -110,8 +102,28 @@ describe('list widget rows', () => {
 
 		await instance.fetchData()
 
-		expect(objectStore.fetchCollection.mock.calls.map((call) => call[0])).toEqual(names)
+		expect(objectStore.fetchCollection.mock.calls.map((call) => call[0])).toEqual(['catalog'])
 		expect(during).toBe(true)
+		expect(instance.loading).toBe(false)
+	})
+
+	it.each([
+		[UnpublishedAttachmentsWidget, 'documents'],
+		[UnpublishedPublicationsWidget, 'publications'],
+	])('%# reads its list of the unpublished overview and clears the loading flag', async (widget, kind) => {
+		const instance = vm(widget)
+		const items = [{ publicationId: 'p1', title: 'Draft' }]
+		let during
+		axios.get.mockImplementation(async () => {
+			during = instance.loading
+			return { data: { items } }
+		})
+
+		await instance.fetchData()
+
+		expect(axios.get).toHaveBeenCalledWith('/nc/apps/opencatalogi/api/dashboard/unpublished', { params: { kind } })
+		expect(during).toBe(true)
+		expect(instance.overview).toEqual(items)
 		expect(instance.loading).toBe(false)
 	})
 
@@ -142,21 +154,17 @@ describe('list widget row clicks', () => {
 		expect(window.location.href).toBe('/nc/apps/opencatalogi/publications/woo')
 	})
 
-	it('opens a publication under its catalog\'s slug', () => {
-		useCollections({ catalog: [{ id: 7, slug: 'woo' }] })
-
-		vm(UnpublishedPublicationsWidget).onRowClick({ publication: { id: 'p1', catalog: 7 } })
+	it.each([UnpublishedAttachmentsWidget, UnpublishedPublicationsWidget])('%# opens the item\'s publication under its catalog\'s slug', (widget) => {
+		vm(widget).onRowClick({ item: { publicationId: 'p1', catalogSlug: 'woo' } })
 
 		expect(window.location.href).toBe('/nc/apps/opencatalogi/publications/woo/p1')
 	})
 
 	it.each([
-		['no catalog slug can be found', { id: 'p1', catalog: 99 }],
-		['the publication has no id', { catalog: 7 }],
-	])('does nothing when %s', (_why, publication) => {
-		useCollections({ catalog: [{ id: 7, slug: 'woo' }] })
-
-		vm(UnpublishedPublicationsWidget).onRowClick({ publication })
+		['no catalog slug is known', { publicationId: 'p1', catalogSlug: null }],
+		['the item has no publication id', { catalogSlug: 'woo' }],
+	])('does nothing when %s', (_why, item) => {
+		vm(UnpublishedPublicationsWidget).onRowClick({ item })
 
 		expect(window.location.href).toBe('')
 	})

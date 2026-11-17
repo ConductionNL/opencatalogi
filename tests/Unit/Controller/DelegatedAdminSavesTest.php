@@ -52,7 +52,6 @@ use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\InspectionService;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
-use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -99,7 +98,6 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
  * @uses \OCA\OpenCatalogi\Service\Publication\DepublicationService
  * @uses \OCA\OpenCatalogi\Service\Publication\InspectionService
  * @uses \OCA\OpenCatalogi\Service\Publication\TermRoll
- * @uses \OCA\OpenCatalogi\Service\Publication\PublicationRuleService
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses   \OCA\OpenCatalogi\Service\ObjectInPair
  */
@@ -313,9 +311,11 @@ class DelegatedAdminSavesTest extends TestCase {
 			$this->session(),
 			new CommunityPages(
 				new StatusPageService(),
-				new AtomFeedService(new PublicationRuleService(), new NoticeBoardService()),
+				new AtomFeedService(new NoticeBoardService()),
 				new MarkupRenderService(),
-				$this->registers()
+				$this->registers(),
+				$this->createMock(\OCA\OpenCatalogi\Contract\CatalogiServiceInterface::class),
+				$this->createMock(\OCA\OpenCatalogi\Contract\CatalogueFeedReaderInterface::class)
 			)
 		);
 	}//end community()

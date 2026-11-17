@@ -223,7 +223,7 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParams')->willReturn([]);
 
-		$controller = new FederationController($request, $publications, $this->createMock(IL10N::class), new NullLogger(), $this->withheld);
+		$controller = new FederationController($request, $publications, $this->createMock(IL10N::class), new NullLogger(), new \OCA\OpenCatalogi\Service\Publication\LocalPublicationState($this->withheld));
 
 		return (array)$controller->publication('pub-1')->getData();
 	}//end federation()
@@ -275,7 +275,7 @@ class WithheldOnThePublicReadTest extends TestCase {
 		);
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParams')->willReturn([]);
-		$controller = new FederationController($request, $publications, $this->createMock(IL10N::class), new NullLogger(), $this->withheld);
+		$controller = new FederationController($request, $publications, $this->createMock(IL10N::class), new NullLogger(), new \OCA\OpenCatalogi\Service\Publication\LocalPublicationState($this->withheld));
 
 		$data = (array)$controller->publication('pub-1')->getData();
 
@@ -287,7 +287,7 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$publications->method('getFederatedPublication')->willReturn(
 			['success' => true, 'data' => ($this->objects->rendered + ['sources' => []]), 'status' => 200]
 		);
-		$controller = new FederationController($request, $publications, $this->createMock(IL10N::class), new NullLogger(), $this->withheld);
+		$controller = new FederationController($request, $publications, $this->createMock(IL10N::class), new NullLogger(), new \OCA\OpenCatalogi\Service\Publication\LocalPublicationState($this->withheld));
 
 		$this->assertArrayNotHasKey('withheld', (array)$controller->publication('pub-1')->getData());
 	}//end testAPeersPublicationGetsNoWithheldKeyEvenWhenTheIdsMatchALocalOptedInCatalogue()

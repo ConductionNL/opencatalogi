@@ -29,6 +29,7 @@ use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
+use OCA\OpenRegister\Event\TaskTerminalEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
@@ -128,6 +129,29 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
 
 		// Refuse a self-relation and mirror caseReference into sourceIdentifiers (REQ-PRS-001, REQ-PRS-003).
+		$context->registerEventListener(ObjectCreatingEvent::class, PublicationRelationsListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationRelationsListener::class);
+
+		// A Woo publication does not go public without its mandatory DiWoo metadata,
+		// and a document type is stored as its list member's URI (REQ-DWP-002, REQ-DWP-003).
+		$context->registerEventListener(ObjectCreatingEvent::class, DiwooCompletenessListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, DiwooCompletenessListener::class);
+
+		// A plain language summary is saved with its reading level, and its
+		// provenance is the server's to write (publication-plain-language-and-translation, REQ-PPL-001).
+		$context->registerEventListener(ObjectCreatingEvent::class, PlainSummaryCheck::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PlainSummaryCheck::class);
+
+		// A Woo batch whose review task is rejected in OpenRegister goes back to its
+		// author with the task's comment (woo-review-surface, REQ-WRV-002).
+		$context->registerEventListener(TaskTerminalEvent::class, BatchReviewTaskListener::class);
+
+		// A publication records whether it is complete and public; a source
+		// system subscribes to the move to complete (publication-tells-its-source, REQ-PTS-002).
+		$context->registerEventListener(ObjectCreatingEvent::class, CompletenessListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, CompletenessListener::class);
+
+		// A publication carries its public page and its officer page (REQ-PTS-001).
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationLinksListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationLinksListener::class);
 

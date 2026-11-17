@@ -35,7 +35,7 @@ interface MarkupRenderServiceInterface {
 	 *
 	 * @return array{html: string, truncated: boolean}
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
 	 */
 	public function render(string $markup): array;
 }//end interface

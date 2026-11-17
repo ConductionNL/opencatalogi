@@ -147,6 +147,9 @@
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -285,6 +288,9 @@
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -410,6 +416,9 @@
             },
             {
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
                 "get": "OCP\\IUserSession"
@@ -620,6 +629,9 @@
             },
             {
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
                 "get": "OCP\\IUserSession"
@@ -833,6 +845,9 @@
             },
             {
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
                 "get": "OCP\\IUserSession"
@@ -1333,6 +1348,9 @@
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -1450,6 +1468,9 @@
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -1553,6 +1574,9 @@
             },
             {
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
                 "get": "OCP\\IUserSession"
@@ -1898,6 +1922,9 @@
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -2001,6 +2028,9 @@
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -2102,6 +2132,9 @@
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -2198,6 +2231,9 @@
             },
             {
                 "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
                 "get": "OCP\\IUserSession"

@@ -1,11 +1,12 @@
 <?php
 
 /**
- * OpenCatalogi Publication Links Listener.
+ * Writes a publication's public page and officer page on every save.
  *
- * Before a publication is written: refuse a relation that points the
- * publication at itself, and mirror its case reference into its source
- * identifiers.
+ * A source system creating a publication through OpenRegister's object API
+ * gets both pages back in the response. Both are read-only: whatever a caller
+ * sends for them, on a create or an update, is replaced
+ * (publication-tells-its-source, REQ-PTS-001).
  *
  * @category Listener
  * @package  OCA\OpenCatalogi\Listener
@@ -21,14 +22,14 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-names-its-relation-to-another-publication-req-prs-001
+ * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
  */
 
 declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\Publication\PublicationLinkRules;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
@@ -37,95 +38,69 @@ use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
 
 /**
- * Pre-save checks on a publication's relations and source identifiers.
- *
- * Only objects of the configured publication register and schema are
- * touched. A self-relation stops the save with an error naming the property;
- * a case reference is added to `sourceIdentifiers` through the event's
- * modified data, so no second save is made.
+ * Sets `publicUrl` and `officerUrl` on a publication before it is stored.
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-names-its-relation-to-another-publication-req-prs-001
+ * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
  */
 class PublicationLinksListener implements IEventListener {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig $config App configuration naming the publication register and schema.
+	 * @param PublicationLinks $links  Builds both pages.
+	 * @param IAppConfig       $config Names the publication schema.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
 	 */
 	public function __construct(
+		private readonly PublicationLinks $links,
 		private readonly IAppConfig $config,
 	) {
-
 	}//end __construct()
 
 	/**
-	 * Check and complete a publication before it is written.
+	 * Set both pages on a publication about to be stored.
 	 *
-	 * @param Event $event The pre-save event.
+	 * OpenRegister gives the object its uuid before it dispatches the event,
+	 * so the pages can name it. Without a uuid both stay empty.
+	 *
+	 * @param Event $event The pre-save event, a create or an update.
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-names-its-relation-to-another-publication-req-prs-001
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
 	 */
 	public function handle(Event $event): void {
-		if ($event instanceof ObjectCreatingEvent === true) {
-			$this->check(event: $event, object: $event->getObject());
+		if ($event instanceof ObjectCreatingEvent === false && $event instanceof ObjectUpdatingEvent === false) {
 			return;
 		}
 
-		if ($event instanceof ObjectUpdatingEvent === true) {
-			$this->check(event: $event, object: $event->getNewObject());
+		$object = $this->objectOf(event: $event);
+		$schema = $this->config->getValueString('opencatalogi', 'publication_schema', '');
+		if ($schema === '' || (string)$object->getSchema() !== $schema) {
+			return;
 		}
 
+		$links = $this->links->for(uuid: (string)$object->getUuid(), schema: $schema);
+		$event->setModifiedData(array_merge($event->getModifiedData(), $links));
 	}//end handle()
 
 	/**
-	 * Refuse a self-relation, else mirror the case reference.
+	 * The object a create or an update is about to store.
 	 *
-	 * @param ObjectCreatingEvent|ObjectUpdatingEvent $event The pre-save event.
-	 * @param ObjectEntity $object The object about to be written.
+	 * An update cannot set the pages either: they are computed again from the new object.
 	 *
-	 * @return void
+	 * @param ObjectCreatingEvent|ObjectUpdatingEvent $event The event.
 	 *
-	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 * @return ObjectEntity The object.
 	 */
-	private function check(ObjectCreatingEvent|ObjectUpdatingEvent $event, ObjectEntity $object): void {
-		if ($this->isPublication(object: $object) === false) {
-			return;
+	private function objectOf(ObjectCreatingEvent|ObjectUpdatingEvent $event): ObjectEntity {
+		if ($event instanceof ObjectCreatingEvent === true) {
+			return $event->getObject();
 		}
 
-		$data = array_merge(($object->getObject() ?? []), $event->getModifiedData());
-		$property = (new PublicationLinkRules())->selfRelation(data: $data, publicationId: (string)($object->getUuid() ?? ''));
-		if ($property !== null) {
-			$event->setErrors(['message' => sprintf('A publication cannot relate to itself: remove it from "%s".', $property), 'property' => $property]);
-			$event->stopPropagation();
-			return;
-		}
-
-		$identifiers = (new PublicationLinkRules())->withMirroredCaseReference(data: $data);
-		if ($identifiers !== null) {
-			$event->setModifiedData(array_merge($event->getModifiedData(), ['sourceIdentifiers' => $identifiers]));
-		}
-
-	}//end check()
-
-	/**
-	 * Whether the object is a publication of the configured register and schema.
-	 *
-	 * @param ObjectEntity $object The object.
-	 *
-	 * @return bool True for a publication.
-	 */
-	private function isPublication(ObjectEntity $object): bool {
-		$schema = $this->config->getValueString('opencatalogi', 'publication_schema', '');
-		$register = $this->config->getValueString('opencatalogi', 'publication_register', '');
-		if ($schema === '' || $register === '') {
-			return false;
-		}
-
-		return (string)$object->getSchema() === $schema && (string)$object->getRegister() === $register;
-	}//end isPublication()
+		return $event->getNewObject();
+	}//end objectOf()
 }//end class

@@ -56,7 +56,11 @@
                 "woo_index_registration_at": "",
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
-                "public_api_cache_seconds": "60"
+                "public_api_cache_seconds": "60",
+                "publication_url_template": "",
+                "publication_url_catalog": "publication",
+                "cors_allowed_origins": "*",
+                "search_indexing": "allowed"
             }
         },
         "enabled": [],
@@ -125,7 +129,11 @@
                 "woo_index_registration_at": "",
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
-                "public_api_cache_seconds": "60"
+                "public_api_cache_seconds": "60",
+                "publication_url_template": "",
+                "publication_url_catalog": "publication",
+                "cors_allowed_origins": "*",
+                "search_indexing": "allowed"
             }
         },
         "enabled": [],
@@ -196,7 +204,11 @@
                 "woo_index_registration_at": "",
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
-                "public_api_cache_seconds": "0"
+                "public_api_cache_seconds": "0",
+                "publication_url_template": "",
+                "publication_url_catalog": "publication",
+                "cors_allowed_origins": "*",
+                "search_indexing": "allowed"
             }
         },
         "enabled": [],
