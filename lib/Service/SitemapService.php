@@ -33,6 +33,8 @@ use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Service for generating DIWOO-compliant sitemaps.
@@ -82,6 +84,27 @@ class SitemapService implements SitemapServiceInterface {
 	 */
 	private const CONFIG_MAX_PER_PAGE = 'sitemap_max_per_page';
 
+	/**
+	 * The reason a document the shipped DiWoo XSD refuses is reported with (REQ-WNO-002).
+	 *
+	 * @var string
+	 */
+	public const XSD_INVALID = 'xsd-invalid';
+
+	/**
+	 * Validates each rendered document against the shipped DiWoo XSD.
+	 *
+	 * @var DiwooXsdValidator
+	 */
+	private readonly DiwooXsdValidator $xsdValidator;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private readonly LoggerInterface $logger;
+
 
 	/**
 	 * Constructor for SitemapService.
@@ -92,6 +115,8 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param SitemapDocumentMapper $documentMapper Maps a file of a publication to its DiWoo document
 	 * @param PublicationQueryService $queryService The SCH-PFTS-CAT-002 read-rule guard
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local
+	 * @param DiwooXsdValidator|null $xsdValidator Validates each rendered document against the shipped XSD (REQ-WNO-002)
+	 * @param LoggerInterface|null $logger Logs a document held back for its XSD errors
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookup $openRegister,
@@ -100,7 +125,11 @@ class SitemapService implements SitemapServiceInterface {
 		private readonly SitemapDocumentMapper $documentMapper,
 		private readonly PublicationQueryService $queryService,
 		private readonly WooCategoryRegistry $categories,
+		?DiwooXsdValidator $xsdValidator = null,
+		?LoggerInterface $logger = null,
 	) {
+		$this->xsdValidator = ($xsdValidator ?? new DiwooXsdValidator());
+		$this->logger = ($logger ?? new NullLogger());
 	}//end __construct()
 
 	/**
@@ -231,7 +260,7 @@ class SitemapService implements SitemapServiceInterface {
 			foreach (SitemapDocumentRelations::forPublication(publication: $publication, apiBase: $apiBase) as [$file, $relations]) {
 				// A document the Woo-index would refuse is held back; validateDiwooOutput() reports it (REQ-DWP-004).
 				$document = $this->documentMapper->mapComplete(publication: $publication, file: $file, relations: $relations);
-				if ($document !== null) {
+				if ($document !== null && $this->passesXsd(entry: $document) === true) {
 					$documents[] = $document;
 				}
 			}
@@ -239,6 +268,30 @@ class SitemapService implements SitemapServiceInterface {
 
 		return new XMLResponse(data: self::documentsXml(documents: $documents));
 	}//end buildSitemap()
+
+	/**
+	 * Whether a url entry's DiWoo document validates against the shipped XSD; a document
+	 * that does not is logged with the XSD errors and left out of the page (REQ-WNO-002).
+	 *
+	 * @param array<string, mixed> $entry The url entry.
+	 *
+	 * @return bool True when the document is valid.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 */
+	private function passesXsd(array $entry): bool {
+		$errors = $this->xsdValidator->entryErrors(entry: $entry);
+		if ($errors === []) {
+			return true;
+		}
+
+		$this->logger->warning(
+			'DiWoo document left out of the sitemap: it does not validate against the DiWoo XSD',
+			['documentLoc' => (string)($entry['loc'] ?? ''), 'errors' => $errors]
+		);
+
+		return false;
+	}//end passesXsd()
 
 	/**
 	 * The sitemap `urlset` around the mapped `url` entries.
@@ -629,8 +682,9 @@ class SitemapService implements SitemapServiceInterface {
 	/**
 	 * Dry-run the DIWOO mapping for a catalog and collect per-document violations.
 	 *
-	 * Runs the same {@see mapDiwooDocument()} path used to serve the sitemap, but
-	 * discards the XML and returns only the unresolved-axis report. Advisory: it
+	 * Runs the same {@see mapDiwooDocument()} path used to serve the sitemap, but discards the XML and returns only the unresolved-axis report, and
+	 * each complete document the shipped XSD refuses with reason `xsd-invalid` and the
+	 * XSD message (REQ-WNO-002). Advisory: it
 	 * never prevents the sitemap from being served (WOO-TOOI-004).
 	 *
 	 * @param array<int, array<string, mixed>> $publications The catalog's publications (with `@self.files`).
@@ -644,7 +698,22 @@ class SitemapService implements SitemapServiceInterface {
 	public function collectDiwooViolations(array $publications): array {
 		$violations = [];
 		foreach (self::downloadableFiles(publications: $publications) as [$publication, $file]) {
-			$this->mapDiwooDocument(publication: $publication, file: $file, violations: $violations);
+			// A complete document is also checked against the shipped XSD; an incomplete
+			// one is held back already and reported by its gaps (REQ-WNO-002).
+			$entry = $this->mapDiwooDocument(publication: $publication, file: $file, violations: $violations);
+			if ($this->documentMapper->mapComplete(publication: $publication, file: $file) === null) {
+				continue;
+			}
+
+			$errors = $this->xsdValidator->entryErrors(entry: $entry);
+			if ($errors !== []) {
+				$violations[] = [
+					'documentLoc' => (string)$entry['loc'],
+					'axis' => 'document',
+					'reason' => self::XSD_INVALID,
+					'message' => implode('; ', $errors),
+				];
+			}
 		}
 
 		foreach ($publications as $publication) {

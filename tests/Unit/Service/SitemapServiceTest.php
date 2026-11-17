@@ -1478,6 +1478,60 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	/**
+	 * REQ-WNO-002: a document the shipped XSD refuses is left out of the page at render
+	 * time, the page that remains validates, and the validator lists the document with
+	 * `xsd-invalid` and the XSD message.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 */
+	public function testAnXsdInvalidDocumentIsLeftOutAndReported(): void {
+		$publications = [
+			['id' => 'goed', 'wooCategory' => 'infocat012', 'creationDate' => '2026-09-30'],
+			// A zero date from an import: the mapper accepts it, xs:date has no year 0000.
+			['id' => 'fout', 'wooCategory' => 'infocat012', 'creationDate' => '0000-01-01'],
+		];
+		$xml = $this->storedValuesPage($publications);
+
+		$this->assertStringContainsString('goed.pdf', $xml);
+		$this->assertStringNotContainsString('fout.pdf', $xml);
+		$this->assertSame(1, substr_count($xml, '<diwoo:Document>'));
+		$this->assertSame([[]], self::diwooXsdErrors($xml));
+
+		$report = $this->service->validateDiwooOutput('woo', 'sitemapindex-diwoo-infocat012.xml');
+		$this->assertFalse($report['valid']);
+		$xsd = array_values(array_filter($report['violations'], static fn (array $violation): bool => $violation['reason'] === SitemapService::XSD_INVALID));
+		$this->assertCount(1, $xsd);
+		$this->assertSame('https://example.com/fout.pdf', $xsd[0]['documentLoc']);
+		$this->assertStringContainsString('creatiedatum', $xsd[0]['message']);
+		$this->assertStringContainsString("'0000-01-01' is not a valid value", $xsd[0]['message']);
+	}
+
+	/**
+	 * REQ-WNO-002: the XSD the app ships and validates with at render time is the
+	 * authority's file, and a rendered page validates against it.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 */
+	public function testARenderedPageValidatesAgainstTheShippedXsd(): void {
+		$shipped = dirname(__DIR__, 3) . '/lib/Settings/diwoo';
+		foreach (['diwoo-metadata.xsd', 'diwoo-metadata-lijsten.xsd', 'MDTO-XML1.0.1.xsd'] as $file) {
+			$this->assertSame(
+				hash_file('sha256', __DIR__ . '/fixtures/diwoo-0.9.8/' . $file),
+				hash_file('sha256', $shipped . '/' . $file),
+				$file . ' differs from the authority copy'
+			);
+		}
+
+		$xml = $this->storedValuesPage([
+			['id' => 'een', 'wooCategory' => 'infocat012', 'documentsoort' => 'besluit', 'creationDate' => '2026-09-30'],
+			['id' => 'twee', 'wooCategory' => 'infocat012', 'language' => 'en', 'creationDate' => '2026-10-01', 'validFrom' => '2027-01-01'],
+		]);
+
+		$this->assertSame(2, substr_count($xml, '<diwoo:Document>'));
+		$this->assertSame([[], []], (new \OCA\OpenCatalogi\Service\DiwooXsdValidator($shipped))->documentErrors($xml));
+	}
+
+	/**
 	 * Every DiWoo document of a rendered page validates against the official DiWoo 0.9.8 XSD.
 	 *
 	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
