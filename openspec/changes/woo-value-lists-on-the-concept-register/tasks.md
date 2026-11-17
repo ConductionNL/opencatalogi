@@ -5,11 +5,18 @@ Read `openspec/woo-build-rules.md` first. Start once `dossiq/woo-refusal-grounds
 ## 1. Read from the register
 
 - [ ] 1.1 Switch `TooiVocabularyService` to the vocabulary register, remove `tooi_waardelijsten.json`, and keep every existing caller's test green (REQ-WVC-001, WOO-TOOI-004). Verify: `tests/Unit/Service/TooiVocabularyServiceTest.php::testTheCategoryResolvesFromTheVocabularyRegister` (fails today), `::testAnUnreadableRegisterThrows`, `::testADeprecatedConceptResolvesButIsRefusedForANewValue`; `SitemapServiceTest` stays green.
+      Not built yet, on purpose (17 Nov): OpenRegister seeds only the informatiecategorieën (17 concepts, without
+      `c_816e508d` / infocat018 that version 4 of the list added) and the documenthandelingen; it seeds no documentsoorten
+      and no talen scheme. Switching the reader before 2.1 can import those schemes would drop infocat018 and leave every
+      document type and language unresolved on a live instance. 1.1 and 2.1 go in together.
 - [ ] 1.2 Declare `x-openregister-concepts` on `wooCategory`, `soortHandeling`, `documentsoort` and `language`, bumping versions (REQ-WVC-001). Verify: `tests/Unit/Settings/ConceptPropertyDeclarationTest.php::testListPropertiesDeclareTheirScheme`, and an import test asserting the annotation survives (an unknown `x-openregister-*` key is dropped silently on older OpenRegister).
 
 ## 2. Refresh
 
 - [ ] 2.1 Add `TooiSchemeRefresh`, registered in `appinfo/info.xml`, with the source config and the mass-deprecation guard (REQ-WVC-002). Verify: `tests/Unit/BackgroundJob/TooiSchemeRefreshTest.php::testANewConceptFromTheSourceIsImported` (fails today), `::testAMassDeprecationIsRefused`, `::testAFailedDownloadKeepsTheScheme`, `::testTheJobIsRegistered`.
+      Blocked (17 Nov): the TOOI and DiWoo source downloads (identifier.overheid.nl, standaarden.overheid.nl,
+      repository.officiele-overheidspublicaties.nl) are refused by the build session's network, and the task asks for the
+      real source URLs and recorded responses, not reconstructed ones. Needs a session that can reach those hosts.
 - [ ] 2.2 Live: run the job once on the dev instance and paste the per-scheme counts in the PR body (REQ-WVC-002). Verify: the pasted counts. (live pass, decision 139)
 - [ ] 2.3 Make `WooCategoryRegistry` read the categories from the vocabulary register instead of `WooCategory::ALL`, switching `SavedSearchService` and `BatchPublicationWriter` to `WooCategoryRegistry::find()`, taking the English label from the concept or `l10n/`, and keeping operator-added categories and every caller (the sitemap included) green (REQ-WVC-005, row 12.30). Verify: `tests/Unit/Service/Woo/WooCategoryRegistryTest.php::testTheCategoriesComeFromTheRegisterNotTheConstant` (fails today), and `git grep -n "const ALL" lib/Service/WooCategory.php` returns nothing.
 - [ ] 2.4 Prove that every category change is audited: a refresh that renames or deprecates a category, an administrator edit, and an operator-added category edit each leave an audit trail row with actor, time, before and after; the job refuses the categories scheme when audit trails are off (REQ-WVC-005, row 12.30). Verify: `TooiSchemeRefreshTest::testACategoryChangeIsOnTheAuditTrailWithBeforeAndAfter` (fails today), `::testWithoutAuditTrailsTheCategoriesAreNotRefreshed`, and `WooCategoryRegistryTest::testAnOperatorCategoryEditIsAudited`, each reading the row back through OpenRegister's `AuditTrailMapper`, not a double of it.
