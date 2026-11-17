@@ -26,8 +26,7 @@ declare(strict_types=1);
 namespace Unit\Service\Subject;
 
 use OCA\OpenRegister\Db\ObjectEntity;
-use OCA\OpenRegister\Db\Register;
-use OCA\OpenRegister\Db\Schema;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Service\ObjectService;
 
 /**
@@ -70,14 +69,9 @@ class FakeSubjectRegister extends ObjectService {
 
 	public function find(
 		int|string $id,
-		?array $_extend = [],
-		bool $files = false,
-		Register|string|int|null $register = null,
-		Schema|string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_render = true,
-		bool $_audit = true,
 	): ?ObjectEntity {
 		foreach ($this->themes as $theme) {
 			if ((string)$theme['id'] === (string)$id) {
