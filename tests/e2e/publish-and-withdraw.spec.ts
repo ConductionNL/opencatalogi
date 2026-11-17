@@ -16,6 +16,7 @@
  * @e2e openspec/specs/publications/spec.md#scenario-a-reader-without-update-rights
  * @e2e openspec/specs/publications/spec.md#scenario-an-editor-restores-a-publication-after-fixing-it
  * @e2e openspec/specs/publications/spec.md#scenario-an-annex-with-personal-data
+ * @e2e openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#scenario-the-editor-sees-it
  */
 import { expect, test } from './authenticated-request.ts'
 import {
@@ -159,5 +160,56 @@ test.describe('Publish and withdraw in one action', () => {
 			`${API_BASE}/publications/${publication.id}/visibility`,
 		)
 		expect((await visibility.json()).state).toBe('public')
+	})
+
+	// REQ-ATT-103 "the editor sees it": the publication page lists a file
+	// whose own window has ended as withdrawn, with that date and the reason
+	// the withdrawal kept on the file (OpenRegister turns the
+	// `withdrawn-reason:` label into the `withdrawn-reason` field).
+	test('the editor sees it: a withdrawn annex carries its date and reason', async ({
+		request: admin,
+	}) => {
+		const publication = await fx.createPublication(
+			'annex-seen',
+			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			REG_PUBLICATION,
+		)
+		const annex = await fx.attachFile(
+			REG_PUBLICATION,
+			SCHEMA_PUBLICATION,
+			publication.id,
+			'bijlage-woonadres.txt',
+			'Woonadres',
+		)
+
+		const withdrawn = await admin.post(
+			`${API_BASE}/publications/${publication.id}/files/${annex}/withdraw`,
+			{ data: { reason: 'Bevat een woonadres' } },
+		)
+		expect(withdrawn.ok()).toBe(true)
+
+		const files = await admin.get(
+			`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${publication.id}/files`,
+		)
+		const list = await files.json()
+		const rows = Array.isArray(list) ? list : list.results || []
+		const annexRow = rows.find((row: { id: number }) => row.id === annex)
+		expect(annexRow.depublished).toBeTruthy()
+		expect(new Date(annexRow.depublished).getTime()).toBeLessThanOrEqual(Date.now())
+		expect(annexRow['withdrawn-reason']).toBe('Bevat een woonadres')
+
+		const putBack = await admin.post(
+			`${API_BASE}/publications/${publication.id}/files/${annex}/republish`,
+			{ data: { reason: 'Woonadres is weggelakt' } },
+		)
+		expect(putBack.ok()).toBe(true)
+		const after = await admin.get(
+			`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${publication.id}/files`,
+		)
+		const afterList = await after.json()
+		const afterRow = (Array.isArray(afterList) ? afterList : afterList.results || [])
+			.find((row: { id: number }) => row.id === annex)
+		expect(afterRow.depublished ?? null).toBeNull()
+		expect(afterRow['withdrawn-reason'] ?? null).toBeNull()
 	})
 })

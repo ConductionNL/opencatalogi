@@ -37,6 +37,7 @@ use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
+use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -357,4 +358,68 @@ class DcatServiceTest extends TestCase {
 		}
 
 	}//end testOpenRegisterDependenciesRefuseWithTheirOwnMessage()
+
+	/**
+	 * A CSV published as a table is handed to the table service, and its
+	 * distribution in the feed conforms to the table's data dictionary (REQ-ODT-003).
+	 *
+	 * @return void
+	 */
+	public function testATableCsvDistributionConformsToItsDictionary(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->appConfig->method('getValueString')->willReturnCallback(static fn ($app, $key, $default = '') => $default);
+
+		$csv = ['id' => 77, 'title' => 'speeltuinen.csv', 'accessUrl' => 'https://host/f/77', 'downloadUrl' => 'https://host/f/77/download', 'type' => 'text/csv', 'published' => '2026-01-01T00:00:00+00:00'];
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturn(
+			[
+				'results' => [['@self' => ['uuid' => 'u1', 'schema' => 28, 'updated' => '2026-01-01T00:00:00+00:00'], 'id' => 'u1', 'title' => 'Speeltuinen']],
+				'next' => null,
+			]
+		);
+		$fileService = $this->createMock(FileService::class);
+		$fileService->method('getFiles')->willReturn([]);
+		$fileService->method('formatFiles')->willReturn(['results' => [$csv]]);
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->method('find')->willThrowException(new \RuntimeException('not needed'));
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				'OCA\\OpenRegister\\Service\\ObjectService' => $objectService,
+				'OCA\\OpenRegister\\Service\\FileService' => $fileService,
+				'OCA\\OpenRegister\\Db\\SchemaMapper' => $schemaMapper,
+			}
+		);
+
+		$tables = $this->createMock(PublishedTableServiceInterface::class);
+		$tables->expects($this->once())
+			->method('withDictionaryUrls')
+			->with([$csv], 'u1', 'woo')
+			->willReturn([$csv + ['dataDictionaryUrl' => 'https://host/apps/opencatalogi/api/woo/u1/tables/t1/dictionary']]);
+
+		$service = new DcatService(
+			new OpenRegisterLookup($this->container, $this->appManager),
+			new DcatMappingService(new \OCA\OpenCatalogi\Service\DcatVocabularyService()),
+			new DcatSerializer(),
+			new InstanceSettings($this->urlGenerator, $this->appConfig),
+			$this->createMock(LoggerInterface::class),
+			new DcatAssurance($this->standardsVersions),
+			$tables
+		);
+
+		$document = $service->buildCatalogDocument(
+			catalog: ['id' => 'c1', 'title' => 'WOO', 'registers' => [20], 'schemas' => [28]],
+			catalogSlug: 'woo'
+		);
+
+		$conforms = [];
+		array_walk_recursive(
+			$document,
+			static function (mixed $value, mixed $key) use (&$conforms): void {
+				if ($key === '@id' && is_string($value) === true && str_ends_with($value, '/dictionary') === true) {
+					$conforms[] = $value;
+				}
+			}
+		);
+		$this->assertSame(['https://host/apps/opencatalogi/api/woo/u1/tables/t1/dictionary'], $conforms);
+	}//end testATableCsvDistributionConformsToItsDictionary()
 }//end class
