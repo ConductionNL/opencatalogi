@@ -23,6 +23,7 @@ namespace Unit\BackgroundJob;
 use OCA\OpenCatalogi\BackgroundJob\DiwooStandardCheck;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
@@ -49,6 +50,13 @@ class DiwooStandardCheckTest extends TestCase {
 	 * @var array<string, string>
 	 */
 	private array $stored = [];
+
+	/**
+	 * The incidents the job raised, as [kind, subject, message].
+	 *
+	 * @var list<array{0: string, 1: string, 2: string}>
+	 */
+	private array $raised = [];
 
 	/**
 	 * A job whose HTTP client answers the version index with the given status and body,
@@ -86,10 +94,18 @@ class DiwooStandardCheckTest extends TestCase {
 		$time = $this->createMock(ITimeFactory::class);
 		$time->method('getTime')->willReturn(1763337600);
 
+		$incidents = $this->createMock(PipelineIncidents::class);
+		$incidents->method('raise')->willReturnCallback(
+			function (string $kind, string $subject, string $message): void {
+				$this->raised[] = [$kind, $subject, $message];
+			}
+		);
+
 		return new DiwooStandardCheck(
 			$time,
 			new StandardsVersionService($clients, $this->createMock(DirectoryService::class)),
 			$config,
+			$incidents,
 			$this->createMock(LoggerInterface::class),
 		);
 	}//end job()
@@ -117,16 +133,19 @@ class DiwooStandardCheckTest extends TestCase {
 		$this->assertSame('0.9.9', $result['published']);
 		$this->assertSame('DiWoo 0.9.9 is current; this instance emits ' . StandardsVersionService::DIWOO_VERSION, $result['message']);
 		$this->assertSame(1763337600, $result['checkedAt']);
+		$this->assertSame([['diwoo-version', 'diwoo', $result['message']]], $this->raised);
 	}//end testANewerVersionFailsReadiness()
 
 	public function testAnUnreachableAuthorityIsNotCurrent(): void {
-		$result = $this->job(status: null)->check();
+		$job = $this->job(status: null);
+		(new \ReflectionMethod($job, 'run'))->invoke($job, null);
+		$result = $this->storedResult();
 
 		$this->assertFalse($result['ready']);
 		$this->assertSame(StandardsVersionService::STATUS_UNKNOWN, $result['status']);
 		$this->assertNull($result['published']);
 		$this->assertSame('could not verify', $result['message']);
-		$this->assertSame($result, $this->storedResult());
+		$this->assertSame([], $this->raised);
 	}//end testAnUnreachableAuthorityIsNotCurrent()
 
 	public function testAnErrorPageIsNotCurrent(): void {

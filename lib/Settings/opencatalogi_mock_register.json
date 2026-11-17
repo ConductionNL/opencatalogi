@@ -2020,6 +2020,40 @@
       {
         "@self": {
           "register": "publication",
+          "schema": "wooPipelineIncident",
+          "slug": "woopipelineincident-1"
+        },
+        "kind": "plooi-delivery",
+        "subject": "example-municipality-annual-report",
+        "message": "PLOOI answered 502: the platform is not available.",
+        "at": "2026-11-16T07:12:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooPipelineIncident",
+          "slug": "woopipelineincident-2"
+        },
+        "kind": "diwoo-version",
+        "subject": "diwoo",
+        "message": "DiWoo 0.9.9 is current; this instance emits 0.9.8",
+        "at": "2026-11-16T03:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooPipelineIncident",
+          "slug": "woopipelineincident-3"
+        },
+        "kind": "sitemap-gap",
+        "subject": "gemeente-voorbeeld/2.1",
+        "message": "One document is missing from the sitemap.",
+        "at": "2026-11-10T03:00:00+00:00",
+        "resolvedAt": "2026-11-10T09:30:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
           "schema": "withheldDocument",
           "slug": "withhelddocument-1"
         },

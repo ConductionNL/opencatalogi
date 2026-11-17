@@ -154,6 +154,7 @@ class SettingsService implements SettingsServiceInterface {
 				'woo_batch_schema' => 'wooBatch',
 				'woo_assessment_schema' => 'wooAssessment',
 				'withheld_document_schema' => 'withheldDocument',
+				'woo_pipeline_incident_schema' => 'wooPipelineIncident',
 			],
 		],
 		[

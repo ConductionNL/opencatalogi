@@ -24,6 +24,7 @@ namespace OCA\OpenCatalogi\BackgroundJob;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -32,8 +33,9 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Asks the DiWoo version index which metadata version is current and stores the
- * answer as a readiness result. A newer version fails readiness and names both
- * versions; an authority that cannot be read is "could not verify", never a pass.
+ * answer as a readiness result. A newer version fails readiness, names both
+ * versions and raises a pipeline incident; an authority that cannot be read is
+ * "could not verify", never a pass.
  *
  * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
  */
@@ -52,12 +54,14 @@ class DiwooStandardCheck extends TimedJob {
 	 * @param ITimeFactory            $time      The clock.
 	 * @param StandardsVersionService $standards Reads the published DiWoo version.
 	 * @param IAppConfig              $config    Stores the result.
+	 * @param PipelineIncidents       $incidents Tells the incident group about a superseded version.
 	 * @param LoggerInterface         $logger    The logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
 		private readonly StandardsVersionService $standards,
 		private readonly IAppConfig $config,
+		private readonly PipelineIncidents $incidents,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);
@@ -79,6 +83,10 @@ class DiwooStandardCheck extends TimedJob {
 		$result = $this->check();
 		if ($result['ready'] === false) {
 			$this->logger->warning('[DiwooStandardCheck] ' . $result['message']);
+		}
+
+		if ($result['status'] === StandardsVersionService::STATUS_BEHIND) {
+			$this->incidents->raise(kind: 'diwoo-version', subject: 'diwoo', message: $result['message']);
 		}
 	}//end run()
 
