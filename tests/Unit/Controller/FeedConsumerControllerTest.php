@@ -177,4 +177,33 @@ class FeedConsumerControllerTest extends TestCase {
 
 		$this->assertSame(['id' => 'c1', 'enabled' => false], $this->controller->disable('hva-onderwijs', 'c1')->getData());
 	}
+	public function testSignedInReadersSetsTheFlagOnTheCataloguesConsumer(): void {
+		$this->params = ['actForSignedInReaders' => true];
+		$this->consumers->expects($this->once())->method('consumerOf')->with('cat-1', 'c1');
+		$this->consumers->expects($this->once())->method('setActForSignedInReaders')->with('c1', true)
+			->willReturn(['id' => 'c1', 'actForSignedInReaders' => true]);
+
+		$response = $this->controller->signedInReaders('hva-onderwijs', 'c1');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['id' => 'c1', 'actForSignedInReaders' => true], $response->getData());
+	}
+
+	public function testSignedInReadersRefusesAValueThatIsNotABoolean(): void {
+		$this->params = ['actForSignedInReaders' => 'yes'];
+		$this->consumers->expects($this->never())->method('setActForSignedInReaders');
+
+		$response = $this->controller->signedInReaders('hva-onderwijs', 'c1');
+
+		$this->assertSame(400, $response->getStatus());
+		$this->assertSame(['error' => 'actForSignedInReaders must be true or false'], $response->getData());
+	}
+
+	public function testSignedInReadersRefusesAConsumerOfAnotherCatalogue(): void {
+		$this->params = ['actForSignedInReaders' => true];
+		$this->consumers->method('consumerOf')->willThrowException(new OutOfBoundsException('Feed consumer not found'));
+		$this->consumers->expects($this->never())->method('setActForSignedInReaders');
+
+		$this->assertSame(404, $this->controller->signedInReaders('hva-onderwijs', 'other')->getStatus());
+	}
 }

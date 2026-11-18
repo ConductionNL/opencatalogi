@@ -140,6 +140,11 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectCreatingEvent::class, PlainSummaryCheck::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PlainSummaryCheck::class);
 
+		// A Woo publication is public by law: it cannot be limited to signed-in
+		// readers (publications-for-signed-in-readers, REQ-PSR-004).
+		$context->registerEventListener(ObjectCreatingEvent::class, PublicationAudienceCheck::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationAudienceCheck::class);
+
 		// A Woo batch whose review task is rejected in OpenRegister goes back to its
 		// author with the task's comment (woo-review-surface, REQ-WRV-002).
 		$context->registerEventListener(TaskTerminalEvent::class, BatchReviewTaskListener::class);

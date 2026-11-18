@@ -106,10 +106,26 @@ class PublicationStateController extends Controller {
 			return $this->notFound();
 		}
 
+		$data = $this->asArray(object: $publication);
+
+		// Who can read it (publications-for-signed-in-readers, REQ-PSR-001); anything
+		// the schema does not know reads as its default.
+		$audience = 'public';
+		if (($data['audience'] ?? null) === 'signedIn') {
+			$audience = 'signedIn';
+		}
+
+		$minimumAssurance = 'substantial';
+		if (($data['minimumAssurance'] ?? null) === 'high') {
+			$minimumAssurance = 'high';
+		}
+
 		return new JSONResponse(
 			[
-				'state' => $this->registers->stateOf(publication: $this->asArray(object: $publication)),
+				'state' => $this->registers->stateOf(publication: $data),
 				'canPublish' => $this->rights->mayPublish(),
+				'audience' => $audience,
+				'minimumAssurance' => $minimumAssurance,
 			]
 		);
 	}//end visibility()

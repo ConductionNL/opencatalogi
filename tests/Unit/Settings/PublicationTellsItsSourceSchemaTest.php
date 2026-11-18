@@ -68,7 +68,7 @@ final class PublicationTellsItsSourceSchemaTest extends TestCase {
 		$merged = $merge->invoke(null, $base, $root . '/register.d');
 		$publication = $merged['components']['schemas']['publication'];
 
-		self::assertSame('0.0.8', $publication['version']);
+		self::assertSame('0.0.9', $publication['version']);
 		foreach (['publicUrl', 'officerUrl', 'completeness', 'completeAt', 'expectedDocuments', 'wooCategory', 'publicationKind'] as $property) {
 			self::assertArrayHasKey($property, $publication['properties'], $property);
 		}

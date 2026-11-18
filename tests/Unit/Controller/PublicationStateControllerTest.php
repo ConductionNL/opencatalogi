@@ -280,7 +280,20 @@ class PublicationStateControllerTest extends TestCase {
 		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$response = $this->controller->visibility('p1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(['state' => 'public', 'canPublish' => true], $response->getData());
+		$this->assertSame(['state' => 'public', 'canPublish' => true, 'audience' => 'public', 'minimumAssurance' => 'substantial'], $response->getData());
+	}
+
+	/** REQ-PSR-001: the page is told who can read the publication. */
+	public function testVisibilityTellsWhoCanReadIt(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'audience' => 'signedIn', 'minimumAssurance' => 'high'];
+		$data = $this->controller->visibility('p1')->getData();
+		$this->assertSame('signedIn', $data['audience']);
+		$this->assertSame('high', $data['minimumAssurance']);
+
+		$this->publication = ['id' => 'p1', 'audience' => 'staff', 'minimumAssurance' => 'low'];
+		$data = $this->controller->visibility('p1')->getData();
+		$this->assertSame('public', $data['audience']);
+		$this->assertSame('substantial', $data['minimumAssurance']);
 	}
 
 	/** REQ-OPR-002: an editor outside the publishers group is told it cannot publish. */
@@ -289,7 +302,7 @@ class PublicationStateControllerTest extends TestCase {
 		$this->mayPublish = false;
 		$response = $this->controller->visibility('p1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(['state' => 'draft', 'canPublish' => false], $response->getData());
+		$this->assertSame(['state' => 'draft', 'canPublish' => false, 'audience' => 'public', 'minimumAssurance' => 'substantial'], $response->getData());
 	}
 
 	/** REQ-OPR-003: an editor who may edit but not publish gets 403 naming the group, and nothing is saved. */

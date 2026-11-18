@@ -45,6 +45,7 @@ use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Http\DcatNegotiation;
+use OCA\OpenCatalogi\Service\Publication\SignedInReadService;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
 use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
@@ -1113,6 +1114,11 @@ class PublicationsController extends Controller {
 
 		$found = $this->findPublication(read: $read);
 		if ($found === null) {
+			$trusted = $this->signedInRead(read: $read);
+			if ($trusted !== null) {
+				return $trusted;
+			}
+
 			$this->logger->warning(
 				'[PublicationsController::show] Object not found in any register/schema',
 				['id' => $read->query->slug, 'catalogSlug' => $read->query->catalogSlug]
@@ -1122,6 +1128,47 @@ class PublicationsController extends Controller {
 
 		return $this->answerFound(read: $read, found: $found);
 	}//end showPublication()
+
+	/**
+	 * The trusted read of a publication for signed-in readers (REQ-PSR-003).
+	 *
+	 * Only on a miss, and only for a request that carries a feed consumer key
+	 * (`Authorization: Bearer oc_...`): {@see SignedInReadService::read()} checks
+	 * the key, its catalogue, `actForSignedInReaders` and the reader's level in
+	 * `X-Reader-Assurance`, reads the one object with RBAC off and audits the
+	 * read. The answer carries `Cache-Control: private, no-store`, so no shared
+	 * cache serves it to an anonymous reader. Any refusal returns null, and the
+	 * caller answers the same 404 as for a missing publication.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 *
+	 * @return JSONResponse|null The publication, or null.
+	 *
+	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-trusted-portal-reads-it-for-a-reader-at-the-required-level-req-psr-003
+	 */
+	private function signedInRead(PublicationRead $read): ?JSONResponse {
+		if (preg_match('/^Bearer\s+(oc_\S+)$/i', trim($this->request->getHeader('Authorization')), $match) !== 1) {
+			return null;
+		}
+
+		$catalogId = (string)($read->catalog['id'] ?? ($read->catalog['@self']['id'] ?? ''));
+		$object = $this->container->get(SignedInReadService::class)->read(
+			catalogId: $catalogId,
+			registers: $read->query->registers,
+			schemas: $read->query->schemas,
+			id: $read->query->slug,
+			key: $match[1],
+			level: $this->request->getHeader(SignedInReadService::ASSURANCE_HEADER)
+		);
+		if ($object === null) {
+			return null;
+		}
+
+		$response = $this->answerFound(read: $read, found: new FoundPublication(object: $object, publicationId: (string)$object->getUuid()));
+		$response->addHeader('Cache-Control', 'private, no-store');
+
+		return $response;
+	}//end signedInRead()
 
 	/**
 	 * Find a publication by UUID, then by slug, inside the catalogue scope.
