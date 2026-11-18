@@ -100,8 +100,8 @@ const RENDERER_ROW_LISTENERS = [
  * listed from `/api/{catalogSlug}` through its `collectionUrl`. The page's own
  * pair is the publication pair when the catalog holds it, else its first pair.
  * Rows of the publication pair open on PublicationDetail, rows of any other
- * pair on the generic CatalogObjectDetail page. Edit opens the publication
- * modal for publications and CnIndexPage's form for other schemas. Takes the
+ * pair on the generic CatalogObjectDetail page. Edit opens the object modal
+ * for every row that has a detail page, else CnIndexPage's form. Takes the
  * page config and route params from CnPageRenderer, and passes the rest of the
  * config through to CnIndexPage, plus `publicationPairConfig` when the page's
  * pair is the publication pair and `otherPairConfig` when it is not.
@@ -591,15 +591,17 @@ export default {
 		},
 
 		/**
-		 * The Edit action: a publication opens in the app's own publication modal,
-		 * a row of another schema in CnIndexPage's form for its own schema.
+		 * The Edit action: a row with a detail page, of any schema, opens in the
+		 * app's own object modal with its Properties, Metadata and Files tabs. A
+		 * row without numeric register and schema ids opens in CnIndexPage's form.
 		 *
 		 * @param {object} row The row.
 		 * @return {void}
 		 * @spec openspec/specs/generic-object-modals/spec.md#requirement-provide-single-object-lifecycle-modals-driven-by-the-navigation-store-gom-001
+		 * @spec openspec/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
 		 */
 		onEdit(row) {
-			if (!this.isPublicationRow(row)) {
+			if (!this.rowTarget(row)) {
 				this.$refs.index?.openFormDialog(row)
 				return
 			}

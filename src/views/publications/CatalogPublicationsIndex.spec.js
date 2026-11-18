@@ -492,7 +492,7 @@ describe('CatalogPublicationsIndex', () => {
 		expect(wrapper.text()).toContain('Catalog not found')
 	})
 
-	it('edits a publication in the publication modal and another row in its form', async () => {
+	it('edits every row with numeric ids in the object modal and another row in its form', async () => {
 		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
 		const setActive = jest
 			.spyOn(objectStore, 'setActiveObject')
@@ -509,15 +509,26 @@ describe('CatalogPublicationsIndex', () => {
 			id: 'abc',
 			'@self': { id: 'abc', register: 19, schema: 173 },
 		}
-		const rule = { id: 'r1', '@self': { id: 'r1', register: 19, schema: 184 } }
+		const component = {
+			id: 'c1',
+			'@self': { id: 'c1', register: 19, schema: 184 },
+		}
+		const slugRow = {
+			id: 's1',
+			'@self': { id: 's1', register: 'code', schema: 'component' },
+		}
 
 		page.vm.$emit('edit-open', publication)
 		expect(setActive).toHaveBeenCalledWith('publication', publication)
 		expect(setModal).toHaveBeenCalledWith('viewObject')
 
-		page.vm.$emit('edit-open', rule)
-		expect(page.vm.formDialogItem).toEqual(rule)
-		expect(setModal).toHaveBeenCalledTimes(1)
+		page.vm.$emit('edit-open', component)
+		expect(setActive).toHaveBeenCalledWith('publication', component)
+		expect(setModal).toHaveBeenCalledTimes(2)
+
+		page.vm.$emit('edit-open', slugRow)
+		expect(page.vm.formDialogItem).toEqual(slugRow)
+		expect(setModal).toHaveBeenCalledTimes(2)
 		expect(router.push).not.toHaveBeenCalled()
 	})
 
