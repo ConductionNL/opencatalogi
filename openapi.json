@@ -3074,6 +3074,296 @@
           }
         }
       }
+    },
+    "/{catalogSlug}/{publicationId}/tables/{tableId}/views": {
+      "get": {
+        "operationId": "dataset-views",
+        "summary": "Views of a published table",
+        "description": "The table, chart and map views of a published table, each with its data URL, while the publication is public.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "table": {
+                      "type": "string"
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "table",
+                              "bar",
+                              "line",
+                              "map"
+                            ]
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "position": {
+                            "type": "integer"
+                          },
+                          "dataUrl": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "dataset-views-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{publicationId}/tables/{tableId}/views/{viewId}/data": {
+      "get": {
+        "operationId": "dataset-view-data",
+        "summary": "Data of a dataset view",
+        "description": "Rows for a table view, grouped values for a chart (at most 200 groups), or a GeoJSON FeatureCollection of at most 5,000 points for a map. 404 unless the publication is public.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          },
+          {
+            "name": "viewId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The view of the table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "A table view answers `columns` and a page of `results`; a bar or line chart `points` of `{x, value}` with `truncated`; a map a GeoJSON FeatureCollection with `skipped` and `truncated`.",
+                  "properties": {
+                    "view": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "table",
+                        "bar",
+                        "line",
+                        "map"
+                      ]
+                    },
+                    "columns": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "points": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "x": {},
+                          "value": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    },
+                    "truncated": {
+                      "type": "boolean"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "features": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "skipped": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "description": "The data of the view could not be read."
+          }
+        }
+      },
+      "options": {
+        "operationId": "dataset-view-data-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          },
+          {
+            "name": "viewId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The view of the table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
     }
   }
 }

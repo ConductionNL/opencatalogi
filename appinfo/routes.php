@@ -135,6 +135,10 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publishedTableEdit#index', 'url' => '/api/publications/{id}/tables', 'verb' => 'GET'],
 		['name' => 'publishedTableEdit#create', 'url' => '/api/publications/{id}/tables', 'verb' => 'POST'],
 		['name' => 'publishedTableEdit#updateDictionary', 'url' => '/api/publications/{id}/tables/{tableId}/dictionary', 'verb' => 'PUT'],
+		// Dataset views, editor side: list, add or change, and remove the views of a published table (REQ-DSV-001).
+		['name' => 'datasetViewEdit#index', 'url' => '/api/publications/{id}/tables/{tableId}/views', 'verb' => 'GET'],
+		['name' => 'datasetViewEdit#save', 'url' => '/api/publications/{id}/tables/{tableId}/views', 'verb' => 'POST'],
+		['name' => 'datasetViewEdit#remove', 'url' => '/api/publications/{id}/tables/{tableId}/views/{viewId}', 'verb' => 'DELETE'],
 		['name' => 'publicationState#withdrawFile', 'url' => '/api/publications/{id}/files/{fileId}/withdraw', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		['name' => 'publicationState#republishFile', 'url' => '/api/publications/{id}/files/{fileId}/republish', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		// A plain language summary an officer writes, or drafts with a text assistant and accepts
@@ -350,6 +354,8 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publishedTable#preflightedCors', 'postfix' => '-table-rows', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/rows', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publishedTable#preflightedCors', 'postfix' => '-table-dictionary', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/dictionary', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'datasetView#preflightedCors', 'postfix' => '-table-views', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/views', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'datasetView#preflightedCors', 'postfix' => '-table-view-data', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/views/{viewId}/data', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
@@ -360,6 +366,9 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// Published tables: rows and data dictionary of a CSV published as a table (REQ-ODT-002, REQ-ODT-003).
 		['name' => 'publishedTable#rows', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/rows', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publishedTable#dictionary', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/dictionary', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		// Dataset views: the views of a published table and each view's data (REQ-DSV-002).
+		['name' => 'datasetView#index', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/views', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'datasetView#data', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/views/{viewId}/data', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
