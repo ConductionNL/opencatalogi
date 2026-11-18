@@ -443,7 +443,13 @@ Implements hydra `woo-citizen-journey` journey step J2.2 (narrow by information 
 
 ### Requirement: An object of another schema in a catalog opens on its own detail page (COS-001)
 
-On a catalog's publications page, a row whose `@self` register and schema are not the publication pair SHALL open on the `CatalogObjectDetail` page for that register, schema and id, by a click, the View action, or a ctrl, cmd, shift or middle click in a new tab. This SHALL also hold in a catalog that does not hold the publication pair, and for every row while the publication register and schema ids are still unresolved. A row whose `@self` register or schema is not a numeric id SHALL open in CnIndexPage's form for its own schema instead, except on a middle click, which SHALL do nothing. The page SHALL show the object's properties in a read-only Data card, including free-form object properties whose schema names a `widget`. The object SHALL be edited through the page's Edit button, not inline.
+On a catalog's publications page, a row whose `@self` register and schema are not the publication pair SHALL open on the `CatalogObjectDetail` page for that register, schema and id, by a click, the View action, or a ctrl, cmd, shift or middle click in a new tab. This SHALL also hold in a catalog that does not hold the publication pair, and for every row while the publication register and schema ids are still unresolved. A row whose `@self` register or schema is not a numeric id SHALL open in CnIndexPage's form for its own schema instead, except on a middle click, which SHALL do nothing. The page SHALL show the object's properties in a read-only Data card, including free-form object properties whose schema names a `widget`. The object SHALL be edited through the page's Edit button, not inline. The list row's Edit action SHALL open such a row in the app's object modal, the same one publications use, with its Properties, Metadata and Files tabs; a row without numeric ids SHALL open in CnIndexPage's form instead.
+
+#### Scenario: A component is edited from the list in the object modal, with its files
+- **GIVEN** a catalog over the publiccode schema, holding a component
+- **WHEN** a user picks Edit in the component's row actions on the catalog's publications page
+- **THEN** the object modal SHALL open on the component with a Properties, a Metadata and a Files tab
+- **AND** no page SHALL be navigated to
 
 #### Scenario: A component's description can be read per language
 - **GIVEN** a catalog over the publiccode schema, holding a component with a Dutch and an English short and long description
