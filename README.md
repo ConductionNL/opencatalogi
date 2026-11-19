@@ -17,7 +17,7 @@
 
 ---
 
-OpenCatalogi turns Nextcloud into a publication platform for open data and government transparency. Create catalogs, manage publications with metadata and attachments, and federate them across organizations so that citizens, businesses, and other government entities can discover and access public information. The app supports the Dutch WOO (Open Government Act) and follows Common Ground principles for interoperability.
+OpenCatalogi turns Nextcloud into a publication platform for open data and government transparency. Create catalogs, manage publications with metadata and attachments, and federate them across organizations so that citizens, businesses, and other government entities can discover and access public information. The app supports the Dutch WOO (Open Government Act) and follows Common Ground principles for interoperability. Install it from the [Nextcloud App Store](https://apps.nextcloud.com/apps/opencatalogi).
 
 It connects to a federated directory of other OpenCatalogi instances, enabling cross-organization search and discovery without centralized infrastructure. A public-facing frontend can be deployed separately for citizen access, while administrators manage everything from within Nextcloud.
 
