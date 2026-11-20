@@ -1,0 +1,38 @@
+# OpenCatalogi
+
+> Nextcloud app that publishes catalogs, publications and listings stored in OpenRegister as a federated public catalogue with DCAT-AP export and Woo (Wet open overheid) support.
+
+## Docs
+
+- [README](README.md): what the app does, installation, Docker and development setup
+- [AGENTS.md](AGENTS.md): build, test, lint commands and repo conventions for coding agents
+- [Architecture](ARCHITECTURE.md): system boundary, directory roles, functional components, request flow
+- [Contributing](CONTRIBUTING.md): workflow, quality checks and commit message format
+- [CLAUDE.md](CLAUDE.md): translation (l10n) tooling and rules
+- [Documentation home](docs/index.md): entry page of the documentation site
+- [Developers](docs/Developers/index.md): development environment and contributing to the codebase (Dutch)
+- [Administrators](docs/Administrator/README.md): catalogs, directory, metadata and configuration (Dutch)
+- [Installation](docs/Installation/README.md): installation and system requirements (Dutch)
+- [Features](docs/features/README.md): per-feature descriptions
+- [Changelog](CHANGELOG.md): release history
+
+## API
+
+- [openapi.json](openapi.json): OpenAPI document for the public versioned API under /api/v1/ (search, catalogs, publications, federation, CMS reads)
+- [openapi.standards.json](openapi.standards.json): OpenAPI document for the public endpoints that implement external standards (DCAT-AP, OOAPI, schema.org, sitemaps, robots.txt, Atom feeds, federation)
+- [appinfo/routes.php](appinfo/routes.php): full route table, including admin and authenticated endpoints
+- [API testing](docs/Technical/api-testing-from-container.md): calling the API from inside a container
+
+## Specs
+
+- [openspec/specs](openspec/specs/): accepted requirements, one folder per capability
+- [Catalogs](openspec/specs/catalogs/spec.md): catalogs as the top-level unit grouping publications
+- [Publications](openspec/specs/publications/spec.md): public publications API: catalog-scoped lists, detail, attachments, downloads
+- [Search](openspec/specs/search/spec.md): search; query parsing and faceting are delegated to OpenRegister
+- [Federation](openspec/specs/federation/spec.md): federation between OpenCatalogi instances
+- [DCAT-AP harvest](openspec/specs/dcat-ap-harvest/spec.md): DCAT-AP-NL documents for harvesters
+- [Woo compliance](openspec/specs/woo-compliance/spec.md): Woo XML sitemaps, DIWOO metadata and robots.txt
+- [Auto-publishing](openspec/specs/auto-publishing/spec.md): event-driven publishing on OpenRegister object events
+- [Admin settings](openspec/specs/admin-settings/spec.md): admin configuration stored in IAppConfig
+- [openspec/changes](openspec/changes/): open change proposals; finished ones in openspec/changes/archive/
+- [Architecture decisions](openspec/architecture/): app-level ADRs
