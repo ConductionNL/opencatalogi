@@ -1235,7 +1235,7 @@ class PublicationsControllerTest extends TestCase {
 		$mockObjService->method('renderEntity')->willReturn(['id' => 'pub-123', 'title' => 'Test Publication']);
 		$this->request->method('getParams')->willReturn([]);
 
-		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication', 'tables' => $withViews], $controller->show('test-catalog', 'pub-123')->getData());
+		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication', 'tables' => $withViews, 'relations' => []], $controller->show('test-catalog', 'pub-123')->getData());
 	}
 
 	/**
