@@ -35,6 +35,8 @@ use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
  * axis that does not resolve.
  *
  * @spec openspec/specs/woo-compliance/spec.md
+ *
+ * @SuppressWarnings(PHPMD.TooManyMethods) Each DiWoo axis is its own short private step.
  */
 class SitemapDocumentMapper implements DiwooCompletenessInterface {
 
@@ -496,12 +498,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 		$categoryRaw = ($mappedCategory ?? $publication['wooCategory'] ?? $publication['category'] ?? $publication['tooiCategorieUri']
 			?? $publication['tooiCategorieNaam'] ?? null);
 		$declared = $this->stringOrNull(value: $categoryRaw);
-		if ($declared !== null && trim($declared) !== '') {
-			// The publication's own category wins, resolved or not (WOO-CAT-003).
-			$category = $this->categories->resolveForDocument($declared);
-		} else {
-			$category = $this->typeDefaultCategory(publication: $publication);
-		}
+		$category = $this->declaredOrDefaultCategory(publication: $publication, declared: $declared);
 
 		if ($category === null) {
 			return null;
@@ -516,6 +513,24 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 			],
 		];
 	}//end categoryElement()
+
+	/**
+	 * The publication's own category, resolved or not (WOO-CAT-003), or else the default of its type.
+	 *
+	 * @param array       $publication The publication as returned from ObjectService.
+	 * @param string|null $declared    The category the publication or the mapping names.
+	 *
+	 * @return array|null The category, or null when none resolves.
+	 *
+	 * @spec openspec/changes/woo-category-mapping-intake/specs/woo-compliance/spec.md
+	 */
+	private function declaredOrDefaultCategory(array $publication, ?string $declared): ?array {
+		if ($declared !== null && trim($declared) !== '') {
+			return $this->categories->resolveForDocument($declared);
+		}
+
+		return $this->typeDefaultCategory(publication: $publication);
+	}//end declaredOrDefaultCategory()
 
 	/**
 	 * The type-level default category of a publication that declares none.
