@@ -43,6 +43,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use DomainException;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
@@ -375,7 +376,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		// REQ-CVS-004: one Woo request has at most one open batch.
 		$open = $this->openBatchFor(caseReference: $caseReference);
 		if ($open !== null) {
-			throw new \DomainException(
+			throw new DomainException(
 				sprintf(
 					'Woo request %s already has an open batch (%s). Continue in that batch instead of adding another.',
 					$caseReference,
