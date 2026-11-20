@@ -401,6 +401,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\TableImportQueueInterface",
+        "OCA\\OpenCatalogi\\BackgroundJob\\PublishedTableImportQueue"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\AttachmentReadingStoreInterface",
         "OCA\\OpenCatalogi\\Service\\AttachmentReading\\AttachmentReadingStore"
     ],
