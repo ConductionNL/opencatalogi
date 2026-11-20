@@ -61,6 +61,7 @@
 		:viewTo="rowTarget"
 		:cardAccent="cardAccent"
 		:editOpensDetail="true"
+		@vue:mounted="followDeleteTarget"
 		@rowClick="onRowOpen"
 		@rowAuxClick="onRowOpen"
 		@view="onView"
@@ -175,6 +176,10 @@ export default {
 			resolveSequence: 0,
 			/** A bulk action opened a dialog; when it closes the list reloads. */
 			selectionActionOpen: false,
+			/** The row CnIndexPage's single-delete dialog is for, or null. */
+			deleteTarget: null,
+			/** Stops following the delete target of an index page that was replaced. */
+			stopDeleteTargetWatch: null,
 		}
 	},
 
@@ -355,12 +360,19 @@ export default {
 		/**
 		 * The publication pair's config for the index page: its row actions
 		 * kept to publication rows, its bulk actions bound (none without the
-		 * delete action).
+		 * delete action), and its delete dialog words only while the row being
+		 * deleted is a publication.
 		 *
 		 * @return {object} The config
+		 * @spec openspec/changes/publication-delete-says-what-it-removes/specs/publication-delete/spec.md#requirement-other-schemas-in-a-catalog-keep-the-generic-dialog-req-pdel-002
 		 */
 		publicationPairIndexConfig() {
 			const config = { ...this.publicationPairConfig }
+			if ('deleteDialog' in config) {
+				config.deleteDialog = this.isPublicationRow(this.deleteTarget)
+					? config.deleteDialog
+					: null
+			}
 			if (Array.isArray(config.actions)) {
 				config.actions = config.actions.map((action) =>
 					this.publicationRowAction(action),
@@ -370,6 +382,25 @@ export default {
 				config.bulkActions = this.boundBulkActions(config.bulkActions)
 			}
 			return config
+		},
+
+		/**
+		 * Follow the row the index page's single-delete dialog is for, so the
+		 * dialog says what deleting a publication removes and keeps the
+		 * library's generic words for a row of another schema. Called when an
+		 * index page mounts; a remount (new catalog) follows the new page.
+		 *
+		 * @spec openspec/changes/publication-delete-says-what-it-removes/specs/publication-delete/spec.md#requirement-deleting-a-publication-says-what-disappears-req-pdel-001
+		 */
+		followDeleteTarget() {
+			this.stopDeleteTargetWatch?.()
+			this.stopDeleteTargetWatch = this.$watch(
+				() => this.$refs.index?.actionTargetItem ?? null,
+				(row) => {
+					this.deleteTarget = row
+				},
+				{ immediate: true },
+			)
 		},
 
 		/**

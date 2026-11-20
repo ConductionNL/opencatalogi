@@ -1691,6 +1691,7 @@ OC.L10N.register(
         "Accept": "Accepteren",
         "Discard": "Verwerpen",
         "Draft plain summary": "Eenvoudige samenvatting laten opstellen",
+        "No text assistant is installed, so a plain summary cannot be drafted here. You can still write one yourself.": "Er is geen tekstassistent geïnstalleerd, dus hier kan geen eenvoudige samenvatting worden opgesteld. U kunt er zelf een schrijven.",
         "Suggested plain language summary": "Voorgestelde samenvatting in eenvoudige taal",
         "The plain language summary is saved.": "De samenvatting in eenvoudige taal is opgeslagen.",
         "The text assistant could not write a suggestion.": "De tekstassistent kon geen voorstel schrijven.",
@@ -1825,7 +1826,10 @@ OC.L10N.register(
         "OpenCatalogi cannot start": "OpenCatalogi kan niet starten",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vereist OpenRegister %1$s of nieuwer. Vraag je beheerder om OpenRegister bij te werken.",
         "Invalid listing": "Ongeldige vermelding",
-        "Listing not found in scope": "Vermelding niet gevonden in dit bereik"
+        "Listing not found in scope": "Vermelding niet gevonden in dit bereik",
+        "Delete publication": "Publicatie verwijderen",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Wilt u \"{name}\" verwijderen? Dit kan niet ongedaan worden gemaakt.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "De publicatie en haar bijlagen verdwijnen van de publieke pagina en uit de Woo-sitemap. Archiveren bewaart ze juist voor de bewaartermijn."
     },
     "nplurals=2; plural=(n != 1);"
 )

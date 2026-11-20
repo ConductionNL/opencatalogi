@@ -1736,6 +1736,7 @@ OC.L10N.register(
         "Accept": "Accept",
         "Discard": "Discard",
         "Draft plain summary": "Draft plain summary",
+        "No text assistant is installed, so a plain summary cannot be drafted here. You can still write one yourself.": "No text assistant is installed, so a plain summary cannot be drafted here. You can still write one yourself.",
         "Suggested plain language summary": "Suggested plain language summary",
         "The plain language summary is saved.": "The plain language summary is saved.",
         "The text assistant could not write a suggestion.": "The text assistant could not write a suggestion.",
@@ -1870,7 +1871,10 @@ OC.L10N.register(
         "OpenCatalogi cannot start": "OpenCatalogi cannot start",
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.",
         "Invalid listing": "Invalid listing",
-        "Listing not found in scope": "Listing not found in scope"
+        "Listing not found in scope": "Listing not found in scope",
+        "Delete publication": "Delete publication",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Do you want to delete \"{name}\"? This action cannot be undone.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead."
     },
     "nplurals=2; plural=(n != 1);"
 )
