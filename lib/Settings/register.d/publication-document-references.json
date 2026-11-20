@@ -1,0 +1,134 @@
+{
+  "_note": "Register fragment for integration-publish-by-reference (REQ-PBR-001). A documentReference points a publication at a document that stays in its source system (a DMS, a council information system) by its public https URL. Nothing is downloaded or stored. Public inside its own publication window, like a file; staff read and edit it. The daily DocumentReferenceCheck writes lastCheckedAt, reachable and lastStatus.",
+  "components": {
+    "registers": {
+      "publication": {
+        "schemas": [
+          "documentReference"
+        ],
+        "configuration": {
+          "schemas": {
+            "documentReference": {
+              "magicMapping": true,
+              "autoCreateTable": true,
+              "comment": "A document of a publication published by its public URL in the source system"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "documentReference": {
+        "slug": "documentReference",
+        "title": "Document reference",
+        "version": "0.1.0",
+        "summary": "A document of a publication, published by its URL in the source system",
+        "description": "A document that stays in the system it lives in and is published by its public https URL. It appears in the DiWoo sitemap, the DCAT feed and the attachments list like a file, with the source URL as its location, but only inside its own publication window.",
+        "icon": "LinkVariant",
+        "required": [
+          "publication",
+          "url",
+          "title",
+          "format"
+        ],
+        "authorization": {
+          "read": [
+            {
+              "group": "public",
+              "match": {
+                "publicationDate": {"$lte": "$now"},
+                "depublicationDate": {"$gte": "$now"}
+              },
+              "crossOrganisation": true
+            },
+            {
+              "group": "public",
+              "match": {
+                "publicationDate": {"$lte": "$now"},
+                "depublicationDate": {"$exists": false}
+              },
+              "crossOrganisation": true
+            },
+            "authenticated"
+          ],
+          "create": ["authenticated"],
+          "update": ["authenticated"],
+          "delete": ["authenticated"]
+        },
+        "x-openregister-aggregations": {
+          "unreachableByPublication": {
+            "metric": "count",
+            "groupBy": {"field": "publication"},
+            "filter": {"reachable": false},
+            "description": "Unreachable references per publication, shown on the references widget (REQ-PBR-003)."
+          }
+        },
+        "properties": {
+          "publication": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "publication",
+            "title": "Publication",
+            "description": "The publication this document belongs to.",
+            "facetable": true
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://",
+            "title": "URL",
+            "description": "The public https address of the document in its source system. A private, loopback or link-local address is refused."
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "The document's title as readers see it."
+          },
+          "format": {
+            "type": "string",
+            "pattern": "^[a-z0-9]{1,10}$",
+            "title": "Format",
+            "description": "The file type as an extension from the EU file-type list, such as pdf or docx; used for diwoo:format and dcat:mediaType."
+          },
+          "sourceSystem": {
+            "type": "string",
+            "title": "Source system",
+            "description": "The system the document lives in, such as the name of the document management system."
+          },
+          "publicationDate": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Publication date",
+            "description": "From when the reference is public."
+          },
+          "depublicationDate": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Depublication date",
+            "description": "Until when the reference is public; empty for no end."
+          },
+          "lastCheckedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last checked",
+            "description": "When the daily check last asked the source system.",
+            "readOnly": true
+          },
+          "reachable": {
+            "type": "boolean",
+            "title": "Reachable",
+            "description": "Whether the source system answered the last check.",
+            "readOnly": true,
+            "facetable": true
+          },
+          "lastStatus": {
+            "type": "integer",
+            "title": "Last status",
+            "description": "The HTTP status of the last check; 0 when there was no answer.",
+            "readOnly": true
+          }
+        }
+      }
+    }
+  }
+}

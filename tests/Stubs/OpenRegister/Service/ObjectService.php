@@ -9,6 +9,9 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -18,6 +21,9 @@ namespace OCA\OpenRegister\Service;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Db\Register;
 use OCA\OpenRegister\Db\Schema;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Minimal stub for ObjectService used by PHPUnit mocks in bare CI.
@@ -57,18 +63,23 @@ class ObjectService {
 	 * @param Schema|string|integer|null $schema Schema context.
 	 * @param boolean $_rbac Apply RBAC.
 	 * @param boolean $_multitenancy Apply multitenancy.
+	 * @param boolean $_render Render the object.
+	 * @param boolean $_audit Record the read in the audit trail.
 	 *
 	 * @return ObjectEntity|null
 	 */
 	public function find(
 		int|string $id,
-		?array $_extend = [],
-		bool $files = false,
-		Register|string|int|null $register = null,
-		Schema|string|int|null $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
+		bool $_multitenancy = true
 	): ?ObjectEntity {
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
+		$_render = $options?->render ?? true;
+		$_audit = $options?->audit ?? true;
 		return null;
 	}//end find()
 
@@ -103,21 +114,22 @@ class ObjectService {
 	 */
 	public function saveObject(
 		array|ObjectEntity $object,
-		?array $extend = [],
-		Register|string|int|null $register = null,
-		Schema|string|int|null $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $silent = false,
-		bool $_validation = true,
-		?array $uploadedFiles = null,
-		mixed $currentUser = null,
-		bool $failIfExists = false,
-		bool $_unowned = false,
-		bool $_dedupOverride = false,
-		?string $_owner = null,
+		bool $_multitenancy = true
 	): ObjectEntity {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
+		$silent = $options->policy->silent ?? false;
+		$_validation = $options->policy->validation ?? true;
+		$uploadedFiles = $options->uploadedFiles;
+		$currentUser = $options->actor->currentUser;
+		$failIfExists = $options->policy->failIfExists ?? false;
+		$_unowned = $options->actor->unowned ?? false;
+		$_dedupOverride = $options->policy->dedupOverride ?? false;
+		$_owner = $options->actor->owner;
 		return new ObjectEntity();
 	}//end saveObject()
 
@@ -130,17 +142,22 @@ class ObjectService {
 	 * @param boolean $_rbac Apply RBAC.
 	 * @param boolean $_multitenancy Apply multitenancy.
 	 * @param boolean $_retentionSweep Retention sweep mode.
+	 * @param \OCP\IUser|null $currentUser The acting user.
+	 * @param boolean $permanent Delete permanently.
 	 *
 	 * @return boolean
 	 */
 	public function deleteObject(
-		string $uuid,
-		Register|string|int|null $register = null,
-		Schema|string|int|null $schema = null,
+		ObjectDeletion $deletion,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_retentionSweep = false,
+		bool $_retentionSweep = false
 	): bool {
+		$uuid = $deletion->uuid;
+		$register = $deletion->target->register;
+		$schema = $deletion->target->schema;
+		$currentUser = $deletion->currentUser;
+		$permanent = $deletion->permanent ?? false;
 		return true;
 	}//end deleteObject()
 
@@ -153,6 +170,7 @@ class ObjectService {
 	 * @param array<mixed>|null $ids IDs to restrict search to.
 	 * @param string|null $uses Filter by uses relation.
 	 * @param array<mixed>|null $views Views to search.
+	 * @param boolean $_viewScopeRequired Require a view scope.
 	 *
 	 * @return array<ObjectEntity>|integer
 	 */
@@ -163,6 +181,7 @@ class ObjectService {
 		?array $ids = null,
 		?string $uses = null,
 		?array $views = null,
+		bool $_viewScopeRequired = false,
 	): array|int {
 		return [];
 	}//end searchObjects()
@@ -227,11 +246,7 @@ class ObjectService {
 	 * Render an entity with optional extension, depth, filter and RBAC controls.
 	 *
 	 * @param ObjectEntity $entity Entity to render.
-	 * @param array<mixed>|null $_extend Extension paths.
-	 * @param integer|null $depth Recursion depth.
-	 * @param array<mixed>|null $filter Field filter.
-	 * @param array<mixed>|null $fields Fields to include.
-	 * @param array<mixed>|null $unset Fields to unset.
+	 * @param \OCA\OpenRegister\Kernel\Contracts\RenderSelection|null $selection Extend, filter, fields and unset.
 	 * @param boolean $_rbac Apply RBAC.
 	 * @param boolean $_multitenancy Apply multitenancy.
 	 *
@@ -239,11 +254,7 @@ class ObjectService {
 	 */
 	public function renderEntity(
 		ObjectEntity $entity,
-		?array $_extend = [],
-		?int $depth = 0,
-		?array $filter = [],
-		?array $fields = [],
-		?array $unset = [],
+		?\OCA\OpenRegister\Kernel\Contracts\RenderSelection $selection = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): array {
@@ -294,7 +305,8 @@ class ObjectService {
 	 * @return \OCA\OpenRegister\Service\Object\PermissionHandler
 	 */
 	public function getPermissionHandler(): \OCA\OpenRegister\Service\Object\PermissionHandler {
-		return new \OCA\OpenRegister\Service\Object\PermissionHandler();
+		// The real handler takes four service bundles; a stub instance needs none of them.
+		return (new \ReflectionClass(\OCA\OpenRegister\Service\Object\PermissionHandler::class))->newInstanceWithoutConstructor();
 	}//end getPermissionHandler()
 
 }//end class

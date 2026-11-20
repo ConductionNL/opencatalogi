@@ -26,7 +26,13 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\DcatDatasetSource;
 use OCA\OpenCatalogi\Service\DcatMappingProfile;
+use OCA\OpenCatalogi\Service\DcatDistributionMapper;
 use OCA\OpenCatalogi\Service\DcatMappingService;
+use OCA\OpenCatalogi\Service\DcatVocabularyService;
+use OCA\OpenCatalogi\Service\FileFacts;
+use OCP\Files\File;
+use OCP\Files\IMimeTypeDetector;
+use OCP\Files\IRootFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -124,6 +130,29 @@ class DcatMappingServiceTest extends TestCase {
 		$this->assertSame('A description', $dataset['dct:description']);
 		$this->assertArrayHasKey('dct:modified', $dataset);
 		$this->assertArrayHasKey('dcat:landingPage', $dataset);
+	}
+
+	/**
+	 * The UUID is the dataset's dct:identifier, and an edit of the title and
+	 * slug leaves the identifier and the landing page as they were.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/publications/spec.md#requirement-a-publication-keeps-one-identifier-for-life-req-cvs-006
+	 */
+	public function testTheIdentifierIsTheUuidAndSurvivesAnEdit(): void {
+		$uuid = '4f2c9a1e-7b3d-4e8a-9c51-2d6f0b8e3a17';
+		$iri = 'https://host/apps/opencatalogi/api/woo-requests/' . $uuid;
+		$before = ['id' => $uuid, 'title' => 'Besluit op Woo-verzoek', '@self' => ['uuid' => $uuid, 'slug' => 'besluit-op-woo-verzoek']];
+		$after = ['id' => $uuid, 'title' => 'Besluit op Woo-verzoek 2026-14', '@self' => ['uuid' => $uuid, 'slug' => 'besluit-2026-14']];
+
+		$first = $this->mapDataset(publication: $before, mapping: DcatMappingService::DEFAULT_MAPPING, files: [], datasetIri: $iri, defaults: []);
+		$second = $this->mapDataset(publication: $after, mapping: DcatMappingService::DEFAULT_MAPPING, files: [], datasetIri: $iri, defaults: []);
+
+		$this->assertSame($uuid, $first['dct:identifier']);
+		$this->assertSame($uuid, $second['dct:identifier']);
+		$this->assertSame(['@id' => $iri], $second['dcat:landingPage']);
+		$this->assertSame('Besluit op Woo-verzoek 2026-14', $second['dct:title']);
 	}
 
 	public function testThemeEmittedAsTooiUriWhenPresent(): void {
@@ -236,6 +265,33 @@ class DcatMappingServiceTest extends TestCase {
 
 	}//end testNoHvdTriplesWhenNoCategory()
 
+	/**
+	 * REQ-ATT-103: a file whose window has ended is left out; one ending later, or never, stays.
+	 *
+	 * @return void
+	 */
+	public function testAWithdrawnFileIsNotADistribution(): void {
+		$files = [
+			['downloadUrl' => 'https://host/d/1/download', 'extension' => 'pdf', 'title' => 'besluit.pdf', 'published' => '2026-01-01T00:00:00+00:00', 'depublished' => null],
+			['downloadUrl' => 'https://host/d/2/download', 'extension' => 'pdf', 'title' => 'bijlage.pdf', 'published' => '2026-01-01T00:00:00+00:00', 'depublished' => '2026-02-01T09:00:00+00:00'],
+			['downloadUrl' => 'https://host/d/3/download', 'extension' => 'pdf', 'title' => 'later.pdf', 'depublished' => '2999-01-01T00:00:00+00:00'],
+			['downloadUrl' => 'https://host/d/4/download', 'extension' => 'pdf', 'title' => 'odd.pdf', 'depublished' => 'not a date'],
+		];
+
+		$dataset = $this->mapDataset(
+			publication: ['id' => 'u', '@self' => ['uuid' => 'u']],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: $files,
+			datasetIri: 'https://host/api/cat/u',
+			defaults: []
+		);
+
+		$urls = array_map(static fn (array $node): string => $node['dcat:downloadURL']['@id'], $dataset['dcat:distribution']);
+		$this->assertSame(['https://host/d/1/download', 'https://host/d/3/download', 'https://host/d/4/download'], $urls);
+		$this->assertTrue(DcatMappingService::windowEnded(['depublished' => '2026-02-01T09:00:00+00:00']));
+		$this->assertFalse(DcatMappingService::windowEnded(['depublished' => '']));
+	}//end testAWithdrawnFileIsNotADistribution()
+
 	public function testDistributionsMappedFromAttachments(): void {
 		$files = [
 			['downloadUrl' => 'https://host/d/1/download', 'accessUrl' => 'https://host/d/1', 'extension' => 'pdf', 'title' => 'doc.pdf', 'size' => 1234],
@@ -259,6 +315,18 @@ class DcatMappingServiceTest extends TestCase {
 		$this->assertSame('text/csv', $csv['dcat:mediaType']);
 		$this->assertSame(1234, $pdf['dcat:byteSize']);
 		$this->assertSame(['@id' => 'https://lic'], $pdf['dct:license']);
+	}
+
+	public function testATableDistributionConformsToItsDictionary(): void {
+		$file = ['downloadUrl' => 'https://host/d/7/download', 'extension' => 'csv', 'dataDictionaryUrl' => 'https://host/api/speeltuinen/p1/tables/t1/dictionary'];
+
+		$distribution = $this->service->mapDistribution($file, null);
+
+		$this->assertSame(['@id' => 'https://host/api/speeltuinen/p1/tables/t1/dictionary'], $distribution['dct:conformsTo']);
+	}
+
+	public function testAPlainDistributionHasNoConformsTo(): void {
+		$this->assertArrayNotHasKey('dct:conformsTo', $this->service->mapDistribution(['downloadUrl' => 'https://host/d/7/download', 'dataDictionaryUrl' => ''], null));
 	}
 
 	public function testDistributionSkippedWithoutDownloadUrl(): void {
@@ -309,5 +377,128 @@ class DcatMappingServiceTest extends TestCase {
 		$context = $this->service->context();
 		$this->assertSame('http://www.w3.org/ns/dcat#', $context['dcat']);
 		$this->assertArrayHasKey('profile', $context);
+	}
+	public function testThePlainSummaryIsEmittedAsAbstractWithItsLanguage(): void {
+		$publication = [
+			'id' => 'uuid-p',
+			'title' => 'Besluit op bezwaar parkeervergunning',
+			'plainSummary' => 'U kreeg geen parkeervergunning. De gemeente blijft bij het besluit.',
+			'plainSummaryLevel' => 'B1',
+			'language' => 'nl',
+			'@self' => ['uuid' => 'uuid-p', 'updated' => '2026-11-14T10:00:00+00:00'],
+		];
+
+		$dataset = $this->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/uuid-p', []);
+
+		$this->assertSame(
+			['@value' => 'U kreeg geen parkeervergunning. De gemeente blijft bij het besluit.', '@language' => 'nl'],
+			$dataset['dct:abstract'] ?? null
+		);
+	}
+
+	public function testTheAbstractTakesThePublicationsLanguageAndDefaultsToDutch(): void {
+		$english = $this->mapDataset(['id' => 'e', 'plainSummary' => 'You got no permit.', 'language' => 'EN'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/e', []);
+		$this->assertSame('en', $english['dct:abstract']['@language']);
+
+		$unset = $this->mapDataset(['id' => 'u', 'plainSummary' => 'Kort.'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/u', []);
+		$this->assertSame('nl', $unset['dct:abstract']['@language']);
+
+		$garbage = $this->mapDataset(['id' => 'g', 'plainSummary' => 'Kort.', 'language' => 'not a tag'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/g', []);
+		$this->assertSame('nl', $garbage['dct:abstract']['@language']);
+	}
+
+	public function testNoAbstractWithoutAPlainSummary(): void {
+		$dataset = $this->mapDataset(['id' => 'x', 'title' => 'T', 'plainSummary' => '  '], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/x', []);
+		$this->assertArrayNotHasKey('dct:abstract', $dataset);
+	}
+
+	/**
+	 * A title and description read with all their translations become one
+	 * language-tagged literal per language, Dutch first; an empty translation
+	 * is left out and a plain value stays plain (publication-translations REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testEachLanguageIsATaggedLiteral(): void {
+		$dataset = $this->mapDataset(
+			publication: [
+				'id' => 'uuid-3',
+				'title' => ['en' => 'Annual report', 'nl' => 'Jaarverslag'],
+				'description' => ['nl' => 'Het verslag', 'en' => ''],
+				'@self' => ['uuid' => 'uuid-3'],
+			],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: [],
+			datasetIri: 'https://host/api/cat/uuid-3',
+			defaults: []
+		);
+
+		$this->assertSame(
+			[['@value' => 'Jaarverslag', '@language' => 'nl'], ['@value' => 'Annual report', '@language' => 'en']],
+			$dataset['dct:title']
+		);
+		$this->assertSame([['@value' => 'Het verslag', '@language' => 'nl']], $dataset['dct:description']);
+
+		$plain = $this->mapDataset(
+			publication: ['id' => 'uuid-4', 'title' => 'Jaarverslag', 'description' => ['nl' => '', 'en' => '']],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: [],
+			datasetIri: 'https://host/api/cat/uuid-4',
+			defaults: []
+		);
+		$this->assertSame('Jaarverslag', $plain['dct:title']);
+		$this->assertArrayNotHasKey('dct:description', $plain);
+	}
+
+	/**
+	 * An array that is not keyed by language is not turned into literals.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testAnArrayNotKeyedByLanguageStaysAsItIs(): void {
+		$dataset = $this->mapDataset(
+			publication: ['id' => 'uuid-5', 'title' => ['Title' => 'x', 'nl' => 'y']],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: [],
+			datasetIri: 'https://host/api/cat/uuid-5',
+			defaults: []
+		);
+
+		$this->assertSame(['Title' => 'x', 'nl' => 'y'], $dataset['dct:title']);
+	}
+
+	/**
+	 * REQ-PFF-001: the distribution's media type is the stored bytes' type, not
+	 * the listed name or type, and bytes that cannot be read give no media type
+	 * rather than one from the extension.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	public function testTheMediaTypeComesFromTheBytes(): void {
+		$pdf = $this->createMock(File::class);
+		$pdf->method('fopen')->willReturnCallback(static function () {
+			$handle = fopen('php://memory', 'r+');
+			fwrite($handle, "%PDF-1.7\n");
+			rewind($handle);
+			return $handle;
+		});
+		$unreadable = $this->createMock(File::class);
+		$unreadable->method('fopen')->willThrowException(new \RuntimeException('storage gone'));
+		$root = $this->createMock(IRootFolder::class);
+		$root->method('getFirstNodeById')->willReturnMap([[11, $pdf], [12, $unreadable]]);
+		$detector = $this->createMock(IMimeTypeDetector::class);
+		$detector->method('detectString')->willReturnCallback(static fn (string $bytes): string => str_starts_with($bytes, '%PDF') ? 'application/pdf' : 'text/plain');
+		$service = new DcatMappingService(new DcatVocabularyService(), new DcatDistributionMapper(new FileFacts($detector, $root)));
+
+		$named = $service->mapDistribution(['id' => 11, 'downloadUrl' => 'https://host/d/11', 'extension' => 'docx', 'mimetype' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], null);
+		$this->assertSame('application/pdf', $named['dcat:mediaType']);
+		$this->assertSame(['@id' => 'http://publications.europa.eu/resource/authority/file-type/PDF'], $named['dct:format']);
+
+		$broken = $service->mapDistribution(['id' => 12, 'downloadUrl' => 'https://host/d/12', 'extension' => 'pdf', 'mimetype' => 'application/pdf'], null);
+		$this->assertArrayNotHasKey('dcat:mediaType', $broken);
+		$this->assertArrayNotHasKey('dct:format', $broken);
+		$this->assertSame('https://host/d/12', $broken['@id']);
 	}
 }//end class

@@ -43,24 +43,42 @@ trait ChecksPublicationWindow {
 	 * @spec openspec/specs/auto-publishing/spec.md#APB-006
 	 */
 	private function isObjectPublished(array $objectData): bool {
-		$publicationDate = ($objectData['publicationDate'] ?? null);
-		$depublicationDate = ($objectData['depublicationDate'] ?? null);
-
-		if ($publicationDate === null || $publicationDate === '') {
-			return false;
-		}
-
 		$now = time();
-		$publishedTime = strtotime((string)$publicationDate);
-		if ($publishedTime === false || $publishedTime > $now) {
+		return $this->hasPublicationStarted(date: ($objectData['publicationDate'] ?? null), now: $now) === true
+			&& $this->hasPublicationNotEnded(date: ($objectData['depublicationDate'] ?? null), now: $now) === true;
+	}//end isObjectPublished()
+
+	/**
+	 * Whether a publication date is set, readable and not in the future.
+	 *
+	 * @param mixed $date The publication date.
+	 * @param int $now The current Unix time.
+	 *
+	 * @return boolean
+	 */
+	private function hasPublicationStarted(mixed $date, int $now): bool {
+		if ($date === null || $date === '') {
 			return false;
 		}
 
-		if ($depublicationDate === null || $depublicationDate === '') {
+		$publishedTime = strtotime((string)$date);
+		return $publishedTime !== false && $publishedTime <= $now;
+	}//end hasPublicationStarted()
+
+	/**
+	 * Whether a depublication date is absent, unreadable or still to come.
+	 *
+	 * @param mixed $date The depublication date.
+	 * @param int $now The current Unix time.
+	 *
+	 * @return boolean
+	 */
+	private function hasPublicationNotEnded(mixed $date, int $now): bool {
+		if ($date === null || $date === '') {
 			return true;
 		}
 
-		$depublishedTime = strtotime((string)$depublicationDate);
+		$depublishedTime = strtotime((string)$date);
 		return ($depublishedTime === false || $depublishedTime > $now);
-	}//end isObjectPublished()
+	}//end hasPublicationNotEnded()
 }//end trait

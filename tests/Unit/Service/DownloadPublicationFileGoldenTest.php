@@ -78,7 +78,7 @@ class DownloadPublicationFileGoldenTest extends TestCase {
 	#[DataProvider('cases')]
 	public function testFileMatchesTheRecording(array $case): void {
 		$name = $this->dataName();
-		$service = new DownloadService($this->files(case: $case));
+		$service = new DownloadService($this->files(case: $case), $this->passthroughL10n());
 		$objects = $this->objects(case: $case);
 		if ($case['options'] === null) {
 			$result = $service->createPublicationFile($objects, 'id-1');
@@ -177,4 +177,15 @@ class DownloadPublicationFileGoldenTest extends TestCase {
 
 		return $objects;
 	}//end objects()
+
+	/**
+	 * An IL10N that answers the English text unchanged.
+	 *
+	 * @return \OCP\IL10N The translator.
+	 */
+	private function passthroughL10n(): \OCP\IL10N {
+		$l10n = $this->createMock(\OCP\IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+		return $l10n;
+	}
 }//end class

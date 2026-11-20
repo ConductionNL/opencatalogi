@@ -115,7 +115,7 @@ async function trace(scenario) {
 	store._constructApiUrl = vi.fn(() => '/url')
 	const actions = []
 	store.$onAction(({ name, args }) => {
-		actions.push([name, JSON.parse(JSON.stringify(args ?? null))])
+		actions.push([name, JSON.parse(JSON.stringify(recordedArgs(name, args)))])
 	})
 	globalThis.fetch = vi.fn(scenario.fetch)
 	const error = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -123,7 +123,7 @@ async function trace(scenario) {
 	for (const call of scenario.calls) {
 		try {
 			out.results.push({
-				returned: (await store.fetchRelatedData(...call)) ?? null,
+				returned: (await store.fetchRelatedData(relatedRequest(call))) ?? null,
 			})
 		} catch (e) {
 			out.results.push({ thrown: String(e) })
@@ -142,6 +142,36 @@ async function trace(scenario) {
 		errors: store.errors,
 	}
 	return out
+}
+
+/**
+ * The request object of a recorded positional call
+ * `[type, id, dataType, params, publicationData]`.
+ *
+ * @param {Array} call - The recorded call
+ * @return {object} The request
+ */
+function relatedRequest(call) {
+	const [type, id, dataType, params, publicationData] = call
+	return { type, id, dataType, params, publicationData }
+}
+
+/**
+ * An action's arguments as the fixture records them: a fetchRelatedData
+ * request back as its positional call, trailing unset values left out.
+ *
+ * @param {string} name - The action
+ * @param {Array|null} args - The arguments
+ * @return {Array|null} The recorded arguments
+ */
+function recordedArgs(name, args) {
+	if (name !== 'fetchRelatedData') return args ?? null
+	const { type, id, dataType, params, publicationData } = args[0]
+	const positional = [type, id, dataType, params, publicationData]
+	while (positional.length > 0 && positional[positional.length - 1] === undefined) {
+		positional.pop()
+	}
+	return positional
 }
 
 describe('object store fetchRelatedData (golden)', () => {

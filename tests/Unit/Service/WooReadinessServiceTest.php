@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
@@ -10,7 +15,9 @@ use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCA\OpenCatalogi\Service\SitemapStandards;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
 use OCA\OpenCatalogi\Service\WooReadinessService;
+use OCP\App\IAppManager;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
@@ -25,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\OpenCatalogi\Service\WooReadinessService
  * @covers \OCA\OpenCatalogi\Service\SitemapStandards
  * @uses \OCA\OpenCatalogi\Service\CatalogReadinessChecks
+ * @uses \OCA\OpenCatalogi\Service\Handover\HandoverState
  */
 class WooReadinessServiceTest extends TestCase {
 
@@ -454,6 +462,46 @@ XML;
 		);
 	}
 
+	/**
+	 * The readiness report carries what the hand-over to dossiq left, without it deciding the verdict.
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-3.2
+	 */
+	public function testUnmigratedRequestsAreReported(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'woo_requests_unmigrated' => '2',
+				'woo_requests_failed' => '1',
+				'woo_requests_migration_checked_at' => '2026-11-15T10:00:00+00:00',
+				default => $default,
+			}
+		);
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('isEnabledForAnyone')->with('dossiq')->willReturn(true);
+		$versions = $this->createMock(StandardsVersionService::class);
+		$versions->method('diwooVersion')->willReturn(['declared' => '0.9.8', 'published' => '0.9.8', 'status' => StandardsVersionService::STATUS_CURRENT]);
+		$service = new WooReadinessService(
+			$this->clientService,
+			$this->directoryService,
+			new SitemapStandards($this->sitemapService, $versions),
+			$this->settingsService,
+			$this->config,
+			$this->urlGenerator,
+			handover: new HandoverState(config: $this->config, appManager: $apps)
+		);
+
+		$report = $service->runCheck();
+
+		$this->assertSame(
+			['unmigrated' => 2, 'failed' => 1, 'checkedAt' => '2026-11-15T10:00:00+00:00', 'readOnly' => false, 'dossiqInstalled' => true],
+			$report['wooRequests']
+		);
+		$this->assertNotContains('woo-requests', array_column($report['checks'], 'id'));
+		$this->assertArrayNotHasKey('wooRequests', $this->service->runCheck());
+	}
+
 	public function testBeingBehindTheDiwooStandardFailsTheReport(): void {
 		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
 		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
@@ -559,5 +607,56 @@ XML;
 		);
 
 		$this->assertSame([], $catalogChecks);
+	}
+
+	/**
+	 * The report says where the Woo-index fields come from: built in without
+	 * integriq, from the mapping when it fills fields, with the refusal when
+	 * integriq refuses (REQ-WIM-004).
+	 *
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
+	 */
+	public function testTheReportNamesTheMappingSource(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+
+		$this->assertSame(['source' => 'built-in', 'refusal' => null, 'fieldsFromMapping' => []], $this->service->runCheck()['mapping']);
+
+		$answer = static function (\OCA\Integriq\Event\MappingExecutionRequestedEvent $event): void {
+			$event->setOutput(['publisher' => '', 'officieleTitel' => $event->getInput()['summary'], 'soortHandeling' => 'ontvangst']);
+		};
+		$this->assertSame(
+			['source' => 'integriq', 'refusal' => null, 'fieldsFromMapping' => ['officieleTitel', 'soortHandeling']],
+			$this->serviceWithMapping($answer)->runCheck()['mapping']
+		);
+
+		$refused = $this->serviceWithMapping(static function (\OCA\Integriq\Event\MappingExecutionRequestedEvent $event): void {
+			$event->refuse('No mapping has this slug.', 'not-found');
+		})->runCheck()['mapping'];
+		$this->assertSame(['source' => 'built-in', 'refusal' => ['code' => 'not-found', 'reason' => 'No mapping has this slug.'], 'fieldsFromMapping' => []], $refused);
+	}
+
+	/**
+	 * The service with a field mapper whose listener answers as given.
+	 *
+	 * @param callable $answer How integriq answers the event.
+	 *
+	 * @return WooReadinessService
+	 */
+	private function serviceWithMapping(callable $answer): WooReadinessService {
+		$dispatcher = $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(static function (object $event) use ($answer): void {
+			$answer($event);
+		});
+
+		return new WooReadinessService(
+			$this->clientService,
+			$this->directoryService,
+			new SitemapStandards($this->sitemapService, $this->standardsVersionService),
+			$this->settingsService,
+			$this->config,
+			$this->urlGenerator,
+			new \OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper($dispatcher)
+		);
 	}
 }

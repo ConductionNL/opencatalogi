@@ -1,7 +1,28 @@
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 import type { ZodSafeParseResult } from 'zod'
 import type { TTheme } from './theme.types'
 
 import { z } from 'zod'
+import { fillDefaults } from '../fillDefaults.js'
+
+/**
+ * The theme's text fields and external flag, with the value each takes when
+ * the data leaves it out or sends a falsy one.
+ */
+const THEME_DEFAULTS = {
+	title: '',
+	summary: '',
+	description: '',
+	image: '',
+	content: '',
+	link: '',
+	url: '',
+	icon: '',
+	isExternal: false,
+}
 
 /**
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -32,15 +53,7 @@ export class Theme implements TTheme {
 	/* istanbul ignore next */ // Jest does not recognize the code coverage of these 2 methods
 	private hydrate(data: TTheme) {
 		this.id = data?.id?.toString() || ''
-		this.title = data?.title || ''
-		this.summary = data?.summary || ''
-		this.description = data?.description || ''
-		this.image = data?.image || ''
-		this.content = data?.content || ''
-		this.link = data?.link || ''
-		this.url = data?.url || ''
-		this.icon = data?.icon || ''
-		this.isExternal = data?.isExternal || false
+		Object.assign(this, fillDefaults(data, THEME_DEFAULTS))
 		this.sort = data?.sort ?? 0
 	}
 

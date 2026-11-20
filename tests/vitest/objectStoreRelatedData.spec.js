@@ -60,8 +60,12 @@ describe('object store fetchRelatedData', () => {
 	])('builds the %s query from %j', async (dataType, params, expected) => {
 		answer({})
 
-		await store.fetchRelatedData('publication', 'p1', dataType, params, {
-			pub: 1,
+		await store.fetchRelatedData({
+			type: 'publication',
+			id: 'p1',
+			dataType,
+			params,
+			publicationData: { pub: 1 },
 		})
 
 		expect(store._constructApiUrl).toHaveBeenCalledWith(
@@ -101,16 +105,16 @@ describe('object store fetchRelatedData', () => {
 	])('derives the %s pagination', async (dataType, params, data, expected) => {
 		answer(data)
 
-		await store.fetchRelatedData('publication', 'p1', dataType, params)
+		await store.fetchRelatedData({ type: 'publication', id: 'p1', dataType, params })
 
 		expect(store.pagination[`publication_${dataType}`]).toEqual(expected)
 	})
 
 	it('stores logs as their results and anything else whole, without pagination when the answer has none', async () => {
 		answer({ results: [{ id: 'l' }] })
-		await store.fetchRelatedData('publication', 'p1', 'logs')
+		await store.fetchRelatedData({ type: 'publication', id: 'p1', dataType: 'logs' })
 		answer({ items: 1 })
-		await store.fetchRelatedData('publication', 'p1', 'uses')
+		await store.fetchRelatedData({ type: 'publication', id: 'p1', dataType: 'uses' })
 
 		expect(store.relatedData.publication).toEqual({
 			logs: [{ id: 'l' }],
@@ -124,7 +128,7 @@ describe('object store fetchRelatedData', () => {
 		answer({}, false)
 
 		await expect(
-			store.fetchRelatedData('publication', 'p1', 'files'),
+			store.fetchRelatedData({ type: 'publication', id: 'p1', dataType: 'files' }),
 		).rejects.toThrow('Failed to fetch files for publication')
 		expect(consoleError).toHaveBeenCalled()
 	})

@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
@@ -8,10 +12,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 		:name="
 			t('opencatalogi', 'Lock {name}', {
 				name:
-					objectStore.objectItem?.['@self']?.name
-					|| objectStore.objectItem?.name
-					|| objectStore.objectItem?.['@self']?.title
-					|| objectStore.objectItem?.id
+					objectDisplayName(objectStore.objectItem)
 					|| t('opencatalogi', 'Publication'),
 			})
 		"
@@ -23,11 +24,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					'opencatalogi',
 					"Do you want to lock {name}? Locking an object prevents other users from modifying it until it is unlocked. You can specify an optional process name to indicate why it's locked and a duration after which it will automatically unlock. Only the user who locked the object or an administrator can unlock it before the duration expires.",
 					{
-						name:
-							objectStore.objectItem?.['@self']?.name
-							|| objectStore.objectItem?.name
-							|| objectStore.objectItem?.['@self']?.title
-							|| objectStore.objectItem?.id,
+						name: objectDisplayName(objectStore.objectItem),
 					},
 				)
 			}}
@@ -86,6 +83,7 @@ import {
 } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
+import { objectDisplayName } from '../../services/objectDisplayName.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -114,6 +112,7 @@ export default {
 	},
 
 	methods: {
+		objectDisplayName,
 		/** @spec openspec/specs/generic-object-modals/spec.md */
 		closeModal() {
 			navigationStore.setModal(false)
@@ -125,16 +124,25 @@ export default {
 			this.duration = 3600
 		},
 
+		/**
+		 * Lock the object, with the process and duration when they are set.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async requestLock() {
+			await objectStore.lockObject(
+				objectStore.objectItem.id,
+				this.process || undefined,
+				this.duration || undefined,
+			)
+		},
+
 		/** @spec openspec/specs/generic-object-modals/spec.md */
 		async lockObject() {
 			this.loading = true
 
 			try {
-				await objectStore.lockObject(
-					objectStore.objectItem.id,
-					this.process || undefined,
-					this.duration || undefined,
-				)
+				await this.requestLock()
 				this.success = true
 				this.error = null
 				this.closeModalTimeout = setTimeout(this.closeModal, 2000)

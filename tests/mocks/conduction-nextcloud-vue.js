@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Jest mock for `@conduction/nextcloud-vue`.
  *
  * The real barrel pulls in `@nextcloud/vue` (CSS + ESM modules) which Jest
@@ -234,7 +238,28 @@ function openRowTarget(event, target, router) {
 	return true
 }
 
+/**
+ * A presentational stand-in that renders its default slot.
+ *
+ * @param {string} name The component name.
+ * @return {object} The stub component.
+ */
+function slotStub(name) {
+	return {
+		name,
+		inheritAttrs: false,
+		render() {
+			return h('div', { class: `${name}-stub` }, this.$slots.default?.())
+		},
+	}
+}
+
 module.exports = {
+	// The real barrel ends in `export * from '@nextcloud/vue'`, so an Nc* component
+	// imported from '@conduction/nextcloud-vue' resolves to the same stub here.
+	...require('./nextcloud-vue.js'),
+	CnDetailCard: slotStub('CnDetailCard'),
+	CnDetailGrid: slotStub('CnDetailGrid'),
 	createObjectStore,
 	useObjectStore: createObjectStore('conduction-objects'),
 	CnAppNav,

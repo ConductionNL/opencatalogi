@@ -1,4 +1,8 @@
 <!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
+<!--
 	UNREACHABLE COMPONENT — no visual baseline is possible.
 
 	Nothing imports this file: `src/registry.js` is the only place page
@@ -1134,6 +1138,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 <script>
 import { CnPagination } from '@conduction/nextcloud-vue'
+import { getRequestToken } from '@nextcloud/auth'
 import {
 	NcActionButton,
 	NcActionLink,
@@ -1174,6 +1179,17 @@ import TimelineQuestionOutline from 'vue-material-design-icons/TimelineQuestionO
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
 import PublicationStatsPanel from './PublicationStatsPanel.vue'
+
+/**
+ * Remove an id from a loading list, the way the list was marked.
+ *
+ * @param {Array} list - The loading list, changed in place
+ * @param {*} id - The id
+ * @return {void}
+ */
+function removeOnce(list, id) {
+	list.splice(list.indexOf(id), 1)
+}
 
 export default {
 	name: 'PublicationDetail',
@@ -1575,6 +1591,7 @@ export default {
 					}),
 					headers: {
 						'Content-Type': 'application/json',
+						requesttoken: getRequestToken(),
 					},
 				},
 			)
@@ -1641,6 +1658,7 @@ export default {
 				`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/${mode}`,
 				{
 					method: 'POST',
+					headers: { requesttoken: getRequestToken() },
 				},
 			).then((response) => {
 				catalogStore.fetchPublications()
@@ -1654,59 +1672,50 @@ export default {
 		},
 
 		publishFile(attachment) {
-			this.publishLoading.push(attachment.id)
+			return this.changeFilePublication(attachment, {
+				action: 'publish',
+				verb: 'publishing',
+			})
+		},
+
+		/**
+		 * Publish or depublish one attachment: mark it as loading, POST the
+		 * action, then refresh the attachments (clearing the marks) and the
+		 * publications list. A failed request is logged.
+		 *
+		 * @param {object} attachment - The attachment
+		 * @param {{action: string, verb: string}} change - The action and the verb for the log line
+		 * @return {Promise<void>}
+		 */
+		changeFilePublication(attachment, { action, verb }) {
+			const loadingList = `${action}Loading`
+			this[loadingList].push(attachment.id)
 			this.fileIdsLoading.push(attachment.id)
 
 			return fetch(
-				`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/publish`,
+				`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/${action}`,
 				{
 					method: 'POST',
+					headers: { requesttoken: getRequestToken() },
 				},
 			)
 				.catch((error) => {
-					console.error('Error publishing file:', error)
+					console.error(`Error ${verb} file:`, error)
 				})
 				.finally(() => {
 					catalogStore.getPublicationAttachments().finally(() => {
-						this.publishLoading.splice(
-							this.publishLoading.indexOf(attachment.id),
-							1,
-						)
-						this.fileIdsLoading.splice(
-							this.fileIdsLoading.indexOf(attachment.id),
-							1,
-						)
+						removeOnce(this[loadingList], attachment.id)
+						removeOnce(this.fileIdsLoading, attachment.id)
 					})
 					catalogStore.fetchPublications()
 				})
 		},
 
 		depublishFile(attachment) {
-			this.depublishLoading.push(attachment.id)
-			this.fileIdsLoading.push(attachment.id)
-
-			return fetch(
-				`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/depublish`,
-				{
-					method: 'POST',
-				},
-			)
-				.catch((error) => {
-					console.error('Error depublishing file:', error)
-				})
-				.finally(() => {
-					catalogStore.getPublicationAttachments().finally(() => {
-						this.depublishLoading.splice(
-							this.depublishLoading.indexOf(attachment.id),
-							1,
-						)
-						this.fileIdsLoading.splice(
-							this.fileIdsLoading.indexOf(attachment.id),
-							1,
-						)
-					})
-					catalogStore.fetchPublications()
-				})
+			return this.changeFilePublication(attachment, {
+				action: 'depublish',
+				verb: 'depublishing',
+			})
 		},
 
 		deleteFile(attachment) {
@@ -1736,9 +1745,24 @@ export default {
 						&& !attachment.published,
 				) || []
 
-			const promises = unpublishedAttachments.map(async (attachment) => {
-				this.publishLoading.push(attachment.id)
-				return await this.publishFile(attachment)
+			this.runBulkFileAction(unpublishedAttachments, {
+				loadingList: 'publishLoading',
+				act: (attachment) => this.publishFile(attachment),
+			})
+		},
+
+		/**
+		 * Run a file action on several attachments, then reload the page of
+		 * attachments, clear the selection and the publication's loading mark.
+		 *
+		 * @param {Array<object>} attachments - The attachments
+		 * @param {{loadingList: string, act: Function}} run - The loading list and the action
+		 * @return {void}
+		 */
+		runBulkFileAction(attachments, { loadingList, act }) {
+			const promises = attachments.map(async (attachment) => {
+				this[loadingList].push(attachment.id)
+				return await act(attachment)
 			})
 
 			Promise.all(promises).then(() => {
@@ -1747,7 +1771,7 @@ export default {
 					limit: this.limit,
 				})
 				this.selectedAttachments = []
-				this.publishLoading = this.publishLoading.filter(
+				this[loadingList] = this[loadingList].filter(
 					(id) => id !== this.publication.id,
 				)
 			})
@@ -1761,20 +1785,9 @@ export default {
 						&& attachment.published,
 				) || []
 
-			const promises = publishedAttachments.map(async (attachment) => {
-				this.depublishLoading.push(attachment.id)
-				return await this.depublishFile(attachment)
-			})
-
-			Promise.all(promises).then(() => {
-				catalogStore.getPublicationAttachments(this.publication.id, {
-					page: this.currentPage,
-					limit: this.limit,
-				})
-				this.selectedAttachments = []
-				this.depublishLoading = this.depublishLoading.filter(
-					(id) => id !== this.publication.id,
-				)
+			this.runBulkFileAction(publishedAttachments, {
+				loadingList: 'depublishLoading',
+				act: (attachment) => this.depublishFile(attachment),
 			})
 		},
 

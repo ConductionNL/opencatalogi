@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
@@ -27,7 +31,7 @@ const { isAdmin } = useIsAdmin()
 		:error="!!error"
 		:errorMessage="error"
 		:onRetry="loadCatalog"
-		:layout="detailLayout"
+		:layout="pageLayout"
 		:widgets="widgetDefs"
 		:sidebar="!!catalog"
 		:sidebarOpen="sidebarOpen"
@@ -81,6 +85,11 @@ const { isAdmin } = useIsAdmin()
 			<CnDetailGrid :items="configItems" layout="horizontal" />
 		</template>
 
+		<!-- Feed consumers widget (administrators only, see widgetDefs) -->
+		<template #widget-feed-consumers>
+			<FeedConsumersPanel v-if="isAdmin && catalogSlug" :catalogSlug="catalogSlug" />
+		</template>
+
 		<!-- Raw data widget -->
 		<template #widget-raw-data>
 			<CnJsonViewer
@@ -95,10 +104,19 @@ const { isAdmin } = useIsAdmin()
 <script>
 import { CnDetailGrid, CnDetailPage, CnJsonViewer } from '@conduction/nextcloud-vue'
 import { NcButton } from '@nextcloud/vue'
+import { defineAsyncComponent } from 'vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
-import { catalogMetadataItems } from '../../services/catalogMetadata.js'
+import {
+	catalogCountRows,
+	catalogFeatureRows,
+	catalogMetadataItems,
+} from '../../services/catalogMetadata.js'
+
+// Administrators alone see the Feed consumers section, so its code is loaded
+// only when it renders.
+const FeedConsumersPanel = defineAsyncComponent(() => import('../../components/catalogi/FeedConsumersPanel.vue'))
 
 const DETAIL_LAYOUT = [
 	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
@@ -126,6 +144,14 @@ const DETAIL_LAYOUT = [
 		gridWidth: 12,
 		gridHeight: 4,
 	},
+	{
+		id: 5,
+		widgetId: 'feed-consumers',
+		gridX: 0,
+		gridY: 10,
+		gridWidth: 12,
+		gridHeight: 5,
+	},
 ]
 
 /**
@@ -136,6 +162,7 @@ const DETAIL_LAYOUT = [
 export default {
 	name: 'CatalogDetailPage',
 	components: {
+		FeedConsumersPanel,
 		CnDetailPage,
 		CnDetailGrid,
 		CnJsonViewer,
@@ -184,49 +211,45 @@ export default {
 		configItems() {
 			if (!this.catalog) return []
 			return [
-				{
-					label: t('opencatalogi', 'Registers'),
-					value: (this.catalog.registers || []).length,
-				},
-				{
-					label: t('opencatalogi', 'Schemas'),
-					value: (this.catalog.schemas || []).length,
-				},
-				{
-					label: t('opencatalogi', 'WOO Sitemap'),
-					value: this.catalog.hasWooSitemap
-						? t('opencatalogi', 'Yes')
-						: t('opencatalogi', 'No'),
-				},
-				{
-					label: t('opencatalogi', 'OOAPI 5.0 Publication'),
-					value: this.catalog.hasOoapi
-						? t('opencatalogi', 'Yes')
-						: t('opencatalogi', 'No'),
-				},
+				...catalogCountRows(this.catalog),
+				...catalogFeatureRows(this.catalog),
 			]
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		widgetDefs() {
-			return [
-				{
-					id: 'metadata',
-					title: t('opencatalogi', 'Metadata'),
-					type: 'custom',
-				},
-				{
-					id: 'configuration',
-					title: t('opencatalogi', 'Configuration'),
-					type: 'custom',
-				},
-				{
-					id: 'description',
-					title: t('opencatalogi', 'Description'),
-					type: 'custom',
-				},
-				{ id: 'raw-data', title: t('opencatalogi', 'Data'), type: 'custom' },
+			const defs = [
+				['metadata', t('opencatalogi', 'Metadata')],
+				['configuration', t('opencatalogi', 'Configuration')],
+				['description', t('opencatalogi', 'Description')],
+				['raw-data', t('opencatalogi', 'Data')],
 			]
+			if (this.isAdmin) {
+				defs.push(['feed-consumers', t('opencatalogi', 'Feed consumers')])
+			}
+			return defs.map(([id, title]) => ({ id, title, type: 'custom' }))
+		},
+
+		/**
+		 * The layout cells of the widgets this viewer gets: no empty cell for a
+		 * widget an administrator alone sees.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/integration-feed-consumer-credentials/specs/ooapi-catalog-publication/spec.md#requirement-account-based-access-keeps-working-and-is-visible-req-fcc-004
+		 */
+		pageLayout() {
+			const ids = this.widgetDefs.map((def) => def.id)
+			return this.detailLayout.filter((cell) => ids.includes(cell.widgetId))
+		},
+
+		/**
+		 * The catalogue's slug, which the Feed consumers endpoints are addressed by.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/integration-feed-consumer-credentials/specs/ooapi-catalog-publication/spec.md#requirement-an-administrator-issues-a-key-to-a-consumer-for-one-catalogue-req-fcc-001
+		 */
+		catalogSlug() {
+			return String(this.catalog?.slug || this.catalog?.['@self']?.slug || '')
 		},
 	},
 

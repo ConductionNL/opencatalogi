@@ -13,6 +13,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -34,12 +37,14 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\SettingsService
  * @covers \OCA\OpenCatalogi\Service\CatalogScopeSlugResolver
  * @uses \OCA\OpenCatalogi\Service\CatalogScopeBackfill
  * @uses \OCA\OpenCatalogi\Service\CatalogScopeLookups
+ * @uses   \OCA\OpenCatalogi\Service\SchemaSlugIndex
  */
 class SettingsServiceCatalogScopeTest extends TestCase {
 
@@ -296,7 +301,11 @@ class SettingsServiceCatalogScopeTest extends TestCase {
 			->getMock();
 		$objects->method('searchObjects')->willReturn($catalogues);
 		$objects->method('saveObject')->willReturnCallback(
-			function (mixed $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null): ObjectEntity {
+			function (mixed $object, ObjectSaveOptions $options = new ObjectSaveOptions()): ObjectEntity {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$this->assertSame('23', $register);
 				$this->assertSame('8', $schema);
 				$this->savedWithUuid[] = [$object, $uuid];

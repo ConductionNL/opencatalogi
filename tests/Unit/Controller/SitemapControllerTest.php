@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
@@ -148,5 +153,29 @@ class SitemapControllerTest extends TestCase {
 		$response = $this->controller->sitemap('test-catalog', 'sitemapindex-diwoo-infocat001.xml');
 
 		$this->assertSame($expectedResponse, $response);
+	}
+
+	/**
+	 * REQ-DWP-004: the validate route answers the report of a held-back document,
+	 * with its location, the publisher field and the reason.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 */
+	public function testTheValidateRouteReportsAHeldBackDocument(): void {
+		$routes = (string)file_get_contents(__DIR__ . '/../../../appinfo/routes.php');
+		$this->assertStringContainsString("['name' => 'sitemap#diwooReport', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}/validate', 'verb' => 'GET']", $routes);
+
+		$violation = ['documentLoc' => 'https://example.com/zonder-tooi.pdf', 'axis' => 'publisher', 'reason' => 'organisation has no TOOI identifier'];
+		$report = ['catalogSlug' => 'woo', 'categoryCode' => 'sitemapindex-diwoo-infocat012.xml', 'valid' => false, 'violations' => [$violation]];
+		$this->request->method('getParams')->willReturn(['page' => '2']);
+		$this->sitemapService->expects($this->once())
+			->method('validateDiwooOutput')
+			->with('woo', 'sitemapindex-diwoo-infocat012.xml', 2)
+			->willReturn($report);
+
+		$response = $this->controller->diwooReport('woo', 'sitemapindex-diwoo-infocat012.xml');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame([$violation], $response->getData()['violations']);
 	}
 }

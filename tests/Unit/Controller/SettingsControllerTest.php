@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
@@ -133,6 +138,51 @@ class SettingsControllerTest extends TestCase {
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(200, $response->getStatus());
 		$this->assertSame($result, $response->getData());
+	}
+
+	/**
+	 * REQ-PTS-001: changing a link setting queues one rewrite of every publication's pages; saving the same value queues none.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	public function testChangingTheLinkTemplateQueuesTheRewrite(): void {
+		$stored = ['publication_url_template' => 'https://old.example/{id}', 'publication_url_catalog' => 'woo'];
+		$config = $this->createMock(\OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$stored): string {
+				return ($stored[$key] ?? $default);
+			}
+		);
+		$this->settingsService->method('updateSettings')->willReturnCallback(
+			static function (array $data) use (&$stored): array {
+				$stored = array_merge($stored, $data);
+				return $data;
+			}
+		);
+		$jobs = $this->createMock(\OCP\BackgroundJob\IJobList::class);
+		$queued = [];
+		$jobs->method('add')->willReturnCallback(
+			static function (string $job) use (&$queued): void {
+				$queued[] = $job;
+			}
+		);
+		$params = [];
+		$this->request->method('getParams')->willReturnCallback(static function () use (&$params): array {
+			return $params;
+		});
+		$controller = new SettingsController('opencatalogi', $this->request, $this->settingsService, $this->l10n, $this->userSession, null, $jobs, $config);
+
+		$params = ['publication_url_template' => 'https://new.example/{id}'];
+		$this->assertSame(200, $controller->update()->getStatus());
+		$this->assertSame([\OCA\OpenCatalogi\BackgroundJob\PublicationLinksRewrite::class], $queued);
+
+		$params = ['publication_url_template' => 'https://new.example/{id}', 'publication_url_catalog' => 'woo', 'dcat_publisher_name' => 'Gemeente'];
+		$controller->update();
+		$this->assertCount(1, $queued);
+
+		$params = ['publication_url_catalog' => ''];
+		$controller->update();
+		$this->assertCount(2, $queued);
 	}
 
 	/**

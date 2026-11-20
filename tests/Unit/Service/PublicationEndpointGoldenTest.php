@@ -27,6 +27,7 @@
  * @spec openspec/specs/dashboard/spec.md
  *
  * @covers \OCA\OpenCatalogi\Service\DirectoryService
+ * @uses \OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard
  */
 
 declare(strict_types=1);

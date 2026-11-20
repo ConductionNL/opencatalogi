@@ -1,0 +1,7 @@
+{
+    "$comment": "The publication filinq's OCA\\FilinQ\\Service\\Publication\\OpenCatalogiPublicationMap::toPublication() writes once its paired change diwoo-documentsoort-to-opencatalogi (ConductionNL/filinq#1344) lands: officieleTitel as title, documentsoort as given (a label or a URI), wooCategory, publicatiedatum at midnight UTC, and no summary (REQ-DWP-006). Today it still writes the document type into summary; this is the shape opencatalogi accepts.",
+    "title": "Besluit op het Woo-verzoek over de herinrichting van de Lindelaan",
+    "documentsoort": "besluit",
+    "wooCategory": "infocat014",
+    "publicationDate": "2026-11-02T00:00:00+00:00"
+}

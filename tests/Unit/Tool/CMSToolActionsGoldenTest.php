@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace Unit\Tool;
 
 use OCA\OpenCatalogi\Tool\CMSTool;
-use OCA\OpenRegister\Db\Agent;
+use OCA\OpenRegister\Mcp\Db\Agent;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\IUser;
@@ -33,6 +33,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for the CMSTool actions.
@@ -109,6 +110,7 @@ class CMSToolActionsGoldenTest extends TestCase {
 		$objects = $this->createMock(ObjectService::class);
 		$objects->method('saveObject')->willReturnCallback(
 			static function (...$args) use (&$calls, $case): ObjectEntity {
+				$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 				$calls[] = ['saveObject' => self::passedArguments(method: 'saveObject', args: $args)];
 				if (($case['save'] ?? 'ok') === 'throw') {
 					throw new \RuntimeException('store down');
@@ -217,7 +219,7 @@ class CMSToolActionsGoldenTest extends TestCase {
 	 */
 	private static function passedArguments(string $method, array $args): array {
 		$named = [];
-		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $position => $parameter) {
+		foreach (LegacyObjectArgs::parameters(ObjectService::class, $method) as $position => $parameter) {
 			if (array_key_exists($position, $args) === false) {
 				continue;
 			}

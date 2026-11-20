@@ -82,12 +82,6 @@ class SitemapService implements SitemapServiceInterface {
 	 */
 	private const CONFIG_MAX_PER_PAGE = 'sitemap_max_per_page';
 
-	/**
-	 * The DiWoo document mapper, made on first use; it caches TOOI lookups for the request.
-	 *
-	 * @var SitemapDocumentMapper|null
-	 */
-	private ?SitemapDocumentMapper $documentMapper = null;
 
 	/**
 	 * Constructor for SitemapService.
@@ -95,7 +89,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param OpenRegisterLookup $openRegister The guarded OpenRegister services
 	 * @param SettingsService $settingsService The settings service
 	 * @param InstanceSettings $instance The base URL and app configuration (operator-tunable page size)
-	 * @param TooiVocabularyService $tooiVocabulary The TOOI value-list resolver
+	 * @param SitemapDocumentMapper $documentMapper Maps a file of a publication to its DiWoo document
 	 * @param PublicationQueryService $queryService The SCH-PFTS-CAT-002 read-rule guard
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local
 	 */
@@ -103,11 +97,10 @@ class SitemapService implements SitemapServiceInterface {
 		private readonly OpenRegisterLookup $openRegister,
 		private readonly SettingsService $settingsService,
 		private readonly InstanceSettings $instance,
-		private readonly TooiVocabularyService $tooiVocabulary,
+		private readonly SitemapDocumentMapper $documentMapper,
 		private readonly PublicationQueryService $queryService,
 		private readonly WooCategoryRegistry $categories,
 	) {
-
 	}//end __construct()
 
 	/**
@@ -214,7 +207,10 @@ class SitemapService implements SitemapServiceInterface {
 	 *
 	 * @return XMLResponse The publications sitemap XML response.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SitemapDocumentRelations is a pure static helper.
+	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
 	 */
 	public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse {
 		$objectService = $this->getObjectService();
@@ -230,8 +226,15 @@ class SitemapService implements SitemapServiceInterface {
 		$publications = $this->publicationsWithFiles(rows: $builder->page(queries: $this->sitemapQueries(request: $request), page: $page)['results']);
 
 		$documents = [];
-		foreach (self::downloadableFiles(publications: $publications) as [$publication, $file]) {
-			$documents[] = $this->mapDiwooDocument(publication: $publication, file: $file);
+		$apiBase = $this->instance->baseUrl() . '/apps/opencatalogi/api/' . rawurlencode($catalogSlug);
+		foreach ($publications as $publication) {
+			foreach (SitemapDocumentRelations::forPublication(publication: $publication, apiBase: $apiBase) as [$file, $relations]) {
+				// A document the Woo-index would refuse is held back; validateDiwooOutput() reports it (REQ-DWP-004).
+				$document = $this->documentMapper->mapComplete(publication: $publication, file: $file, relations: $relations);
+				if ($document !== null) {
+					$documents[] = $document;
+				}
+			}
 		}
 
 		return new XMLResponse(data: self::documentsXml(documents: $documents));
@@ -271,21 +274,14 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param array $publication The publication as returned from ObjectService.
 	 * @param array $file The file metadata belonging to that publication.
 	 * @param array<int, array<string, string>> $violations Per-document unresolved-axis report (by reference).
+	 * @param array<string, array<string, mixed>> $relations The document's `isPartOf` or `hasParts` element, if any.
 	 *
 	 * @return array A DIWOO metadata array ready for XMLResponse.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function mapDiwooDocument(array $publication, array $file, array &$violations = []): array {
-		if ($this->documentMapper === null) {
-			$this->documentMapper = new SitemapDocumentMapper(
-				tooiVocabulary: $this->tooiVocabulary,
-				categories: $this->categories,
-				openRegister: $this->openRegister
-			);
-		}
-
-		return $this->documentMapper->map(publication: $publication, file: $file, violations: $violations);
+	private function mapDiwooDocument(array $publication, array $file, array &$violations = [], array $relations = []): array {
+		return $this->documentMapper->map(publication: $publication, file: $file, violations: $violations, relations: $relations);
 	}//end mapDiwooDocument()
 
 	/**
@@ -641,12 +637,21 @@ class SitemapService implements SitemapServiceInterface {
 	 *
 	 * @return array<int, array<string, string>> The `{documentLoc, axis, reason}` violations.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SitemapDocumentRelations is a pure static helper.
+	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function collectDiwooViolations(array $publications): array {
 		$violations = [];
 		foreach (self::downloadableFiles(publications: $publications) as [$publication, $file]) {
 			$this->mapDiwooDocument(publication: $publication, file: $file, violations: $violations);
+		}
+
+		foreach ($publications as $publication) {
+			$violation = SitemapDocumentRelations::mainDocumentViolation(publication: $publication);
+			if ($violation !== null) {
+				$violations[] = $violation;
+			}
 		}
 
 		return $violations;
@@ -664,7 +669,8 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param string $categoryCode The DIWOO category code (e.g. `infocat014`).
 	 * @param integer $page The 1-based page number.
 	 *
-	 * @return array{catalogSlug: string, categoryCode: string, valid: bool, violations: array<int, array<string, string>>, error?: string}
+	 * @return array<string, mixed> The report: catalogSlug, categoryCode, valid, violations, and
+	 *                              unreachableReferences when there are any (or error).
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
@@ -683,10 +689,48 @@ class SitemapService implements SitemapServiceInterface {
 		$scope = ['register' => $request->registerId, 'schema' => $request->schemaId];
 		$query = ['@self' => $scope, '_limit' => $this->getMaxPerPage(), '_page' => max(1, $page)];
 		$publicationResult = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
-		$violations = $this->collectDiwooViolations(publications: $this->publicationsWithFiles(rows: ($publicationResult['results'] ?? [])));
+		$publications = $this->publicationsWithFiles(rows: ($publicationResult['results'] ?? []));
+		$violations = $this->collectDiwooViolations(publications: $publications);
 
-		return ['catalogSlug' => $catalogSlug, 'categoryCode' => $categoryCode, 'valid' => ($violations === []), 'violations' => $violations];
+		$report = ['catalogSlug' => $catalogSlug, 'categoryCode' => $categoryCode, 'valid' => ($violations === []), 'violations' => $violations];
+		$unreachable = self::unreachableReferences(publications: $publications);
+		if ($unreachable !== []) {
+			$report['unreachableReferences'] = $unreachable;
+		}
+
+		return $report;
 	}//end validateDiwooOutput()
+
+	/**
+	 * The document references whose last check found no answer, per publication (REQ-PBR-003).
+	 *
+	 * Advisory, like the violations: an unreachable reference stays in the
+	 * sitemap, because the harvester decides what to do with it.
+	 *
+	 * @param array<int, array<string, mixed>> $publications The publications, with their files and references under `@self.files`.
+	 *
+	 * @return list<array{publication: string, title: string, url: string, lastStatus: int, lastCheckedAt: string}>
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-broken-references-are-shown-before-readers-find-them-req-pbr-003
+	 */
+	public static function unreachableReferences(array $publications): array {
+		$unreachable = [];
+		foreach (self::downloadableFiles(publications: $publications) as [$publication, $file]) {
+			if (($file['kind'] ?? null) !== DocumentReferenceMapper::KIND || ($file['reachable'] ?? null) !== false) {
+				continue;
+			}
+
+			$unreachable[] = [
+				'publication' => (string)($publication['id'] ?? ''),
+				'title' => (string)($file['title'] ?? ''),
+				'url' => (string)($file['downloadUrl'] ?? ''),
+				'lastStatus' => (int)($file['lastStatus'] ?? 0),
+				'lastCheckedAt' => (string)($file['lastCheckedAt'] ?? ''),
+			];
+		}
+
+		return $unreachable;
+	}//end unreachableReferences()
 
 	/**
 	 * The publications as arrays, each with its files under `@self.files`.
@@ -707,12 +751,41 @@ class SitemapService implements SitemapServiceInterface {
 				$publication = $publication->jsonSerialize();
 			}
 
-			$publication['@self']['files'] = ($fileService->formatFiles($fileService->getFiles(object: $publication['id']))['results'] ?? []);
+			$files = ($fileService->formatFiles($fileService->getFiles(object: $publication['id']))['results'] ?? []);
+			$publication['@self']['files'] = $this->withReferences(files: $files, publicationId: (string)$publication['id']);
 			$publications[] = $publication;
 		}
 
 		return $publications;
 	}//end publicationsWithFiles()
+
+	/**
+	 * A publication's files with its public document references after them (REQ-PBR-002).
+	 *
+	 * The references are resolved through the OpenRegister lookup, because they
+	 * live in OpenRegister; without it, or when they cannot be resolved, the
+	 * files are returned as they are.
+	 *
+	 * @param array<int, array<string, mixed>> $files The publication's file entries.
+	 * @param string $publicationId The publication's id.
+	 *
+	 * @return array<int, array<string, mixed>> The files, then the references.
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-a-reference-is-published-like-a-file-pointing-at-its-source-req-pbr-002
+	 */
+	private function withReferences(array $files, string $publicationId): array {
+		try {
+			$references = $this->openRegister->installedService(DocumentReferences::class, 'OpenRegister is not available.');
+		} catch (\Throwable $e) {
+			return $files;
+		}
+
+		if ($references instanceof DocumentReferences === false) {
+			return $files;
+		}
+
+		return $references->appendTo(files: $files, publicationId: $publicationId);
+	}//end withReferences()
 
 	/**
 	 * Build a DIWOO validator error report.

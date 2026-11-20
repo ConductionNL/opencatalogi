@@ -60,7 +60,7 @@ class DownloadLookupFailureGoldenTest extends TestCase {
 			'multiple' => new MultipleObjectsReturnedException('mo'),
 			'does not exist' => new DoesNotExistException('dne'),
 		];
-		$service = new DownloadService($this->createMock(FileService::class));
+		$service = new DownloadService($this->createMock(FileService::class), $this->passthroughL10n());
 		$data = new ReflectionMethod($service, 'getPublicationData');
 		$calls = [
 			'getPublicationData' => static fn (ObjectService $objects): mixed => $data->invoke($service, 'p-1', $objects),
@@ -96,4 +96,15 @@ class DownloadLookupFailureGoldenTest extends TestCase {
 		$objects->method('find')->willThrowException($failure);
 		return $objects;
 	}//end failingStore()
+
+	/**
+	 * An IL10N that answers the English text unchanged.
+	 *
+	 * @return \OCP\IL10N The translator.
+	 */
+	private function passthroughL10n(): \OCP\IL10N {
+		$l10n = $this->createMock(\OCP\IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+		return $l10n;
+	}
 }//end class

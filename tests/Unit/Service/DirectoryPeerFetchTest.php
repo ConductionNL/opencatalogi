@@ -15,6 +15,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -32,6 +35,7 @@ use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use ReflectionClass;
 
 class DirectoryPeerFetchTest extends TestCase {
@@ -255,5 +259,75 @@ class DirectoryPeerFetchTest extends TestCase {
 		);
 
 		$this->assertNull($result);
+	}
+
+	/**
+	 * Wire a container answering OpenRegister's LanguageService with the
+	 * language the visitor asked for and where it came from.
+	 *
+	 * @param string $language The preferred language.
+	 * @param string $source Where it came from: query, header or default.
+	 *
+	 * @return void
+	 */
+	private function wireVisitorLanguage(string $language, string $source): void {
+		$languageService = new class($language, $source) {
+			public function __construct(private string $language, private string $source) {
+			}
+
+			public function getPreferredLanguage(): string {
+				return $this->language;
+			}
+
+			public function getRequestedLanguageSource(): string {
+				return $this->source;
+			}
+		};
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->with('OCA\OpenRegister\Service\LanguageService')->willReturn($languageService);
+		(new ReflectionClass(DirectoryService::class))->getProperty('container')->setValue($this->service, $container);
+	}
+
+	/**
+	 * A peer read forwards the language the visitor asked for, so the peer
+	 * answers in it (publication-translations REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testAPeerReadForwardsTheVisitorsLanguage(): void {
+		$this->wireVisitorLanguage(language: 'en', source: 'header');
+
+		$this->service->getPublications(
+			$this->guzzle([
+				new Response(200, [], '{"results":[],"total":0}'),
+				new Response(200, [], '{"results":[],"total":0}'),
+				new Response(200, [], '{"results":[],"total":0}'),
+			])
+		);
+
+		$this->assertCount(3, $this->history);
+		foreach ($this->history as $entry) {
+			$this->assertSame('en', $entry['request']->getHeaderLine('Accept-Language'));
+			$this->assertSame('application/json', $entry['request']->getHeaderLine('Accept'));
+		}
+	}
+
+	/**
+	 * A visitor who asked for no language gets the peer's default: nothing is forwarded.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testAPeerReadForwardsNoLanguageWhenNoneWasAsked(): void {
+		$this->wireVisitorLanguage(language: 'nl', source: 'default');
+
+		$this->service->getPublication(
+			'x',
+			$this->guzzle([new Response(404, [], '{}'), new Response(404, [], '{}'), new Response(404, [], '{}')])
+		);
+
+		$this->assertNotEmpty($this->history);
+		foreach ($this->history as $entry) {
+			$this->assertFalse($entry['request']->hasHeader('Accept-Language'));
+		}
 	}
 }

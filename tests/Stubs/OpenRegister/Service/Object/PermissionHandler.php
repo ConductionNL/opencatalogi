@@ -11,6 +11,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -35,6 +38,7 @@ class PermissionHandler {
 	 * @param string|null $objectOwner The object's owner.
 	 * @param boolean $_rbac Whether to apply RBAC.
 	 * @param ObjectEntity|null $object The object, for conditional rules.
+	 * @param string|null $register The register written to, for a check that names no object.
 	 *
 	 * @return boolean
 	 */
@@ -45,6 +49,7 @@ class PermissionHandler {
 		?string $objectOwner = null,
 		bool $_rbac = true,
 		?ObjectEntity $object = null,
+		?string $register = null,
 	): bool {
 		return false;
 	}//end hasPermission()

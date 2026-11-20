@@ -126,8 +126,28 @@ class CollectionShareService implements CollectionShareServiceInterface {
 	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-shared-dossier-shows-only-what-is-public-now-and-a-revoked-link-answers-404-req-ccol-005
 	 */
 	public function shared(string $token): array {
+		$dossier = $this->liveShare(token: $token);
+
+		return [
+			'title' => (string)($dossier['title'] ?? ''),
+			'description' => (string)($dossier['description'] ?? ''),
+			'items' => $this->publicItems(dossier: $dossier),
+		];
+
+	}//end shared()
+
+	/**
+	 * The dossier a token is the live share link of.
+	 *
+	 * @param string $token The share token: the dossier id, a dot, 48 hex characters.
+	 *
+	 * @return array<string, mixed> The dossier.
+	 *
+	 * @throws PortalNotFoundException When the token is not a live share.
+	 */
+	private function liveShare(string $token): array {
 		$parts = explode('.', $token, 2);
-		if (count($parts) !== 2 || preg_match('/^[0-9a-f]{48}$/', $parts[1]) !== 1) {
+		if ($this->isWellFormedToken(parts: $parts) === false) {
 			throw new PortalNotFoundException(message: 'Not found');
 		}
 
@@ -137,31 +157,59 @@ class CollectionShareService implements CollectionShareServiceInterface {
 			throw new PortalNotFoundException(message: 'Not found');
 		}
 
+		return $dossier;
+	}//end liveShare()
+
+	/**
+	 * Whether a token split at its first dot has a dossier part and a secret of
+	 * 48 lower-case hex characters.
+	 *
+	 * @param array<int, string> $parts The token split at its first dot.
+	 *
+	 * @return bool
+	 */
+	private function isWellFormedToken(array $parts): bool {
+		return count($parts) === 2 && preg_match('/^[0-9a-f]{48}$/', $parts[1]) === 1;
+	}//end isWellFormedToken()
+
+	/**
+	 * The dossier's items whose publication is public right now.
+	 *
+	 * @param array<string, mixed> $dossier The shared dossier.
+	 *
+	 * @return array<int, array<string, mixed>> The items as the shared view lists them.
+	 */
+	private function publicItems(array $dossier): array {
 		$items = [];
 		foreach ((array)($dossier['items'] ?? []) as $item) {
 			$publication = $this->store->publicPublication(id: (string)($item['publication'] ?? ''));
-			if ($publication === null) {
-				continue;
+			if ($publication !== null) {
+				$items[] = $this->sharedItem(item: $item, publication: $publication);
 			}
-
-			$items[] = [
-				'id' => (string)($item['id'] ?? ''),
-				'publication' => (string)$item['publication'],
-				'attachment' => ($item['attachment'] ?? null),
-				'note' => (string)($item['note'] ?? ''),
-				'addedAt' => (string)($item['addedAt'] ?? ''),
-				'title' => (string)($publication['title'] ?? ($item['title'] ?? '')),
-				'url' => $this->linker->url(id: (string)$item['publication']),
-			];
 		}
 
-		return [
-			'title' => (string)($dossier['title'] ?? ''),
-			'description' => (string)($dossier['description'] ?? ''),
-			'items' => $items,
-		];
+		return $items;
+	}//end publicItems()
 
-	}//end shared()
+	/**
+	 * One item as the shared view lists it, titled by its publication now.
+	 *
+	 * @param array<string, mixed> $item The dossier item.
+	 * @param array<string, mixed> $publication Its public publication.
+	 *
+	 * @return array<string, mixed> The item.
+	 */
+	private function sharedItem(array $item, array $publication): array {
+		return [
+			'id' => (string)($item['id'] ?? ''),
+			'publication' => (string)$item['publication'],
+			'attachment' => ($item['attachment'] ?? null),
+			'note' => (string)($item['note'] ?? ''),
+			'addedAt' => (string)($item['addedAt'] ?? ''),
+			'title' => (string)($publication['title'] ?? ($item['title'] ?? '')),
+			'url' => $this->linker->url(id: (string)$item['publication']),
+		];
+	}//end sharedItem()
 
 	/**
 	 * The dossier when this owner owns it.

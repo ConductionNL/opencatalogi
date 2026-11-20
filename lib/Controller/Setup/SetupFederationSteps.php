@@ -84,40 +84,70 @@ class SetupFederationSteps {
 		try {
 			$result = $this->directoryService->syncDirectory($directoryUrl);
 		} catch (\Exception $e) {
-			$this->logger->warning('Setup connect-federation sync failed: ' . $e->getMessage(), ['app' => AppIdentity::APP_ID]);
-			return new JSONResponse(
-				[
-					'success' => false,
-					'message' => $this->l10n->t('Could not reach the directory right now. You can skip this — it will sync automatically later.'),
-				]
-			);
+			return $this->unreachableDirectory(exception: $e);
 		}
 
-		$created = (int)($result['listings_created'] ?? 0);
-		$updated = (int)($result['listings_updated'] ?? 0);
-
-		$advertised = false;
-		try {
-			$broadcastResults = $this->broadcastService->broadcast($directoryUrl);
-			$advertised = (isset($broadcastResults[$directoryUrl]) === true && $broadcastResults[$directoryUrl] === true);
-		} catch (\Exception $e) {
-			$this->logger->warning('Setup connect-federation advertise failed: ' . $e->getMessage(), ['app' => AppIdentity::APP_ID]);
-		}
-
-		return new JSONResponse(
-			[
-				'success' => true,
-				'message' => $this->buildFederationMessage(created: $created, updated: $updated, advertised: $advertised),
-				'details' => [
-					'listings_created' => $created,
-					'listings_updated' => $updated,
-					'advertised' => $advertised,
-					'directory_url' => $directoryUrl,
-				],
-			]
+		$details = $this->pulledListings(result: $result);
+		$details['advertised'] = $this->advertise(directoryUrl: $directoryUrl);
+		$details['directory_url'] = $directoryUrl;
+		$message = $this->buildFederationMessage(
+			created: $details['listings_created'],
+			updated: $details['listings_updated'],
+			advertised: $details['advertised']
 		);
 
+		return new JSONResponse(['success' => true, 'message' => $message, 'details' => $details]);
+
 	}//end connectFederation()
+
+	/**
+	 * The non-fatal answer when the default directory cannot be reached.
+	 *
+	 * @param \Exception $exception Why the pull failed.
+	 *
+	 * @return JSONResponse The result envelope (success, message).
+	 */
+	private function unreachableDirectory(\Exception $exception): JSONResponse {
+		$this->logger->warning('Setup connect-federation sync failed: ' . $exception->getMessage(), ['app' => AppIdentity::APP_ID]);
+		return new JSONResponse(
+			[
+				'success' => false,
+				'message' => $this->l10n->t('Could not reach the directory right now. You can skip this — it will sync automatically later.'),
+			]
+		);
+	}//end unreachableDirectory()
+
+	/**
+	 * How many listings the pull created and updated.
+	 *
+	 * @param array<string, mixed> $result The directory sync result.
+	 *
+	 * @return array{listings_created: int, listings_updated: int}
+	 */
+	private function pulledListings(array $result): array {
+		return [
+			'listings_created' => (int)($result['listings_created'] ?? 0),
+			'listings_updated' => (int)($result['listings_updated'] ?? 0),
+		];
+	}//end pulledListings()
+
+	/**
+	 * Broadcast this instance to the directory, so it can sync back and list
+	 * us. A failure is logged and reported as not advertised.
+	 *
+	 * @param string $directoryUrl The directory.
+	 *
+	 * @return bool True when the directory accepted the broadcast.
+	 */
+	private function advertise(string $directoryUrl): bool {
+		try {
+			$broadcastResults = $this->broadcastService->broadcast($directoryUrl);
+			return (isset($broadcastResults[$directoryUrl]) === true && $broadcastResults[$directoryUrl] === true);
+		} catch (\Exception $e) {
+			$this->logger->warning('Setup connect-federation advertise failed: ' . $e->getMessage(), ['app' => AppIdentity::APP_ID]);
+			return false;
+		}
+	}//end advertise()
 
 	/**
 	 * Sync every registered federation directory (wizard step 6).
@@ -142,17 +172,40 @@ class SetupFederationSteps {
 		try {
 			$result = $this->directoryService->doCronSync();
 		} catch (\Exception $e) {
-			$this->logger->warning('Setup sync-all-directories failed: ' . $e->getMessage(), ['app' => AppIdentity::APP_ID]);
-			return new JSONResponse(
-				[
-					'success' => false,
-					'message' => $this->l10n->t(
-						'Could not synchronize the directories right now. You can skip this — the periodic cron will retry automatically.'
-					),
-				]
-			);
+			return $this->directoriesNotSynced(exception: $e);
 		}
 
+		return $this->syncedDirectoriesAnswer(result: $result);
+	}//end syncAllDirectories()
+
+	/**
+	 * The non-fatal answer when the directories cannot be synchronized.
+	 *
+	 * @param \Exception $exception Why the sync failed.
+	 *
+	 * @return JSONResponse The result envelope (success, message).
+	 */
+	private function directoriesNotSynced(\Exception $exception): JSONResponse {
+		$this->logger->warning('Setup sync-all-directories failed: ' . $exception->getMessage(), ['app' => AppIdentity::APP_ID]);
+		return new JSONResponse(
+			[
+				'success' => false,
+				'message' => $this->l10n->t(
+					'Could not synchronize the directories right now. You can skip this — the periodic cron will retry automatically.'
+				),
+			]
+		);
+	}//end directoriesNotSynced()
+
+	/**
+	 * The answer to a finished sync of every directory: how many synced, failed
+	 * and were there in all.
+	 *
+	 * @param array<string, mixed> $result The cron sync result.
+	 *
+	 * @return JSONResponse The result envelope (success, message, details).
+	 */
+	private function syncedDirectoriesAnswer(array $result): JSONResponse {
 		$synced = (int)($result['synced_directories'] ?? 0);
 		$failed = (int)($result['failed_directories'] ?? 0);
 		$total = (int)($result['total_directories'] ?? ($synced + $failed));
@@ -172,7 +225,7 @@ class SetupFederationSteps {
 			]
 		);
 
-	}//end syncAllDirectories()
+	}//end syncedDirectoriesAnswer()
 
 	/**
 	 * Compose the admin-facing message describing the pull + push outcome.

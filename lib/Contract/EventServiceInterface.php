@@ -45,13 +45,13 @@ interface EventServiceInterface {
 	 * This method provides access to the FileMapper for direct database access
 	 * to file information without triggering object updates.
 	 *
-	 * @return \OCA\OpenRegister\Db\FileMapper The FileMapper instance.
+	 * @return \OCA\OpenRegister\Files\Db\FileMapper The FileMapper instance.
 	 * @throws \RuntimeException If the FileMapper is not available.
 	 *
 	 * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
 	 *       FileMapper from the container; pure framework plumbing, no domain behavior.
 	 */
-	public function getFileMapper(): ?\OCA\OpenRegister\Db\FileMapper;
+	public function getFileMapper(): ?\OCA\OpenRegister\Files\Db\FileMapper;
 
 	/**
 	 * Handle object creation events with auto-publishing logic.

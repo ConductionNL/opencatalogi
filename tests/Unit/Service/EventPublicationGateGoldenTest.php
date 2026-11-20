@@ -32,7 +32,7 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\EventService;
 use OCA\OpenCatalogi\Service\SettingsService;
-use OCA\OpenRegister\Db\FileMapper;
+use OCA\OpenRegister\Files\Db\FileMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
@@ -41,6 +41,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for EventService::shouldAutoPublishObject() and publishObjectAttachments().
@@ -268,6 +269,7 @@ class EventPublicationGateGoldenTest extends TestCase {
 		);
 		$objectService->method('find')->willReturnCallback(
 			function (...$args): ?ObjectEntity {
+				$args = LegacyObjectArgs::positional(method: 'find', args: $args);
 				$this->record(call: ObjectService::class . '::find', args: $args);
 				if ($args[0] === 'no-entity') {
 					return null;
@@ -312,7 +314,7 @@ class EventPublicationGateGoldenTest extends TestCase {
 		$container->method('get')->willReturnCallback(
 			static fn (string $id) => match ($id) {
 				'OCA\OpenRegister\Service\FileService' => $fileService,
-				'OCA\OpenRegister\Db\FileMapper' => $fileMapper,
+				'OCA\OpenRegister\Files\Db\FileMapper' => $fileMapper,
 				default => $objectService,
 			}
 		);

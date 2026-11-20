@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 module.exports = {
 	transform: {
 		// `@vue/vue2-jest` compiles SFCs with `vue-template-compiler`, which was

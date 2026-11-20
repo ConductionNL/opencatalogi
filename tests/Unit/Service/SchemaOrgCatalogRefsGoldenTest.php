@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Service\DcatService;
 use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCP\IURLGenerator;
@@ -157,11 +158,18 @@ class SchemaOrgCatalogRefsGoldenTest extends TestCase {
 			}
 		};
 
+		$visibility = $this->createMock(originalClassName: PublicationQueryServiceInterface::class);
+		$visibility->method('isObjectPublic')->willReturn(true);
+
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			static function (string $id) use ($objects, $world): object {
+			static function (string $id) use ($objects, $world, $visibility): object {
 				if ($id === 'OCA\OpenRegister\Service\ObjectService' && ($world['openregister'] ?? true) === true) {
 					return $objects;
+				}
+
+				if ($id === PublicationQueryServiceInterface::class) {
+					return $visibility;
 				}
 
 				throw new RuntimeException('no ' . $id);

@@ -30,12 +30,17 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
-use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
+use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
@@ -50,30 +55,100 @@ use Psr\Log\LoggerInterface;
  */
 class FederationController extends Controller {
 	use AnswersCacheably;
+	use AnswersInTheVisitorsLanguage;
+	use AnswersCrossOriginSearchRequests;
+
+	/**
+	 * App config holding the CORS allowlist; null allows every origin.
+	 *
+	 * @var IAppConfig|null
+	 */
+	private readonly ?IAppConfig $appConfig;
+
+	/**
+	 * The request's collector of applied filters (REQ-ASF-001).
+	 *
+	 * @var AppliedFilters|null
+	 */
+	private readonly ?AppliedFilters $appliedFilters;
+
+	/**
+	 * Negotiates the visitor's language (REQ-PTR-002); null leaves the response untranslated.
+	 *
+	 * @var PublicationQueryServiceInterface|null
+	 */
+	private readonly ?PublicationQueryServiceInterface $queryService;
+
+	/**
+	 * The container AnswersCacheably reads the session and app config from; null caches nothing.
+	 *
+	 * @var ContainerInterface|null
+	 */
+	private readonly ?ContainerInterface $container;
 
 	/**
 	 * FederationController constructor.
 	 *
-	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
 	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
-	 * @param ContainerInterface $container The container the cache headers read the session and config from.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
+	 * @param LocalPublicationStateInterface|null $localState Adds the withheld list (REQ-WDW-003) and the comment period state (REQ-PDP-003).
+	 * @param ContainerInterface|null $container DI container for the optional collaborators: the app config
+	 *                                           holding the CORS allowlist (without it every origin is allowed)
+	 *                                           and the request's collector of applied filters (REQ-ASF-001),
+	 *                                           and the query service negotiating the visitor's language (REQ-PTR-002);
+	 *                                           the cache headers read the session and app config from it.
 	 */
 	public function __construct(
-		$appName,
 		IRequest $request,
 		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
-		private readonly ContainerInterface $container,
 		private readonly ?LoggerInterface $logger = null,
-		private readonly ?WithheldFromPublicationInterface $withheld = null,
+		private readonly ?LocalPublicationStateInterface $localState = null,
+		?ContainerInterface $container = null,
 	) {
-		parent::__construct(appName: $appName, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
+		$this->container = $container;
+		$appConfig = self::optional(container: $container, class: IAppConfig::class);
+		$appliedFilters = self::optional(container: $container, class: AppliedFilters::class);
+		if ($appConfig instanceof IAppConfig === false) {
+			$appConfig = null;
+		}
+
+		if ($appliedFilters instanceof AppliedFilters === false) {
+			$appliedFilters = null;
+		}
+
+		$this->appConfig = $appConfig;
+		$this->appliedFilters = $appliedFilters;
+		$queryService = self::optional(container: $container, class: PublicationQueryServiceInterface::class);
+		$this->queryService = $queryService instanceof PublicationQueryServiceInterface ? $queryService : null;
 
 	}//end __construct()
+
+	/**
+	 * One optional collaborator from the container, or null when there is none.
+	 *
+	 * @param ContainerInterface|null $container The DI container.
+	 * @param string                  $class     The service to resolve.
+	 *
+	 * @return mixed The service, or null.
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
+	 */
+	private static function optional(?ContainerInterface $container, string $class): mixed {
+		if ($container === null) {
+			return null;
+		}
+
+		try {
+			return $container->get($class);
+		} catch (ContainerExceptionInterface | NotFoundExceptionInterface $e) {
+			return null;
+		}
+
+	}//end optional()
 
 	/**
 	 * Retrieve all publications from local and federated sources.
@@ -83,24 +158,19 @@ class FederationController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
-	 * @SuppressWarnings(PHPMD.Superglobals)
+	 * @SuppressWarnings(PHPMD.StaticAccess) AppliedFilters::forResponse() is a pure fail-closed reader.
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publications(): JSONResponse {
+		$this->negotiateVisitorLanguage(queryService: $this->queryService);
+
 		// Get all current query parameters.
 		$queryParams = $this->request->getParams();
-
-		// Build base URL for pagination links.
-		$protocol = 'http';
-		if (empty($_SERVER['HTTPS']) === false && $_SERVER['HTTPS'] !== 'off') {
-			$protocol = 'https';
-		}
-
-		$host = ($_SERVER['HTTP_HOST'] ?? 'localhost');
-		$uri = ($_SERVER['REQUEST_URI'] ?? '/');
-		$baseUrl = $protocol . '://' . $host . strtok($uri, '?');
+		$baseUrl = $this->paginationBaseUrl();
 
 		try {
 			// Use the service method to get aggregated publications.
@@ -109,23 +179,57 @@ class FederationController extends Controller {
 				requestParams: $this->request->getParams(),
 				baseUrl: $baseUrl
 			);
+			$responseData['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
 
-			return new JSONResponse($responseData);
+			return $this->withVisitorLanguageHeaders(
+				response: $this->withSearchCorsHeaders(response: new JSONResponse($responseData)),
+				queryService: $this->queryService
+			);
 		} catch (\Exception $e) {
-			$this->logger?->error(
-				'[FederationController::publications] Failed to retrieve publications',
-				[
-					'error' => $e->getMessage(),
-					'trace' => $e->getTraceAsString(),
-				]
-			);
-			return new JSONResponse(
-				data: ['error' => $this->l10n->t('Failed to retrieve publications')],
-				statusCode: 500
-			);
-		}//end try
+			return $this->withSearchCorsHeaders(response: $this->publicationsFailed(exception: $e));
+		}
 
 	}//end publications()
+
+	/**
+	 * The base URL for pagination links: the request's scheme, host and path without its query.
+	 *
+	 * @return string The base URL.
+	 *
+	 * @SuppressWarnings(PHPMD.Superglobals)
+	 */
+	private function paginationBaseUrl(): string {
+		$protocol = 'http';
+		if (empty($_SERVER['HTTPS']) === false && $_SERVER['HTTPS'] !== 'off') {
+			$protocol = 'https';
+		}
+
+		$host = ($_SERVER['HTTP_HOST'] ?? 'localhost');
+		$uri = ($_SERVER['REQUEST_URI'] ?? '/');
+
+		return $protocol . '://' . $host . strtok($uri, '?');
+	}//end paginationBaseUrl()
+
+	/**
+	 * Log a failed aggregation and answer 500.
+	 *
+	 * @param \Exception $exception Why the aggregation failed.
+	 *
+	 * @return JSONResponse The 500 answer.
+	 */
+	private function publicationsFailed(\Exception $exception): JSONResponse {
+		$this->logger?->error(
+			'[FederationController::publications] Failed to retrieve publications',
+			[
+				'error' => $exception->getMessage(),
+				'trace' => $exception->getTraceAsString(),
+			]
+		);
+		return new JSONResponse(
+			data: ['error' => $this->l10n->t('Failed to retrieve publications')],
+			statusCode: 500
+		);
+	}//end publicationsFailed()
 
 	/**
 	 * Retrieve a specific publication by its ID.
@@ -141,9 +245,12 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publication(string $id): JSONResponse {
+		$this->negotiateVisitorLanguage(queryService: $this->queryService);
+
 		try {
 			// Use the service method to get the publication with federation support.
 			$result = $this->publicationService->getFederatedPublication($id, $this->request->getParams());
@@ -155,16 +262,16 @@ class FederationController extends Controller {
 			$isLocal = (($result['federated'] ?? false) !== true
 				&& is_array($result['data']) === true
 				&& array_key_exists('sources', $result['data']) === false);
-			if ($this->withheld !== null && $result['status'] === 200 && $isLocal === true) {
-				$result['data'] = $this->withheld->addForPublication(response: $result['data']);
+			if ($this->localState !== null && $result['status'] === 200 && $isLocal === true) {
+				$result['data'] = $this->localState->addTo(publication: $result['data']);
 			}
 
 			// The same cache headers publications#show sends: the portal reads a
 			// publication with its schema through this route on every page view,
 			// and an unchanged answer comes back as a 304 without a body.
-			return $this->cacheableForCaller(
-				response: new JSONResponse($result['data'], $result['status'])
-			);
+			$response = new JSONResponse($result['data'], $result['status']);
+			$this->withVisitorLanguageHeaders(response: $this->withSearchCorsHeaders(response: $response), queryService: $this->queryService);
+			return $this->cacheableForCaller(response: $response);
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publication] Failed to retrieve publication',
@@ -174,10 +281,10 @@ class FederationController extends Controller {
 					'trace' => $e->getTraceAsString(),
 				]
 			);
-			return new JSONResponse(
+			return $this->withSearchCorsHeaders(response: new JSONResponse(
 				data: ['error' => $this->l10n->t('Failed to retrieve publication')],
 				statusCode: 500
-			);
+			));
 		}
 
 	}//end publication()
@@ -205,7 +312,7 @@ class FederationController extends Controller {
 			// Use the service method to get the publication uses with federation support.
 			$result = $this->publicationService->getFederatedUses($id, $this->request->getParams());
 
-			return new JSONResponse($result['data'], $result['status']);
+			return $this->withSearchCorsHeaders(response: new JSONResponse($result['data'], $result['status']));
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publicationUses] Failed to retrieve publication uses',
@@ -215,10 +322,10 @@ class FederationController extends Controller {
 					'trace' => $e->getTraceAsString(),
 				]
 			);
-			return new JSONResponse(
+			return $this->withSearchCorsHeaders(response: new JSONResponse(
 				data: ['error' => $this->l10n->t('Failed to retrieve publication uses')],
 				statusCode: 500
-			);
+			));
 		}
 
 	}//end publicationUses()
@@ -246,7 +353,7 @@ class FederationController extends Controller {
 			// Use the service method to get the publication used with federation support.
 			$result = $this->publicationService->getFederatedUsed($id, $this->request->getParams());
 
-			return new JSONResponse($result['data'], $result['status']);
+			return $this->withSearchCorsHeaders(response: new JSONResponse($result['data'], $result['status']));
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publicationUsed] Failed to retrieve publication used',
@@ -256,10 +363,10 @@ class FederationController extends Controller {
 					'trace' => $e->getTraceAsString(),
 				]
 			);
-			return new JSONResponse(
+			return $this->withSearchCorsHeaders(response: new JSONResponse(
 				data: ['error' => $this->l10n->t('Failed to retrieve publication used')],
 				statusCode: 500
-			);
+			));
 		}
 
 	}//end publicationUsed()
@@ -279,13 +386,18 @@ class FederationController extends Controller {
 	 * @no-admin-idor-exempt PublicationService::attachments() refuses an id outside the configured
 	 *   catalog scope (isObjectInCatalogScope()), reads the object with OpenRegister find() (RBAC on,
 	 *   anonymous callers get public-group reads only) and lists shared files only (sharedFilesOnly).
+	 *   An id not held here is only answered with what the public federation endpoint of the
+	 *   instance that holds it returns (getFederatedAttachments()).
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationAttachments(string $id): JSONResponse {
-		return $this->cacheableForCaller(response: $this->publicationService->attachments(id: $id));
+		$response = $this->publicationService->getFederatedAttachments(id: $id, queryParams: $this->request->getParams());
+		$this->withSearchCorsHeaders(response: $response);
+		return $this->cacheableForCaller(response: $response);
 	}//end publicationAttachments()
 
 	// Lower than the sibling reads: a download moves file bytes, so the cost of
@@ -311,6 +423,24 @@ class FederationController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function publicationDownload(string $id): DataDownloadResponse|JSONResponse {
-		return $this->publicationService->download(id: $id);
+		return $this->withSearchCorsHeaders(response: $this->publicationService->download(id: $id));
 	}//end publicationDownload()
+
+	/**
+	 * Answer a CORS preflight on the federation routes.
+	 *
+	 * The preflight carries no resource data; the allowed origin comes from the
+	 * shared allowlist rule.
+	 *
+	 * @return Response The preflight answer.
+	 *
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
+	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
+	public function preflightedCors(): Response {
+		return $this->searchPreflight();
+	}//end preflightedCors()
 }//end class

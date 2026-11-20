@@ -28,6 +28,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
+use OCA\OpenCatalogi\Contract\DonlRegistrationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Http\DcatResponse;
@@ -65,6 +66,7 @@ class DcatController extends Controller {
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param StandardsVersionServiceInterface $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
+	 * @param DonlRegistrationServiceInterface|null $donl The data.overheid.nl registration and its harvest evidence.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -79,6 +81,7 @@ class DcatController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly StandardsVersionServiceInterface $standardsVersions,
 		private readonly ?IAppConfig $appConfig = null,
+		private readonly ?DonlRegistrationServiceInterface $donl = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -120,6 +123,7 @@ class DcatController extends Controller {
 				return $this->unsupportedFormat();
 			}
 
+			$this->recordHarvesterFetch();
 			$document = $this->dcatService->buildInstanceDocument();
 			return $this->respond(document: $document, format: $format);
 		} catch (\Throwable $e) {
@@ -160,12 +164,9 @@ class DcatController extends Controller {
 			}
 
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-			if ($catalog === null) {
-				return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
-			}
-
-			if ($this->dcatService->isDcatEnabled($catalog) === false) {
-				return new JSONResponse(['error' => $this->l10n->t('DCAT harvesting is not enabled for this catalog')], 404);
+			$refusal = $this->harvestRefusal(catalog: $catalog);
+			if ($refusal !== null) {
+				return $refusal;
 			}
 
 			// SCH-PFTS-CAT-002 (WOO-581): an anonymous harvester must not reach a
@@ -174,22 +175,11 @@ class DcatController extends Controller {
 			// is the worst place to leak: it is crawled and cached by third parties.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 
+			$this->recordHarvesterFetch();
 			$page = max(1, (int)$this->request->getParam('page', 1));
 			$document = $this->dcatService->buildCatalogDocument(catalog: $catalog, catalogSlug: $catalogSlug, page: $page);
 
-			// Conditional GET — return 304 when the harvester's ETag still matches.
-			$ifNoneMatch = $this->request->getHeader('If-None-Match');
-			$etag = ($document['_meta']['etag'] ?? '');
-			if ($ifNoneMatch !== '' && $etag !== '' && trim($ifNoneMatch) === $etag) {
-				return new DcatResponse(
-					body: '',
-					contentType: DcatSerializerInterface::FORMATS[$format],
-					status: 304,
-					headers: $this->cachingHeaders(document: $document)
-				);
-			}
-
-			return $this->respond(document: $document, format: $format);
+			return $this->catalogResponse(document: $document, format: $format);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'[DcatController::catalog] Failed to build catalog DCAT document',
@@ -199,6 +189,63 @@ class DcatController extends Controller {
 		}//end try
 
 	}//end catalog()
+
+	/**
+	 * Why a catalog cannot be harvested, or null when it can.
+	 *
+	 * @param array<string, mixed>|null $catalog The catalog, or null when the slug is unknown.
+	 *
+	 * @return JSONResponse|null 404 for an unknown catalog or one without DCAT harvesting.
+	 */
+	private function harvestRefusal(?array $catalog): ?JSONResponse {
+		if ($catalog === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+		}
+
+		if ($this->dcatService->isDcatEnabled($catalog) === false) {
+			return new JSONResponse(['error' => $this->l10n->t('DCAT harvesting is not enabled for this catalog')], 404);
+		}
+
+		return null;
+
+	}//end harvestRefusal()
+
+	/**
+	 * Answer a catalog document, or 304 when the harvester's ETag still matches.
+	 *
+	 * @param array<string, mixed> $document The DCAT document with its `_meta`.
+	 * @param string $format The negotiated format.
+	 *
+	 * @return DcatResponse The feed or the empty 304.
+	 */
+	private function catalogResponse(array $document, string $format): DcatResponse {
+		if ($this->etagStillMatches(document: $document) === true) {
+			return new DcatResponse(
+				body: '',
+				contentType: DcatSerializerInterface::FORMATS[$format],
+				status: 304,
+				headers: $this->cachingHeaders(document: $document)
+			);
+		}
+
+		return $this->respond(document: $document, format: $format);
+
+	}//end catalogResponse()
+
+	/**
+	 * Whether the request's If-None-Match names the document's ETag (conditional GET).
+	 *
+	 * @param array<string, mixed> $document The DCAT document with its `_meta`.
+	 *
+	 * @return bool
+	 */
+	private function etagStillMatches(array $document): bool {
+		$ifNoneMatch = $this->request->getHeader('If-None-Match');
+		$etag = ($document['_meta']['etag'] ?? '');
+
+		return $ifNoneMatch !== '' && $etag !== '' && trim($ifNoneMatch) === $etag;
+
+	}//end etagStillMatches()
 
 	/**
 	 * Validate a catalog's DCAT feed against the DCAT-AP-NL mandatory-property checklist.
@@ -229,6 +276,7 @@ class DcatController extends Controller {
 					'valid' => empty($violations),
 					'violations' => $violations,
 					'profile' => $this->standardsVersions->dcatApNlVersion(),
+					'checked' => DcatServiceInterface::MANDATORY_DATASET_PROPERTIES,
 				],
 				200
 			);
@@ -271,6 +319,63 @@ class DcatController extends Controller {
 		}
 
 	}//end donlReport()
+
+	/**
+	 * The data.overheid.nl registration, its harvest evidence and whether it reads harvested.
+	 *
+	 * Admin-only.
+	 *
+	 * @return JSONResponse The status.
+	 *
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-data-overheid-nl-registration-and-its-harvest-are-tracked-req-dcc-002
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function donlRegistration(): JSONResponse {
+		if ($this->donl === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Internal server error')], 500);
+		}
+
+		return new JSONResponse($this->donl->status());
+	}//end donlRegistration()
+
+	/**
+	 * Record the operator's data.overheid.nl registration status and settings.
+	 *
+	 * Admin-only. DCAT-NPF-001: the registration itself stays operator-driven.
+	 *
+	 * @return JSONResponse The status after recording, or 400 on a value it refuses.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-data-overheid-nl-registration-and-its-harvest-are-tracked-req-dcc-002
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function recordDonlRegistration(): JSONResponse {
+		if ($this->donl === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Internal server error')], 500);
+		}
+
+		try {
+			return new JSONResponse($this->donl->record(input: $this->request->getParams()));
+		} catch (\InvalidArgumentException $e) {
+			return new JSONResponse(['error' => $this->l10n->t('The data.overheid.nl registration could not be saved: %s', [$e->getMessage()])], 400);
+		}
+	}//end recordDonlRegistration()
+
+	/**
+	 * Record this feed request when it comes from the data.overheid.nl harvester; never fails the feed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-data-overheid-nl-registration-and-its-harvest-are-tracked-req-dcc-002
+	 */
+	private function recordHarvesterFetch(): void {
+		try {
+			$this->donl?->recordFetch(userAgent: $this->request->getHeader('User-Agent'));
+		} catch (\Throwable $e) {
+			$this->logger->warning('[DcatController] the harvester fetch was not recorded', ['error' => $e->getMessage()]);
+		}
+	}//end recordHarvesterFetch()
 
 	/**
 	 * Serialize a document and wrap it in a CORS- and cache-headed DcatResponse.

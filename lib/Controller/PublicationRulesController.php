@@ -3,6 +3,9 @@
 /**
  * OpenCatalogi Publication Rules Controller.
  *
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The admin side of active publication: the rules that decide what publishes
  * and what an anonymous reader may read of it, the preview that shows both
  * halves before a rule is saved, the walked process around a publication, and
@@ -30,14 +33,11 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
- *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 
 declare(strict_types=1);
@@ -62,7 +62,7 @@ use OCP\IUserSession;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 class PublicationRulesController extends Controller {
 	use AnswersCrossOriginRequests;
@@ -114,7 +114,7 @@ class PublicationRulesController extends Controller {
 	 *
 	 * @return JSONResponse The preview.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function previewRule(): JSONResponse {
@@ -160,7 +160,7 @@ class PublicationRulesController extends Controller {
 	 * stored, and an unauthenticated caller is refused above, so there is no
 	 * object reference to substitute.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
 	 */
 	public function validateDecision(): JSONResponse {
 		if ($this->userSession->getUser() === null) {
@@ -199,25 +199,29 @@ class PublicationRulesController extends Controller {
 	 * so a word that occurs only in a withheld property cannot return the
 	 * record. Every result names the dossier the document belongs to.
 	 *
+	 * Without posted `records` the search reads the stored records of every
+	 * configured published collection, under that collection's conditions and
+	 * anonymous set. Posted records and rules are searched as before.
+	 *
 	 * @return JSONResponse The results.
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function publicSearch(): JSONResponse {
-		$records = $this->request->getParam('records', []);
+		$records = $this->request->getParam('records', null);
 		$rules = $this->request->getParam('rules', []);
 		$terms = (string)$this->request->getParam('q', '');
 
-		if (is_array($records) === false || is_array($rules) === false) {
+		if (is_array($records ?? []) === false || is_array($rules) === false) {
 			return new JSONResponse(data: ['error' => 'missing-parameters'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
-			$results = $this->rules->searchPublic(query: ['records' => $records, 'rules' => $rules, 'terms' => $terms]);
+			$results = $this->rules->search(query: ['records' => $records, 'rules' => $rules, 'terms' => $terms]);
 		} catch (UnreadableRuleException $e) {
 			// A rule this app cannot evaluate refuses. Answering the empty set
 			// would read as "nothing published matches", which is a claim

@@ -1,6 +1,9 @@
+<!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
-import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -10,10 +13,11 @@ import { objectStore } from '../../store/store.js'
 		:loading="loading"
 		hideHeader
 		borderless
-		rowIcon="FileOutline">
+		rowIcon="FileOutline"
+		@rowClick="onRowClick">
 		<template #empty>
 			<NcEmptyContent
-				:title="t('opencatalogi', 'No concept attachments found')">
+				:title="t('opencatalogi', 'No unpublished documents')">
 				<template #icon>
 					<FolderIcon />
 				</template>
@@ -29,7 +33,8 @@ import { NcEmptyContent } from '@nextcloud/vue'
 import FileOutline from 'vue-material-design-icons/FileOutline.vue'
 // Icons
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
-import { LIST_COLUMNS } from './widgetTable.js'
+import { documentRow, fetchUnpublished, publicationUrl } from './unpublishedOverview.js'
+import { LIST_WIDGET_OPTIONS, navigateTo } from './widgetTable.js'
 
 // The row's leading icon renders through CnDataTable's shared CnIcon
 // registry; MDI icons use currentColor, so light/dark theming is automatic
@@ -52,58 +57,51 @@ export default {
 		NcEmptyContent,
 	},
 
-	props: {
-		title: {
-			type: String,
-			required: true,
-		},
-	},
+	...LIST_WIDGET_OPTIONS,
 
 	data() {
-		return {
-			loading: false,
-			columns: LIST_COLUMNS,
-		}
+		return { ...LIST_WIDGET_OPTIONS.data(), overview: [] }
 	},
 
 	computed: {
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
+		/**
+		 * The documents of the reader's publications that are not public (REQ-PUO-002).
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+		 */
 		items() {
-			return objectStore
-				.getCollection('attachment')
-				.results.filter((attachment) => attachment.status === 'Concept')
-				.map((attachment) => ({
-					id: attachment.id,
-					mainText: attachment.title,
-					subText: attachment.summary,
-				}))
+			return this.overview.map(documentRow)
 		},
-	},
-
-	mounted() {
-		this.fetchData()
 	},
 
 	methods: {
 		/**
-		 * Fetch the attachment data
+		 * Open the publication the clicked document belongs to.
+		 *
+		 * @param {object} row The clicked row.
+		 * @return {void}
+		 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+		 */
+		onRowClick(row) {
+			const url = publicationUrl(row.item)
+			if (url !== null) {
+				navigateTo(url)
+			}
+		},
+
+		/**
+		 * Read the documents list of the unpublished overview.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		async fetchData() {
 			this.loading = true
-			await objectStore.fetchCollection('attachment')
+			this.overview = await fetchUnpublished('documents')
 			this.loading = false
 		},
 	},
 }
 </script>
 
-<style scoped>
-/* This list is non-interactive (no row navigation); suppress the shared
-   table's pointer cursor so rows don't advertise a click that does nothing. */
-:deep(.cn-table-row) {
-	cursor: default;
-}
-</style>

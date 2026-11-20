@@ -14,6 +14,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -140,6 +143,7 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 			'publicationRule', 'inspection', 'publicationProcess', 'zienswijzeAsk', 'depublication', 'obligationSource',
 			'wooRequest', 'commentPeriod',
 			'serviceStatus', 'statusSubscription', 'instanceBanner', 'noticeBoard', 'notice', 'recordVote',
+			'attachmentReading',
 		];
 		foreach ($slugs as $index => $slug) {
 			$schemas[] = ['slug' => $slug, 'id' => (100 + $index)];
@@ -174,6 +178,7 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 				'woo_request_schema=117', 'comment_period_schema=118',
 				'service_status_schema=119', 'status_subscription_schema=120', 'instance_banner_schema=121',
 				'notice_board_schema=122', 'notice_schema=123', 'record_vote_schema=124',
+				'attachment_reading_schema=125',
 			],
 			$this->writes
 		);
@@ -214,7 +219,7 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 
 		$this->update(['schemas' => [['slug' => 'catalog', 'id' => 3]]]);
 
-		$this->assertCount(28, $looked);
+		$this->assertCount(31, $looked);
 		$this->assertSame('listing@opencatalogi', $looked[0]);
 		$this->assertSame(
 			[

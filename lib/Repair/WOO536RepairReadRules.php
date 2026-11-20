@@ -76,6 +76,38 @@ class WOO536RepairReadRules implements IRepairStep {
 	private const TWO_RULE_SLUGS = ['publication', 'document'];
 
 	/**
+	 * The depublicationDate-aware two-rule read shape: published content that
+	 * is not yet depublished, or has no depublication date, is readable by the
+	 * public group in every organisation.
+	 */
+	private const TWO_RULE_READ = [
+		[
+			'group' => 'public',
+			'match' => [
+				'publicationDate' => ['$lte' => '$now'],
+				'depublicationDate' => ['$gte' => '$now'],
+			],
+			'crossOrganisation' => true,
+		],
+		[
+			'group' => 'public',
+			'match' => [
+				'publicationDate' => ['$lte' => '$now'],
+				'depublicationDate' => ['$exists' => false],
+			],
+			'crossOrganisation' => true,
+		],
+	];
+
+	/**
+	 * The Dutch 1.x match keys, each with the English name used since #850.
+	 */
+	private const DUTCH_MATCH_KEYS = [
+		'publicatiedatum' => 'publicationDate',
+		'depublicatiedatum' => 'depublicationDate',
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IAppManager $appManager The app manager.
@@ -166,28 +198,17 @@ class WOO536RepairReadRules implements IRepairStep {
 	 */
 	private function repairSchema(SchemaRepair $repair): bool {
 		$slug = $repair->slug();
-		$label = $repair->label();
 		$authorization = $repair->schema->getAuthorization();
 		if (is_array($authorization) === false) {
-			if (in_array($slug, self::TWO_RULE_SLUGS, true) === true) {
-				$repair->output->warning("WOO-536: {$label} has no authorization block — skipping (anonymous read rules missing)");
-			}
-
+			$this->reportMissingAuthorization(repair: $repair);
 			return false;
 		}
 
 		$result = $this->computeAuthorizationChanges(authorization: $authorization, slug: $slug);
-		foreach ($result['dropped'] as $where) {
-			$repair->output->warning(
-				"WOO-573: {$label} — Dutch key dropped at {$where} because the English key already exists; verify the two conditions agreed"
-			);
-		}
+		$this->reportDroppedKeys(repair: $repair, dropped: $result['dropped']);
 
 		if (empty($result['changes']) === true) {
-			if (in_array($slug, self::TWO_RULE_SLUGS, true) === true) {
-				$repair->output->info("WOO-536: {$label} already on two-rule shape or admin-customised — skipping");
-			}
-
+			$this->reportUnchanged(repair: $repair);
 			return false;
 		}
 
@@ -195,6 +216,49 @@ class WOO536RepairReadRules implements IRepairStep {
 
 		return $this->persist(repair: $repair, changes: $result['changes']);
 	}//end repairSchema()
+
+	/**
+	 * Warn that a bundled schema has no authorization block to repair.
+	 *
+	 * @param SchemaRepair $repair The schema, its mapper and the output.
+	 *
+	 * @return void
+	 */
+	private function reportMissingAuthorization(SchemaRepair $repair): void {
+		if (in_array($repair->slug(), self::TWO_RULE_SLUGS, true) === true) {
+			$repair->output->warning("WOO-536: {$repair->label()} has no authorization block — skipping (anonymous read rules missing)");
+		}
+	}//end reportMissingAuthorization()
+
+	/**
+	 * Warn about every Dutch duplicate the translation dropped.
+	 *
+	 * @param SchemaRepair $repair The schema, its mapper and the output.
+	 * @param string[] $dropped The "action[index].key" of each dropped key.
+	 *
+	 * @return void
+	 */
+	private function reportDroppedKeys(SchemaRepair $repair, array $dropped): void {
+		$label = $repair->label();
+		foreach ($dropped as $where) {
+			$repair->output->warning(
+				"WOO-573: {$label} — Dutch key dropped at {$where} because the English key already exists; verify the two conditions agreed"
+			);
+		}
+	}//end reportDroppedKeys()
+
+	/**
+	 * Tell the operator a bundled schema needed no repair.
+	 *
+	 * @param SchemaRepair $repair The schema, its mapper and the output.
+	 *
+	 * @return void
+	 */
+	private function reportUnchanged(SchemaRepair $repair): void {
+		if (in_array($repair->slug(), self::TWO_RULE_SLUGS, true) === true) {
+			$repair->output->info("WOO-536: {$repair->label()} already on two-rule shape or admin-customised — skipping");
+		}
+	}//end reportUnchanged()
 
 	/**
 	 * Save a repaired schema and report the change.
@@ -289,40 +353,95 @@ class WOO536RepairReadRules implements IRepairStep {
 	 * @spec openspec/specs/search/spec.md
 	 */
 	private function translateDutchKeys(array $authorization, array &$dropped): array {
-		$map = [
-			'publicatiedatum' => 'publicationDate',
-			'depublicatiedatum' => 'depublicationDate',
-		];
-
 		foreach ($authorization as $action => $rules) {
 			if (is_array($rules) === false) {
 				continue;
 			}
 
 			foreach ($rules as $index => $rule) {
-				if (is_array($rule) === false || isset($rule['match']) === false || is_array($rule['match']) === false) {
+				if ($this->hasMatchList(rule: $rule) === false) {
 					continue;
 				}
 
-				$match = [];
-				foreach ($rule['match'] as $key => $condition) {
-					$newKey = ($map[$key] ?? $key);
-					// An English key that already exists wins over the Dutch
-					// duplicate — never clobber a rule the admin already fixed.
-					if ($newKey !== $key && array_key_exists($newKey, $rule['match']) === true) {
-						$dropped[] = "{$action}[{$index}].{$key}";
-						continue;
-					}
-
-					$match[$newKey] = $condition;
-				}
-
-				$authorization[$action][$index]['match'] = $match;
+				$authorization[$action][$index]['match'] = $this->englishMatch(conditions: $rule['match']);
+				array_push($dropped, ...$this->droppedDutchKeys(conditions: $rule['match'], location: "{$action}[{$index}]"));
 			}
 		}
 
 		return $authorization;
 	}//end translateDutchKeys()
+
+	/**
+	 * Whether an action's element is a conditional rule with a match list.
+	 *
+	 * @param mixed $rule One element of an action's rule list.
+	 *
+	 * @return bool True when the rule has a `match` array.
+	 */
+	private function hasMatchList(mixed $rule): bool {
+		return is_array($rule) === true && isset($rule['match']) === true && is_array($rule['match']) === true;
+	}//end hasMatchList()
+
+	/**
+	 * The match list with its Dutch keys renamed to English, in place; a Dutch
+	 * key whose English name is already there is left out.
+	 *
+	 * @param array $conditions The rule's match list.
+	 *
+	 * @return array The match list with English keys.
+	 */
+	private function englishMatch(array $conditions): array {
+		$english = [];
+		foreach ($conditions as $key => $condition) {
+			$newKey = $this->englishKeyFor(conditions: $conditions, key: $key);
+			if ($newKey === null) {
+				continue;
+			}
+
+			$english[$newKey] = $condition;
+		}
+
+		return $english;
+	}//end englishMatch()
+
+	/**
+	 * Where each Dutch duplicate left out of a match list sat, as
+	 * "action[index].key".
+	 *
+	 * @param array $conditions The rule's match list.
+	 * @param string $location The rule's "action[index]".
+	 *
+	 * @return string[] One entry per dropped Dutch key, in match order.
+	 */
+	private function droppedDutchKeys(array $conditions, string $location): array {
+		$dropped = [];
+		foreach (array_keys($conditions) as $key) {
+			if ($this->englishKeyFor(conditions: $conditions, key: $key) === null) {
+				$dropped[] = "{$location}.{$key}";
+			}
+		}
+
+		return $dropped;
+	}//end droppedDutchKeys()
+
+	/**
+	 * The key a match condition goes under: the English name of a Dutch key,
+	 * any other key as it is. An English key that already exists wins over the
+	 * Dutch duplicate — never clobber a rule the admin already fixed.
+	 *
+	 * @param array $conditions The rule's match list.
+	 * @param int|string $key One key of that list.
+	 *
+	 * @return int|string|null The key to use, or null when the condition is dropped.
+	 */
+	private function englishKeyFor(array $conditions, int|string $key): int|string|null {
+		$newKey = (self::DUTCH_MATCH_KEYS[$key] ?? $key);
+		if ($newKey !== $key && array_key_exists($newKey, $conditions) === true) {
+			return null;
+		}
+
+		return $newKey;
+	}//end englishKeyFor()
 
 	/**
 	 * Detect the old single-rule shape.
@@ -410,24 +529,7 @@ class WOO536RepairReadRules implements IRepairStep {
 	 * @return array The two-rule read block.
 	 */
 	private function buildTwoRuleRead(array $existing): array {
-		$twoRule = [
-			[
-				'group' => 'public',
-				'match' => [
-					'publicationDate' => ['$lte' => '$now'],
-					'depublicationDate' => ['$gte' => '$now'],
-				],
-				'crossOrganisation' => true,
-			],
-			[
-				'group' => 'public',
-				'match' => [
-					'publicationDate' => ['$lte' => '$now'],
-					'depublicationDate' => ['$exists' => false],
-				],
-				'crossOrganisation' => true,
-			],
-		];
+		$twoRule = self::TWO_RULE_READ;
 
 		// Preserve simple-string elements (like "authenticated") from the
 		// existing read block, in their original order after the two new rules.

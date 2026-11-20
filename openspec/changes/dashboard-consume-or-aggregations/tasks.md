@@ -66,8 +66,8 @@
 - [ ] ~~Add `x-openregister-aggregations.countBySchema`~~ — NOT POSSIBLE with
       OR's current aggregation feature; see the note above. Not implemented.
 - [ ] ~~Add `x-openregister-aggregations.countByStatus` to the `attachment`
-      schema~~ — NO SUCH SCHEMA EXISTS; see the note above. Not implemented.
-- [ ] Confirm the register import picks up the new annotation on a clean
+      schema~~ — NO SUCH SCHEMA EXISTS; see the note above. Not implemented. SUPERSEDED by `publications-unpublished-overview`.
+- [ ] Confirm the register import picks up the new annotation on a clean (live pass, decision 139)
       install / `reload-settings` — DEFERRED, needs a live instance
       (`SettingsService::loadSettings()` round-trip); not verifiable from an
       isolated worktree with no running Nextcloud.
@@ -88,16 +88,28 @@
       if the aggregation call didn't resolve, e.g. unconfigured register/schema
       on a fresh install).
 - [ ] ~~Update `publicationsByCategoryData()` to use `countBySchema`~~ — NOT
-      DONE; blocked on the cross-schema groupBy gap above. Left on its
+      DONE; blocked on the cross-schema groupBy gap above (one `value` count
+      per schema would need the catalogs' register/schema pairs, which a
+      catalog lists as two unpaired id lists). Left on its
       existing client-side tally over the fetched page (same truncation
       exposure as before for catalogs with >1000 publications spanning many
       schemas — unresolved, needs upstream OR support or a redesign).
+- [x] Source `conceptPublicationCount` / `publishedPublicationCount` /
+      `depublishedPublicationCount` from OR's ad-hoc `value?metric=count`
+      endpoint — `src/services/publicationStatusCounts.js`. No null filter is
+      needed: three counts that only use `lte` (total; live =
+      `publicationDate ≤ now`; ended = live and `depublicationDate ≤ now`)
+      give concept = total − live, published = live − ended, depublished =
+      ended, matching `publicationStatus.js` exactly. `fetchPublicationAggregations()`
+      stores them in `statusCounts`; `kpis()` reads them and keeps the
+      list-derived counts only when the aggregation is unavailable (no
+      register/schema configured, or a count fails). Unit tests:
+      `tests/vitest/publicationStatusCounts.spec.js`,
+      `src/views/dashboard/DashboardStatusCounts.spec.js`.
 - [ ] `allPublications`/`conceptPublications`/`publishedPublications`/
       `depublishedPublications` getters — KEPT (not removed): they still back
-      the concept/published/depublished KPI sub-counts and the "recent
-      concepts" side panels, which remain list-derived because their
-      underlying status is a computed (not stored) value — see the note above
-      for why an aggregation-based replacement wasn't safe to guess at.
+      the "recent publications" side panels, the category chart and the
+      KPI fallback above.
 - [x] Right-sized `fetchAllPublications()`'s role — it is documented as no
       longer the source of the headline `publicationCount` KPI (that's
       `fetchPublicationAggregations()` now); it remains the source for the
@@ -110,11 +122,18 @@
 - [ ] NOT DONE — depends on the `attachment` schema existing (see note above).
       Left commented out exactly as at HEAD; the `// Do NOT remove this code`
       TODO still stands until that design decision is made.
+      SUPERSEDED for the Nextcloud dashboard widget by
+      `publications-unpublished-overview`; the in-app dashboard card can read
+      the same `kind=documents` list when it is restored.
 
 ## 4. Frontend: UnpublishedAttachmentsWidget / UnpublishedPublicationsWidget
 
 - [ ] NOT DONE — same blocker; `objectStore.fetchCollection('attachment')`
       has no real backing schema to aggregate against. Left as-is.
+      SUPERSEDED by `publications-unpublished-overview` (REQ-PUO-002): both
+      widgets now read `GET /api/dashboard/unpublished`, which lists
+      unpublished publications and the not yet public files on them, so no
+      `attachment` schema is needed.
 
 ## 5. Spec + verification
 
@@ -124,8 +143,8 @@
       claiming full "Status: Implemented" compliance.
 - [x] No new user-facing strings were introduced by the KPI aggregation change
       — nothing to register via `scripts/l10n-ai.js`.
-- [ ] Manual verify against a >1000-publication catalog — DEFERRED, needs a
+- [ ] Manual verify against a >1000-publication catalog — DEFERRED, needs a (live pass, decision 139)
       live instance / Postgres seed script not available from this isolated
       worktree.
-- [ ] Verify `UnpublishedAttachmentsWidget`/`UnpublishedPublicationsWidget` on
+- [ ] Verify `UnpublishedAttachmentsWidget`/`UnpublishedPublicationsWidget` on (live pass, decision 139)
       `/apps/dashboard/` — DEFERRED, moot until task 4 is unblocked.
