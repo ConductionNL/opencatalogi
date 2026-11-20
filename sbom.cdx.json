@@ -2105,10 +2105,10 @@
       ]
     },
     {
-      "bom-ref": "symfony/process-6.4.41.0",
+      "bom-ref": "symfony/process-6.4.49.0",
       "type": "library",
       "name": "process",
-      "version": "v6.4.41",
+      "version": "v6.4.49",
       "group": "symfony",
       "description": "Executes commands in sub-processes",
       "author": "Fabien Potencier, Symfony Community",
@@ -2119,17 +2119,17 @@
           }
         }
       ],
-      "purl": "pkg:composer/symfony/process@v6.4.41",
+      "purl": "pkg:composer/symfony/process@v6.4.49",
       "externalReferences": [
         {
           "type": "distribution",
-          "url": "https://api.github.com/repos/symfony/process/zipball/c8fc09bdfe9fde9aaa89b415a4477feaccec16a7",
-          "comment": "dist reference: c8fc09bdfe9fde9aaa89b415a4477feaccec16a7"
+          "url": "https://api.github.com/repos/symfony/process/zipball/f83dad5ec04a56948a97f4a86141fe81998233ba",
+          "comment": "dist reference: f83dad5ec04a56948a97f4a86141fe81998233ba"
         },
         {
           "type": "vcs",
           "url": "https://github.com/symfony/process.git",
-          "comment": "source reference: c8fc09bdfe9fde9aaa89b415a4477feaccec16a7"
+          "comment": "source reference: f83dad5ec04a56948a97f4a86141fe81998233ba"
         },
         {
           "type": "website",
@@ -2138,18 +2138,18 @@
         },
         {
           "type": "vcs",
-          "url": "https://github.com/symfony/process/tree/v6.4.41",
+          "url": "https://github.com/symfony/process/tree/v6.4.49",
           "comment": "as detected from Composer manifest 'support.source'"
         }
       ],
       "properties": [
         {
           "name": "cdx:composer:package:distReference",
-          "value": "c8fc09bdfe9fde9aaa89b415a4477feaccec16a7"
+          "value": "f83dad5ec04a56948a97f4a86141fe81998233ba"
         },
         {
           "name": "cdx:composer:package:sourceReference",
-          "value": "c8fc09bdfe9fde9aaa89b415a4477feaccec16a7"
+          "value": "f83dad5ec04a56948a97f4a86141fe81998233ba"
         },
         {
           "name": "cdx:composer:package:type",
@@ -33569,7 +33569,7 @@
       "ref": "symfony/polyfill-uuid-1.33.0.0"
     },
     {
-      "ref": "symfony/process-6.4.41.0"
+      "ref": "symfony/process-6.4.49.0"
     },
     {
       "ref": "symfony/service-contracts-3.8.1.0",
@@ -33636,7 +33636,7 @@
         "opis/json-schema-2.6.0.0",
         "react/async-4.3.0.0",
         "react/promise-3.3.0.0",
-        "symfony/process-6.4.41.0",
+        "symfony/process-6.4.49.0",
         "symfony/twig-bundle-6.4.32.0",
         "symfony/uid-6.4.32.0",
         "twig/twig-3.27.0.0"
