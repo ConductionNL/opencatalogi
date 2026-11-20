@@ -3,7 +3,7 @@
 ## 1. Requirements that describe built behaviour
 
 - [x] 1.1 Name or add the PHPUnit test for REQ-CRG-001 on `WooService::canMarkReadyForReview()` and `markReadyForReview()` (an unassessed document and an empty batch are refused) and sync the requirement into `openspec/specs/woo-transparency`.
-- [ ] 1.2 Name or add the e2e test for REQ-CRG-002 (add, edit and delete a term on the Glossary page, then read it from `GET /api/glossary`) and sync the requirement into `openspec/specs/content-management`.
+- [ ] 1.2 Name or add the e2e test for REQ-CRG-002 (add, edit and delete a term on the Glossary page, then read it from `GET /api/glossary`) and sync the requirement into `openspec/specs/content-management`. Written: `tests/e2e/glossary-page.spec.ts` (add, correct and delete a term, each read back from `GET /api/glossary`); not run, needs a live instance.
 
 ## 2. Rows whose built state was not true
 
@@ -23,5 +23,5 @@ is done and its test is green.
 ## 3. Not-built rows that had no plan
 
 - [x] 3.1 `lc-defaults`: add a retention defaults section to the catalogue edit page that reads and saves `GET`/`POST /api/retention/defaults` per Woo category (RET-004).
-- [ ] 3.2 `ops-reports`: point the report widgets in `src/manifest.json` (Reports, PublicationsReport, UsageReport, FederationReport) at the register the app ships (slug `publication`) instead of `opencatalogi`, and show each report with data on a default install (REP-001).
+- [x] 3.2 `ops-reports`: point the report widgets in `src/manifest.json` (Reports, PublicationsReport, UsageReport, FederationReport) at the register the app ships (slug `publication`) instead of `opencatalogi`, and show each report with data on a default install (REP-001). Built: every register reference on the three report pages is `publication` and every schema is one that register ships; `src/services/reportPagesRegister.spec.js` asserts both against `lib/Settings/publication_register.json`. The read of each report on a default install was not run (live instance).
 
