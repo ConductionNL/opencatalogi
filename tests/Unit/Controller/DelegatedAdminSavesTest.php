@@ -147,7 +147,7 @@ class DelegatedAdminSavesTest extends TestCase {
 				// Already withdrawn, so depublishing it saves only the depublication:
 				// the flows below count one save. Taking a public one down is
 				// DepublicationControllerTest's.
-				'pub-1' => ['schema' => 'publication', 'object' => ['title' => 'Besluit', 'publicationDate' => '2020-01-01T00:00:00+00:00', 'depublicationDate' => '2020-02-01T00:00:00+00:00']],
+				'pub-1' => ['schema' => 'publication', 'object' => ['title' => 'Besluit', 'status' => 'published', 'publicationDate' => '2020-01-01T00:00:00+00:00', 'depublicationDate' => '2020-02-01T00:00:00+00:00']],
 				'ct-1' => ['schema' => 'caseTypeDefinition', 'object' => self::IMPORTED_CASE_TYPE],
 			]
 		);
@@ -255,17 +255,18 @@ class DelegatedAdminSavesTest extends TestCase {
 	 * The inspection controller.
 	 *
 	 * @param IRequest $request The request.
+	 * @param \Unit\Support\AllowingCapabilityRights|null $rights The rights, granting all by default.
 	 *
 	 * @return InspectionController The controller.
 	 */
-	private function inspection(IRequest $request): InspectionController {
+	private function inspection(IRequest $request, ?\Unit\Support\AllowingCapabilityRights $rights=null): InspectionController {
 		return new InspectionController(
 			'opencatalogi',
 			$request,
 			$this->config(),
 			$this->l10n(),
 			$this->session(),
-			new InspectionRecords(new InspectionService($this->termRoll()), $this->registers())
+			new InspectionRecords(new InspectionService($this->termRoll()), $this->registers()), capabilities: ($rights ?? new \Unit\Support\AllowingCapabilityRights())
 		);
 	}//end inspection()
 
@@ -273,10 +274,11 @@ class DelegatedAdminSavesTest extends TestCase {
 	 * The depublication controller, with channels that answer unreachable.
 	 *
 	 * @param IRequest $request The request.
+	 * @param \Unit\Support\AllowingCapabilityRights|null $rights The rights, granting all by default.
 	 *
 	 * @return DepublicationController The controller.
 	 */
-	private function depublication(IRequest $request): DepublicationController {
+	private function depublication(IRequest $request, ?\Unit\Support\AllowingCapabilityRights $rights=null): DepublicationController {
 		$index = $this->getMockBuilder(NationalIndexService::class)
 			->disableOriginalConstructor()
 			->onlyMethods(['composeNotices', 'deliver', 'withdraw'])
@@ -291,7 +293,7 @@ class DelegatedAdminSavesTest extends TestCase {
 			$this->l10n(),
 			$this->session(),
 			$service,
-			new PublicationTransitions(new PublicationStateService(), $service, $this->createMock(ContainerInterface::class), $this->registers())
+			new PublicationTransitions(new PublicationStateService(), $service, $this->createMock(ContainerInterface::class), $this->registers()), capabilities: ($rights ?? new \Unit\Support\AllowingCapabilityRights())
 		);
 	}//end depublication()
 
@@ -544,6 +546,29 @@ class DelegatedAdminSavesTest extends TestCase {
 			'serviceCatalogue' => ServiceCatalogueController::class,
 		][$factory];
 		$reflection = new ReflectionMethod($class, $method);
+
+		// Opening an inspection and depublishing are rights granted per group now
+		// (woo-access-boundary-hardening REQ-WAB-004): the route admits a signed-in
+		// user and the method refuses one without the right before it acts.
+		$rights = ['inspection:open' => 'openInspection', 'depublication:depublish' => 'depublish', 'depublication:acknowledgeWithdrawal' => 'depublish'];
+		if (isset($rights[$factory.':'.$method]) === true) {
+			$this->assertSame([], $reflection->getAttributes(AuthorizedAdminSetting::class));
+			$this->assertCount(1, $reflection->getAttributes('OCP\AppFramework\Http\Attribute\NoAdminRequired'));
+			$this->assertSame([], $reflection->getAttributes('OCP\AppFramework\Http\Attribute\PublicPage'));
+
+			$refusing = new \Unit\Support\AllowingCapabilityRights(false);
+			$this->storeFor(['gedelegeerden']);
+			$controller = ($factory === 'inspection')
+				? $this->inspection($this->requestWith([]), $refusing)
+				: $this->depublication($this->requestWith([]), $refusing);
+			$response = $controller->$method();
+
+			$this->assertSame(403, $response->getStatus());
+			$this->assertSame($rights[$factory.':'.$method], $response->getData()['right']);
+			$this->assertSame([[$rights[$factory.':'.$method], 'gedelegeerd']], $refusing->asked);
+			$this->assertSame([], $this->store->saves);
+			return;
+		}
 
 		$attributes = $reflection->getAttributes(AuthorizedAdminSetting::class);
 		$this->assertCount(1, $attributes);

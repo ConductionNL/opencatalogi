@@ -284,6 +284,30 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		}
 
 	}//end testRegisterCallsEveryComponentRegistrar()
+	/**
+	 * The single-lawful-value fill is subscribed to the pre-save create event by
+	 * name, through a registrar register() calls (woo-metadata-suggestions REQ-WMS-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-a-field-with-one-lawful-value-for-this-officer-fills-itself-req-wms-004
+	 */
+	public function testTheSingleLawfulValueFillIsSubscribedToThePreSaveCreate(): void {
+		$registrars = $this->registrars();
+		$this->assertArrayHasKey('ListenerRegistrar', $registrars);
+		$body = $this->methodBody($this->source($registrars['ListenerRegistrar']), 'public function register(');
+
+		$this->assertStringContainsString(
+			'registerEventListener(ObjectCreatingEvent::class, SingleLawfulValueListener::class);',
+			$body,
+			'ListenerRegistrar::register() does not subscribe SingleLawfulValueListener to ObjectCreatingEvent, so nothing fills itself'
+		);
+		$this->assertMatchesRegularExpression(
+			'/\(new ListenerRegistrar\(\)\)->register\(\$context\);/',
+			$this->methodBody($this->source(), 'public function register(')
+		);
+
+	}//end testTheSingleLawfulValueFillIsSubscribedToThePreSaveCreate()
 
 	/**
 	 * The read-only guard of the Woo request schema listens on OpenRegister's real pre-save events.
@@ -429,4 +453,32 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		);
 
 	}//end testRegisterSubscribesTheBatchReviewListener()
+
+	/**
+	 * register() subscribes both capability listeners to OpenRegister's real events (REQ-WAB-004).
+	 *
+	 * @return void
+	 */
+	public function testRegisterSubscribesTheCapabilityListeners(): void {
+		$pairs   = [];
+		$context = $this->createMock(\OCP\AppFramework\Bootstrap\IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$pairs): void {
+				$pairs[] = [$event, $listener];
+			}
+		);
+
+		$application = (new \ReflectionClass(\OCA\OpenCatalogi\AppInfo\Application::class))->newInstanceWithoutConstructor();
+		$application->register($context);
+
+		$this->assertContains(
+			['OCA\\OpenRegister\\Event\\PermissionsDeclaringEvent', \OCA\OpenCatalogi\Listener\CapabilityDeclarationListener::class],
+			$pairs
+		);
+		$this->assertContains(
+			['OCA\\OpenRegister\\Event\\CustomScopeEvaluatingEvent', \OCA\OpenCatalogi\Listener\CapabilityScopeListener::class],
+			$pairs
+		);
+
+	}//end testRegisterSubscribesTheCapabilityListeners()
 }//end class

@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "OpenCatalogi",
-    "version": "2.1.16-unstable.20261117071500",
+    "version": "2.1.55-unstable.20261117203721",
     "description": "OpenCatalogi's public, anonymously-reachable API surface: full-text search, catalog and publication read access, DCAT-AP-NL and schema.org harvest feeds, DIWOO sitemaps/robots.txt, the federation read surface, the federated-directory sync endpoint, and the CMS read APIs (pages/menus/themes/glossary/listings). Every path in this document corresponds to a route in `appinfo/routes.php` whose controller method carries `@PublicPage` / `#[PublicPage]` \u2014 admin-gated and authenticated-only endpoints (settings, retention, Woo batches, setup, OOAPI 5.0 resource reads, DCAT/DIWOO/OOAPI validation reports) are out of scope; see the `public-api-openapi-document` OpenSpec change.\n\nEvery path is served under `/api/v1/`, the version this document describes. The unversioned `/api/` paths keep working, are deprecated, and name their `/api/v1/` successor in a `Link` header next to a `Deprecation` header. Paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, robots.txt, Atom feeds, federation) keep their own URLs and formats; openapi.standards.json describes them.",
     "license": {
       "name": "EUPL-1.2",
@@ -342,8 +342,19 @@
                   "$ref": "#/components/schemas/WithheldEntry"
                 },
                 "description": "Present only when the catalogue (on the federation route: every catalogue holding the publication) has showWithheld true and the list could be read and holds at least one entry; absent otherwise, including when nothing was recorded for the publication."
+              },
+              "commentPeriod": {
+                "$ref": "#/components/schemas/CommentPeriodView"
+              },
+              "commentPeriodError": {
+                "type": "string",
+                "enum": [
+                  "unreadable-dates"
+                ],
+                "description": "Present instead of commentPeriod when the period's dates cannot be read; no state is guessed."
               }
-            }
+            },
+            "description": "commentPeriod is present only when the publication has a comment period whose dates can be read; commentPeriodError replaces it when they cannot."
           }
         ]
       },
@@ -381,6 +392,252 @@
           }
         },
         "additionalProperties": true
+      },
+      "DocumentFacts": {
+        "type": "object",
+        "description": "The facts of one document of a publication (REQ-PDP-002). documentId is the Nextcloud file id as a string and does not change when the file is renamed.",
+        "required": [
+          "documentId",
+          "title"
+        ],
+        "properties": {
+          "documentId": {
+            "type": "string",
+            "description": "The Nextcloud file id, as a string."
+          },
+          "position": {
+            "type": "integer",
+            "description": "Position in the publication's document order, from 1."
+          },
+          "title": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "description": "The file extension in lower case, else its media type."
+          },
+          "size": {
+            "type": "integer"
+          },
+          "published": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "downloadUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "documentsoort": {
+            "type": "string",
+            "description": "Present only when a document type is stored, the file's own first."
+          },
+          "creationDate": {
+            "type": "string",
+            "description": "Present only when the publication stores a creationDate."
+          },
+          "metadataUrl": {
+            "type": "string",
+            "description": "This document's metadata route. Absent on a list whose catalogue could not be resolved."
+          },
+          "diwooUrl": {
+            "type": "string",
+            "description": "This document's diwoo:Document route. Absent on a list whose catalogue could not be resolved."
+          }
+        }
+      },
+      "PublicDocument": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/DocumentFacts"
+          },
+          {
+            "type": "object",
+            "required": [
+              "publication"
+            ],
+            "properties": {
+              "publication": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "title",
+                  "url"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "description": "The publication the document belongs to."
+              }
+            }
+          }
+        ]
+      },
+      "ErrorReportRequest": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "What is wrong, at most 2,000 characters."
+          },
+          "contact": {
+            "type": "string",
+            "format": "email",
+            "description": "Optional address to answer the visitor."
+          }
+        }
+      },
+      "ErrorReportReceipt": {
+        "type": "object",
+        "required": [
+          "reference"
+        ],
+        "properties": {
+          "reference": {
+            "type": "string",
+            "description": "The reference of the stored report."
+          }
+        }
+      },
+      "CommentPeriodView": {
+        "type": "object",
+        "description": "The publication's comment period as a reader sees it (REQ-PDP-003, REQ-PCP-004).",
+        "required": [
+          "state"
+        ],
+        "properties": {
+          "publication": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "upcoming",
+              "open",
+              "closed"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "termDays": {
+            "type": "integer"
+          },
+          "legalRemedy": {
+            "type": "string"
+          },
+          "reactionFormUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Only while the period is open; null otherwise."
+          },
+          "announcementUrl": {
+            "type": "string"
+          },
+          "unrolledEndDate": {
+            "type": "string",
+            "nullable": true
+          },
+          "rolledBy": {
+            "nullable": true
+          },
+          "withdrawnAt": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AttachmentPage": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PaginatedEnvelope"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DocumentFacts"
+                },
+                "description": "The documents in the officer's order (REQ-PDP-001), then the rest by upload time."
+              }
+            }
+          }
+        ]
+      },
+      "ChangesEnvelope": {
+        "type": "object",
+        "required": [
+          "changed",
+          "withdrawn",
+          "since",
+          "until",
+          "next"
+        ],
+        "properties": {
+          "changed": {
+            "type": "array",
+            "description": "DCAT dataset nodes (JSON-LD) of the publications changed in the window.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "withdrawn": {
+            "type": "array",
+            "description": "Publications withdrawn in the window. Id and date only.",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "withdrawnAt"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "withdrawnAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "until": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The moment of the read. Use it as the next `since`."
+          },
+          "next": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "The next page, or null on the last."
+          }
+        }
       }
     },
     "parameters": {
@@ -555,6 +812,58 @@
     }
   },
   "paths": {
+    "/value-lists": {
+      "get": {
+        "operationId": "value-lists-index",
+        "summary": "Every controlled-list entry",
+        "description": "Every entry of every controlled list OpenCatalogi uses (the TOOI and DiWoo lists, the DCAT lists and the Woo refusal grounds) as scheme, scheme URI, code, label, resource URI, status and the moment of the last refresh. A list that cannot be read is named in `unavailable` rather than answered empty.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "scheme",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "informatiecategorieen",
+                "soortHandeling",
+                "documentsoorten",
+                "talen",
+                "hvdCategories",
+                "dataThemes",
+                "weigeringsgronden"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown scheme"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/catalogi": {
       "get": {
         "operationId": "catalogi-index",
@@ -1486,7 +1795,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                  "$ref": "#/components/schemas/AttachmentPage"
                 }
               }
             },
@@ -3066,6 +3375,659 @@
               "type": "string"
             },
             "description": "The published table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{publicationId}/tables/{tableId}/views": {
+      "get": {
+        "operationId": "dataset-views",
+        "summary": "Views of a published table",
+        "description": "The table, chart and map views of a published table, each with its data URL, while the publication is public.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "table": {
+                      "type": "string"
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "table",
+                              "bar",
+                              "line",
+                              "map"
+                            ]
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "position": {
+                            "type": "integer"
+                          },
+                          "dataUrl": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "dataset-views-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{publicationId}/tables/{tableId}/views/{viewId}/data": {
+      "get": {
+        "operationId": "dataset-view-data",
+        "summary": "Data of a dataset view",
+        "description": "Rows for a table view, grouped values for a chart (at most 200 groups), or a GeoJSON FeatureCollection of at most 5,000 points for a map. 404 unless the publication is public.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          },
+          {
+            "name": "viewId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The view of the table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "A table view answers `columns` and a page of `results`; a bar or line chart `points` of `{x, value}` with `truncated`; a map a GeoJSON FeatureCollection with `skipped` and `truncated`.",
+                  "properties": {
+                    "view": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "table",
+                        "bar",
+                        "line",
+                        "map"
+                      ]
+                    },
+                    "columns": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "points": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "x": {},
+                          "value": {
+                            "type": "number"
+                          }
+                        }
+                      }
+                    },
+                    "truncated": {
+                      "type": "boolean"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "features": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "skipped": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "description": "The data of the view could not be read."
+          }
+        }
+      },
+      "options": {
+        "operationId": "dataset-view-data-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          },
+          {
+            "name": "viewId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The view of the table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{id}/documents/{documentId}": {
+      "get": {
+        "operationId": "publications-document",
+        "summary": "One document",
+        "description": "One document's metadata with the publication it belongs to. 404 unless the document is a shared, not withdrawn attachment of a published publication in the catalogue.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The documentId of an attachment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicDocument"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-document-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The documentId of an attachment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{id}/documents/{documentId}/diwoo": {
+      "get": {
+        "operationId": "publications-document-diwoo",
+        "summary": "One document as DiWoo",
+        "description": "One document as a single diwoo:Document element, as the DiWoo sitemap renders it. 404 as the metadata route.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The documentId of an attachment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-document-diwoo-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The documentId of an attachment."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/publications/{id}/error-reports": {
+      "post": {
+        "operationId": "publications-error-report",
+        "summary": "Report an error",
+        "description": "Report an error in a publication (REQ-PDP-005). Answers 404 unless the publication is published and its catalogue has acceptErrorReports true and names a moderator group. Rate limited to 5 reports an hour per address. The report is never published and stores no IP address.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorReportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Stored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorReportReceipt"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "400": {
+            "description": "The message is empty or longer than 2,000 characters, or the contact is not an e-mail address (error: message-required, message-too-long, invalid-contact).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "description": "Too many reports from this address."
+          },
+          "503": {
+            "description": "The error report schema is not configured.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-error-report-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/changes": {
+      "get": {
+        "operationId": "changes-since",
+        "summary": "What changed in a catalog since a moment",
+        "description": "For a re-user who keeps a copy of a catalog. Lists the publications an anonymous visitor may read whose last change is at or after `since`, as DCAT dataset nodes ordered by last change and then id, and the publications withdrawn since then by id and date only. A withdrawn publication is listed only when a depublication record shows it was public once. Use `until` as the next `since`. Pages hold at most 100 entries; follow `next` while it is set.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": true,
+            "description": "An ISO 8601 date or date and time, such as 2026-04-01T00:00:00Z.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "The cursor of a next page, as `next` carries it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangesEnvelope"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "400": {
+            "description": "`since` or `cursor` cannot be read; `parameter` names which.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Problem"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "parameter": {
+                          "type": "string",
+                          "enum": [
+                            "since",
+                            "cursor"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "changes-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for the changed-since read.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
           }
         ],
         "responses": {

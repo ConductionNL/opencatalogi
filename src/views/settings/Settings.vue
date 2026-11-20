@@ -257,6 +257,8 @@
 
 				<WooIndexConnection />
 
+				<RefusalGroundsSource />
+
 				<DonlHarvestStatus />
 
 				<DcatFeedValidation />
@@ -264,6 +266,8 @@
 				<PublishRightsLine />
 
 				<RecordHandover />
+
+				<WooIncidents />
 
 				<h3 class="woo-registration-heading">
 					{{ t('opencatalogi', 'National delivery channels') }}
@@ -321,6 +325,18 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
+			id="section-capability-rights"
+			:name="t('opencatalogi', 'Rights per group')"
+			:description="
+				t(
+					'opencatalogi',
+					'Which groups may do each of these tasks. Administrators may always do all of them; a right without a group is for administrators only.',
+				)
+			">
+			<CapabilityRightsSection />
+		</NcSettingsSection>
+
+		<NcSettingsSection
 			id="section-publiccode-harvest"
 			:name="t('opencatalogi', 'GitHub harvest')"
 			:description="
@@ -330,6 +346,18 @@
 				)
 			">
 			<PubliccodeHarvest />
+		</NcSettingsSection>
+
+		<NcSettingsSection
+			id="section-council-harvest"
+			:name="t('opencatalogi', 'Council documents')"
+			:description="
+				t(
+					'opencatalogi',
+					'Read the public documents of the council from Notubiz or iBabs into the Raadsinformatie catalogue, every night. Runs through integriq.',
+				)
+			">
+			<CouncilHarvest />
 		</NcSettingsSection>
 
 		<NcSettingsSection
@@ -370,6 +398,24 @@
 							t(
 								'opencatalogi',
 								'When an object matching a catalog schema is created, automatically apply public read access via RBAC rules',
+							)
+						}}
+					</p>
+				</div>
+
+				<!-- Review before publishing (publication-lifecycle-on-or REQ-PLC-001) -->
+				<div class="option-section">
+					<NcCheckboxRadioSwitch
+						v-model="publishingOptions.publicationReviewRequired"
+						:disabled="saving"
+						data-testid="publication-review-required">
+						{{ t('opencatalogi', 'Review publications before they are published') }}
+					</NcCheckboxRadioSwitch>
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.',
 							)
 						}}
 					</p>
@@ -665,12 +711,16 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import CapabilityRightsSection from './CapabilityRightsSection.vue'
+import CouncilHarvest from './CouncilHarvest.vue'
 import DcatFeedValidation from './DcatFeedValidation.vue'
 import DonlHarvestStatus from './DonlHarvestStatus.vue'
 import InstanceModeSection from './InstanceModeSection.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
 import RecordHandover from './RecordHandover.vue'
+import RefusalGroundsSource from './RefusalGroundsSource.vue'
+import WooIncidents from './WooIncidents.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
@@ -791,12 +841,16 @@ export default defineComponent({
 		MinusCircle,
 		InformationOutline,
 		InstanceModeSection,
+		CapabilityRightsSection,
 		PublishRightsLine,
 		RecordHandover,
+		RefusalGroundsSource,
 		WooIndexConnection,
+		WooIncidents,
 		DcatFeedValidation,
 		DonlHarvestStatus,
 		PubliccodeHarvest,
+		CouncilHarvest,
 	},
 
 	/**
@@ -826,6 +880,7 @@ export default defineComponent({
 				autoPublishAttachments: false,
 				autoPublishObjects: false,
 				useOldStylePublishingView: false,
+				publicationReviewRequired: true,
 			},
 
 			versionInfo: {

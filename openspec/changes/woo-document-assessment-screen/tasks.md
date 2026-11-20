@@ -26,6 +26,7 @@ Read `design.md` first (D1 lists what each board shows) and `openspec/woo-build-
 ## 5. Tests, strings, verification
 
 - [ ] 5.1 e2e `tests/e2e/woo-document-assessment.spec.ts` on a seeded batch (three documents, one fixture PDF holding a name): open the batch from `/woo`, move a card to Partly public with a ground, move one with the keyboard, refuse a move without a ground, open the redaction page, switch versions, mark verified, see the document leave the blocked list. Carries `@e2e` for every scenario of REQ-WDA-001 to REQ-WDA-004 that has no exclusion.
+  - Written: `tests/e2e/woo-document-assessment.spec.ts` (5 tests). It seeds a three-document batch through `POST /api/woo/batches`. The redaction-page test skips when no redaction pipeline produced a redacted file. Not run here: it needs a live instance.
 - [x] 5.2 nl and en strings for the board labels in `l10n/`; `npm run check:l10n`.
 - [ ] 5.3 Live: on the dev instance assess one PDF as partly public, verify it, publish the batch, and paste the publish response in the PR body.
 - [ ] 5.4 Diff check while building; once before push `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:manifest`; hydra gates `--scope-to-diff` (modal-isolation, nc-input-labels, route-auth). One PR `--base development`, closes opencatalogi#1604.
