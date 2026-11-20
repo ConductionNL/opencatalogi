@@ -119,15 +119,17 @@ class SmallBranchesCharacterisationTest extends TestCase {
 		return [
 			'archived wins' => [['status' => 'archived', 'publicationDate' => '2026-01-01'], 'archived'],
 			'nothing set' => [[], 'draft'],
-			'published earlier' => [['publicationDate' => '2026-01-01T00:00:00+00:00'], 'public'],
-			'published at this moment' => [['publicationDate' => $now], 'public'],
-			'published a second later' => [['publicationDate' => '2026-06-15T12:00:01+00:00'], 'scheduled'],
-			'withdrawn at this moment' => [['publicationDate' => '2026-01-01', 'depublicationDate' => $now], 'withdrawn'],
-			'withdrawal a second later' => [['publicationDate' => '2026-01-01', 'depublicationDate' => '2026-06-15T12:00:01+00:00'], 'public'],
-			'withdrawn without a publication date' => [['depublicationDate' => '2026-01-01'], 'withdrawn'],
-			'an unreadable publication date' => [['publicationDate' => 'soon'], 'draft'],
-			'an unreadable withdrawal date' => [['publicationDate' => '2026-01-01', 'depublicationDate' => 'never'], 'public'],
-			'another status' => [['status' => 'concept', 'publicationDate' => '2026-01-01'], 'public'],
+			'published earlier' => [['status' => 'published', 'publicationDate' => '2026-01-01T00:00:00+00:00'], 'public'],
+			'published at this moment' => [['status' => 'published', 'publicationDate' => $now], 'public'],
+			'published a second later' => [['status' => 'published', 'publicationDate' => '2026-06-15T12:00:01+00:00'], 'scheduled'],
+			'withdrawn at this moment' => [['status' => 'published', 'publicationDate' => '2026-01-01', 'depublicationDate' => $now], 'withdrawn'],
+			'withdrawal a second later' => [['status' => 'published', 'publicationDate' => '2026-01-01', 'depublicationDate' => '2026-06-15T12:00:01+00:00'], 'public'],
+			'withdrawn without a publication date' => [['status' => 'published', 'depublicationDate' => '2026-01-01'], 'withdrawn'],
+			'an unreadable publication date' => [['status' => 'published', 'publicationDate' => 'soon'], 'draft'],
+			'an unreadable withdrawal date' => [['status' => 'published', 'publicationDate' => '2026-01-01', 'depublicationDate' => 'never'], 'public'],
+			// Publication-lifecycle-on-or REQ-PLC-002: only a stored `published` reads its dates; an unknown status is a draft.
+			'another status' => [['status' => 'concept', 'publicationDate' => '2026-01-01'], 'draft'],
+			'no stored status' => [['publicationDate' => '2026-01-01T00:00:00+00:00'], 'draft'],
 		];
 
 	}//end publications()

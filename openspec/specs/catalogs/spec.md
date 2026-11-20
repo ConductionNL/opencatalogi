@@ -14,7 +14,9 @@ retrofit_extensions:
 @e2e exclude retrofit spec — public catalog HTTP API contract and backend caching/event behaviour verified by Newman API tests and PHPUnit, not browser-UI observable.
 
 Catalogs are the top-level organizational unit in OpenCatalogi. A catalog groups publications by associating them with specific OpenRegister registers and schemas, providing a URL-slug-based namespace for the public API. Catalogs enable multi-tenant content organization where different collections of publications can be served through distinct API endpoints.
+
 ## Requirements
+
 ### Requirement: List all catalogs via public API with CORS headers (CAT-001)
 The system MUST list all catalogs via public API with CORS headers.
 
@@ -294,6 +296,48 @@ catalogues MUST appear in both, as the same object.
 
 > @e2e exclude Backend selection contract; `tests/Unit/Service/CatalogueSharedPublicationTest.php::testAnEditShowsInBothCatalogues`.
 
+### Requirement: A catalogue declares its staff access (REQ-CSA-001)
+
+The catalog schema SHALL have `staffAccess` with `restricted` (boolean, default false), `readGroups` and `editGroups` (lists of Nextcloud group ids). An unrestricted catalogue SHALL behave as today.
+
+#### Scenario: Existing catalogues are untouched
+<!-- @e2e exclude Upgrade path; proven by CatalogAccessServiceTest::testAnUnrestrictedCatalogueKeepsTodaysRules. -->
+- **GIVEN** an install with three catalogues and no staff access set
+- **WHEN** the upgrade runs
+- **THEN** the schemas' authorization grants every signed-in user as before
+
+### Requirement: Staff access becomes OpenRegister rules on the covered schemas (REQ-CSA-002)
+
+When a catalogue's `staffAccess`, `schemas` or `filters` change, or a catalogue is deleted, the system SHALL recompute the `authorization` of every schema involved from all catalogues that cover it: a restricted catalogue SHALL contribute rules for its read groups to `read` and for its edit groups to `read`, `create`, `update` and `delete`, each with the catalogue's filters as `match`; an unrestricted catalogue SHALL contribute the signed-in rule, narrowed to its filters when it has filters. The public read rules SHALL be kept. OpenCatalogi SHALL NOT check staff access itself.
+
+#### Scenario: Only the Woo team edits Woo requests
+<!-- @e2e exclude Enforcement is OpenRegister's; proven by CatalogAccessEnforcementTest::testAUserOutsideTheEditGroupsIsRefused against OpenRegister. -->
+- **GIVEN** a catalogue "Woo requests" over schema publication with filter `wooCategory: infocat014`, restricted, edit group `woo-team`
+- **WHEN** a signed-in user outside `woo-team` updates a draft publication with that category
+- **THEN** OpenRegister refuses the update
+- **AND** a member of `woo-team` may update it
+
+#### Scenario: Two catalogues on one schema
+<!-- @e2e exclude Rule computation; proven by CatalogAccessServiceTest::testTwoCataloguesOnOneSchemaAreUnited. -->
+- **GIVEN** two restricted catalogues over the same schema with different filters and different groups
+- **WHEN** either is saved
+- **THEN** the schema's rules hold both groups, each with its own catalogue's filters
+
+### Requirement: The administrator sets staff access on the catalogue edit page (REQ-CSA-003)
+
+The catalogue edit page SHALL offer a Staff access section with the restricted switch and the two group pickers, and SHALL list the other catalogues that cover the same publications. The setup wizard's private choice SHALL set `staffAccess.restricted` with the groups it asks for.
+
+#### Scenario: Restricting a catalogue
+- **GIVEN** an administrator on the edit page of catalogue "Council papers"
+- **WHEN** they switch on restricted access, pick the group Griffie for edit and save
+- **THEN** the catalogue page shows "Staff access: restricted to Griffie"
+
+#### Scenario: The wizard's private choice is real
+<!-- @e2e exclude Setup path; proven by SetupControllerTest::testThePrivateChoiceRestrictsTheCatalogue. -->
+- **GIVEN** the setup wizard with the scope "private, granted groups only" and group Griffie
+- **WHEN** the first catalogue is created
+- **THEN** it is unlisted and restricted to Griffie
+
 ## Data Model
 
 The catalog schema is defined in `publication_register.json` and stored in OpenRegister.
@@ -465,3 +509,20 @@ A previous implementation subscribed this listener to the post-save events and c
 - **CatalogCacheEventListener** - Automatic cache management on OpenRegister post-save events (read-only with respect to the catalog object)
 - **CatalogSchemaEventListener** - Pre-save normalisation of `registers`/`schemas` slug-or-uuid values into integer IDs via `setModifiedData(...)`
 - **OpenRegister Events** - `ObjectCreatedEvent` / `ObjectUpdatedEvent` / `ObjectDeletedEvent` for cache triggers, `ObjectCreatingEvent` / `ObjectUpdatingEvent` for normalisation
+
+### Requirement: An administrator chooses the kinds of publication a catalogue holds (REQ-CVS-002)
+
+The catalogue form MUST let an administrator pick one or more registers and one
+or more schemas for the catalogue. The saved choice MUST decide which
+publications the catalogue lists, on its staff page and on `GET /api/{catalogSlug}`.
+
+#### Scenario: A catalogue gets a second kind of publication
+- **GIVEN** catalogue "Raadsstukken" that holds only the schema "agenda"
+- **WHEN** an administrator edits it, adds the schema "besluit" and saves
+- **THEN** `GET /api/raadsstukken` lists agendas and decisions
+- **AND** reopening the form shows both schemas selected
+
+#### Scenario: A schema taken off the catalogue
+- **GIVEN** the same catalogue with "agenda" and "besluit"
+- **WHEN** the administrator removes "agenda" and saves
+- **THEN** `GET /api/raadsstukken` no longer lists agendas

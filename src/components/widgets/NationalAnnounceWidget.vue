@@ -196,7 +196,33 @@ export default {
 		},
 	},
 
+	mounted() {
+		this.prefillEffectiveDate()
+	},
+
 	methods: {
+		/**
+		 * Prefill the effective date with the day the publication takes legal
+		 * effect, when it stores one and the editor has not typed a date yet.
+		 * A publication that cannot be read leaves the field empty.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-publication-stores-its-diwoo-metadata-req-dwp-001
+		 */
+		async prefillEffectiveDate() {
+			if (!this.isAdmin || !this.resolvedObjectId) {
+				return
+			}
+			try {
+				const publication = await this.fetchPublication()
+				if (!this.effectiveDate && publication && publication.validFrom) {
+					this.effectiveDate = String(publication.validFrom)
+				}
+			} catch {
+				// No prefill: the editor can still type the date.
+			}
+		},
+
 		/**
 		 * The readable name of a channel.
 		 *

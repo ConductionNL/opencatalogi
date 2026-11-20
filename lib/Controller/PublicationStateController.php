@@ -34,8 +34,10 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
-use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
+use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
+use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -51,6 +53,8 @@ use OCP\IUserSession;
 /**
  * The publication's visibility, and the three moves an editor makes on it.
  *
+ * @SuppressWarnings(PHPMD.TooManyMethods) Each move is split into short private steps to stay under the unit size and complexity limits.
+ *
  * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
  */
 class PublicationStateController extends Controller {
@@ -64,16 +68,18 @@ class PublicationStateController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param PublicationRights $rights The update right on one publication, and the publish right.
+	 * @param PublicationRightsInterface $rights The update right on one publication, and the publish right.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
+ * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003).
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly PublicationRights $rights,
+		private readonly PublicationRightsInterface $rights,
 		private readonly PublicationTransitions $registers,
+		private readonly PublishTransition $publisher,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -106,13 +112,96 @@ class PublicationStateController extends Controller {
 			return $this->notFound();
 		}
 
+		$properties = $this->asArray(object: $publication);
+
 		return new JSONResponse(
-			[
-				'state' => $this->registers->stateOf(publication: $this->asArray(object: $publication)),
-				'canPublish' => $this->rights->mayPublish(),
-			]
+			array_merge(
+				[
+					'state' => $this->registers->stateOf(publication: $properties),
+					'canPublish' => $this->rights->mayPublish(),
+					'unlisted' => ($properties['unlisted'] ?? false) === true,
+					'canUpdate' => $this->rights->mayUpdate(publication: $publication),
+				],
+				self::readers(properties: $properties)
+			)
 		);
 	}//end visibility()
+
+	/**
+	 * Who can read the publication (publications-for-signed-in-readers, REQ-PSR-001);
+	 * anything the schema does not know reads as its default.
+	 *
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return array{audience: string, minimumAssurance: string}
+	 */
+	private static function readers(array $properties): array {
+		$audience = 'public';
+		if (($properties['audience'] ?? null) === 'signedIn') {
+			$audience = 'signedIn';
+		}
+
+		$minimumAssurance = 'substantial';
+		if (($properties['minimumAssurance'] ?? null) === 'high') {
+			$minimumAssurance = 'high';
+		}
+
+		return ['audience' => $audience, 'minimumAssurance' => $minimumAssurance];
+	}//end readers()
+
+	/**
+	 * Unlist a publication: it stays readable at its own link and leaves search, feeds and sitemaps (REQ-PLC-006).
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return JSONResponse `{unlisted: true}`, 403 without the update right.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+	 */
+	#[NoAdminRequired]
+	public function unlist(string $id): JSONResponse {
+		return $this->setUnlisted(id: $id, unlisted: true);
+	}//end unlist()
+
+	/**
+	 * Put an unlisted publication back on every surface (REQ-PLC-006).
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return JSONResponse `{unlisted: false}`, 403 without the update right.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+	 */
+	#[NoAdminRequired]
+	public function relist(string $id): JSONResponse {
+		return $this->setUnlisted(id: $id, unlisted: false);
+	}//end relist()
+
+	/**
+	 * Store the unlisted flag only: no depublication, no withdrawal sent.
+	 *
+	 * @param string $id       The publication id.
+	 * @param bool   $unlisted The flag.
+	 *
+	 * @return JSONResponse The flag, or the refusal.
+	 */
+	private function setUnlisted(string $id, bool $unlisted): JSONResponse {
+		[$publication, $refusal] = $this->guardWrite(id: $id);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$record = $this->asArray(object: $publication);
+		unset($record['@self']);
+		$record['unlisted'] = $unlisted;
+		try {
+			$this->save(id: $id, record: $record);
+		} catch (\Throwable $e) {
+			return $this->refused(e: $e);
+		}
+
+		return new JSONResponse(['unlisted' => $unlisted]);
+	}//end setUnlisted()
 
 	/**
 	 * Publish now, or publish again after a withdrawal.
@@ -138,13 +227,54 @@ class PublicationStateController extends Controller {
 		}
 
 		try {
-			$this->save(id: $id, record: $this->registers->publishedRecord(publication: $properties));
+			$this->publishNow(id: $id, properties: $properties);
+		} catch (PublishRefusedException $e) {
+			return $this->transitionRefused(state: $e->state);
 		} catch (\Throwable $e) {
 			return $this->refused(e: $e);
 		}
 
 		return new JSONResponse(['state' => PublicationStateServiceInterface::STATE_PUBLIC]);
 	}//end publish()
+
+	/**
+	 * Publish now: a stored `published` publication (scheduled or withdrawn) gets today's date; any other runs
+	 * the publish transition with that date in the same call, so a refused move writes no date (REQ-PLC-003).
+	 *
+	 * @param string               $id         The publication id.
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return void
+	 *
+	 * @throws PublishRefusedException When the lifecycle allows no publish from the stored state.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 * @SuppressWarnings(PHPMD.StaticAccess) PublishTransition::storedState() is a pure state helper.
+	 */
+	private function publishNow(string $id, array $properties): void {
+		$record = $this->registers->publishedRecord(publication: $properties);
+		$stored = PublishTransition::storedState(stored: (string)($properties['status'] ?? ''));
+		if ($stored === 'published') {
+			$this->save(id: $id, record: $record);
+			return;
+		}
+
+		$this->publisher->publish(id: $id, stored: $stored, publicationDate: (string)$record['publicationDate']);
+	}//end publishNow()
+
+	/**
+	 * The 422 for a publish the lifecycle does not allow, naming the transition and the state.
+	 *
+	 * @param string $state The stored state.
+	 *
+	 * @return JSONResponse 422.
+	 */
+	private function transitionRefused(string $state): JSONResponse {
+		return new JSONResponse(
+			data: ['error' => 'transition-not-allowed', 'action' => PublishTransition::PUBLISH, 'state' => $state],
+			statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
+		);
+	}//end transitionRefused()
 
 	/**
 	 * Withdraw the publication with a reason, and tell every channel it reached.
@@ -284,14 +414,9 @@ class PublicationStateController extends Controller {
 			);
 		}
 
-		// The withdrawal is kept on the file's own window, so no automatic
-		// path shares it again (REQ-ATT-103, REQ-ATT-104).
-		$windowNotEnded = $this->registers->endFileWindow(fileId: (int)$fileId);
-		if ($windowNotEnded !== null) {
-			return new JSONResponse(
-				data: ['error' => 'file-window-not-ended', 'message' => $windowNotEnded],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+		$notKept = $this->keepWithdrawalOnFile(fileId: (int)$fileId, reason: $reason);
+		if ($notKept !== null) {
+			return $notKept;
 		}
 
 		$depublication = $this->registers->depublish(
@@ -304,8 +429,52 @@ class PublicationStateController extends Controller {
 		);
 		$depublication['file'] = $fileId;
 
+		// The withdrawn file is no longer shared: a complete publication is incomplete again (REQ-PTS-002).
+		$this->registers->reevaluateCompleteness(id: $id);
+
 		return $this->record(depublication: $depublication);
 	}//end withdrawFile()
+
+	/**
+	 * Keep a withdrawal on the file itself: its own window ends now, so no
+	 * automatic path shares it again, and its labels name the reason and the
+	 * editor (REQ-ATT-103, REQ-ATT-104).
+	 *
+	 * @param int    $fileId The file id.
+	 * @param string $reason Why the file is withdrawn.
+	 *
+	 * @return JSONResponse|null Null when both are kept, else the 500 that says which failed.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+	 */
+	private function keepWithdrawalOnFile(int $fileId, string $reason): ?JSONResponse {
+		$windowNotEnded = $this->registers->endFileWindow(fileId: $fileId);
+		if ($windowNotEnded !== null) {
+			return $this->fileStepFailed(error: 'file-window-not-ended', message: $windowNotEnded);
+		}
+
+		$notRecorded = $this->registers->recordFileWithdrawal(fileId: $fileId, reason: $reason, editor: $this->actor());
+		if ($notRecorded !== null) {
+			return $this->fileStepFailed(error: 'file-withdrawal-not-recorded', message: $notRecorded);
+		}
+
+		return null;
+	}//end keepWithdrawalOnFile()
+
+	/**
+	 * The 500 for a step on a file that failed after its share already changed.
+	 *
+	 * @param string $error   The machine-readable error.
+	 * @param string $message Why the step failed.
+	 *
+	 * @return JSONResponse The 500.
+	 */
+	private function fileStepFailed(string $error, string $message): JSONResponse {
+		return new JSONResponse(
+			data: ['error' => $error, 'message' => $message],
+			statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end fileStepFailed()
 
 	/**
 	 * Put a withdrawn document of a publication back, on purpose, with a reason.
@@ -347,10 +516,12 @@ class PublicationStateController extends Controller {
 
 		$windowNotOpen = $this->registers->reopenFileWindow(fileId: (int)$fileId);
 		if ($windowNotOpen !== null) {
-			return new JSONResponse(
-				data: ['error' => 'file-window-not-reopened', 'message' => $windowNotOpen],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->fileStepFailed(error: 'file-window-not-reopened', message: $windowNotOpen);
+		}
+
+		$notCleared = $this->registers->clearFileWithdrawal(fileId: (int)$fileId);
+		if ($notCleared !== null) {
+			return $this->fileStepFailed(error: 'file-withdrawal-not-cleared', message: $notCleared);
 		}
 
 		return $this->recordRepublication(

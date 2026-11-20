@@ -28,7 +28,9 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
+use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -37,6 +39,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) mapDatasets() lets the changed-since read reuse the feed instead of copying it.
  * @SuppressWarnings(PHPMD.TooManyMethods) Document building is split into small private steps to stay under the unit size and complexity limits.
  *
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-3-serializer-public-endpoints
@@ -50,6 +53,7 @@ class DcatService implements DcatServiceInterface {
 	 */
 	public const MAX_PER_PAGE = 1000;
 
+
 	/**
 	 * DcatService constructor.
 	 *
@@ -61,6 +65,8 @@ class DcatService implements DcatServiceInterface {
 	 * @param InstanceSettings $instance The base URL (absolute IRIs) and app config (publisher defaults).
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param DcatAssurance $assurance The profile-version check and the optional DQV quality scorer.
+	 * @param DocumentReferences|null $references The publications' document references (REQ-PBR-002).
+	 * @param PublishedTableServiceInterface|null $tables The published tables, whose CSVs conform to their data dictionary; null links none.
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookup $openRegister,
@@ -69,6 +75,8 @@ class DcatService implements DcatServiceInterface {
 		private readonly InstanceSettings $instance,
 		private readonly LoggerInterface $logger,
 		private readonly DcatAssurance $assurance,
+		private readonly ?DocumentReferences $references = null,
+		private readonly ?PublishedTableServiceInterface $tables = null,
 	) {
 
 	}//end __construct()
@@ -231,6 +239,98 @@ class DcatService implements DcatServiceInterface {
 	}//end buildCatalogDocument()
 
 	/**
+	 * Map publications of a catalog to DCAT dataset nodes, as the catalog feed does.
+	 *
+	 * The same mapping, defaults, HVD resolution, opt-out and DQV handling as
+	 * {@see buildCatalogDocument()}, without the search: the caller hands in the
+	 * publications it read. Like that method it does not guard the catalog; a
+	 * public caller guards it first and reads the publications in the anonymous
+	 * scope.
+	 *
+	 * @param array<string, mixed> $catalog The catalog object, with its `slug`.
+	 * @param array<int, mixed> $publications The publications to map.
+	 *
+	 * @return array<int, array<string, mixed>> One dataset node per publication whose schema did not opt out.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	public function mapDatasets(array $catalog, array $publications): array {
+		if ($publications === []) {
+			return [];
+		}
+
+		$scope = $this->resolveCatalogScope(catalog: $catalog, catalogSlug: (string)$catalog['slug']);
+
+		return $this->mapCatalogDatasets(publications: $publications, scope: $scope)['datasets'];
+	}//end mapDatasets()
+
+	/**
+	 * The DCAT graph of one publication of a catalogue, for its dataset IRI.
+	 *
+	 * Built from the same search as the catalogue feed: the catalogue's own
+	 * registers and schemas, RBAC on, so a publication the caller cannot read,
+	 * one outside the scope or one whose schema opted out answers null. The
+	 * caller guards the catalogue first, as for buildCatalogDocument().
+	 *
+	 * @param array<string, mixed> $catalog The guarded catalogue.
+	 * @param string $catalogSlug The catalogue slug.
+	 * @param string $uuid The publication uuid.
+	 *
+	 * @return array<string, mixed>|null The JSON-LD document of that dataset, or null.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-catalogue-is-served-as-linked-data-and-through-sparql-req-dcc-003
+	 */
+	public function buildDatasetDocument(array $catalog, string $catalogSlug, string $uuid): ?array {
+		$scope = $this->resolveCatalogScope(catalog: $catalog, catalogSlug: $catalogSlug);
+		$publication = $this->findInScope(scope: $scope, uuid: $uuid);
+		if ($publication === null || self::schemaOptedOut(publication: $publication, scope: $scope) === true) {
+			return null;
+		}
+
+		$scope['fileService'] = $this->getFileService();
+		$source = $this->datasetSource(publication: $publication, scope: $scope);
+
+		return [
+			'@context' => $this->mappingService->context(),
+			'@graph' => [$this->mapCatalogDataset(source: $source, scope: $scope)],
+		];
+	}//end buildDatasetDocument()
+
+	/**
+	 * The publication with this uuid in the catalogue scope, as the caller may read it.
+	 *
+	 * Fails closed on an empty scope or uuid, and on a result that is not that uuid.
+	 *
+	 * @param array<string, mixed> $scope The resolved catalogue scope.
+	 * @param string $uuid The publication uuid.
+	 *
+	 * @return array<string, mixed>|null The publication, or null.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-catalogue-is-served-as-linked-data-and-through-sparql-req-dcc-003
+	 */
+	private function findInScope(array $scope, string $uuid): ?array {
+		if ($uuid === '' || $scope['schemas'] === [] || $scope['registers'] === []) {
+			return null;
+		}
+
+		$query = CallerScope::writeScope(
+			query: ['_limit' => 1, '_page' => 1, '_ids' => [$uuid]],
+			registers: $scope['registers'],
+			schemas: $scope['schemas']
+		);
+		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		foreach (array_map($this->toArray(...), ($result['results'] ?? [])) as $publication) {
+			if ((string)($publication['@self']['uuid'] ?? $publication['id'] ?? '') === $uuid) {
+				return $publication;
+			}
+		}
+
+		return null;
+	}//end findInScope()
+
+	/**
 	 * Resolve what a catalog document is built from: scope, defaults, schema mappings and options.
 	 *
 	 * @param array<string, mixed> $catalog The catalog object.
@@ -284,13 +384,46 @@ class DcatService implements DcatServiceInterface {
 		$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $scope['registers'], schemas: $scope['schemas']);
 		$searchQuery['_order']['updated'] = 'desc';
 
-		return $this->getObjectService()->searchObjectsPaginated(
-			query: $searchQuery,
-			_rbac: true,
-			_multitenancy: false,
-			deleted: false
-		);
+		// Every translation of the translatable fields, so each language becomes its
+		// own tagged literal (publication-translations REQ-PTR-002); reset after.
+		$languageService = $this->languageService();
+		$languageService?->setReturnAllTranslations(true);
+		try {
+			// REQ-PLC-006: the DCAT feed never carries an unlisted publication.
+			return UnlistedPublications::withoutUnlisted(
+				page: $this->getObjectService()->searchObjectsPaginated(
+					query: $searchQuery,
+					_rbac: true,
+					_multitenancy: false,
+					deleted: false
+				)
+			);
+		} finally {
+			$languageService?->setReturnAllTranslations(false);
+		}
 	}//end searchCatalogPage()
+
+	/**
+	 * OpenRegister's request-scoped language service, or null when OpenRegister
+	 * is absent or predates translations (the feed then stays in the source language).
+	 *
+	 * @return object|null The service.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function languageService(): ?object {
+		try {
+			$service = $this->openRegister->installedService('OCA\OpenRegister\Service\LanguageService', 'OpenRegister is not available.');
+		} catch (\Throwable) {
+			return null;
+		}
+
+		if (is_object($service) === false || method_exists($service, 'setReturnAllTranslations') === false) {
+			return null;
+		}
+
+		return $service;
+	}//end languageService()
 
 	/**
 	 * Map a page of publications to DCAT datasets, skipping schemas that opted out.
@@ -370,8 +503,17 @@ class DcatService implements DcatServiceInterface {
 		try {
 			$fileService = $scope['fileService'];
 			$files = ($fileService->formatFiles($fileService->getFiles(object: ($publication['id'] ?? $uuid)))['results'] ?? []);
+			$files = $this->withDictionaryUrls(
+				files: (array)$files,
+				publicationId: (string)($publication['id'] ?? $uuid),
+				catalogSlug: (string)$scope['catalogSlug']
+			);
 		} catch (\Throwable $e) {
 			$this->logger->debug('[DcatService] Could not load files for publication', ['uuid' => $uuid, 'error' => $e->getMessage()]);
+		}
+
+		if ($this->references !== null) {
+			$files = $this->references->appendTo(files: $files, publicationId: (string)($publication['id'] ?? $uuid));
 		}
 
 		return new DcatDatasetSource(
@@ -380,6 +522,25 @@ class DcatService implements DcatServiceInterface {
 			files: $files
 		);
 	}//end datasetSource()
+
+	/**
+	 * The files, with a data dictionary URL on each one published as a table (REQ-ODT-003).
+	 *
+	 * @param array<int, mixed> $files         The publication's published attachments.
+	 * @param string            $publicationId The publication.
+	 * @param string            $catalogSlug   The catalogue the URLs are under.
+	 *
+	 * @return array<int, mixed> The files; unchanged without published tables.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	private function withDictionaryUrls(array $files, string $publicationId, string $catalogSlug): array {
+		if ($this->tables === null || $files === []) {
+			return $files;
+		}
+
+		return $this->tables->withDictionaryUrls(files: $files, publicationId: $publicationId, catalogSlug: $catalogSlug);
+	}//end withDictionaryUrls()
 
 	/**
 	 * Map one publication to a DCAT dataset; its violations are left on the source.
@@ -794,9 +955,8 @@ class DcatService implements DcatServiceInterface {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
 	 */
 	public function mandatoryViolations(array $node): array {
-		$required = ['dct:title', 'dct:publisher', 'dcat:landingPage'];
 		$missing = [];
-		foreach ($required as $property) {
+		foreach (self::MANDATORY_DATASET_PROPERTIES as $property) {
 			if (isset($node[$property]) === false || $node[$property] === '' || $node[$property] === []) {
 				$missing[] = $property;
 			}

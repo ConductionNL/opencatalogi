@@ -1,0 +1,405 @@
+{
+  "$comment": "openspec/changes/council-documents-from-notubiz-and-ibabs. One harvest flow per council system (Notubiz, iBabs) on the publication schema, the mappings they write through (a concept one and a publish-on-arrival one per system), and the Raadsinformatie catalogue the harvested publications land in (Woo category infocat008). The synchronizations and fetch-file rules the flows name are NOT seeded here: OpenRegister skips an object whose register is missing, so an install without integriq would never get them. CouncilHarvestService::setUp() writes them from lib/Settings/council-documents-sources.json when an administrator asks.",
+  "components": {
+    "schemas": {
+      "publication": {
+        "configuration": {
+          "x-openregister-flows": [
+            {
+              "name": "Council documents harvest (Notubiz)",
+              "app": "opencatalogi",
+              "description": "Reads the public council documents of a Notubiz raadsinformatiesysteem into concept publications of the Raadsinformatie catalogue (openspec/changes/council-documents-from-notubiz-and-ibabs). Ships disabled; set it up and switch it on in the OpenCatalogi admin settings, section Council documents. Needs integriq with its notubiz-ris-v1 source filled in.",
+              "trigger": "schedule",
+              "enabled": false,
+              "executionMode": "async",
+              "limits": {
+                "maxRuntimeMinutes": 120
+              },
+              "nodes": [
+                {
+                  "id": "nightly",
+                  "type": "openregister.trigger-schedule",
+                  "config": {
+                    "cron": "30 2 * * *",
+                    "runAs": "admin"
+                  }
+                },
+                {
+                  "id": "on-demand",
+                  "type": "openregister.trigger-manual",
+                  "config": {}
+                },
+                {
+                  "id": "documents",
+                  "type": "openconnector.source-paginate",
+                  "config": {
+                    "synchronization": "opencatalogi-council-documents-notubiz",
+                    "output": "page"
+                  }
+                },
+                {
+                  "id": "each-document",
+                  "type": "openregister.explode",
+                  "config": {
+                    "path": "page.results",
+                    "as": "document",
+                    "keepRecord": false
+                  }
+                },
+                {
+                  "id": "public-only",
+                  "type": "openregister.filter",
+                  "config": {
+                    "condition": {
+                      "and": [
+                        {
+                          "!!": [
+                            {
+                              "var": "json.document.id"
+                            }
+                          ]
+                        },
+                        {
+                          "!!": [
+                            {
+                              "var": "json.document.title"
+                            }
+                          ]
+                        },
+                        {
+                          "!!": [
+                            {
+                              "var": "json.document.url"
+                            }
+                          ]
+                        },
+                        {
+                          "!": {
+                            "var": "json.document.confidential"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "map",
+                  "type": "openregister.map",
+                  "config": {
+                    "mapping": "council-document-to-publication-notubiz"
+                  },
+                  "onError": "continue"
+                },
+                {
+                  "id": "write",
+                  "type": "openregister.object-write",
+                  "config": {
+                    "operation": "upsert",
+                    "register": "publication",
+                    "schema": "publication",
+                    "payloadFrom": "publication",
+                    "match": {
+                      "caseReference": "{{ publication.caseReference }}"
+                    },
+                    "maxWrites": 5000
+                  },
+                  "onError": "continue"
+                },
+                {
+                  "id": "file",
+                  "type": "openconnector.fetch-file",
+                  "config": {
+                    "rule": "opencatalogi-council-document-file-notubiz",
+                    "synchronization": "opencatalogi-council-documents-notubiz"
+                  },
+                  "onError": "continue"
+                }
+              ],
+              "edges": [
+                {
+                  "id": "e-nightly-documents",
+                  "from": "nightly",
+                  "to": "documents"
+                },
+                {
+                  "id": "e-on-demand-documents",
+                  "from": "on-demand",
+                  "to": "documents"
+                },
+                {
+                  "id": "e-documents-each-document",
+                  "from": "documents",
+                  "to": "each-document"
+                },
+                {
+                  "id": "e-each-document-public-only",
+                  "from": "each-document",
+                  "to": "public-only"
+                },
+                {
+                  "id": "e-public-only-map",
+                  "from": "public-only",
+                  "to": "map"
+                },
+                {
+                  "id": "e-map-write",
+                  "from": "map",
+                  "to": "write"
+                },
+                {
+                  "id": "e-write-file",
+                  "from": "write",
+                  "to": "file"
+                }
+              ]
+            },
+            {
+              "name": "Council documents harvest (iBabs)",
+              "app": "opencatalogi",
+              "description": "Reads the public council documents of a iBabs raadsinformatiesysteem into concept publications of the Raadsinformatie catalogue (openspec/changes/council-documents-from-notubiz-and-ibabs). Ships disabled; set it up and switch it on in the OpenCatalogi admin settings, section Council documents. Needs integriq with its ibabs-ris-v1 source filled in.",
+              "trigger": "schedule",
+              "enabled": false,
+              "executionMode": "async",
+              "limits": {
+                "maxRuntimeMinutes": 120
+              },
+              "nodes": [
+                {
+                  "id": "nightly",
+                  "type": "openregister.trigger-schedule",
+                  "config": {
+                    "cron": "30 2 * * *",
+                    "runAs": "admin"
+                  }
+                },
+                {
+                  "id": "on-demand",
+                  "type": "openregister.trigger-manual",
+                  "config": {}
+                },
+                {
+                  "id": "documents",
+                  "type": "openconnector.source-paginate",
+                  "config": {
+                    "synchronization": "opencatalogi-council-documents-ibabs",
+                    "output": "page"
+                  }
+                },
+                {
+                  "id": "each-document",
+                  "type": "openregister.explode",
+                  "config": {
+                    "path": "page.results",
+                    "as": "document",
+                    "keepRecord": false
+                  }
+                },
+                {
+                  "id": "public-only",
+                  "type": "openregister.filter",
+                  "config": {
+                    "condition": {
+                      "and": [
+                        {
+                          "!!": [
+                            {
+                              "var": "json.document.id"
+                            }
+                          ]
+                        },
+                        {
+                          "!!": [
+                            {
+                              "var": "json.document.title"
+                            }
+                          ]
+                        },
+                        {
+                          "!!": [
+                            {
+                              "var": "json.document.downloadUrl"
+                            }
+                          ]
+                        },
+                        {
+                          "==": [
+                            {
+                              "var": "json.document.isPublic"
+                            },
+                            true
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "id": "map",
+                  "type": "openregister.map",
+                  "config": {
+                    "mapping": "council-document-to-publication-ibabs"
+                  },
+                  "onError": "continue"
+                },
+                {
+                  "id": "write",
+                  "type": "openregister.object-write",
+                  "config": {
+                    "operation": "upsert",
+                    "register": "publication",
+                    "schema": "publication",
+                    "payloadFrom": "publication",
+                    "match": {
+                      "caseReference": "{{ publication.caseReference }}"
+                    },
+                    "maxWrites": 5000
+                  },
+                  "onError": "continue"
+                },
+                {
+                  "id": "file",
+                  "type": "openconnector.fetch-file",
+                  "config": {
+                    "rule": "opencatalogi-council-document-file-ibabs",
+                    "synchronization": "opencatalogi-council-documents-ibabs"
+                  },
+                  "onError": "continue"
+                }
+              ],
+              "edges": [
+                {
+                  "id": "e-nightly-documents",
+                  "from": "nightly",
+                  "to": "documents"
+                },
+                {
+                  "id": "e-on-demand-documents",
+                  "from": "on-demand",
+                  "to": "documents"
+                },
+                {
+                  "id": "e-documents-each-document",
+                  "from": "documents",
+                  "to": "each-document"
+                },
+                {
+                  "id": "e-each-document-public-only",
+                  "from": "each-document",
+                  "to": "public-only"
+                },
+                {
+                  "id": "e-public-only-map",
+                  "from": "public-only",
+                  "to": "map"
+                },
+                {
+                  "id": "e-map-write",
+                  "from": "map",
+                  "to": "write"
+                },
+                {
+                  "id": "e-write-file",
+                  "from": "write",
+                  "to": "file"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "mappings": {
+      "council-document-to-publication-notubiz": {
+        "slug": "council-document-to-publication-notubiz",
+        "name": "Notubiz council document to publication (concept)",
+        "description": "Turns one Notubiz council document (at `document`) into a publication under `publication`: its title, the meeting body and date as summary, Woo category infocat008 (raadsstukken) and the source identifier notubiz:{id} the write matches on. No publication date: it arrives as a concept, so a person checks it before it is public.",
+        "version": "1.0.0",
+        "passThrough": false,
+        "mapping": {
+          "publication.title": "{{ document.title|trim }}",
+          "publication.summary": "{{ (document.meeting.gremium.title ?? '')|trim }}, meeting of {{ document.meeting.date ?? '' }}",
+          "publication.wooCategory": "infocat008",
+          "publication.caseReference": "notubiz:{{ document.id }}"
+        },
+        "cast": {}
+      },
+      "council-document-to-publication-notubiz-published": {
+        "slug": "council-document-to-publication-notubiz-published",
+        "name": "Notubiz council document to publication (published on arrival)",
+        "description": "Turns one Notubiz council document (at `document`) into a publication under `publication`: its title, the meeting body and date as summary, Woo category infocat008 (raadsstukken) and the source identifier notubiz:{id} the write matches on. The source's publication date is kept, so the publication is public on arrival.",
+        "version": "1.0.0",
+        "passThrough": false,
+        "mapping": {
+          "publication.title": "{{ document.title|trim }}",
+          "publication.summary": "{{ (document.meeting.gremium.title ?? '')|trim }}, meeting of {{ document.meeting.date ?? '' }}",
+          "publication.wooCategory": "infocat008",
+          "publication.caseReference": "notubiz:{{ document.id }}",
+          "publication.publicationDate": "{{ document.publication_date ?? '' }}"
+        },
+        "cast": {
+          "publication.publicationDate": [
+            "unsetIfValue=="
+          ]
+        }
+      },
+      "council-document-to-publication-ibabs": {
+        "slug": "council-document-to-publication-ibabs",
+        "name": "iBabs council document to publication (concept)",
+        "description": "Turns one iBabs council document (at `document`) into a publication under `publication`: its title, the meeting body and date as summary, Woo category infocat008 (raadsstukken) and the source identifier ibabs:{id} the write matches on. No publication date: it arrives as a concept, so a person checks it before it is public.",
+        "version": "1.0.0",
+        "passThrough": false,
+        "mapping": {
+          "publication.title": "{{ document.title|trim }}",
+          "publication.summary": "{{ (document.meeting.meetingtype ?? '')|trim }}, meeting of {{ document.meeting.date ?? '' }}",
+          "publication.wooCategory": "infocat008",
+          "publication.caseReference": "ibabs:{{ document.id }}"
+        },
+        "cast": {}
+      },
+      "council-document-to-publication-ibabs-published": {
+        "slug": "council-document-to-publication-ibabs-published",
+        "name": "iBabs council document to publication (published on arrival)",
+        "description": "Turns one iBabs council document (at `document`) into a publication under `publication`: its title, the meeting body and date as summary, Woo category infocat008 (raadsstukken) and the source identifier ibabs:{id} the write matches on. The source's publication date is kept, so the publication is public on arrival.",
+        "version": "1.0.0",
+        "passThrough": false,
+        "mapping": {
+          "publication.title": "{{ document.title|trim }}",
+          "publication.summary": "{{ (document.meeting.meetingtype ?? '')|trim }}, meeting of {{ document.meeting.date ?? '' }}",
+          "publication.wooCategory": "infocat008",
+          "publication.caseReference": "ibabs:{{ document.id }}",
+          "publication.publicationDate": "{{ document.publishDate ?? '' }}"
+        },
+        "cast": {
+          "publication.publicationDate": [
+            "unsetIfValue=="
+          ]
+        }
+      }
+    },
+    "objects": [
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "catalog",
+          "slug": "raadsinformatie"
+        },
+        "title": "Raadsinformatie",
+        "summary": "Raadsstukken uit het raadsinformatiesysteem van de gemeente",
+        "description": "De openbare stukken van de gemeenteraad, zoals agenda's, voorstellen en besluitenlijsten, overgenomen uit Notubiz of iBabs. Elk stuk komt eerst als concept binnen, zodat iemand het nakijkt voordat het openbaar wordt.",
+        "listed": true,
+        "status": "stable",
+        "slug": "raadsinformatie",
+        "registers": [
+          "publication"
+        ],
+        "schemas": [
+          "publication"
+        ],
+        "filters": {
+          "wooCategory": "infocat008"
+        },
+        "published": "2026-11-17T00:00:00+00:00"
+      }
+    ]
+  }
+}

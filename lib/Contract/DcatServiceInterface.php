@@ -29,6 +29,15 @@ namespace OCA\OpenCatalogi\Contract;
  */
 interface DcatServiceInterface {
 	/**
+	 * The DCAT-AP-NL properties every dataset must carry, in the order they are checked.
+	 *
+	 * Named so the validation report can say what it checked, not only what failed (DCAT-010).
+	 *
+	 * @var array<int, string>
+	 */
+	public const MANDATORY_DATASET_PROPERTIES = ['dct:title', 'dct:publisher', 'dcat:landingPage'];
+
+	/**
 	 * Determine whether DCAT is enabled for a catalog.
 	 *
 	 * @param array<string, mixed> $catalog The catalog object (jsonSerialize shape).
@@ -112,6 +121,20 @@ interface DcatServiceInterface {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-harvester-grade-pagination-and-caching-dcat-008
 	 */
 	public function buildCatalogDocument(array $catalog, string $catalogSlug, int $page = 1, array &$violations = []): array;
+
+	/**
+	 * Map publications of a catalog to DCAT dataset nodes, as the catalog feed does.
+	 *
+	 * @param array<string, mixed> $catalog The catalog object, with its `slug`.
+	 * @param array<int, mixed> $publications The publications to map.
+	 *
+	 * @return array<int, array<string, mixed>> One dataset node per publication whose schema did not opt out.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 *
+	 * @contract-shift internal-only — only DcatService implements it; no other app consumes this interface.
+	 */
+	public function mapDatasets(array $catalog, array $publications): array;
 
 	/**
 	 * Build the instance-level DCAT document listing every DCAT-enabled catalog.

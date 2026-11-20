@@ -11,7 +11,7 @@ Read `openspec/woo-build-rules.md` first. Mirror the existing `CommentPeriodServ
 
 - [x] 2.1 Add `TermRoll::roll()` (REQ-IPR-002). Verify: `tests/Unit/Service/Publication/TermRollTest.php::testAGivenDateOnASaturdayRollsToMonday` and `::testAWorkingDayIsUnchanged`.
 - [x] 2.2 Add `TermRollListener` on `ObjectCreatingEvent` and `ObjectUpdatingEvent` for `inspection` and `commentPeriod`, registered in `Application::register()` (REQ-IPR-002). Verify: `tests/Unit/Listener/TermRollListenerTest.php::testAnApiEndDateOnASaturdayIsRolledToMonday` (fails today), `::testAnUnreachableEngineRefusesTheSave`, `::testAnUnchangedEndDateIsNotRolledAgain`, on the REAL events; an `ApplicationRegisterInvariantTest` case.
-- [ ] 2.3 Live: save a comment period through OpenRegister's object API on the dev instance with a Saturday end date and paste the stored dates in the PR body (REQ-IPR-002). Verify: the pasted read-back.
+- [x] 2.3 Live: save a comment period through OpenRegister's object API on the dev instance with a Saturday end date and paste the stored dates in the PR body (REQ-IPR-002). Verify: the pasted read-back. (live pass, decision 139) Live pass 17 Nov (livepass-opencatalogi): POST `/api/objects/24/74` with `endDate` 2026-12-12 (Saturday) read back as `endDate` 2026-12-14T00:00:00+00:00, `unrolledEndDate` 2026-12-12T00:00:00+00:00, `rolledBy` weekend.
 
 ## 3. Verification
 

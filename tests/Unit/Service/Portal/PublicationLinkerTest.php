@@ -81,12 +81,39 @@ class PublicationLinkerTest extends TestCase {
 	}
 
 	/**
-	 * A blank catalogue setting falls back to the `publication` catalogue.
+	 * A blank catalogue setting falls back to the `publications` catalogue the app ships.
 	 */
-	public function testABlankCatalogueFallsBackToPublication(): void {
+	public function testABlankCatalogueFallsBackToTheShippedCatalogue(): void {
 		$this->assertSame(
-			'http://localhost:8080/index.php/apps/opencatalogi/api/publication/pub%2F1',
+			'http://localhost:8080/index.php/apps/opencatalogi/api/publications/pub%2F1',
 			$this->linker(values: ['publication_url_catalog' => '  ', 'publication_url_template' => 'https://x/no-placeholder'], portaliq: false)->url(id: 'pub/1')
+		);
+	}
+
+	/**
+	 * REQ-PTS-001: publicUrl() is empty when no template, no portaliq and an empty default catalogue leave no public page.
+	 */
+	public function testPublicUrlIsEmptyWhenNoPublicPageCanBeBuilt(): void {
+		$this->assertSame('', $this->linker(values: ['publication_url_catalog' => ' '], portaliq: false)->publicUrl(id: 'pub-1'));
+		$this->assertSame('', $this->linker(values: ['publication_url_catalog' => '', 'publication_url_template' => 'https://x/no-placeholder'], portaliq: false)->publicUrl(id: 'pub-1'));
+		$this->assertSame('', $this->linker(values: [], portaliq: true)->publicUrl(id: ''));
+	}
+
+	/**
+	 * REQ-PTS-001: otherwise publicUrl() is the same link url() builds.
+	 */
+	public function testPublicUrlFollowsUrlWhenAPageExists(): void {
+		$this->assertSame(
+			'https://open.gemeente.nl/publicaties/pub-1',
+			$this->linker(values: ['publication_url_template' => 'https://open.gemeente.nl/publicaties/{id}', 'publication_url_catalog' => ''], portaliq: false)->publicUrl(id: 'pub-1')
+		);
+		$this->assertSame(
+			'http://localhost:8080/index.php/apps/portaliq/site?route=/publicatie/pub-1',
+			$this->linker(values: ['publication_url_catalog' => ''], portaliq: true)->publicUrl(id: 'pub-1')
+		);
+		$this->assertSame(
+			'http://localhost:8080/index.php/apps/opencatalogi/api/publications/pub-1',
+			$this->linker(values: [], portaliq: false)->publicUrl(id: 'pub-1')
 		);
 	}
 }

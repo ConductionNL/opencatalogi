@@ -40,7 +40,10 @@ test.describe('Public API cache headers', () => {
 	test('an anonymous answer is public, and an unchanged one answers 304', async ({
 		baseURL,
 	}) => {
-		const anonymous = await playwrightRequest.newContext({ baseURL })
+		const anonymous = await playwrightRequest.newContext({
+			baseURL,
+			storageState: { cookies: [], origins: [] },
+		})
 		const first = await anonymous.get(SEARCH)
 		expect(first.status()).toBe(200)
 		expect(first.headers()['cache-control']).toContain('public, max-age=60')
@@ -72,7 +75,10 @@ test.describe('Public API cache headers', () => {
 				})
 			).ok(),
 		).toBe(true)
-		const anonymous = await playwrightRequest.newContext({ baseURL })
+		const anonymous = await playwrightRequest.newContext({
+			baseURL,
+			storageState: { cookies: [], origins: [] },
+		})
 		const answer = await anonymous.get(SEARCH)
 		expect(answer.status()).toBe(200)
 		expect(answer.headers()['cache-control'] ?? '').not.toContain('public')

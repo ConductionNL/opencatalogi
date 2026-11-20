@@ -724,7 +724,26 @@ OC.L10N.register(
         "Open catalog": "Отвори каталога",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Създайте първия си каталог. Това е контейнерът, в който ще бъдат публикациите ви. Изберете регистъра Publication и схемата Publication, за да показва каталогът публикациите, които добавяте.",
         "Manage your publications and their status": "Управлявайте публикациите си и техния статус",
-        "Open at the source": "Отваряне при източника"
+        "Open at the source": "Отваряне при източника",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: версия на OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister съдържа двигателя, от който OpenCatalogi се нуждае.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi изисква OpenRegister %1$s или по-нова версия. В инсталирания OpenRegister липсва %2$s, затова OpenCatalogi показва известие вместо страниците си. Обновете OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi не може да стартира",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi изисква OpenRegister %1$s или по-нова версия. Помолете администратора да обнови OpenRegister.",
+        "Feed consumers": "Потребители на емисията",
+        "Contact": "Контакт",
+        "Generate key": "Генериране на ключ",
+        "Revoke": "Отнемане",
+        "Disable": "Деактивиране",
+        "Last used": "Последно използван",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Този ключ се показва само веднъж. Копирайте го сега: не може да бъде показан отново.",
+        "No feed consumers yet.": "Все още няма потребители на емисията.",
+        "Accounts that read every catalogue's feed": "Профили, които четат емисията на всеки каталог",
+        "Review publications before they are published": "Преглед на публикациите преди публикуване",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Когато е включено, черновата трябва да бъде изпратена и одобрена, преди да може да бъде публикувана. Когато е изключено, редакторът може да публикува черновата директно.",
+        "Delete publication": "Изтриване на публикацията",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Искате ли да изтриете \"{name}\"? Това действие не може да бъде отменено.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публикацията и нейните прикачени файлове изчезват от публичната страница и от картата на сайта на Woo. Архивирането, напротив, ги запазва за срока на съхранение."
     },
     "nplurals=2; plural=(n != 1);"
 )

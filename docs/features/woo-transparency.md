@@ -21,6 +21,29 @@ When refusing publication, assessors select applicable legal grounds (weigerings
 
 Related documents are grouped into WOO batches. Bulk assessment enables processing multiple documents with the same decision simultaneously.
 
+## Reviewing a batch
+
+A batch moves through four states: in progress, ready for review, approved and published. Each move is a declared transition on OpenRegister, so no path skips one.
+
+1. The officer assesses every document and chooses **Mark ready for review**.
+2. While the batch is in review, its page shows each document as the public will see it, in place of the document queue. For a public document that is the original file. For a partly public document it is the verified redacted file, never the original. A withheld document shows no file. Next to each file stand the publication fields the public read returns: the title, the information category, the kind of publication, the date and the case reference.
+3. The reviewer opens the public view of every published document. **Approve** stays disabled until they have. The server checks the same thing again on every path to approval, so an approval through OpenRegister's task list is refused too until the approving reviewer opened every view.
+4. Approving starts the `batchReview` approval chain for the role `woo-reviewer`. When the chain completes, OpenRegister moves the batch to approved. Only an approved batch can be published.
+
+### Rejecting and sending back
+
+**Reject** asks for a reason in its own dialog. The batch goes back to in progress and is assigned to the officer who created it. The reason is kept on the batch with the reviewer and the date, the batch page shows it, and the officer gets a notification naming the batch and the reason. A rejection of the review task in OpenRegister's task list does the same, with the task's comment as the reason. A task rejected without a comment leaves the batch in review.
+
+**Send back** on one document returns only that document to assessment. It needs a reason too, and works only while the batch is in review. The assessment page shows the reason with who sent it back.
+
+## Redaction log
+
+Every partly public document keeps a redaction log. It lists, per redacted passage, the kind of information, where it sits in the text and the legal grounds. The log is filled from OpenRegister's record of what was actually redacted, once the redaction is verified.
+
+The review page and the redaction page show the log. A passage without a ground is marked. Publishing is refused, naming the document, when the log of a partly public document is empty, cannot be read or has a passage without a ground. The Woo requires a ground for every withheld part.
+
+The log is internal. It is stored on the assessment, which only administrators read, and it never appears in a public response.
+
 ## Inventarislijst
 
 The inventarislijst is a structured export listing all documents in a batch with their assessment decisions, applicable weigeringsgronden, and publication status.
@@ -46,6 +69,46 @@ Press **Request registration**. OpenCatalogi composes the request: the organisat
 
 With no gateway installed, nothing is recorded as sent. The panel shows the composed request, so you can send it another way. When the Woo-index confirms, press **Mark as registered**.
 
+### Where the Woo-index fields come from
+
+Four fields of each document in the sitemap can be set from integriq's mapping `woo-index-publication`: the publisher, the official title (`officieleTitel`), the information category and the handling type (`soortHandeling`). An administrator changes where a field comes from on integriq's Mappings page; the next sitemap carries the change. OpenCatalogi asks the mapping once per publication. A field the mapping leaves empty keeps OpenCatalogi's own value, and so does every field when integriq is not installed or refuses (for example because the mapping no longer lists `opencatalogi` among the apps that may run it). A mapped value is checked exactly like OpenCatalogi's own: a category outside the informatiecategorieen list, a publisher that is not a TOOI organisation URI or a handling type that is not a DiWoo value is left out and shows in the readiness check. The readiness card says in one line whether the fields came from the mapping or are built in, with integriq's refusal when there was one.
+
 ### A current verdict
 
 The readiness check runs once a day while a catalogue publishes a Woo sitemap. It also runs once right after a catalogue is switched on for Woo.
+
+## DiWoo metadata on the publication
+
+The national Woo-index only takes a document whose metadata follows the DiWoo metadata standard. A publication stores that metadata in its own fields, and the DiWoo sitemap emits what it stores.
+
+| Field | What it holds |
+| --- | --- |
+| `title` | The official title (`diwoo:officieleTitel`). |
+| `documentsoort` | The document type, from the national list of document types. Stored as the address of the list member. |
+| `fileDocumentsoorten` | A different document type for one attached file, such as an annex to a decision. Keyed by the file id. |
+| `language` | The language of the document. It defaults to `nl`. |
+| `creationDate` | The day the document was made. This is not the day it was published. |
+| `validFrom` and `validUntil` | The days the content takes and loses legal effect. They are apart from the publication date. |
+
+`GET /api/woo/documentsoorten` lists the document types an editor can choose from.
+
+### What a save checks
+
+A document type may be given as its code, its label or its address. The save stores the address. A document type the national list does not hold is refused. A validity that ends before it starts is refused.
+
+A Woo publication cannot be made public while a field the Woo-index requires is missing. This holds for a publication date now and for one in the future. A Woo publication has a Woo category, or sits in a schema a category names. The required fields are the publisher with a TOOI identifier, the title, the information category and the handling type. The refusal names every missing field. A draft without a publication date may be incomplete.
+
+Publishing a Woo batch reports the same refusal and leaves the batch unpublished.
+
+### What the sitemap emits
+
+Each document carries its title, document type, language, creation date, validity and the responsible organisation. Until the responsible organisation has its own field, it is the publisher.
+
+A publication created before these fields existed falls back to the old derivation: the day it was saved for the creation date, and `nl` for the language. A newer publication gets no fallback. A document that still lacks a required field is left off the sitemap page, and the rest of the page is served. The DiWoo validation report at `/api/{catalogSlug}/sitemaps/{categoryCode}/validate` lists each held-back document with the field and the reason.
+
+The national announcement takes `validFrom` as its effective date when the editor gives none.
+
+### Release notes
+
+- An earlier hand-off wrote a document type into the summary of a publication. On upgrade, a summary that is exactly a document type moves to the document type field, and that summary is emptied. Editors may want to write a real summary for those publications.
+- A Woo publication can no longer be made public without the metadata the Woo-index requires. The save names what is missing.

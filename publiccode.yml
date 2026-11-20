@@ -2,13 +2,15 @@ publiccodeYmlVersion: "0.4"
 
 name: OpenCatalogi
 url: "https://github.com/ConductionNL/opencatalogi"
-softwareVersion: "0.7.34"
-releaseDate: "2026-05-26"
+landingURL: "https://opencatalogi.conduction.nl/"
+logo: img/app-store.svg
+softwareVersion: "2.1.0"
+releaseDate: "2026-09-06"
 developmentStatus: stable
 softwareType: addon
 
 platforms:
-  - nextcloud
+  - web
 
 categories:
   - content-management
@@ -20,13 +22,26 @@ description:
     longDescription: |
       OpenCatalogi biedt een framework waarmee gefedereerde catalogi samenwerken
       in een open data ecosysteem. De app synchroniseert bronnen met meerdere
-      catalogi en ondersteunt automatische publicatie van open data conform het
+      catalogi en ondersteunt automatische publicatie van open data conform de
       DIWOO-standaard.
+      Conduction onderhoudt dit component in opdracht van Gemeente Rotterdam.
+      De app is te installeren via de Nextcloud App Store:
+      https://apps.nextcloud.com/apps/opencatalogi
     features:
       - Gefedereerde catalogi
       - Automatische publicatie van open data
       - DIWOO-sitemaps voor WOO-documenten
       - Integratie met OpenRegister
+      - Publicaties met metadata en bijlagen
+      - Federatieve zoekfunctie over organisaties heen
+      - Gefacetteerd zoeken in publicaties
+      - Publieke zoek-API voor externe frontends
+      - Pagina's, menu's en thema's voor de publieke frontend
+      - Woo-informatiecategorieën voor publicaties
+    screenshots:
+      - img/screenshot-dashboard.png
+      - img/screenshot-catalog.png
+      - img/screenshot-publications.png
   en:
     shortDescription: "Framework for federated catalogs in Nextcloud"
     longDescription: |
@@ -34,23 +49,83 @@ description:
       in an open data ecosystem. The app synchronises sources with multiple
       catalogs and supports automatic publication of open data following the
       DIWOO metadata standard.
+      Conduction maintains this component on behalf of the Municipality of Rotterdam.
+      The app can be installed from the Nextcloud App Store:
+      https://apps.nextcloud.com/apps/opencatalogi
     features:
       - Federated catalogs
       - Automatic open data publication
       - DIWOO sitemaps for WOO documents
       - OpenRegister integration
+      - Publications with metadata and attachments
+      - Federated search across organisations
+      - Faceted search over publications
+      - Public search API for external frontends
+      - Pages, menus and themes for the public frontend
+      - Woo information categories for publications
+    screenshots:
+      - img/screenshot-dashboard.png
+      - img/screenshot-catalog.png
+      - img/screenshot-publications.png
 
 legal:
   license: EUPL-1.2
+  mainCopyrightOwner: Conduction B.V.
+
+intendedAudience:
+  countries:
+    - nl
+  scope:
+    - government
 
 localisation:
   localisationReady: true
   availableLanguages:
-    - nl
+    - be
+    - bg
+    - bs
+    - ca
+    - cs
+    - da
+    - de
+    - el
     - en
+    - es
+    - et
+    - fi
+    - fr
+    - ga
+    - hr
+    - hu
+    - is
+    - it
+    - lb
+    - lt
+    - lv
+    - mk
+    - mt
+    - nb
+    - nl
+    - pl
+    - pt
+    - rm
+    - ro
+    - ru
+    - sk
+    - sl
+    - sq
+    - sr
+    - sv
+    - tr
+    - uk
 
 maintenance:
-  type: internal
+  type: contract
+  contractors:
+    - name: Conduction B.V.
+      until: "2026-12-31"
+      email: info@conduction.nl
+      website: https://conduction.nl
   contacts:
     - name: Conduction Development Team
       email: info@conduction.nl
@@ -58,6 +133,9 @@ maintenance:
 
 dependsOn:
   open:
+    - name: Nextcloud
+      versionMin: "32"
+      versionMax: "35"
     - name: OpenRegister
       versionMin: "0.1.0"
 

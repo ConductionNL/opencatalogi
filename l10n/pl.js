@@ -724,7 +724,26 @@ OC.L10N.register(
         "Open catalog": "Otwórz katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Utwórz swój pierwszy katalog. To kontener, w którym będą twoje publikacje. Wybierz rejestr Publication i schemat Publication, aby katalog wyświetlał dodawane przez ciebie publikacje.",
         "Manage your publications and their status": "Zarządzaj swoimi publikacjami i ich statusem",
-        "Open at the source": "Otwórz u źródła"
+        "Open at the source": "Otwórz u źródła",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: wersja OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister zawiera silnik, którego potrzebuje OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi wymaga OpenRegister %1$s lub nowszego. W zainstalowanym OpenRegister brakuje %2$s, dlatego OpenCatalogi zamiast swoich stron pokazuje komunikat. Zaktualizuj OpenRegister.",
+        "OpenCatalogi cannot start": "Nie można uruchomić OpenCatalogi",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi wymaga OpenRegister %1$s lub nowszego. Poproś administratora o aktualizację OpenRegister.",
+        "Feed consumers": "Odbiorcy kanału",
+        "Contact": "Kontakt",
+        "Generate key": "Wygeneruj klucz",
+        "Revoke": "Unieważnij",
+        "Disable": "Wyłącz",
+        "Last used": "Ostatnio użyty",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ten klucz jest wyświetlany tylko raz. Skopiuj go teraz: nie będzie można go ponownie wyświetlić.",
+        "No feed consumers yet.": "Brak jeszcze odbiorców kanału.",
+        "Accounts that read every catalogue's feed": "Konta, które czytają kanał każdego katalogu",
+        "Review publications before they are published": "Sprawdzaj publikacje przed ich opublikowaniem",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Gdy włączone, wersja robocza musi zostać przesłana i zatwierdzona, zanim będzie można ją opublikować. Gdy wyłączone, redaktor może opublikować wersję roboczą bezpośrednio.",
+        "Delete publication": "Usuń publikację",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Czy chcesz usunąć \"{name}\"? Tej operacji nie można cofnąć.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikacja i jej załączniki znikają ze strony publicznej i z mapy witryny Woo. Archiwizacja natomiast zachowuje je na okres przechowywania."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -724,7 +724,26 @@ OC.L10N.register(
         "Open catalog": "Odpri katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Ustvarite svoj prvi katalog. To je vsebnik, v katerem bodo vaše objave. Izberite register Publication in shemo Publication, da bo katalog prikazoval objave, ki jih dodate.",
         "Manage your publications and their status": "Upravljajte svoje publikacije in njihovo stanje",
-        "Open at the source": "Odpri pri viru"
+        "Open at the source": "Odpri pri viru",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: različica OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister vsebuje pogon, ki ga OpenCatalogi potrebuje.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi zahteva OpenRegister %1$s ali novejši. V nameščenem OpenRegister manjka %2$s, zato OpenCatalogi namesto svojih strani prikaže obvestilo. Posodobite OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi se ne more zagnati",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi zahteva OpenRegister %1$s ali novejši. Prosite skrbnika, naj posodobi OpenRegister.",
+        "Feed consumers": "Prejemniki vira",
+        "Contact": "Stik",
+        "Generate key": "Ustvari ključ",
+        "Revoke": "Prekliči",
+        "Disable": "Onemogoči",
+        "Last used": "Nazadnje uporabljeno",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ta ključ je prikazan samo enkrat. Kopirajte ga zdaj: znova ga ni mogoče prikazati.",
+        "No feed consumers yet.": "Prejemnikov vira še ni.",
+        "Accounts that read every catalogue's feed": "Računi, ki berejo vir vsakega kataloga",
+        "Review publications before they are published": "Preglej objave, preden so objavljene",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Ko je vklopljeno, je treba osnutek oddati in odobriti, preden ga je mogoče objaviti. Ko je izklopljeno, lahko urednik osnutek objavi neposredno.",
+        "Delete publication": "Izbriši objavo",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Ali želite izbrisati \"{name}\"? Tega dejanja ni mogoče razveljaviti.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Objava in njene priloge izginejo z javne strani in iz zemljevida strani Woo. Arhiviranje pa jih ohrani za čas hrambe."
     },
     "nplurals=2; plural=(n != 1);"
 )

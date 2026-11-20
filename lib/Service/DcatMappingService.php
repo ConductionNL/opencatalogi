@@ -57,6 +57,23 @@ class DcatMappingService {
 	];
 
 	/**
+	 * The DCAT properties whose value may be language-keyed (`{nl: ..., en: ...}`,
+	 * as OpenRegister returns a translatable field with all its translations).
+	 * Each language present becomes its own language-tagged literal
+	 * (publication-translations REQ-PTR-002).
+	 *
+	 * @var array<int, string>
+	 */
+	public const LANGUAGE_TAGGED = ['dct:title', 'dct:description'];
+
+	/**
+	 * Basic BCP 47 shape of a language key.
+	 *
+	 * @var string
+	 */
+	private const LANGUAGE_KEY = '/^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})*$/';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param DcatVocabularyService $vocabulary The HVD-category / data-theme resolver.
@@ -181,6 +198,7 @@ class DcatMappingService {
 			],
 			$this->mapProperties(source: $source, mapping: $profile->mapping),
 			$this->hvdProperties(publication: $source->publication, profile: $profile),
+			$this->plainSummaryProperties(publication: $source->publication),
 			$this->mandatoryProperties(source: $source),
 			$this->completionProperties(source: $source, profile: $profile)
 		);
@@ -207,8 +225,86 @@ class DcatMappingService {
 			$properties['dcat:theme'] = $this->themeNode(source: $source, value: $values['dcat:theme']);
 		}
 
+		foreach (self::LANGUAGE_TAGGED as $dcatProperty) {
+			if (isset($properties[$dcatProperty]) === true && is_array($properties[$dcatProperty]) === true) {
+				$properties[$dcatProperty] = $this->languageTaggedLiterals(value: $properties[$dcatProperty]);
+			}
+		}
+
 		return array_filter($properties, static fn ($value) => $value !== null);
 	}//end mapProperties()
+
+	/**
+	 * One language-tagged literal per language of a language-keyed value, the
+	 * source language (Dutch) first; null when no language has text.
+	 *
+	 * A value that is not keyed by language is left as it is.
+	 *
+	 * @param array<mixed> $value The mapped value.
+	 *
+	 * @return array<mixed>|null The literals, the value unchanged, or null.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function languageTaggedLiterals(array $value): ?array {
+		if ($this->isKeyedByLanguage(value: $value) === false) {
+			return $value;
+		}
+
+		$literals = self::literalsByLanguage(value: $value);
+		if ($literals === []) {
+			return null;
+		}
+
+		return $literals;
+	}//end languageTaggedLiterals()
+
+	/**
+	 * One literal per language that has text, Dutch first.
+	 *
+	 * @param array<mixed> $value A language-keyed value.
+	 *
+	 * @return list<array{'@value': string, '@language': string}> The literals.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private static function literalsByLanguage(array $value): array {
+		if (array_key_exists('nl', $value) === true) {
+			$value = (['nl' => $value['nl']] + $value);
+		}
+
+		$literals = [];
+		foreach ($value as $language => $text) {
+			if (is_scalar($text) === true && (string)$text !== '') {
+				$literals[] = ['@value' => (string)$text, '@language' => (string)$language];
+			}
+		}
+
+		return $literals;
+	}//end literalsByLanguage()
+
+	/**
+	 * Whether a value is a non-empty map whose every key is a language tag.
+	 *
+	 * @param array<mixed> $value The mapped value.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function isKeyedByLanguage(array $value): bool {
+		if ($value === [] || array_is_list($value) === true) {
+			return false;
+		}
+
+		foreach (array_keys($value) as $key) {
+			if (preg_match(self::LANGUAGE_KEY, (string)$key) !== 1) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end isKeyedByLanguage()
 
 	/**
 	 * The publication value at each mapped path, leaving out empty values.
@@ -345,6 +441,32 @@ class DcatMappingService {
 
 		return $properties;
 	}//end mandatoryProperties()
+
+	/**
+	 * The plain language summary as `dct:abstract`, tagged with the publication's language.
+	 *
+	 * The language is the publication's own `language` when it carries one, and
+	 * `nl` otherwise.
+	 *
+	 * @param array<string, mixed> $publication The publication object.
+	 *
+	 * @return array<string, mixed> The abstract, or nothing without a plain summary.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 */
+	private function plainSummaryProperties(array $publication): array {
+		$text = ($publication['plainSummary'] ?? null);
+		if (is_string($text) === false || trim($text) === '') {
+			return [];
+		}
+
+		$language = ($publication['language'] ?? null);
+		if (is_string($language) === false || preg_match('/^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/', $language) !== 1) {
+			$language = 'nl';
+		}
+
+		return ['dct:abstract' => ['@value' => trim($text), '@language' => strtolower($language)]];
+	}//end plainSummaryProperties()
 
 	/**
 	 * Publisher, contact point and distributions, each only when it resolves.

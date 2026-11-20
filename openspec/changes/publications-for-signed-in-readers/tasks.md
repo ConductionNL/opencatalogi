@@ -4,21 +4,27 @@ Start after `integration-feed-consumer-credentials` is merged: task 2.2 adds a f
 
 ## 1. The schema and the rule
 
-- [ ] 1.1 Add `audience` and `minimumAssurance` to the `publication` schema in `lib/Settings/publication_register.json` with titles, descriptions and a bumped schema version (REQ-PSR-001). Verify: `tests/Unit/Settings/PublicationAudienceSchemaTest.php`.
-- [ ] 1.2 Add `lib/Migration/SetPublicationAudiencePublic.php` (repair step) that sets `audience: public` on every publication without one (REQ-PSR-001). Verify: `tests/Unit/Migration/AudienceMigrationTest.php::testEveryExistingPublicationGetsAudiencePublic`.
-- [ ] 1.3 Add `audience: "public"` to the `match` of the `group: public` read rule and the same check to `PublicationQueryService::isObjectPublic()` (REQ-PSR-002). Verify: `tests/Unit/Service/SignedInPublicationExclusionTest.php` with one case each for the public API, search, sitemap, DCAT, OOAPI and federation.
-- [ ] 1.4 Refuse `signedIn` with a `wooCategory` in `PublicationValidationService` (REQ-PSR-004). Verify: `tests/Unit/Service/PublicationValidationServiceTest.php::testASignedInPublicationWithAWooCategoryIsRefused`.
+- [x] 1.1 Add `audience` and `minimumAssurance` to the `publication` schema in `lib/Settings/publication_register.json` with titles, descriptions and a bumped schema version (REQ-PSR-001). Verify: `tests/Unit/Settings/PublicationAudienceSchemaTest.php`.
+- [x] 1.2 Add `lib/Migration/SetPublicationAudiencePublic.php` (repair step) that sets `audience: public` on every publication without one (REQ-PSR-001). Verify: `tests/Unit/Migration/AudienceMigrationTest.php::testEveryExistingPublicationGetsAudiencePublic`.
+  - Built as `lib/Repair/SetPublicationAudiencePublic.php` (repair steps live in `lib/Repair/` here; `lib/Migration/` holds database migrations), registered right after `InitializeSettings`. Test: `tests/Unit/Repair/AudienceMigrationTest.php`.
+- [x] 1.3 Add `audience: "public"` to the `match` of the `group: public` read rule and the same check to `PublicationQueryService::isObjectPublic()` (REQ-PSR-002). Verify: `tests/Unit/Service/SignedInPublicationExclusionTest.php` with one case each for the public API, search, sitemap, DCAT, OOAPI and federation.
+  - The surface cases in `SignedInPublicationExclusionTest` pin that the sitemap, DCAT, OOAPI and federation sources read with `_rbac: true` only, so the rule applies to them; the rule and `isObjectPublic()` are tested directly.
+- [x] 1.4 Refuse `signedIn` with a `wooCategory` in `PublicationValidationService` (REQ-PSR-004). Verify: `tests/Unit/Service/PublicationValidationServiceTest.php::testASignedInPublicationWithAWooCategoryIsRefused`.
 
 ## 2. The trusted read
 
-- [ ] 2.1 In `PublicationsController::show()`, on a miss for a request carrying a consumer key, check the key, its catalogue, `actForSignedInReaders` and `X-Reader-Assurance` against `minimumAssurance`, then read the one object with RBAC off; answer `Cache-Control: private, no-store` (REQ-PSR-003). Verify: `tests/Unit/Controller/SignedInReadControllerTest.php::testAKeyThatMayActForReadersAtTheRightLevelIsServed`, `::testALowerLevelAnswers404`, `::testAKeyWithoutActForSignedInReadersAnswers404`, `::testNoKeyAnswers404`.
-- [ ] 2.2 Add `actForSignedInReaders` to the consumer key and a switch for it in the consumer credentials section of the admin settings (REQ-PSR-003). Verify: a settings controller test.
-- [ ] 2.3 Write an audit entry for every trusted read through OpenRegister's audit trail (REQ-PSR-003). Verify: `SignedInReadControllerTest::testATrustedReadIsAudited`.
+- [x] 2.1 In `PublicationsController::show()`, on a miss for a request carrying a consumer key, check the key, its catalogue, `actForSignedInReaders` and `X-Reader-Assurance` against `minimumAssurance`, then read the one object with RBAC off; answer `Cache-Control: private, no-store` (REQ-PSR-003). Verify: `tests/Unit/Controller/SignedInReadControllerTest.php::testAKeyThatMayActForReadersAtTheRightLevelIsServed`, `::testALowerLevelAnswers404`, `::testAKeyWithoutActForSignedInReadersAnswers404`, `::testNoKeyAnswers404`.
+  - The checks live in `lib/Service/Publication/SignedInReadService.php`; `SignedInReadControllerTest` drives them, and `PublicationsControllerTest` covers the header, the 404 and `Cache-Control`.
+- [x] 2.2 Add `actForSignedInReaders` to the consumer key and a switch for it in the consumer credentials section of the admin settings (REQ-PSR-003). Verify: a settings controller test.
+  - The flag is on the feed consumer (its keys share it): `PUT /api/catalogs/{catalogSlug}/consumers/{id}/signed-in-readers`, and a switch per consumer in the Feed consumers section.
+- [x] 2.3 Write an audit entry for every trusted read through OpenRegister's audit trail (REQ-PSR-003). Verify: `SignedInReadControllerTest::testATrustedReadIsAudited`.
 
 ## 3. The editor
 
 - [ ] 3.1 Add "Who can read it" to the Visibility card on the publication page and in the editor, as design D5 (boards `OcPublicatie`, `OcPublicatieBewerken`) (REQ-PSR-001). Verify: `tests/e2e/publications-for-signed-in-readers.spec.ts` "an editor limits a publication to signed-in readers", carrying `@e2e` REQ-PSR-001.
-- [ ] 3.2 Add the strings to `l10n/` (en, nl). Verify: `npm run check:l10n`, `npm run check:schema-l10n`.
+  - Code built: the Visibility card shows who can read it and the sign-in link line (`PublicationVisibilityWidget`), and the editable Publication card includes `audience` and `minimumAssurance` (manifest). Left open: the e2e spec, which needs a live instance, and the D5 radio-pair layout, which the shared Data widget renders as a select.
+  - Round 2 (17 Nov): the e2e spec is written, `tests/e2e/publications-for-signed-in-readers.spec.ts`: a draft without a Woo category, saved with `audience: signedIn` and level Substantial through the object endpoint, the Visibility card wording and link line, and the anonymous public read answering 404. Not run here (no live instance); tick after a live run.
+- [x] 3.2 Add the strings to `l10n/` (en, nl). Verify: `npm run check:l10n`, `npm run check:schema-l10n`.
 
 ## 4. portaliq (cross-repo, ConductionNL/portaliq)
 
@@ -28,5 +34,6 @@ Start after `integration-feed-consumer-credentials` is merged: task 2.2 adds a f
 ## 5. Verification
 
 - [ ] 5.1 `openspec validate publications-for-signed-in-readers --strict`, `composer check:strict`, `npm run lint`.
-- [ ] 5.2 Live: create a `signedIn` publication, show the anonymous 404 and the trusted read with a key, and paste both in the PR body.
+  - Run 17 Nov: phpstan clean; phpmd's two findings in this change's own files fixed (`SignedInReadService::read()` complexity, `count()` in the repair step's loop). Left red, not this change's: psalm's UndefinedClass on openregister main classes absent from the vendored stub, phpcs errors in FederationController, SettingsService and PublishedTableService, phpmd findings elsewhere, eslint errors in `DashboardSideBar.vue`; `openspec validate --strict` warns only on the spec's `status:` front matter, which every change in this repo carries. Unit suite: no failures beyond the branch's own baseline.
+- [ ] 5.2 Live: create a `signedIn` publication, show the anonymous 404 and the trusted read with a key, and paste both in the PR body. (live pass, decision 139)
 - [ ] 5.3 Set `pub-restricted` in `openspec/parity/capabilities.json` to `built` once the portaliq tasks land.

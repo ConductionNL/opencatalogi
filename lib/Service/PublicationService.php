@@ -41,9 +41,12 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinkRules;
 use Exception;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Service\Publication\AttachmentOrder;
 use OCA\OpenRegister\Exception\RegisterNotFoundException;
 use OCA\OpenRegister\Exception\SchemaNotFoundException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
@@ -141,6 +144,11 @@ class PublicationService implements PublicationServiceInterface {
 		'error' => 'Publication not found',
 		'status' => 404,
 	];
+
+	/**
+	 * The folder of a download archive that holds the attachments (REQ-DWN-006).
+	 */
+	private const ATTACHMENTS_FOLDER = 'Bijlagen/';
 
 	/**
 	 * The object service instance.
@@ -303,23 +311,7 @@ class PublicationService implements PublicationServiceInterface {
 			// Derive allowed registers/schemas from the catalogs configured on this
 			// instance. getCatalogFilters() returns the union of all catalog scopes,
 			// which is the safe upper-bound for any request that reaches this path.
-			$context = $this->getCatalogFilters();
-			$allowedRegisters = array_map('intval', $context['registers']);
-			$allowedSchemas = array_map('intval', $context['schemas']);
-
-			if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
-				// No catalog scope configured — refuse to do a platform-wide scan.
-				return;
-			}
-
-			// Delegate to the scoped helper that routes the lookup through OpenRegister's
-			// ObjectService, never a raw DBMS-catalog probe, and only within a
-			// constrained (register × schema) set.
-			$location = $this->getQueryService()->findObjectLocation(
-				uuid: $objectId,
-				allowedRegisters: $allowedRegisters,
-				allowedSchemas: $allowedSchemas
-			);
+			$location = $this->locationInCatalogScope(objectId: $objectId);
 
 			if ($location !== null) {
 				$objectService->setRegister(register: (string)$location['register']);
@@ -1178,27 +1170,44 @@ class PublicationService implements PublicationServiceInterface {
 	 */
 	private function isObjectInCatalogScope(string $objectId): bool {
 		try {
-			$context = $this->getCatalogFilters();
-			$allowedRegisters = array_map('intval', $context['registers']);
-			$allowedSchemas = array_map('intval', $context['schemas']);
-
-			if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
-				return false;
-			}
-
-			$location = $this->getQueryService()->findObjectLocation(
-				uuid: $objectId,
-				allowedRegisters: $allowedRegisters,
-				allowedSchemas: $allowedSchemas
-			);
-
-			return $location !== null;
+			return $this->locationInCatalogScope(objectId: $objectId) !== null;
 		} catch (\Exception $e) {
 			// Fail closed — if we cannot verify scope, deny.
 			return false;
 		}//end try
 
 	}//end isObjectInCatalogScope()
+
+	/**
+	 * Where an object lives, looked up only within the (register × schema) pairs
+	 * of the catalogs configured on this instance.
+	 *
+	 * Delegates to the scoped helper that routes the lookup through OpenRegister's
+	 * ObjectService, never a raw DBMS-catalog probe. With no catalog scope
+	 * configured there is no lookup at all: no platform-wide scan.
+	 *
+	 * @param string $objectId The UUID of the object to locate
+	 *
+	 * @return array|null The register and schema of the object, or null when it is not in scope.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function locationInCatalogScope(string $objectId): ?array {
+		$context = $this->getCatalogFilters();
+		$allowedRegisters = array_map('intval', $context['registers']);
+		$allowedSchemas = array_map('intval', $context['schemas']);
+
+		if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
+			return null;
+		}
+
+		return $this->getQueryService()->findObjectLocation(
+			uuid: $objectId,
+			allowedRegisters: $allowedRegisters,
+			allowedSchemas: $allowedSchemas
+		);
+
+	}//end locationInCatalogScope()
 
 	/**
 	 * Shows attachments of a publication
@@ -1214,6 +1223,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
 	 */
 	public function attachments(string $id): JSONResponse {
 		// Catalog-scope gate (C-1 / wave-7): verify the requested object belongs to one
@@ -1241,10 +1251,14 @@ class PublicationService implements PublicationServiceInterface {
 			// Get the raw files from the file service.
 			$files = $fileService->getFiles(object: $id, sharedFilesOnly: true);
 
+			// The officer's order first, then the rest by upload time (REQ-PDP-001),
+			// before paging so every page continues the same sequence.
+			$files = AttachmentOrder::sort(files: $files, order: AttachmentOrder::storedOrder(publication: $object));
+
 			// Format the files with pagination using request parameters.
 			$formattedFiles = $fileService->formatFiles($files, $this->request->getParams());
 
-			return new JSONResponse($formattedFiles);
+			return new JSONResponse($this->withReferences(formatted: AttachmentOrder::withPositions(page: $formattedFiles), publicationId: $id));
 		} catch (DoesNotExistException $e) {
 			return new JSONResponse(['error' => 'Object not found'], 404);
 		} catch (NotFoundException $e) {
@@ -1254,6 +1268,43 @@ class PublicationService implements PublicationServiceInterface {
 		}//end try
 
 	}//end attachments()
+
+	/**
+	 * The formatted files with the publication's public document references after them (REQ-PBR-002).
+	 *
+	 * Each reference carries `kind: reference` and its source URL. The
+	 * references are listed once, after the files on the first page, and
+	 * counted in `total`.
+	 *
+	 * @param array<string, mixed> $formatted The formatFiles result.
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<string, mixed> The result with the references.
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-a-reference-is-published-like-a-file-pointing-at-its-source-req-pbr-002
+	 */
+	public function withReferences(array $formatted, string $publicationId): array {
+		if ((int)($formatted['page'] ?? 1) > 1) {
+			return $formatted;
+		}
+
+		try {
+			$references = $this->container->get(DocumentReferences::class)->publishedFileEntries(publicationId: $publicationId);
+		} catch (\Throwable $e) {
+			return $formatted;
+		}
+
+		if ($references === []) {
+			return $formatted;
+		}
+
+		$formatted['results'] = array_merge(array_values((array)($formatted['results'] ?? [])), $references);
+		if (isset($formatted['total']) === true) {
+			$formatted['total'] = ((int)$formatted['total'] + count($references));
+		}
+
+		return $formatted;
+	}//end withReferences()
 
 	/**
 	 * Download all files of an object as a ZIP archive
@@ -1307,6 +1358,8 @@ class PublicationService implements PublicationServiceInterface {
 			if ($sharedNames !== null) {
 				$this->removeZipEntriesNotIn(zipPath: $zipInfo['path'], keepNames: $sharedNames);
 			}
+
+			$this->moveZipEntriesIntoAttachmentsFolder(zipPath: $zipInfo['path']);
 
 			// Render the publication metadata PDF and pipe it into the ZIP alongside the
 			// attachments streamed from OR's file service (DWN-OR-001 / DWN-OR-003).
@@ -1466,6 +1519,46 @@ class PublicationService implements PublicationServiceInterface {
 	}//end removeZipEntriesNotIn()
 
 	/**
+	 * Move every entry of the archive under `Bijlagen/`.
+	 *
+	 * OpenRegister writes an object's files at the root of the archive; the download
+	 * puts the metadata PDF there and the attachments in `Bijlagen/` (REQ-DWN-006).
+	 *
+	 * @param string $zipPath Path of the ZIP archive to rewrite in place.
+	 *
+	 * @return void
+	 *
+	 * @throws Exception When the archive cannot be opened or an entry cannot be renamed.
+	 *
+	 * @spec openspec/specs/download-service/spec.md
+	 */
+	private function moveZipEntriesIntoAttachmentsFolder(string $zipPath): void {
+		$zip = new ZipArchive();
+		if ($zip->open($zipPath) !== true) {
+			// An archive whose every entry was removed no longer exists on disk.
+			return;
+		}
+
+		$renames = [];
+		for ($index = 0; $index < $zip->numFiles; $index++) {
+			$entryName = (string) $zip->getNameIndex($index);
+			if (str_starts_with($entryName, self::ATTACHMENTS_FOLDER) === false) {
+				$renames[$index] = self::ATTACHMENTS_FOLDER . $entryName;
+			}
+		}
+
+		foreach ($renames as $index => $newName) {
+			if ($zip->renameIndex($index, $newName) === false) {
+				$zip->close();
+				throw new Exception('Failed to move an attachment into the Bijlagen folder of the ZIP archive');
+			}
+		}
+
+		$zip->close();
+
+	}//end moveZipEntriesIntoAttachmentsFolder()
+
+	/**
 	 * Whether the current request has no signed-in user.
 	 *
 	 * @return bool True for an anonymous caller.
@@ -1539,6 +1632,11 @@ class PublicationService implements PublicationServiceInterface {
 						);
 					}
 				}//end if
+
+				// REQ-PRS-003: only public source identifiers leave on these public reads.
+				if (is_array($objectArray) === true) {
+					$objectArray = (new PublicationLinkRules())->withPublicSourceIdentifiers(publication: $objectArray);
+				}
 
 				return $objectArray;
 			},
@@ -1914,11 +2012,13 @@ class PublicationService implements PublicationServiceInterface {
 	 * @return array The decoded response data.
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::withoutUnlisted() is a pure filter.
 	 */
 	private function fetchLocalPublicationData(array $queryParams): array {
 		$response = $this->index(catalogId: null, customParams: $queryParams);
 
-		return (json_decode($response->render(), true) ?? []);
+		// REQ-PLC-006: the federation list never carries an unlisted publication.
+		return UnlistedPublications::withoutUnlisted(page: (json_decode($response->render(), true) ?? []));
 	}//end fetchLocalPublicationData()
 
 	/**

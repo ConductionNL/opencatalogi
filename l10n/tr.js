@@ -724,7 +724,26 @@ OC.L10N.register(
         "Open catalog": "Kataloğu aç",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "İlk kataloğunuzu oluşturun. Yayınlarınızın yer alacağı kapsayıcıdır. Kataloğun eklediğiniz yayınları listelemesi için Publication kaydını ve Publication şemasını seçin.",
         "Manage your publications and their status": "Yayınlarınızı ve durumlarını yönetin",
-        "Open at the source": "Kaynakta aç"
+        "Open at the source": "Kaynakta aç",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegister sürümü",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister, OpenCatalogi'nin ihtiyaç duyduğu motoru içeriyor.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi, OpenRegister %1$s veya daha yeni bir sürüm gerektirir. Kurulu OpenRegister'da %2$s eksik, bu yüzden OpenCatalogi sayfaları yerine bir uyarı gösteriyor. OpenRegister'ı güncelleyin.",
+        "OpenCatalogi cannot start": "OpenCatalogi başlatılamıyor",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi, OpenRegister %1$s veya daha yeni bir sürüm gerektirir. Yöneticinizden OpenRegister'ı güncellemesini isteyin.",
+        "Feed consumers": "Akış tüketicileri",
+        "Contact": "İletişim",
+        "Generate key": "Anahtar oluştur",
+        "Revoke": "İptal et",
+        "Disable": "Devre dışı bırak",
+        "Last used": "Son kullanım",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Bu anahtar yalnızca bir kez gösterilir. Şimdi kopyalayın: yeniden gösterilemez.",
+        "No feed consumers yet.": "Henüz akış tüketicisi yok.",
+        "Accounts that read every catalogue's feed": "Her kataloğun akışını okuyan hesaplar",
+        "Review publications before they are published": "Yayınları yayımlanmadan önce incele",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Açık olduğunda, bir taslağın yayımlanabilmesi için gönderilmesi ve onaylanması gerekir. Kapalı olduğunda, bir editör taslağı doğrudan yayımlayabilir.",
+        "Delete publication": "Yayını sil",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "\"{name}\" ögesini silmek istiyor musunuz? Bu eylem geri alınamaz.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Yayın ve ekleri herkese açık sayfadan ve Woo site haritasından kaybolur. Arşivleme ise bunları saklama süresi boyunca korur."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -13,6 +13,7 @@
 // vue-material-design-icons.
 
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
 import BookOpenPageVariantOutline from 'vue-material-design-icons/BookOpenPageVariantOutline.vue'
@@ -41,6 +42,7 @@ import FolderMultiple from 'vue-material-design-icons/FolderMultiple.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
 import History from 'vue-material-design-icons/History.vue'
+import LightbulbOnOutline from 'vue-material-design-icons/LightbulbOnOutline.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
@@ -60,13 +62,16 @@ import Sitemap from 'vue-material-design-icons/Sitemap.vue'
 import StorefrontOutline from 'vue-material-design-icons/StorefrontOutline.vue'
 import StoreOutline from 'vue-material-design-icons/StoreOutline.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import TableColumn from 'vue-material-design-icons/TableColumn.vue'
 import TagOutline from 'vue-material-design-icons/TagOutline.vue'
+import Translate from 'vue-material-design-icons/Translate.vue'
 import Tune from 'vue-material-design-icons/Tune.vue'
 import ViewDashboardOutline from 'vue-material-design-icons/ViewDashboardOutline.vue'
 import Web from 'vue-material-design-icons/Web.vue'
 
 export default {
 	AccountGroup,
+	AlertCircleOutline,
 	AlertOutline,
 	ArchiveOutline,
 	BookOpenPageVariantOutline,
@@ -95,6 +100,7 @@ export default {
 	FolderOutline,
 	FormatListBulleted,
 	History,
+	LightbulbOnOutline,
 	LinkVariant,
 	ListBoxOutline,
 	Lock,
@@ -114,7 +120,9 @@ export default {
 	StorefrontOutline,
 	StoreOutline,
 	Sync,
+	TableColumn,
 	TagOutline,
+	Translate,
 	Tune,
 	ViewDashboardOutline,
 	Web,

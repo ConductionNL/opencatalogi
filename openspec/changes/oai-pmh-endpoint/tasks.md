@@ -63,15 +63,15 @@ Groups 1 to 5 specified the OAI-PMH protocol. Decision D10 struck it (row 9.10),
 
 Decision D10 struck OAI-PMH (row 9.10). Groups 1 to 5 above specified the OAI-PMH protocol and are not to be built; they carry no checkboxes. Say so in the PR body. Build only this group. Read `openspec/woo-build-rules.md` first; for OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`.
 
-- [ ] 6.1 Add `ChangesController::changes(string $catalogSlug)` (`#[PublicPage]`, `#[NoCSRFRequired]`, rate limited like `SearchController::index()`), its route and CORS preflight, reading through `PublicationQueryService` inside the anonymous scope and rendering nodes with `DcatMappingService` (OAI-006). Verify: `tests/Unit/Controller/ChangesEndpointTest.php::testOnlyPublicRecordsChangedSinceAreListed` (fails today: no route), `::testAMalformedSinceIs400`, `::testPagesFollowTheCursor`; a route-table test.
-- [ ] 6.2 Add the withdrawn list from `depublication` records and archived publications that were once public (OAI-007). Verify: `ChangesEndpointTest::testAWithdrawnRecordIsListedWithIdAndDateOnly` and `::testANeverPublicDraftIsNotListed`.
-- [ ] 6.3 Document the route in `openapi.json` (keeping `tests/Unit/OpenApiParityTest.php` green) and in `docs/` for re-users. Verify: `OpenApiParityTest` and a grep for U+2014 on the doc.
+- [x] 6.1 Add `ChangesController::changes(string $catalogSlug)` (`#[PublicPage]`, `#[NoCSRFRequired]`, rate limited like `SearchController::index()`), its route and CORS preflight, reading through `PublicationQueryService` inside the anonymous scope and rendering nodes with `DcatMappingService` (OAI-006). Verify: `tests/Unit/Controller/ChangesEndpointTest.php::testOnlyPublicRecordsChangedSinceAreListed` (fails today: no route), `::testAMalformedSinceIs400`, `::testPagesFollowTheCursor`; a route-table test.
+- [x] 6.2 Add the withdrawn list from `depublication` records and archived publications that were once public (OAI-007). Verify: `ChangesEndpointTest::testAWithdrawnRecordIsListedWithIdAndDateOnly` and `::testANeverPublicDraftIsNotListed`.
+- [x] 6.3 Document the route in `openapi.json` (keeping `tests/Unit/OpenApiParityTest.php` green) and in `docs/` for re-users. Verify: `OpenApiParityTest` and a grep for U+2014 on the doc.
 - [ ] 6.4 Live: ask the dev instance for changes since yesterday after editing and withdrawing one publication each, and paste the answer in the PR body (OAI-006, OAI-007). Verify: the pasted answer.
 
 ## 7. Verification (amendment)
 
-- [ ] 7.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
-- [ ] 7.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
+- [x] 7.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
+- [x] 7.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
 - [ ] 7.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
 - [ ] 7.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
 

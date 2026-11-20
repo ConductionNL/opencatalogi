@@ -724,7 +724,26 @@ OC.L10N.register(
         "Open catalog": "Apri catalogo",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Crea il tuo primo catalogo. È il contenitore in cui vivranno le tue pubblicazioni. Scegli il registro Publication e lo schema Publication, così il catalogo elenca le pubblicazioni che aggiungi.",
         "Manage your publications and their status": "Gestisci le tue pubblicazioni e il loro stato",
-        "Open at the source": "Apri alla fonte"
+        "Open at the source": "Apri alla fonte",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: versione di OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister contiene il motore di cui OpenCatalogi ha bisogno.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi richiede OpenRegister %1$s o successivo. Nell'OpenRegister installato manca %2$s, quindi OpenCatalogi mostra un avviso invece delle sue pagine. Aggiorna OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi non può avviarsi",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi richiede OpenRegister %1$s o successivo. Chiedi all'amministratore di aggiornare OpenRegister.",
+        "Feed consumers": "Consumatori del feed",
+        "Contact": "Contatto",
+        "Generate key": "Genera chiave",
+        "Revoke": "Revoca",
+        "Disable": "Disattiva",
+        "Last used": "Ultimo utilizzo",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Questa chiave viene mostrata una sola volta. Copiala ora: non potrà essere mostrata di nuovo.",
+        "No feed consumers yet.": "Nessun consumatore del feed per ora.",
+        "Accounts that read every catalogue's feed": "Account che leggono il feed di ogni catalogo",
+        "Review publications before they are published": "Revisiona le pubblicazioni prima che vengano pubblicate",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Se attivo, una bozza deve essere inviata e approvata prima di poter essere pubblicata. Se disattivo, un redattore può pubblicare una bozza direttamente.",
+        "Delete publication": "Elimina pubblicazione",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Vuole eliminare \"{name}\"? Questa azione non può essere annullata.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La pubblicazione e i suoi allegati scompaiono dalla pagina pubblica e dalla sitemap Woo. L’archiviazione invece li conserva per il periodo di conservazione."
     },
     "nplurals=2; plural=(n != 1);"
 )

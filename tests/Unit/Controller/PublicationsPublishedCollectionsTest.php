@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
  */
 
 declare(strict_types=1);
@@ -196,7 +196,7 @@ class PublicationsPublishedCollectionsTest extends TestCase {
 
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame(
-			['id' => self::UUID, '@self' => ['id' => self::UUID, 'register' => 1, 'schema' => 1], 'title' => 'Besluit geluid'],
+			['id' => self::UUID, '@self' => ['id' => self::UUID, 'register' => 1, 'schema' => 1], 'title' => 'Besluit geluid', 'relations' => []],
 			$response->getData()
 		);
 
@@ -226,7 +226,8 @@ class PublicationsPublishedCollectionsTest extends TestCase {
 		$response = $this->controller->show('woo', self::UUID);
 
 		$this->assertSame(200, $response->getStatus());
-		$this->assertSame($this->record, $response->getData());
+		// The detail answer also carries the relations a reader may see (REQ-PRS-002); none here.
+		$this->assertSame($this->record + ['relations' => []], $response->getData());
 
 	}//end testASignedInReadIsUnchanged()
 

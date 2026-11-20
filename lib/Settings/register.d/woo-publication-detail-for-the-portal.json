@@ -1,0 +1,183 @@
+{
+	"_note": "Register fragment for publication-detail-for-the-portal (REQ-PDP-001). The publication carries attachmentOrder, the file ids of its documents in the order an officer set; PublicationService::attachments() answers the public and federation attachment lists in that order. Named to merge after woo-information-categories-as-data.json, so its version wins. It also adds errorReport (REQ-PDP-005): a report a visitor posts on a publication of a catalogue that accepts them. Reports have no public read rule and are never published; the moderator groups the catalogue names get a notification, and only members of those groups (and admins) read and update them, and only admins change which publication, catalogue, moment and groups a report belongs to.",
+	"components": {
+		"schemas": {
+			"publication": {
+				"slug": "publication",
+				"version": "0.0.9",
+				"properties": {
+					"attachmentOrder": {
+						"type": "array",
+						"title": "Attachment order",
+						"description": "The file ids of the publication's documents in the order the portal shows them. Files not listed follow by upload time.",
+						"items": {
+							"type": "string"
+						},
+						"default": []
+					}
+				}
+			},
+			"errorReport": {
+				"slug": "errorReport",
+				"title": "Error report",
+				"version": "0.1.0",
+				"published": "2026-11-16T00:00:00+00:00",
+				"summary": "An error a visitor reported in a publication",
+				"description": "A visitor's report of an error in a publication. It is taken only for a catalogue that accepts error reports and names a moderator group. The report stores no IP address of the sender and is never published.",
+				"icon": "AlertCircleOutline",
+				"type": "object",
+				"required": [
+					"publication",
+					"message",
+					"status",
+					"createdAt"
+				],
+				"authorization": {
+					"read": [
+						"admin",
+						{
+							"group": "authenticated",
+							"match": {
+								"moderators": {
+									"$contains": "$user.groups"
+								}
+							}
+						}
+					],
+					"create": [
+						"admin"
+					],
+					"update": [
+						"admin",
+						{
+							"group": "authenticated",
+							"match": {
+								"moderators": {
+									"$contains": "$user.groups"
+								}
+							}
+						}
+					],
+					"delete": [
+						"admin"
+					]
+				},
+				"properties": {
+					"publication": {
+						"type": "string",
+						"title": "Publication",
+						"facetable": true,
+						"description": "The publication the report is about.",
+						"authorization": {
+							"update": [
+								"admin"
+							]
+						}
+					},
+					"catalog": {
+						"type": "string",
+						"title": "Catalogue",
+						"facetable": true,
+						"description": "The catalogue the publication was read through.",
+						"authorization": {
+							"update": [
+								"admin"
+							]
+						}
+					},
+					"message": {
+						"type": "string",
+						"title": "Message",
+						"maxLength": 2000,
+						"description": "What the visitor reported, at most 2,000 characters."
+					},
+					"contact": {
+						"type": "string",
+						"format": "email",
+						"title": "Contact",
+						"description": "An address to answer the visitor, when they gave one.",
+						"authorization": {
+							"read": [
+								"admin"
+							],
+							"reveal": "explicit"
+						}
+					},
+					"status": {
+						"type": "string",
+						"title": "Status",
+						"enum": [
+							"new",
+							"handled",
+							"dismissed"
+						],
+						"default": "new",
+						"facetable": true,
+						"description": "Where the moderators are with the report."
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Created at",
+						"description": "When the report came in.",
+						"authorization": {
+							"update": [
+								"admin"
+							]
+						}
+					},
+					"moderators": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"title": "Moderator groups",
+						"description": "The catalogue's moderator groups when the report came in. The notification goes to their members.",
+						"authorization": {
+							"update": [
+								"admin"
+							]
+						}
+					}
+				},
+				"x-openregister-notifications": {
+					"error-report-created": {
+						"trigger": {
+							"type": "created"
+						},
+						"enabled": true,
+						"channels": [
+							"nc-notification"
+						],
+						"recipients": [
+							{
+								"kind": "expression",
+								"resolver": "OCA\\OpenCatalogi\\Service\\ErrorReport\\ModeratorRecipients"
+							}
+						],
+						"subject": {
+							"nl": "Nieuwe foutmelding bij een publicatie",
+							"en": "New error report on a publication"
+						}
+					}
+				}
+			}
+		},
+		"registers": {
+			"publication": {
+				"schemas": [
+					"errorReport"
+				],
+				"configuration": {
+					"schemas": {
+						"errorReport": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "Never read by an anonymous reader; written only by the public error report route"
+						}
+					}
+				}
+			}
+		}
+	}
+}

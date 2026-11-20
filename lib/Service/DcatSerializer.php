@@ -317,6 +317,11 @@ class DcatSerializer implements DcatSerializerInterface {
 				return '<' . $value['@id'] . '>';
 			}
 
+			// Language-tagged literal.
+			if (isset($value['@value']) === true) {
+				return $this->turtleValue(value: (string)$value['@value']) . $this->languageSuffix(value: $value);
+			}
+
 			// Nested blank node (e.g. foaf:Agent / distribution).
 			if ($this->isAssoc(array: $value) === true) {
 				return $this->turtleBlankNode(node: $value);
@@ -341,6 +346,24 @@ class DcatSerializer implements DcatSerializerInterface {
 
 		return '"' . str_replace(['\\', '"', "\n"], ['\\\\', '\\"', '\\n'], (string)$value) . '"';
 	}//end turtleValue()
+
+	/**
+	 * The `@lang` suffix of a language-tagged literal, empty without a language.
+	 *
+	 * @param array<string, mixed> $value The literal node.
+	 *
+	 * @return string The suffix.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 */
+	private function languageSuffix(array $value): string {
+		$language = (string)($value['@language'] ?? '');
+		if (preg_match('/^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/', $language) !== 1) {
+			return '';
+		}
+
+		return '@' . $language;
+	}//end languageSuffix()
 
 	/**
 	 * Resolve a Turtle predicate for a JSON-LD key (`@type` → `a`).
@@ -420,8 +443,19 @@ class DcatSerializer implements DcatSerializerInterface {
 			return $out;
 		}
 
-		if (is_array($value) === true && isset($value['@id']) === true && count($value) === 1) {
-			return '    <' . $tag . ' rdf:resource="' . htmlspecialchars((string)$value['@id'], ENT_QUOTES) . '"/>' . "\n";
+		$single = $this->rdfXmlSingleTerm(tag: $tag, value: $value);
+		if ($single !== null) {
+			return $single;
+		}
+
+		// Language-tagged literal.
+		if (is_array($value) === true && isset($value['@value']) === true) {
+			$lang = '';
+			if (isset($value['@language']) === true) {
+				$lang = ' xml:lang="' . htmlspecialchars((string)$value['@language'], ENT_QUOTES) . '"';
+			}
+
+			return '    <' . $tag . $lang . '>' . htmlspecialchars((string)$value['@value'], ENT_QUOTES) . '</' . $tag . '>' . "\n";
 		}
 
 		// Nested blank node.
@@ -452,6 +486,50 @@ class DcatSerializer implements DcatSerializerInterface {
 
 		return $key;
 	}//end rdfXmlTag()
+
+	/**
+	 * A single-term value as one RDF/XML element: a language-tagged literal
+	 * with xml:lang, or an IRI reference as rdf:resource; null for anything else.
+	 *
+	 * @param string $tag The property tag (CURIE).
+	 * @param mixed $value The property value.
+	 *
+	 * @return string|null The element, or null.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function rdfXmlSingleTerm(string $tag, mixed $value): ?string {
+		if (is_array($value) === false) {
+			return null;
+		}
+
+		if (self::isLanguageLiteral(value: $value) === true) {
+			return '    <' . $tag . ' xml:lang="' . htmlspecialchars((string)$value['@language'], ENT_QUOTES) . '">'
+				. htmlspecialchars((string)$value['@value'], ENT_QUOTES) . '</' . $tag . '>' . "\n";
+		}
+
+		if (isset($value['@id']) === true && count($value) === 1) {
+			return '    <' . $tag . ' rdf:resource="' . htmlspecialchars((string)$value['@id'], ENT_QUOTES) . '"/>' . "\n";
+		}
+
+		return null;
+	}//end rdfXmlSingleTerm()
+
+	/**
+	 * Whether a value is a JSON-LD language-tagged literal: exactly `@value` and `@language`.
+	 *
+	 * @param array<mixed> $value The value.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private static function isLanguageLiteral(array $value): bool {
+		return count($value) === 2
+			&& isset($value['@value'], $value['@language']) === true
+			&& is_scalar($value['@value']) === true
+			&& preg_match('/^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})*$/', (string)$value['@language']) === 1;
+	}//end isLanguageLiteral()
 
 	/**
 	 * Determine whether an array is associative (string keys) vs. a list.

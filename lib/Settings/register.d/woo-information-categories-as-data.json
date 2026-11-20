@@ -85,7 +85,7 @@
 				}
 			},
 			"publication": {
-				"version": "0.0.7",
+				"version": "0.0.9",
 				"properties": {
 					"wooCategory": {
 						"type": "string",

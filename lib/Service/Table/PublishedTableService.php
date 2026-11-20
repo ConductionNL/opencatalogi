@@ -28,6 +28,7 @@ use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\TableFile;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Service\Import\ImportCommit;
+use OCP\IURLGenerator;
 use OCP\IUser;
 use Psr\Container\ContainerInterface;
 
@@ -79,6 +80,11 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	public const MAX_LIMIT = 1000;
 
 	/**
+	 * The longest column title or description an editor can store.
+	 */
+	public const MAX_TEXT = 2000;
+
+	/**
 	 * Query parameters that are not a filter on a column.
 	 *
 	 * @var array<int, string>
@@ -90,10 +96,12 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 *
 	 * @param OpenRegisterLookupInterface $registers The OpenRegister ObjectService and register configuration.
 	 * @param ContainerInterface $container Resolves OpenRegister's schema, register and import services.
+	 * @param IURLGenerator|null $urls The URL generator for the rows and dictionary URLs; null leaves them empty.
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookupInterface $registers,
 		private readonly ContainerInterface $container,
+		private readonly ?IURLGenerator $urls = null,
 	) {
 	}//end __construct()
 
@@ -116,15 +124,7 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-an-editor-publishes-a-csv-attachment-as-a-table-req-odt-001
 	 */
 	public function createFromFile(array $publication, TableFile $file, ?IUser $user = null): array {
-		$rows = $this->service(class: 'OCA\OpenRegister\Service\Import\SourceRowReader')->read($file->path, 'csv');
-		$sample = array_map(
-			static fn (array $row): array => (array)($row['data'] ?? []),
-			array_slice($rows, 0, ColumnTypes::SAMPLE_SIZE)
-		);
-		if ($sample === []) {
-			throw new InvalidArgumentException('The file "'.$file->name.'" holds no rows.');
-		}
-
+		$sample = $this->sampleOf(file: $file);
 		$register = $this->service(class: 'OCA\OpenRegister\Db\RegisterMapper')->find(self::ROWS_REGISTER);
 		$schema = $this->createRowSchema(register: $register, publication: $publication, file: $file, sample: $sample);
 
@@ -136,8 +136,30 @@ class PublishedTableService implements PublishedTableServiceInterface {
 			'rowCount' => 0,
 		];
 
-		return $this->lifecycle(table: $table, file: $file, user: $user, importedBy: null, schema: $schema);
+		return $this->lifecycle(table: $table, run: new TableImportRun(file: $file, user: $user, schema: $schema));
 	}//end createFromFile()
+
+	/**
+	 * The first rows of a CSV file, which the row schema's column types are read from.
+	 *
+	 * @param TableFile $file The CSV on disk and its identity.
+	 *
+	 * @return array<int, array<string, mixed>> The first rows.
+	 *
+	 * @throws InvalidArgumentException When the file has no rows.
+	 */
+	private function sampleOf(TableFile $file): array {
+		$rows = $this->service(class: 'OCA\OpenRegister\Service\Import\SourceRowReader')->read($file->path, 'csv');
+		$sample = array_map(
+			static fn (array $row): array => (array)($row['data'] ?? []),
+			array_slice($rows, 0, ColumnTypes::SAMPLE_SIZE)
+		);
+		if ($sample === []) {
+			throw new InvalidArgumentException('The file "'.$file->name.'" holds no rows.');
+		}
+
+		return $sample;
+	}//end sampleOf()
 
 	/**
 	 * Import a table's file into its row schema, from importing to ready or failed.
@@ -158,30 +180,26 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md
 	 */
 	public function importTable(array $table, TableFile $file, ?IUser $user = null, ?string $importedBy = null): array {
-		return $this->lifecycle(table: $table, file: $file, user: $user, importedBy: $importedBy, schema: null);
+		return $this->lifecycle(table: $table, run: new TableImportRun(file: $file, user: $user, importedBy: $importedBy));
 	}//end importTable()
 
 	/**
 	 * Store the table importing, import, and store it ready or failed.
 	 *
-	 * @param array<string, mixed> $table      The table record.
-	 * @param TableFile            $file       The CSV.
-	 * @param IUser|null           $user       The editor.
-	 * @param string|null          $importedBy Who started it, when not the editor.
-	 * @param object|null          $schema     The row schema when just created, else looked up from the table.
+	 * @param array<string, mixed> $table The table record.
+	 * @param TableImportRun       $run   The CSV, the editor, who started it when not the editor, and
+	 *                                    the row schema when just created (else looked up from the table).
 	 *
 	 * @return array<string, mixed> The stored table record.
 	 */
-	private function lifecycle(array $table, TableFile $file, ?IUser $user, ?string $importedBy, ?object $schema): array {
+	private function lifecycle(array $table, TableImportRun $run): array {
 		$table['status'] = self::STATUS_IMPORTING;
-		$table['importedBy'] = ($importedBy ?? ($user?->getUID() ?? (string)($table['importedBy'] ?? '')));
+		$table['importedBy'] = ($run->importedBy ?? ($run->user?->getUID() ?? (string)($table['importedBy'] ?? '')));
 		unset($table['lastError']);
 		$stored = (array)self::plain(value: $this->tables()->save(object: $table));
 
 		try {
-			$register = $this->service(class: 'OCA\OpenRegister\Db\RegisterMapper')->find(self::ROWS_REGISTER);
-			$schema ??= $this->service(class: 'OCA\OpenRegister\Db\SchemaMapper')->find((string)$table['schema']);
-			$outcome = $this->import(register: $register, schema: $schema, file: $file, user: $user);
+			$outcome = $this->import(table: $table, run: $run);
 		} catch (\Throwable $e) {
 			$outcome = ['status' => self::STATUS_FAILED, 'lastError' => self::errorText(message: $e->getMessage())];
 		}
@@ -240,16 +258,18 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	/**
 	 * Preview the import of the whole file and commit it when no row is refused.
 	 *
-	 * @param mixed $register The rows register.
-	 * @param mixed $schema The table's schema.
-	 * @param TableFile $file The CSV.
-	 * @param IUser|null $user The editor.
+	 * @param array<string, mixed> $table The table record; its schema is read when the run has none.
+	 * @param TableImportRun       $run   The CSV, the editor and the row schema when just created.
 	 *
 	 * @return array<string, mixed> The status fields of the table record.
 	 *
 	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-an-editor-publishes-a-csv-attachment-as-a-table-req-odt-001
 	 */
-	private function import(mixed $register, mixed $schema, TableFile $file, ?IUser $user): array {
+	private function import(array $table, TableImportRun $run): array {
+		$register = $this->service(class: 'OCA\OpenRegister\Db\RegisterMapper')->find(self::ROWS_REGISTER);
+		$schema = ($run->schema ?? $this->service(class: 'OCA\OpenRegister\Db\SchemaMapper')->find((string)$table['schema']));
+		$file = $run->file;
+		$user = $run->user;
 		$importer = $this->service(class: 'OCA\OpenRegister\Service\Import\ImportPreviewServiceInterface');
 		$preview = $importer->preview(
 			[
@@ -427,6 +447,260 @@ class PublishedTableService implements PublishedTableServiceInterface {
 			'pages' => (int)($found['pages'] ?? 1),
 		];
 	}//end rows()
+
+	/**
+	 * Publish a CSV attachment of a publication as a table (REQ-ODT-001).
+	 *
+	 * The caller has checked that the user may update the publication. The file
+	 * is read from the publication's own attachments, copied to a temporary file
+	 * OpenRegister's reader can open, and imported through createFromFile().
+	 *
+	 * @param object     $publication The publication as OpenRegister returned it.
+	 * @param string     $fileId      The attachment's file id.
+	 * @param IUser|null $user        The editor.
+	 *
+	 * @return array<string, mixed> The stored table record.
+	 *
+	 * @throws InvalidArgumentException When the publication has no such attachment, or it is not a CSV.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-an-editor-publishes-a-csv-attachment-as-a-table-req-odt-001
+	 */
+	public function publishAttachment(object $publication, string $fileId, ?IUser $user = null): array {
+		$file = $this->attachmentFile(publication: $publication, fileId: $fileId);
+		$record = self::plain(value: $publication);
+
+		return $this->createFromFile(
+			publication: is_array($record) === true ? $record : ['id' => (string)$publication->getUuid()],
+			file: $file,
+			user: $user
+		);
+	}//end publishAttachment()
+
+	/**
+	 * A CSV attachment of the publication, copied to a temporary file OpenRegister's reader can open.
+	 *
+	 * @param object $publication The publication as OpenRegister returned it.
+	 * @param string $fileId      The attachment's file id.
+	 *
+	 * @return TableFile The copy on disk and the attachment's identity.
+	 *
+	 * @throws InvalidArgumentException When the publication has no such attachment, or it is not a CSV.
+	 */
+	private function attachmentFile(object $publication, string $fileId): TableFile {
+		$file = $this->service(class: 'OCA\OpenRegister\Service\FileService')->getFile(object: $publication, file: (int)$fileId);
+		if ($file === null) {
+			throw new InvalidArgumentException('The publication has no attachment '.$fileId.'.');
+		}
+
+		$name = (string)$file->getName();
+		if (strtolower(pathinfo($name, PATHINFO_EXTENSION)) !== 'csv') {
+			throw new InvalidArgumentException('Only a CSV attachment can be published as a table; "'.$name.'" is not one.');
+		}
+
+		$path = (string)$this->service(class: 'OCP\ITempManager')->getTemporaryFile('.csv');
+		file_put_contents($path, (string)$file->getContent());
+
+		return new TableFile(path: $path, id: (string)$file->getId(), name: $name);
+	}//end attachmentFile()
+
+	/**
+	 * Every table of a publication, whatever its status, for its editors.
+	 *
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<int, array<string, mixed>> The table records, each with its `dictionary` when it is ready.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	public function tablesFor(string $publicationId): array {
+		if ($publicationId === '') {
+			return [];
+		}
+
+		$found = $this->tables()->search(filters: ['publication' => $publicationId, '_limit' => 100]);
+		$tables = [];
+		foreach ((array)(self::plain(value: $found)['results'] ?? []) as $record) {
+			$table = self::plain(value: $record);
+			if (is_array($table) === false) {
+				continue;
+			}
+
+			if (($table['status'] ?? null) === self::STATUS_READY) {
+				$table['dictionary'] = $this->dictionary(table: $table);
+			}
+
+			$tables[] = $table;
+		}
+
+		return $tables;
+	}//end tablesFor()
+
+	/**
+	 * Write the titles and descriptions an editor gave a table's columns (REQ-ODT-003).
+	 *
+	 * Only columns the table declares are written, and only their title and
+	 * description; the names and types stay as the import made them.
+	 *
+	 * @param array<string, mixed>            $table   The table record.
+	 * @param array<int, array<string,mixed>> $columns Each `{name, title?, description?}`.
+	 *
+	 * @return array<int, array<string, string>> The dictionary after the change.
+	 *
+	 * @throws InvalidArgumentException When a column is not one the table declares.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	public function updateDictionary(array $table, array $columns): array {
+		$mapper = $this->service(class: 'OCA\OpenRegister\Db\SchemaMapper');
+		$schema = $mapper->find((string)($table['schema'] ?? ''));
+		$properties = (array)$schema->getProperties();
+		foreach ($columns as $column) {
+			$name = (string)(is_array($column) === true ? ($column['name'] ?? '') : '');
+			if (is_array($properties[$name] ?? null) === false) {
+				throw new InvalidArgumentException('This table has no column named '.$name.'.');
+			}
+
+			$properties[$name] = array_merge($properties[$name], self::describedColumn(column: $column));
+		}
+
+		$schema->setProperties($properties);
+		$mapper->update($schema);
+
+		return $this->dictionary(table: $table);
+	}//end updateDictionary()
+
+	/**
+	 * The title and description an editor gave one column, trimmed and capped; an empty title is left out.
+	 *
+	 * @param array<string, mixed> $column The column as the editor sent it.
+	 *
+	 * @return array<string, string> The `title` and `description` it carries.
+	 */
+	private static function describedColumn(array $column): array {
+		$described = [];
+		foreach (['title', 'description'] as $field) {
+			$text = is_string($column[$field] ?? null) === true ? mb_substr(trim($column[$field]), 0, self::MAX_TEXT) : null;
+			// A column always keeps a title; an empty one leaves the current title.
+			if ($text !== null && ($text !== '' || $field === 'description')) {
+				$described[$field] = $text;
+			}
+		}
+
+		return $described;
+	}//end describedColumn()
+
+	/**
+	 * The ready tables of a publication, each with its rows and dictionary URLs.
+	 *
+	 * @param string $publicationId The publication.
+	 * @param string $catalogSlug   The catalogue the URLs are under.
+	 *
+	 * @return array<int, array<string, mixed>> The tables: id, title, file, rowCount, rowsUrl, dictionaryUrl.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	public function tablesOf(string $publicationId, string $catalogSlug): array {
+		if ($publicationId === '') {
+			return [];
+		}
+
+		$found = $this->tables()->search(filters: ['publication' => $publicationId, 'status' => self::STATUS_READY, '_limit' => 100]);
+		$tables = [];
+		foreach ((array)(self::plain(value: $found)['results'] ?? []) as $record) {
+			$table = self::plain(value: $record);
+			if (is_array($table) === true && ($table['status'] ?? null) === self::STATUS_READY) {
+				$tables[] = $this->tableEntry(table: $table, where: ['catalogSlug' => $catalogSlug, 'publicationId' => $publicationId]);
+			}
+		}
+
+		return $tables;
+	}//end tablesOf()
+
+	/**
+	 * Give each file published as a table its `dataDictionaryUrl`, for the DCAT distribution.
+	 *
+	 * @param array<int, array<string, mixed>> $files         formatFiles-shape file entries.
+	 * @param string                           $publicationId The publication the files belong to.
+	 * @param string                           $catalogSlug   The catalogue the URLs are under.
+	 *
+	 * @return array<int, array<string, mixed>> The files, a table's file with its dictionary URL.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	public function withDictionaryUrls(array $files, string $publicationId, string $catalogSlug): array {
+		$urls = [];
+		foreach ($this->tablesOf(publicationId: $publicationId, catalogSlug: $catalogSlug) as $table) {
+			$urls[$table['file']] ??= $table['dictionaryUrl'];
+		}
+
+		return self::withUrls(files: $files, urls: $urls);
+	}//end withDictionaryUrls()
+
+	/**
+	 * The files, each one whose id has a dictionary URL with its `dataDictionaryUrl`.
+	 *
+	 * @param array<int, mixed>     $files The file entries.
+	 * @param array<string, string> $urls  Dictionary URL by file id.
+	 *
+	 * @return array<int, mixed> The files; unchanged without URLs.
+	 */
+	private static function withUrls(array $files, array $urls): array {
+		if ($urls === []) {
+			return $files;
+		}
+
+		return array_map(
+			static function (mixed $file) use ($urls): mixed {
+				if (is_array($file) === false || ($urls[(string)($file['id'] ?? '')] ?? '') === '') {
+					return $file;
+				}
+
+				return array_merge($file, ['dataDictionaryUrl' => $urls[(string)$file['id']]]);
+			},
+			$files
+		);
+	}//end withUrls()
+
+	/**
+	 * One table as the public publication answer lists it.
+	 *
+	 * @param array<string, mixed>                              $table The table record.
+	 * @param array{catalogSlug: string, publicationId: string} $where The catalogue and the publication.
+	 *
+	 * @return array<string, mixed> The entry.
+	 */
+	private function tableEntry(array $table, array $where): array {
+		$id = (string)($table['id'] ?? $table['@self']['id'] ?? '');
+		$where['tableId'] = $id;
+
+		return [
+			'id' => $id,
+			'title' => (string)($table['title'] ?? ''),
+			'file' => (string)($table['file'] ?? ''),
+			'rowCount' => (int)($table['rowCount'] ?? 0),
+			'rowsUrl' => $this->tableUrl(route: 'rows', parameters: $where),
+			'dictionaryUrl' => $this->tableUrl(route: 'dictionary', parameters: $where),
+		];
+	}//end tableEntry()
+
+	/**
+	 * The absolute URL of a table's public rows or dictionary endpoint.
+	 *
+	 * @param string                                                             $route      `rows` or `dictionary`.
+	 * @param array{catalogSlug: string, publicationId: string, tableId: string} $parameters The route's parameters.
+	 *
+	 * @return string The URL; empty without a URL generator.
+	 */
+	private function tableUrl(string $route, array $parameters): string {
+		if ($this->urls === null) {
+			return '';
+		}
+
+		return $this->urls->linkToRouteAbsolute(
+			'opencatalogi.publishedTable.'.$route,
+			$parameters
+		);
+	}//end tableUrl()
 
 	/**
 	 * An OpenRegister entity as its array, anything else as it is.

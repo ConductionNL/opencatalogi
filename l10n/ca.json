@@ -723,7 +723,26 @@
         "Open catalog": "Obre el catàleg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creeu el vostre primer catàleg. És el contenidor on viuran les vostres publicacions. Trieu el registre Publication i l'esquema Publication perquè el catàleg mostri les publicacions que afegiu.",
         "Manage your publications and their status": "Gestioneu les vostres publicacions i el seu estat",
-        "Open at the source": "Obre a l'origen"
+        "Open at the source": "Obre a l'origen",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: versió d'OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister inclou el motor que necessita OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi requereix OpenRegister %1$s o posterior. A l'OpenRegister instal·lat li falta %2$s, de manera que OpenCatalogi mostra un avís en lloc de les seves pàgines. Actualitzeu OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi no es pot iniciar",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requereix OpenRegister %1$s o posterior. Demaneu a l'administrador que actualitzi OpenRegister.",
+        "Feed consumers": "Consumidors del canal",
+        "Contact": "Contacte",
+        "Generate key": "Genera una clau",
+        "Revoke": "Revoca",
+        "Disable": "Desactiva",
+        "Last used": "Darrer ús",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Aquesta clau només es mostra una vegada. Copieu-la ara: no es podrà tornar a mostrar.",
+        "No feed consumers yet.": "Encara no hi ha consumidors del canal.",
+        "Accounts that read every catalogue's feed": "Comptes que llegeixen el canal de cada catàleg",
+        "Review publications before they are published": "Revisa les publicacions abans de publicar-les",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Quan està activat, cal enviar i aprovar un esborrany abans de poder-lo publicar. Quan està desactivat, un editor pot publicar un esborrany directament.",
+        "Delete publication": "Elimina la publicació",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Voleu eliminar \"{name}\"? Aquesta acció no es pot desfer.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicació i els seus adjunts desapareixen de la pàgina pública i del mapa del lloc Woo. En canvi, arxivar-la els conserva durant el termini de conservació."
     },
     "plurals": {}
 }

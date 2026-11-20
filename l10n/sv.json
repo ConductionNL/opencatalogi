@@ -723,7 +723,26 @@
         "Open catalog": "Öppna katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Skapa din första katalog. Den är behållaren som dina publikationer ska ligga i. Välj registret Publication och schemat Publication, så att katalogen visar publikationerna du lägger till.",
         "Manage your publications and their status": "Hantera dina publikationer och deras status",
-        "Open at the source": "Öppna vid källan"
+        "Open at the source": "Öppna vid källan",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegister-version",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister innehåller motorn som OpenCatalogi behöver.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi kräver OpenRegister %1$s eller senare. Den installerade OpenRegister saknar %2$s, så OpenCatalogi visar ett meddelande i stället för sina sidor. Uppdatera OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi kan inte starta",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi kräver OpenRegister %1$s eller senare. Be din administratör att uppdatera OpenRegister.",
+        "Feed consumers": "Flödesmottagare",
+        "Contact": "Kontakt",
+        "Generate key": "Skapa nyckel",
+        "Revoke": "Återkalla",
+        "Disable": "Inaktivera",
+        "Last used": "Senast använd",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Den här nyckeln visas bara en gång. Kopiera den nu: den kan inte visas igen.",
+        "No feed consumers yet.": "Inga flödesmottagare ännu.",
+        "Accounts that read every catalogue's feed": "Konton som läser flödet för varje katalog",
+        "Review publications before they are published": "Granska publikationer innan de publiceras",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "När detta är på måste ett utkast skickas in och godkännas innan det kan publiceras. När detta är av kan en redaktör publicera ett utkast direkt.",
+        "Delete publication": "Radera publikation",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Vill du radera \"{name}\"? Den här åtgärden kan inte ångras.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikationen och dess bilagor försvinner från den offentliga sidan och från Woo-webbplatskartan. Arkivering bevarar dem i stället under bevarandetiden."
     },
     "plurals": {}
 }

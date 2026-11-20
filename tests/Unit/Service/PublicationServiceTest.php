@@ -987,7 +987,63 @@ class PublicationServiceTest extends TestCase {
 		$response = $this->service->getFederatedAttachments('pub-1');
 
 		$this->assertSame(200, $response->getStatus());
-		$this->assertSame(['results' => [['name' => 'local.pdf']], 'total' => 1], $response->getData());
+		// Each attachment carries its position (REQ-PDP-001).
+		$this->assertSame(['results' => [['name' => 'local.pdf', 'position' => 1]], 'total' => 1], $response->getData());
+	}
+
+	/**
+	 * The public and the federation attachment lists answer in the officer's order, with positions.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
+	 */
+	public function testAttachmentsFollowTheStoredOrderOnBothRoutes(): void {
+		$this->mockConfiguredCatalogScope();
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
+		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+		$objectService->method('searchObjects')->willReturn([$this->createSerializableObject(['registers' => [1], 'schemas' => [1]])]);
+		$this->container->method('get')
+			->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
+				return match ($class) {
+					'OCA\OpenRegister\Service\ObjectService' => $objectService,
+					'OCA\OpenRegister\Service\FileService' => $fileService,
+					\OCA\OpenCatalogi\Service\PublicationQueryService::class => $queryService,
+					default => null,
+				};
+			});
+		$objectService->method('find')->willReturn(
+			$this->createSerializableObject(['id' => 'pub-1', 'attachmentOrder' => ['12', '13', '11']])
+		);
+
+		$files = [];
+		foreach ([[11, 'Bijlage 2', 100], [12, 'Besluit', 200], [13, 'Bijlage 1', 300]] as [$id, $name, $uploaded]) {
+			$file = $this->createMock(\OCP\Files\File::class);
+			$file->method('getId')->willReturn($id);
+			$file->method('getName')->willReturn($name);
+			$file->method('getUploadTime')->willReturn($uploaded);
+			$files[] = $file;
+		}
+		$fileService->method('getFiles')->willReturn($files);
+		// The formatter keeps the order it is given, as OpenRegister's does, and pages from offset 0.
+		$fileService->method('formatFiles')->willReturnCallback(
+			static fn (array $nodes): array => [
+				'results' => array_map(static fn ($node): array => ['title' => $node->getName()], $nodes),
+				'total' => count($nodes),
+				'offset' => 0,
+			]
+		);
+		$this->request->method('getParams')->willReturn([]);
+
+		foreach ([$this->service->attachments('pub-1'), $this->service->getFederatedAttachments('pub-1')] as $response) {
+			$this->assertSame(200, $response->getStatus());
+			$results = $response->getData()['results'];
+			$this->assertSame(['Besluit', 'Bijlage 1', 'Bijlage 2'], array_column($results, 'title'));
+			$this->assertSame([1, 2, 3], array_column($results, 'position'));
+		}
 	}
 
 	/**
@@ -2163,6 +2219,28 @@ class PublicationServiceTest extends TestCase {
 		$this->assertArrayNotHasKey('retention', $self);
 		$this->assertArrayNotHasKey('size', $self);
 		$this->assertArrayNotHasKey('deleted', $self);
+	}
+
+	/**
+	 * REQ-PRS-003: the federation and catalogue reads keep only public source identifiers.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testFilterUnwantedPropertiesKeepsOnlyPublicSourceIdentifiers(): void {
+		$method = new \ReflectionMethod(PublicationService::class, 'filterUnwantedProperties');
+		$method->setAccessible(true);
+
+		$obj = $this->createSerializableObject([
+			'@self' => ['id' => 'pub-1'],
+			'sourceIdentifiers' => [
+				['system' => 'case', 'identifier' => 'c-1', 'public' => false],
+				['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true],
+			],
+		]);
+
+		$result = $method->invoke($this->service, [$obj]);
+
+		$this->assertSame([['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true]], $result[0]['sourceIdentifiers']);
 	}
 
 	public function testFilterUnwantedPropertiesFiltersFilesWithoutPublished(): void {
@@ -4157,11 +4235,11 @@ class PublicationServiceTest extends TestCase {
 				return $fileService;
 			});
 
-		// Create a real ZIP fixture so the metadata PDF can be piped into it (DWN-OR-001).
+		// A real ZIP in OpenRegister's shape, files at the root, so the metadata PDF can be piped into it (DWN-OR-001).
 		$tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
 		$fixture = new \ZipArchive();
 		$fixture->open($tmpFile, \ZipArchive::OVERWRITE);
-		$fixture->addFromString('Bijlagen/attachment1.txt', 'attachment content');
+		$fixture->addFromString('attachment1.txt', 'attachment content');
 		$fixture->close();
 
 		$sharedNode = $this->createMock(\OCP\Files\File::class);
@@ -4262,9 +4340,9 @@ class PublicationServiceTest extends TestCase {
 	public function testDownloadGivesAnAnonymousCallerOnlySharedFiles(): void {
 		$entries = $this->downloadEntriesFor($this->service, ['shared.pdf']);
 
-		$this->assertContains('shared.pdf', $entries);
+		$this->assertContains('Bijlagen/shared.pdf', $entries);
 		$this->assertContains('pub-1.pdf', $entries, 'The metadata PDF must stay in the download ZIP.');
-		$this->assertNotContains('unshared.pdf', $entries, 'An anonymous caller must not receive unshared files.');
+		$this->assertNotContains('Bijlagen/unshared.pdf', $entries, 'An anonymous caller must not receive unshared files.');
 	}
 
 	public function testDownloadGivesASignedInCallerEveryReadableFile(): void {
@@ -4273,8 +4351,8 @@ class PublicationServiceTest extends TestCase {
 
 		$entries = $this->downloadEntriesFor($this->serviceWithSession($session), ['shared.pdf']);
 
-		$this->assertContains('shared.pdf', $entries);
-		$this->assertContains('unshared.pdf', $entries);
+		$this->assertContains('Bijlagen/shared.pdf', $entries);
+		$this->assertContains('Bijlagen/unshared.pdf', $entries);
 		$this->assertContains('pub-1.pdf', $entries);
 	}
 

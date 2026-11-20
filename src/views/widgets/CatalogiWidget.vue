@@ -1,7 +1,5 @@
-<!--
-  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
-  - SPDX-License-Identifier: EUPL-1.2
--->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl> -->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 import { objectStore } from '../../store/store.js'
@@ -17,20 +15,19 @@ import { objectStore } from '../../store/store.js'
 		rowIcon="DatabaseOutline"
 		@rowClick="onRowClick">
 		<template #empty>
-			<NcEmptyContent :title="t('opencatalogi', 'No catalogs found')">
+			<CnWidgetEmptyState :name="t('opencatalogi', 'No catalogs found')">
 				<template #icon>
-					<FolderIcon />
+					<FolderIcon :size="24" />
 				</template>
-			</NcEmptyContent>
+			</CnWidgetEmptyState>
 		</template>
 	</CnDataTable>
 </template>
 
 <script>
 // Components
-import { CnDataTable, registerIcons } from '@conduction/nextcloud-vue'
+import { CnDataTable, CnWidgetEmptyState, registerIcons } from '@conduction/nextcloud-vue'
 import { generateUrl } from '@nextcloud/router'
-import { NcEmptyContent } from '@nextcloud/vue'
 import DatabaseOutline from 'vue-material-design-icons/DatabaseOutline.vue'
 // Icons
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
@@ -53,7 +50,7 @@ export default {
 	name: 'CatalogiWidget',
 	components: {
 		CnDataTable,
-		NcEmptyContent,
+		CnWidgetEmptyState,
 	},
 
 	...LIST_WIDGET_OPTIONS,

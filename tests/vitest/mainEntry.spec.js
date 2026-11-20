@@ -63,8 +63,11 @@ vi.mock('../../src/App.vue', () => ({ default: { name: 'App' } }))
 vi.mock('../../src/registry.js', () => ({ default: { FederationDirectory: { name: 'FederationDirectory' } } }))
 vi.mock('../../src/views/settings/Settings.vue', () => ({ default: { name: 'AdminSettings' } }))
 vi.mock('../../src/components/widgets/AuditTrailWidget.vue', () => ({ default: { name: 'AuditTrailWidget' } }))
+vi.mock('../../src/components/widgets/MetadataSuggestionsWidget.vue', () => ({ default: { name: 'MetadataSuggestionsWidget' } }))
 vi.mock('../../src/components/widgets/NationalAnnounceWidget.vue', () => ({ default: { name: 'NationalAnnounceWidget' } }))
+vi.mock('../../src/components/widgets/PlainSummaryDraftWidget.vue', () => ({ default: { name: 'PlainSummaryDraftWidget' } }))
 vi.mock('../../src/components/widgets/PublicationAttachmentsWidget.vue', () => ({ default: { name: 'PublicationAttachmentsWidget' } }))
+vi.mock('../../src/components/widgets/PublicationLanguagesWidget.vue', () => ({ default: { name: 'PublicationLanguagesWidget' } }))
 vi.mock('../../src/components/widgets/PublicationVisibilityWidget.vue', () => ({ default: { name: 'PublicationVisibilityWidget' } }))
 vi.mock('../../src/components/widgets/ThemePreviewWidget.vue', () => ({ default: { name: 'ThemePreviewWidget' } }))
 
@@ -116,7 +119,7 @@ afterEach(() => {
 })
 
 describe('src/main.js', () => {
-	it('registers the eight detail-page widgets after the built-in ones', async () => {
+	it('registers the eleven detail-page widgets after the built-in ones', async () => {
 		await runMain()
 
 		expect(lib.registerBuiltinDashboardWidgets).toHaveBeenCalledOnce()
@@ -125,6 +128,9 @@ describe('src/main.js', () => {
 			'audit-trail',
 			'national-announce',
 			'publication-visibility',
+			'metadata-suggestions',
+			'publication-languages',
+			'plain-summary-draft',
 			'publication-attachments',
 			'theme-preview',
 			'tree-view',
@@ -136,8 +142,11 @@ describe('src/main.js', () => {
 			expect(options.form).toBe(null)
 		}
 		expect(calls[0][1].renderer).toEqual({ name: 'AuditTrailWidget' })
-		expect(calls[3][1].defaultContent).toEqual({ maxDisplay: 100 })
-		expect(calls[5][1].renderer).toBe(lib.CnTreeView)
+		expect(calls[3][1].renderer).toEqual({ name: 'MetadataSuggestionsWidget' })
+		expect(calls[4][1].renderer).toEqual({ name: 'PublicationLanguagesWidget' })
+		expect(calls[5][1].renderer).toEqual({ name: 'PlainSummaryDraftWidget' })
+		expect(calls[6][1].defaultContent).toEqual({ maxDisplay: 100 })
+		expect(calls[8][1].renderer).toBe(lib.CnTreeView)
 		expect(lib.registerBuiltinDashboardWidgets.mock.invocationCallOrder[0]).toBeLessThan(lib.registerDashboardWidget.mock.invocationCallOrder[0])
 	})
 
