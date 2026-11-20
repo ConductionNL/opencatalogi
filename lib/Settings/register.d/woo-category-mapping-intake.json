@@ -1,0 +1,199 @@
+{
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"wooCategoryMapping"
+				],
+				"configuration": {
+					"schemas": {
+						"wooCategoryMapping": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "Per-type default Woo informatiecategorie keyed by (app, objectType). Read through an OpenRegister object query by any publishing app, and by SitemapService for opencatalogi's own publications"
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"wooCategoryMapping": {
+				"slug": "wooCategoryMapping",
+				"title": "Woo category mapping",
+				"version": "0.1.0",
+				"published": "2026-11-14T00:00:00+00:00",
+				"summary": "The default Woo information category for one kind of object of one app",
+				"description": "A per-type default for the Woo informatiecategorie, keyed by the owning app and its object type. It applies only to an object that declares no category of its own; an object's own category always wins. The value is the resolved TOOI URI and label, so any app can read the row through OpenRegister without calling OpenCatalogi code. Mappings have no lifecycle. OpenRegister has no cross-object unique constraint, so the (app, objectType) pair is kept unique by review and by the tests on the seed data. See openspec/changes/woo-category-mapping-intake.",
+				"icon": "TagArrowRight",
+				"authorization": {
+					"read": [
+						"authenticated"
+					],
+					"create": [
+						"admin"
+					],
+					"update": [
+						"admin"
+					],
+					"delete": [
+						"admin"
+					]
+				},
+				"required": [
+					"app",
+					"objectType",
+					"informatiecategorie",
+					"informatiecategorieLabel",
+					"active"
+				],
+				"properties": {
+					"app": {
+						"type": "string",
+						"title": "App",
+						"description": "The app that owns the object type, for example opencatalogi or decidesk.",
+						"maxLength": 64,
+						"facetable": true
+					},
+					"objectType": {
+						"type": "string",
+						"title": "Object type",
+						"description": "The owning app's schema slug or payload kind the default applies to.",
+						"maxLength": 128,
+						"facetable": true
+					},
+					"informatiecategorie": {
+						"type": "string",
+						"title": "Information category",
+						"description": "The TOOI URI of the informatiecategorie, a member of the official waardelijst.",
+						"pattern": "^https://identifier\\.overheid\\.nl/tooi/def/thes/kern/c_[0-9a-f]{8}$"
+					},
+					"informatiecategorieLabel": {
+						"type": "string",
+						"title": "Information category label",
+						"description": "The canonical label of that informatiecategorie, shown beside the URI for review.",
+						"maxLength": 255
+					},
+					"active": {
+						"type": "boolean",
+						"title": "Active",
+						"description": "Whether the default applies. An inactive row is kept but never used.",
+						"default": true,
+						"facetable": true
+					},
+					"notes": {
+						"type": "string",
+						"title": "Notes",
+						"description": "Why this default was chosen, and where it came from.",
+						"maxLength": 2000
+					}
+				}
+			}
+		},
+		"objects": [
+			{
+				"@self": {
+					"register": "publication",
+					"schema": "wooCategoryMapping",
+					"slug": "woo-map-decidesk-meeting-agenda"
+				},
+				"app": "decidesk",
+				"objectType": "meeting-agenda",
+				"informatiecategorie": "https://identifier.overheid.nl/tooi/def/thes/kern/c_db4862c3",
+				"informatiecategorieLabel": "Vergaderstukken decentrale overheden",
+				"active": true,
+				"notes": "Meeting agenda payload. Migrated from decidesk woo-map-meeting-agenda; placeholder resolved to infocat008."
+			},
+			{
+				"@self": {
+					"register": "publication",
+					"schema": "wooCategoryMapping",
+					"slug": "woo-map-decidesk-decision-list"
+				},
+				"app": "decidesk",
+				"objectType": "decision-list",
+				"informatiecategorie": "https://identifier.overheid.nl/tooi/def/thes/kern/c_db4862c3",
+				"informatiecategorieLabel": "Vergaderstukken decentrale overheden",
+				"active": true,
+				"notes": "Generated decision-list document. Migrated from decidesk woo-map-besluitenlijst; placeholder resolved to infocat008."
+			},
+			{
+				"@self": {
+					"register": "publication",
+					"schema": "wooCategoryMapping",
+					"slug": "woo-map-decidesk-minutes"
+				},
+				"app": "decidesk",
+				"objectType": "minutes",
+				"informatiecategorie": "https://identifier.overheid.nl/tooi/def/thes/kern/c_db4862c3",
+				"informatiecategorieLabel": "Vergaderstukken decentrale overheden",
+				"active": true,
+				"notes": "ORI Verslag. Migrated from decidesk woo-map-minutes; placeholder resolved to infocat008."
+			},
+			{
+				"@self": {
+					"register": "publication",
+					"schema": "wooCategoryMapping",
+					"slug": "woo-map-decidesk-decision"
+				},
+				"app": "decidesk",
+				"objectType": "decision",
+				"informatiecategorie": "https://identifier.overheid.nl/tooi/def/thes/kern/c_db4862c3",
+				"informatiecategorieLabel": "Vergaderstukken decentrale overheden",
+				"active": true,
+				"notes": "ORI Besluit. Migrated from decidesk woo-map-decision; placeholder resolved to infocat008."
+			},
+			{
+				"@self": {
+					"register": "publication",
+					"schema": "wooCategoryMapping",
+					"slug": "woo-map-decidesk-motion"
+				},
+				"app": "decidesk",
+				"objectType": "motion",
+				"informatiecategorie": "https://identifier.overheid.nl/tooi/def/thes/kern/c_db4862c3",
+				"informatiecategorieLabel": "Vergaderstukken decentrale overheden",
+				"active": true,
+				"notes": "Inert until decidesk's Motie schema lands (WOO-CAT-004). Migrated from decidesk woo-map-motie; placeholder resolved to infocat008."
+			},
+			{
+				"@self": {
+					"register": "publication",
+					"schema": "wooCategoryMapping",
+					"slug": "woo-map-decidesk-commitment"
+				},
+				"app": "decidesk",
+				"objectType": "commitment",
+				"informatiecategorie": "https://identifier.overheid.nl/tooi/def/thes/kern/c_db4862c3",
+				"informatiecategorieLabel": "Vergaderstukken decentrale overheden",
+				"active": true,
+				"notes": "Predicate-published. Migrated from decidesk woo-map-toezegging; placeholder resolved to infocat008."
+			},
+			{
+				"@self": {
+					"register": "publication",
+					"schema": "wooCategoryMapping",
+					"slug": "woo-map-decidesk-council-information-letter"
+				},
+				"app": "decidesk",
+				"objectType": "council-information-letter",
+				"informatiecategorie": "https://identifier.overheid.nl/tooi/def/thes/kern/c_db4862c3",
+				"informatiecategorieLabel": "Vergaderstukken decentrale overheden",
+				"active": true,
+				"notes": "Predicate-published. Migrated from decidesk woo-map-raadsinformatiebrief; placeholder resolved to infocat008."
+			},
+			{
+				"@self": {
+					"register": "publication",
+					"schema": "wooCategoryMapping",
+					"slug": "woo-map-decidesk-arrangement"
+				},
+				"app": "decidesk",
+				"objectType": "arrangement",
+				"informatiecategorie": "https://identifier.overheid.nl/tooi/def/thes/kern/c_139c6280",
+				"informatiecategorieLabel": "Wetten en algemeen verbindende voorschriften",
+				"active": true,
+				"notes": "Inert until decidesk's Regeling schema lands (WOO-CAT-004). Migrated from decidesk woo-map-regeling; placeholder resolved to infocat001."
+			}
+		]
+	}
+}
