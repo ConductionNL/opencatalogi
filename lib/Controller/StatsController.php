@@ -47,6 +47,7 @@ use Psr\Log\LoggerInterface;
  * Controller exposing authenticated publication usage statistics.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) One endpoint per statistic, each a short guarded read.
  *
  * @spec openspec/specs/publication-quality/spec.md
  */
@@ -66,6 +67,8 @@ class StatsController extends Controller {
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param MostViewedPublications|null $mostViewed The most viewed readable publications (ANA-005).
 	 * @param PublicationQuality|null $publicationQuality One publication's metadata-quality score (PQM-001).
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) The last two are optional collaborators the container fills.
 	 */
 	public function __construct(
 		$appName,
