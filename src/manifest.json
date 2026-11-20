@@ -449,6 +449,10 @@
 					"showViewToggle": true,
 					"selectable": false
 				},
+				"createOverride": "createWooBatch",
+				"includeFields": [
+					"caseReference"
+				],
 				"rowRoute": "WooBatchDetail",
 				"documentationUrl": "https://opencatalogi.conduction.nl"
 			},

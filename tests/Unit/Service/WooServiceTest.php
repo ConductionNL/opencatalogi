@@ -68,6 +68,25 @@ class WooFakeObjectService {
 	/** @var array<int, array{register: mixed, schema: mixed}> */
 	public array $saveTargets = [];
 
+	/** @var array<int, array<string, mixed>> */
+	public array $searches = [];
+
+	/** @var array<string, mixed> Object id => the schema it was saved under. */
+	public array $schemaOf = [];
+
+	public function searchObjects(array $query = [], bool $_rbac = true, bool $_multitenancy = true, mixed ...$rest): array {
+		$this->searches[] = $query;
+		$filters = array_diff_key($query, ['@self' => true]);
+		$schema = ($query['@self']['schema'] ?? null);
+		return array_values(
+			array_filter(
+				$this->objects,
+				fn (array $object): bool => array_intersect_assoc($filters, $object) === $filters
+					&& ($schema === null || ($this->schemaOf[(string)($object['id'] ?? '')] ?? $schema) === $schema)
+			)
+		);
+	}//end searchObjects()
+
 	/** @var (\Closure(array, mixed): ?\Throwable)|null Refuses a save, as a pre-save hook does. */
 	public ?\Closure $refuse = null;
 
@@ -88,6 +107,8 @@ class WooFakeObjectService {
 		} elseif (empty($object['id']) === true) {
 			$object['id'] = $uuid;
 		}
+
+		$this->schemaOf[(string)$object['id']] = $schema;
 
 		// Upsert into the in-memory store.
 		foreach ($this->objects as $i => $existing) {
@@ -656,6 +677,45 @@ class WooServiceTest extends TestCase {
 		$this->service->createBatch('WOO-2026-006', []);
 
 	}//end testCreateBatchNeedsTheRegisterAndSchemas()
+
+	/**
+	 * REQ-CVS-004: a second batch for a Woo request with an open batch is refused, naming that batch.
+	 */
+	public function testASecondBatchForAnOpenRequestIsRefusedNamingTheOpenBatch(): void {
+		$first = $this->service->createBatch('WOO-2026-031', [['fileName' => 'a.pdf']]);
+		$stored = count($this->objects->objects);
+
+		try {
+			$this->service->createBatch('WOO-2026-031', [['fileName' => 'b.pdf']]);
+			$this->fail('A second open batch for the same request must be refused.');
+		} catch (\DomainException $e) {
+			$this->assertSame(
+				'Woo request WOO-2026-031 already has an open batch (' . $first['id'] . '). Continue in that batch instead of adding another.',
+				$e->getMessage()
+			);
+		}
+
+		$this->assertCount($stored, $this->objects->objects, 'nothing is saved for the refused batch');
+		$this->assertSame(
+			['@self' => ['register' => '1', 'schema' => 'batch-sch'], 'caseReference' => 'WOO-2026-031'],
+			end($this->objects->searches)
+		);
+	}//end testASecondBatchForAnOpenRequestIsRefusedNamingTheOpenBatch()
+
+	/**
+	 * A published batch, or an open batch of another request, does not block a new batch.
+	 */
+	public function testAPublishedOrOtherRequestsBatchDoesNotBlock(): void {
+		$this->objects->objects[] = ['id' => 'old', 'caseReference' => 'WOO-2026-032', 'status' => 'published'];
+		$this->objects->objects[] = ['id' => 'other', 'caseReference' => 'WOO-2026-033', 'status' => 'in_progress'];
+
+		$this->assertNull($this->service->openBatchFor('WOO-2026-032'));
+		$this->assertSame('other', $this->service->openBatchFor('WOO-2026-033')['id']);
+		$batch = $this->service->createBatch('WOO-2026-032', [['fileName' => 'a.pdf']]);
+
+		$this->assertSame('in_progress', $batch['status']);
+		$this->assertSame('WOO-2026-032', $batch['caseReference']);
+	}//end testAPublishedOrOtherRequestsBatchDoesNotBlock()
 
 	public function testCreateBatchDeckUnavailableSurfacesWarning(): void {
 		$this->deck->available = false;

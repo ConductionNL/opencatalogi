@@ -43,6 +43,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use DomainException;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
@@ -400,6 +401,18 @@ class WooService implements TransparencyWorkflowServiceInterface {
 			throw new RuntimeException('OpenRegister WOO register/schema unavailable or unconfigured');
 		}
 
+		// REQ-CVS-004: one Woo request has at most one open batch.
+		$open = $this->openBatchFor(caseReference: $caseReference);
+		if ($open !== null) {
+			throw new DomainException(
+				sprintf(
+					'Woo request %s already has an open batch (%s). Continue in that batch instead of adding another.',
+					$caseReference,
+					(string)($open['id'] ?? ($open['uuid'] ?? ''))
+				)
+			);
+		}
+
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
 		// First persist the assessment objects so we have their ids for the cards.
@@ -440,6 +453,45 @@ class WooService implements TransparencyWorkflowServiceInterface {
 
 		return $savedBatch;
 	}//end createBatch()
+
+	/**
+	 * The open batch of a Woo request: one for the case reference that is not published yet.
+	 *
+	 * @param string $caseReference The case reference of the Woo request.
+	 *
+	 * @return array<string, mixed>|null The open batch, or null when the request has none.
+	 *
+	 * @throws RuntimeException When OpenRegister or the Woo batch schema is unavailable.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
+	 */
+	public function openBatchFor(string $caseReference): ?array {
+		$objectService = $this->getObjectService();
+		$register = $this->getRegister();
+		$batchSchema = $this->getBatchSchema();
+		if ($objectService === null || $register === null || $batchSchema === null) {
+			throw new RuntimeException('OpenRegister WOO register/schema unavailable or unconfigured');
+		}
+
+		$found = $objectService->searchObjects(
+			query: ['@self' => ['register' => $register, 'schema' => $batchSchema], 'caseReference' => $caseReference],
+			_rbac: false,
+			_multitenancy: false
+		);
+		if (is_iterable($found) === false) {
+			return null;
+		}
+
+		foreach ($found as $item) {
+			$batch = $this->plainArray(object: $item);
+			// The search filters on the reference; the check here keeps a loose match out.
+			if ((string)($batch['caseReference'] ?? '') === $caseReference && ($batch['status'] ?? '') !== 'published') {
+				return $batch;
+			}
+		}
+
+		return null;
+	}//end openBatchFor()
 
 	/**
 	 * A new assessment object for one collected document, waiting to be assessed.

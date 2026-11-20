@@ -39,6 +39,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\CapabilityRights;
+use OCA\OpenCatalogi\Service\Woo\CaseDocuments;
 use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -70,6 +71,7 @@ class WooController extends Controller {
 	 * @param IUserSession $userSession The current user session.
 	 * @param InformationCategoryRegistryInterface $categories The information categories, bundled plus local.
 	 * @param CapabilityRights|null $capabilities The capability rights (REQ-WAB-004).
+	 * @param CaseDocuments|null $caseDocuments The documents delivered for a case (REQ-CVS-004).
 	 */
 	public function __construct(
 		$appName,
@@ -79,6 +81,7 @@ class WooController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly InformationCategoryRegistryInterface $categories,
 		private readonly ?CapabilityRights $capabilities=null,
+		private readonly ?CaseDocuments $caseDocuments = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -198,12 +201,23 @@ class WooController extends Controller {
 				return new JSONResponse(data: ['error' => $this->l10n->t('caseReference is required')], statusCode: Http::STATUS_BAD_REQUEST);
 			}
 
+			// REQ-CVS-004: Add on the Woo batches page sends only the case
+			// reference; the batch then starts with the documents delivered for
+			// that case. A caller that lists its own documents keeps doing so.
+			if ($documents === [] && $this->caseDocuments !== null) {
+				$documents = $this->caseDocuments->forCase(caseReference: $caseReference);
+			}
+
 			$batch = $this->wooService->createBatch(
 				caseReference: $caseReference,
 				documents: $documents,
 				boardId: $boardId
 			);
 			return new JSONResponse($batch, Http::STATUS_CREATED);
+		} catch (\DomainException $e) {
+			// REQ-CVS-004: a Woo request that already has an open batch gets no second one,
+			// and a case reference no Woo request carries opens none.
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_CONFLICT);
 		} catch (\Throwable $e) {
 			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		}//end try

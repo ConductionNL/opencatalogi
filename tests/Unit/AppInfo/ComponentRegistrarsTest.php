@@ -49,6 +49,7 @@ use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\PublicationLinksListener;
+use OCA\OpenCatalogi\Listener\RuleCategoryListener;
 use OCA\OpenCatalogi\Listener\TermRollListener;
 use OCA\OpenCatalogi\Listener\HandedOverRecordsListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
@@ -157,6 +158,8 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', CompletenessListener::class],
 				[$e . 'ObjectCreatingEvent', PublicationLinksListener::class],
 				[$e . 'ObjectUpdatingEvent', PublicationLinksListener::class],
+				[$e . 'ObjectCreatingEvent', RuleCategoryListener::class],
+				[$e . 'ObjectUpdatingEvent', RuleCategoryListener::class],
 				[$e . 'RegisterCreatedEvent', CatalogScopePendingListener::class],
 				[$e . 'RegisterUpdatedEvent', CatalogScopePendingListener::class],
 				[$e . 'ToolRegistrationEvent', ToolRegistrationListener::class],
