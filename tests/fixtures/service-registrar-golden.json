@@ -121,6 +121,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\CouncilHarvestServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\CouncilHarvestService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\OoapiServiceInterface",
         "OCA\\OpenCatalogi\\Service\\OoapiService"
     ],
