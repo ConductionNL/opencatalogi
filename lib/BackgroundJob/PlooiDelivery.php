@@ -84,13 +84,16 @@ class PlooiDelivery extends QueuedJob {
 			return;
 		}
 
+		$uuid = (string)$argument['uuid'];
+		$register = (string)($argument['register'] ?? '');
+		$schema = (string)($argument['schema'] ?? '');
 		try {
-			$this->deliveryService->deliver(
-				uuid: (string)$argument['uuid'],
-				register: (string)($argument['register'] ?? ''),
-				schema: (string)($argument['schema'] ?? ''),
-				withdraw: ((string)($argument['mode'] ?? '') === self::MODE_WITHDRAW)
-			);
+			if ((string)($argument['mode'] ?? '') === self::MODE_WITHDRAW) {
+				$this->deliveryService->withdraw(uuid: $uuid, register: $register, schema: $schema);
+				return;
+			}
+
+			$this->deliveryService->deliver(uuid: $uuid, register: $register, schema: $schema);
 		} catch (\Throwable $e) {
 			$this->logger->error('[PlooiDelivery] Delivery of ' . (string)$argument['uuid'] . ' failed: ' . $e->getMessage());
 		}

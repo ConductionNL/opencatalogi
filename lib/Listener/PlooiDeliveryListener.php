@@ -56,6 +56,13 @@ class PlooiDeliveryListener implements IEventListener {
 	}//end __construct()
 
 	/**
+	 * The queue() mode of a first delivery: the job argument carries no mode.
+	 *
+	 * @var string
+	 */
+	private const MODE_FIRST = 'first';
+
+	/**
 	 * The publication fields a DiWoo document or the PLOOI delivery carries.
 	 *
 	 * A change to any other field (an internal note, a retention date) does
@@ -98,45 +105,59 @@ class PlooiDeliveryListener implements IEventListener {
 		}
 
 		$new = $event->getNewObject();
-		$old = $event->getOldObject();
-		$newPublic = $this->isPublic(entity: $new);
-		$oldPublic = ($old !== null && $this->isPublic(entity: $old) === true);
-
-		if ($newPublic === true && $oldPublic === false) {
-			$this->queue(entity: $new, mode: null);
-			return;
-		}
-
-		if ($old === null || $oldPublic === false || $this->isDelivered(entity: $new) === false) {
-			return;
-		}
-
-		if ($newPublic === false) {
-			$this->queue(entity: $new, mode: PlooiDelivery::MODE_WITHDRAW);
-			return;
-		}
-
-		if ($this->carriedChange(old: $old, new: $new) === true) {
-			$this->queue(entity: $new, mode: PlooiDelivery::MODE_UPDATE);
+		$mode = $this->followUp(old: $event->getOldObject(), new: $new);
+		if ($mode !== null) {
+			$this->queue(entity: $new, mode: $mode);
 		}
 
 	}//end handle()
 
 	/**
+	 * Which PLOOI job a save asks for: a first delivery, a withdrawal, an update, or none.
+	 *
+	 * @param ObjectEntity|null $old The publication before the save.
+	 * @param ObjectEntity      $new The publication after it.
+	 *
+	 * @return string|null MODE_FIRST, PlooiDelivery::MODE_WITHDRAW or PlooiDelivery::MODE_UPDATE; null for none.
+	 */
+	private function followUp(?ObjectEntity $old, ObjectEntity $new): ?string {
+		$newPublic = $this->isPublic(entity: $new);
+		$oldPublic = ($old !== null && $this->isPublic(entity: $old) === true);
+
+		if ($newPublic === true && $oldPublic === false) {
+			return self::MODE_FIRST;
+		}
+
+		if ($old === null || $oldPublic === false || $this->isDelivered(entity: $new) === false) {
+			return null;
+		}
+
+		if ($newPublic === false) {
+			return PlooiDelivery::MODE_WITHDRAW;
+		}
+
+		if ($this->carriedChange(old: $old, new: $new) === true) {
+			return PlooiDelivery::MODE_UPDATE;
+		}
+
+		return null;
+	}//end followUp()
+
+	/**
 	 * Queue one PLOOI delivery job for a publication.
 	 *
 	 * @param ObjectEntity $entity The publication.
-	 * @param string|null  $mode   The update or withdrawal mode; null for a first delivery.
+	 * @param string       $mode   The update or withdrawal mode, or MODE_FIRST for a first delivery.
 	 *
 	 * @return void
 	 */
-	private function queue(ObjectEntity $entity, ?string $mode): void {
+	private function queue(ObjectEntity $entity, string $mode): void {
 		$argument = [
 			'uuid' => (string)$entity->getUuid(),
 			'register' => (string)$entity->getRegister(),
 			'schema' => (string)$entity->getSchema(),
 		];
-		if ($mode !== null) {
+		if ($mode !== self::MODE_FIRST) {
 			$argument['mode'] = $mode;
 		}
 

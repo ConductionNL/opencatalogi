@@ -236,7 +236,7 @@ class PlooiDeliveryServiceTest extends TestCase {
 			->with(NationalIndexService::CHANNEL_PLOOI, 'plooi-42', $this->isType('string'))
 			->willReturn(['channel' => 'plooi']);
 
-		$result = $this->service()->deliver(uuid: 'pub-1', register: '7', schema: '12', withdraw: true);
+		$result = $this->service()->withdraw(uuid: 'pub-1', register: '7', schema: '12');
 
 		$this->assertSame('withdrawn', $result['plooiStatus']);
 		$this->assertSame([], $this->saved['plooiDocuments']);
@@ -250,7 +250,7 @@ class PlooiDeliveryServiceTest extends TestCase {
 		$this->delivered(files: [], delivered: []);
 		$this->index->method('withdraw')->willThrowException(new IndexUnreachableException('The channel "plooi" answered HTTP 503.'));
 
-		$result = $this->service()->deliver(uuid: 'pub-1', register: '7', schema: '12', withdraw: true);
+		$result = $this->service()->withdraw(uuid: 'pub-1', register: '7', schema: '12');
 
 		$this->assertSame('failed', $result['plooiStatus']);
 		$this->assertStringContainsString('503', $this->saved['plooiReason']);
