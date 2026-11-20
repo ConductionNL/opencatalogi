@@ -58,7 +58,7 @@ class WooValueListsFragmentTest extends TestCase {
 	}//end testTheMarkerFieldsAreDeclared()
 
 	/**
-	 * Its version is the one that wins the merge, above every other fragment's.
+	 * The version that wins the merge is the highest, and never below its own bump.
 	 *
 	 * @return void
 	 */
@@ -73,11 +73,15 @@ class WooValueListsFragmentTest extends TestCase {
 			}
 		}
 
-		$this->assertSame('woo-value-lists-on-the-concept-register.json', array_key_last($versions));
+		// A later fragment may bump it again (woo-x-access-boundary-hardening sorts
+		// last on purpose); what must hold is that the version that wins the merge
+		// is the highest, and never below this change's bump.
+		$merged = end($versions);
+		$own = $versions['woo-value-lists-on-the-concept-register.json'];
+		$this->assertTrue(version_compare($merged, $own, '>='), $merged . ' is below ' . $own);
 		foreach ($versions as $file => $version) {
-			if ($file !== 'woo-value-lists-on-the-concept-register.json') {
-				$this->assertTrue(version_compare(end($versions), $version, '>'), $file . ' carries ' . $version);
-			}
+			$this->assertTrue(version_compare($merged, $version, '>='), $file . ' carries ' . $version . ', above the merged ' . $merged);
 		}
+
 	}//end testItsVersionWinsTheMerge()
 }//end class
