@@ -262,6 +262,22 @@
             "facetable": false,
             "title": "Retention Last Evaluated At"
           },
+          "retentionDecisionLog": {
+            "type": "array",
+            "description": "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "decision": {"type": "string", "title": "Decision", "description": "What was decided about the publication."},
+                "by": {"type": "string", "title": "Decided by", "description": "The user who made the decision."},
+                "at": {"type": "string", "format": "date-time", "title": "Decided at", "description": "When the decision was made."},
+                "note": {"type": "string", "title": "Note", "description": "The explanation given with the decision."},
+                "basis": {"type": "string", "title": "Legal basis", "description": "The legal basis the decision rests on."}
+              }
+            },
+            "facetable": false,
+            "title": "Retention Decision Log"
+          },
           "status": {
             "type": "string",
             "description": "Stored lifecycle state of the publication (publication-lifecycle-on-or REQ-PLC-001): draft, in review, approved, published or archived. Only a published publication can be public; whether it is scheduled, public or withdrawn follows from its dates. The archived state retains the object internally while removing it from every public surface (RET-006).",

@@ -94,9 +94,12 @@ class RetentionRulesTest extends TestCase {
 		$this->assertSame(['status' => 'published', 'title' => 'Besluit', 'depublicationDate' => self::NOW], $data);
 	}
 
-	public function testArchivingAndDisposingArchive(): void {
+	public function testArchivingArchivesAndDisposingOnlyDepublishes(): void {
 		$this->assertSame('archived', $this->rules->afterDecision(['status' => 'published'], ['decision' => 'archive'])['status']);
-		$this->assertSame('archived', $this->rules->afterDecision(['status' => 'published'], ['decision' => 'dispose'])['status']);
+		$this->assertSame(
+			['status' => 'published', 'depublicationDate' => self::NOW],
+			$this->rules->afterDecision(['status' => 'published'], ['decision' => 'dispose'])
+		);
 	}
 
 	public function testAnUnknownDecisionIsRefused(): void {

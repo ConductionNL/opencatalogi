@@ -13,7 +13,7 @@ import MostViewedPublicationsWidget from './MostViewedPublicationsWidget.vue'
 import RetentionWidget from './RetentionWidget.vue'
 import UnpublishedAttachmentsWidget from './UnpublishedAttachmentsWidget.vue'
 import UnpublishedPublicationsWidget from './UnpublishedPublicationsWidget.vue'
-import { fetchCatalogStats } from '../../services/usageStats.js'
+import { fetchMostViewed } from '../../services/usageStats.js'
 import { LIST_COLUMNS, LIST_WIDGET_OPTIONS, navigateTo } from './widgetTable.js'
 
 jest.mock('@nextcloud/l10n', () => ({ translate: (app, text) => text, t: (app, text) => text }))
@@ -24,7 +24,7 @@ jest.mock('@conduction/nextcloud-vue', () => ({ registerIcons: jest.fn() }))
 jest.mock('../../store/store.js', () => ({ objectStore: {} }))
 jest.mock('../../services/usageStats.js', () => ({
 	...jest.requireActual('../../services/usageStats.js'),
-	fetchCatalogStats: jest.fn(),
+	fetchMostViewed: jest.fn(),
 }))
 
 const axios = jest.requireMock('@nextcloud/axios').default
@@ -169,10 +169,10 @@ describe('list widget row clicks', () => {
 		expect(window.location.href).toBe('')
 	})
 
-	it('opens a most-viewed publication by id', () => {
-		vm(MostViewedPublicationsWidget).onRowClick({ id: 'p9' })
+	it('opens a most-viewed publication in the catalogue it was counted in', () => {
+		vm(MostViewedPublicationsWidget).onRowClick({ id: 'p9', catalog: 'woo' })
 
-		expect(window.location.href).toBe('/nc/apps/opencatalogi/publications/p9')
+		expect(window.location.href).toBe('/nc/apps/opencatalogi/publications/woo/p9')
 	})
 
 	it('navigateTo ignores an empty url', () => {
@@ -186,7 +186,7 @@ describe('list widget row clicks', () => {
 describe('MostViewedPublicationsWidget', () => {
 	beforeEach(() => {
 		jest.useFakeTimers().setSystemTime(new Date('2026-11-14T12:00:00Z'))
-		fetchCatalogStats.mockReset()
+		fetchMostViewed.mockReset()
 	})
 
 	afterEach(() => {
@@ -205,32 +205,32 @@ describe('MostViewedPublicationsWidget', () => {
 		expect(vm(MostViewedPublicationsWidget, { period }).rangeFrom()).toBe(from)
 	})
 
-	it('shapes each entry into a row with its view count', () => {
-		const instance = vm(MostViewedPublicationsWidget, { topViewed: [{ publication: 'p1', views: 12 }, { publication: 'p2', views: 'x' }] })
+	it('shapes each entry into a row titled by the publication with its view count', () => {
+		const instance = vm(MostViewedPublicationsWidget, { topViewed: [{ id: 'p1', title: 'Besluit', catalog: 'woo', views: 12 }, { id: 'p2', catalog: 'woo', views: 'x' }] })
 
 		expect(MostViewedPublicationsWidget.computed.items.call(instance)).toEqual([
-			{ id: 'p1', mainText: 'p1', subText: '12 views' },
-			{ id: 'p2', mainText: 'p2', subText: '0 views' },
+			{ id: 'p1', catalog: 'woo', mainText: 'Besluit', subText: '12 views' },
+			{ id: 'p2', catalog: 'woo', mainText: 'p2', subText: '0 views' },
 		])
 	})
 
-	it('loads the top viewed publications of the catalog from the period start', async () => {
-		fetchCatalogStats.mockResolvedValue({ topViewed: [{ publication: 'p1', views: 3 }] })
-		const instance = vm(MostViewedPublicationsWidget, { catalogSlug: 'woo', period: 7 })
+	it('loads the top ten publications across catalogues from the period start', async () => {
+		fetchMostViewed.mockResolvedValue([{ id: 'p1', title: 'Besluit', catalog: 'woo', views: 3 }])
+		const instance = vm(MostViewedPublicationsWidget, { period: 7 })
 
 		await instance.load()
 
-		expect(fetchCatalogStats).toHaveBeenCalledWith('woo', { from: '2026-11-07' })
-		expect(instance.topViewed).toEqual([{ publication: 'p1', views: 3 }])
+		expect(fetchMostViewed).toHaveBeenCalledWith({ from: '2026-11-07', top: 10 })
+		expect(instance.topViewed).toEqual([{ id: 'p1', title: 'Besluit', catalog: 'woo', views: 3 }])
 		expect(instance.loading).toBe(false)
 	})
 
 	it.each([
-		['an answer without a list', () => Promise.resolve({ topViewed: 'none' })],
+		['an empty answer', () => Promise.resolve([])],
 		['a failed request', () => Promise.reject(new Error('500'))],
 	])('shows nothing after %s', async (_why, answer) => {
-		fetchCatalogStats.mockImplementation(answer)
-		const instance = vm(MostViewedPublicationsWidget, { catalogSlug: 'woo', topViewed: [{ publication: 'old' }] })
+		fetchMostViewed.mockImplementation(answer)
+		const instance = vm(MostViewedPublicationsWidget, { topViewed: [{ id: 'old' }] })
 
 		await instance.load()
 

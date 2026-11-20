@@ -1,0 +1,31 @@
+{
+	"_note": "Register fragment for capability-rows-close-gaps task 2.8. A publication harvested from an external source is maintained by a synchronisation whose disappearance policy writes these markers when the source stops carrying the record: only absentAtSource and sourceAbsentSince when the policy keeps it (the publication stays up and its page flags it for an editor), and also sourceEndedAt when the policy ends it (SourceAbsenceListener then sets depublicationDate). Declared so they are validated, facetable and shown, rather than undeclared extra data.",
+	"components": {
+		"schemas": {
+			"publication": {
+				"properties": {
+					"absentAtSource": {
+						"type": "boolean",
+						"title": "Gone from its source",
+						"description": "Its source no longer carries this record. An editor decides whether to keep or withdraw it.",
+						"facetable": true
+					},
+					"sourceAbsentSince": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Gone from its source since",
+						"description": "When its source was first found without the record.",
+						"facetable": false
+					},
+					"sourceEndedAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Ended at its source",
+						"description": "When its source ended the record; the publication is taken down from then.",
+						"facetable": false
+					}
+				}
+			}
+		}
+	}
+}

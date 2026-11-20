@@ -68,6 +68,7 @@ vi.mock('../../src/components/widgets/NationalAnnounceWidget.vue', () => ({ defa
 vi.mock('../../src/components/widgets/PlainSummaryDraftWidget.vue', () => ({ default: { name: 'PlainSummaryDraftWidget' } }))
 vi.mock('../../src/components/widgets/PublicationAttachmentsWidget.vue', () => ({ default: { name: 'PublicationAttachmentsWidget' } }))
 vi.mock('../../src/components/widgets/PublicationLanguagesWidget.vue', () => ({ default: { name: 'PublicationLanguagesWidget' } }))
+vi.mock('../../src/components/widgets/PublicationQualityWidget.vue', () => ({ default: { name: 'PublicationQualityWidget' } }))
 vi.mock('../../src/components/widgets/PublicationVisibilityWidget.vue', () => ({ default: { name: 'PublicationVisibilityWidget' } }))
 vi.mock('../../src/components/widgets/ThemePreviewWidget.vue', () => ({ default: { name: 'ThemePreviewWidget' } }))
 
@@ -119,7 +120,7 @@ afterEach(() => {
 })
 
 describe('src/main.js', () => {
-	it('registers the eleven detail-page widgets after the built-in ones', async () => {
+	it('registers the twelve detail-page widgets after the built-in ones', async () => {
 		await runMain()
 
 		expect(lib.registerBuiltinDashboardWidgets).toHaveBeenCalledOnce()
@@ -131,6 +132,7 @@ describe('src/main.js', () => {
 			'metadata-suggestions',
 			'publication-languages',
 			'plain-summary-draft',
+			'publication-quality',
 			'publication-attachments',
 			'theme-preview',
 			'tree-view',
@@ -145,8 +147,9 @@ describe('src/main.js', () => {
 		expect(calls[3][1].renderer).toEqual({ name: 'MetadataSuggestionsWidget' })
 		expect(calls[4][1].renderer).toEqual({ name: 'PublicationLanguagesWidget' })
 		expect(calls[5][1].renderer).toEqual({ name: 'PlainSummaryDraftWidget' })
-		expect(calls[6][1].defaultContent).toEqual({ maxDisplay: 100 })
-		expect(calls[8][1].renderer).toBe(lib.CnTreeView)
+		expect(calls[6][1].renderer).toEqual({ name: 'PublicationQualityWidget' })
+		expect(calls[7][1].defaultContent).toEqual({ maxDisplay: 100 })
+		expect(calls[9][1].renderer).toBe(lib.CnTreeView)
 		expect(lib.registerBuiltinDashboardWidgets.mock.invocationCallOrder[0]).toBeLessThan(lib.registerDashboardWidget.mock.invocationCallOrder[0])
 	})
 

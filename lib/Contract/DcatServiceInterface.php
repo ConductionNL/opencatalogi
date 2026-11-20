@@ -146,6 +146,21 @@ interface DcatServiceInterface {
 	public function buildInstanceDocument(): array;
 
 	/**
+	 * The dcat:Dataset node one publication renders as in a catalogue's feed, published or not.
+	 *
+	 * @param array  $catalog     The catalog object.
+	 * @param string $catalogSlug The catalog slug.
+	 * @param array  $publication The publication, as OpenRegister serialises it.
+	 *
+	 * @return array The dataset node.
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
+	 *
+	 * @contract-shift new-contract — added for the staff metadata-quality score; DcatService is its only implementation.
+	 */
+	public function buildPublicationDataset(array $catalog, string $catalogSlug, array $publication): array;
+
+	/**
 	 * Validate a catalog's feed against the DCAT-AP-NL mandatory-property checklist.
 	 *
 	 * Advisory only — never gates serving. Reports the dataset IRIs that lack any

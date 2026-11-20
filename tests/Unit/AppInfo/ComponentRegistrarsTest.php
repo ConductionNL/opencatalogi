@@ -47,6 +47,7 @@ use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
 use OCA\OpenCatalogi\Listener\PublicationAudienceCheck;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
+use OCA\OpenCatalogi\Listener\SourceAbsenceListener;
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\PublicationLinksListener;
@@ -132,6 +133,7 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatedEvent', ObjectUpdatedEventListener::class],
 				[$e . 'ObjectUpdatedEvent', PortalAccountRemovedListener::class],
 				[$e . 'ObjectUpdatedEvent', PlooiDeliveryListener::class],
+				[$e . 'ObjectUpdatedEvent', SourceAbsenceListener::class],
 				[$e . 'ObjectCreatedEvent', WooReadinessTriggerListener::class],
 				[$e . 'ObjectUpdatedEvent', WooReadinessTriggerListener::class],
 				[$e . 'ObjectCreatedEvent', CatalogCacheEventListener::class],

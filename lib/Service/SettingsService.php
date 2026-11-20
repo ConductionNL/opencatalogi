@@ -147,6 +147,7 @@ class SettingsService implements SettingsServiceInterface {
 	 * - Woo request intake and the comment period.
 	 * - The public and community surface; a notice is its own schema so it never
 	 *   enters the sitemap.
+	 * - The usage counter, so counting is on for a default install (ANA-001, ANA-002).
 	 */
 	private const KEYED_SCHEMA_GROUPS = [
 		[
@@ -205,6 +206,12 @@ class SettingsService implements SettingsServiceInterface {
 			'register' => null,
 			'schemas' => [
 				'attachment_reading_schema' => 'attachmentReading',
+			],
+		],
+		[
+			'register' => 'usageCounter_register',
+			'schemas' => [
+				'usageCounter_schema' => 'usageCounter',
 			],
 		],
 	];

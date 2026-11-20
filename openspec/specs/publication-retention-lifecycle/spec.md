@@ -24,8 +24,8 @@ background job (`Cron\RetentionEvaluation`).
 > recording and the authenticated CSV report (RET-006/RET-009), and the
 > published-predicate visibility of scheduled publish/depublish (RET-001/RET-002).
 > These are verified by PHPUnit (`tests/Unit/Service/RetentionServiceTest.php`,
-> `tests/Unit/Cron/RetentionEvaluationTest.php`) and Vitest
-> (`tests/vitest/retentionStatus.spec.js`). The user-facing surfaces are reused,
+> `tests/Unit/Cron/RetentionEvaluationTest.php`); the review queue filters on the
+> server, so no client-side status classifier remains. The user-facing surfaces are reused,
 > already-e2e-covered ones: the scheduled publish/depublish date pickers live in
 > the mass publish/depublish modals (covered under
 > generic-object-modals), the review queue is the existing publications table
