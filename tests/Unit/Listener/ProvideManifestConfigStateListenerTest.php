@@ -67,9 +67,9 @@ class ProvideManifestConfigStateListenerTest extends TestCase {
 
 		// 20 register/schema keys (incl. the 3 WOO, 4 service catalogue and the error report keys;
 		// no page or menu keys since the CMS moved to Portaliq) + default_directory_url + instance_mode.
-		$this->assertCount(22, $this->provided);
-		$this->assertArrayNotHasKey('page_schema', $this->provided);
-		$this->assertArrayNotHasKey('menu_schema', $this->provided);
+		$this->assertCount(expectedCount: 22, haystack: $this->provided);
+		$this->assertArrayNotHasKey(key: 'page_schema', array: $this->provided);
+		$this->assertArrayNotHasKey(key: 'menu_schema', array: $this->provided);
 		$this->assertSame('42', $this->provided['error_report_schema']);
 		// Anything but production reads as staging, so the banner shows.
 		$this->assertSame('staging', $this->provided['instance_mode']);

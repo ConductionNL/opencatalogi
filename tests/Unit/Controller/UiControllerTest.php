@@ -116,17 +116,19 @@ class UiControllerTest extends TestCase {
 	 * cannot open an empty CMS shell.
 	 *
 	 * @spec openspec/specs/content-management/spec.md
+	 *
+	 * @return void
 	 */
 	public function testThereIsNoPagesOrMenusScreenAnyMore(): void {
-		$this->assertFalse(method_exists($this->controller, 'pages'));
-		$this->assertFalse(method_exists($this->controller, 'menus'));
+		$this->assertFalse(condition: method_exists($this->controller, 'pages'));
+		$this->assertFalse(condition: method_exists($this->controller, 'menus'));
 
 		$routes = include __DIR__ . '/../../../appinfo/routes.php';
 		$urls = array_column($routes['routes'], 'url');
-		$this->assertNotContains('/pages', $urls);
-		$this->assertNotContains('/menus', $urls);
-		$this->assertNotContains('/api/pages', $urls);
-		$this->assertNotContains('/api/menus', $urls);
+		$this->assertNotContains(needle: '/pages', haystack: $urls);
+		$this->assertNotContains(needle: '/menus', haystack: $urls);
+		$this->assertNotContains(needle: '/api/pages', haystack: $urls);
+		$this->assertNotContains(needle: '/api/menus', haystack: $urls);
 	}
 
 	public function testDirectoryReturnsSpaTemplate(): void {
