@@ -23,7 +23,7 @@ use Symfony\Component\Console\Tester\CommandTester;
  * @covers \OCA\OpenCatalogi\Command\DirectorySyncCommand
  * @covers \OCA\OpenCatalogi\Command\MaintenanceCommand
  *
- * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+ * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
  */
 class DirectorySyncCommandTest extends TestCase {
 

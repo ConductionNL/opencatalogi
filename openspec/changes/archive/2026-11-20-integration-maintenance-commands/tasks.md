@@ -16,5 +16,5 @@
 
 ## 4. Registration and docs
 
-- [ ] 4.1 Register the five commands in `appinfo/info.xml` (REQ-IMC-001). Verify: `occ list opencatalogi` on a dev instance shows all seven commands.
+- [x] 4.1 Register the five commands in `appinfo/info.xml` (REQ-IMC-001). Verify: `occ list opencatalogi` on a dev instance shows all seven commands. Built: all five are in `<commands>`; `tests/Unit/Command/CommandRegistrationTest.php` asserts info.xml registers exactly the concrete classes in `lib/Command`, each named `opencatalogi:*` (the `occ list` read on a dev instance was not run).
 - [x] 4.2 Document the commands with examples in `docs/`. Verify: `npm run lint`.

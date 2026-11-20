@@ -34,7 +34,7 @@ use Throwable;
  * `occ opencatalogi:catalog:cache rebuild|clear <slug>|--all`: the cache work
  * the object events do, run now (REQ-IMC-001).
  *
- * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+ * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
  */
 class CatalogCacheCommand extends MaintenanceCommand {
 
@@ -43,7 +43,7 @@ class CatalogCacheCommand extends MaintenanceCommand {
 	 *
 	 * @param CatalogiServiceInterface $catalogiService The catalogue service.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	public function __construct(
 		private readonly CatalogiServiceInterface $catalogiService,
@@ -56,7 +56,7 @@ class CatalogCacheCommand extends MaintenanceCommand {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'opencatalogi:catalog:cache')
@@ -75,7 +75,7 @@ class CatalogCacheCommand extends MaintenanceCommand {
 	 *
 	 * @return int 0 when every catalogue succeeded, 1 when one failed, 2 on wrong usage.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		try {
@@ -111,7 +111,7 @@ class CatalogCacheCommand extends MaintenanceCommand {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private static function usageRefusal(string $action, mixed $slug, bool $all): ?string {
 		if (in_array($action, ['rebuild', 'clear'], true) === false) {
@@ -134,7 +134,7 @@ class CatalogCacheCommand extends MaintenanceCommand {
 	 *
 	 * @return array<int, string>
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private static function entryLines(string $action, array $entries, int $failed): array {
 		$lines = array_map(static fn (array $entry): string => self::entryLine(entry: $entry), $entries);
@@ -155,7 +155,7 @@ class CatalogCacheCommand extends MaintenanceCommand {
 	 *
 	 * @return string The line.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private static function entryLine(array $entry): string {
 		$line = self::outcomePrefix(success: $entry['success']) . $entry['slug'];
@@ -174,7 +174,7 @@ class CatalogCacheCommand extends MaintenanceCommand {
 	 *
 	 * @return array{slug: string, action: string, success: bool, error: string|null} The result.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private function handle(string $action, string $slug): array {
 		try {

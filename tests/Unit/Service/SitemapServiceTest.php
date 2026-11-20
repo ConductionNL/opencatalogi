@@ -792,7 +792,7 @@ class SitemapServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-woo-compliance/specs/woo-compliance/spec.md
 	 */
 	public function testAFileWithoutTimesTakesThePublicationsUpdateAsLastmod(): void {
 		$publication = ['id' => 'pub-4', 'title' => 'Besluit', '@self' => ['updated' => '2024-07-01 09:00:00']];
@@ -810,7 +810,7 @@ class SitemapServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-woo-compliance/specs/woo-compliance/spec.md
 	 */
 	public function testNoOwnerEverBecomesThePublisher(): void {
 		$publication = ['id' => 'pub-5', 'title' => 'Besluit', '@self' => ['owner' => 'alice']];
@@ -834,7 +834,7 @@ class SitemapServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-woo-compliance/specs/woo-compliance/spec.md
 	 */
 	public function testAFileWithoutADownloadUrlMapsToAnEmptyLoc(): void {
 		$publication = ['id' => 'pub-6', 'title' => 'Besluit', '@self' => ['updated' => '2024-07-01 09:00:00']];
@@ -851,7 +851,7 @@ class SitemapServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-woo-compliance/specs/woo-compliance/spec.md
 	 */
 	public function testTheFormatTextIsTheLowercaseExtension(): void {
 		$publication = ['id' => 'pub-7', 'title' => 'Besluit', '@self' => []];
@@ -870,7 +870,7 @@ class SitemapServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-woo-compliance/specs/woo-compliance/spec.md
 	 */
 	public function testEachFileOfAPublicationIsOneDocument(): void {
 		$this->setupValidSitemapContext(registerId: 'reg-woo', schemaId: 'sch-1');

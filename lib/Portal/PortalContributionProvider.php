@@ -173,7 +173,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 *
-	 * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
+	 * @spec openspec/changes/archive/2026-11-20-service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
 	 */
 	public function getPublicIndex(string $portal): array {
 		if ($this->statusIndex === null) {
@@ -192,7 +192,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 *
-	 * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
+	 * @spec openspec/changes/archive/2026-11-20-service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
 	 */
 	public function getPublicIndexKinds(string $portal): array {
 		if ($this->statusIndex === null) {

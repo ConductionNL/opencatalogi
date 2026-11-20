@@ -9,7 +9,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  *
- * @spec openspec/changes/woo-category-mapping-intake/specs/woo-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-20-woo-category-mapping-intake/specs/woo-compliance/spec.md
  */
 
 declare(strict_types=1);
@@ -242,7 +242,7 @@ class SitemapCategoryMappingTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-category-mapping-intake/specs/woo-category-mapping/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-woo-category-mapping-intake/specs/woo-category-mapping/spec.md
 	 */
 	public function testTheSeededRowsResolveAndAreUnique(): void {
 		$fragment = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/register.d/woo-category-mapping-intake.json'), true);

@@ -172,7 +172,7 @@ class CatalogiServiceTest extends TestCase {
 	 * Every catalogue's slug in the configured register and schema, each once,
 	 * read outside RBAC; rows without a slug are left out.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	public function testGetCatalogSlugsListsEveryCatalogueOnce(): void {
 		$this->config->method('getValueString')->willReturnCallback(
@@ -197,7 +197,7 @@ class CatalogiServiceTest extends TestCase {
 	/**
 	 * Without a configured catalogue register or schema there is nothing to list, and nothing is searched.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	public function testGetCatalogSlugsIsEmptyWhenUnconfigured(): void {
 		$this->config->method('getValueString')->willReturn('');
