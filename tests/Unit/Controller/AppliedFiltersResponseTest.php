@@ -36,6 +36,7 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Controller\SearchController
  * @covers \OCA\OpenCatalogi\Controller\FederationController
  * @uses \OCA\OpenCatalogi\Service\AppliedFilters
+ * @uses \OCA\OpenCatalogi\Service\Publication\PublicationLinkRules
  * @uses \OCA\OpenCatalogi\Service\PublicationQueryService
  * @uses \OCA\OpenCatalogi\Service\CallerScope
  * @uses \OCA\OpenCatalogi\Service\CatalogScopeIds

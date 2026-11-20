@@ -36,6 +36,7 @@ import {
 	CnRelationshipGraph,
 	CnTreeView,
 } from '@conduction/nextcloud-vue'
+import axios from '@nextcloud/axios'
 import { showError } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
@@ -54,6 +55,7 @@ import { createCaseTypeActionHandlers } from './services/caseTypeActions.js'
 import { createConnectionHandlers } from './services/connectionRegistry.js'
 import { createPublicationActionHandlers } from './services/publicationActions.js'
 import { createRetentionActionHandlers } from './services/retentionActions.js'
+import { createWooBatchHandlers } from './services/wooBatches.js'
 import { navigationStore, objectStore } from './store/store.js'
 
 export default {
@@ -84,6 +86,10 @@ export default {
 		generateUrl,
 		assign: (url) => window.location.assign(url),
 	}),
+
+	// Create override of the Woo batches index (REQ-CVS-004): Add takes a
+	// case reference and the server opens the batch with the case's documents.
+	...createWooBatchHandlers({ axios, generateUrl }),
 
 	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
 	//     the list is an index over the `flows` source, the canvas the shared

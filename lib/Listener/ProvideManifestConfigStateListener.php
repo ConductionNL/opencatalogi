@@ -90,6 +90,7 @@ class ProvideManifestConfigStateListener implements IEventListener {
 		'service_catalogue_entry_schema',
 		'case_type_definition_schema',
 		'knowledge_article_schema',
+		'error_report_schema',
 	];
 
 	/**

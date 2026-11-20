@@ -97,6 +97,21 @@ class WooCreateBatchTest extends TestCase {
 	}//end testAFailingServiceAnswers400WithItsMessage()
 
 	/**
+	 * REQ-CVS-004: a request that already has an open batch answers 409 with the refusal.
+	 *
+	 * @return void
+	 */
+	public function testAnOpenBatchAnswers409(): void {
+		$service = $this->createMock(WooService::class);
+		$service->method('createBatch')->willThrowException(new \DomainException('Woo request Z-1 already has an open batch (b-1).'));
+
+		$response = $this->controller(post: ['caseReference' => 'Z-1'], service: $service)->createBatch();
+
+		$this->assertSame(409, $response->getStatus());
+		$this->assertSame(['error' => 'Woo request Z-1 already has an open batch (b-1).'], $response->getData());
+	}//end testAnOpenBatchAnswers409()
+
+	/**
 	 * The controller over a request carrying the post.
 	 *
 	 * @param array<string, mixed> $post The posted values.
@@ -119,6 +134,6 @@ class WooCreateBatchTest extends TestCase {
 			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
 		);
 
-		return new WooController('opencatalogi', $request, $service, $l10n, $this->createMock(IUserSession::class), $categories);
+		return new WooController('opencatalogi', $request, $service, $l10n, $this->createMock(IUserSession::class), $categories, capabilities: new \Unit\Support\AllowingCapabilityRights());
 	}//end controller()
 }//end class

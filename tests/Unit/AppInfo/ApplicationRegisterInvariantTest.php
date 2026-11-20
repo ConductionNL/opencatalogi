@@ -453,4 +453,32 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		);
 
 	}//end testRegisterSubscribesTheBatchReviewListener()
+
+	/**
+	 * register() subscribes both capability listeners to OpenRegister's real events (REQ-WAB-004).
+	 *
+	 * @return void
+	 */
+	public function testRegisterSubscribesTheCapabilityListeners(): void {
+		$pairs   = [];
+		$context = $this->createMock(\OCP\AppFramework\Bootstrap\IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$pairs): void {
+				$pairs[] = [$event, $listener];
+			}
+		);
+
+		$application = (new \ReflectionClass(\OCA\OpenCatalogi\AppInfo\Application::class))->newInstanceWithoutConstructor();
+		$application->register($context);
+
+		$this->assertContains(
+			['OCA\\OpenRegister\\Event\\PermissionsDeclaringEvent', \OCA\OpenCatalogi\Listener\CapabilityDeclarationListener::class],
+			$pairs
+		);
+		$this->assertContains(
+			['OCA\\OpenRegister\\Event\\CustomScopeEvaluatingEvent', \OCA\OpenCatalogi\Listener\CapabilityScopeListener::class],
+			$pairs
+		);
+
+	}//end testRegisterSubscribesTheCapabilityListeners()
 }//end class

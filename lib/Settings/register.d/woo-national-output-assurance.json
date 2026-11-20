@@ -1,0 +1,98 @@
+{
+  "_note": "Register fragment for woo-national-output-assurance (REQ-WNO-004). One wooPipelineIncident per failure of the Woo publication pipeline, raised through PipelineIncidents::raise(), which coalesces an identical open incident within 24 hours. The schema's notification rule tells the members of the incident-receiver role by Nextcloud notification and e-mail; the Woo settings assign that role the group named in app config woo_incident_group. Admin-only.",
+  "components": {
+    "registers": {
+      "publication": {
+        "schemas": [
+          "wooPipelineIncident"
+        ],
+        "configuration": {
+          "schemas": {
+            "wooPipelineIncident": {
+              "magicMapping": true,
+              "autoCreateTable": true,
+              "comment": "One failure of the Woo publication pipeline, open until resolved"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "wooPipelineIncident": {
+        "slug": "wooPipelineIncident",
+        "title": "Woo pipeline incident",
+        "version": "0.1.0",
+        "summary": "A failure of the Woo publication pipeline that a named group must look at",
+        "description": "Records one failure of the Woo publication pipeline: a readiness check, a refused sitemap, a failed batch, a failed national hand-over, a sitemap gap or a superseded DiWoo version. The incident group is told when one is created.",
+        "icon": null,
+        "required": [
+          "kind",
+          "subject",
+          "message",
+          "at"
+        ],
+        "authorization": {
+          "read": ["admin"],
+          "create": ["admin"],
+          "update": ["admin"],
+          "delete": ["admin"],
+          "roles": {
+            "woo-incident-receiver": []
+          }
+        },
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "What failed, such as plooi-delivery or diwoo-version.",
+            "facetable": true
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject",
+            "description": "What it failed for, such as a publication or a catalogue."
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "The reason, as a person reads it."
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Raised at",
+            "description": "When the failure was raised."
+          },
+          "resolvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Resolved at",
+            "description": "When someone marked it resolved; empty while it is open."
+          }
+        },
+        "x-openregister-notifications": {
+          "incidentRaised": {
+            "trigger": {
+              "type": "created"
+            },
+            "enabled": true,
+            "channels": [
+              "nc-notification",
+              "email"
+            ],
+            "recipients": [
+              {
+                "kind": "role",
+                "role": "woo-incident-receiver"
+              }
+            ],
+            "subject": {
+              "nl": "Woo-storing ({{kind}}) bij {{subject}}: {{message}}",
+              "en": "Woo pipeline failure ({{kind}}) for {{subject}}: {{message}}"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -995,6 +995,7 @@ import {
 	propertyErrors,
 	withSchemaFillValues,
 } from './objectPayload.js'
+import { relationFieldOverrides } from './relationFields.js'
 
 import '@toast-ui/editor/dist/toastui-editor.css'
 
@@ -1338,10 +1339,19 @@ export default {
 		/**
 		 * Per-property cell-config overrides forwarded into CnPropertiesTab → CnPropertyValueCell.
 		 * Only properties that need runtime-driven options (e.g. `themes` from objectStore) need entries here.
+		 * Relation properties to the object's own schema (`replaces`, `amends`, ...) become pickers over
+		 * the objects of the same register and schema.
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
+		/**
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-1.4
+		 */
 		propertyOverrides() {
+			const register = this.isNewObject
+				? (this.selectedRegister?.id ?? null)
+				: (this.currentObject?.['@self']?.register ?? null)
 			return {
+				...relationFieldOverrides(this.resolvedSchema, register),
 				themes: {
 					widget: 'select',
 					selectOptions: this.themeOptions,

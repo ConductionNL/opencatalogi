@@ -1,0 +1,52 @@
+{
+	"components": {
+		"schemas": {
+			"publication": {
+				"slug": "publication",
+				"version": "0.0.9",
+				"properties": {
+					"audience": {
+						"type": "string",
+						"title": "Who can read it",
+						"description": "Everyone, or only readers who log in with DigiD or eHerkenning through a trusted portal. The public website, search, the sitemaps and the feeds leave a publication for signed-in readers out.",
+						"enum": [
+							"public",
+							"signedIn"
+						],
+						"x-enum-labels": {
+							"public": "Everyone",
+							"signedIn": "Readers who log in with DigiD or eHerkenning"
+						},
+						"default": "public",
+						"facetable": true
+					},
+					"minimumAssurance": {
+						"type": "string",
+						"title": "Minimum login level",
+						"description": "The lowest login level a portal must vouch for before its reader is shown a publication for signed-in readers.",
+						"enum": [
+							"substantial",
+							"high"
+						],
+						"x-enum-labels": {
+							"substantial": "Substantial",
+							"high": "High"
+						},
+						"default": "substantial"
+					}
+				}
+			},
+			"feedConsumer": {
+				"version": "0.1.1",
+				"properties": {
+					"actForSignedInReaders": {
+						"type": "boolean",
+						"title": "May act for signed-in readers",
+						"description": "Whether a portal holding this consumer's key may read a publication for signed-in readers on behalf of a reader whose login level it sends.",
+						"default": false
+					}
+				}
+			}
+		}
+	}
+}

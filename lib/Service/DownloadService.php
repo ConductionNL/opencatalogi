@@ -39,6 +39,7 @@ use OCA\OpenRegister\Service\ObjectService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use Psr\Container\ContainerExceptionInterface;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
@@ -58,9 +59,11 @@ class DownloadService {
 	 * Constructor for DownloadService.
 	 *
 	 * @param FileService $fileService The file service for handling file operations
+	 * @param IL10N       $l10n        Translates the error messages.
 	 */
 	public function __construct(
 		private readonly FileService $fileService,
+		private readonly IL10N $l10n,
 	) {
 
 	}//end __construct()
@@ -96,7 +99,7 @@ class DownloadService {
 		// Validate options before generating any file content (DWN-OR-004).
 		if (($options['download'] ?? true) === false) {
 			return new JSONResponse(
-				data: ['error' => 'At least one output option must be enabled; "download" was false'],
+				data: ['error' => $this->l10n->t('At least one output option must be enabled; "download" was false')],
 				statusCode: 400
 			);
 		}
@@ -133,7 +136,7 @@ class DownloadService {
 		$content = $this->renderToString(mpdf: $mpdf);
 		if ($content === false) {
 			return new JSONResponse(
-				data: ['error' => 'Failed to read the rendered publication metadata PDF'],
+				data: ['error' => $this->l10n->t('Failed to read the rendered publication metadata PDF')],
 				statusCode: 500
 			);
 		}
@@ -194,7 +197,7 @@ class DownloadService {
 			}
 
 			return new JSONResponse(
-				data: ['error' => 'Publication not found'],
+				data: ['error' => $this->l10n->t('Publication not found')],
 				statusCode: 404
 			);
 		} catch (ContainerExceptionInterface|MultipleObjectsReturnedException|DoesNotExistException $e) {
@@ -218,7 +221,7 @@ class DownloadService {
 			// Fetch the publication object by its ID.
 			$object = $this->serialised(entity: $objectService->find($id));
 			if ($object === null) {
-				return new JSONResponse(data: ['error' => 'Publication not found'], statusCode: 500);
+				return new JSONResponse(data: ['error' => $this->l10n->t('Publication not found')], statusCode: 500);
 			}
 
 			return $this->attachmentsOf(object: $object, objectService: $objectService);

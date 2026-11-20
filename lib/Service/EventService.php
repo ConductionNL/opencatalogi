@@ -29,6 +29,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use DateTime;
 use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
@@ -470,6 +471,15 @@ class EventService implements EventServiceInterface {
 			$objectService = $this->getObjectService();
 			$target = self::publicationTarget(objectSelf: ($objectData['@self'] ?? []));
 			$data = self::publishedPayload(objectData: $objectData);
+			if ($this->isPublication(schema: (string)$target['schema']) === true) {
+				// A publication moves through its lifecycle; a refused move writes no date (REQ-PLC-003).
+				$this->container->get(PublishTransition::class)->publish(
+					id: (string)$target['id'],
+					stored: (string)($objectData['status'] ?? ''),
+					publicationDate: $data['publicationDate']
+				);
+				return ['success' => true, 'objectId' => $target['id'], 'publishedAt' => $data['publicationDate']];
+			}
 
 			$objectService->saveObject(
 				object: $data,
@@ -484,6 +494,21 @@ class EventService implements EventServiceInterface {
 			return ['success' => false, 'objectId' => ($objectData['@self']['id'] ?? 'unknown'), 'error' => $e->getMessage()];
 		}//end try
 	}//end publishObject()
+
+	/**
+	 * Whether a schema id is the configured publication schema, whose publish is a lifecycle transition.
+	 *
+	 * @param string $schema The object's schema id.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 */
+	private function isPublication(string $schema): bool {
+		$configured = (string)($this->settingsService->getSettings()['configuration']['publication_schema'] ?? '');
+
+		return $configured !== '' && $configured === $schema;
+	}//end isPublication()
 
 	/**
 	 * The id, register and schema an object is saved under.

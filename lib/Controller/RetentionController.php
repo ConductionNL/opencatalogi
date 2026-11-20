@@ -33,10 +33,12 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
+use OCA\OpenCatalogi\Service\CapabilityRights;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
@@ -47,6 +49,9 @@ use OCP\IUserSession;
  * Controller for publication retention lifecycle operations.
  */
 class RetentionController extends Controller {
+
+	use CapabilityGuard;
+
 	/**
 	 * Constructor.
 	 *
@@ -55,6 +60,7 @@ class RetentionController extends Controller {
 	 * @param RetentionServiceInterface $retentionService The retention service.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The user session.
+	 * @param CapabilityRights|null $capabilities The capability rights (REQ-WAB-004).
 	 */
 	public function __construct(
 		$appName,
@@ -62,6 +68,7 @@ class RetentionController extends Controller {
 		private readonly RetentionServiceInterface $retentionService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
+		private readonly ?CapabilityRights $capabilities=null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -162,8 +169,13 @@ class RetentionController extends Controller {
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function decide(string $id): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'decideRetention');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		try {
 			$decision = (string)$this->request->getParam('decision', '');
 			$rationale = (string)$this->request->getParam('note', '');

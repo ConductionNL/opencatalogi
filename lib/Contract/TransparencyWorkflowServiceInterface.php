@@ -35,6 +35,10 @@ interface TransparencyWorkflowServiceInterface {
 	 * entry is the article reference (stored value) mapped to a short Dutch
 	 * description. Absolute grounds (5.1) and relative grounds (5.2).
 	 *
+	 * @deprecated No longer the source of the grounds: they are dossiq's list,
+	 *   read through `Service\Woo\RefusalGrounds` (REQ-WVC-003). Kept only so a
+	 *   caller of this published contract keeps resolving the constant.
+	 *
 	 * @var array<string, string>
 	 */
 	public const WEIGERINGSGRONDEN = [
