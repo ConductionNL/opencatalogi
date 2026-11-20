@@ -22,6 +22,7 @@ use OCP\Files\Folder;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 
@@ -115,10 +116,10 @@ class PublishedTableReimportListenerTest extends TestCase {
 	 * @return PublishedTableReimportListener The listener.
 	 */
 	private function listener(ReimportObjects $objects, ?string $user = 'bram'): PublishedTableReimportListener {
-		$registers = $this->createMock(OpenRegisterLookupInterface::class);
+		$registers = $this->createMock(originalClassName: OpenRegisterLookupInterface::class);
 		$registers->method('objectService')->willReturn($objects);
 		$registers->method('registerConfiguration')->willReturn(['register' => 'pub', 'schema' => 'tbl']);
-		$queue = $this->createMock(TableImportQueueInterface::class);
+		$queue = $this->createMock(originalClassName: TableImportQueueInterface::class);
 		$queue->method('queue')->willReturnCallback(
 			function (string $tableId, string $importedBy): bool {
 				$this->queued[] = [$tableId, $importedBy];
@@ -126,16 +127,15 @@ class PublishedTableReimportListenerTest extends TestCase {
 			}
 		);
 		$followUp = new TableImportFollowUp(
-			tables: $this->createMock(PublishedTableService::class),
-			registers: $registers,
+			tables: new PublishedTableService(registers: $registers, container: $this->createMock(originalClassName: ContainerInterface::class)),
 			queue: $queue,
-			time: $this->createMock(ITimeFactory::class)
+			time: $this->createMock(originalClassName: ITimeFactory::class)
 		);
 
-		$session = $this->createMock(IUserSession::class);
+		$session = $this->createMock(originalClassName: IUserSession::class);
 		$signedIn = null;
 		if ($user !== null) {
-			$signedIn = $this->createMock(IUser::class);
+			$signedIn = $this->createMock(originalClassName: IUser::class);
 			$signedIn->method('getUID')->willReturn($user);
 		}
 
@@ -171,10 +171,11 @@ class PublishedTableReimportListenerTest extends TestCase {
 			['id' => 't2', 'file' => '78', 'importedBy' => 'anna'],
 		]);
 
-		$this->listener(objects: $objects)->handle(event: self::written(name: 'speeltuinen.csv', id: 77, node: $this->createMock(File::class)));
+		$event = self::written(name: 'speeltuinen.csv', id: 77, node: $this->createMock(originalClassName: File::class));
+		$this->listener(objects: $objects)->handle(event: $event);
 
-		$this->assertSame([['t1', 'bram']], $this->queued);
-		$this->assertSame(['file' => '77', '_limit' => 100], array_diff_key($objects->queries[0], ['@self' => 1]));
+		$this->assertSame(expected: [['t1', 'bram']], actual: $this->queued);
+		$this->assertSame(expected: ['file' => '77', '_limit' => 100], actual: array_diff_key($objects->queries[0], ['@self' => 1]));
 	}//end testAReplacedFileQueuesAReimport()
 
 	/**
@@ -185,9 +186,10 @@ class PublishedTableReimportListenerTest extends TestCase {
 	public function testWithoutAUserTheLastImporterStartsIt(): void {
 		$objects = new ReimportObjects(results: [['id' => 't1', 'file' => '77', 'importedBy' => 'anna']]);
 
-		$this->listener(objects: $objects, user: null)->handle(event: self::written(name: 'SPEELTUINEN.CSV', id: 77, node: $this->createMock(File::class)));
+		$event = self::written(name: 'SPEELTUINEN.CSV', id: 77, node: $this->createMock(originalClassName: File::class));
+		$this->listener(objects: $objects, user: null)->handle(event: $event);
 
-		$this->assertSame([['t1', 'anna']], $this->queued);
+		$this->assertSame(expected: [['t1', 'anna']], actual: $this->queued);
 	}//end testWithoutAUserTheLastImporterStartsIt()
 
 	/**
@@ -199,12 +201,12 @@ class PublishedTableReimportListenerTest extends TestCase {
 		$objects = new ReimportObjects(results: [['id' => 't1', 'file' => '77']]);
 		$listener = $this->listener(objects: $objects);
 
-		$listener->handle(event: self::written(name: 'besluit.pdf', id: 77, node: $this->createMock(File::class)));
-		$listener->handle(event: self::written(name: 'data.csv', id: 77, node: $this->createMock(Folder::class)));
+		$listener->handle(event: self::written(name: 'besluit.pdf', id: 77, node: $this->createMock(originalClassName: File::class)));
+		$listener->handle(event: self::written(name: 'data.csv', id: 77, node: $this->createMock(originalClassName: Folder::class)));
 		$listener->handle(event: new Event());
 
-		$this->assertSame([], $objects->queries);
-		$this->assertSame([], $this->queued);
+		$this->assertSame(expected: [], actual: $objects->queries);
+		$this->assertSame(expected: [], actual: $this->queued);
 	}//end testAnythingButACsvIsIgnored()
 
 	/**
@@ -219,11 +221,16 @@ class PublishedTableReimportListenerTest extends TestCase {
 
 		$objects = new ReimportObjects(results: [['id' => 't1', 'file' => '77', 'importedBy' => 'anna']]);
 		$class = PublishedTableReimportListener::VERSION_RESTORED_EVENT;
-		$event = new $class(...(is_a($class, VersionRestoredStandIn::class, true) === true ? [77] : ['obj-1', 77]));
+		$arguments = ['obj-1', 77];
+		if (is_a($class, VersionRestoredStandIn::class, true) === true) {
+			$arguments = [77];
+		}
+
+		$event = new $class(...$arguments);
 
 		$this->listener(objects: $objects)->handle(event: $event);
 
-		$this->assertSame([['t1', 'bram']], $this->queued);
+		$this->assertSame(expected: [['t1', 'bram']], actual: $this->queued);
 	}//end testARestoredVersionQueuesAReimport()
 
 	/**
@@ -232,8 +239,9 @@ class PublishedTableReimportListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAFailingLookupDoesNotBreakTheWrite(): void {
-		$this->listener(objects: new ReimportObjects(fails: true))->handle(event: self::written(name: 'a.csv', id: 77, node: $this->createMock(File::class)));
+		$event = self::written(name: 'a.csv', id: 77, node: $this->createMock(originalClassName: File::class));
+		$this->listener(objects: new ReimportObjects(fails: true))->handle(event: $event);
 
-		$this->assertSame([], $this->queued);
+		$this->assertSame(expected: [], actual: $this->queued);
 	}//end testAFailingLookupDoesNotBreakTheWrite()
 }//end class

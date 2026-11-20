@@ -31,10 +31,10 @@ class PublishedTableImportQueueTest extends TestCase {
 	 * @return void
 	 */
 	public function testATableIsQueuedWithItsStarter(): void {
-		$jobs = $this->createMock(IJobList::class);
+		$jobs = $this->createMock(originalClassName: IJobList::class);
 		$jobs->expects($this->once())->method('add')->with(PublishedTableImportJob::class, ['table' => 't1', 'importedBy' => 'anna']);
 
-		$this->assertTrue((new PublishedTableImportQueue(jobList: $jobs, logger: new NullLogger()))->queue(tableId: 't1', importedBy: 'anna'));
+		$this->assertTrue(condition: (new PublishedTableImportQueue(jobList: $jobs, logger: new NullLogger()))->queue(tableId: 't1', importedBy: 'anna'));
 	}//end testATableIsQueuedWithItsStarter()
 
 	/**
@@ -43,11 +43,11 @@ class PublishedTableImportQueueTest extends TestCase {
 	 * @return void
 	 */
 	public function testNothingOrAFailingJobListAnswersFalse(): void {
-		$jobs = $this->createMock(IJobList::class);
+		$jobs = $this->createMock(originalClassName: IJobList::class);
 		$jobs->expects($this->once())->method('add')->willThrowException(new RuntimeException('database gone'));
 		$queue = new PublishedTableImportQueue(jobList: $jobs, logger: new NullLogger());
 
-		$this->assertFalse($queue->queue(tableId: '', importedBy: 'anna'));
-		$this->assertFalse($queue->queue(tableId: 't1', importedBy: 'anna'));
+		$this->assertFalse(condition: $queue->queue(tableId: '', importedBy: 'anna'));
+		$this->assertFalse(condition: $queue->queue(tableId: 't1', importedBy: 'anna'));
 	}//end testNothingOrAFailingJobListAnswersFalse()
 }//end class

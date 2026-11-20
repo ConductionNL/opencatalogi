@@ -18,6 +18,7 @@ use OCA\OpenCatalogi\Service\Table\TableImportFollowUp;
 use OCP\AppFramework\Utility\ITimeFactory;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use ReflectionMethod;
 use RuntimeException;
@@ -93,7 +94,14 @@ class PublishedTableImportJobTest extends TestCase {
 	 *
 	 * @var array<string, mixed>
 	 */
-	private const TABLE = ['id' => 't1', 'publication' => 'p1', 'file' => '77', 'title' => 'speeltuinen.csv', 'status' => 'importing', 'importedBy' => 'anna'];
+	private const TABLE = [
+		'id' => 't1',
+		'publication' => 'p1',
+		'file' => '77',
+		'title' => 'speeltuinen.csv',
+		'status' => 'importing',
+		'importedBy' => 'anna',
+	];
 
 	/**
 	 * The table service double.
@@ -115,9 +123,26 @@ class PublishedTableImportJobTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$this->tables = $this->createMock(PublishedTableService::class);
 		$this->objects = new ImportJobObjects();
+		$this->tables = $this->partialTables();
 	}//end setUp()
+
+	/**
+	 * The table service with its OpenRegister reads and writes real, over the
+	 * fake object service, and its lookup and import doubled.
+	 *
+	 * @return PublishedTableService&MockObject The service.
+	 */
+	private function partialTables(): PublishedTableService {
+		$registers = $this->createMock(originalClassName: OpenRegisterLookupInterface::class);
+		$registers->method('objectService')->willReturnCallback(fn (): ImportJobObjects => $this->objects);
+		$registers->method('registerConfiguration')->willReturn(['register' => 'pub', 'schema' => 'tbl']);
+
+		return $this->getMockBuilder(className: PublishedTableService::class)
+			->setConstructorArgs(arguments: [$registers, $this->createMock(originalClassName: ContainerInterface::class)])
+			->onlyMethods(methods: ['findTable', 'reimport'])
+			->getMock();
+	}//end partialTables()
 
 	/**
 	 * Run the job with an argument.
@@ -128,16 +153,12 @@ class PublishedTableImportJobTest extends TestCase {
 	 * @return void
 	 */
 	private function runJob(mixed $argument, int $now = 1_800_000_000): void {
-		$registers = $this->createMock(OpenRegisterLookupInterface::class);
-		$registers->method('objectService')->willReturn($this->objects);
-		$registers->method('registerConfiguration')->willReturn(['register' => 'pub', 'schema' => 'tbl']);
-		$time = $this->createMock(ITimeFactory::class);
+		$time = $this->createMock(originalClassName: ITimeFactory::class);
 		$time->method('getTime')->willReturn($now);
 
 		$followUp = new TableImportFollowUp(
 			tables: $this->tables,
-			registers: $registers,
-			queue: $this->createMock(TableImportQueueInterface::class),
+			queue: $this->createMock(originalClassName: TableImportQueueInterface::class),
 			time: $time
 		);
 		$job = new PublishedTableImportJob(time: $time, followUp: $followUp, logger: new NullLogger());
@@ -160,7 +181,7 @@ class PublishedTableImportJobTest extends TestCase {
 
 		$this->runJob(argument: ['table' => 't1', 'importedBy' => 'bram']);
 
-		$this->assertSame([], $this->objects->saved, 'the import itself stored the outcome');
+		$this->assertSame(expected: [], actual: $this->objects->saved, message: 'the import itself stored the outcome');
 	}//end testAFailedImportEndsFailedWithImportedBy()
 
 	/**
@@ -174,11 +195,11 @@ class PublishedTableImportJobTest extends TestCase {
 
 		$this->runJob(argument: ['table' => 't1', 'importedBy' => '']);
 
-		$this->assertCount(1, $this->objects->saved);
+		$this->assertCount(expectedCount: 1, haystack: $this->objects->saved);
 		$saved = $this->objects->saved[0];
-		$this->assertSame('failed', $saved['status']);
-		$this->assertSame('The publication has no attachment 77.', $saved['lastError']);
-		$this->assertSame('anna', $saved['importedBy'], 'without a starter the table keeps its last importer');
+		$this->assertSame(expected: 'failed', actual: $saved['status']);
+		$this->assertSame(expected: 'The publication has no attachment 77.', actual: $saved['lastError']);
+		$this->assertSame(expected: 'anna', actual: $saved['importedBy'], message: 'without a starter the table keeps its last importer');
 	}//end testAThrowableEndsFailed()
 
 	/**
@@ -199,12 +220,12 @@ class PublishedTableImportJobTest extends TestCase {
 
 		$this->runJob(argument: ['table' => 't1'], now: $now);
 
-		$this->assertSame(['status' => 'importing', '_limit' => 100], array_diff_key($this->objects->queries[0], ['@self' => 1]));
-		$this->assertCount(1, $this->objects->saved);
-		$this->assertSame('old', $this->objects->saved[0]['id']);
-		$this->assertSame('failed', $this->objects->saved[0]['status']);
-		$this->assertSame(TableImportFollowUp::STALE_ERROR, $this->objects->saved[0]['lastError']);
-		$this->assertArrayNotHasKey('@self', $this->objects->saved[0]);
+		$this->assertSame(expected: ['status' => 'importing', '_limit' => 100], actual: array_diff_key($this->objects->queries[0], ['@self' => 1]));
+		$this->assertCount(expectedCount: 1, haystack: $this->objects->saved);
+		$this->assertSame(expected: 'old', actual: $this->objects->saved[0]['id']);
+		$this->assertSame(expected: 'failed', actual: $this->objects->saved[0]['status']);
+		$this->assertSame(expected: TableImportFollowUp::STALE_ERROR, actual: $this->objects->saved[0]['lastError']);
+		$this->assertArrayNotHasKey(key: '@self', array: $this->objects->saved[0]);
 	}//end testAStaleImportIsFailed()
 
 	/**
@@ -229,7 +250,7 @@ class PublishedTableImportJobTest extends TestCase {
 				throw new RuntimeException('OpenRegister is down');
 			}//end searchObjectsPaginated()
 		};
-		$tables = $this->createMock(PublishedTableService::class);
+		$tables = $this->partialTables();
 		$tables->method('findTable')->willReturn(self::TABLE);
 		$tables->expects($this->once())->method('reimport')->willReturn(self::TABLE);
 		$this->tables = $tables;
@@ -248,6 +269,6 @@ class PublishedTableImportJobTest extends TestCase {
 
 		$this->runJob(argument: ['table' => 'gone', 'importedBy' => 'anna']);
 
-		$this->assertSame([], $this->objects->saved);
+		$this->assertSame(expected: [], actual: $this->objects->saved);
 	}//end testAGoneTableIsSkipped()
 }//end class

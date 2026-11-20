@@ -190,14 +190,10 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
 	 */
 	public function reimport(array $table, ?string $importedBy = null): array {
-		$config = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
+		$pair = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
+		$where = new ObjectFindOptions(register: $pair['register'], schema: $pair['schema']);
 		try {
-			$publication = $this->registers->objectService()->find(
-				id: (string)($table['publication'] ?? ''),
-				options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
-				_rbac: false,
-				_multitenancy: false
-			);
+			$publication = $this->registers->objectService()->find(id: (string)($table['publication'] ?? ''), options: $where, _rbac: false, _multitenancy: false);
 		} catch (\Throwable $e) {
 			throw new InvalidArgumentException('The publication of this table is gone.');
 		}
@@ -206,6 +202,34 @@ class PublishedTableService implements PublishedTableServiceInterface {
 
 		return $this->importTable(table: $table, file: $file, importedBy: $importedBy);
 	}//end reimport()
+
+	/**
+	 * The table records matching filters, read as the system.
+	 *
+	 * @param array<string, mixed> $filters The filters on the table schema.
+	 *
+	 * @return array<int, array<string, mixed>> The records.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
+	 */
+	public function findTables(array $filters): array {
+		$found = (array)self::plain(value: $this->tables()->search(filters: $filters));
+
+		return array_values(array_filter(array_map(static fn (mixed $record): mixed => self::plain(value: $record), (array)($found['results'] ?? [])), 'is_array'));
+	}//end findTables()
+
+	/**
+	 * Store a table record as the system.
+	 *
+	 * @param array<string, mixed> $table The record.
+	 *
+	 * @return array<string, mixed> The stored record.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
+	 */
+	public function storeTable(array $table): array {
+		return (array)self::plain(value: $this->tables()->save(object: $table));
+	}//end storeTable()
 
 	/**
 	 * The rows of a CSV file; the first ones give the row schema's column types.

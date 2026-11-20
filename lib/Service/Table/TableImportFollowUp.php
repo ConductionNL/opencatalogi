@@ -24,9 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Table;
 
-use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\TableImportQueueInterface;
-use OCA\OpenCatalogi\Service\SchemaObjects;
 use OCP\AppFramework\Utility\ITimeFactory;
 use Throwable;
 
@@ -58,14 +56,12 @@ class TableImportFollowUp {
 	/**
 	 * Constructor.
 	 *
-	 * @param PublishedTableService       $tables    Imports a stored table again from its attachment.
-	 * @param OpenRegisterLookupInterface $registers The OpenRegister ObjectService and register configuration.
-	 * @param TableImportQueueInterface   $queue     Queues an import.
-	 * @param ITimeFactory                $time      The clock.
+	 * @param PublishedTableService     $tables Reads, stores and imports the table records.
+	 * @param TableImportQueueInterface $queue  Queues an import.
+	 * @param ITimeFactory              $time   The clock.
 	 */
 	public function __construct(
 		private readonly PublishedTableService $tables,
-		private readonly OpenRegisterLookupInterface $registers,
 		private readonly TableImportQueueInterface $queue,
 		private readonly ITimeFactory $time,
 	) {
@@ -109,12 +105,10 @@ class TableImportFollowUp {
 	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
 	 */
 	public function failStaleImports(string $except = ''): int {
-		$found = self::plain(value: $this->objects()->search(filters: ['status' => PublishedTableService::STATUS_IMPORTING, '_limit' => 100]));
 		$limit = $this->time->getTime() - self::STALE_AFTER_SECONDS;
 		$ended = 0;
-		foreach ((array)($found['results'] ?? []) as $record) {
-			$table = self::plain(value: $record);
-			if (is_array($table) === false || ($table['status'] ?? null) !== PublishedTableService::STATUS_IMPORTING) {
+		foreach ($this->tables->findTables(filters: ['status' => PublishedTableService::STATUS_IMPORTING, '_limit' => 100]) as $table) {
+			if (($table['status'] ?? null) !== PublishedTableService::STATUS_IMPORTING) {
 				continue;
 			}
 
@@ -145,11 +139,9 @@ class TableImportFollowUp {
 			return 0;
 		}
 
-		$found = self::plain(value: $this->objects()->search(filters: ['file' => (string)$fileId, '_limit' => 100]));
 		$queued = 0;
-		foreach ((array)($found['results'] ?? []) as $record) {
-			$table = self::plain(value: $record);
-			if (is_array($table) === false || (string)($table['file'] ?? '') !== (string)$fileId) {
+		foreach ($this->tables->findTables(filters: ['file' => (string)$fileId, '_limit' => 100]) as $table) {
+			if ((string)($table['file'] ?? '') !== (string)$fileId) {
 				continue;
 			}
 
@@ -186,7 +178,7 @@ class TableImportFollowUp {
 		$table['lastError'] = mb_substr($message, 0, 2000);
 		unset($table['@self']);
 
-		return (array)self::plain(value: $this->objects()->save(object: $table));
+		return $this->tables->storeTable(table: $table);
 	}//end fail()
 
 	/**
@@ -209,30 +201,4 @@ class TableImportFollowUp {
 
 		return $time;
 	}//end startedAt()
-
-	/**
-	 * The table records, read and written as the system.
-	 *
-	 * @return SchemaObjects The bound objects.
-	 */
-	private function objects(): SchemaObjects {
-		$config = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'published_table_schema');
-
-		return new SchemaObjects(objects: $this->registers->objectService(), target: [$config['register'], $config['schema']]);
-	}//end objects()
-
-	/**
-	 * A serialisable value as plain data.
-	 *
-	 * @param mixed $value The value.
-	 *
-	 * @return mixed The plain value.
-	 */
-	private static function plain(mixed $value): mixed {
-		if (is_object($value) === true && method_exists($value, 'jsonSerialize') === true) {
-			return $value->jsonSerialize();
-		}
-
-		return $value;
-	}//end plain()
 }//end class

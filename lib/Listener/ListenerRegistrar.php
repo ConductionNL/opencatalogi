@@ -102,14 +102,8 @@ class ListenerRegistrar {
 		);
 
 		// Queue a readiness check when a catalogue is switched on for Woo (REQ-WIH-004).
-		$context->registerEventListener(
-			event: ObjectCreatedEvent::class,
-			listener: WooReadinessTriggerListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: WooReadinessTriggerListener::class
-		);
+		$context->registerEventListener(event: ObjectCreatedEvent::class, listener: WooReadinessTriggerListener::class);
+		$context->registerEventListener(event: ObjectUpdatedEvent::class, listener: WooReadinessTriggerListener::class);
 
 		// Register catalog cache event listeners.
 		$context->registerEventListener(
