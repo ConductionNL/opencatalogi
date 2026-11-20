@@ -39,6 +39,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) mapDatasets() lets the changed-since read reuse the feed instead of copying it.
  * @SuppressWarnings(PHPMD.TooManyMethods) Document building is split into small private steps to stay under the unit size and complexity limits.
  *
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-3-serializer-public-endpoints
@@ -236,6 +237,32 @@ class DcatService implements DcatServiceInterface {
 			'_meta' => $this->buildCatalogMeta(etagKey: ($catalog['id'] ?? $catalogSlug), page: $scope + ['collected' => $collected]),
 		];
 	}//end buildCatalogDocument()
+
+	/**
+	 * Map publications of a catalog to DCAT dataset nodes, as the catalog feed does.
+	 *
+	 * The same mapping, defaults, HVD resolution, opt-out and DQV handling as
+	 * {@see buildCatalogDocument()}, without the search: the caller hands in the
+	 * publications it read. Like that method it does not guard the catalog; a
+	 * public caller guards it first and reads the publications in the anonymous
+	 * scope.
+	 *
+	 * @param array<string, mixed> $catalog The catalog object, with its `slug`.
+	 * @param array<int, mixed> $publications The publications to map.
+	 *
+	 * @return array<int, array<string, mixed>> One dataset node per publication whose schema did not opt out.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	public function mapDatasets(array $catalog, array $publications): array {
+		if ($publications === []) {
+			return [];
+		}
+
+		$scope = $this->resolveCatalogScope(catalog: $catalog, catalogSlug: (string)$catalog['slug']);
+
+		return $this->mapCatalogDatasets(publications: $publications, scope: $scope)['datasets'];
+	}//end mapDatasets()
 
 	/**
 	 * The DCAT graph of one publication of a catalogue, for its dataset IRI.

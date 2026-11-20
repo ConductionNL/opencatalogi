@@ -1898,6 +1898,7 @@ OC.L10N.register(
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vereist OpenRegister %1$s of nieuwer. Vraag je beheerder om OpenRegister bij te werken.",
         "Invalid listing": "Ongeldige vermelding",
         "Listing not found in scope": "Vermelding niet gevonden in dit bereik",
+        "%s must be an ISO 8601 date, such as 2026-04-01T00:00:00Z.": "%s moet een ISO 8601-datum zijn, zoals 2026-04-01T00:00:00Z.",
         "Who can read it": "Wie kan het lezen",
         "Everyone": "Iedereen",
         "Readers who log in with DigiD or eHerkenning": "Lezers die inloggen met DigiD of eHerkenning",

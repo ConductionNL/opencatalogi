@@ -1942,6 +1942,7 @@
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.",
         "Invalid listing": "Invalid listing",
         "Listing not found in scope": "Listing not found in scope",
+        "%s must be an ISO 8601 date, such as 2026-04-01T00:00:00Z.": "%s must be an ISO 8601 date, such as 2026-04-01T00:00:00Z.",
         "Who can read it": "Who can read it",
         "Everyone": "Everyone",
         "Readers who log in with DigiD or eHerkenning": "Readers who log in with DigiD or eHerkenning",

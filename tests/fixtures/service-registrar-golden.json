@@ -56,6 +56,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\ChangesServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\ChangesService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\DcatDereferenceInterface",
         "OCA\\OpenCatalogi\\Service\\DcatDereference"
     ],

@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\InstanceModeSwitchInterface;
+use OCA\OpenCatalogi\Contract\ChangesServiceInterface;
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
 use OCA\OpenCatalogi\Contract\DiwooCompletenessInterface;
 use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
@@ -179,6 +180,7 @@ final class ServiceBindings {
 		TransparencyWorkflowServiceInterface::class => WooService::class,
 		CatalogiServiceInterface::class => CatalogiService::class,
 		DcatServiceInterface::class => DcatService::class,
+		ChangesServiceInterface::class => ChangesService::class,
 		DcatDereferenceInterface::class => DcatDereference::class,
 		DocumentReferencesInterface::class => DocumentReferences::class,
 		DocumentReferenceProbeInterface::class => DocumentReferenceProbe::class,
