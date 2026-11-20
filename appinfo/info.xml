@@ -242,6 +242,20 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				bundled one. Idempotent: a schema whose rules already match is not written.
 			-->
 			<step>OCA\OpenCatalogi\Repair\RecomputeCatalogAccess</step>
+			<!--
+				Grants the eight capability rights (woo-access-boundary-hardening REQ-WAB-004)
+				to every group delegated the OpenCatalogi admin section, so nobody loses a
+				capability when the routes stop riding on the admin delegation. After
+				InitializeSettings, which may reset the catalog schema's authorization.
+				Idempotent: grants already there are kept and a complete block is not written.
+			-->
+			<step>OCA\OpenCatalogi\Repair\GrantCapabilitiesToDelegatedAdmins</step>
+			<!--
+				Seeds the processing activity opencatalogi-woo-records that the five Woo
+				schemas attribute their logged reads to (woo-access-boundary-hardening
+				REQ-WAB-001). Idempotent: an activity with the code is left as it is.
+			-->
+			<step>OCA\OpenCatalogi\Repair\SeedWooProcessingActivity</step>
 			<!-- Hands depublication, inspection, comment-period, community and Woo-request records an
 			     editor came to own to the system. Needs OpenRegister's release-to-system call; idempotent. -->
 			<step>OCA\OpenCatalogi\Repair\HandRecordsToSystem</step>
