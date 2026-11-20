@@ -31,6 +31,8 @@ use OCA\OpenCatalogi\Dashboard\RetentionWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
 use OCA\OpenCatalogi\Listener\BatchReviewTaskListener;
+use OCA\OpenCatalogi\Listener\CapabilityDeclarationListener;
+use OCA\OpenCatalogi\Listener\CapabilityScopeListener;
 use OCA\OpenCatalogi\Listener\CatalogAccessListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
@@ -39,19 +41,26 @@ use OCA\OpenCatalogi\Listener\CompletenessListener;
 use OCA\OpenCatalogi\Listener\DiwooCompletenessListener;
 use OCA\OpenCatalogi\Listener\DocumentReferenceListener;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
+use OCA\OpenCatalogi\Listener\MetadataSuggestionListener;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
+use OCA\OpenCatalogi\Listener\PublicationAudienceCheck;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
+use OCA\OpenCatalogi\Listener\SourceAbsenceListener;
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\PublicationLinksListener;
+use OCA\OpenCatalogi\Listener\RuleCategoryListener;
+use OCA\OpenCatalogi\Listener\PublicationRelationsListener;
+use OCA\OpenCatalogi\Listener\SingleLawfulValueListener;
 use OCA\OpenCatalogi\Listener\TermRollListener;
 use OCA\OpenCatalogi\Listener\HandedOverRecordsListener;
+use OCA\OpenCatalogi\Listener\ThemeFeaturedCheckListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Listener\WooReadinessTriggerListener;
 use OCA\OpenCatalogi\Mcp\McpRegistrar;
-use OCA\OpenCatalogi\Mcp\OpenCatalogiToolProvider;
+use OCA\OpenCatalogi\Mcp\OpenCatalogiScannableServices;
 use OCA\OpenCatalogi\Observability\ObservabilityRegistrar;
 use OCA\OpenCatalogi\Observability\OpenCatalogiMetricsProvider;
 use OCA\OpenCatalogi\Observability\SearchBackendHealthProvider;
@@ -120,9 +129,11 @@ class ComponentRegistrarsTest extends TestCase {
 		$this->assertSame(
 			[
 				[$e . 'ObjectCreatedEvent', ObjectCreatedEventListener::class],
+				[$e . 'ObjectCreatedEvent', MetadataSuggestionListener::class],
 				[$e . 'ObjectUpdatedEvent', ObjectUpdatedEventListener::class],
 				[$e . 'ObjectUpdatedEvent', PortalAccountRemovedListener::class],
 				[$e . 'ObjectUpdatedEvent', PlooiDeliveryListener::class],
+				[$e . 'ObjectUpdatedEvent', SourceAbsenceListener::class],
 				[$e . 'ObjectCreatedEvent', WooReadinessTriggerListener::class],
 				[$e . 'ObjectUpdatedEvent', WooReadinessTriggerListener::class],
 				[$e . 'ObjectCreatedEvent', CatalogCacheEventListener::class],
@@ -136,21 +147,32 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectCreatedEvent', CatalogAccessListener::class],
 				[$e . 'ObjectUpdatedEvent', CatalogAccessListener::class],
 				[$e . 'ObjectDeletedEvent', CatalogAccessListener::class],
+				[$e . 'PermissionsDeclaringEvent', CapabilityDeclarationListener::class],
+				[$e . 'CustomScopeEvaluatingEvent', CapabilityScopeListener::class],
 				[$e . 'ObjectCreatingEvent', TermRollListener::class],
 				[$e . 'ObjectUpdatingEvent', TermRollListener::class],
 				[$e . 'ObjectCreatingEvent', HandedOverRecordsListener::class],
 				[$e . 'ObjectUpdatingEvent', HandedOverRecordsListener::class],
+				[$e . 'ObjectCreatingEvent', PublicationRelationsListener::class],
+				[$e . 'ObjectUpdatingEvent', PublicationRelationsListener::class],
 				[$e . 'ObjectCreatingEvent', DocumentReferenceListener::class],
 				[$e . 'ObjectUpdatingEvent', DocumentReferenceListener::class],
+				[$e . 'ObjectCreatingEvent', SingleLawfulValueListener::class],
+				[$e . 'ObjectCreatingEvent', ThemeFeaturedCheckListener::class],
+				[$e . 'ObjectUpdatingEvent', ThemeFeaturedCheckListener::class],
 				[$e . 'ObjectCreatingEvent', DiwooCompletenessListener::class],
 				[$e . 'ObjectUpdatingEvent', DiwooCompletenessListener::class],
 				[$e . 'ObjectCreatingEvent', PlainSummaryCheck::class],
 				[$e . 'ObjectUpdatingEvent', PlainSummaryCheck::class],
+				[$e . 'ObjectCreatingEvent', PublicationAudienceCheck::class],
+				[$e . 'ObjectUpdatingEvent', PublicationAudienceCheck::class],
 				[$e . 'TaskTerminalEvent', BatchReviewTaskListener::class],
 				[$e . 'ObjectCreatingEvent', CompletenessListener::class],
 				[$e . 'ObjectUpdatingEvent', CompletenessListener::class],
 				[$e . 'ObjectCreatingEvent', PublicationLinksListener::class],
 				[$e . 'ObjectUpdatingEvent', PublicationLinksListener::class],
+				[$e . 'ObjectCreatingEvent', RuleCategoryListener::class],
+				[$e . 'ObjectUpdatingEvent', RuleCategoryListener::class],
 				[$e . 'RegisterCreatedEvent', CatalogScopePendingListener::class],
 				[$e . 'RegisterUpdatedEvent', CatalogScopePendingListener::class],
 				[$e . 'ToolRegistrationEvent', ToolRegistrationListener::class],
@@ -160,6 +182,22 @@ class ComponentRegistrarsTest extends TestCase {
 		);
 
 	}//end testListenerRegistrarSubscribesEveryListener()
+
+	/**
+	 * The metadata suggestion listener's queue contract is bound beside it.
+	 *
+	 * @return void
+	 */
+	public function testListenerRegistrarBindsTheSuggestionQueue(): void {
+		$context = $this->createMock(IRegistrationContext::class);
+		$context->expects($this->once())->method('registerServiceAlias')->with(
+			'OCA\\OpenCatalogi\\Contract\\MetadataSuggestionQueueInterface',
+			'OCA\\OpenCatalogi\\BackgroundJob\\MetadataSuggestionQueue'
+		);
+
+		(new ListenerRegistrar())->register($context);
+
+	}//end testListenerRegistrarBindsTheSuggestionQueue()
 
 	/**
 	 * The MCP and metrics providers are bound under the keys OpenRegister enumerates.
@@ -180,7 +218,7 @@ class ComponentRegistrarsTest extends TestCase {
 
 		$this->assertSame(
 			[
-				'OCA\\OpenRegister\\Mcp\\IMcpToolProvider::opencatalogi' => OpenCatalogiToolProvider::class,
+				'OCA\\OpenRegister\\Mcp\\IMcpScannableServices::opencatalogi' => OpenCatalogiScannableServices::class,
 				'OCA\\OpenRegister\\AppHost\\IMetricsProvider::opencatalogi' => OpenCatalogiMetricsProvider::class,
 				'OCA\\OpenRegister\\AppHost\\IHealthCheckProvider::opencatalogi' => SearchBackendHealthProvider::class,
 			],

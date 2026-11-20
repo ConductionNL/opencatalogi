@@ -22,16 +22,20 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
+use OCA\OpenRegister\Event\CustomScopeEvaluatingEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectDeletingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
+use OCA\OpenRegister\Event\PermissionsDeclaringEvent;
 use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
+use OCA\OpenCatalogi\BackgroundJob\MetadataSuggestionQueue;
+use OCA\OpenCatalogi\Contract\MetadataSuggestionQueueInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 
@@ -60,6 +64,16 @@ class ListenerRegistrar {
 			event: ObjectCreatedEvent::class,
 			listener: ObjectCreatedEventListener::class
 		);
+
+		// Woo metadata suggestions (REQ-WMS-001): queue the rules floor for a new
+		// publication, so missing Woo metadata is proposed after the save.
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: MetadataSuggestionListener::class
+		);
+		// The listener queues through this contract; bound here, beside its only
+		// caller, so the service bindings take no further dependency on BackgroundJob/.
+		$context->registerServiceAlias(MetadataSuggestionQueueInterface::class, MetadataSuggestionQueue::class);
 		$context->registerEventListener(
 			event: ObjectUpdatedEvent::class,
 			listener: ObjectUpdatedEventListener::class
@@ -78,6 +92,12 @@ class ListenerRegistrar {
 		$context->registerEventListener(
 			event: ObjectUpdatedEvent::class,
 			listener: PlooiDeliveryListener::class
+		);
+
+		// A harvested publication its source ended is taken down (capability-rows-close-gaps 2.8).
+		$context->registerEventListener(
+			event: ObjectUpdatedEvent::class,
+			listener: SourceAbsenceListener::class
 		);
 
 		// Queue a readiness check when a catalogue is switched on for Woo (REQ-WIH-004).
@@ -126,12 +146,28 @@ class ListenerRegistrar {
 			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
 		}
 
+		// Capability rights (woo-access-boundary-hardening REQ-WAB-004): declare the
+		// eight verbs to OpenRegister and decide them from the catalog schema's grants.
+		$context->registerEventListener(PermissionsDeclaringEvent::class, CapabilityDeclarationListener::class);
+		$context->registerEventListener(CustomScopeEvaluatingEvent::class, CapabilityScopeListener::class);
+
 		$this->registerWriteGuards(context: $context);
+
+		// Refuse a self-relation and mirror caseReference into sourceIdentifiers (REQ-PRS-001, REQ-PRS-003).
+		$context->registerEventListener(ObjectCreatingEvent::class, PublicationRelationsListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationRelationsListener::class);
 
 		// Document references (integration-publish-by-reference): refuse a URL
 		// that is not a public https address before OpenRegister stores it.
 		$context->registerEventListener(ObjectCreatingEvent::class, DocumentReferenceListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, DocumentReferenceListener::class);
+
+		// A field with one lawful value for the officer fills itself before the first write (REQ-WMS-004).
+		$context->registerEventListener(ObjectCreatingEvent::class, SingleLawfulValueListener::class);
+		// A featured subject is shown by its title, so a featured save without one is
+		// refused through any API (subjects-as-first-class-records, REQ-SUB-001).
+		$context->registerEventListener(ObjectCreatingEvent::class, ThemeFeaturedCheckListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, ThemeFeaturedCheckListener::class);
 
 		// A Woo publication does not go public without its mandatory DiWoo metadata,
 		// and a document type is stored as its list member's URI (REQ-DWP-002, REQ-DWP-003).
@@ -142,6 +178,11 @@ class ListenerRegistrar {
 		// provenance is the server's to write (publication-plain-language-and-translation, REQ-PPL-001).
 		$context->registerEventListener(ObjectCreatingEvent::class, PlainSummaryCheck::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PlainSummaryCheck::class);
+
+		// A Woo publication is public by law: it cannot be limited to signed-in
+		// readers (publications-for-signed-in-readers, REQ-PSR-004).
+		$context->registerEventListener(ObjectCreatingEvent::class, PublicationAudienceCheck::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationAudienceCheck::class);
 
 		// A Woo batch whose review task is rejected in OpenRegister goes back to its
 		// author with the task's comment (woo-review-surface, REQ-WRV-002).
@@ -155,6 +196,12 @@ class ListenerRegistrar {
 		// A publication carries its public page and its officer page (REQ-PTS-001).
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationLinksListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationLinksListener::class);
+
+		// A record a published collection publishes is filed under the collection's
+		// Woo category before it is written, so it lands in that category's sitemap
+		// (capability-rows-verify-scenarios, REQ-CVS-003).
+		$context->registerEventListener(ObjectCreatingEvent::class, RuleCategoryListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, RuleCategoryListener::class);
 
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is

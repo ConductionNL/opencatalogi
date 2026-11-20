@@ -211,7 +211,8 @@ class LeafIntegrationsDeclarationTest extends TestCase {
 	}
 
 	/**
-	 * The integration widgets are the pre-existing three plus the calendar leaf,
+	 * The integration widgets are the pre-existing three plus the calendar leaf
+	 * and the publication's version history (capability-rows-close-gaps 2.4),
 	 * and the pre-existing ones are unchanged.
 	 *
 	 * @return void
@@ -233,6 +234,7 @@ class LeafIntegrationsDeclarationTest extends TestCase {
 				'pub-calendar' => 'calendar',
 				'pub-links' => 'bookmarks',
 				'pub-photos' => 'photos',
+				'pub-versions' => 'version-history',
 			],
 			$found
 		);

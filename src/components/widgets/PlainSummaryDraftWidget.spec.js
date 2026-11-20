@@ -35,11 +35,13 @@ beforeEach(() => {
 })
 
 describe('PlainSummaryDraftWidget', () => {
-	it('stays hidden without a text assistant', async () => {
+	it('offers no draft without a text assistant, and says so once it has asked', async () => {
 		const self = widget()
+		expect(self.checked).toBe(false)
 		axios.get.mockResolvedValue({ data: { available: false } })
 		await self.checkAssistant()
 		expect(self.available).toBe(false)
+		expect(self.checked).toBe(true)
 
 		axios.get.mockRejectedValue(new Error('down'))
 		await self.checkAssistant()

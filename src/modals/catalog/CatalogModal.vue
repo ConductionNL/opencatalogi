@@ -189,6 +189,10 @@ const { isAdmin } = useIsAdmin()
 						v-if="isAdmin"
 						v-model="catalogi.staffAccess"
 						:disabled="objectStore.isLoading('catalog')" />
+					<CatalogRetentionDefaultsFields
+						v-if="isAdmin && storedSlug"
+						:catalogSlug="storedSlug"
+						:disabled="objectStore.isLoading('catalog')" />
 				</fieldset>
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
@@ -247,6 +251,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import CatalogRetentionDefaultsFields from '../../components/CatalogRetentionDefaultsFields.vue'
 import CatalogStaffAccessFields from '../../components/CatalogStaffAccessFields.vue'
 import TranslationLanguageSwitch from '../../components/TranslationLanguageSwitch.vue'
 import { Catalogi } from '../../entities/index.js'
@@ -342,6 +347,7 @@ function schemaOption(schema) {
 export default {
 	name: 'CatalogModal',
 	components: {
+		CatalogRetentionDefaultsFields,
 		TranslationLanguageSwitch,
 		CatalogStaffAccessFields,
 		NcModal,
@@ -424,6 +430,15 @@ export default {
 
 		isEdit() {
 			return !!objectStore.getActiveObject('catalog')
+		},
+
+		/**
+		 * The slug the catalogue is saved under, which keys its retention defaults (RET-004).
+		 *
+		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
+		 */
+		storedSlug() {
+			return objectStore.getActiveObject('catalog')?.slug || ''
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */

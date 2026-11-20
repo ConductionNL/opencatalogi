@@ -44,7 +44,7 @@ final class RetentionRules {
 	private const WITHDRAWALS = [
 		'depublish' => [],
 		'archive' => ['status' => 'archived'],
-		'dispose' => ['status' => 'archived'],
+		'dispose' => [],
 	];
 
 	/**
@@ -238,7 +238,10 @@ final class RetentionRules {
 	}//end withObjectId()
 
 	/**
-	 * The publication depublished now, archived too for archive and dispose.
+	 * The publication depublished now, archived too for archive.
+	 *
+	 * Dispose is not archived: the publication leaves the public surfaces at once and
+	 * RetentionService removes it once the decision is saved.
 	 *
 	 * @param array<string, mixed> $data The publication.
 	 * @param string $decision The withdrawing decision.

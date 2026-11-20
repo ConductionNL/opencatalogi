@@ -102,6 +102,18 @@ interface FeedConsumerServiceInterface {
 	public function disableConsumer(string $consumerId): array;
 
 	/**
+	 * Let a consumer act for signed-in readers, or stop it.
+	 *
+	 * @param string $consumerId The consumer id.
+	 * @param bool   $allowed    Whether it may.
+	 *
+	 * @return array<string, mixed> The consumer, without verifiers.
+	 *
+	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-trusted-portal-reads-it-for-a-reader-at-the-required-level-req-psr-003
+	 */
+	public function setActForSignedInReaders(string $consumerId, bool $allowed): array;
+
+	/**
 	 * The consumer and account a presented key belongs to, or null when the key is refused.
 	 *
 	 * @param string $presented The key as sent.

@@ -34,8 +34,8 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
 use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Service\CapabilityRights;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
-use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -43,7 +43,7 @@ use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
-use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -59,6 +59,7 @@ use OCP\IUserSession;
  * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-publication-can-carry-one-bounded-public-comment-period-req-pcp-001
  */
 class CommentPeriodController extends Controller {
+	use CapabilityGuard;
 	use ResolvesRegisterConfiguration;
 	use ReadsOpenRegisterResults;
 
@@ -71,6 +72,7 @@ class CommentPeriodController extends Controller {
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
 	 * @param CommentPeriodServiceInterface $periods Opens periods and derives their state.
+	 * @param CapabilityRights|null $capabilities The capability rights (REQ-WAB-004).
 	 */
 	public function __construct(
 		$appName,
@@ -79,6 +81,7 @@ class CommentPeriodController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly CommentPeriodServiceInterface $periods,
+		private readonly ?CapabilityRights $capabilities=null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -122,8 +125,13 @@ class CommentPeriodController extends Controller {
 	 *
 	 * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-publication-can-carry-one-bounded-public-comment-period-req-pcp-001
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function open(): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'openCommentPeriod');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		try {
 			$period = $this->periods->open(request: $this->openRequest(openedBy: $this->sessionUserId()));
 		} catch (\DomainException $e) {

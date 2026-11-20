@@ -9,6 +9,32 @@
 			data-testid="publication-visibility-state">
 			{{ stateLabel }}
 		</p>
+		<p
+			v-if="unlisted"
+			class="publication-visibility__state"
+			data-testid="publication-visibility-unlisted">
+			{{ t('opencatalogi', 'Unlisted: reachable by its link, left out of search and feeds.') }}
+		</p>
+		<p
+			v-if="state"
+			class="publication-visibility__audience"
+			data-testid="publication-visibility-audience">
+			<strong>{{ t('opencatalogi', 'Who can read it') }}:</strong>
+			{{ audienceLabel }}
+		</p>
+		<p
+			v-if="audience === 'signedIn'"
+			class="publication-visibility__audience-link"
+			data-testid="publication-visibility-audience-link">
+			{{ t('opencatalogi', 'The link works for readers who log in') }}
+		</p>
+
+		<NcNoteCard
+			v-if="sourceAbsenceNote"
+			type="warning"
+			data-testid="publication-source-absence">
+			{{ sourceAbsenceNote }}
+		</NcNoteCard>
 
 		<div class="publication-visibility__actions">
 			<NcButton
@@ -26,6 +52,20 @@
 				data-testid="publication-publish-again"
 				@click="publish">
 				{{ t('opencatalogi', 'Publish again') }}
+			</NcButton>
+			<NcButton
+				v-if="lists.unlist"
+				:disabled="busy"
+				data-testid="publication-unlist"
+				@click="setListed(false)">
+				{{ t('opencatalogi', 'Unlist') }}
+			</NcButton>
+			<NcButton
+				v-if="lists.listAgain"
+				:disabled="busy"
+				data-testid="publication-list-again"
+				@click="setListed(true)">
+				{{ t('opencatalogi', 'List again') }}
 			</NcButton>
 			<NcButton
 				v-if="actions.withdraw"
@@ -101,11 +141,26 @@ import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublica
 import {
 	documentOptions,
 	filesRouteParams,
+	listActions,
 	publishRefusalMessage,
 	visibilityActions,
 	withdrawnDocuments,
 } from '../../services/publicationVisibility.js'
 import { injectedObjectContext } from './objectContext.js'
+
+/**
+ * A moment from the server, as the reader's locale writes a date and time.
+ *
+ * @param {string} value An ISO 8601 moment.
+ * @return {string} The formatted moment, or the value itself when it is not a date.
+ */
+function formatMoment(value) {
+	const date = new Date(value)
+	if (Number.isNaN(date.getTime())) {
+		return value
+	}
+	return date.toLocaleString()
+}
 
 /**
  * The withdraw endpoint's path: one document's, or the whole publication's.
@@ -146,6 +201,11 @@ export default {
 		return {
 			state: '',
 			canPublish: false,
+			canUpdate: false,
+			unlisted: false,
+			audience: 'public',
+			minimumAssurance: 'substantial',
+			sourceAbsence: null,
 			documents: [],
 			withdrawn: [],
 			republishing: null,
@@ -162,6 +222,11 @@ export default {
 			return visibilityActions(this.state, this.canPublish)
 		},
 
+		/** @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006 */
+		lists() {
+			return listActions(this.state, this.unlisted, this.canUpdate)
+		},
+
 		/** @spec exclude presentational widget adapter; resolves the object context from inject. */
 		ctx() {
 			return injectedObjectContext(this)
@@ -170,6 +235,39 @@ export default {
 		/** @spec exclude presentational widget adapter; derives the object id. */
 		resolvedObjectId() {
 			return this.objectId || this.ctx.objectId || this.content.objectId || ''
+		},
+
+		/**
+		 * What the editor is told when the source this publication was harvested
+		 * from no longer carries it: taken down when the source ended it, or kept
+		 * until the editor acts.
+		 *
+		 * @return {string} The note, or an empty string when its source still carries it.
+		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+		 */
+		sourceAbsenceNote() {
+			const absence = this.sourceAbsence
+			if (!absence) {
+				return ''
+			}
+			if (absence.endedAt) {
+				return this.t(
+					'opencatalogi',
+					'Its source no longer carries this publication and ended it on {date}, so it was taken down.',
+					{ date: formatMoment(absence.endedAt) },
+				)
+			}
+			if (absence.since) {
+				return this.t(
+					'opencatalogi',
+					'Its source no longer carries this publication (since {date}). It stays as it is until you withdraw it.',
+					{ date: formatMoment(absence.since) },
+				)
+			}
+			return this.t(
+				'opencatalogi',
+				'Its source no longer carries this publication. It stays as it is until you withdraw it.',
+			)
 		},
 
 		/**
@@ -183,10 +281,27 @@ export default {
 			return this.documents.filter((document) => !withdrawnIds.has(String(document.id)))
 		},
 
+		/**
+		 * Who can read the publication, as the Visibility card shows it (design D5).
+		 *
+		 * @return {string} The label.
+		 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-publication-says-who-can-read-it-req-psr-001
+		 */
+		audienceLabel() {
+			if (this.audience !== 'signedIn') {
+				return this.t('opencatalogi', 'Everyone')
+			}
+			return this.minimumAssurance === 'high'
+				? this.t('opencatalogi', 'Readers who log in with DigiD or eHerkenning, level High')
+				: this.t('opencatalogi', 'Readers who log in with DigiD or eHerkenning, level Substantial')
+		},
+
 		/** @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001 */
 		stateLabel() {
 			const labels = {
 				draft: this.t('opencatalogi', 'Not published yet.'),
+				in_review: this.t('opencatalogi', 'In review: waiting for a reviewer.'),
+				approved: this.t('opencatalogi', 'Approved: ready to publish.'),
 				scheduled: this.t(
 					'opencatalogi',
 					'Scheduled: it becomes public on its publication date.',
@@ -249,9 +364,17 @@ export default {
 				const { data } = await axios.get(this.url('visibility'))
 				this.state = data.state || ''
 				this.canPublish = data.canPublish === true
+				this.canUpdate = data.canUpdate === true
+				this.unlisted = data.unlisted === true
+				this.audience = data.audience === 'signedIn' ? 'signedIn' : 'public'
+				this.minimumAssurance = data.minimumAssurance === 'high' ? 'high' : 'substantial'
+				this.sourceAbsence = data.sourceAbsence || null
 			} catch {
 				this.state = ''
 				this.canPublish = false
+				this.audience = 'public'
+				this.minimumAssurance = 'substantial'
+				this.sourceAbsence = null
 			}
 
 			await this.loadFiles()
@@ -301,6 +424,27 @@ export default {
 				this.message = this.t('opencatalogi', 'The publication is public.')
 			} catch (error) {
 				this.showError(error)
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Unlist the publication, or list it again (REQ-PLC-006).
+		 *
+		 * @param {boolean} listed True to put it back on every surface.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+		 */
+		async setListed(listed) {
+			this.busy = true
+			this.message = ''
+			try {
+				const { data } = await axios.post(this.url(listed ? 'list' : 'unlist'))
+				this.unlisted = data.unlisted === true
+			} catch {
+				this.messageType = 'error'
+				this.message = this.t('opencatalogi', 'The list status could not be changed.')
 			} finally {
 				this.busy = false
 			}
@@ -460,8 +604,14 @@ export default {
 	padding: 12px;
 }
 
-.publication-visibility__state {
+.publication-visibility__state,
+.publication-visibility__audience,
+.publication-visibility__audience-link {
 	margin: 0;
+}
+
+.publication-visibility__audience-link {
+	color: var(--color-text-maxcontrast);
 }
 
 .publication-visibility__actions {

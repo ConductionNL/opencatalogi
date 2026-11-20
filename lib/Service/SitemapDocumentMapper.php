@@ -35,6 +35,8 @@ use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
  * axis that does not resolve.
  *
  * @spec openspec/specs/woo-compliance/spec.md
+ *
+ * @SuppressWarnings(PHPMD.TooManyMethods) Each DiWoo axis is its own short private step.
  */
 class SitemapDocumentMapper implements DiwooCompletenessInterface {
 
@@ -65,6 +67,34 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @var array<string, array<string, mixed>>
 	 */
 	private array $organisationCache = [];
+
+	/**
+	 * The register the type-level category defaults live in.
+	 *
+	 * @var string
+	 */
+	private const MAPPING_REGISTER = 'publication';
+
+	/**
+	 * The schema of the type-level category defaults.
+	 *
+	 * @var string
+	 */
+	private const MAPPING_SCHEMA = 'wooCategoryMapping';
+
+	/**
+	 * The app key under which opencatalogi's own publication schemas are mapped.
+	 *
+	 * @var string
+	 */
+	private const MAPPING_APP = 'opencatalogi';
+
+	/**
+	 * The type-level default category per schema id, so each schema is looked up once per sitemap.
+	 *
+	 * @var array<string, array{uri: string, label: string}|null>
+	 */
+	private array $typeDefaultCache = [];
 
 	/**
 	 * The fields the publication stores for its DiWoo document.
@@ -462,11 +492,14 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @return array|null The classificatiecollectie element, or null.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-category-mapping-intake/specs/woo-compliance/spec.md
 	 */
 	private function categoryElement(array $publication, ?string $mappedCategory = null): ?array {
 		$categoryRaw = ($mappedCategory ?? $publication['wooCategory'] ?? $publication['category'] ?? $publication['tooiCategorieUri']
 			?? $publication['tooiCategorieNaam'] ?? null);
-		$category = $this->categories->resolveForDocument($this->stringOrNull(value: $categoryRaw));
+		$declared = $this->stringOrNull(value: $categoryRaw);
+		$category = $this->declaredOrDefaultCategory(publication: $publication, declared: $declared);
+
 		if ($category === null) {
 			return null;
 		}
@@ -480,6 +513,134 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 			],
 		];
 	}//end categoryElement()
+
+	/**
+	 * The publication's own category, resolved or not (WOO-CAT-003), or else the default of its type.
+	 *
+	 * @param array       $publication The publication as returned from ObjectService.
+	 * @param string|null $declared    The category the publication or the mapping names.
+	 *
+	 * @return array|null The category, or null when none resolves.
+	 *
+	 * @spec openspec/changes/woo-category-mapping-intake/specs/woo-compliance/spec.md
+	 */
+	private function declaredOrDefaultCategory(array $publication, ?string $declared): ?array {
+		if ($declared !== null && trim($declared) !== '') {
+			return $this->categories->resolveForDocument($declared);
+		}
+
+		return $this->typeDefaultCategory(publication: $publication);
+	}//end declaredOrDefaultCategory()
+
+	/**
+	 * The type-level default category of a publication that declares none.
+	 *
+	 * Reads the active `wooCategoryMapping` row keyed by
+	 * `(app: opencatalogi, objectType: <the publication's schema slug>)` through
+	 * an ordinary OpenRegister object query, the same path any other app uses.
+	 * The row's URI is resolved against the value list again, so a row that names
+	 * no member is never emitted (WOO-CAT-002). No row, or OpenRegister not
+	 * reachable, is no default: the axis stays unresolved and reported.
+	 *
+	 * @param array<string, mixed> $publication The publication as returned from ObjectService.
+	 *
+	 * @return array{uri: string, label: string}|null The default, or null.
+	 *
+	 * @spec openspec/changes/woo-category-mapping-intake/specs/woo-compliance/spec.md
+	 */
+	private function typeDefaultCategory(array $publication): ?array {
+		$schema = ($publication['@self']['schema'] ?? null);
+		if ((is_string($schema) === false && is_int($schema) === false) || (string)$schema === '') {
+			return null;
+		}
+
+		$schemaId = (string)$schema;
+
+		if (array_key_exists($schemaId, $this->typeDefaultCache) === false) {
+			$this->typeDefaultCache[$schemaId] = $this->lookupTypeDefault(schemaId: $schemaId);
+		}
+
+		return $this->typeDefaultCache[$schemaId];
+	}//end typeDefaultCategory()
+
+	/**
+	 * Look up the default of one publication schema, resolved against the value list.
+	 *
+	 * @param string $schemaId The publication schema's id.
+	 *
+	 * @return array{uri: string, label: string}|null The default, or null.
+	 *
+	 * @spec openspec/changes/woo-category-mapping-intake/specs/woo-compliance/spec.md
+	 */
+	private function lookupTypeDefault(string $schemaId): ?array {
+		try {
+			$slug = $this->openRegister
+				->installedService('OCA\OpenRegister\Db\SchemaMapper', 'OpenRegister schemas are not available.')
+				->find($schemaId)
+				->getSlug();
+			$result = $this->openRegister->installedObjectService()->searchObjectsPaginated(
+				query: [
+					'@self' => ['register' => self::MAPPING_REGISTER, 'schema' => self::MAPPING_SCHEMA],
+					'app' => self::MAPPING_APP,
+					'objectType' => (string)$slug,
+					'_limit' => 10,
+				],
+				_rbac: false,
+				_multitenancy: false
+			);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		foreach (($result['results'] ?? []) as $row) {
+			$category = $this->activeMappingCategory(row: self::rowArray(row: $row), slug: (string)$slug);
+			if ($category !== null) {
+				return $category;
+			}
+		}
+
+		return null;
+	}//end lookupTypeDefault()
+
+	/**
+	 * The value-list member an active mapping row for this app and slug names, or null.
+	 *
+	 * The key is checked again rather than trusted to the query filter.
+	 *
+	 * @param array<string, mixed> $row  The mapping row.
+	 * @param string               $slug The publication schema's slug.
+	 *
+	 * @return array{uri: string, label: string}|null The member, or null.
+	 */
+	private function activeMappingCategory(array $row, string $slug): ?array {
+		if (($row['active'] ?? false) !== true
+			|| ($row['app'] ?? null) !== self::MAPPING_APP
+			|| ($row['objectType'] ?? null) !== $slug
+		) {
+			return null;
+		}
+
+		return $this->tooiVocabulary->resolveInformatiecategorie($this->stringOrNull(value: ($row['informatiecategorie'] ?? null)));
+	}//end activeMappingCategory()
+
+	/**
+	 * An OpenRegister result row as an array.
+	 *
+	 * @param mixed $row The row, an object or an array.
+	 *
+	 * @return array<string, mixed> The row's properties; empty when it is neither.
+	 */
+	private static function rowArray(mixed $row): array {
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$row = $row->jsonSerialize();
+		}
+
+		if (is_array($row) === false) {
+			return [];
+		}
+
+		return $row;
+	}//end rowArray()
 
 	/**
 	 * The documenthandeling element, resolved through the DiWoo value list

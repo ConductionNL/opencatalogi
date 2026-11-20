@@ -13,6 +13,10 @@ import CatalogModal from './CatalogModal.vue'
 import { adminForTest as admin } from '../../composables/useIsAdmin.js'
 import { objectStore } from '../../store/store.js'
 
+jest.mock('@nextcloud/axios', () => ({
+	get: jest.fn(() => Promise.resolve({ data: {} })),
+	post: jest.fn(() => Promise.resolve({ data: {} })),
+}))
 jest.mock('../../composables/useIsAdmin.js', () => {
 	const isAdmin = jest.requireActual('vue').ref(false)
 	return {

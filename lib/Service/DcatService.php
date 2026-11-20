@@ -28,6 +28,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use Psr\Log\LoggerInterface;
@@ -38,6 +39,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) mapDatasets() lets the changed-since read reuse the feed instead of copying it.
  * @SuppressWarnings(PHPMD.TooManyMethods) Document building is split into small private steps to stay under the unit size and complexity limits.
  *
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-3-serializer-public-endpoints
@@ -237,6 +239,32 @@ class DcatService implements DcatServiceInterface {
 	}//end buildCatalogDocument()
 
 	/**
+	 * Map publications of a catalog to DCAT dataset nodes, as the catalog feed does.
+	 *
+	 * The same mapping, defaults, HVD resolution, opt-out and DQV handling as
+	 * {@see buildCatalogDocument()}, without the search: the caller hands in the
+	 * publications it read. Like that method it does not guard the catalog; a
+	 * public caller guards it first and reads the publications in the anonymous
+	 * scope.
+	 *
+	 * @param array<string, mixed> $catalog The catalog object, with its `slug`.
+	 * @param array<int, mixed> $publications The publications to map.
+	 *
+	 * @return array<int, array<string, mixed>> One dataset node per publication whose schema did not opt out.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	public function mapDatasets(array $catalog, array $publications): array {
+		if ($publications === []) {
+			return [];
+		}
+
+		$scope = $this->resolveCatalogScope(catalog: $catalog, catalogSlug: (string)$catalog['slug']);
+
+		return $this->mapCatalogDatasets(publications: $publications, scope: $scope)['datasets'];
+	}//end mapDatasets()
+
+	/**
 	 * The DCAT graph of one publication of a catalogue, for its dataset IRI.
 	 *
 	 * Built from the same search as the catalogue feed: the catalogue's own
@@ -361,11 +389,14 @@ class DcatService implements DcatServiceInterface {
 		$languageService = $this->languageService();
 		$languageService?->setReturnAllTranslations(true);
 		try {
-			return $this->getObjectService()->searchObjectsPaginated(
-				query: $searchQuery,
-				_rbac: true,
-				_multitenancy: false,
-				deleted: false
+			// REQ-PLC-006: the DCAT feed never carries an unlisted publication.
+			return UnlistedPublications::withoutUnlisted(
+				page: $this->getObjectService()->searchObjectsPaginated(
+					query: $searchQuery,
+					_rbac: true,
+					_multitenancy: false,
+					deleted: false
+				)
 			);
 		} finally {
 			$languageService?->setReturnAllTranslations(false);
@@ -491,6 +522,28 @@ class DcatService implements DcatServiceInterface {
 			files: $files
 		);
 	}//end datasetSource()
+
+	/**
+	 * The dcat:Dataset node one publication renders as in a catalogue's feed, published or not.
+	 *
+	 * The same mapping as {@see buildCatalogDocument()}, without DQV measurements, so a
+	 * quality score of the node reflects what a harvester will see once it is public.
+	 *
+	 * @param array  $catalog     The catalog object.
+	 * @param string $catalogSlug The catalog slug.
+	 * @param array  $publication The publication, as OpenRegister serialises it.
+	 *
+	 * @return array The dataset node.
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
+	 */
+	public function buildPublicationDataset(array $catalog, string $catalogSlug, array $publication): array {
+		$scope = $this->resolveCatalogScope(catalog: $catalog, catalogSlug: $catalogSlug);
+		$scope['fileService'] = $this->getFileService();
+		$scope['dqvExposure'] = false;
+
+		return $this->mapCatalogDataset(source: $this->datasetSource(publication: $publication, scope: $scope), scope: $scope);
+	}//end buildPublicationDataset()
 
 	/**
 	 * The files, with a data dictionary URL on each one published as a table (REQ-ODT-003).

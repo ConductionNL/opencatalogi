@@ -34,6 +34,9 @@ use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicDocumentsInterface;
+use OCA\OpenCatalogi\Contract\PublicationUsage;
+use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -73,6 +76,20 @@ class FederationController extends Controller {
 	private readonly ?AppliedFilters $appliedFilters;
 
 	/**
+	 * Adds each document's id, metadata and links to a local attachment list (REQ-PDP-002); null leaves the list as is.
+	 *
+	 * @var PublicDocumentsInterface|null
+	 */
+	private readonly ?PublicDocumentsInterface $documents;
+
+	/**
+	 * Counts a served local publication and download (ANA-001); null counts nothing.
+	 *
+	 * @var UsageCounterServiceInterface|null
+	 */
+	private readonly ?UsageCounterServiceInterface $usageCounter;
+
+	/**
 	 * Negotiates the visitor's language (REQ-PTR-002); null leaves the response untranslated.
 	 *
 	 * @var PublicationQueryServiceInterface|null
@@ -95,8 +112,9 @@ class FederationController extends Controller {
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param LocalPublicationStateInterface|null $localState Adds the withheld list (REQ-WDW-003) and the comment period state (REQ-PDP-003).
 	 * @param ContainerInterface|null $container DI container for the optional collaborators: the app config
-	 *                                           holding the CORS allowlist (without it every origin is allowed)
-	 *                                           and the request's collector of applied filters (REQ-ASF-001),
+	 *                                           holding the CORS allowlist (without it every origin is allowed),
+	 *                                           the request's collector of applied filters (REQ-ASF-001),
+	 *                                           the usage counter of served local publications (ANA-001)
 	 *                                           and the query service negotiating the visitor's language (REQ-PTR-002);
 	 *                                           the cache headers read the session and app config from it.
 	 */
@@ -122,6 +140,20 @@ class FederationController extends Controller {
 
 		$this->appConfig = $appConfig;
 		$this->appliedFilters = $appliedFilters;
+		$documents = self::optional(container: $container, class: PublicDocumentsInterface::class);
+		if ($documents instanceof PublicDocumentsInterface === false) {
+			$documents = null;
+		}
+
+		$this->documents = $documents;
+
+		$usageCounter = self::optional(container: $container, class: UsageCounterServiceInterface::class);
+		if ($usageCounter instanceof UsageCounterServiceInterface === false) {
+			$usageCounter = null;
+		}
+
+		$this->usageCounter = $usageCounter;
+
 		$queryService = self::optional(container: $container, class: PublicationQueryServiceInterface::class);
 		$this->queryService = $queryService instanceof PublicationQueryServiceInterface ? $queryService : null;
 
@@ -266,6 +298,10 @@ class FederationController extends Controller {
 				$result['data'] = $this->localState->addTo(publication: $result['data']);
 			}
 
+			if ($result['status'] === 200 && $isLocal === true) {
+				$this->countReach(publicationId: $id, kind: UsageCounterServiceInterface::KIND_VIEW);
+			}
+
 			// The same cache headers publications#show sends: the portal reads a
 			// publication with its schema through this route on every page view,
 			// and an unchanged answer comes back as a 304 without a body.
@@ -392,10 +428,15 @@ class FederationController extends Controller {
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationAttachments(string $id): JSONResponse {
 		$response = $this->publicationService->getFederatedAttachments(id: $id, queryParams: $this->request->getParams());
+		if ($this->documents !== null) {
+			$response = $this->documents->describe(response: $response, catalogSlug: null, publicationId: $id);
+		}
+
 		$this->withSearchCorsHeaders(response: $response);
 		return $this->cacheableForCaller(response: $response);
 	}//end publicationAttachments()
@@ -423,8 +464,42 @@ class FederationController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function publicationDownload(string $id): DataDownloadResponse|JSONResponse {
-		return $this->withSearchCorsHeaders(response: $this->publicationService->download(id: $id));
+		$response = $this->withSearchCorsHeaders(response: $this->publicationService->download(id: $id));
+		if ($response instanceof DataDownloadResponse) {
+			$this->countReach(publicationId: $id, kind: UsageCounterServiceInterface::KIND_DOWNLOAD);
+		}
+
+		return $response;
 	}//end publicationDownload()
+
+	/**
+	 * Count one public read of a publication of this instance, never failing the read.
+	 *
+	 * The federation endpoint is a public read path like publications#show, so a
+	 * successful detail answer is a view and a served file a download (ANA-001).
+	 * HEAD requests are not counted, and a counter failure is logged and swallowed.
+	 *
+	 * @param string $publicationId The publication id the caller asked for.
+	 * @param string $kind          UsageCounterServiceInterface::KIND_VIEW or KIND_DOWNLOAD.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.1
+	 */
+	private function countReach(string $publicationId, string $kind): void {
+		if ($this->usageCounter === null || strtoupper((string)$this->request->getMethod()) === 'HEAD') {
+			return;
+		}
+
+		try {
+			$this->usageCounter->increment(
+				usage: new PublicationUsage(publicationId: $publicationId, kind: $kind),
+				userAgent: $this->request->getHeader('User-Agent')
+			);
+		} catch (\Throwable $e) {
+			$this->logger?->warning('[FederationController] usage count failed (swallowed)', ['error' => $e->getMessage()]);
+		}
+	}//end countReach()
 
 	/**
 	 * Answer a CORS preflight on the federation routes.

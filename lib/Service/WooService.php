@@ -43,12 +43,16 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use DomainException;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
+use OCA\OpenCatalogi\Service\Woo\RefusalGrounds;
+use OCA\OpenCatalogi\Service\Woo\RefusalGroundsUnavailableException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IL10N;
@@ -152,6 +156,13 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	private ?object $transitionEngine = null;
 
 	/**
+	 * The Woo refusal grounds: dossiq's list, or the vendored snapshot without dossiq.
+	 *
+	 * @var RefusalGrounds
+	 */
+	private readonly RefusalGrounds $refusalGrounds;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param RegisterBindings $bindings The configured register ids and the OpenRegister services.
@@ -161,6 +172,8 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @param BatchPublicationWriter $publications Makes the batch's publication (woo-batch-creates-publications).
 	 * @param DocumentRedactor $redactor Redacts a partly public document through OpenRegister (woo-redaction-pipeline).
 	 * @param FileFacts|null $fileFacts Reads a document's type from its stored bytes (REQ-PFF-001).
+	 * @param RefusalGrounds|null $refusalGrounds The Woo refusal grounds (dossiq's list or the vendored snapshot).
+	 * @param PipelineIncidents|null $incidents Tells the incident group about a failure (REQ-WNO-004).
 	 */
 	public function __construct(
 		private readonly RegisterBindings $bindings,
@@ -170,8 +183,11 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		private readonly BatchPublicationWriter $publications,
 		private readonly DocumentRedactor $redactor,
 		private readonly ?FileFacts $fileFacts = null,
+		?RefusalGrounds $refusalGrounds = null,
+		// Tells the incident group about a batch that failed to publish (REQ-WNO-004).
+		private readonly ?PipelineIncidents $incidents = null,
 	) {
-
+		$this->refusalGrounds = ($refusalGrounds ?? new RefusalGrounds());
 	}//end __construct()
 
 	/**
@@ -314,13 +330,19 @@ class WooService implements TransparencyWorkflowServiceInterface {
 
 	/**
 	 * Return the WOO weigeringsgronden catalogue, optionally filtered by a search
-	 * term (matched against article reference and description, case-insensitive).
+	 * term (matched against the code and label, case-insensitive).
+	 *
+	 * The grounds are dossiq's list, or the vendored snapshot without dossiq
+	 * (REQ-WVC-003); only citable grounds are offered.
 	 *
 	 * @param string|null $search Optional filter term.
 	 *
-	 * @return array<int, array{article: string, description: string}> The grounds.
+	 * @return array<int, array<string, mixed>> The grounds, each with `article` (the code) and `description` (the label).
+	 *
+	 * @throws RefusalGroundsUnavailableException When the grounds cannot be read.
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-weigeringsgronden-refusal-grounds
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-refusal-grounds-come-from-dossiq-with-a-read-only-snapshot-for-redaction-only-req-wvc-003
 	 */
 	public function getWeigeringsgronden(?string $search = null): array {
 		$needle = '';
@@ -329,17 +351,24 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		}
 
 		$rows = [];
-		foreach (self::WEIGERINGSGRONDEN as $article => $description) {
+		foreach ($this->refusalGrounds->citable() as $ground) {
+			$code = (string)$ground['code'];
+			$label = (string)($ground['label'] ?? '');
 			if ($needle !== ''
-				&& mb_strpos(mb_strtolower($article . ' ' . $description), $needle) === false
+				&& mb_strpos(mb_strtolower($code . ' ' . $label), $needle) === false
 			) {
 				continue;
 			}
 
-			$rows[] = [
-				'article' => $article,
-				'description' => $description,
-			];
+			// `article` and `description` stay the keys the assessment form
+			// reads; the rest is dossiq's shape, with where the row came from.
+			$rows[] = array_merge(
+				$ground,
+				[
+					'article' => $code,
+					'description' => $label,
+				]
+			);
 		}
 
 		return $rows;
@@ -370,6 +399,18 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		$assessmentSchema = $this->getAssessmentSchema();
 		if ($objectService === null || $register === null || $batchSchema === null || $assessmentSchema === null) {
 			throw new RuntimeException('OpenRegister WOO register/schema unavailable or unconfigured');
+		}
+
+		// REQ-CVS-004: one Woo request has at most one open batch.
+		$open = $this->openBatchFor(caseReference: $caseReference);
+		if ($open !== null) {
+			throw new DomainException(
+				sprintf(
+					'Woo request %s already has an open batch (%s). Continue in that batch instead of adding another.',
+					$caseReference,
+					(string)($open['id'] ?? ($open['uuid'] ?? ''))
+				)
+			);
 		}
 
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
@@ -412,6 +453,45 @@ class WooService implements TransparencyWorkflowServiceInterface {
 
 		return $savedBatch;
 	}//end createBatch()
+
+	/**
+	 * The open batch of a Woo request: one for the case reference that is not published yet.
+	 *
+	 * @param string $caseReference The case reference of the Woo request.
+	 *
+	 * @return array<string, mixed>|null The open batch, or null when the request has none.
+	 *
+	 * @throws RuntimeException When OpenRegister or the Woo batch schema is unavailable.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
+	 */
+	public function openBatchFor(string $caseReference): ?array {
+		$objectService = $this->getObjectService();
+		$register = $this->getRegister();
+		$batchSchema = $this->getBatchSchema();
+		if ($objectService === null || $register === null || $batchSchema === null) {
+			throw new RuntimeException('OpenRegister WOO register/schema unavailable or unconfigured');
+		}
+
+		$found = $objectService->searchObjects(
+			query: ['@self' => ['register' => $register, 'schema' => $batchSchema], 'caseReference' => $caseReference],
+			_rbac: false,
+			_multitenancy: false
+		);
+		if (is_iterable($found) === false) {
+			return null;
+		}
+
+		foreach ($found as $item) {
+			$batch = $this->plainArray(object: $item);
+			// The search filters on the reference; the check here keeps a loose match out.
+			if ((string)($batch['caseReference'] ?? '') === $caseReference && ($batch['status'] ?? '') !== 'published') {
+				return $batch;
+			}
+		}
+
+		return null;
+	}//end openBatchFor()
 
 	/**
 	 * A new assessment object for one collected document, waiting to be assessed.
@@ -648,10 +728,20 @@ class WooService implements TransparencyWorkflowServiceInterface {
 			throw new RuntimeException('At least one weigeringsgrond is required for "Niet openbaar"');
 		}
 
-		// Reject grounds outside the WOO catalogue.
-		foreach ($weigeringsgronden as $ground) {
-			if (array_key_exists((string)$ground, self::WEIGERINGSGRONDEN) === false) {
-				throw new RuntimeException('Unknown weigeringsgrond: ' . $ground);
+		// Reject grounds outside the refusal grounds list. With dossiq installed
+		// but unreadable the save is refused with the reason, and the snapshot
+		// is not used in its place (REQ-WVC-003).
+		if (count($weigeringsgronden) > 0) {
+			try {
+				$citable = $this->refusalGrounds->citableCodes();
+			} catch (RefusalGroundsUnavailableException $e) {
+				throw new RuntimeException('The refusal grounds cannot be read: ' . $e->getMessage(), 0, $e);
+			}
+
+			foreach ($weigeringsgronden as $ground) {
+				if (in_array((string)$ground, $citable, true) === false) {
+					throw new RuntimeException('Unknown weigeringsgrond: ' . $ground);
+				}
 			}
 		}
 
@@ -680,6 +770,11 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		} else {
 			$data['weigeringsgronden'] = array_values(array_unique(array_map('strval', $weigeringsgronden)));
 		}
+
+		// The codes just saved are dossiq's settled codes: mark them so the
+		// repair step that maps earlier codes never shifts them (REQ-WVC-003).
+		$data['groundsListVersion'] = RefusalGrounds::SETTLED_LIST_VERSION;
+		$data['unmappedGrounds'] = [];
 
 		$assessedBy = 'system';
 		if ($user !== null) {
@@ -1206,6 +1301,45 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		$listings = $this->publications->listings(assessments: $assessments);
 		$this->redactor->assertPublishable(listings: $listings, owner: (string)($batch['createdBy'] ?? ''));
 
+		try {
+			return $this->publishApprovedBatch(
+				batchId: $batchId,
+				batch: $batch,
+				listings: $listings,
+				objectService: $objectService,
+				register: $register,
+				batchSchema: $batchSchema
+			);
+		} catch (\Throwable $e) {
+			// The gates above refuse an editor; a failure past them is the pipeline's (REQ-WNO-004).
+			$message = 'Publishing Woo batch ' . $batchId . ' failed: ' . $e->getMessage();
+			$this->incidents?->raise(kind: 'batch-publish', subject: $batchId, message: $message);
+			throw $e;
+		}
+	}//end publishBatch()
+
+	/**
+	 * Publish a batch that passed the approval and redaction gates.
+	 *
+	 * @param string $batchId The batch.
+	 * @param array<string, mixed> $batch The batch record.
+	 * @param array<int, array<string, mixed>> $listings The documents to publish.
+	 * @param object $objectService The OpenRegister object service.
+	 * @param string $register The Woo register.
+	 * @param string $batchSchema The batch schema.
+	 *
+	 * @return array<string, mixed> The published batch.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	private function publishApprovedBatch(
+		string $batchId,
+		array $batch,
+		array $listings,
+		object $objectService,
+		string $register,
+		string $batchSchema
+	): array {
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
 		// The batch becomes a real publication with its documents attached (woo-batch-creates-publications).
@@ -1259,7 +1393,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		$saved['wooPublication'] = $publicationMeta;
 
 		return $saved;
-	}//end publishBatch()
+	}//end publishApprovedBatch()
 
 	/**
 	 * Run the batch's publication; a publication OpenRegister refuses becomes a

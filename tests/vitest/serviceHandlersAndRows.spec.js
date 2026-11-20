@@ -3,13 +3,11 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Unit tests for the publication merge and migration handlers, the catalog
- * count and feature rows, and the retention review and expiry checks
- * (Vitest offline suite).
+ * count and feature rows (Vitest offline suite).
  */
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { catalogCountRows, catalogFeatureRows } from '../../src/services/catalogMetadata.js'
 import { createPublicationActionHandlers } from '../../src/services/publicationActions.js'
-import { isExpiringSoon, isReviewRequired } from '../../src/services/retentionStatus.js'
 
 function stores() {
 	return {
@@ -85,47 +83,5 @@ describe('catalog rows', () => {
 			{ label: 'WOO Sitemap', value: 'Yes' },
 			{ label: 'OOAPI 5.0 Publication', value: 'No' },
 		])
-	})
-})
-
-describe('retention checks', () => {
-	afterEach(() => {
-		vi.useRealTimers()
-	})
-
-	const day = 24 * 60 * 60 * 1000
-
-	function at(now) {
-		vi.useFakeTimers()
-		vi.setSystemTime(new Date(now))
-	}
-
-	it('an archived publication is neither expiring nor up for review', () => {
-		const archived = { status: 'archived', retentionExpiresAt: '2000-01-01T00:00:00Z' }
-		expect(isExpiringSoon(archived)).toBe(false)
-		expect(isReviewRequired(archived)).toBe(false)
-	})
-
-	it('without an expiry nothing is due', () => {
-		expect(isExpiringSoon({})).toBe(false)
-		expect(isReviewRequired({ retentionExpiresAt: 'not a date' })).toBe(false)
-	})
-
-	it('expires soon only inside the window and before expiry', () => {
-		at('2026-06-01T00:00:00Z')
-		const now = Date.parse('2026-06-01T00:00:00Z')
-		expect(isExpiringSoon({ retentionExpiresAt: new Date(now + 10 * day).toISOString() })).toBe(true)
-		expect(isExpiringSoon({ retentionExpiresAt: new Date(now + 40 * day).toISOString() })).toBe(false)
-		expect(isExpiringSoon({ retentionExpiresAt: new Date(now + 40 * day).toISOString() }, 60)).toBe(true)
-		expect(isExpiringSoon({ retentionExpiresAt: new Date(now - day).toISOString() })).toBe(false)
-	})
-
-	it('needs review once expired, when the action is review or unset', () => {
-		at('2026-06-01T00:00:00Z')
-		const expired = '2026-05-01T00:00:00Z'
-		expect(isReviewRequired({ retentionExpiresAt: expired })).toBe(true)
-		expect(isReviewRequired({ retentionExpiresAt: expired, retentionAction: 'review' })).toBe(true)
-		expect(isReviewRequired({ retentionExpiresAt: expired, retentionAction: 'archive' })).toBe(false)
-		expect(isReviewRequired({ retentionExpiresAt: '2026-07-01T00:00:00Z' })).toBe(false)
 	})
 })

@@ -27,10 +27,12 @@ import { createApp, h } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
+import MetadataSuggestionsWidget from './components/widgets/MetadataSuggestionsWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
 import PlainSummaryDraftWidget from './components/widgets/PlainSummaryDraftWidget.vue'
 import PublicationAttachmentsWidget from './components/widgets/PublicationAttachmentsWidget.vue'
 import PublicationLanguagesWidget from './components/widgets/PublicationLanguagesWidget.vue'
+import PublicationQualityWidget from './components/widgets/PublicationQualityWidget.vue'
 import PublicationTablesWidget from './components/widgets/PublicationTablesWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
@@ -102,6 +104,17 @@ registerDashboardWidget('publication-visibility', {
 	icon: 'EyeOutline',
 	surfaces: ['detail-page'],
 })
+// The pending metadata suggestions with Accept, Reject and Ask Hermiq
+// (woo-metadata-suggestions, REQ-WMS-002..004): the screen for
+// GET/POST .../metadata-suggestions and POST /api/metadata-suggestions/{id}/accept|reject.
+registerDashboardWidget('metadata-suggestions', {
+	renderer: MetadataSuggestionsWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Metadata suggestions',
+	icon: 'LightbulbOnOutline',
+	surfaces: ['detail-page'],
+})
 // Per enabled language what is translated, with Translate in the editor
 // (publication-translations REQ-PTR-004, board OcPublicatie).
 registerDashboardWidget('publication-languages', {
@@ -120,6 +133,17 @@ registerDashboardWidget('plain-summary-draft', {
 	defaultContent: {},
 	displayName: 'Plain language summary',
 	icon: 'FileDocument',
+	surfaces: ['detail-page'],
+})
+// The metadata-quality score and the missing fields, before publishing
+// (capability-rows-close-gaps task 2.5, PQM-001): the screen for
+// GET /api/catalogs/{slug}/publications/{id}/quality.
+registerDashboardWidget('publication-quality', {
+	renderer: PublicationQualityWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Metadata quality',
+	icon: 'ChartBar',
 	surfaces: ['detail-page'],
 })
 // The publication's attachments with Add attachment, which opens the app's

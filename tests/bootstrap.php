@@ -135,11 +135,11 @@ if (!defined('OC_CONSOLE')) {
 	unset($opencatalogiNcRoot);
 }
 
-// IMcpToolProvider stub — loaded when the openregister runtime (PR #1466) is absent.
-// OpenCatalogiToolProvider implements this interface in production; the stub keeps the
-// class loadable in bare CI containers until the real interface ships.
-if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpToolProvider') === false) {
-	require_once __DIR__ . '/Stubs/Mcp/IMcpToolProvider.php';
+// IMcpScannableServices stub — loaded when the openregister runtime is absent.
+// OpenCatalogiScannableServices implements this interface in production; the stub keeps the
+// class loadable in bare CI containers.
+if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpScannableServices') === false) {
+	require_once __DIR__ . '/Stubs/Mcp/IMcpScannableServices.php';
 }
 
 // AppHost observability stubs — loaded when the openregister runtime is absent.

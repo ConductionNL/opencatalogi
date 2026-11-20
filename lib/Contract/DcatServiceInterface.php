@@ -123,6 +123,20 @@ interface DcatServiceInterface {
 	public function buildCatalogDocument(array $catalog, string $catalogSlug, int $page = 1, array &$violations = []): array;
 
 	/**
+	 * Map publications of a catalog to DCAT dataset nodes, as the catalog feed does.
+	 *
+	 * @param array<string, mixed> $catalog The catalog object, with its `slug`.
+	 * @param array<int, mixed> $publications The publications to map.
+	 *
+	 * @return array<int, array<string, mixed>> One dataset node per publication whose schema did not opt out.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 *
+	 * @contract-shift internal-only — only DcatService implements it; no other app consumes this interface.
+	 */
+	public function mapDatasets(array $catalog, array $publications): array;
+
+	/**
 	 * Build the instance-level DCAT document listing every DCAT-enabled catalog.
 	 *
 	 * @return array<string, mixed> The JSON-LD document plus `_meta`.
@@ -130,6 +144,21 @@ interface DcatServiceInterface {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
 	 */
 	public function buildInstanceDocument(): array;
+
+	/**
+	 * The dcat:Dataset node one publication renders as in a catalogue's feed, published or not.
+	 *
+	 * @param array  $catalog     The catalog object.
+	 * @param string $catalogSlug The catalog slug.
+	 * @param array  $publication The publication, as OpenRegister serialises it.
+	 *
+	 * @return array The dataset node.
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
+	 *
+	 * @contract-shift new-contract — added for the staff metadata-quality score; DcatService is its only implementation.
+	 */
+	public function buildPublicationDataset(array $catalog, string $catalogSlug, array $publication): array;
 
 	/**
 	 * Validate a catalog's feed against the DCAT-AP-NL mandatory-property checklist.

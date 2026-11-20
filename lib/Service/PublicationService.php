@@ -41,13 +41,17 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinkRules;
 use Exception;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Service\Publication\AgentToolAnswer;
 use OCA\OpenCatalogi\Service\Publication\AttachmentOrder;
 use OCA\OpenRegister\Exception\RegisterNotFoundException;
 use OCA\OpenRegister\Exception\SchemaNotFoundException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Mcp\Attribute\McpTool;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -1268,6 +1272,97 @@ class PublicationService implements PublicationServiceInterface {
 	}//end attachments()
 
 	/**
+	 * Agent tool: search the publications inside one catalog.
+	 *
+	 * A catalog spans a set of registers, schemas and filters, so no schema
+	 * filter can express "inside catalog X"; this delegates to index(), which
+	 * resolves the catalog's scope and searches with OpenRegister RBAC on every
+	 * row. The catalog is required, so the tool never duplicates the derived
+	 * `opencatalogi.publication.search`.
+	 *
+	 * @param string  $catalog The catalog's id, uuid or slug.
+	 * @param string  $query   The full-text query.
+	 * @param integer $limit   How many publications to answer, 1 to 50.
+	 *
+	 * @return array<string, mixed> The publications and their total, or an `error` envelope.
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-catalog-scoped-search-survives-as-a-curated-service-tool-req-004
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AgentToolAnswer is a set of pure answer shapers.
+	 */
+	#[McpTool(
+		name: 'searchCatalogPublications',
+		description: 'Search publications inside one catalog. A catalog spans a set of registers and schemas, so this searches '
+			. 'across all of them; use it when the question names a catalog. The catalog is required. For a plain '
+			. 'publication search, use opencatalogi.publication.search.',
+		readOnlyHint: true,
+		destructiveHint: false,
+		idempotentHint: true,
+		scope: 'read',
+		subject: 'publication',
+		action: 'search',
+		reach: 'user',
+	)]
+	public function searchCatalogPublications(string $catalog, string $query, int $limit = 20): array {
+		$request = AgentToolAnswer::searchRequest(asked: ['catalog' => $catalog, 'query' => $query, 'limit' => $limit]);
+		if (isset($request['refusal']) === true) {
+			return $request['refusal'];
+		}
+
+		$search = $request['search'];
+		try {
+			$response = $this->index(catalogId: $search['catalog'], customParams: AgentToolAnswer::searchParams(search: $search));
+		} catch (\Throwable) {
+			return AgentToolAnswer::searchFailed();
+		}
+
+		return AgentToolAnswer::searchAnswer(search: $search, response: $response);
+	}//end searchCatalogPublications()
+
+	/**
+	 * Agent tool: the Nextcloud file attachments stored on a publication.
+	 *
+	 * Delegates to attachments(), so the catalog-scope gate and the RBAC read
+	 * check on the publication both run before any file is listed. These are
+	 * the files in Nextcloud, not the document objects of a publication.
+	 *
+	 * @param string $id The publication's id or uuid.
+	 *
+	 * @return array<string, mixed> The files and their total, or an `error` envelope.
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-the-publication-file-attachment-list-survives-as-a-curated-service-tool-req-005
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AgentToolAnswer is a set of pure answer shapers.
+	 */
+	#[McpTool(
+		name: 'listPublicationFiles',
+		description: 'List the Nextcloud file attachments stored on one publication (name, type, size, download link). '
+			. 'These are files in Nextcloud, not structured document objects; a publication outside this instance\'s '
+			. 'catalogs, or one the caller may not read, answers not_found.',
+		readOnlyHint: true,
+		destructiveHint: false,
+		idempotentHint: true,
+		scope: 'read',
+		subject: 'publication',
+		action: 'listFiles',
+		reach: 'user',
+	)]
+	public function listPublicationFiles(string $id): array {
+		$publication = AgentToolAnswer::text(value: $id);
+		if ($publication === null) {
+			return AgentToolAnswer::missingArgument(name: 'id');
+		}
+
+		try {
+			$response = $this->attachments(id: $publication);
+		} catch (\Throwable) {
+			return AgentToolAnswer::filesFailed();
+		}
+
+		return AgentToolAnswer::filesAnswer(publication: $publication, response: $response);
+	}//end listPublicationFiles()
+
+	/**
 	 * The formatted files with the publication's public document references after them (REQ-PBR-002).
 	 *
 	 * Each reference carries `kind: reference` and its source URL. The
@@ -1631,6 +1726,11 @@ class PublicationService implements PublicationServiceInterface {
 					}
 				}//end if
 
+				// REQ-PRS-003: only public source identifiers leave on these public reads.
+				if (is_array($objectArray) === true) {
+					$objectArray = (new PublicationLinkRules())->withPublicSourceIdentifiers(publication: $objectArray);
+				}
+
 				return $objectArray;
 			},
 			$objects
@@ -1799,7 +1899,7 @@ class PublicationService implements PublicationServiceInterface {
 	 */
 	public function getAggregatedPublications(array $queryParams = [], array $requestParams = [], string $baseUrl = ''): array {
 		$startTime = microtime(true);
-		$context = $this->buildListingContext(queryParams: $queryParams, requestParams: $requestParams, baseUrl: $baseUrl);
+		$context = $this->buildListingContext(queryParams: $queryParams, links: ['requestParams' => $requestParams, 'baseUrl' => $baseUrl]);
 		$queryParams = $this->withPagination(queryParams: $queryParams, pagination: $context);
 
 		if ($this->hasFederatedSources(aggregate: $context['aggregate']) === false) {
@@ -1824,22 +1924,21 @@ class PublicationService implements PublicationServiceInterface {
 	 * Resolve the clamped pagination and the switches of a listing request.
 	 *
 	 * @param array $queryParams The request query.
-	 * @param array $requestParams The original request parameters, for the pagination links.
-	 * @param string $baseUrl The base URL of the pagination links.
+	 * @param array{requestParams: array, baseUrl: string} $links The original request parameters and the base URL, for the pagination links.
 	 *
 	 * @return array Limit, page, offset, the listing switches, requestParams and baseUrl.
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function buildListingContext(array $queryParams, array $requestParams, string $baseUrl): array {
+	private function buildListingContext(array $queryParams, array $links): array {
 		$pagination = $this->readPagination(queryParams: $queryParams);
 
 		return [
 			'limit' => max(0, $pagination['limit']),
 			'page' => max(1, $pagination['page']),
 			'offset' => max(0, $pagination['offset']),
-			'requestParams' => $requestParams,
-			'baseUrl' => $baseUrl,
+			'requestParams' => $links['requestParams'],
+			'baseUrl' => $links['baseUrl'],
 		] + $this->readListingOptions(queryParams: $queryParams);
 	}//end buildListingContext()
 
@@ -1862,9 +1961,9 @@ class PublicationService implements PublicationServiceInterface {
 			offset: $context['offset'],
 			context: $context
 		);
-		$responseData = $this->withListingFacets(responseData: $responseData, facets: $this->unwrapFacetsOf(data: $localData), context: $context);
+		$responseData = array_merge($responseData, $this->listingFacets(facets: $this->unwrapFacetsOf(data: $localData), context: $context));
 
-		return $this->withMergedFacetable(responseData: $responseData, sources: [$localData, []], include: $context['includeFacets']);
+		return array_merge($responseData, $this->mergedFacetable(sources: [$localData, []], include: $context['includeFacets']));
 	}//end buildLocalAggregateListing()
 
 	/**
@@ -2005,11 +2104,13 @@ class PublicationService implements PublicationServiceInterface {
 	 * @return array The decoded response data.
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::withoutUnlisted() is a pure filter.
 	 */
 	private function fetchLocalPublicationData(array $queryParams): array {
 		$response = $this->index(catalogId: null, customParams: $queryParams);
 
-		return (json_decode($response->render(), true) ?? []);
+		// REQ-PLC-006: the federation list never carries an unlisted publication.
+		return UnlistedPublications::withoutUnlisted(page: (json_decode($response->render(), true) ?? []));
 	}//end fetchLocalPublicationData()
 
 	/**
@@ -2137,20 +2238,19 @@ class PublicationService implements PublicationServiceInterface {
 	}//end unwrapFacets()
 
 	/**
-	 * Set the response facets, adding the virtual directory and catalog facets when requested.
+	 * The response facets, adding the virtual directory and catalog facets when requested.
 	 *
-	 * @param array $responseData The response.
 	 * @param mixed|null $facets The facets to set, or null when the sources had none.
 	 * @param array $context Holds reqDirFacets and reqCatFacets.
 	 *
-	 * @return array The response.
+	 * @return array `facets` to merge into the response, or nothing when there are none.
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function withListingFacets(array $responseData, $facets, array $context): array {
+	private function listingFacets($facets, array $context): array {
 		$virtual = ($context['reqDirFacets'] === true || $context['reqCatFacets'] === true);
 		if ($facets === null && $virtual === false) {
-			return $responseData;
+			return [];
 		}
 
 		if ($virtual === true) {
@@ -2161,36 +2261,28 @@ class PublicationService implements PublicationServiceInterface {
 			);
 		}
 
-		$responseData['facets'] = $facets;
-
-		return $responseData;
-	}//end withListingFacets()
+		return ['facets' => $facets];
+	}//end listingFacets()
 
 	/**
-	 * Set the merged facetable metadata of a local and a federated source.
+	 * The merged facetable metadata of a local and a federated source.
 	 *
-	 * @param array $responseData The response.
 	 * @param array $sources The local and the federated search response, in that order.
 	 * @param bool $include Whether facetable metadata was requested.
 	 *
-	 * @return array The response.
+	 * @return array `facetable` to merge into the response, or nothing when there is none.
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function withMergedFacetable(array $responseData, array $sources, bool $include): array {
+	private function mergedFacetable(array $sources, bool $include): array {
 		$local = ($sources[0]['facetable'] ?? null);
 		$federated = ($sources[1]['facetable'] ?? null);
 		if ($local === null && $federated === null && $include === false) {
-			return $responseData;
+			return [];
 		}
 
-		$responseData['facetable'] = $this->mergeFacetableData(
-			localFacetable: ($local ?? []),
-			federatedFacetable: ($federated ?? [])
-		);
-
-		return $responseData;
-	}//end withMergedFacetable()
+		return ['facetable' => $this->mergeFacetableData(localFacetable: ($local ?? []), federatedFacetable: ($federated ?? []))];
+	}//end mergedFacetable()
 
 	/**
 	 * Build one page of the merged local and federated listing.
@@ -2233,13 +2325,12 @@ class PublicationService implements PublicationServiceInterface {
 			context: $context
 		);
 
-		$responseData = $this->withListingFacets(
-			responseData: $responseData,
-			facets: $this->mergeSourceFacets(localData: $allLocalData, federationResult: $federationResult),
-			context: $context
+		$responseData = array_merge(
+			$responseData,
+			$this->listingFacets(facets: $this->mergeSourceFacets(localData: $allLocalData, federationResult: $federationResult), context: $context)
 		);
 
-		return $this->withMergedFacetable(responseData: $responseData, sources: [$allLocalData, $federationResult], include: $context['includeFacets']);
+		return array_merge($responseData, $this->mergedFacetable(sources: [$allLocalData, $federationResult], include: $context['includeFacets']));
 	}//end buildFederatedListing()
 
 	/**
@@ -2439,7 +2530,7 @@ class PublicationService implements PublicationServiceInterface {
 			offset: $pageContext['offset'],
 			context: $pageContext
 		);
-		$responseData = $this->withListingFacets(responseData: $responseData, facets: $this->unwrapFacetsOf(data: $localData), context: $context);
+		$responseData = array_merge($responseData, $this->listingFacets(facets: $this->unwrapFacetsOf(data: $localData), context: $context));
 		if (isset($localData['facetable']) === true) {
 			$responseData['facetable'] = $localData['facetable'];
 		}
@@ -2642,11 +2733,7 @@ class PublicationService implements PublicationServiceInterface {
 
 		$responseData = $this->buildListingPage(results: $results, total: ($result['total'] ?? 0), offset: $pageContext['offset'], context: $pageContext);
 		if (isset($result['facets']) === true) {
-			$responseData = $this->withListingFacets(
-				responseData: $responseData,
-				facets: $this->unwrapFacets(facets: $result['facets']),
-				context: $switches
-			);
+			$responseData = array_merge($responseData, $this->listingFacets(facets: $this->unwrapFacets(facets: $result['facets']), context: $switches));
 		}
 
 		if (isset($result['facetable']) === true) {

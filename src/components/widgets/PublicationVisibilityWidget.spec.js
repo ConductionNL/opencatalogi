@@ -157,6 +157,47 @@ describe('PublicationVisibilityWidget states', () => {
 	})
 })
 
+describe('PublicationVisibilityWidget audience', () => {
+	it('shows a publication for everyone as Everyone, without the sign-in link line', async () => {
+		answerReads({
+			visibility: Promise.resolve({ data: { state: 'public', audience: 'public' } }),
+			files: Promise.resolve({ data: [] }),
+		})
+		const wrapper = await mountWidget()
+
+		expect(wrapper.vm.audienceLabel).toBe('Everyone')
+		expect(wrapper.find('[data-testid="publication-visibility-audience"]').text()).toContain('Everyone')
+		expect(wrapper.find('[data-testid="publication-visibility-audience-link"]').exists()).toBe(false)
+	})
+
+	it('shows a sign-in publication with its level and the link line', async () => {
+		answerReads({
+			visibility: Promise.resolve({ data: { state: 'scheduled', audience: 'signedIn', minimumAssurance: 'substantial' } }),
+			files: Promise.resolve({ data: [] }),
+		})
+		const wrapper = await mountWidget()
+
+		expect(wrapper.vm.audienceLabel).toBe('Readers who log in with DigiD or eHerkenning, level Substantial')
+		expect(wrapper.find('[data-testid="publication-visibility-audience-link"]').text()).toBe('The link works for readers who log in')
+	})
+
+	it('names the level High, and falls back to Everyone when the read fails', async () => {
+		answerReads({
+			visibility: Promise.resolve({ data: { state: 'public', audience: 'signedIn', minimumAssurance: 'high' } }),
+			files: Promise.resolve({ data: [] }),
+		})
+		const wrapper = await mountWidget()
+		expect(wrapper.vm.audienceLabel).toBe('Readers who log in with DigiD or eHerkenning, level High')
+
+		answerReads({
+			visibility: Promise.reject(new Error('down')),
+			files: Promise.resolve({ data: [] }),
+		})
+		await wrapper.vm.load()
+		expect(wrapper.vm.audienceLabel).toBe('Everyone')
+	})
+})
+
 describe('PublicationVisibilityWidget.publish', () => {
 	beforeEach(() => {
 		answerReads({
@@ -224,5 +265,67 @@ describe('PublicationVisibilityWidget.publish', () => {
 		expect(wrapper.vm.messageType).toBe('error')
 		expect(wrapper.vm.message).toBe('That did not work. Try again.')
 		expect(wrapper.vm.state).toBe('draft')
+	})
+})
+
+describe('PublicationVisibilityWidget source absence', () => {
+	/**
+	 * Mount with a visibility answer.
+	 *
+	 * @param {object} data The visibility answer.
+	 * @return {Promise<object>} The wrapper.
+	 */
+	async function mountWith(data) {
+		answerReads({
+			visibility: Promise.resolve({ data }),
+			files: Promise.resolve({ data: [] }),
+		})
+		return mountWidget()
+	}
+
+	it('shows no note for a publication its source still carries', async () => {
+		const wrapper = await mountWith({ state: 'public' })
+
+		expect(wrapper.vm.sourceAbsence).toBeNull()
+		expect(wrapper.find('[data-testid="publication-source-absence"]').exists()).toBe(false)
+	})
+
+	it('tells the editor a kept publication stays until they withdraw it', async () => {
+		const since = '2026-11-14T03:00:00+00:00'
+		const wrapper = await mountWith({ state: 'public', sourceAbsence: { since, endedAt: null } })
+
+		const note = wrapper.find('[data-testid="publication-source-absence"]')
+		expect(note.exists()).toBe(true)
+		expect(note.text()).toBe(
+			'Its source no longer carries this publication (since ' + new Date(since).toLocaleString() + '). It stays as it is until you withdraw it.',
+		)
+		expect(wrapper.vm.sourceAbsence).toEqual({ since, endedAt: null })
+	})
+
+	it('tells the editor an ended publication was taken down', async () => {
+		const endedAt = '2026-11-14T03:00:00+00:00'
+		const wrapper = await mountWith({ state: 'withdrawn', sourceAbsence: { since: endedAt, endedAt } })
+
+		expect(wrapper.vm.sourceAbsenceNote).toBe(
+			'Its source no longer carries this publication and ended it on ' + new Date(endedAt).toLocaleString() + ', so it was taken down.',
+		)
+	})
+
+	it('words a missing or unreadable date without breaking', async () => {
+		const bare = await mountWith({ state: 'public', sourceAbsence: { since: null, endedAt: null } })
+		expect(bare.vm.sourceAbsenceNote).toBe('Its source no longer carries this publication. It stays as it is until you withdraw it.')
+
+		const garbled = await mountWith({ state: 'public', sourceAbsence: { since: 'yesterday', endedAt: null } })
+		expect(garbled.vm.sourceAbsenceNote).toBe('Its source no longer carries this publication (since yesterday). It stays as it is until you withdraw it.')
+	})
+
+	it('drops the note when the visibility read fails', async () => {
+		answerReads({
+			visibility: Promise.reject(new Error('down')),
+			files: Promise.resolve({ data: [] }),
+		})
+		const wrapper = await mountWidget()
+		expect(wrapper.vm.sourceAbsence).toBeNull()
+		expect(wrapper.vm.sourceAbsenceNote).toBe('')
 	})
 })

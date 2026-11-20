@@ -35,6 +35,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
@@ -76,6 +77,7 @@ class RetentionDecisionGoldenTest extends TestCase {
 			'archive' => [['decision' => 'archive', 'object' => $pub]],
 			'dispose with a decision log' => [['decision' => 'dispose', 'object' => array_merge($pub, ['retentionDecisionLog' => [['decision' => 'extend']]])]],
 			'dispose with a broken decision log' => [['decision' => 'dispose', 'object' => array_merge($pub, ['retentionDecisionLog' => 'x'])]],
+			'dispose that OpenRegister does not remove' => [['decision' => 'dispose', 'removed' => false, 'object' => $pub]],
 			'unknown decision' => [['decision' => 'shred', 'object' => $pub]],
 			'blank rationale' => [['decision' => 'archive', 'rationale' => " \t", 'object' => $pub]],
 			'no register configured' => [['decision' => 'archive', 'register' => '', 'object' => $pub]],
@@ -168,11 +170,17 @@ class RetentionDecisionGoldenTest extends TestCase {
 		);
 
 		$log = &$this->log;
-		$objects = new class($log, $case['object']) {
+		$objects = new class($log, $case['object'], ($case['removed'] ?? true)) {
 			public function __construct(
 				private array &$log,
 				private ?array $object,
+				private bool $removed,
 			) {
+			}
+
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true): bool {
+				$this->log[] = ['delete' => $deletion->uuid, 'register' => $deletion->target->register, 'schema' => $deletion->target->schema, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
+				return $this->removed;
 			}
 
 			public function find(string $id): array {

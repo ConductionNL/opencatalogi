@@ -68,7 +68,8 @@
         "status": 200,
         "data": {
             "id": "uuid-of-p1",
-            "title": "T"
+            "title": "T",
+            "relations": []
         },
         "headers": {
             "Cache-Control": "public, max-age=60, must-revalidate",
@@ -76,7 +77,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "ETag": "W/\"68572f6b66ed70b4858eafeaf67ba08ca79da821\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -143,6 +144,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
@@ -164,7 +168,8 @@
         "status": 200,
         "data": {
             "id": "uuid-of-p1",
-            "title": "T"
+            "title": "T",
+            "relations": []
         },
         "headers": {
             "Cache-Control": "public, max-age=60, must-revalidate",
@@ -172,7 +177,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "ETag": "W/\"68572f6b66ed70b4858eafeaf67ba08ca79da821\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -280,6 +285,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
@@ -301,7 +309,8 @@
         "status": 200,
         "data": {
             "id": "uuid-of-p1",
-            "title": "T"
+            "title": "T",
+            "relations": []
         },
         "headers": {
             "Cache-Control": "public, max-age=60, must-revalidate",
@@ -309,7 +318,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "ETag": "W/\"68572f6b66ed70b4858eafeaf67ba08ca79da821\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -406,6 +415,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
@@ -427,7 +439,8 @@
         "status": 200,
         "data": {
             "id": "uuid-of-p2",
-            "title": "T"
+            "title": "T",
+            "relations": []
         },
         "headers": {
             "Cache-Control": "public, max-age=60, must-revalidate",
@@ -435,7 +448,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"9b63373d78b54951b970e4e3bfb66f23a8a09104\"",
+            "ETag": "W/\"efdcb3eecedf24c2938247f76fd4f65c0f1220d0\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -615,6 +628,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
@@ -639,7 +655,8 @@
             "title": "T",
             "withheld": [
                 "uuid-of-p2"
-            ]
+            ],
+            "relations": []
         },
         "headers": {
             "Cache-Control": "public, max-age=60, must-revalidate",
@@ -647,7 +664,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"bbd8afa25d5f61c1214371d99d59352b4dd243c4\"",
+            "ETag": "W/\"cd23189f02d0513c70c1c2d59f4b7dc796eaec0d\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -825,6 +842,9 @@
                     "woo",
                     "uuid-of-p2"
                 ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
@@ -1235,7 +1255,8 @@
         "status": 200,
         "data": {
             "id": "uuid-of-p1",
-            "title": "T"
+            "title": "T",
+            "relations": []
         },
         "headers": {
             "Cache-Control": "public, max-age=60, must-revalidate",
@@ -1243,7 +1264,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "ETag": "W/\"68572f6b66ed70b4858eafeaf67ba08ca79da821\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -1322,6 +1343,9 @@
                     true,
                     false
                 ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
@@ -1345,7 +1369,8 @@
         "status": 200,
         "data": {
             "id": "uuid-of-p1",
-            "title": "T"
+            "title": "T",
+            "relations": []
         },
         "headers": {
             "Cache-Control": "public, max-age=60, must-revalidate",
@@ -1353,7 +1378,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "ETag": "W/\"68572f6b66ed70b4858eafeaf67ba08ca79da821\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -1440,6 +1465,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
@@ -1461,7 +1489,8 @@
         "status": 200,
         "data": {
             "id": "uuid-of-p1",
-            "title": "T"
+            "title": "T",
+            "relations": []
         },
         "headers": {
             "Cache-Control": "public, max-age=60, must-revalidate",
@@ -1469,7 +1498,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "ETag": "W/\"68572f6b66ed70b4858eafeaf67ba08ca79da821\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -1542,6 +1571,9 @@
                     true,
                     false
                 ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
@@ -1792,7 +1824,8 @@
             "title": "T",
             "withheld": [
                 "0b1e7a52-0000-4000-8000-000000000001"
-            ]
+            ],
+            "relations": []
         },
         "headers": {
             "Cache-Control": "public, max-age=60, must-revalidate",
@@ -1800,7 +1833,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"cf8d1f04cba80899c2e208269e5ca849cb0850dd\"",
+            "ETag": "W/\"7a83a9977a3f47979a28c5e628255c449658fc6e\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -1886,6 +1919,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
@@ -1907,7 +1943,8 @@
         "status": 200,
         "data": {
             "id": "uuid-of-p1",
-            "title": "T"
+            "title": "T",
+            "relations": []
         },
         "headers": {
             "Cache-Control": "private, no-store",
@@ -1988,6 +2025,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
+            },
+            {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
             },
             {
@@ -2014,7 +2054,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "ETag": "W/\"68572f6b66ed70b4858eafeaf67ba08ca79da821\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -2087,6 +2127,9 @@
                     true,
                     false
                 ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"
@@ -2103,7 +2146,8 @@
         "status": 200,
         "data": {
             "id": "uuid-of-p1",
-            "title": "T"
+            "title": "T",
+            "relations": []
         },
         "headers": {
             "Cache-Control": "public, max-age=60, must-revalidate",
@@ -2111,7 +2155,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "ETag": "W/\"68572f6b66ed70b4858eafeaf67ba08ca79da821\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -2184,6 +2228,9 @@
                     true,
                     false
                 ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRelations"
             },
             {
                 "get": "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface"

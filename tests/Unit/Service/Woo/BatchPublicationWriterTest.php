@@ -26,6 +26,7 @@ use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate;
 use OCA\OpenCatalogi\Service\Publication\PdfTitleUpdate;
+use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCP\App\IAppManager;
 use OCP\Files\File;
@@ -47,7 +48,7 @@ class TitleFakeObjectService {
 	public array $saved = [];
 
 	public function find(string $id, mixed ...$rest): mixed {
-		return ['id' => $id, 'title' => 'Eerder gemaakte publicatie'];
+		return ['id' => $id, 'title' => 'Eerder gemaakte publicatie', 'status' => 'published'];
 	}//end find()
 
 	public function saveObject(array $object, mixed ...$rest): mixed {
@@ -166,12 +167,50 @@ class BatchPublicationWriterTest extends TestCase {
 	 *
 	 * @return BatchPublicationWriter
 	 */
+	/** @var array<int, array{0: string, 1: string, 2: string, 3: bool}> Every publish the writer ran: id, stored state, date, as system. */
+	private array $publishes = [];
+
+	/**
+	 * A PublishTransition double recording each publish.
+	 *
+	 * @return PublishTransition
+	 */
+	private function publisher(): PublishTransition {
+		$publisher = $this->createMock(PublishTransition::class);
+		foreach (['publish' => false, 'publishAsSystem' => true] as $method => $asSystem) {
+			$publisher->method($method)->willReturnCallback(
+				function (string $id, string $stored, string $publicationDate) use ($asSystem): object {
+					$this->publishes[] = [$id, $stored, $publicationDate, $asSystem];
+					return new \stdClass();
+				}
+			);
+		}
+
+		return $publisher;
+	}//end publisher()
+
+	/**
+	 * REQ-PLC-003: a batch creates its publication approved, without a date, and publishes it through `publish` as the system.
+	 *
+	 * @return void
+	 */
+	public function testABatchCreatesAnApprovedPublicationAndPublishesIt(): void {
+		$result = $this->writer()->publication(batch: ['title' => 'Besluit', 'caseReference' => 'Z-9'], now: '2026-11-17T10:00:00+00:00');
+
+		$this->assertSame('pub-1', $result['id']);
+		$this->assertCount(1, $this->objects->saved);
+		$this->assertSame('approved', $this->objects->saved[0]['status']);
+		$this->assertArrayNotHasKey('publicationDate', $this->objects->saved[0]);
+		$this->assertSame([['pub-1', 'approved', '2026-11-17T10:00:00+00:00', true]], $this->publishes);
+	}//end testABatchCreatesAnApprovedPublicationAndPublishesIt()
+
 	private function writer(bool $withTitles = true): BatchPublicationWriter {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			fn (string $id): object => match ($id) {
 				'OCA\OpenRegister\Service\ObjectService' => $this->objects,
 				'OCA\OpenRegister\Service\FileService' => $this->files,
+				PublishTransition::class => $this->publisher(),
 				default => throw new RuntimeException('not registered: ' . $id),
 			}
 		);
