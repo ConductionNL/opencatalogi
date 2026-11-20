@@ -33,7 +33,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * with `--output=json`, and the exit codes 0 success, 1 failure, 2 wrong usage
  * (REQ-IMC-001).
  *
- * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+ * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
  */
 abstract class MaintenanceCommand extends Command {
 
@@ -52,7 +52,7 @@ abstract class MaintenanceCommand extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function addOutputOption(): void {
 		$this->addOption(
@@ -72,7 +72,7 @@ abstract class MaintenanceCommand extends Command {
 	 *
 	 * @throws InvalidArgumentException When the format is neither plain nor json.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function wantsJson(InputInterface $input): bool {
 		$format = (string)$input->getOption('output');
@@ -93,7 +93,7 @@ abstract class MaintenanceCommand extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function writeResult(InputInterface $input, OutputInterface $output, array $lines, mixed $data): void {
 		if ($this->wantsJson(input: $input) === true) {
@@ -113,7 +113,7 @@ abstract class MaintenanceCommand extends Command {
 	 *
 	 * @return int The exit code.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected static function exitCode(bool $failed): int {
 		if ($failed === true) {
@@ -130,7 +130,7 @@ abstract class MaintenanceCommand extends Command {
 	 *
 	 * @return string The prefix.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected static function outcomePrefix(bool $success): string {
 		if ($success === true) {
@@ -148,7 +148,7 @@ abstract class MaintenanceCommand extends Command {
 	 *
 	 * @return int The exit code 2.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function wrongUsage(OutputInterface $output, string $message): int {
 		$output->writeln('Error: ' . $message, OutputInterface::OUTPUT_RAW);

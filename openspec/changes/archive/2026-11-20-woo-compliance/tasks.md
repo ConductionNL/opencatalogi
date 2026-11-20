@@ -110,6 +110,7 @@
 
 ## Task 10: Spec sync
 
-- [ ] 10.1 After the change is verified and all tasks are done, sync the delta spec back to the canonical location via `/opsx:sync`
+- [x] 10.1 After the change is verified and all tasks are done, sync the delta spec back to the canonical location via `/opsx:sync`
   - Source: `openspec/changes/woo-compliance/specs/woo-compliance/spec.md`
   - Target: `openspec/specs/woo-compliance/spec.md` (create if absent)
+  - Synced: the canonical spec already carries REQ-WOO-001..010 as WOO-001..WOO-010, since extended by later changes (WOO-TOOI-001..004, WOO-HR-*, REQ-WPC-*). The per-requirement scenarios of this proposal-era spec (e.g. "soortHandeling is always ontvangst") are superseded by WOO-TOOI-003 and stay in the archive rather than contradict the canonical text.

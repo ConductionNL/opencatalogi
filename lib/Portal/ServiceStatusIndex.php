@@ -23,7 +23,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
+ * @spec openspec/changes/archive/2026-11-20-service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Reads the service status components and shapes them as public index items.
  *
- * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
+ * @spec openspec/changes/archive/2026-11-20-service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
  */
 class ServiceStatusIndex {
 	use ReadsObjectProperties;
@@ -93,7 +93,7 @@ class ServiceStatusIndex {
 	 *
 	 * @return array<string, mixed> The kind.
 	 *
-	 * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
+	 * @spec openspec/changes/archive/2026-11-20-service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
 	 */
 	public function kind(): array {
 		return [
@@ -118,7 +118,7 @@ class ServiceStatusIndex {
 	 *
 	 * @return array<int, array<string, mixed>> The items.
 	 *
-	 * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
+	 * @spec openspec/changes/archive/2026-11-20-service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
 	 */
 	public function items(?DateTimeInterface $now = null): array {
 		$rendered = $this->statusService->render(

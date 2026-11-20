@@ -32,7 +32,7 @@ use PHPUnit\Framework\TestCase;
  * The index lists one sitemap page per batch of publications, each with the
  * newest update in its batch, and an empty index is still a valid document.
  *
- * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-20-woo-compliance/specs/woo-compliance/spec.md
  */
 #[CoversClass(SitemapIndexBuilder::class)]
 #[UsesClass(XMLResponse::class)]

@@ -162,7 +162,7 @@ interface CatalogiServiceInterface {
 	 *
 	 * @return array<int, string> The slugs, each once, in the order found; empty when unconfigured.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	public function getCatalogSlugs(): array;
 

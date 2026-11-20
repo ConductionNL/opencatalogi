@@ -63,7 +63,7 @@ class SitemapDirectives {
 	 * @return array<int, object> The catalogues.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
-	 * @spec openspec/changes/woo-compliance/tasks.md#task-2
+	 * @spec openspec/changes/archive/2026-11-20-woo-compliance/tasks.md#task-2
 	 */
 	public function sitemapCatalogs(array $configuration): array {
 		$searchQuery = [];
@@ -94,7 +94,7 @@ class SitemapDirectives {
 	 * @return string One line per category the registry serves.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
-	 * @spec openspec/changes/woo-compliance/tasks.md#task-2
+	 * @spec openspec/changes/archive/2026-11-20-woo-compliance/tasks.md#task-2
 	 */
 	public function sitemapLines(object $catalog, string $baseUrl): string {
 		$slug = $catalog->getSlug();

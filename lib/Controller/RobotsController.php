@@ -89,7 +89,7 @@ class RobotsController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
-	 * @spec openspec/changes/woo-compliance/tasks.md#task-2
+	 * @spec openspec/changes/archive/2026-11-20-woo-compliance/tasks.md#task-2
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function index(): TextResponse {

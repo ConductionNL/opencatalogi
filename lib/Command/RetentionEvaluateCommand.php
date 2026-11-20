@@ -33,7 +33,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Without `--apply` it lists what each publication would get and changes nothing;
  * with it, it acts exactly as the daily job does (REQ-IMC-002).
  *
- * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+ * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
  */
 class RetentionEvaluateCommand extends MaintenanceCommand {
 
@@ -42,7 +42,7 @@ class RetentionEvaluateCommand extends MaintenanceCommand {
 	 *
 	 * @param RetentionServiceInterface $retentionService The retention service.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	public function __construct(
 		private readonly RetentionServiceInterface $retentionService,
@@ -55,7 +55,7 @@ class RetentionEvaluateCommand extends MaintenanceCommand {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'opencatalogi:retention:evaluate')
@@ -72,7 +72,7 @@ class RetentionEvaluateCommand extends MaintenanceCommand {
 	 *
 	 * @return int 0, or 2 on wrong usage.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		try {
@@ -96,7 +96,7 @@ class RetentionEvaluateCommand extends MaintenanceCommand {
 	 *
 	 * @return array<int, string>
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private static function resultLines(array $result, bool $apply): array {
 		$lines = [];

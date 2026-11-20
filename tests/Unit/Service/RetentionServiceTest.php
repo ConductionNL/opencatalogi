@@ -508,7 +508,7 @@ class RetentionServiceTest extends TestCase {
 	/**
 	 * A dry run plans every action the daily job would take, and saves nothing (REQ-IMC-002).
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	public function testEvaluateDryRunPlansWithoutSaving(): void {
 		$soon = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->modify('+3 days')->format(\DateTimeInterface::ATOM);

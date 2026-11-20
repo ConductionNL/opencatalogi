@@ -33,7 +33,7 @@ use Throwable;
  * persisted the same way, exiting 1 unless the verdict is ready, so it can gate
  * a deployment script (REQ-IMC-003).
  *
- * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+ * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
  */
 class WooReadinessCommand extends MaintenanceCommand {
 
@@ -42,7 +42,7 @@ class WooReadinessCommand extends MaintenanceCommand {
 	 *
 	 * @param HarvesterReadinessServiceInterface $readiness The readiness service.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	public function __construct(
 		private readonly HarvesterReadinessServiceInterface $readiness,
@@ -55,7 +55,7 @@ class WooReadinessCommand extends MaintenanceCommand {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'opencatalogi:woo:readiness')
@@ -71,7 +71,7 @@ class WooReadinessCommand extends MaintenanceCommand {
 	 *
 	 * @return int 0 when ready, 1 when not ready, not configured or stopped, 2 on wrong usage.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		try {
@@ -101,7 +101,7 @@ class WooReadinessCommand extends MaintenanceCommand {
 	 *
 	 * @return array<string, mixed>|null The report, or null when not configured or stopped.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private function checkReport(InputInterface $input, OutputInterface $output): ?array {
 		if ($this->readiness->hasWooEnabledCatalogs() === false) {
@@ -134,7 +134,7 @@ class WooReadinessCommand extends MaintenanceCommand {
 	 *
 	 * @return array<int, string>
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private static function reportLines(array $report): array {
 		$lines = [];
@@ -154,7 +154,7 @@ class WooReadinessCommand extends MaintenanceCommand {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private static function checkLine(mixed $check): string {
 		$line = strtoupper((string)($check['status'] ?? '')) . ' ' . (string)($check['id'] ?? '');

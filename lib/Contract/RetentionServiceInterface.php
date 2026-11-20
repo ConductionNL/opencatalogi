@@ -155,7 +155,7 @@ interface RetentionServiceInterface {
 	 * @return array<string, mixed> Counts: expiringSoon, reviewRequired, depublished, archived; plus `planned` on a dry run.
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	public function evaluate(bool $dryRun = false): array;
 

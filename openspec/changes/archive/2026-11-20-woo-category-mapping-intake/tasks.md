@@ -53,5 +53,6 @@
 
 ## 7. Spec sync
 
-- [ ] 7.1 After verification, sync both delta specs (`woo-category-mapping` new capability, `woo-compliance`
+- [x] 7.1 After verification, sync both delta specs (`woo-category-mapping` new capability, `woo-compliance`
       MODIFIED `WOO-TOOI-001`) back to `openspec/specs/` per the project's sync step
+      Synced: `openspec/specs/woo-category-mapping/spec.md` (WOO-CAT-001..006) created; WOO-TOOI-001 replaced in `openspec/specs/woo-compliance/spec.md`.

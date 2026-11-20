@@ -34,7 +34,7 @@ use Throwable;
  * `occ opencatalogi:directory:sync [--url=<directory>]`: the hourly directory
  * sync, run now, for every known directory or one (REQ-IMC-001).
  *
- * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+ * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
  */
 class DirectorySyncCommand extends MaintenanceCommand {
 
@@ -43,7 +43,7 @@ class DirectorySyncCommand extends MaintenanceCommand {
 	 *
 	 * @param DirectoryServiceInterface $directoryService The directory service.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	public function __construct(
 		private readonly DirectoryServiceInterface $directoryService,
@@ -56,7 +56,7 @@ class DirectorySyncCommand extends MaintenanceCommand {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'opencatalogi:directory:sync')
@@ -73,7 +73,7 @@ class DirectorySyncCommand extends MaintenanceCommand {
 	 *
 	 * @return int 0 when every directory synced, 1 when one failed, 2 on wrong usage.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		try {
@@ -100,7 +100,7 @@ class DirectorySyncCommand extends MaintenanceCommand {
 	 *
 	 * @return array<int, string>
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private static function allSyncedLines(array $results): array {
 		$lines = [];
@@ -127,7 +127,7 @@ class DirectorySyncCommand extends MaintenanceCommand {
 	 *
 	 * @return int 0 on success, 1 when the sync or a listing failed, 2 for a URL the service refuses.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private function syncOne(InputInterface $input, OutputInterface $output, string $url): int {
 		try {
@@ -161,7 +161,7 @@ class DirectorySyncCommand extends MaintenanceCommand {
 	 *
 	 * @return array<int, string>
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private static function oneSyncedLines(string $url, array $result): array {
 		$lines = [];

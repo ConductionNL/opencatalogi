@@ -492,7 +492,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @return array|null The classificatiecollectie element, or null.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
-	 * @spec openspec/changes/woo-category-mapping-intake/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-woo-category-mapping-intake/specs/woo-compliance/spec.md
 	 */
 	private function categoryElement(array $publication, ?string $mappedCategory = null): ?array {
 		$categoryRaw = ($mappedCategory ?? $publication['wooCategory'] ?? $publication['category'] ?? $publication['tooiCategorieUri']
@@ -522,7 +522,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 *
 	 * @return array|null The category, or null when none resolves.
 	 *
-	 * @spec openspec/changes/woo-category-mapping-intake/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-woo-category-mapping-intake/specs/woo-compliance/spec.md
 	 */
 	private function declaredOrDefaultCategory(array $publication, ?string $declared): ?array {
 		if ($declared !== null && trim($declared) !== '') {
@@ -546,7 +546,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 *
 	 * @return array{uri: string, label: string}|null The default, or null.
 	 *
-	 * @spec openspec/changes/woo-category-mapping-intake/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-woo-category-mapping-intake/specs/woo-compliance/spec.md
 	 */
 	private function typeDefaultCategory(array $publication): ?array {
 		$schema = ($publication['@self']['schema'] ?? null);
@@ -570,7 +570,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 *
 	 * @return array{uri: string, label: string}|null The default, or null.
 	 *
-	 * @spec openspec/changes/woo-category-mapping-intake/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-woo-category-mapping-intake/specs/woo-compliance/spec.md
 	 */
 	private function lookupTypeDefault(string $schemaId): ?array {
 		try {

@@ -147,7 +147,7 @@ final class SitemapIndexBuilder {
 	 * @return XMLResponse
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
-	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-woo-compliance/specs/woo-compliance/spec.md
 	 */
 	public function response(array $sitemaps): XMLResponse {
 		$index = [

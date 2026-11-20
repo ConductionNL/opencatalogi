@@ -2,7 +2,7 @@
 
 OpenCatalogi publishes every Woo catalogue as DiWoo sitemaps, so the national Woo-index (KOOP) and search engines can harvest the published documents, and points crawlers at them from `robots.txt`.
 
-Spec: [`openspec/specs/woo-compliance/spec.md`](../../openspec/specs/woo-compliance/spec.md), change [`woo-compliance`](../../openspec/changes/woo-compliance/).
+Spec: [`openspec/specs/woo-compliance/spec.md`](../../openspec/specs/woo-compliance/spec.md), change [`woo-compliance`](../../openspec/changes/archive/2026-11-20-woo-compliance/).
 
 ## Endpoints
 

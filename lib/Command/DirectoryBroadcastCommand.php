@@ -31,7 +31,7 @@ use Symfony\Component\Console\Output\OutputInterface;
  * `occ opencatalogi:directory:broadcast`: the four-hourly broadcast, run now
  * (REQ-IMC-001).
  *
- * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+ * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
  */
 class DirectoryBroadcastCommand extends MaintenanceCommand {
 
@@ -40,7 +40,7 @@ class DirectoryBroadcastCommand extends MaintenanceCommand {
 	 *
 	 * @param BroadcastServiceInterface $broadcastService The broadcast service.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	public function __construct(
 		private readonly BroadcastServiceInterface $broadcastService,
@@ -53,7 +53,7 @@ class DirectoryBroadcastCommand extends MaintenanceCommand {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'opencatalogi:directory:broadcast')
@@ -69,7 +69,7 @@ class DirectoryBroadcastCommand extends MaintenanceCommand {
 	 *
 	 * @return int 0 when every target accepted, 1 when one did not, 2 on wrong usage.
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		try {
@@ -93,7 +93,7 @@ class DirectoryBroadcastCommand extends MaintenanceCommand {
 	 *
 	 * @return array<int, string>
 	 *
-	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	private static function broadcastLines(array $results, int $failed): array {
 		$lines = [];
