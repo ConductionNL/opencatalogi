@@ -257,6 +257,8 @@
 
 				<WooIndexConnection />
 
+				<RefusalGroundsSource />
+
 				<DonlHarvestStatus />
 
 				<DcatFeedValidation />
@@ -684,6 +686,7 @@ import InstanceModeSection from './InstanceModeSection.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
 import RecordHandover from './RecordHandover.vue'
+import RefusalGroundsSource from './RefusalGroundsSource.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
@@ -807,6 +810,7 @@ export default defineComponent({
 		CapabilityRightsSection,
 		PublishRightsLine,
 		RecordHandover,
+		RefusalGroundsSource,
 		WooIndexConnection,
 		DcatFeedValidation,
 		DonlHarvestStatus,

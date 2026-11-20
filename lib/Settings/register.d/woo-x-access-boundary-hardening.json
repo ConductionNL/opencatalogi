@@ -3,7 +3,7 @@
 	"components": {
 		"schemas": {
 			"wooAssessment": {
-				"version": "0.6.1",
+				"version": "0.7.1",
 				"configuration": {
 					"x-openregister-processing": {
 						"logReads": true,
