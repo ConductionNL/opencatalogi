@@ -35,8 +35,9 @@
 - [x] 5.4 Smoke test `PUT /api/listings/{id}` (authenticated) — confirm listing updated Live pass 17 Nov (livepass-opencatalogi): 200, title changed and read back anonymously; an unknown id is now 404 (was 500).
 - [x] 5.5 Smoke test `DELETE /api/listings/{id}` (authenticated) — confirm listing deleted Live pass 17 Nov (livepass-opencatalogi): 200 `Listing removed`, then 404 on read.
 - [x] 5.6 Verify `ListingController` reads `listing_register` and `listing_schema` from `IAppConfig` and passes them to `ObjectService`
-- [ ] 5.7 Verify CORS annotations (`#[CORS]`) and public-page annotations (`#[PublicPage]`, `#[NoCSRFRequired]`) are correct on `GET /api/listings/{id}` and `POST /api/listings/add`
+- [x] 5.7 Verify CORS annotations (`#[CORS]`) and public-page annotations (`#[PublicPage]`, `#[NoCSRFRequired]`) are correct on `GET /api/listings/{id}` and `POST /api/listings/add`
   - Live pass 17 Nov: left open. `OPTIONS /api/listings/{id}` answers the CORS headers, but the GET answer itself carries no `Access-Control-Allow-Origin`, and `POST /api/listings/add` is admin-only since harden-listings-admin-write-surface (403 anonymously), so this item's expectation no longer matches the spec.
+  - Built 17 Nov (round 2): `ListingsController::show()` now adds the CORS headers (origin from the `cors_allowed_origins` allowlist, never a reflected arbitrary origin) to every answer, the 404 and 503 included (DIR-008). `show` keeps `@PublicPage` / `@NoCSRFRequired`; `add` is correctly admin-only (`#[AuthorizedAdminSetting]`) per LST-003. Tests: `ListingsControllerTest::testShowAnswersWithTheCorsHeaders`, `testShowFollowsTheAllowlistOnA404`.
 
 ## 6. Directory Synchronisation Verification (DIR-001..011)
 
@@ -67,5 +68,6 @@
 ## 9. Internationalization (ADR-007)
 
 - [x] 9.1 Verify all user-facing strings in dashboard Vue components (`DashboardIndex.vue`, `DirectoryIndex.vue`, `EditListingModal.vue`, `AddDirectoryModal.vue`, `ViewDirectoryModal.vue`) are wrapped in `t('opencatalogi', '...')`
-- [ ] 9.2 Run `npm run check:l10n` — confirm zero MISSING and zero UNWRAPPED
+- [x] 9.2 Run `npm run check:l10n` — confirm zero MISSING and zero UNWRAPPED
+  - 17 Nov (round 2): zero MISSING, zero UNWRAPPED. The three former UNWRAPPED hits were `actionIconName="Delete"`, an icon component name; `scripts/check-l10n.js` now lists `actionIconName` as a non-display attribute. One UNUSED key remains, the OpenRegister-version notice that `lib/AppInfo/OpenRegisterVersionCheck.php` translates server-side.
 - [x] 9.3 Run `npm run find:unwrapped` — confirm no unregistered prose candidates in dashboard/directory Vue files
