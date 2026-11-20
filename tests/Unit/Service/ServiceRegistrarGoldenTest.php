@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
 
+use OCA\OpenCatalogi\Service\ServiceBindings;
 use OCA\OpenCatalogi\Service\ServiceRegistrar;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use PHPUnit\Framework\TestCase;
@@ -82,7 +83,7 @@ class ServiceRegistrarGoldenTest extends TestCase {
 	 * @return void
 	 */
 	public function testEveryInterfaceBindingImplementsItsInterface(): void {
-		$bindings = (new \ReflectionClassConstant(ServiceRegistrar::class, 'INTERFACE_BINDINGS'))->getValue();
+		$bindings = ServiceBindings::INTERFACE_BINDINGS;
 
 		$this->assertNotEmpty($bindings);
 		foreach ($bindings as $interface => $target) {

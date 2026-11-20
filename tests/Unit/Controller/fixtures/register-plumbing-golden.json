@@ -73,6 +73,7 @@
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
                 "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "Vary": "Origin",
                 "X-Robots-Tag": "noindex, nofollow"
             }
         },
@@ -202,6 +203,7 @@
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
                 "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "Vary": "Origin",
                 "X-Robots-Tag": "noindex, nofollow"
             }
         },
@@ -284,6 +286,7 @@
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
                 "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "Vary": "Origin",
                 "X-Robots-Tag": "noindex, nofollow"
             }
         },
@@ -347,6 +350,7 @@
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
                 "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "Vary": "Origin",
                 "X-Robots-Tag": "noindex, nofollow"
             }
         },
@@ -1575,6 +1579,7 @@
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
                 "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "Vary": "Origin",
                 "X-Robots-Tag": "noindex, nofollow"
             }
         },
@@ -1608,6 +1613,7 @@
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
                 "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "Vary": "Origin",
                 "X-Robots-Tag": "noindex, nofollow"
             }
         },
@@ -1675,6 +1681,7 @@
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
                 "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "Vary": "Origin",
                 "X-Robots-Tag": "noindex, nofollow"
             }
         },
