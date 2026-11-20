@@ -54,7 +54,7 @@ trait AnswersCrossOriginSearchRequests {
 	private function withSearchCorsHeaders(Response $response): Response {
 		$this->withCorsHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-		$response->addHeader('Vary', self::varyWithOrigin(vary: ($response->getHeaders()['Vary'] ?? '')));
+		$this->addOriginToVary(response: $response);
 
 		return $response;
 	}//end withSearchCorsHeaders()
@@ -72,25 +72,4 @@ trait AnswersCrossOriginSearchRequests {
 
 		return $response;
 	}//end searchPreflight()
-
-	/**
-	 * A Vary value that names Origin, keeping the names it already had.
-	 *
-	 * @param string $vary The current Vary value, '' when there is none.
-	 *
-	 * @return string The Vary value.
-	 *
-	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
-	 */
-	private static function varyWithOrigin(string $vary): string {
-		$names = array_values(array_filter(array_map('trim', explode(',', $vary)), static fn (string $name): bool => $name !== ''));
-		foreach ($names as $name) {
-			if (strcasecmp($name, 'Origin') === 0 || $name === '*') {
-				return implode(', ', $names);
-			}
-		}
-
-		$names[] = 'Origin';
-		return implode(', ', $names);
-	}//end varyWithOrigin()
 }//end trait

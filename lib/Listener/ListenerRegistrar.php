@@ -26,6 +26,7 @@ use OCA\OpenRegister\Event\CustomScopeEvaluatingEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
+use OCA\OpenRegister\Event\ObjectDeletingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\OpenRegister\Event\PermissionsDeclaringEvent;
@@ -131,10 +132,12 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectUpdatingEvent::class, CatalogSchemaEventListener::class);
 
 		// Catalogue staff access (catalogue-staff-access): refuse a change by a
-		// non-administrator before the write, recompute the covered schemas' rules after it.
+		// non-administrator before the write (deletes included), recompute the
+		// covered schemas' rules after it.
 		$catalogAccessEvents = [
 			ObjectCreatingEvent::class,
 			ObjectUpdatingEvent::class,
+			ObjectDeletingEvent::class,
 			ObjectCreatedEvent::class,
 			ObjectUpdatedEvent::class,
 			ObjectDeletedEvent::class,

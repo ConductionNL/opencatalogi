@@ -57,6 +57,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/federation/spec.md
  */
 class FederationController extends Controller {
+	use AnswersCacheably;
 	use AnswersInTheVisitorsLanguage;
 	use AnswersCrossOriginSearchRequests;
 
@@ -96,6 +97,13 @@ class FederationController extends Controller {
 	private readonly ?PublicationQueryServiceInterface $queryService;
 
 	/**
+	 * The container AnswersCacheably reads the session and app config from; null caches nothing.
+	 *
+	 * @var ContainerInterface|null
+	 */
+	private readonly ?ContainerInterface $container;
+
+	/**
 	 * FederationController constructor.
 	 *
 	 * @param IRequest $request The request object.
@@ -107,7 +115,8 @@ class FederationController extends Controller {
 	 *                                           holding the CORS allowlist (without it every origin is allowed),
 	 *                                           the request's collector of applied filters (REQ-ASF-001),
 	 *                                           the usage counter of served local publications (ANA-001)
-	 *                                           and the query service negotiating the visitor's language (REQ-PTR-002).
+	 *                                           and the query service negotiating the visitor's language (REQ-PTR-002);
+	 *                                           the cache headers read the session and app config from it.
 	 */
 	public function __construct(
 		IRequest $request,
@@ -118,6 +127,7 @@ class FederationController extends Controller {
 		?ContainerInterface $container = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
+		$this->container = $container;
 		$appConfig = self::optional(container: $container, class: IAppConfig::class);
 		$appliedFilters = self::optional(container: $container, class: AppliedFilters::class);
 		if ($appConfig instanceof IAppConfig === false) {
@@ -266,6 +276,7 @@ class FederationController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
@@ -291,10 +302,12 @@ class FederationController extends Controller {
 				$this->countReach(publicationId: $id, kind: UsageCounterServiceInterface::KIND_VIEW);
 			}
 
-			return $this->withVisitorLanguageHeaders(
-				response: $this->withSearchCorsHeaders(response: new JSONResponse($result['data'], $result['status'])),
-				queryService: $this->queryService
-			);
+			// The same cache headers publications#show sends: the portal reads a
+			// publication with its schema through this route on every page view,
+			// and an unchanged answer comes back as a 304 without a body.
+			$response = new JSONResponse($result['data'], $result['status']);
+			$this->withVisitorLanguageHeaders(response: $this->withSearchCorsHeaders(response: $response), queryService: $this->queryService);
+			return $this->cacheableForCaller(response: $response);
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publication] Failed to retrieve publication',
@@ -413,6 +426,7 @@ class FederationController extends Controller {
 	 *   instance that holds it returns (getFederatedAttachments()).
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
 	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
 	 */
@@ -423,7 +437,8 @@ class FederationController extends Controller {
 			$response = $this->documents->describe(response: $response, catalogSlug: null, publicationId: $id);
 		}
 
-		return $this->withSearchCorsHeaders(response: $response);
+		$this->withSearchCorsHeaders(response: $response);
+		return $this->cacheableForCaller(response: $response);
 	}//end publicationAttachments()
 
 	// Lower than the sibling reads: a download moves file bytes, so the cost of

@@ -8,6 +8,7 @@
 
 - [x] 2.1 Wrap the answers of `PublicationsController::index()`, `show()` and `attachments()` (REQ-PAC-001). Verify: controller tests assert the headers for an anonymous and a signed-in call.
 - [x] 2.2 Wrap `SearchController::index()` and `show()` (REQ-PAC-001). Verify: same.
+- [x] 2.3 Wrap `FederationController::publication()` and `publicationAttachments()` (REQ-PAC-001): the portal (portaliq) reads a publication through these routes on every page view, with `_extend=@self.schema`, so an unchanged answer should come back as a 304 instead of carrying the schema again. Verify: `tests/Unit/Controller/FederationControllerTest.php` asserts the public headers, the 304 and the private answer. Done: 4 tests.
 
 ## 3. The setting
 

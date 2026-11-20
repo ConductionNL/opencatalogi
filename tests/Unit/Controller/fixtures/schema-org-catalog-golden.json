@@ -235,6 +235,7 @@
             "X-Robots-Tag": "noindex, nofollow",
             "Content-Type": "application/ld+json",
             "Access-Control-Allow-Origin": "https://portal.example",
+            "Vary": "Origin",
             "Access-Control-Allow-Methods": "GET, OPTIONS",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
         },
@@ -278,6 +279,7 @@
             "X-Robots-Tag": "noindex, nofollow",
             "Content-Type": "application/ld+json",
             "Access-Control-Allow-Origin": "https://portal.example",
+            "Vary": "Origin",
             "Access-Control-Allow-Methods": "GET, OPTIONS",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
         },
