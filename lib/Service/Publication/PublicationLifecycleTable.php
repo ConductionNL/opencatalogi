@@ -59,6 +59,7 @@ class PublicationLifecycleTable {
 	 * @return array{field: string, states: list<string>, initial: string|null, final: list<string>, transitions: list<array<string, mixed>>}
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-the-publication-declares-one-lifecycle-with-named-transitions-req-plc-001
+	 * @SuppressWarnings(PHPMD.StaticAccess) SettingsService::shippedSchema() reads the shipped schema file, no service state.
 	 */
 	public function table(): array {
 		$schema = SettingsService::shippedSchema(settingsDir: $this->settingsDir, slug: 'publication');

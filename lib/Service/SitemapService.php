@@ -743,6 +743,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @return array<int, array<string, mixed>>
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::isUnlisted() is a pure predicate.
 	 */
 	private function publicationsWithFiles(iterable $rows): array {
 		$fileService = $this->getFileService();

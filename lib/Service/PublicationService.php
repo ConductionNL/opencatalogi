@@ -2006,6 +2006,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * @return array The decoded response data.
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::withoutUnlisted() is a pure filter.
 	 */
 	private function fetchLocalPublicationData(array $queryParams): array {
 		$response = $this->index(catalogId: null, customParams: $queryParams);

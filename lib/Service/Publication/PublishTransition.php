@@ -110,7 +110,6 @@ class PublishTransition {
 	 * @param string $id              The publication uuid.
 	 * @param string $stored          The stored `status`.
 	 * @param string $publicationDate The publication date to write (ATOM).
-	 * @param bool   $asSystem        Run as opencatalogi itself, for a publish no caller makes (a reviewed Woo batch).
 	 *
 	 * @return object The publication as the engine answers it.
 	 *
@@ -119,18 +118,58 @@ class PublishTransition {
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
 	 */
-	public function publish(string $id, string $stored, string $publicationDate, bool $asSystem = false): object {
+	public function publish(string $id, string $stored, string $publicationDate): object {
+		$action = $this->allowedAction(stored: $stored);
+
+		return $this->container->get(self::ENGINE)->transition($id, $action, self::publishData(publicationDate: $publicationDate));
+	}//end publish()
+
+	/**
+	 * Publish now as opencatalogi itself, for a publish no caller makes (a reviewed Woo batch).
+	 *
+	 * @param string $id              The publication uuid.
+	 * @param string $stored          The stored `status`.
+	 * @param string $publicationDate The publication date to write (ATOM).
+	 *
+	 * @return object The publication as the engine answers it.
+	 *
+	 * @throws PublishRefusedException When no publish transition is allowed from the stored state.
+	 * @throws \Throwable              Whatever the engine refuses (move, rights, guard, inputs).
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 */
+	public function publishAsSystem(string $id, string $stored, string $publicationDate): object {
+		$action = $this->allowedAction(stored: $stored);
+
+		return $this->container->get(self::ENGINE)->transitionAsSystem($id, $action, 'opencatalogi', self::publishData(publicationDate: $publicationDate));
+	}//end publishAsSystem()
+
+	/**
+	 * The publish transition allowed from the stored state.
+	 *
+	 * @param string $stored The stored `status`.
+	 *
+	 * @return string The transition.
+	 *
+	 * @throws PublishRefusedException When no publish transition is allowed from the stored state.
+	 */
+	private function allowedAction(string $stored): string {
 		$action = $this->actionFor(stored: $stored);
 		if ($action === null) {
 			throw new PublishRefusedException(state: self::storedState(stored: $stored));
 		}
 
-		$engine = $this->container->get(self::ENGINE);
-		$data   = ['publicationDate' => $publicationDate, 'depublicationDate' => null];
-		if ($asSystem === true) {
-			return $engine->transitionAsSystem($id, $action, 'opencatalogi', $data);
-		}
+		return $action;
+	}//end allowedAction()
 
-		return $engine->transition($id, $action, $data);
-	}//end publish()
+	/**
+	 * The data a publish writes: the publication date, and no depublication date.
+	 *
+	 * @param string $publicationDate The publication date (ATOM).
+	 *
+	 * @return array{publicationDate: string, depublicationDate: null}
+	 */
+	private static function publishData(string $publicationDate): array {
+		return ['publicationDate' => $publicationDate, 'depublicationDate' => null];
+	}//end publishData()
 }//end class

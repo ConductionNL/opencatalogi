@@ -91,12 +91,14 @@ class BatchPublicationWriterEdgesTest extends TestCase {
 
 	protected function setUp(): void {
 		$this->publisher = $this->createMock(PublishTransition::class);
-		$this->publisher->method('publish')->willReturnCallback(
-			function (string $id, string $stored, string $publicationDate, bool $asSystem = false): object {
-				$this->publishes[] = [$id, $stored, $publicationDate, $asSystem];
-				return new \stdClass();
-			}
-		);
+		foreach (['publish' => false, 'publishAsSystem' => true] as $method => $asSystem) {
+			$this->publisher->method($method)->willReturnCallback(
+				function (string $id, string $stored, string $publicationDate) use ($asSystem): object {
+					$this->publishes[] = [$id, $stored, $publicationDate, $asSystem];
+					return new \stdClass();
+				}
+			);
+		}
 		$this->objects = new WriterFakeObjectService();
 
 	}//end setUp()

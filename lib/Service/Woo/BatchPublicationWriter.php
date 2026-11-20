@@ -335,7 +335,7 @@ class BatchPublicationWriter {
 			return $entity;
 		}
 
-		$this->container->get(PublishTransition::class)->publish(id: $id, stored: $stored, publicationDate: $now, asSystem: true);
+		$this->container->get(PublishTransition::class)->publishAsSystem(id: $id, stored: $stored, publicationDate: $now);
 
 		return $entity;
 	}//end published()

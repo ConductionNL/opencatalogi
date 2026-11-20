@@ -222,6 +222,7 @@ class PublicationStateController extends Controller {
 	 * @throws PublishRefusedException When the lifecycle allows no publish from the stored state.
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 * @SuppressWarnings(PHPMD.StaticAccess) PublishTransition::storedState() is a pure state helper.
 	 */
 	private function publishNow(string $id, array $properties): void {
 		$record = $this->registers->publishedRecord(publication: $properties);

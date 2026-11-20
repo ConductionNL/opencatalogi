@@ -595,6 +595,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @return array|null The shaped row, or null when it must be dropped.
 	 *
 	 * @spec openspec/specs/search/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::isUnlisted() is a pure predicate.
 	 */
 	private function shapeCandidateRow(array $rowArray, PublicSearchAssembly $run): ?array {
 		$schemaId = $this->extractSchemaId(rowArray: $rowArray);

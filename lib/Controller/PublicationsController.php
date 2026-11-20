@@ -886,6 +886,7 @@ class PublicationsController extends Controller {
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the configuration cannot be read.
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::withoutUnlisted() is a pure filter.
 	 */
 	private function anonymousResults(array $result): array {
 		if (is_array($result['results'] ?? null) === false || $this->queryService->isAnonymous() === false) {
