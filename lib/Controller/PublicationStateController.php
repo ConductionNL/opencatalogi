@@ -53,6 +53,8 @@ use OCP\IUserSession;
 /**
  * The publication's visibility, and the three moves an editor makes on it.
  *
+ * @SuppressWarnings(PHPMD.TooManyMethods) Each move is split into short private steps to stay under the unit size and complexity limits.
+ *
  * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
  */
 class PublicationStateController extends Controller {

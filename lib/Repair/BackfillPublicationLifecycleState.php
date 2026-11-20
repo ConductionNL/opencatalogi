@@ -164,8 +164,9 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 				$this->backfillOne(publication: self::asArray(row: $row), scope: $scope);
 			}
 
+			$pageCount = count($rows);
 			$page++;
-		} while (count($rows) === self::PAGE_SIZE);
+		} while ($pageCount === self::PAGE_SIZE);
 
 	}//end backfillScope()
 

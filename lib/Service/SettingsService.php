@@ -82,6 +82,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.TooManyMethods) Object type configuration is split into small private steps to stay under the unit limits.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) shippedSchema() is a static reader of the shipped files, part of that same split-out-later surface.
  *
  * @spec openspec/specs/admin-settings/spec.md
  */
@@ -1535,8 +1536,12 @@ class SettingsService implements SettingsServiceInterface {
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-the-publication-declares-one-lifecycle-with-named-transitions-req-plc-001
 	 */
 	public static function shippedSchema(string $settingsDir, string $slug): array {
-		$raw = @file_get_contents($settingsDir . '/publication_register.json');
-		$base = json_decode((string)$raw, true);
+		$path = $settingsDir . '/publication_register.json';
+		if (is_readable($path) === false) {
+			return [];
+		}
+
+		$base = json_decode((string)file_get_contents($path), true);
 		if (is_array($base) === false) {
 			return [];
 		}

@@ -328,6 +328,7 @@ class BatchPublicationWriter {
 	 * @return mixed The publication as saved or found: files attach to it by id, which the move does not change.
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 * @SuppressWarnings(PHPMD.StaticAccess) PublishTransition::storedState() is a pure state helper.
 	 */
 	private function published(mixed $entity, string $id, string $now): mixed {
 		$stored = PublishTransition::storedState(stored: (string)(self::propertiesOf(entity: $entity)['status'] ?? ''));
