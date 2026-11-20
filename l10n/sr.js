@@ -738,7 +738,12 @@ OC.L10N.register(
         "Last used": "Последње коришћено",
         "This key is shown once. Copy it now: it cannot be shown again.": "Овај кључ се приказује само једном. Копирајте га сада: не може се поново приказати.",
         "No feed consumers yet.": "Још нема корисника фида.",
-        "Accounts that read every catalogue's feed": "Налози који читају фид сваког каталога"
+        "Accounts that read every catalogue's feed": "Налози који читају фид сваког каталога",
+        "Review publications before they are published": "Прегледај објаве пре објављивања",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Када је укључено, нацрт мора бити поднет и одобрен пре него што може да се објави. Када је искључено, уредник може директно да објави нацрт.",
+        "Delete publication": "Обриши објаву",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Да ли желите да обришете \"{name}\"? Ова радња се не може опозвати.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Објава и њени прилози нестају са јавне странице и из Woo мапе сајта. Архивирање их, насупрот томе, чува током рока чувања."
     },
     "nplurals=2; plural=(n != 1);"
 )

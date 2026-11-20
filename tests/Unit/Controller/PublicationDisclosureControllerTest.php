@@ -72,7 +72,7 @@ class PublicationDisclosureControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->indexService,
-			new PublishedCollectionsService($this->config, new PublicationRuleService(), 'opencatalogi')
+			new PublishedCollectionsService($this->config, new PublicationRuleService(), 'opencatalogi'), capabilities: new \Unit\Support\AllowingCapabilityRights()
 		);
 
 	}//end setUp()

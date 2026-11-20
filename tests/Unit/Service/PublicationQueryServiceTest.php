@@ -1086,6 +1086,24 @@ class PublicationQueryServiceTest extends TestCase {
 	}
 
 	/**
+	 * Publication-lifecycle-on-or REQ-PLC-006: search never finds an unlisted publication, and keeps a listed one.
+	 */
+	public function testSearchLeavesAnUnlistedPublicationOut(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [
+				['@self' => ['id' => 'pub-listed', 'schema' => 1], 'title' => 'Besluit gevonden', 'status' => 'published'],
+				['@self' => ['id' => 'pub-unlisted', 'schema' => 1], 'title' => 'Besluit niet in de lijst', 'status' => 'published', 'unlisted' => true],
+			], 'total' => 2, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertSame(['pub-listed'], array_map(static fn (array $row): string => $row['@self']['id'], $out['results']));
+		$this->assertSame(1, $out['total']);
+	}
+
+	/**
 	 * RET-006 belt-and-braces on the UUID fast-path: a document pointing at
 	 * a publication with `status: 'archived'` MUST be dropped, even when
 	 * a mis-configured schema RBAC would let the row through. The linked

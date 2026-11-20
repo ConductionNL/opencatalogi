@@ -94,7 +94,7 @@
         "slug": "publication",
         "x-schema-org": "schema:CreativeWork",
         "title": "Publication",
-        "version": "0.0.6",
+        "version": "0.0.10",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A single publication entry within the catalog",
         "description": "A publication represents an individual piece of content within the catalog. It can be associated with themes and schemas, and is the primary unit of content that users can view and interact with. Publications can be linked to specific organizations and can be either public or private.",
@@ -264,20 +264,47 @@
           },
           "status": {
             "type": "string",
-            "description": "Lifecycle status of the publication; the archived state retains the object internally while removing it from every public surface (RET-006).",
+            "description": "Stored lifecycle state of the publication (publication-lifecycle-on-or REQ-PLC-001): draft, in review, approved, published or archived. Only a published publication can be public; whether it is scheduled, public or withdrawn follows from its dates. The archived state retains the object internally while removing it from every public surface (RET-006).",
             "enum": [
+              "draft",
+              "in_review",
+              "approved",
               "published",
               "archived"
             ],
+            "default": "draft",
             "facetable": true,
             "title": "Status"
           },
+          "firstReleasedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the publication was first published. Set once by the publish transitions and never changed afterwards (REQ-PLC-001).",
+            "immutable": true,
+            "facetable": false,
+            "title": "First released at"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the publication last entered the approved state; a calling system reconciles on it through GET /api/publications/ready (REQ-PLC-005).",
+            "facetable": false,
+            "title": "Approved at"
+          },
+          "unlisted": {
+            "type": "boolean",
+            "description": "When true, a public publication stays readable at its own link but is left out of search, the sitemaps, DCAT, PLOOI delivery and the federation list (REQ-PLC-006). Clearing it puts the publication back.",
+            "default": false,
+            "facetable": true,
+            "title": "Unlisted"
+          },
           "plooiStatus": {
             "type": "string",
-            "description": "Whether this publication reached PLOOI, the delivery API of open.overheid.nl: delivered or failed. Empty until a catalogue with PLOOI delivery on delivers it.",
+            "description": "Whether this publication reached PLOOI, the delivery API of open.overheid.nl: delivered, failed, or withdrawn once it stopped being public. Empty until a catalogue with PLOOI delivery on delivers it.",
             "enum": [
               "delivered",
-              "failed"
+              "failed",
+              "withdrawn"
             ],
             "facetable": true,
             "title": "PLOOI status"
@@ -300,15 +327,125 @@
             "description": "Why the last PLOOI delivery failed, as the platform or the connection said it.",
             "facetable": false,
             "title": "PLOOI failure reason"
+          },
+          "plooiDocuments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The document links PLOOI received with the last delivery, so a document that is no longer public is withdrawn with the next one.",
+            "facetable": false,
+            "title": "PLOOI documents"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initial": "published",
+          "initial": "draft",
           "final": [
             "archived"
           ],
           "transitions": {
+            "submit": {
+              "from": [
+                "draft"
+              ],
+              "to": "in_review",
+              "label": "Submit for review",
+              "description": "Offer the draft for review"
+            },
+            "approve": {
+              "from": [
+                "in_review"
+              ],
+              "to": "approved",
+              "label": "Approve",
+              "description": "Approve the publication for publishing",
+              "actions": [
+                {
+                  "action": "set-fields",
+                  "actionParameters": {
+                    "approvedAt": "@now"
+                  }
+                }
+              ]
+            },
+            "reject": {
+              "from": [
+                "in_review"
+              ],
+              "to": "draft",
+              "label": "Reject",
+              "description": "Send the publication back to draft, with a reason",
+              "inputs": [
+                {
+                  "field": "reason",
+                  "required": true
+                }
+              ]
+            },
+            "retract": {
+              "from": [
+                "approved"
+              ],
+              "to": "draft",
+              "label": "Retract approval",
+              "description": "Take the approval back and return to draft"
+            },
+            "publish": {
+              "from": [
+                "approved"
+              ],
+              "to": "published",
+              "inputs": [
+                {
+                  "field": "publicationDate",
+                  "required": false
+                },
+                {
+                  "field": "depublicationDate",
+                  "required": false
+                }
+              ],
+              "label": "Publish",
+              "description": "Publish the approved publication",
+              "actions": [
+                {
+                  "action": "set-fields",
+                  "condition": "@previous.firstReleasedAt == ''",
+                  "actionParameters": {
+                    "firstReleasedAt": "@now"
+                  }
+                }
+              ]
+            },
+            "publishWithoutReview": {
+              "from": [
+                "draft"
+              ],
+              "to": "published",
+              "inputs": [
+                {
+                  "field": "publicationDate",
+                  "required": false
+                },
+                {
+                  "field": "depublicationDate",
+                  "required": false
+                }
+              ],
+              "label": "Publish without review",
+              "description": "Publish a draft directly; allowed only while review is not required",
+              "requires": "OCA\\OpenCatalogi\\Lifecycle\\ReviewNotRequiredGuard",
+              "actions": [
+                {
+                  "action": "set-fields",
+                  "condition": "@previous.firstReleasedAt == ''",
+                  "actionParameters": {
+                    "firstReleasedAt": "@now"
+                  }
+                }
+              ]
+            },
             "archive": {
               "from": [
                 "published"
@@ -380,6 +517,7 @@
             {
               "group": "public",
               "match": {
+                "status": "published",
                 "publicationDate": {
                   "$lte": "$now"
                 },
@@ -392,6 +530,7 @@
             {
               "group": "public",
               "match": {
+                "status": "published",
                 "publicationDate": {
                   "$lte": "$now"
                 },

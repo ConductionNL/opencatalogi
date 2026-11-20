@@ -94,6 +94,10 @@ class WooRegisterSchemasTest extends TestCase {
 		'fileTypeClaimed',
 		'assessment',
 		'weigeringsgronden',
+		// Written by updateAssessment() and MapStoredRefusalGrounds: which list the codes are from,
+		// and the earlier codes that could not be mapped (woo-value-lists-on-the-concept-register, REQ-WVC-003).
+		'groundsListVersion',
+		'unmappedGrounds',
 		'redactionInstructions',
 		'anonymizedDocument',
 		'anonymizedDocumentHash',

@@ -200,7 +200,7 @@ final class CompletenessListenerTest extends TestCase {
 	 * @return array<string, mixed> The properties.
 	 */
 	private function public(): array {
-		return ['title' => 'Besluit', 'publicationDate' => '2026-01-01T00:00:00+00:00'];
+		return ['title' => 'Besluit', 'status' => 'published', 'publicationDate' => '2026-01-01T00:00:00+00:00'];
 	}//end public()
 
 	/**

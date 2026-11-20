@@ -30,6 +30,7 @@
         "saves": [
             {
                 "object": {
+                    "status": "published",
                     "title": "Besluit",
                     "publicationDate": "2026-09-01T09:00:00+00:00",
                     "plooiStatus": "delivered",
@@ -85,6 +86,7 @@
         "saves": [
             {
                 "object": {
+                    "status": "published",
                     "publicationDate": "2099-09-01T09:00:00+00:00",
                     "depublicationDate": "<now>"
                 },
@@ -195,6 +197,7 @@
         "saves": [
             {
                 "object": {
+                    "status": "published",
                     "title": "Besluit",
                     "publicationDate": "2026-09-01T09:00:00+00:00",
                     "plooiStatus": "delivered",
@@ -242,6 +245,7 @@
         "saves": [
             {
                 "object": {
+                    "status": "published",
                     "title": "Besluit",
                     "publicationDate": "2026-09-01T09:00:00+00:00",
                     "plooiStatus": "delivered",
@@ -264,6 +268,7 @@
         "saves": [
             {
                 "object": {
+                    "status": "published",
                     "title": "Besluit",
                     "publicationDate": "2026-09-01T09:00:00+00:00",
                     "plooiStatus": "delivered",

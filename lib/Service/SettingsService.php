@@ -82,6 +82,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.TooManyMethods) Object type configuration is split into small private steps to stay under the unit limits.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) shippedSchema() is a static reader of the shipped files, part of that same split-out-later surface.
  *
  * @spec openspec/specs/admin-settings/spec.md
  */
@@ -154,6 +155,7 @@ class SettingsService implements SettingsServiceInterface {
 				'woo_batch_schema' => 'wooBatch',
 				'woo_assessment_schema' => 'wooAssessment',
 				'withheld_document_schema' => 'withheldDocument',
+				'woo_pipeline_incident_schema' => 'wooPipelineIncident',
 			],
 		],
 		[
@@ -253,6 +255,7 @@ class SettingsService implements SettingsServiceInterface {
 		'auto_publish_attachments',
 		'auto_publish_objects',
 		'use_old_style_publishing_view',
+		'publication_review_required',
 	];
 
 	/**
@@ -276,6 +279,8 @@ class SettingsService implements SettingsServiceInterface {
 		'auto_publish_attachments' => 'false',
 		'auto_publish_objects' => 'false',
 		'use_old_style_publishing_view' => 'false',
+		// Publication-lifecycle-on-or REQ-PLC-001: review is on until an admin turns it off.
+		'publication_review_required' => 'true',
 		'dcat_instance_title' => 'OpenCatalogi',
 		'dcat_publisher_name' => '',
 		'dcat_publisher_uri' => '',
@@ -1160,8 +1165,10 @@ class SettingsService implements SettingsServiceInterface {
 		try {
 			$publishingOptions = [];
 			foreach (self::PUBLISHING_OPTIONS as $option) {
-				// Stored as the text 'true' or 'false'; anything else reads as false.
-				$publishingOptions[$option] = $this->config->getValueString($this->appName, $option, 'false') === 'true';
+				// Stored as the text 'true' or 'false'; anything else reads as false. An unset
+				// option reads as its default (publication_review_required is on by default).
+				$default = self::SETTING_DEFAULTS[$option];
+				$publishingOptions[$option] = $this->config->getValueString($this->appName, $option, $default) === 'true';
 			}
 
 			return $publishingOptions;
@@ -1515,6 +1522,39 @@ class SettingsService implements SettingsServiceInterface {
 
 		return $data;
 	}//end withSourceTracking()
+
+	/**
+	 * One schema of the shipped register, as it is imported: the base register with every fragment merged.
+	 *
+	 * Read from the app's own files, so a caller that publishes a declaration
+	 * (the publication lifecycle table) never answers from a copy.
+	 *
+	 * @param string $settingsDir The app's lib/Settings directory.
+	 * @param string $slug        The schema key under components.schemas.
+	 *
+	 * @return array<string, mixed> The merged schema, empty when the register or the schema is missing.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-the-publication-declares-one-lifecycle-with-named-transitions-req-plc-001
+	 */
+	public static function shippedSchema(string $settingsDir, string $slug): array {
+		$path = $settingsDir . '/publication_register.json';
+		if (is_readable($path) === false) {
+			return [];
+		}
+
+		$base = json_decode((string)file_get_contents($path), true);
+		if (is_array($base) === false) {
+			return [];
+		}
+
+		$merged = self::mergeRegisterFragments(data: $base, fragmentDir: $settingsDir . '/register.d');
+		$schema = ($merged['components']['schemas'][$slug] ?? []);
+		if (is_array($schema) === false) {
+			return [];
+		}
+
+		return $schema;
+	}//end shippedSchema()
 
 	/**
 	 * Deep-merge a register fragment onto the base config (ADR-037).
