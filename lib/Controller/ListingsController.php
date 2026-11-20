@@ -260,7 +260,7 @@ class ListingsController extends Controller {
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
-	 * @spec openspec/changes/dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
+	 * @spec openspec/changes/archive/2026-11-20-dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string|int $id): JSONResponse {
@@ -318,7 +318,7 @@ class ListingsController extends Controller {
 	 *
 	 * @return JSONResponse The answer with the CORS headers.
 	 *
-	 * @spec openspec/changes/dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
+	 * @spec openspec/changes/archive/2026-11-20-dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
 	 */
 	private function withShowCorsHeaders(JSONResponse $response): JSONResponse {
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());

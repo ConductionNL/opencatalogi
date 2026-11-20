@@ -722,7 +722,7 @@ class ListingsControllerTest extends TestCase {
 	 * Show() answers a cross-origin read with the CORS headers (DIR-008): with no
 	 * allowlist configured, any origin may read the listing.
 	 *
-	 * @spec openspec/changes/dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
+	 * @spec openspec/changes/archive/2026-11-20-dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
 	 *
 	 * @return void
 	 */
@@ -745,7 +745,7 @@ class ListingsControllerTest extends TestCase {
 	 * Show() never reflects an origin outside a configured allowlist, and its 404
 	 * carries the headers too, so a cross-origin caller can read the refusal.
 	 *
-	 * @spec openspec/changes/dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
+	 * @spec openspec/changes/archive/2026-11-20-dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
 	 *
 	 * @return void
 	 */
@@ -981,6 +981,30 @@ class ListingsControllerTest extends TestCase {
 	}//end testAddHasAuthorizedAdminSettingGate()
 
 	/**
+	 * DIR-005: an administrator's add() hands the URL to
+	 * DirectoryService::syncDirectory() exactly once and answers with its result.
+	 *
+	 * @spec openspec/changes/archive/2026-11-20-dashboard/tasks.md#6-4
+	 *
+	 * @return void
+	 */
+	public function testAddSyncsTheGivenDirectoryOnceAndReturnsItsResult(): void {
+		$this->request->method('getParam')
+			->with('url')
+			->willReturn('https://catalogus.example.nl/api/directory');
+
+		$this->directoryService->expects($this->once())
+			->method('syncDirectory')
+			->with('https://catalogus.example.nl/api/directory')
+			->willReturn(['listingsAdded' => 2]);
+
+		$response = $this->controller->add();
+
+		$this->assertSame(expected: 200, actual: $response->getStatus());
+		$this->assertSame(expected: ['listingsAdded' => 2], actual: $response->getData());
+	}//end testAddSyncsTheGivenDirectoryOnceAndReturnsItsResult()
+
+	/**
 	 * Add() returns 400 when no `url` parameter is supplied.
 	 *
 	 * @return void
@@ -1090,6 +1114,8 @@ class ListingsControllerTest extends TestCase {
 			$this->l10n,
 			$anonymousSession
 		);
+
+		$this->directoryService->expects($this->never())->method('syncDirectory');
 
 		$response = $controller->add();
 

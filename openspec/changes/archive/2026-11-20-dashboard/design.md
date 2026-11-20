@@ -10,7 +10,7 @@ OpenCatalogi's main entry point is `DashboardController::page()` which renders t
 - **Gap 21 (DSH-005..008)**: `Application.php` bootstrap registers widgets, event listeners, and vendor autoload — documented here for traceability, no code change expected.
 
 **Constraints:**
-- Public endpoints (`/api/listings/{id}`, `/api/listings/add`, `/api/directory`) require `#[PublicPage]` + `#[NoCSRFRequired]`.
+- Public endpoints (`/api/listings/{id}`, `/api/directory`) require `#[PublicPage]` + `#[NoCSRFRequired]`.
 - CORS (`#[CORS]`) required on all listing and directory public endpoints so external OpenCatalogi instances can call them from a browser context.
 - Listing configuration stored in `IAppConfig`: keys `listing_schema` and `listing_register`.
 - Anti-loop protection: `DirectoryService` tracks processed directory URLs with a 5-minute TTL cache.
