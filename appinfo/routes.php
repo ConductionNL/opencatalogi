@@ -38,6 +38,11 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'dcat#donlReport', 'url' => '/api/catalogs/{catalogSlug}/dcat/donl-validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// OOAPI 5.0 feed validation (admin-only — auditable via AuthorizedAdminSetting)
 		['name' => 'ooapi#validate', 'url' => '/api/catalogs/{catalogSlug}/ooapi/validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#index', 'url' => '/api/catalogs/{catalogSlug}/consumers', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#create', 'url' => '/api/catalogs/{catalogSlug}/consumers', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#generateKey', 'url' => '/api/catalogs/{catalogSlug}/consumers/{id}/keys', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#revokeKey', 'url' => '/api/catalogs/{catalogSlug}/consumers/{id}/keys/{keyId}/revoke', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#disable', 'url' => '/api/catalogs/{catalogSlug}/consumers/{id}/disable', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// Robots
 		['name' => 'robots#index', 'url' => '/api/robots.txt', 'verb' => 'GET'],
 		// Global Configuration
@@ -57,6 +62,9 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'settings#getSyncOptions', 'url' => '/api/settings/sync', 'verb' => 'GET'],
 		['name' => 'settings#updateSyncOptions', 'url' => '/api/settings/sync', 'verb' => 'POST'],
 		['name' => 'settings#getVersionInfo', 'url' => '/api/settings/version', 'verb' => 'GET'],
+		// Instance mode (instance-staging-mode REQ-STG-001): admin only, CSRF enforced on the change.
+		['name' => 'instanceMode#getInstanceMode', 'url' => '/api/settings/instance-mode', 'verb' => 'GET'],
+		['name' => 'instanceMode#updateInstanceMode', 'url' => '/api/settings/instance-mode', 'verb' => 'POST'],
 		['name' => 'settings#manualImport', 'url' => '/api/settings/import', 'verb' => 'POST'],
 		// Retention lifecycle (publication-retention-lifecycle)
 		['name' => 'retention#queueSummary', 'url' => '/api/retention/queue', 'verb' => 'GET'],
@@ -75,6 +83,13 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'woo#markReadyForReview', 'url' => '/api/woo/batches/{batchId}/ready-for-review', 'verb' => 'POST'],
 		['name' => 'woo#inventarislijst', 'url' => '/api/woo/batches/{batchId}/inventarislijst', 'verb' => 'GET'],
 		['name' => 'woo#publishBatch', 'url' => '/api/woo/batches/{batchId}/publish', 'verb' => 'POST'],
+		// The review of a batch (woo-review-surface): the public view per document, what the
+		// reviewer opened, approve and reject, and one document's send-back.
+		['name' => 'batchReview#publicPreview', 'url' => '/api/woo/batches/{batchId}/public-preview', 'verb' => 'GET'],
+		['name' => 'batchReview#previewSeen', 'url' => '/api/woo/batches/{batchId}/preview-seen', 'verb' => 'POST'],
+		['name' => 'batchReview#approve', 'url' => '/api/woo/batches/{batchId}/approve', 'verb' => 'POST'],
+		['name' => 'batchReview#reject', 'url' => '/api/woo/batches/{batchId}/reject', 'verb' => 'POST'],
+		['name' => 'batchReview#sendBack', 'url' => '/api/woo/assessments/{assessmentId}/send-back', 'verb' => 'POST'],
 		// Woo request intake and the statutory term (woo-request-intake). The
 		// citizen-facing form is portaliq's; this is the API it calls.
 		// terms-report comes BEFORE {requestId} or the wildcard swallows it.
@@ -116,6 +131,10 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publicationState#visibility', 'url' => '/api/publications/{id}/visibility', 'verb' => 'GET'],
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
+		// Published tables, editor side: list, publish a CSV attachment, edit the dictionary (REQ-ODT-001, REQ-ODT-003).
+		['name' => 'publishedTableEdit#index', 'url' => '/api/publications/{id}/tables', 'verb' => 'GET'],
+		['name' => 'publishedTableEdit#create', 'url' => '/api/publications/{id}/tables', 'verb' => 'POST'],
+		['name' => 'publishedTableEdit#updateDictionary', 'url' => '/api/publications/{id}/tables/{tableId}/dictionary', 'verb' => 'PUT'],
 		['name' => 'publicationState#withdrawFile', 'url' => '/api/publications/{id}/files/{fileId}/withdraw', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		['name' => 'publicationState#republishFile', 'url' => '/api/publications/{id}/files/{fileId}/republish', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		// A plain language summary an officer writes, or drafts with a text assistant and accepts

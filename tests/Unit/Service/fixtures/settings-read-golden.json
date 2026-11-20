@@ -57,6 +57,9 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "60",
+                "publication_languages": "[\"nl\",\"en\"]",
+                "publication_url_template": "",
+                "publication_url_catalog": "publications",
                 "cors_allowed_origins": "*",
                 "search_indexing": "allowed"
             }
@@ -128,6 +131,9 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "60",
+                "publication_languages": "[\"nl\",\"en\"]",
+                "publication_url_template": "",
+                "publication_url_catalog": "publications",
                 "cors_allowed_origins": "*",
                 "search_indexing": "allowed"
             }
@@ -201,6 +207,9 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "0",
+                "publication_languages": "[\"nl\",\"en\"]",
+                "publication_url_template": "",
+                "publication_url_catalog": "publications",
                 "cors_allowed_origins": "*",
                 "search_indexing": "allowed"
             }

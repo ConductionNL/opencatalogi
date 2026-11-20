@@ -39,8 +39,8 @@
   - GIVEN a target URL pointing at metadata IP `169.254.169.254` WHEN `enqueueBroadcast` is called THEN the SSRF guard throws before any OR call
   - GIVEN an http:// URL (not https + not allowlisted) WHEN `enqueueBroadcast` is called THEN the SSRF guard rejects it
   - GIVEN an allowlisted dev host (e.g. `nc-fed-2` in compose) WHEN `enqueueBroadcast` is called THEN it passes pre-flight even on http://
-- [ ] Implement (partial: metadata-IP and private-address rejection exist, BroadcastService::assertSafeOutboundUrl in enqueueBroadcast; an http:// URL to a public host that is not allowlisted is accepted, the scheme check allows http and https)
-- [ ] Test (partial: metadata-IP rejection covered by BroadcastServiceTest::testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery; http:// rejection for a public host that is not allowlisted is untested; the allowlisted dev host on http:// is only tested through FederationHostPolicy::isLocalUrl in ::testBroadcastProceedsWhenTheLocalHostIsAllowlisted, not via enqueueBroadcast)
+- [x] Implement (built: `BroadcastService::assertSafeOutboundUrl()` refuses a URL that is not https unless its host is on the dev federation allowlist, after the internal-address check)
+- [x] Test (`BroadcastServiceTest::testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery` metadata IP, `::testEnqueueBroadcastRefusesPlainHttpToAPublicHost`, `::testEnqueueBroadcastLetsAnAllowlistedDevHostThroughOnHttp`; `BroadcastOutboundGuardTest` case "a public address over plain http")
 
 ### Task 5: Remove legacy sync retry loop + app-local config keys
 - **spec_ref**: `openspec/changes/opencatalogi-delegate-broadcast-to-or-webhooks/specs/federation/spec.md#requirement-no-app-local-retry-maths-fed-or-001`

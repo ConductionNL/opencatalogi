@@ -724,6 +724,21 @@ OC.L10N.register(
         "Open catalog": "Otwórz katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Utwórz swój pierwszy katalog. To kontener, w którym będą twoje publikacje. Wybierz rejestr Publication i schemat Publication, aby katalog wyświetlał dodawane przez ciebie publikacje.",
         "Manage your publications and their status": "Zarządzaj swoimi publikacjami i ich statusem",
+        "Open at the source": "Otwórz u źródła",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: wersja OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister zawiera silnik, którego potrzebuje OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi wymaga OpenRegister %1$s lub nowszego. W zainstalowanym OpenRegister brakuje %2$s, dlatego OpenCatalogi zamiast swoich stron pokazuje komunikat. Zaktualizuj OpenRegister.",
+        "OpenCatalogi cannot start": "Nie można uruchomić OpenCatalogi",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi wymaga OpenRegister %1$s lub nowszego. Poproś administratora o aktualizację OpenRegister.",
+        "Feed consumers": "Odbiorcy kanału",
+        "Contact": "Kontakt",
+        "Generate key": "Wygeneruj klucz",
+        "Revoke": "Unieważnij",
+        "Disable": "Wyłącz",
+        "Last used": "Ostatnio użyty",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ten klucz jest wyświetlany tylko raz. Skopiuj go teraz: nie będzie można go ponownie wyświetlić.",
+        "No feed consumers yet.": "Brak jeszcze odbiorców kanału.",
+        "Accounts that read every catalogue's feed": "Konta, które czytają kanał każdego katalogu",
         "Retention defaults": "Domyślne okresy przechowywania",
         "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Publikacja w tym katalogu otrzymuje je przy pierwszej publikacji, jeśli jej własne pola przechowywania są puste. Późniejsza zmiana nie wpływa na istniejące publikacje.",
         "Term in months": "Okres w miesiącach",
@@ -761,8 +776,7 @@ OC.L10N.register(
         "Publisher": "Wydawca",
         "The metadata quality could not be loaded": "Nie udało się wczytać jakości metadanych",
         "{score} of 100": "{score} na 100",
-        "Could not compute the metadata quality.": "Nie udało się obliczyć jakości metadanych.",
-        "Open at the source": "Otwórz u źródła"
+        "Could not compute the metadata quality.": "Nie udało się obliczyć jakości metadanych."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -724,6 +724,21 @@ OC.L10N.register(
         "Open catalog": "Atverti katalogą",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Sukurkite pirmąjį katalogą. Tai talpykla, kurioje bus jūsų publikacijos. Pasirinkite registrą Publication ir schemą Publication, kad katalogas rodytų jūsų pridedamas publikacijas.",
         "Manage your publications and their status": "Tvarkykite savo leidinius ir jų būseną",
+        "Open at the source": "Atidaryti šaltinyje",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegister versija",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister turi variklį, kurio reikia OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi reikia OpenRegister %1$s arba naujesnės versijos. Įdiegtame OpenRegister trūksta %2$s, todėl OpenCatalogi vietoj savo puslapių rodo pranešimą. Atnaujinkite OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi negali paleisti",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi reikia OpenRegister %1$s arba naujesnės versijos. Paprašykite administratoriaus atnaujinti OpenRegister.",
+        "Feed consumers": "Srauto naudotojai",
+        "Contact": "Kontaktai",
+        "Generate key": "Sukurti raktą",
+        "Revoke": "Atšaukti",
+        "Disable": "Išjungti",
+        "Last used": "Paskutinį kartą naudota",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Šis raktas rodomas tik vieną kartą. Nukopijuokite jį dabar: jo nebebus galima parodyti.",
+        "No feed consumers yet.": "Srauto naudotojų dar nėra.",
+        "Accounts that read every catalogue's feed": "Paskyros, skaitančios kiekvieno katalogo srautą",
         "Retention defaults": "Numatytieji saugojimo terminai",
         "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Šio katalogo leidinys juos gauna pirmą kartą paskelbtas, jei jo saugojimo laukai tušti. Vėlesni pakeitimai esamų leidinių nekeičia.",
         "Term in months": "Terminas mėnesiais",
@@ -761,8 +776,7 @@ OC.L10N.register(
         "Publisher": "Leidėjas",
         "The metadata quality could not be loaded": "Nepavyko įkelti metaduomenų kokybės",
         "{score} of 100": "{score} iš 100",
-        "Could not compute the metadata quality.": "Nepavyko apskaičiuoti metaduomenų kokybės.",
-        "Open at the source": "Atidaryti šaltinyje"
+        "Could not compute the metadata quality.": "Nepavyko apskaičiuoti metaduomenų kokybės."
     },
     "nplurals=2; plural=(n != 1);"
 )

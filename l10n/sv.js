@@ -724,6 +724,21 @@ OC.L10N.register(
         "Open catalog": "Öppna katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Skapa din första katalog. Den är behållaren som dina publikationer ska ligga i. Välj registret Publication och schemat Publication, så att katalogen visar publikationerna du lägger till.",
         "Manage your publications and their status": "Hantera dina publikationer och deras status",
+        "Open at the source": "Öppna vid källan",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegister-version",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister innehåller motorn som OpenCatalogi behöver.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi kräver OpenRegister %1$s eller senare. Den installerade OpenRegister saknar %2$s, så OpenCatalogi visar ett meddelande i stället för sina sidor. Uppdatera OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi kan inte starta",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi kräver OpenRegister %1$s eller senare. Be din administratör att uppdatera OpenRegister.",
+        "Feed consumers": "Flödesmottagare",
+        "Contact": "Kontakt",
+        "Generate key": "Skapa nyckel",
+        "Revoke": "Återkalla",
+        "Disable": "Inaktivera",
+        "Last used": "Senast använd",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Den här nyckeln visas bara en gång. Kopiera den nu: den kan inte visas igen.",
+        "No feed consumers yet.": "Inga flödesmottagare ännu.",
+        "Accounts that read every catalogue's feed": "Konton som läser flödet för varje katalog",
         "Retention defaults": "Standardgallringsfrister",
         "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "En publikation i denna katalog får dessa vid första publiceringen om dess egna bevarandefält är tomma. Senare ändringar påverkar inte befintliga publikationer.",
         "Term in months": "Frist i månader",
@@ -761,8 +776,7 @@ OC.L10N.register(
         "Publisher": "Utgivare",
         "The metadata quality could not be loaded": "Metadatakvaliteten kunde inte läsas in",
         "{score} of 100": "{score} av 100",
-        "Could not compute the metadata quality.": "Metadatakvaliteten kunde inte beräknas.",
-        "Open at the source": "Öppna vid källan"
+        "Could not compute the metadata quality.": "Metadatakvaliteten kunde inte beräknas."
     },
     "nplurals=2; plural=(n != 1);"
 )

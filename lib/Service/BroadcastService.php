@@ -139,6 +139,7 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * @param IAppConfig $config App configuration (local-federation allowlist)
 	 * @param FederationHostPolicy $hostPolicy Decides whether a federation URL is reachable by a peer
 	 * @param ConnectionReporter|null $connectionReporter Tells integriq what a broadcast met, or nothing when absent.
+	 * @param DryRunRecorder|null     $dryRuns            Holds the broadcast as a dry run in staging (REQ-STG-002).
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
@@ -152,6 +153,8 @@ class BroadcastService implements BroadcastServiceInterface {
 		// The integriq connection report (adopt-connection-registry). Nullable
 		// and last, so every existing construction site keeps working.
 		private readonly ?ConnectionReporter $connectionReporter = null,
+		// Holds the broadcast in staging (instance-staging-mode REQ-STG-002).
+		private readonly ?DryRunRecorder $dryRuns = null,
 	) {
 
 		// Initialize HTTP client; the per-request timeout is operator-tunable.
@@ -349,6 +352,11 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function sendBroadcastRequest(string $url, string $directoryUrl): bool {
+		// In staging nothing leaves: the broadcast is kept as a dry run and the flow goes on as if it was accepted.
+		if ($this->dryRuns?->hold(channel: 'broadcast', payload: ['url' => $url, 'directoryUrl' => $directoryUrl]) !== null) {
+			return true;
+		}
+
 		$run = new BroadcastAttempt();
 		$run->url = $url;
 		$startTime = time();
@@ -687,7 +695,8 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * Assert that a URL is safe for outbound HTTP requests.
 	 *
 	 * Performs DNS resolution and rejects URLs that resolve to an internal address,
-	 * in any IPv4 or IPv6 notation.
+	 * in any IPv4 or IPv6 notation, and any URL that is not https. A host on the
+	 * dev federation allowlist skips both checks.
 	 *
 	 * @param string $url The URL to validate.
 	 *
@@ -709,6 +718,11 @@ class BroadcastService implements BroadcastServiceInterface {
 			if ($this->urlGuard()->isInternal(ipAddress: $ipAddress) === true) {
 				throw new InvalidArgumentException('Broadcast URL resolves to a disallowed (internal) address');
 			}
+		}
+
+		// FED-OR-001: outside the dev allowlist a broadcast travels over https only.
+		if (strtolower((string)parse_url($url, PHP_URL_SCHEME)) !== 'https') {
+			throw new InvalidArgumentException('Broadcast URL must use https');
 		}
 
 	}//end assertSafeOutboundUrl()

@@ -684,6 +684,39 @@ class CatalogiService implements CatalogiServiceInterface {
 	}//end intParam()
 
 	/**
+	 * The slug of the first catalogue whose `schemas` include this schema, read outside RBAC.
+	 *
+	 * @param string $schemaId The schema id.
+	 *
+	 * @return string|null The slug, or null when no catalogue lists the schema.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	public function getCatalogSlugForSchema(string $schemaId): ?string {
+		if ($schemaId === '') {
+			return null;
+		}
+
+		foreach ($this->allCatalogs() as $catalog) {
+			if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
+				$catalog = $catalog->jsonSerialize();
+			}
+
+			$schemas = [];
+			if (is_array($catalog) === true && is_array($catalog['schemas'] ?? null) === true) {
+				$schemas = array_map('strval', array_filter($catalog['schemas'], 'is_scalar'));
+			}
+
+			$slug = self::catalogSlugOf(catalog: $catalog);
+			if ($slug !== null && in_array($schemaId, $schemas, true) === true) {
+				return $slug;
+			}
+		}
+
+		return null;
+	}//end getCatalogSlugForSchema()
+
+	/**
 	 * The slugs of every catalogue in the configured catalogue register and schema.
 	 *
 	 * Read outside RBAC: the maintenance command that asks acts for the operator on
@@ -1051,6 +1084,53 @@ class CatalogiService implements CatalogiServiceInterface {
 		// Return paginated results.
 		return new JSONResponse($result);
 	}//end index()
+
+	/**
+	 * Lists the catalog objects themselves for the public `GET /api/catalogi`.
+	 *
+	 * The caller's own register/schema scope keys are dropped first (WOO-581) and
+	 * the configured catalog register/schema is pinned on both the top-level
+	 * magic-mapper routing keys (`_register`/`_schema`) and the `@self` filter, so
+	 * a query parameter can never widen the scope. RBAC decides which catalogs the
+	 * caller may read (the catalog schema grants the public group read only when
+	 * `published <= $now`); multitenancy stays enabled and deleted objects are left out.
+	 *
+	 * @param array<string, mixed>  $requestParams The request parameters.
+	 * @param array<string, string> $catalogConfig The resolved `register`/`schema` pair.
+	 *
+	 * @return array<string, mixed> The paginated result of searchObjectsPaginated().
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function listCatalogs(array $requestParams, array $catalogConfig): array {
+		$objectService = $this->getObjectService();
+
+		// The configured scope below wins for the rows, but OR's facet path reads
+		// `@self.schemas ?? _schemas` first; drop every caller scope key (WOO-581).
+		$searchQuery = CallerScope::strip(query: $objectService->buildSearchQuery($requestParams));
+
+		// The @self keys produced by buildSearchQuery are normalised downstream, so the
+		// configured scope is pinned via the magic-mapper routing keys as well.
+		if (empty($catalogConfig['schema']) === false) {
+			$searchQuery['_schema'] = $catalogConfig['schema'];
+			$searchQuery['@self']['schema'] = $catalogConfig['schema'];
+		}
+
+		if (empty($catalogConfig['register']) === false) {
+			$searchQuery['_register'] = $catalogConfig['register'];
+			$searchQuery['@self']['register'] = $catalogConfig['register'];
+		}
+
+		return $objectService->searchObjectsPaginated(
+			query: $searchQuery,
+			_rbac: true,
+			deleted: false
+		);
+	}//end listCatalogs()
 
 	/**
 	 * The answer for a catalogue id that matches no catalogue.

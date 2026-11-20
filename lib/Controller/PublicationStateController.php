@@ -34,7 +34,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
-use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenCatalogi\Service\Publication\SourceAbsence;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
@@ -65,7 +65,7 @@ class PublicationStateController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param PublicationRights $rights The update right on one publication, and the publish right.
+	 * @param PublicationRightsInterface $rights The update right on one publication, and the publish right.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
 	 */
 	public function __construct(
@@ -73,7 +73,7 @@ class PublicationStateController extends Controller {
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly PublicationRights $rights,
+		private readonly PublicationRightsInterface $rights,
 		private readonly PublicationTransitions $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
@@ -294,14 +294,9 @@ class PublicationStateController extends Controller {
 			);
 		}
 
-		// The withdrawal is kept on the file's own window, so no automatic
-		// path shares it again (REQ-ATT-103, REQ-ATT-104).
-		$windowNotEnded = $this->registers->endFileWindow(fileId: (int)$fileId);
-		if ($windowNotEnded !== null) {
-			return new JSONResponse(
-				data: ['error' => 'file-window-not-ended', 'message' => $windowNotEnded],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+		$notKept = $this->keepWithdrawalOnFile(fileId: (int)$fileId, reason: $reason);
+		if ($notKept !== null) {
+			return $notKept;
 		}
 
 		$depublication = $this->registers->depublish(
@@ -314,8 +309,52 @@ class PublicationStateController extends Controller {
 		);
 		$depublication['file'] = $fileId;
 
+		// The withdrawn file is no longer shared: a complete publication is incomplete again (REQ-PTS-002).
+		$this->registers->reevaluateCompleteness(id: $id);
+
 		return $this->record(depublication: $depublication);
 	}//end withdrawFile()
+
+	/**
+	 * Keep a withdrawal on the file itself: its own window ends now, so no
+	 * automatic path shares it again, and its labels name the reason and the
+	 * editor (REQ-ATT-103, REQ-ATT-104).
+	 *
+	 * @param int    $fileId The file id.
+	 * @param string $reason Why the file is withdrawn.
+	 *
+	 * @return JSONResponse|null Null when both are kept, else the 500 that says which failed.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+	 */
+	private function keepWithdrawalOnFile(int $fileId, string $reason): ?JSONResponse {
+		$windowNotEnded = $this->registers->endFileWindow(fileId: $fileId);
+		if ($windowNotEnded !== null) {
+			return $this->fileStepFailed(error: 'file-window-not-ended', message: $windowNotEnded);
+		}
+
+		$notRecorded = $this->registers->recordFileWithdrawal(fileId: $fileId, reason: $reason, editor: $this->actor());
+		if ($notRecorded !== null) {
+			return $this->fileStepFailed(error: 'file-withdrawal-not-recorded', message: $notRecorded);
+		}
+
+		return null;
+	}//end keepWithdrawalOnFile()
+
+	/**
+	 * The 500 for a step on a file that failed after its share already changed.
+	 *
+	 * @param string $error   The machine-readable error.
+	 * @param string $message Why the step failed.
+	 *
+	 * @return JSONResponse The 500.
+	 */
+	private function fileStepFailed(string $error, string $message): JSONResponse {
+		return new JSONResponse(
+			data: ['error' => $error, 'message' => $message],
+			statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end fileStepFailed()
 
 	/**
 	 * Put a withdrawn document of a publication back, on purpose, with a reason.
@@ -357,10 +396,12 @@ class PublicationStateController extends Controller {
 
 		$windowNotOpen = $this->registers->reopenFileWindow(fileId: (int)$fileId);
 		if ($windowNotOpen !== null) {
-			return new JSONResponse(
-				data: ['error' => 'file-window-not-reopened', 'message' => $windowNotOpen],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->fileStepFailed(error: 'file-window-not-reopened', message: $windowNotOpen);
+		}
+
+		$notCleared = $this->registers->clearFileWithdrawal(fileId: (int)$fileId);
+		if ($notCleared !== null) {
+			return $this->fileStepFailed(error: 'file-withdrawal-not-cleared', message: $notCleared);
 		}
 
 		return $this->recordRepublication(

@@ -31,6 +31,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
@@ -55,6 +56,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/federation/spec.md
  */
 class FederationController extends Controller {
+	use AnswersInTheVisitorsLanguage;
 	use AnswersCrossOriginSearchRequests;
 
 	/**
@@ -79,6 +81,13 @@ class FederationController extends Controller {
 	private readonly ?UsageCounterServiceInterface $usageCounter;
 
 	/**
+	 * Negotiates the visitor's language (REQ-PTR-002); null leaves the response untranslated.
+	 *
+	 * @var PublicationQueryServiceInterface|null
+	 */
+	private readonly ?PublicationQueryServiceInterface $queryService;
+
+	/**
 	 * FederationController constructor.
 	 *
 	 * @param IRequest $request The request object.
@@ -88,8 +97,9 @@ class FederationController extends Controller {
 	 * @param LocalPublicationStateInterface|null $localState Adds the withheld list (REQ-WDW-003) and the comment period state (REQ-PDP-003).
 	 * @param ContainerInterface|null $container DI container for the optional collaborators: the app config
 	 *                                           holding the CORS allowlist (without it every origin is allowed),
-	 *                                           the request's collector of applied filters (REQ-ASF-001)
-	 *                                           and the usage counter of served local publications (ANA-001).
+	 *                                           the request's collector of applied filters (REQ-ASF-001),
+	 *                                           the usage counter of served local publications (ANA-001)
+	 *                                           and the query service negotiating the visitor's language (REQ-PTR-002).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -118,6 +128,9 @@ class FederationController extends Controller {
 		}
 
 		$this->usageCounter = $usageCounter;
+
+		$queryService = self::optional(container: $container, class: PublicationQueryServiceInterface::class);
+		$this->queryService = $queryService instanceof PublicationQueryServiceInterface ? $queryService : null;
 
 	}//end __construct()
 
@@ -156,9 +169,12 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publications(): JSONResponse {
+		$this->negotiateVisitorLanguage(queryService: $this->queryService);
+
 		// Get all current query parameters.
 		$queryParams = $this->request->getParams();
 		$baseUrl = $this->paginationBaseUrl();
@@ -172,7 +188,10 @@ class FederationController extends Controller {
 			);
 			$responseData['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
 
-			return $this->withSearchCorsHeaders(response: new JSONResponse($responseData));
+			return $this->withVisitorLanguageHeaders(
+				response: $this->withSearchCorsHeaders(response: new JSONResponse($responseData)),
+				queryService: $this->queryService
+			);
 		} catch (\Exception $e) {
 			return $this->withSearchCorsHeaders(response: $this->publicationsFailed(exception: $e));
 		}
@@ -232,9 +251,12 @@ class FederationController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publication(string $id): JSONResponse {
+		$this->negotiateVisitorLanguage(queryService: $this->queryService);
+
 		try {
 			// Use the service method to get the publication with federation support.
 			$result = $this->publicationService->getFederatedPublication($id, $this->request->getParams());
@@ -254,7 +276,10 @@ class FederationController extends Controller {
 				$this->countReach(publicationId: $id, kind: UsageCounterServiceInterface::KIND_VIEW);
 			}
 
-			return $this->withSearchCorsHeaders(response: new JSONResponse($result['data'], $result['status']));
+			return $this->withVisitorLanguageHeaders(
+				response: $this->withSearchCorsHeaders(response: new JSONResponse($result['data'], $result['status'])),
+				queryService: $this->queryService
+			);
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publication] Failed to retrieve publication',

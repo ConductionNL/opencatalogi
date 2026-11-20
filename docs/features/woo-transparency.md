@@ -21,6 +21,29 @@ When refusing publication, assessors select applicable legal grounds (weigerings
 
 Related documents are grouped into WOO batches. Bulk assessment enables processing multiple documents with the same decision simultaneously.
 
+## Reviewing a batch
+
+A batch moves through four states: in progress, ready for review, approved and published. Each move is a declared transition on OpenRegister, so no path skips one.
+
+1. The officer assesses every document and chooses **Mark ready for review**.
+2. While the batch is in review, its page shows each document as the public will see it, in place of the document queue. For a public document that is the original file. For a partly public document it is the verified redacted file, never the original. A withheld document shows no file. Next to each file stand the publication fields the public read returns: the title, the information category, the kind of publication, the date and the case reference.
+3. The reviewer opens the public view of every published document. **Approve** stays disabled until they have. The server checks the same thing again on every path to approval, so an approval through OpenRegister's task list is refused too until the approving reviewer opened every view.
+4. Approving starts the `batchReview` approval chain for the role `woo-reviewer`. When the chain completes, OpenRegister moves the batch to approved. Only an approved batch can be published.
+
+### Rejecting and sending back
+
+**Reject** asks for a reason in its own dialog. The batch goes back to in progress and is assigned to the officer who created it. The reason is kept on the batch with the reviewer and the date, the batch page shows it, and the officer gets a notification naming the batch and the reason. A rejection of the review task in OpenRegister's task list does the same, with the task's comment as the reason. A task rejected without a comment leaves the batch in review.
+
+**Send back** on one document returns only that document to assessment. It needs a reason too, and works only while the batch is in review. The assessment page shows the reason with who sent it back.
+
+## Redaction log
+
+Every partly public document keeps a redaction log. It lists, per redacted passage, the kind of information, where it sits in the text and the legal grounds. The log is filled from OpenRegister's record of what was actually redacted, once the redaction is verified.
+
+The review page and the redaction page show the log. A passage without a ground is marked. Publishing is refused, naming the document, when the log of a partly public document is empty, cannot be read or has a passage without a ground. The Woo requires a ground for every withheld part.
+
+The log is internal. It is stored on the assessment, which only administrators read, and it never appears in a public response.
+
 ## Inventarislijst
 
 The inventarislijst is a structured export listing all documents in a batch with their assessment decisions, applicable weigeringsgronden, and publication status.
@@ -45,6 +68,10 @@ When the reading room runs on its own domain, add the rule on that domain. The r
 Press **Request registration**. OpenCatalogi composes the request: the organisation's name and TOOI identifier, the root `robots.txt` URL and every sitemap index. It hands the request to integriq's `national-woo-index` channel. The status moves to requested only when the gateway answered, and the answer is kept.
 
 With no gateway installed, nothing is recorded as sent. The panel shows the composed request, so you can send it another way. When the Woo-index confirms, press **Mark as registered**.
+
+### Where the Woo-index fields come from
+
+Four fields of each document in the sitemap can be set from integriq's mapping `woo-index-publication`: the publisher, the official title (`officieleTitel`), the information category and the handling type (`soortHandeling`). An administrator changes where a field comes from on integriq's Mappings page; the next sitemap carries the change. OpenCatalogi asks the mapping once per publication. A field the mapping leaves empty keeps OpenCatalogi's own value, and so does every field when integriq is not installed or refuses (for example because the mapping no longer lists `opencatalogi` among the apps that may run it). A mapped value is checked exactly like OpenCatalogi's own: a category outside the informatiecategorieen list, a publisher that is not a TOOI organisation URI or a handling type that is not a DiWoo value is left out and shows in the readiness check. The readiness card says in one line whether the fields came from the mapping or are built in, with integriq's refusal when there was one.
 
 ### A current verdict
 

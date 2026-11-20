@@ -643,6 +643,54 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testChannelSourcesKeepOnlyKnownChannelsWithASlug()
 
 	/**
+	 * The publication languages are stored as a JSON list of valid tags,
+	 * Dutch first and once, whether sent as a list or as its JSON text
+	 * (publication-translations D6).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-translations/design.md
+	 */
+	public function testPublicationLanguagesAreStoredAsTagsWithDutchFirst(): void {
+		$stored = [];
+		$this->config->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored[] = [$key, $value];
+				return true;
+			}
+		);
+
+		$this->service->updateSettings(['publication_languages' => ['EN', ' de ', 'en', 'xx-!!', 42, 'nl', 'fr-BE']]);
+		$this->service->updateSettings(['publication_languages' => '["fy"]']);
+		$this->service->updateSettings(['publication_languages' => 'not json']);
+
+		$this->assertSame(
+			[
+				['publication_languages', '["nl","en","de","fr-BE"]'],
+				['publication_languages', '["nl","fy"]'],
+				['publication_languages', '["nl"]'],
+			],
+			$stored
+		);
+	}//end testPublicationLanguagesAreStoredAsTagsWithDutchFirst()
+
+	/**
+	 * Without a stored value the settings report Dutch and English.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-translations/design.md
+	 */
+	public function testPublicationLanguagesDefaultToDutchAndEnglish(): void {
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => $default
+		);
+
+		$this->assertSame('["nl","en"]', $this->service->getSettings()['configuration']['publication_languages']);
+	}//end testPublicationLanguagesDefaultToDutchAndEnglish()
+
+	/**
 	 * Returns empty array when no settings are passed.
 	 *
 	 * @return void
@@ -2517,6 +2565,11 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => '-5'])['public_api_cache_seconds']);
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => 'soon'])['public_api_cache_seconds']);
 		$this->assertSame('3600', $this->service->updateSettings(['public_api_cache_seconds' => 31536000])['public_api_cache_seconds']);
+		// REQ-PTS-001: the two settings that shape a publication's pages can be saved.
+		$this->assertSame(
+			['publication_url_template' => 'https://open.gemeente.nl/p/{id}', 'publication_url_catalog' => 'woo'],
+			$this->service->updateSettings(['publication_url_template' => 'https://open.gemeente.nl/p/{id}', 'publication_url_catalog' => 'woo'])
+		);
 
 	}//end testTheAdministratorSetsThePublicCacheTime()
 

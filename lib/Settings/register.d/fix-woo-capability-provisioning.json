@@ -26,7 +26,7 @@
       "wooBatch": {
         "slug": "wooBatch",
         "title": "WooBatch",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "published": null,
         "summary": "A Woo disclosure batch grouping the documents released for one Woo-verzoek case",
         "description": "A Woo disclosure batch represents one Woo-verzoek (Wet open overheid request) case moving through document collection, per-document assessment, review and publication to the public reading room. It is the OpenRegister-backed storage WooService reads and writes; the document queue itself is provisioned as a Deck board via the consumed deck leaf (ADR-022) rather than a bespoke queue table.",
@@ -94,10 +94,11 @@
           },
           "status": {
             "type": "string",
-            "description": "Overall batch lifecycle status",
+            "description": "Batch lifecycle status, moved only through the declared transitions: submit (in_progress to ready_for_review), approve (ready_for_review to approved, behind the batchReview approval chain), reject (ready_for_review back to in_progress, with a reason) and publish (approved to published).",
             "enum": [
               "in_progress",
               "ready_for_review",
+              "approved",
               "published"
             ],
             "facetable": true,
@@ -185,10 +186,118 @@
             "description": "The user id that created this batch, or \"system\" when created without an active user session",
             "facetable": true,
             "title": "Created By"
+          },
+          "assignee": {
+            "type": "string",
+            "description": "The user who has to act on the batch next. A rejection assigns the batch back to its author (createdBy).",
+            "facetable": true,
+            "title": "Assignee"
+          },
+          "rejections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "title": "Reason",
+                  "description": "Why the reviewer sent the batch back.",
+                  "type": "string"
+                },
+                "by": {
+                  "title": "Rejected by",
+                  "description": "The user who rejected the batch.",
+                  "type": "string"
+                },
+                "at": {
+                  "title": "Rejected at",
+                  "description": "When the batch was rejected.",
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            },
+            "default": [],
+            "description": "Every rejection of the batch in review, oldest first: the reviewer's reason, who rejected it and when.",
+            "facetable": false,
+            "title": "Rejections"
+          },
+          "lastRejectionReason": {
+            "type": "string",
+            "description": "The reason of the most recent rejection, as the author's notification names it.",
+            "facetable": false,
+            "title": "Last rejection reason"
+          },
+          "previewsSeen": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "default": {},
+            "description": "Per reviewer, the documents whose public view they opened during the review. Approve waits until the approving user opened every published document.",
+            "facetable": false,
+            "title": "Previews seen"
           }
         },
         "configuration": {
-          "autoPublish": false
+          "autoPublish": false,
+          "x-openregister-lifecycle": {
+            "field": "status",
+            "initial": "in_progress",
+            "transitions": {
+              "submit": {
+                "from": [
+                  "in_progress"
+                ],
+                "to": "ready_for_review"
+              },
+              "approve": {
+                "from": [
+                  "ready_for_review"
+                ],
+                "to": "approved",
+                "requires": "OCA\\OpenCatalogi\\Lifecycle\\PreviewsSeenGuard"
+              },
+              "reject": {
+                "from": [
+                  "ready_for_review"
+                ],
+                "to": "in_progress",
+                "inputs": [
+                  {
+                    "field": "reason",
+                    "required": true
+                  }
+                ],
+                "actions": [
+                  {
+                    "action": "OCA\\OpenCatalogi\\Lifecycle\\RecordBatchRejectionAction"
+                  }
+                ]
+              },
+              "publish": {
+                "from": [
+                  "approved"
+                ],
+                "to": "published"
+              }
+            }
+          },
+          "x-openregister-approval-chains": {
+            "batchReview": {
+              "transition": "approve",
+              "approvers": [
+                {
+                  "role": "woo-reviewer",
+                  "min": 1
+                }
+              ],
+              "onApprove": "advanceTransition"
+            }
+          }
         },
         "hardValidation": false,
         "searchable": false,
@@ -205,6 +314,28 @@
           "delete": [
             "admin"
           ]
+        },
+        "x-openregister-notifications": {
+          "batchRejected": {
+            "trigger": {
+              "type": "transition",
+              "action": "reject"
+            },
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "assignee"
+              }
+            ],
+            "subject": {
+              "nl": "Woo-batch {{caseReference}} is teruggestuurd: {{lastRejectionReason}}",
+              "en": "Woo batch {{caseReference}} was sent back: {{lastRejectionReason}}"
+            }
+          }
         }
       },
       "wooAssessment": {
@@ -301,6 +432,47 @@
             "facetable": false,
             "title": "Redaction message"
           },
+          "redactionLog": {
+            "type": "array",
+            "description": "What was removed from the partly public document and on which grounds, one entry per redacted passage. Internal: never part of a public response.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "relationId": {
+                  "title": "Relation",
+                  "description": "The OpenRegister entity relation the passage comes from.",
+                  "type": "integer"
+                },
+                "entityType": {
+                  "title": "Type",
+                  "description": "The kind of information that was removed, such as a name or a phone number.",
+                  "type": "string"
+                },
+                "positionStart": {
+                  "title": "Start position",
+                  "description": "Where the removed passage starts in the text.",
+                  "type": "integer"
+                },
+                "positionEnd": {
+                  "title": "End position",
+                  "description": "Where the removed passage ends in the text.",
+                  "type": "integer"
+                },
+                "value": {
+                  "title": "Removed value",
+                  "description": "What was removed. Internal: never part of a public response.",
+                  "type": "string"
+                },
+                "grounds": {
+                  "title": "Grounds",
+                  "description": "The legal grounds for removing the passage.",
+                  "type": "array"
+                }
+              }
+            },
+            "facetable": false,
+            "title": "Redaction log"
+          },
           "caseReference": {
             "type": "string",
             "description": "The Procest Woo-verzoek case reference this assessment belongs to",
@@ -327,6 +499,30 @@
             "default": false,
             "facetable": false,
             "title": "Title public"
+          },
+          "sentBackReason": {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "title": "Reason",
+                "description": "Why the reviewer sent the document back.",
+                "type": "string"
+              },
+              "by": {
+                "title": "Sent back by",
+                "description": "The user who sent the document back.",
+                "type": "string"
+              },
+              "at": {
+                "title": "Sent back at",
+                "description": "When the document was sent back.",
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "description": "Why a reviewer sent this document back to assessment, who did and when. Internal: never part of a public response.",
+            "facetable": false,
+            "title": "Sent back reason"
           }
         },
         "configuration": {

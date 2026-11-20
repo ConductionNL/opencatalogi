@@ -168,6 +168,11 @@ class WooFakeEntityRelationMapper {
 	public function findEntitiesForAnonymization(int $fileId): array {
 		return [['entity_value' => 'Jan Jansen', 'entity_type' => 'PERSON']];
 	}//end findEntitiesForAnonymization()
+
+	/** Mirrors openregister EntityRelationMapper::findAnonymisedEntitiesWithBasesForFile. */
+	public function findAnonymisedEntitiesWithBasesForFile(int $fileId): array {
+		return [['relation_id' => 1, 'entity_type' => 'PERSON', 'entity_value' => 'Jan Jansen', 'position_start' => 0, 'position_end' => 10, 'bases' => ['5.1.2.e']]];
+	}//end findAnonymisedEntitiesWithBasesForFile()
 }//end class
 
 /**
@@ -261,6 +266,49 @@ class WooFakeTaskSequenceMapper {
 }//end class
 
 /**
+ * Fake of OpenRegister's TransitionEngine over the fake object store: it
+ * moves `status` along the declared wooBatch transitions and refuses any
+ * other move, as the real engine does.
+ */
+class WooFakeTransitionEngine {
+
+	/** @var array<string, array{0: string, 1: string}> */
+	public const TRANSITIONS = [
+		'submit' => ['in_progress', 'ready_for_review'],
+		'approve' => ['ready_for_review', 'approved'],
+		'reject' => ['ready_for_review', 'in_progress'],
+		'publish' => ['approved', 'published'],
+	];
+
+	/** @var array<int, array{id: string, action: string, data: array<string, mixed>}> */
+	public array $calls = [];
+
+	public function __construct(
+		private WooFakeObjectService $objects,
+	) {
+	}
+
+	public function transition(string $objectId, string $action, array $data = []): array {
+		$this->calls[] = ['id' => $objectId, 'action' => $action, 'data' => $data];
+		foreach ($this->objects->objects as $i => $object) {
+			if ((string)($object['id'] ?? '') !== $objectId) {
+				continue;
+			}
+
+			[$from, $to] = (self::TRANSITIONS[$action] ?? ['', '']);
+			if ($from === '' || ($object['status'] ?? '') !== $from) {
+				throw new \RuntimeException(sprintf('Transition "%s" is not allowed from "%s"', $action, (string)($object['status'] ?? '')));
+			}
+
+			$this->objects->objects[$i] = array_merge($object, $data, ['status' => $to]);
+			return $this->objects->objects[$i];
+		}
+
+		throw new \RuntimeException('not found');
+	}
+}//end class
+
+/**
  * @covers \OCA\OpenCatalogi\Service\WooService
  * @covers \OCA\OpenCatalogi\Service\RegisterBindings
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
@@ -313,6 +361,13 @@ class WooServiceTest extends TestCase {
 	 */
 	private \OCP\Files\IRootFolder $rootFolder;
 
+	/**
+	 * The fake lifecycle engine.
+	 *
+	 * @var WooFakeTransitionEngine
+	 */
+	private WooFakeTransitionEngine $engine;
+
 	protected function setUp(): void {
 		$this->config = $this->createMock(IAppConfig::class);
 		$this->container = $this->createMock(ContainerInterface::class);
@@ -322,6 +377,7 @@ class WooServiceTest extends TestCase {
 		$this->objects = new WooFakeObjectService();
 		$this->deck = new WooFakeDeckService();
 		$this->sequences = new WooFakeTaskSequenceMapper();
+		$this->engine = new WooFakeTransitionEngine($this->objects);
 		$this->files = new WooFakeFileService();
 		$id = 0;
 		foreach (['doc-a' => 'a.pdf', 'doc-b' => 'b.pdf', 'doc-c' => 'c.pdf', 'doc-c-anon' => 'c-gelakt.pdf'] as $reference => $name) {
@@ -352,6 +408,10 @@ class WooServiceTest extends TestCase {
 
 				if ($id === 'OCA\OpenRegister\Db\TaskSequenceMapper') {
 					return $this->sequences;
+				}
+
+				if ($id === 'OCA\OpenRegister\Service\Lifecycle\TransitionEngine') {
+					return $this->engine;
 				}
 
 				if ($id === 'OCA\OpenRegister\Service\FileService') {
@@ -688,6 +748,109 @@ class WooServiceTest extends TestCase {
 
 	}//end testMarkReadyForReviewWhenAllAssessed()
 
+	/**
+	 * REQ-WRV-002: going to review runs the declared `submit` transition.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-review-surface/tasks.md#task-1.2
+	 */
+	public function testMarkReadyForReviewRunsSubmit(): void {
+		$this->seedBatchWithAssessments(false);
+
+		$batch = $this->service->markReadyForReview('batch-1');
+
+		$this->assertSame([['id' => 'batch-1', 'action' => 'submit', 'data' => []]], $this->engine->calls);
+		$this->assertSame('ready_for_review', $batch['status']);
+
+	}//end testMarkReadyForReviewRunsSubmit()
+
+	/**
+	 * REQ-WRV-002: a batch in review is not published, even with a completed
+	 * chain, and nothing is written.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-review-surface/tasks.md#task-1.2
+	 */
+	public function testAnUnapprovedBatchIsNotPublished(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+		$this->sequences->status = 'completed';
+		$before = $this->objects->objects;
+
+		try {
+			$this->service->publishBatch('batch-1');
+			$this->fail('A batch in review was published.');
+		} catch (\RuntimeException $e) {
+			$this->assertSame('Batch must be approved before publishing', $e->getMessage());
+		}
+
+		$this->assertSame($before, $this->objects->objects);
+		$this->assertSame([], $this->createdPublications());
+
+	}//end testAnUnapprovedBatchIsNotPublished()
+
+	/**
+	 * An approved batch ends published through the `publish` transition; without
+	 * the engine nothing is published.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-review-surface/tasks.md#task-1.2
+	 */
+	public function testPublishingRunsThePublishTransitionAndNeedsTheEngine(): void {
+		$this->approvedBatch();
+
+		$result = $this->service->publishBatch('batch-1');
+
+		$this->assertSame('published', $result['status']);
+		$this->assertSame('publish', end($this->engine->calls)['action']);
+		$this->assertSame('published', $this->service->getBatch('batch-1')['status']);
+
+		$this->setUp();
+		$this->approvedBatch();
+		$service = new WooService(
+			new RegisterBindings($this->config, $this->containerWithout('OCA\OpenRegister\Service\Lifecycle\TransitionEngine')),
+			$this->userSession,
+			$this->logger,
+			$this->l10n,
+			$this->writer,
+			new \OCA\OpenCatalogi\Service\Woo\DocumentRedactor($this->writer, $this->container, $this->l10n, $this->logger)
+		);
+		try {
+			$service->publishBatch('batch-1');
+			$this->fail('Published without the lifecycle engine.');
+		} catch (\RuntimeException $e) {
+			$this->assertStringContainsString('lifecycle engine unavailable', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->createdPublications());
+
+	}//end testPublishingRunsThePublishTransitionAndNeedsTheEngine()
+
+	/**
+	 * The test container, minus one service.
+	 *
+	 * @param string $missing The service id that cannot be resolved.
+	 *
+	 * @return ContainerInterface
+	 */
+	private function containerWithout(string $missing): ContainerInterface {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			function (string $id) use ($missing) {
+				if ($id === $missing) {
+					throw new \RuntimeException('unknown service ' . $id);
+				}
+
+				return $this->container->get($id);
+			}
+		);
+
+		return $container;
+	}//end containerWithout()
+
 	public function testInventarislijstRowsAndCsv(): void {
 		$this->seedBatchWithAssessments(false);
 		$rows = $this->service->buildInventarislijst('batch-1');
@@ -733,6 +896,7 @@ class WooServiceTest extends TestCase {
 		unset($this->store['woo_publish_approval_chain']);
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
+		$this->engine->transition('batch-1', 'approve');
 
 		$this->expectException(\RuntimeException::class);
 		$this->expectExceptionMessage('no approval chain is configured');
@@ -743,6 +907,7 @@ class WooServiceTest extends TestCase {
 	public function testPublishRefusesWhenChainHasNoRecordedApproval(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
+		$this->engine->transition('batch-1', 'approve');
 
 		// No sequence recorded for the anchor at all.
 		$this->sequences->status = null;
@@ -756,6 +921,7 @@ class WooServiceTest extends TestCase {
 	public function testPublishRefusesWhileChainIsStillRunning(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
+		$this->engine->transition('batch-1', 'approve');
 		$this->sequences->status = 'running';
 
 		$this->expectException(\RuntimeException::class);
@@ -767,6 +933,7 @@ class WooServiceTest extends TestCase {
 	public function testPublishRefusesWhenChainRejected(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
+		$this->engine->transition('batch-1', 'approve');
 		$this->sequences->status = 'rejected';
 
 		$this->expectException(\RuntimeException::class);
@@ -778,6 +945,7 @@ class WooServiceTest extends TestCase {
 	public function testPublishFailsClosedWhenApprovalStoreErrors(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
+		$this->engine->transition('batch-1', 'approve');
 		$this->sequences->throwOnLookup = new \RuntimeException('database gone');
 
 		$this->expectException(\RuntimeException::class);
@@ -789,6 +957,7 @@ class WooServiceTest extends TestCase {
 	public function testPublishEvaluatesTheChainAnchoredOnTheBatch(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
+		$this->engine->transition('batch-1', 'approve');
 		$this->sequences->status = 'completed';
 
 		$this->service->publishBatch('batch-1');
@@ -803,6 +972,7 @@ class WooServiceTest extends TestCase {
 	public function testPublishExcludesNietOpenbaar(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
+		$this->engine->transition('batch-1', 'approve');
 		$this->sequences->status = 'completed';
 		$result = $this->service->publishBatch('batch-1');
 		$this->assertSame('published', $result['status']);
@@ -824,6 +994,7 @@ class WooServiceTest extends TestCase {
 	public function testPublishFilesTheBatchUnderTheWooRequestCategory(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
+		$this->engine->transition('batch-1', 'approve');
 		$this->sequences->status = 'completed';
 		$this->service->publishBatch('batch-1');
 
@@ -862,6 +1033,7 @@ class WooServiceTest extends TestCase {
 	private function approvedBatch(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
+		$this->engine->transition('batch-1', 'approve');
 		$this->sequences->status = 'completed';
 	}//end approvedBatch()
 
@@ -931,7 +1103,8 @@ class WooServiceTest extends TestCase {
 		}
 
 		$batch = array_values(array_filter($this->objects->objects, static fn (array $o): bool => ($o['id'] ?? '') === 'batch-1'))[0];
-		$this->assertSame('ready_for_review', $batch['status']);
+		// Still approved, not published: the publish transition did not run.
+		$this->assertSame('approved', $batch['status']);
 		$this->assertArrayNotHasKey('publishedAt', $batch);
 		$this->assertSame([], $this->createdPublications());
 		$this->assertSame([], $this->files->added);
@@ -1033,7 +1206,7 @@ class WooServiceTest extends TestCase {
 
 		$this->assertSame([], $this->createdPublications());
 		$this->assertSame([], $this->files->added);
-		$this->assertSame('ready_for_review', $this->service->getBatch('batch-1')['status']);
+		$this->assertSame('approved', $this->service->getBatch('batch-1')['status']);
 	}//end testAMissingDocumentStopsThePublishAndCreatesNothing()
 
 	/**
@@ -1051,7 +1224,7 @@ class WooServiceTest extends TestCase {
 			$this->assertStringContainsString('b.pdf', $e->getMessage());
 		}
 
-		$this->assertSame('ready_for_review', $this->service->getBatch('batch-1')['status']);
+		$this->assertSame('approved', $this->service->getBatch('batch-1')['status']);
 		$this->files->failOn = null;
 		$this->service->publishBatch('batch-1');
 
@@ -1093,6 +1266,7 @@ class WooServiceTest extends TestCase {
 	public function testNoApprovalNoPublication(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
+		$this->engine->transition('batch-1', 'approve');
 		try {
 			$this->service->publishBatch('batch-1');
 		} catch (\RuntimeException) {
@@ -1142,7 +1316,7 @@ class WooServiceTest extends TestCase {
 		$this->assertNotContains('c.pdf', $this->attachedNames());
 		$this->assertSame([], $this->files->added);
 		$this->assertSame([], $this->createdPublications());
-		$this->assertSame('ready_for_review', $this->service->getBatch('batch-1')['status']);
+		$this->assertSame('approved', $this->service->getBatch('batch-1')['status']);
 	}//end testABrokenRedactionNeverPublishesTheOriginal()
 
 	/**
@@ -1372,6 +1546,7 @@ class WooServiceTest extends TestCase {
 				'anonymizedDocument' => 'doc-c-anon',
 				'anonymizedDocumentHash' => hash('sha256', 'inhoud van c-gelakt.pdf'),
 				'redactionStatus' => 'verified',
+				'redactionLog' => [['relationId' => 1, 'entityType' => 'PERSON', 'positionStart' => 0, 'positionEnd' => 10, 'value' => 'Jan Jansen', 'grounds' => ['5.2.e']]],
 				'redactionVerifiedBy' => 'bob',
 				'redactionVerifiedAt' => '2026-11-01T10:00:00+00:00',
 				'weigeringsgronden' => ['5.2.e'],

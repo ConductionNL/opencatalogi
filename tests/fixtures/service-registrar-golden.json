@@ -31,6 +31,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\InstanceModeSwitchInterface",
+        "OCA\\OpenCatalogi\\Service\\InstanceModeSwitch"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\RetentionServiceInterface",
         "OCA\\OpenCatalogi\\Service\\RetentionService"
     ],
@@ -53,6 +58,21 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\DcatDereferenceInterface",
         "OCA\\OpenCatalogi\\Service\\DcatDereference"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentReferencesInterface",
+        "OCA\\OpenCatalogi\\Service\\DocumentReferences"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentReferenceProbeInterface",
+        "OCA\\OpenCatalogi\\Service\\DocumentReferenceProbe"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentReferenceUrlPolicyInterface",
+        "OCA\\OpenCatalogi\\Service\\DocumentReferenceUrlPolicy"
     ],
     [
         "alias",
@@ -221,6 +241,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\FeedConsumerServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\FeedConsumerService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\DemoDataServiceInterface",
         "OCA\\OpenCatalogi\\Service\\DemoDataService"
     ],
@@ -243,6 +268,16 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\InformationRequestStoreInterface",
         "OCA\\OpenCatalogi\\Service\\Woo\\WooRequestStore"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\HandoverStateInterface",
+        "OCA\\OpenCatalogi\\Service\\Handover\\HandoverState"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\IntakeForwardInterface",
+        "OCA\\OpenCatalogi\\Service\\Woo\\DossiqWooForward"
     ],
     [
         "alias",
@@ -353,5 +388,25 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\PlainSummaryProvenanceInterface",
         "OCA\\OpenCatalogi\\Service\\Publication\\PlainSummaryProvenance"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\TermRollInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\TermRoll"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublicationRightsInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublicationRights"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\InstanceModeInterface",
+        "OCA\\OpenCatalogi\\Service\\InstanceMode"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\BatchReviewInterface",
+        "OCA\\OpenCatalogi\\Service\\Review\\BatchReview"
     ]
 ]

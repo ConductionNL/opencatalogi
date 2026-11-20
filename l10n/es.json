@@ -723,6 +723,21 @@
         "Open catalog": "Abrir catálogo",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Cree su primer catálogo. Es el contenedor donde estarán sus publicaciones. Elija el registro Publication y el esquema Publication para que el catálogo muestre las publicaciones que añada.",
         "Manage your publications and their status": "Gestione sus publicaciones y su estado",
+        "Open at the source": "Abrir en el origen",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: versión de OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister incluye el motor que necesita OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi requiere OpenRegister %1$s o posterior. Al OpenRegister instalado le falta %2$s, por lo que OpenCatalogi muestra un aviso en lugar de sus páginas. Actualice OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi no puede iniciarse",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requiere OpenRegister %1$s o posterior. Pida a su administrador que actualice OpenRegister.",
+        "Feed consumers": "Consumidores del feed",
+        "Contact": "Contacto",
+        "Generate key": "Generar clave",
+        "Revoke": "Revocar",
+        "Disable": "Desactivar",
+        "Last used": "Último uso",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Esta clave se muestra una sola vez. Cópiela ahora: no se podrá volver a mostrar.",
+        "No feed consumers yet.": "Todavía no hay consumidores del feed.",
+        "Accounts that read every catalogue's feed": "Cuentas que leen el feed de cada catálogo",
         "Retention defaults": "Plazos de conservación predeterminados",
         "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Una publicación de este catálogo los recibe al publicarse por primera vez si sus propios campos de conservación están vacíos. Cambiarlos después no modifica las publicaciones existentes.",
         "Term in months": "Plazo en meses",
@@ -760,8 +775,7 @@
         "Publisher": "Editor",
         "The metadata quality could not be loaded": "No se pudo cargar la calidad de los metadatos",
         "{score} of 100": "{score} de 100",
-        "Could not compute the metadata quality.": "No se pudo calcular la calidad de los metadatos.",
-        "Open at the source": "Abrir en el origen"
+        "Could not compute the metadata quality.": "No se pudo calcular la calidad de los metadatos."
     },
     "plurals": {}
 }

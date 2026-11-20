@@ -723,6 +723,21 @@
         "Open catalog": "Oscail an catalóg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Cruthaigh do chéad chatalóg. Is é an coimeádán ina mbeidh do chuid foilseachán. Roghnaigh an clár Publication agus an scéimre Publication, ionas go liostóidh an catalóg na foilseacháin a chuireann tú leis.",
         "Manage your publications and their status": "Bainistigh do chuid foilseachán agus a stádas",
+        "Open at the source": "Oscail ag an bhfoinse",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: leagan OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "Tá an t-inneall atá de dhíth ar OpenCatalogi in OpenRegister.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "Teastaíonn OpenRegister %1$s nó níos nuaí ó OpenCatalogi. Tá %2$s in easnamh ar an OpenRegister suiteáilte, mar sin taispeánann OpenCatalogi fógra in ionad a leathanach. Nuashonraigh OpenRegister.",
+        "OpenCatalogi cannot start": "Ní féidir OpenCatalogi a thosú",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "Teastaíonn OpenRegister %1$s nó níos nuaí ó OpenCatalogi. Iarr ar do riarthóir OpenRegister a nuashonrú.",
+        "Feed consumers": "Tomhaltóirí fotha",
+        "Contact": "Teagmháil",
+        "Generate key": "Gin eochair",
+        "Revoke": "Cúlghair",
+        "Disable": "Díchumasaigh",
+        "Last used": "Úsáidte go deireanach",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ní thaispeántar an eochair seo ach uair amháin. Cóipeáil anois í: ní féidir í a thaispeáint arís.",
+        "No feed consumers yet.": "Níl aon tomhaltóirí fotha fós.",
+        "Accounts that read every catalogue's feed": "Cuntais a léann fotha gach catalóige",
         "Retention defaults": "Tréimhsí coinneála réamhshocraithe",
         "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Faigheann foilseachán sa chatalóg seo iad nuair a fhoilsítear é den chéad uair má tá a réimsí coinneála féin folamh. Ní athraíonn athrú níos déanaí foilseacháin atá ann cheana.",
         "Term in months": "Tréimhse i míonna",
@@ -760,8 +775,7 @@
         "Publisher": "Foilsitheoir",
         "The metadata quality could not be loaded": "Níorbh fhéidir cáilíocht na meiteashonraí a lódáil",
         "{score} of 100": "{score} as 100",
-        "Could not compute the metadata quality.": "Níorbh fhéidir cáilíocht na meiteashonraí a ríomh.",
-        "Open at the source": "Oscail ag an bhfoinse"
+        "Could not compute the metadata quality.": "Níorbh fhéidir cáilíocht na meiteashonraí a ríomh."
     },
     "plurals": {}
 }

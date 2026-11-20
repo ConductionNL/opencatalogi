@@ -230,6 +230,12 @@
 							</div>
 						</li>
 					</ul>
+					<p
+						v-if="wooReadinessReport.mapping"
+						class="woo-readiness-mapping"
+						data-testid="woo-readiness-mapping">
+						{{ wooIndexMappingLine(wooReadinessReport.mapping) }}
+					</p>
 				</div>
 
 				<p v-else-if="!wooReadinessRunning" class="woo-readiness-empty">
@@ -256,6 +262,8 @@
 				<DcatFeedValidation />
 
 				<PublishRightsLine />
+
+				<RecordHandover />
 
 				<h3 class="woo-registration-heading">
 					{{ t('opencatalogi', 'National delivery channels') }}
@@ -298,6 +306,18 @@
 					</NcButton>
 				</div>
 			</div>
+		</NcSettingsSection>
+
+		<NcSettingsSection
+			id="section-instance-mode"
+			:name="t('opencatalogi', 'Instance mode')"
+			:description="
+				t(
+					'opencatalogi',
+					'In staging nothing leaves this instance: every hand-over to the national index, PLOOI and federation partners is kept as a dry run, and the public pages answer only to signed-in users.',
+				)
+			">
+			<InstanceModeSection />
 		</NcSettingsSection>
 
 		<NcSettingsSection
@@ -384,6 +404,39 @@
 						</template>
 						{{ t('opencatalogi', 'Save Publishing Options') }}
 					</NcButton>
+				</div>
+
+				<!-- Languages offered to editors (publication-translations D6) -->
+				<div class="option-section" data-testid="publication-languages">
+					<NcSelect
+						v-model="publicationLanguageSelection"
+						:options="publicationLanguageChoices"
+						:multiple="true"
+						:inputLabel="t('opencatalogi', 'Languages offered to editors')"
+						:disabled="savingPublicationLanguages" />
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'Editors can write the title, summary and description of a publication or catalogue in these languages. Dutch is the source language and is always offered.',
+							)
+						}}
+					</p>
+					<NcNoteCard v-if="publicationLanguagesError" type="error">
+						{{ publicationLanguagesError }}
+					</NcNoteCard>
+					<div class="button-container">
+						<NcButton
+							variant="secondary"
+							:disabled="savingPublicationLanguages"
+							@click="savePublicationLanguages">
+							<template #icon>
+								<NcLoadingIcon v-if="savingPublicationLanguages" :size="20" />
+								<Save v-else :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Save languages') }}
+						</NcButton>
+					</div>
 				</div>
 
 				<!-- Public API cache time (REQ-PAC-003) -->
@@ -614,8 +667,10 @@ import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
 import DcatFeedValidation from './DcatFeedValidation.vue'
 import DonlHarvestStatus from './DonlHarvestStatus.vue'
+import InstanceModeSection from './InstanceModeSection.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
+import RecordHandover from './RecordHandover.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
@@ -625,6 +680,9 @@ import {
 	directorySyncFailed,
 	directorySyncFailure,
 	postSyncInterval,
+	publicationLanguageOptions,
+	publicationLanguagesFrom,
+	publicationLanguagesPayload,
 	publishingOptionsFrom,
 	publishingOptionsPayload,
 	requestDirectorySync,
@@ -638,6 +696,14 @@ import {
 } from './settingsSchemas.js'
 
 import '@nextcloud/dialogs/style.css'
+
+/** The directory sync interval the page shows until the stored one has loaded, in minutes. */
+const DEFAULT_SYNC_OPTIONS = Object.freeze({
+	intervalMinutes: 60,
+	minMinutes: 15,
+	maxMinutes: 1440,
+	defaultMinutes: 60,
+})
 
 /**
  * Fetch the federation sync options.
@@ -724,7 +790,9 @@ export default defineComponent({
 		CloseCircle,
 		MinusCircle,
 		InformationOutline,
+		InstanceModeSection,
 		PublishRightsLine,
+		RecordHandover,
 		WooIndexConnection,
 		DcatFeedValidation,
 		DonlHarvestStatus,
@@ -785,6 +853,10 @@ export default defineComponent({
 			publicCacheSeconds: '60',
 			savingPublicCache: false,
 			publicCacheError: '',
+			// Languages offered to editors (publication-translations D6).
+			publicationLanguages: ['nl', 'en'],
+			savingPublicationLanguages: false,
+			publicationLanguagesError: '',
 			// Websites that may call the public API, one per line (REQ-SCO-003).
 			corsOrigins: '*',
 			savingCors: false,
@@ -796,16 +868,41 @@ export default defineComponent({
 			syncingDirectories: false,
 			loadingSyncOptions: true,
 			savingSyncOptions: false,
-			syncOptions: {
-				intervalMinutes: 60,
-				minMinutes: 15,
-				maxMinutes: 1440,
-				defaultMinutes: 60,
-			},
+			syncOptions: { ...DEFAULT_SYNC_OPTIONS },
 		}
 	},
 
 	computed: {
+		/**
+		 * The language options of the editors' language select.
+		 *
+		 * @return {Array<{id: string, label: string, locked: boolean}>} The options
+		 * @spec openspec/changes/publication-translations/design.md
+		 */
+		publicationLanguageChoices() {
+			return publicationLanguageOptions(this.publicationLanguages, document.documentElement.lang || 'en')
+		},
+
+		/**
+		 * The selected language options, read and written as tags.
+		 *
+		 * @spec openspec/changes/publication-translations/design.md
+		 */
+		publicationLanguageSelection: {
+			/** @spec openspec/changes/publication-translations/design.md */
+			get() {
+				return this.publicationLanguageChoices.filter((option) => this.publicationLanguages.includes(option.id))
+			},
+
+			/**
+			 * @param {Array<{id: string}>} options The selected options.
+			 * @spec openspec/changes/publication-translations/design.md
+			 */
+			set(options) {
+				this.publicationLanguages = publicationLanguagesPayload(options)
+			},
+		},
+
 		/**
 		 * The national channels a source can be set for, with their labels.
 		 *
@@ -940,6 +1037,7 @@ export default defineComponent({
 		 *
 		 * @param {object|undefined} configuration - The stored configuration
 		 * @return {void}
+		 * @spec openspec/changes/publication-translations/design.md
 		 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
 		 */
 		applyStoredConfiguration(configuration) {
@@ -958,6 +1056,10 @@ export default defineComponent({
 					configuration.public_api_cache_seconds,
 				)
 			}
+
+			this.publicationLanguages = publicationLanguagesFrom(
+				configuration && configuration.publication_languages,
+			)
 
 			if (configuration && configuration.cors_allowed_origins !== undefined) {
 				this.corsOrigins = corsOriginLines(configuration.cors_allowed_origins)
@@ -1411,6 +1513,23 @@ export default defineComponent({
 		},
 
 		/**
+		 * The one line saying where the Woo-index fields come from (REQ-WIM-004).
+		 *
+		 * @param {{source: string, refusal: ?{code: string, reason: string}}} mapping The report's `mapping`.
+		 * @return {string} The line.
+		 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
+		 */
+		wooIndexMappingLine(mapping) {
+			const line = mapping.source === 'integriq'
+				? t('opencatalogi', 'Woo-index fields from integriq mapping woo-index-publication')
+				: t('opencatalogi', 'Woo-index fields built in')
+			if (!mapping.refusal) {
+				return line
+			}
+			return t('opencatalogi', '{line} (integriq refused: {code}, {reason})', { line, code: mapping.refusal.code, reason: mapping.refusal.reason })
+		},
+
+		/**
 		 * Loads the last persisted Woo-index harvester-readiness report.
 		 *
 		 * Read-only — performs no outbound checks itself (WOO-HR-002).
@@ -1533,6 +1652,33 @@ export default defineComponent({
 				)
 			} finally {
 				this.savingPublicCache = false
+			}
+		},
+
+		/**
+		 * Saves the languages offered to editors. The server stores Dutch first
+		 * and drops what is not a language tag; what it stored is shown back.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-translations/design.md
+		 */
+		async savePublicationLanguages() {
+			this.savingPublicationLanguages = true
+			this.publicationLanguagesError = ''
+
+			try {
+				const response = await putSettings({ publication_languages: this.publicationLanguages })
+				const stored = response.data && response.data.publication_languages
+				if (stored !== undefined) {
+					this.publicationLanguages = publicationLanguagesFrom(stored)
+				}
+			} catch {
+				this.publicationLanguagesError = this.t(
+					'opencatalogi',
+					'The languages could not be saved. Try again.',
+				)
+			} finally {
+				this.savingPublicationLanguages = false
 			}
 		},
 

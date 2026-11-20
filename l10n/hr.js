@@ -724,6 +724,21 @@ OC.L10N.register(
         "Open catalog": "Otvori katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Izradite svoj prvi katalog. To je spremnik u kojem će biti vaše objave. Odaberite registar Publication i shemu Publication kako bi katalog prikazivao objave koje dodate.",
         "Manage your publications and their status": "Upravljajte svojim publikacijama i njihovim statusom",
+        "Open at the source": "Otvori na izvoru",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: verzija OpenRegistera",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister sadrži pogon koji OpenCatalogi treba.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi zahtijeva OpenRegister %1$s ili noviji. U instaliranom OpenRegisteru nedostaje %2$s, pa OpenCatalogi umjesto svojih stranica prikazuje obavijest. Ažurirajte OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi se ne može pokrenuti",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi zahtijeva OpenRegister %1$s ili noviji. Zamolite administratora da ažurira OpenRegister.",
+        "Feed consumers": "Korisnici feeda",
+        "Contact": "Kontakt",
+        "Generate key": "Generiraj ključ",
+        "Revoke": "Opozovi",
+        "Disable": "Onemogući",
+        "Last used": "Zadnje korišteno",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ovaj se ključ prikazuje samo jednom. Kopirajte ga sada: ne može se ponovno prikazati.",
+        "No feed consumers yet.": "Još nema korisnika feeda.",
+        "Accounts that read every catalogue's feed": "Računi koji čitaju feed svakog kataloga",
         "Retention defaults": "Zadani rokovi čuvanja",
         "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Objava u ovom katalogu dobiva ih pri prvoj objavi ako su njezina polja čuvanja prazna. Kasnija promjena ne mijenja postojeće objave.",
         "Term in months": "Rok u mjesecima",
@@ -761,8 +776,7 @@ OC.L10N.register(
         "Publisher": "Izdavač",
         "The metadata quality could not be loaded": "Kvalitetu metapodataka nije moguće učitati",
         "{score} of 100": "{score} od 100",
-        "Could not compute the metadata quality.": "Kvalitetu metapodataka nije moguće izračunati.",
-        "Open at the source": "Otvori na izvoru"
+        "Could not compute the metadata quality.": "Kvalitetu metapodataka nije moguće izračunati."
     },
     "nplurals=2; plural=(n != 1);"
 )

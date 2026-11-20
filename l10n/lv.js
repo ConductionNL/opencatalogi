@@ -724,6 +724,21 @@ OC.L10N.register(
         "Open catalog": "Atvērt katalogu",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Izveidojiet savu pirmo katalogu. Tas ir konteiners, kurā būs jūsu publikācijas. Izvēlieties reģistru Publication un shēmu Publication, lai katalogs rādītu jūsu pievienotās publikācijas.",
         "Manage your publications and their status": "Pārvaldiet savas publikācijas un to statusu",
+        "Open at the source": "Atvērt avotā",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegister versija",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister satur dzinēju, kas nepieciešams OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi nepieciešams OpenRegister %1$s vai jaunāka versija. Instalētajā OpenRegister trūkst %2$s, tāpēc OpenCatalogi savu lapu vietā rāda paziņojumu. Atjauniniet OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi nevar startēt",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi nepieciešams OpenRegister %1$s vai jaunāka versija. Lūdziet administratoram atjaunināt OpenRegister.",
+        "Feed consumers": "Plūsmas patērētāji",
+        "Contact": "Kontaktinformācija",
+        "Generate key": "Izveidot atslēgu",
+        "Revoke": "Atsaukt",
+        "Disable": "Atspējot",
+        "Last used": "Pēdējoreiz izmantots",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Šī atslēga tiek parādīta tikai vienreiz. Nokopējiet to tagad: to nevarēs parādīt vēlreiz.",
+        "No feed consumers yet.": "Vēl nav plūsmas patērētāju.",
+        "Accounts that read every catalogue's feed": "Konti, kas lasa katra kataloga plūsmu",
         "Retention defaults": "Noklusējuma glabāšanas termiņi",
         "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Šī kataloga publikācija tos saņem pirmajā publicēšanas reizē, ja tās glabāšanas lauki ir tukši. Vēlākas izmaiņas esošās publikācijas nemaina.",
         "Term in months": "Termiņš mēnešos",
@@ -761,8 +776,7 @@ OC.L10N.register(
         "Publisher": "Izdevējs",
         "The metadata quality could not be loaded": "Metadatu kvalitāti neizdevās ielādēt",
         "{score} of 100": "{score} no 100",
-        "Could not compute the metadata quality.": "Metadatu kvalitāti neizdevās aprēķināt.",
-        "Open at the source": "Atvērt avotā"
+        "Could not compute the metadata quality.": "Metadatu kvalitāti neizdevās aprēķināt."
     },
     "nplurals=2; plural=(n != 1);"
 )

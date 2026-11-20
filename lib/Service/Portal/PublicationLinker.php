@@ -10,7 +10,7 @@
  * installed, the link opens the publication page of portaliq's site
  * (`/publicatie/<id>`), which anyone may open. Only without portaliq is it
  * opencatalogi's public publication API in the catalogue named by
- * `publication_url_catalog` (default `publication`): raw data, but the one
+ * `publication_url_catalog` (default `publications`, the catalogue the app ships): raw data, but the one
  * public address there is then.
  *
  * Every link is absolute through IURLGenerator::getAbsoluteURL(). In a
@@ -51,6 +51,12 @@ class PublicationLinker {
 	public const SITE_PUBLICATION_PAGE = '/index.php/apps/portaliq/site?route=/publicatie/';
 
 	/**
+	 * The catalogue whose public API links a publication when nothing else is set:
+	 * the catalogue the app ships in `publication_register.json`.
+	 */
+	public const DEFAULT_CATALOG = 'publications';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IAppConfig $appConfig Holds the template.
@@ -85,11 +91,40 @@ class PublicationLinker {
 			return $this->urlGenerator->getAbsoluteURL(self::SITE_PUBLICATION_PAGE . rawurlencode($id));
 		}
 
-		$catalog = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_catalog', 'publication'));
+		$catalog = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_catalog', self::DEFAULT_CATALOG));
 		if ($catalog === '') {
-			$catalog = 'publication';
+			$catalog = self::DEFAULT_CATALOG;
 		}
 
 		return $this->urlGenerator->getAbsoluteURL('/index.php/apps/opencatalogi/api/' . rawurlencode($catalog) . '/' . rawurlencode($id));
 	}//end url()
+
+	/**
+	 * The public page of a publication, or empty when no public link can be built.
+	 *
+	 * Like url(), but it never falls back to a guessed catalogue: with no
+	 * template, no portaliq and an empty `publication_url_catalog` there is no
+	 * public page, so the answer is empty rather than an API address
+	 * (publication-tells-its-source, REQ-PTS-001).
+	 *
+	 * @param string $id The publication uuid.
+	 *
+	 * @return string The absolute link, or ''.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	public function publicUrl(string $id): string {
+		if ($id === '') {
+			return '';
+		}
+
+		$template = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_template', ''));
+		$portaliq = ($this->appManager?->isInstalled('portaliq') === true);
+		$catalog  = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_catalog', self::DEFAULT_CATALOG));
+		if (str_contains($template, '{id}') === false && $portaliq === false && $catalog === '') {
+			return '';
+		}
+
+		return $this->url(id: $id);
+	}//end publicUrl()
 }//end class

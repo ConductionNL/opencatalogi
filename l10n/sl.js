@@ -724,6 +724,21 @@ OC.L10N.register(
         "Open catalog": "Odpri katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Ustvarite svoj prvi katalog. To je vsebnik, v katerem bodo vaše objave. Izberite register Publication in shemo Publication, da bo katalog prikazoval objave, ki jih dodate.",
         "Manage your publications and their status": "Upravljajte svoje publikacije in njihovo stanje",
+        "Open at the source": "Odpri pri viru",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: različica OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister vsebuje pogon, ki ga OpenCatalogi potrebuje.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi zahteva OpenRegister %1$s ali novejši. V nameščenem OpenRegister manjka %2$s, zato OpenCatalogi namesto svojih strani prikaže obvestilo. Posodobite OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi se ne more zagnati",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi zahteva OpenRegister %1$s ali novejši. Prosite skrbnika, naj posodobi OpenRegister.",
+        "Feed consumers": "Prejemniki vira",
+        "Contact": "Stik",
+        "Generate key": "Ustvari ključ",
+        "Revoke": "Prekliči",
+        "Disable": "Onemogoči",
+        "Last used": "Nazadnje uporabljeno",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ta ključ je prikazan samo enkrat. Kopirajte ga zdaj: znova ga ni mogoče prikazati.",
+        "No feed consumers yet.": "Prejemnikov vira še ni.",
+        "Accounts that read every catalogue's feed": "Računi, ki berejo vir vsakega kataloga",
         "Retention defaults": "Privzeti roki hrambe",
         "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Objava v tem katalogu jih prejme ob prvi objavi, če so njena polja hrambe prazna. Poznejša sprememba ne spremeni obstoječih objav.",
         "Term in months": "Rok v mesecih",
@@ -761,8 +776,7 @@ OC.L10N.register(
         "Publisher": "Izdajatelj",
         "The metadata quality could not be loaded": "Kakovosti metapodatkov ni bilo mogoče naložiti",
         "{score} of 100": "{score} od 100",
-        "Could not compute the metadata quality.": "Kakovosti metapodatkov ni bilo mogoče izračunati.",
-        "Open at the source": "Odpri pri viru"
+        "Could not compute the metadata quality.": "Kakovosti metapodatkov ni bilo mogoče izračunati."
     },
     "nplurals=2; plural=(n != 1);"
 )

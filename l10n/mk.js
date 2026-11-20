@@ -724,6 +724,21 @@ OC.L10N.register(
         "Open catalog": "Отвори каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Создадете го вашиот прв каталог. Тоа е контејнерот во кој ќе бидат вашите објави. Изберете го регистарот Publication и шемата Publication, за каталогот да ги прикажува објавите што ги додавате.",
         "Manage your publications and their status": "Управувајте со вашите публикации и нивниот статус",
+        "Open at the source": "Отвори кај изворот",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: верзија на OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister го содржи моторот што му е потребен на OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi бара OpenRegister %1$s или понов. Во инсталираниот OpenRegister недостасува %2$s, па OpenCatalogi наместо своите страници прикажува известување. Ажурирајте го OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi не може да се стартува",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi бара OpenRegister %1$s или понов. Побарајте од администраторот да го ажурира OpenRegister.",
+        "Feed consumers": "Корисници на фидот",
+        "Contact": "Контакт",
+        "Generate key": "Генерирај клуч",
+        "Revoke": "Отповикај",
+        "Disable": "Оневозможи",
+        "Last used": "Последно користено",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Овој клуч се прикажува само еднаш. Копирајте го сега: не може повторно да се прикаже.",
+        "No feed consumers yet.": "Сè уште нема корисници на фидот.",
+        "Accounts that read every catalogue's feed": "Сметки што го читаат фидот на секој каталог",
         "Retention defaults": "Стандардни рокови на чување",
         "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Објава во овој каталог ги добива при првото објавување ако нејзините полиња за чување се празни. Подоцнежна промена не ги менува постојните објави.",
         "Term in months": "Рок во месеци",
@@ -761,8 +776,7 @@ OC.L10N.register(
         "Publisher": "Издавач",
         "The metadata quality could not be loaded": "Квалитетот на метаподатоците не можеше да се вчита",
         "{score} of 100": "{score} од 100",
-        "Could not compute the metadata quality.": "Квалитетот на метаподатоците не можеше да се пресмета.",
-        "Open at the source": "Отвори кај изворот"
+        "Could not compute the metadata quality.": "Квалитетот на метаподатоците не можеше да се пресмета."
     },
     "nplurals=2; plural=(n != 1);"
 )

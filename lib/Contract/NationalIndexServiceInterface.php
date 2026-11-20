@@ -69,7 +69,7 @@ interface NationalIndexServiceInterface {
 	 * `publicatie` gateway by reference; every other channel is called through
 	 * its configured source.
 	 *
-	 * @return array{channel: string, deliveredAt: string, answer: string, delivery?: array<string, mixed>}
+	 * @return array{channel: string, deliveredAt: ?string, answer: string, delivery?: array<string, mixed>, dryRun?: true, reason?: string}
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\IndexUnreachableException When the delivery could not be made.
 	 *
@@ -95,7 +95,7 @@ interface NationalIndexServiceInterface {
 	 * @param array<string, mixed> $request The composed registration request.
 	 * @param DateTimeInterface|null $now The moment.
 	 *
-	 * @return array{channel: string, registeredAt: string, answer: string}
+	 * @return array{channel: string, registeredAt: ?string, answer: string, dryRun?: true, reason?: string}
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\IndexUnreachableException When the index could not be asked.
 	 *
@@ -124,7 +124,7 @@ interface NationalIndexServiceInterface {
 	 * @param string $reason Why it is coming down.
 	 * @param DateTimeInterface|null $now The moment.
 	 *
-	 * @return array{channel: string, acknowledgedAt: string, answer: string}
+	 * @return array{channel: string, acknowledgedAt: ?string, answer: string, dryRun?: true, reason?: string}
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\IndexUnreachableException When the channel could not be reached.
 	 *

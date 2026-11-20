@@ -723,6 +723,21 @@
         "Open catalog": "Άνοιγμα καταλόγου",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Δημιουργήστε τον πρώτο σας κατάλογο. Είναι ο χώρος όπου θα βρίσκονται οι δημοσιεύσεις σας. Επιλέξτε το μητρώο Publication και το σχήμα Publication, ώστε ο κατάλογος να εμφανίζει τις δημοσιεύσεις που προσθέτετε.",
         "Manage your publications and their status": "Διαχειριστείτε τις δημοσιεύσεις σας και την κατάστασή τους",
+        "Open at the source": "Άνοιγμα στην πηγή",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: έκδοση OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "Το OpenRegister περιέχει τη μηχανή που χρειάζεται το OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "Το OpenCatalogi απαιτεί OpenRegister %1$s ή νεότερο. Στο εγκατεστημένο OpenRegister λείπει το %2$s, οπότε το OpenCatalogi εμφανίζει μια ειδοποίηση αντί για τις σελίδες του. Ενημερώστε το OpenRegister.",
+        "OpenCatalogi cannot start": "Το OpenCatalogi δεν μπορεί να ξεκινήσει",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "Το OpenCatalogi απαιτεί OpenRegister %1$s ή νεότερο. Ζητήστε από τον διαχειριστή να ενημερώσει το OpenRegister.",
+        "Feed consumers": "Καταναλωτές ροής",
+        "Contact": "Επικοινωνία",
+        "Generate key": "Δημιουργία κλειδιού",
+        "Revoke": "Ανάκληση",
+        "Disable": "Απενεργοποίηση",
+        "Last used": "Τελευταία χρήση",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Αυτό το κλειδί εμφανίζεται μία φορά. Αντιγράψτε το τώρα: δεν μπορεί να εμφανιστεί ξανά.",
+        "No feed consumers yet.": "Δεν υπάρχουν ακόμη καταναλωτές ροής.",
+        "Accounts that read every catalogue's feed": "Λογαριασμοί που διαβάζουν τη ροή κάθε καταλόγου",
         "Retention defaults": "Προεπιλεγμένες προθεσμίες διατήρησης",
         "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Μια δημοσίευση αυτού του καταλόγου τις λαμβάνει κατά την πρώτη δημοσίευση, αν τα δικά της πεδία διατήρησης είναι κενά. Μεταγενέστερες αλλαγές δεν επηρεάζουν τις υπάρχουσες δημοσιεύσεις.",
         "Term in months": "Προθεσμία σε μήνες",
@@ -760,8 +775,7 @@
         "Publisher": "Εκδότης",
         "The metadata quality could not be loaded": "Δεν ήταν δυνατή η φόρτωση της ποιότητας των μεταδεδομένων",
         "{score} of 100": "{score} στα 100",
-        "Could not compute the metadata quality.": "Δεν ήταν δυνατός ο υπολογισμός της ποιότητας των μεταδεδομένων.",
-        "Open at the source": "Άνοιγμα στην πηγή"
+        "Could not compute the metadata quality.": "Δεν ήταν δυνατός ο υπολογισμός της ποιότητας των μεταδεδομένων."
     },
     "plurals": {}
 }

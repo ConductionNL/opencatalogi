@@ -29,6 +29,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
+use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -62,6 +63,8 @@ class DcatService implements DcatServiceInterface {
 	 * @param InstanceSettings $instance The base URL (absolute IRIs) and app config (publisher defaults).
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param DcatAssurance $assurance The profile-version check and the optional DQV quality scorer.
+	 * @param DocumentReferences|null $references The publications' document references (REQ-PBR-002).
+	 * @param PublishedTableServiceInterface|null $tables The published tables, whose CSVs conform to their data dictionary; null links none.
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookup $openRegister,
@@ -70,6 +73,8 @@ class DcatService implements DcatServiceInterface {
 		private readonly InstanceSettings $instance,
 		private readonly LoggerInterface $logger,
 		private readonly DcatAssurance $assurance,
+		private readonly ?DocumentReferences $references = null,
+		private readonly ?PublishedTableServiceInterface $tables = null,
 	) {
 
 	}//end __construct()
@@ -351,13 +356,43 @@ class DcatService implements DcatServiceInterface {
 		$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $scope['registers'], schemas: $scope['schemas']);
 		$searchQuery['_order']['updated'] = 'desc';
 
-		return $this->getObjectService()->searchObjectsPaginated(
-			query: $searchQuery,
-			_rbac: true,
-			_multitenancy: false,
-			deleted: false
-		);
+		// Every translation of the translatable fields, so each language becomes its
+		// own tagged literal (publication-translations REQ-PTR-002); reset after.
+		$languageService = $this->languageService();
+		$languageService?->setReturnAllTranslations(true);
+		try {
+			return $this->getObjectService()->searchObjectsPaginated(
+				query: $searchQuery,
+				_rbac: true,
+				_multitenancy: false,
+				deleted: false
+			);
+		} finally {
+			$languageService?->setReturnAllTranslations(false);
+		}
 	}//end searchCatalogPage()
+
+	/**
+	 * OpenRegister's request-scoped language service, or null when OpenRegister
+	 * is absent or predates translations (the feed then stays in the source language).
+	 *
+	 * @return object|null The service.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function languageService(): ?object {
+		try {
+			$service = $this->openRegister->installedService('OCA\OpenRegister\Service\LanguageService', 'OpenRegister is not available.');
+		} catch (\Throwable) {
+			return null;
+		}
+
+		if (is_object($service) === false || method_exists($service, 'setReturnAllTranslations') === false) {
+			return null;
+		}
+
+		return $service;
+	}//end languageService()
 
 	/**
 	 * Map a page of publications to DCAT datasets, skipping schemas that opted out.
@@ -437,8 +472,17 @@ class DcatService implements DcatServiceInterface {
 		try {
 			$fileService = $scope['fileService'];
 			$files = ($fileService->formatFiles($fileService->getFiles(object: ($publication['id'] ?? $uuid)))['results'] ?? []);
+			$files = $this->withDictionaryUrls(
+				files: (array)$files,
+				publicationId: (string)($publication['id'] ?? $uuid),
+				catalogSlug: (string)$scope['catalogSlug']
+			);
 		} catch (\Throwable $e) {
 			$this->logger->debug('[DcatService] Could not load files for publication', ['uuid' => $uuid, 'error' => $e->getMessage()]);
+		}
+
+		if ($this->references !== null) {
+			$files = $this->references->appendTo(files: $files, publicationId: (string)($publication['id'] ?? $uuid));
 		}
 
 		return new DcatDatasetSource(
@@ -469,6 +513,25 @@ class DcatService implements DcatServiceInterface {
 
 		return $this->mapCatalogDataset(source: $this->datasetSource(publication: $publication, scope: $scope), scope: $scope);
 	}//end buildPublicationDataset()
+
+	/**
+	 * The files, with a data dictionary URL on each one published as a table (REQ-ODT-003).
+	 *
+	 * @param array<int, mixed> $files         The publication's published attachments.
+	 * @param string            $publicationId The publication.
+	 * @param string            $catalogSlug   The catalogue the URLs are under.
+	 *
+	 * @return array<int, mixed> The files; unchanged without published tables.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	private function withDictionaryUrls(array $files, string $publicationId, string $catalogSlug): array {
+		if ($this->tables === null || $files === []) {
+			return $files;
+		}
+
+		return $this->tables->withDictionaryUrls(files: $files, publicationId: $publicationId, catalogSlug: $catalogSlug);
+	}//end withDictionaryUrls()
 
 	/**
 	 * Map one publication to a DCAT dataset; its violations are left on the source.

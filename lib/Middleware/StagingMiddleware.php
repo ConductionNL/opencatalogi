@@ -24,7 +24,7 @@ namespace OCA\OpenCatalogi\Middleware;
 
 use OCA\OpenCatalogi\Controller\RobotsController;
 use OCA\OpenCatalogi\Http\TextResponse;
-use OCA\OpenCatalogi\Service\InstanceMode;
+use OCA\OpenCatalogi\Contract\InstanceModeInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
@@ -60,11 +60,11 @@ class StagingMiddleware extends Middleware {
 	/**
 	 * Constructor.
 	 *
-	 * @param InstanceMode $mode        The instance mode.
+	 * @param InstanceModeInterface $mode The instance mode.
 	 * @param IUserSession $userSession Who is calling.
 	 */
 	public function __construct(
-		private readonly InstanceMode $mode,
+		private readonly InstanceModeInterface $mode,
 		private readonly IUserSession $userSession,
 	) {
 	}//end __construct()

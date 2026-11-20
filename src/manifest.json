@@ -861,6 +861,58 @@
 						}
 					},
 					{
+						"id": "pub-references",
+						"type": "object-list",
+						"title": "Document references",
+						"icon": "LinkVariant",
+						"content": {
+							"register": "publication",
+							"schema": "documentReference",
+							"filter": {
+								"publication": "@objectId"
+							},
+							"sort": {
+								"field": "title",
+								"dir": "asc"
+							},
+							"columns": [
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "format",
+									"label": "Format"
+								},
+								{
+									"key": "url",
+									"label": "URL"
+								},
+								{
+									"key": "reachable",
+									"label": "Reachable"
+								},
+								{
+									"key": "lastStatus",
+									"label": "Last status"
+								},
+								{
+									"key": "lastCheckedAt",
+									"label": "Last checked"
+								}
+							],
+							"limit": 25,
+							"allowCreate": true,
+							"emptyText": "This publication has no document references yet."
+						}
+					},
+					{
+						"id": "pub-tables",
+						"type": "publication-tables",
+						"title": "Tables",
+						"icon": "TableColumn"
+					},
+					{
 						"id": "pub-photos",
 						"type": "integration",
 						"integrationId": "photos",
@@ -930,6 +982,12 @@
 						"icon": "EyeOutline"
 					},
 					{
+						"id": "pub-languages",
+						"type": "publication-languages",
+						"title": "Languages",
+						"icon": "Translate"
+					},
+					{
 						"id": "pub-plain-summary",
 						"type": "plain-summary-draft",
 						"title": "Plain language summary",
@@ -992,10 +1050,18 @@
 						"gridHeight": 5
 					},
 					{
+						"id": "15",
+						"widgetId": "pub-tables",
+						"gridX": 0,
+						"gridY": 15,
+						"gridWidth": 12,
+						"gridHeight": 5
+					},
+					{
 						"id": "6",
 						"widgetId": "pub-photos",
 						"gridX": 0,
-						"gridY": 15,
+						"gridY": 24,
 						"gridWidth": 6,
 						"gridHeight": 4
 					},
@@ -1003,7 +1069,7 @@
 						"id": "7",
 						"widgetId": "pub-links",
 						"gridX": 6,
-						"gridY": 15,
+						"gridY": 24,
 						"gridWidth": 6,
 						"gridHeight": 4
 					},
@@ -1011,7 +1077,7 @@
 						"id": "10",
 						"widgetId": "pub-announce",
 						"gridX": 0,
-						"gridY": 19,
+						"gridY": 28,
 						"gridWidth": 12,
 						"gridHeight": 4
 					},
@@ -1019,7 +1085,7 @@
 						"id": "11",
 						"widgetId": "pub-plooi",
 						"gridX": 0,
-						"gridY": 23,
+						"gridY": 32,
 						"gridWidth": 12,
 						"gridHeight": 3
 					},
@@ -1027,7 +1093,7 @@
 						"id": "12",
 						"widgetId": "pub-visibility",
 						"gridX": 0,
-						"gridY": 26,
+						"gridY": 35,
 						"gridWidth": 12,
 						"gridHeight": 3
 					},
@@ -1035,7 +1101,7 @@
 						"id": "14",
 						"widgetId": "pub-plain-summary",
 						"gridX": 0,
-						"gridY": 29,
+						"gridY": 38,
 						"gridWidth": 12,
 						"gridHeight": 4
 					},
@@ -1059,7 +1125,23 @@
 						"id": "13",
 						"widgetId": "pub-calendar",
 						"gridX": 0,
-						"gridY": 41,
+						"gridY": 42,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
+						"id": "16",
+						"widgetId": "pub-references",
+						"gridX": 0,
+						"gridY": 20,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
+						"id": "16",
+						"widgetId": "pub-languages",
+						"gridX": 0,
+						"gridY": 42,
 						"gridWidth": 12,
 						"gridHeight": 4
 					}

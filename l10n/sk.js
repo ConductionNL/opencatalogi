@@ -724,6 +724,21 @@ OC.L10N.register(
         "Open catalog": "Otvoriť katalóg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Vytvorte svoj prvý katalóg. Je to kontajner, v ktorom budú vaše publikácie. Vyberte register Publication a schému Publication, aby katalóg zobrazoval publikácie, ktoré pridáte.",
         "Manage your publications and their status": "Spravujte svoje publikácie a ich stav",
+        "Open at the source": "Otvoriť pri zdroji",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: verzia OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister obsahuje jadro, ktoré OpenCatalogi potrebuje.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi vyžaduje OpenRegister %1$s alebo novší. V nainštalovanom OpenRegister chýba %2$s, preto OpenCatalogi namiesto svojich stránok zobrazuje upozornenie. Aktualizujte OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi sa nedá spustiť",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vyžaduje OpenRegister %1$s alebo novší. Požiadajte správcu o aktualizáciu OpenRegister.",
+        "Feed consumers": "Odberatelia kanála",
+        "Contact": "Kontakt",
+        "Generate key": "Vygenerovať kľúč",
+        "Revoke": "Odvolať",
+        "Disable": "Zakázať",
+        "Last used": "Naposledy použité",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Tento kľúč sa zobrazí iba raz. Skopírujte si ho teraz: znova ho zobraziť nemožno.",
+        "No feed consumers yet.": "Zatiaľ žiadni odberatelia kanála.",
+        "Accounts that read every catalogue's feed": "Účty, ktoré čítajú kanál každého katalógu",
         "Retention defaults": "Predvolené lehoty uchovávania",
         "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Publikácia v tomto katalógu ich dostane pri prvom zverejnení, ak sú jej vlastné polia uchovávania prázdne. Neskoršia zmena nemení existujúce publikácie.",
         "Term in months": "Lehota v mesiacoch",
@@ -761,8 +776,7 @@ OC.L10N.register(
         "Publisher": "Vydavateľ",
         "The metadata quality could not be loaded": "Kvalitu metadát sa nepodarilo načítať",
         "{score} of 100": "{score} zo 100",
-        "Could not compute the metadata quality.": "Kvalitu metadát sa nepodarilo vypočítať.",
-        "Open at the source": "Otvoriť pri zdroji"
+        "Could not compute the metadata quality.": "Kvalitu metadát sa nepodarilo vypočítať."
     },
     "nplurals=2; plural=(n != 1);"
 )
