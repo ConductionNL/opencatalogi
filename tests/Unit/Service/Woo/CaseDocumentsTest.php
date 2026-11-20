@@ -245,7 +245,8 @@ class CaseDocumentsTest extends TestCase {
 			$l10n,
 			$this->createMock(IUserSession::class),
 			$categories,
-			$this->caseDocuments()
+			capabilities: new \Unit\Support\AllowingCapabilityRights(),
+			caseDocuments: $this->caseDocuments()
 		);
 
 	}//end controller()
