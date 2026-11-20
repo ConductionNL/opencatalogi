@@ -738,7 +738,12 @@ OC.L10N.register(
         "Last used": "Апошняе выкарыстанне",
         "This key is shown once. Copy it now: it cannot be shown again.": "Гэты ключ паказваецца толькі адзін раз. Скапіруйце яго зараз: паказаць яго зноў нельга.",
         "No feed consumers yet.": "Спажыўцоў стужкі пакуль няма.",
-        "Accounts that read every catalogue's feed": "Уліковыя запісы, якія чытаюць стужку кожнага каталога"
+        "Accounts that read every catalogue's feed": "Уліковыя запісы, якія чытаюць стужку кожнага каталога",
+        "Review publications before they are published": "Правяраць публікацыі перад апублікаваннем",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Калі ўключана, чарнавік трэба падаць і зацвердзіць, перш чым яго можна апублікаваць. Калі выключана, рэдактар можа апублікаваць чарнавік адразу.",
+        "Delete publication": "Выдаліць публікацыю",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Вы хочаце выдаліць \"{name}\"? Гэта дзеянне нельга адмяніць.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публікацыя і яе далучэнні знікаюць з публічнай старонкі і з карты сайта Woo. Архіваванне, наадварот, захоўвае іх на тэрмін захоўвання."
     },
     "nplurals=2; plural=(n != 1);"
 )

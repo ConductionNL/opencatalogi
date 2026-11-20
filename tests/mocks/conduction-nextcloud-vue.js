@@ -196,6 +196,8 @@ const CnIndexPage = {
 	data() {
 		return {
 			formDialogItem: null,
+			// The row the single-delete dialog is for, set by the Delete row action.
+			actionTargetItem: null,
 			selectedObjects: [],
 			refreshCount: 0,
 		}

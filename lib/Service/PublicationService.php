@@ -41,6 +41,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use OCA\OpenCatalogi\Service\Publication\PublicationLinkRules;
 use Exception;
 use InvalidArgumentException;
@@ -2011,11 +2012,13 @@ class PublicationService implements PublicationServiceInterface {
 	 * @return array The decoded response data.
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::withoutUnlisted() is a pure filter.
 	 */
 	private function fetchLocalPublicationData(array $queryParams): array {
 		$response = $this->index(catalogId: null, customParams: $queryParams);
 
-		return (json_decode($response->render(), true) ?? []);
+		// REQ-PLC-006: the federation list never carries an unlisted publication.
+		return UnlistedPublications::withoutUnlisted(page: (json_decode($response->render(), true) ?? []));
 	}//end fetchLocalPublicationData()
 
 	/**

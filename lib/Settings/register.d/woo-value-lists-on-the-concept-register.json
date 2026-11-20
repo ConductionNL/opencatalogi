@@ -1,0 +1,25 @@
+{
+  "_note": "Register fragment for woo-value-lists-on-the-concept-register (REQ-WVC-003). The refusal grounds are dossiq's list. groundsListVersion marks which list the stored codes belong to; it is set on every save by WooService::updateAssessment() and by the MapStoredRefusalGrounds repair step, which maps OpenCatalogi's earlier codes once. unmappedGrounds lists the earlier codes it could not map. Admin-only, as the rest of wooAssessment.",
+  "components": {
+    "schemas": {
+      "wooAssessment": {
+        "version": "0.7.0",
+        "properties": {
+          "groundsListVersion": {
+            "type": "string",
+            "description": "The version of dossiq's refusal grounds list the codes in weigeringsgronden belong to. Set on every save; an assessment without it still carries OpenCatalogi's earlier codes, which the MapStoredRefusalGrounds repair step maps once.",
+            "title": "Grounds list version"
+          },
+          "unmappedGrounds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Stored ground codes the repair step could not map unambiguously to dossiq's list. They are kept in weigeringsgronden as they were and listed here for an officer to settle.",
+            "title": "Unmapped grounds"
+          }
+        }
+      }
+    }
+  }
+}

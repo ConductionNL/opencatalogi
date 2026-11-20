@@ -738,7 +738,12 @@ OC.L10N.register(
         "Last used": "Ultimo utilizzo",
         "This key is shown once. Copy it now: it cannot be shown again.": "Questa chiave viene mostrata una sola volta. Copiala ora: non potrà essere mostrata di nuovo.",
         "No feed consumers yet.": "Nessun consumatore del feed per ora.",
-        "Accounts that read every catalogue's feed": "Account che leggono il feed di ogni catalogo"
+        "Accounts that read every catalogue's feed": "Account che leggono il feed di ogni catalogo",
+        "Review publications before they are published": "Revisiona le pubblicazioni prima che vengano pubblicate",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Se attivo, una bozza deve essere inviata e approvata prima di poter essere pubblicata. Se disattivo, un redattore può pubblicare una bozza direttamente.",
+        "Delete publication": "Elimina pubblicazione",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Vuole eliminare \"{name}\"? Questa azione non può essere annullata.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La pubblicazione e i suoi allegati scompaiono dalla pagina pubblica e dalla sitemap Woo. L’archiviazione invece li conserva per il periodo di conservazione."
     },
     "nplurals=2; plural=(n != 1);"
 )

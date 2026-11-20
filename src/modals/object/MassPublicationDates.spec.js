@@ -19,6 +19,11 @@ jest.mock('../../store/store.js', () => ({
 	objectStore: { selectedObjects: [], availableSchemas: [], saveObject: jest.fn() },
 }))
 
+jest.mock('../../services/publicationTransition.js', () => ({
+	publishesThroughLifecycle: jest.fn(() => false),
+	publishThroughLifecycle: jest.fn(),
+}))
+
 const { catalogStore, navigationStore, objectStore } = jest.requireMock('../../store/store.js')
 
 /** Substitutes `{name}` placeholders, as the Nextcloud l10n does. */

@@ -104,7 +104,7 @@ export function withdrawnDocuments(data, now = new Date()) {
 export function visibilityActions(state, canPublish) {
 	const allowed = canPublish === true
 	return {
-		publishNow: allowed && (state === 'draft' || state === 'scheduled'),
+		publishNow: allowed && (state === 'draft' || state === 'approved' || state === 'scheduled'),
 		publishAgain: allowed && state === 'withdrawn',
 		withdraw: allowed && (state === 'public' || state === 'scheduled'),
 	}
@@ -124,4 +124,23 @@ export function publishRefusalMessage(error) {
 		return data.message
 	}
 	return ''
+}
+
+/**
+ * The list moves the page offers: Unlist on a public or scheduled publication
+ * that is listed, List again on an unlisted one, both only to a caller with
+ * the update right (publication-lifecycle-on-or REQ-PLC-006).
+ *
+ * @param {string} state The publication's state from the server.
+ * @param {boolean} unlisted Whether the publication is unlisted.
+ * @param {boolean} canUpdate Whether the caller may update it.
+ * @return {{unlist: boolean, listAgain: boolean}} Which moves show.
+ * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+ */
+export function listActions(state, unlisted, canUpdate) {
+	const allowed = canUpdate === true
+	return {
+		unlist: allowed && unlisted !== true && (state === 'public' || state === 'scheduled'),
+		listAgain: allowed && unlisted === true,
+	}
 }

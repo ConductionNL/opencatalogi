@@ -22,11 +22,13 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
+use OCA\OpenRegister\Event\CustomScopeEvaluatingEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
+use OCA\OpenRegister\Event\PermissionsDeclaringEvent;
 use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
@@ -123,6 +125,11 @@ class ListenerRegistrar {
 			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
 		}
 
+		// Capability rights (woo-access-boundary-hardening REQ-WAB-004): declare the
+		// eight verbs to OpenRegister and decide them from the catalog schema's grants.
+		$context->registerEventListener(PermissionsDeclaringEvent::class, CapabilityDeclarationListener::class);
+		$context->registerEventListener(CustomScopeEvaluatingEvent::class, CapabilityScopeListener::class);
+
 		$this->registerWriteGuards(context: $context);
 
 		// Refuse a self-relation and mirror caseReference into sourceIdentifiers (REQ-PRS-001, REQ-PRS-003).
@@ -144,6 +151,11 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectCreatingEvent::class, PlainSummaryCheck::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PlainSummaryCheck::class);
 
+		// A Woo publication is public by law: it cannot be limited to signed-in
+		// readers (publications-for-signed-in-readers, REQ-PSR-004).
+		$context->registerEventListener(ObjectCreatingEvent::class, PublicationAudienceCheck::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationAudienceCheck::class);
+
 		// A Woo batch whose review task is rejected in OpenRegister goes back to its
 		// author with the task's comment (woo-review-surface, REQ-WRV-002).
 		$context->registerEventListener(TaskTerminalEvent::class, BatchReviewTaskListener::class);
@@ -156,6 +168,12 @@ class ListenerRegistrar {
 		// A publication carries its public page and its officer page (REQ-PTS-001).
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationLinksListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationLinksListener::class);
+
+		// A record a published collection publishes is filed under the collection's
+		// Woo category before it is written, so it lands in that category's sitemap
+		// (capability-rows-verify-scenarios, REQ-CVS-003).
+		$context->registerEventListener(ObjectCreatingEvent::class, RuleCategoryListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, RuleCategoryListener::class);
 
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is
