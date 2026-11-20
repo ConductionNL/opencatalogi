@@ -2269,6 +2269,52 @@
         "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd. De publicatiedatum ligt ver in de toekomst, zodat de rij gepland blijft. Gemeente Voorbeeld bestaat niet en staat voor geen echte overheidsorganisatie.",
         "publicationDate": "2030-01-01T09:00:00+00:00",
         "status": "published"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "errorReport",
+          "slug": "errorreport-demo-1"
+        },
+        "publication": "Voorbeeld publicatie 1",
+        "catalog": "Voorbeeld catalogus",
+        "message": "De bijlage hoort bij een ander besluit.",
+        "status": "new",
+        "createdAt": "2026-11-02T09:00:00+00:00",
+        "moderators": [
+          "woo-redactie"
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "errorReport",
+          "slug": "errorreport-demo-2"
+        },
+        "publication": "Voorbeeld publicatie 2",
+        "catalog": "Voorbeeld catalogus",
+        "message": "De datum van het besluit klopt niet.",
+        "contact": "inwoner@example.nl",
+        "status": "handled",
+        "createdAt": "2026-10-20T14:30:00+00:00",
+        "moderators": [
+          "woo-redactie"
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "errorReport",
+          "slug": "errorreport-demo-3"
+        },
+        "publication": "Voorbeeld publicatie 3",
+        "catalog": "Voorbeeld catalogus",
+        "message": "Een naam in het document is niet weggelakt.",
+        "status": "dismissed",
+        "createdAt": "2026-10-05T11:15:00+00:00",
+        "moderators": [
+          "woo-redactie"
+        ]
       }
     ]
   }

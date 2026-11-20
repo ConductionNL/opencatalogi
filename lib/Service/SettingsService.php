@@ -196,6 +196,7 @@ class SettingsService implements SettingsServiceInterface {
 				'notice_board_schema' => 'noticeBoard',
 				'notice_schema' => 'notice',
 				'record_vote_schema' => 'recordVote',
+				'error_report_schema' => 'errorReport',
 				'document_reference_schema' => 'documentReference',
 			],
 		],

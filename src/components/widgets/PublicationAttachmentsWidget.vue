@@ -13,6 +13,11 @@
 			surface="detail-page"
 			:title="cardTitle"
 			:maxDisplay="content.maxDisplay || 100" />
+		<AttachmentOrderList
+			v-if="resolvedObjectId"
+			:key="'order-' + refreshKey"
+			:route="orderRoute"
+			:order="storedOrder" />
 		<NcButton
 			class="publication-attachments__add"
 			variant="secondary"
@@ -32,6 +37,8 @@ import { CnFilesCard } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
 import { NcButton } from '@nextcloud/vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import AttachmentOrderList from './AttachmentOrderList.vue'
+import { filesRouteParams } from '../../services/publicationVisibility.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 import { injectedObjectContext } from './objectContext.js'
 
@@ -48,7 +55,7 @@ import { injectedObjectContext } from './objectContext.js'
  */
 export default {
 	name: 'PublicationAttachmentsWidget',
-	components: { CnFilesCard, NcButton, Plus },
+	components: { AttachmentOrderList, CnFilesCard, NcButton, Plus },
 	inject: {
 		cnObjectContext: { default: null },
 		cnDetailObjectContext: { default: null },
@@ -99,6 +106,22 @@ export default {
 			return String(
 				this.objectId || this.ctx.objectId || this.publication?.id || '',
 			)
+		},
+
+		/** @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2 */
+		orderRoute() {
+			return filesRouteParams({
+				register: this.resolvedRegister,
+				schema: this.resolvedSchema,
+				ctx: this.ctx,
+				id: this.resolvedObjectId,
+			})
+		},
+
+		/** @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2 */
+		storedOrder() {
+			const order = this.publication?.attachmentOrder
+			return Array.isArray(order) ? order : []
 		},
 
 		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */

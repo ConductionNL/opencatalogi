@@ -105,6 +105,8 @@ use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
+use OCA\OpenCatalogi\Contract\PublicDocumentsInterface;
+use OCA\OpenCatalogi\Contract\ErrorReportIntakeInterface;
 use OCA\OpenCatalogi\Contract\InstanceModeInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Contract\TermRollInterface;
@@ -114,6 +116,8 @@ use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
 use OCA\OpenCatalogi\Service\Publication\LocalPublicationState;
 use OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod;
+use OCA\OpenCatalogi\Service\Publication\PublicDocuments;
+use OCA\OpenCatalogi\Service\ErrorReport\ErrorReportIntake;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\CatalogueFeedReader;
 use OCA\OpenCatalogi\Service\Table\PublishedTableService;
@@ -219,6 +223,8 @@ final class ServiceBindings {
 		WithheldFromPublicationInterface::class => WithheldFromPublication::class,
 		LocalPublicationStateInterface::class => LocalPublicationState::class,
 		PublicationCommentPeriodInterface::class => PublicationCommentPeriod::class,
+		PublicDocumentsInterface::class => PublicDocuments::class,
+		ErrorReportIntakeInterface::class => ErrorReportIntake::class,
 		InformationRequestStoreInterface::class => WooRequestStore::class,
 		HandoverStateInterface::class => HandoverState::class,
 		IntakeForwardInterface::class => DossiqWooForward::class,
