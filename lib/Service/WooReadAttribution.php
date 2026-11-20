@@ -25,6 +25,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
+use OCA\OpenRegister\Db\ProcessingLogReadScope;
+use OCA\OpenRegister\Kernel\Contracts\ListQuery;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -92,7 +94,7 @@ class WooReadAttribution {
 
 			$schemas = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
 			$log     = $this->container->get('OCA\OpenRegister\Db\ProcessingLogMapper');
-			$scope   = new \OCA\OpenRegister\Db\ProcessingLogReadScope(from: new DateTime('-'.self::DAYS.' days'));
+			$scope   = new ProcessingLogReadScope(from: new DateTime('-'.self::DAYS.' days'));
 			$count   = 0;
 			foreach (self::SCHEMAS as $slug) {
 				$filters = ['activity_id' => (string) $fallback->getUuid(), 'schema_id' => (string) $schemas->find($slug)->getId()];
@@ -111,7 +113,7 @@ class WooReadAttribution {
 	 *
 	 * @param object                                      $log     The processing log mapper.
 	 * @param array<string,string>                        $filters The filters.
-	 * @param \OCA\OpenRegister\Db\ProcessingLogReadScope $scope   The period.
+	 * @param ProcessingLogReadScope                      $scope   The period.
 	 *
 	 * @return int The count.
 	 */
@@ -119,10 +121,11 @@ class WooReadAttribution {
 		$count  = 0;
 		$offset = 0;
 		do {
-			$page    = $log->findListed(new \OCA\OpenRegister\Kernel\Contracts\ListQuery(limit: self::PAGE, offset: $offset, filters: $filters), $scope);
-			$count  += count($page);
-			$offset += self::PAGE;
-		} while (count($page) === self::PAGE);
+			$page      = $log->findListed(new ListQuery(limit: self::PAGE, offset: $offset, filters: $filters), $scope);
+			$pageCount = count($page);
+			$count    += $pageCount;
+			$offset   += self::PAGE;
+		} while ($pageCount === self::PAGE);
 
 		return $count;
 
