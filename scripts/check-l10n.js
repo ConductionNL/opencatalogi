@@ -465,6 +465,9 @@ function collectManifestStrings() {
 			) {
 				// A record-list or stat template: one string or a list of them.
 				;[value].flat().forEach(remember)
+			} else if (key === 'deleteDialog' && value && typeof value === 'object') {
+				// An index page's delete dialog: title, question and consequence line.
+				Object.values(value).forEach(remember)
 			} else if (key === 'meta' && value && Array.isArray(value.parts)) {
 				value.parts.forEach(remember)
 			} else if (

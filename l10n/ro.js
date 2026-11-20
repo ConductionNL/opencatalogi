@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Ultima utilizare",
         "This key is shown once. Copy it now: it cannot be shown again.": "Această cheie este afișată o singură dată. Copiați-o acum: nu mai poate fi afișată.",
         "No feed consumers yet.": "Încă nu există consumatori ai fluxului.",
-        "Accounts that read every catalogue's feed": "Conturi care citesc fluxul fiecărui catalog"
+        "Accounts that read every catalogue's feed": "Conturi care citesc fluxul fiecărui catalog",
+        "Delete publication": "Ștergeți publicația",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Doriți să ștergeți \"{name}\"? Această acțiune nu poate fi anulată.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publicația și atașamentele ei dispar de pe pagina publică și din harta site-ului Woo. Arhivarea, în schimb, le păstrează pe durata termenului de păstrare."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

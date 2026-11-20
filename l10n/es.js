@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Último uso",
         "This key is shown once. Copy it now: it cannot be shown again.": "Esta clave se muestra una sola vez. Cópiela ahora: no se podrá volver a mostrar.",
         "No feed consumers yet.": "Todavía no hay consumidores del feed.",
-        "Accounts that read every catalogue's feed": "Cuentas que leen el feed de cada catálogo"
+        "Accounts that read every catalogue's feed": "Cuentas que leen el feed de cada catálogo",
+        "Delete publication": "Eliminar publicación",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "¿Desea eliminar \"{name}\"? Esta acción no se puede deshacer.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicación y sus adjuntos desaparecen de la página pública y del mapa del sitio Woo. Archivarla, en cambio, los conserva durante el plazo de conservación."
     },
     "nplurals=2; plural=(n != 1);"
 )

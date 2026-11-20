@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Последнее использование",
         "This key is shown once. Copy it now: it cannot be shown again.": "Этот ключ показывается только один раз. Скопируйте его сейчас: показать его снова нельзя.",
         "No feed consumers yet.": "Потребителей ленты пока нет.",
-        "Accounts that read every catalogue's feed": "Учётные записи, читающие ленту каждого каталога"
+        "Accounts that read every catalogue's feed": "Учётные записи, читающие ленту каждого каталога",
+        "Delete publication": "Удалить публикацию",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Хотите удалить \"{name}\"? Это действие нельзя отменить.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публикация и её вложения исчезают с публичной страницы и из карты сайта Woo. Архивирование, напротив, сохраняет их на срок хранения."
     },
     "nplurals=2; plural=(n != 1);"
 )

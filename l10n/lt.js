@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Paskutinį kartą naudota",
         "This key is shown once. Copy it now: it cannot be shown again.": "Šis raktas rodomas tik vieną kartą. Nukopijuokite jį dabar: jo nebebus galima parodyti.",
         "No feed consumers yet.": "Srauto naudotojų dar nėra.",
-        "Accounts that read every catalogue's feed": "Paskyros, skaitančios kiekvieno katalogo srautą"
+        "Accounts that read every catalogue's feed": "Paskyros, skaitančios kiekvieno katalogo srautą",
+        "Delete publication": "Ištrinti publikaciją",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Ar norite ištrinti \"{name}\"? Šio veiksmo atšaukti negalima.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikacija ir jos priedai dingsta iš viešojo puslapio ir iš Woo svetainės schemos. Archyvavimas, priešingai, juos išsaugo saugojimo terminui."
     },
     "nplurals=2; plural=(n != 1);"
 )

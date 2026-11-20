@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Darrer ús",
         "This key is shown once. Copy it now: it cannot be shown again.": "Aquesta clau només es mostra una vegada. Copieu-la ara: no es podrà tornar a mostrar.",
         "No feed consumers yet.": "Encara no hi ha consumidors del canal.",
-        "Accounts that read every catalogue's feed": "Comptes que llegeixen el canal de cada catàleg"
+        "Accounts that read every catalogue's feed": "Comptes que llegeixen el canal de cada catàleg",
+        "Delete publication": "Elimina la publicació",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Voleu eliminar \"{name}\"? Aquesta acció no es pot desfer.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicació i els seus adjunts desapareixen de la pàgina pública i del mapa del lloc Woo. En canvi, arxivar-la els conserva durant el termini de conservació."
     },
     "nplurals=2; plural=(n != 1);"
 )

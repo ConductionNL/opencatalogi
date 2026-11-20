@@ -737,7 +737,10 @@
         "Last used": "Viimati kasutatud",
         "This key is shown once. Copy it now: it cannot be shown again.": "Seda võtit näidatakse ainult üks kord. Kopeeri see kohe: seda ei saa uuesti näidata.",
         "No feed consumers yet.": "Voo tarbijaid veel pole.",
-        "Accounts that read every catalogue's feed": "Kontod, mis loevad iga kataloogi voogu"
+        "Accounts that read every catalogue's feed": "Kontod, mis loevad iga kataloogi voogu",
+        "Delete publication": "Kustuta väljaanne",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Kas soovite kustutada üksuse \"{name}\"? Seda toimingut ei saa tagasi võtta.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Väljaanne ja selle manused kaovad avalikult lehelt ja Woo saidikaardilt. Arhiveerimine säilitab need hoopis säilitustähtaja jooksul."
     },
     "plurals": {}
 }
