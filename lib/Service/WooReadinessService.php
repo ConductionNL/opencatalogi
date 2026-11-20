@@ -32,7 +32,12 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
 use DOMDocument;
+use OCA\OpenCatalogi\BackgroundJob\DiwooSitemapReconciliation;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidentSettings;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
+use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
@@ -45,6 +50,8 @@ use OCP\IURLGenerator;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
  * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+ *
+ * @SuppressWarnings(PHPMD.TooManyMethods) One private method per readiness check.
  */
 class WooReadinessService implements HarvesterReadinessServiceInterface {
 
@@ -124,6 +131,10 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @param SettingsService $settingsService The settings service, used to resolve WOO-enabled catalogs.
 	 * @param IAppConfig $config App configuration (report persistence + registration status).
 	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator (public base URL).
+	 * @param WooIndexFieldMapper|null $fieldMapper Where the Woo-index fields come from (REQ-WIM-004).
+	 * @param HandoverState|null $handover What the hand-over of the Woo requests to dossiq left; null reports nothing.
+	 * @param WooReadAttribution|null $readAttribution Counts the reads logged under the fallback activity.
+	 * @param PipelineIncidents|null $incidents Tells the incident group about a failure (REQ-WNO-004).
 	 */
 	public function __construct(
 		private readonly IClientService $clientService,
@@ -132,6 +143,11 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		private readonly SettingsService $settingsService,
 		private readonly IAppConfig $config,
 		private readonly IURLGenerator $urlGenerator,
+		private readonly ?WooIndexFieldMapper $fieldMapper = null,
+		private readonly ?HandoverState $handover = null,
+		private readonly ?WooReadAttribution $readAttribution = null,
+		// Tells the incident group about a failing check (REQ-WNO-004). Nullable and last.
+		private readonly ?PipelineIncidents $incidents = null,
 	) {
 
 	}//end __construct()
@@ -181,6 +197,8 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @return array<string, mixed> The report (verdict, checks, registration, baseUrl, checkedAt).
 	 *
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 * @SuppressWarnings(PHPMD.StaticAccess) DiwooSitemapReconciliation::lastResults() reads the stored results.
 	 */
 	public function runCheck(): array {
 		$this->requestCount = 0;
@@ -192,6 +210,9 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 
 		$registration = $this->getRegistrationConfig();
 		$checks[] = $this->checkRegistration(registration: $registration, baseUrl: $baseUrl);
+		if ($this->incidents !== null) {
+			$checks[] = $this->checkIncidentGroup();
+		}
 
 		$report = [
 			'verdict' => $this->computeVerdict(checks: $checks),
@@ -199,12 +220,72 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 			'baseUrl' => $baseUrl,
 			'checks' => $checks,
 			'registration' => $registration,
+			// REQ-WIM-004: where the Woo-index fields come from.
+			'mapping' => ($this->fieldMapper?->source() ?? WooIndexFieldMapper::BUILT_IN_SOURCE),
 		];
+		// The Woo requests not yet handed to dossiq (REQ-WHD-003). Reported, not
+		// a check: they say nothing about whether the index can harvest.
+		if ($this->handover !== null) {
+			$report['wooRequests'] = $this->handover->report();
+		}
+
+		// Reads of the Woo schemas OpenRegister logged under its unclassified
+		// activity in the last 30 days (REQ-WAB-001). Reported, not a check.
+		if ($this->readAttribution !== null) {
+			$report['readLogging'] = $this->readAttribution->report();
+		}
+
+		// The last daily reconciliation of the sitemaps against the register (REQ-WNO-003).
+		$reconciliation = DiwooSitemapReconciliation::lastResults(config: $this->config);
+		if ($reconciliation !== null) {
+			$report['reconciliation'] = $reconciliation;
+		}
 
 		$this->persistReport(report: $report);
+		$this->raiseWhenNotReady(report: $report);
 
 		return $report;
 	}//end runCheck()
+
+	/**
+	 * Fail while nobody receives the pipeline incidents: a failure then reaches no one (REQ-WNO-004).
+	 *
+	 * @return array<string, mixed> The check.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	private function checkIncidentGroup(): array {
+		if (trim($this->config->getValueString(self::APP_NAME, PipelineIncidentSettings::GROUP_KEY, '')) === '') {
+			return $this->buildCheck(id: 'incident-group', status: 'fail', reason: 'nobody receives pipeline failures');
+		}
+
+		return $this->buildCheck(id: 'incident-group', status: 'pass');
+	}//end checkIncidentGroup()
+
+	/**
+	 * Raise a pipeline incident naming the failing checks of a report that is not ready.
+	 *
+	 * @param array<string, mixed> $report The report.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	private function raiseWhenNotReady(array $report): void {
+		if ($this->incidents === null || $report['verdict'] !== 'not-ready') {
+			return;
+		}
+
+		$failing = [];
+		foreach ($report['checks'] as $check) {
+			if ($check['status'] === 'fail') {
+				$failing[] = $check['id'] . ': ' . (string)($check['reason'] ?? 'failed');
+			}
+		}
+
+		$message = 'The Woo readiness check failed: ' . implode('; ', $failing);
+		$this->incidents->raise(kind: 'readiness', subject: (string)$report['baseUrl'], message: $message);
+	}//end raiseWhenNotReady()
 
 	/**
 	 * The standard-version check, the robots.txt check and the checks of every catalog with a slug.

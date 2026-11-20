@@ -286,6 +286,7 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			ContainerInterface::class => $this->container(),
 			IAppManager::class => $this->appManager(),
 			IUserSession::class => $this->userSession(),
+			\OCA\OpenCatalogi\Service\CapabilityRights::class => new \Unit\Support\AllowingCapabilityRights(),
 			IL10N::class => $this->l10n(),
 			ServiceCatalogueServiceInterface::class => $this->catalogue(),
 			InspectionServiceInterface::class => $this->double(
@@ -320,7 +321,9 @@ class RegisterPlumbingGoldenTest extends TestCase {
 				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\StatusPageServiceInterface'),
 				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\AtomFeedServiceInterface'),
 				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\MarkupRenderServiceInterface'),
-				$this->collaborator(type: 'OCA\\OpenCatalogi\\Controller\\RegisterAccess')
+				$this->collaborator(type: 'OCA\\OpenCatalogi\\Controller\\RegisterAccess'),
+				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\CatalogiServiceInterface'),
+				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\CatalogueFeedReaderInterface')
 			),
 			'OCA\\OpenCatalogi\\Controller\\RegisterAccess' => new $type(
 				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface'),

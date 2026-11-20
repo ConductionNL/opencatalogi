@@ -9,6 +9,32 @@
 			data-testid="publication-visibility-state">
 			{{ stateLabel }}
 		</p>
+		<p
+			v-if="unlisted"
+			class="publication-visibility__state"
+			data-testid="publication-visibility-unlisted">
+			{{ t('opencatalogi', 'Unlisted: reachable by its link, left out of search and feeds.') }}
+		</p>
+		<p
+			v-if="state"
+			class="publication-visibility__audience"
+			data-testid="publication-visibility-audience">
+			<strong>{{ t('opencatalogi', 'Who can read it') }}:</strong>
+			{{ audienceLabel }}
+		</p>
+		<p
+			v-if="audience === 'signedIn'"
+			class="publication-visibility__audience-link"
+			data-testid="publication-visibility-audience-link">
+			{{ t('opencatalogi', 'The link works for readers who log in') }}
+		</p>
+
+		<NcNoteCard
+			v-if="sourceAbsenceNote"
+			type="warning"
+			data-testid="publication-source-absence">
+			{{ sourceAbsenceNote }}
+		</NcNoteCard>
 
 		<div class="publication-visibility__actions">
 			<NcButton
@@ -28,6 +54,20 @@
 				{{ t('opencatalogi', 'Publish again') }}
 			</NcButton>
 			<NcButton
+				v-if="lists.unlist"
+				:disabled="busy"
+				data-testid="publication-unlist"
+				@click="setListed(false)">
+				{{ t('opencatalogi', 'Unlist') }}
+			</NcButton>
+			<NcButton
+				v-if="lists.listAgain"
+				:disabled="busy"
+				data-testid="publication-list-again"
+				@click="setListed(true)">
+				{{ t('opencatalogi', 'List again') }}
+			</NcButton>
+			<NcButton
 				v-if="actions.withdraw"
 				variant="error"
 				:disabled="busy"
@@ -36,6 +76,38 @@
 				{{ t('opencatalogi', 'Withdraw') }}
 			</NcButton>
 		</div>
+
+		<section
+			v-if="withdrawn.length > 0"
+			class="publication-visibility__withdrawn"
+			data-testid="publication-withdrawn-documents">
+			<h4 class="publication-visibility__withdrawn-title">
+				{{ t('opencatalogi', 'Withdrawn documents') }}
+			</h4>
+			<ul class="publication-visibility__withdrawn-list">
+				<li
+					v-for="document in withdrawn"
+					:key="document.id"
+					class="publication-visibility__withdrawn-item"
+					data-testid="publication-withdrawn-document">
+					<span class="publication-visibility__withdrawn-text">
+						<strong>{{ document.label }}</strong>
+						<span data-testid="publication-withdrawn-date">
+							{{ t('opencatalogi', 'Withdrawn on {date}', { date: formatDate(document.withdrawnAt) }) }}
+						</span>
+						<span v-if="document.reason" data-testid="publication-withdrawn-reason">
+							{{ t('opencatalogi', 'Reason: {reason}', { reason: document.reason }) }}
+						</span>
+					</span>
+					<NcButton
+						:disabled="busy"
+						data-testid="publication-republish-document"
+						@click="openRepublish(document)">
+						{{ t('opencatalogi', 'Republish') }}
+					</NcButton>
+				</li>
+			</ul>
+		</section>
 
 		<NcNoteCard
 			v-if="message"
@@ -47,9 +119,16 @@
 		<WithdrawPublicationDialog
 			:open="dialogOpen"
 			:busy="busy"
-			:documents="state === 'public' ? documents : []"
+			:documents="state === 'public' ? withdrawable : []"
 			@close="dialogOpen = false"
 			@confirm="withdraw" />
+
+		<RepublishDocumentDialog
+			:open="republishing !== null"
+			:busy="busy"
+			:document="republishing"
+			@close="republishing = null"
+			@confirm="republish" />
 	</div>
 </template>
 
@@ -57,14 +136,31 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
+import RepublishDocumentDialog from '../../dialogs/publication/RepublishDocumentDialog.vue'
 import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublicationDialog.vue'
 import {
 	documentOptions,
 	filesRouteParams,
+	listActions,
 	publishRefusalMessage,
 	visibilityActions,
+	withdrawnDocuments,
 } from '../../services/publicationVisibility.js'
 import { injectedObjectContext } from './objectContext.js'
+
+/**
+ * A moment from the server, as the reader's locale writes a date and time.
+ *
+ * @param {string} value An ISO 8601 moment.
+ * @return {string} The formatted moment, or the value itself when it is not a date.
+ */
+function formatMoment(value) {
+	const date = new Date(value)
+	if (Number.isNaN(date.getTime())) {
+		return value
+	}
+	return date.toLocaleString()
+}
 
 /**
  * The withdraw endpoint's path: one document's, or the whole publication's.
@@ -88,7 +184,7 @@ function withdrawPath(answer) {
  */
 export default {
 	name: 'PublicationVisibilityWidget',
-	components: { NcButton, NcNoteCard, WithdrawPublicationDialog },
+	components: { NcButton, NcNoteCard, RepublishDocumentDialog, WithdrawPublicationDialog },
 	inject: {
 		cnObjectContext: { default: null },
 		cnDetailObjectContext: { default: null },
@@ -105,7 +201,14 @@ export default {
 		return {
 			state: '',
 			canPublish: false,
+			canUpdate: false,
+			unlisted: false,
+			audience: 'public',
+			minimumAssurance: 'substantial',
+			sourceAbsence: null,
 			documents: [],
+			withdrawn: [],
+			republishing: null,
 			busy: false,
 			dialogOpen: false,
 			message: '',
@@ -119,6 +222,11 @@ export default {
 			return visibilityActions(this.state, this.canPublish)
 		},
 
+		/** @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006 */
+		lists() {
+			return listActions(this.state, this.unlisted, this.canUpdate)
+		},
+
 		/** @spec exclude presentational widget adapter; resolves the object context from inject. */
 		ctx() {
 			return injectedObjectContext(this)
@@ -129,10 +237,71 @@ export default {
 			return this.objectId || this.ctx.objectId || this.content.objectId || ''
 		},
 
+		/**
+		 * What the editor is told when the source this publication was harvested
+		 * from no longer carries it: taken down when the source ended it, or kept
+		 * until the editor acts.
+		 *
+		 * @return {string} The note, or an empty string when its source still carries it.
+		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+		 */
+		sourceAbsenceNote() {
+			const absence = this.sourceAbsence
+			if (!absence) {
+				return ''
+			}
+			if (absence.endedAt) {
+				return this.t(
+					'opencatalogi',
+					'Its source no longer carries this publication and ended it on {date}, so it was taken down.',
+					{ date: formatMoment(absence.endedAt) },
+				)
+			}
+			if (absence.since) {
+				return this.t(
+					'opencatalogi',
+					'Its source no longer carries this publication (since {date}). It stays as it is until you withdraw it.',
+					{ date: formatMoment(absence.since) },
+				)
+			}
+			return this.t(
+				'opencatalogi',
+				'Its source no longer carries this publication. It stays as it is until you withdraw it.',
+			)
+		},
+
+		/**
+		 * The documents a withdrawal can pick: the ones not withdrawn already.
+		 *
+		 * @return {Array<{id: (string|number), label: string}>} The documents.
+		 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+		 */
+		withdrawable() {
+			const withdrawnIds = new Set(this.withdrawn.map((document) => String(document.id)))
+			return this.documents.filter((document) => !withdrawnIds.has(String(document.id)))
+		},
+
+		/**
+		 * Who can read the publication, as the Visibility card shows it (design D5).
+		 *
+		 * @return {string} The label.
+		 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-publication-says-who-can-read-it-req-psr-001
+		 */
+		audienceLabel() {
+			if (this.audience !== 'signedIn') {
+				return this.t('opencatalogi', 'Everyone')
+			}
+			return this.minimumAssurance === 'high'
+				? this.t('opencatalogi', 'Readers who log in with DigiD or eHerkenning, level High')
+				: this.t('opencatalogi', 'Readers who log in with DigiD or eHerkenning, level Substantial')
+		},
+
 		/** @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001 */
 		stateLabel() {
 			const labels = {
 				draft: this.t('opencatalogi', 'Not published yet.'),
+				in_review: this.t('opencatalogi', 'In review: waiting for a reviewer.'),
+				approved: this.t('opencatalogi', 'Approved: ready to publish.'),
 				scheduled: this.t(
 					'opencatalogi',
 					'Scheduled: it becomes public on its publication date.',
@@ -195,11 +364,30 @@ export default {
 				const { data } = await axios.get(this.url('visibility'))
 				this.state = data.state || ''
 				this.canPublish = data.canPublish === true
+				this.canUpdate = data.canUpdate === true
+				this.unlisted = data.unlisted === true
+				this.audience = data.audience === 'signedIn' ? 'signedIn' : 'public'
+				this.minimumAssurance = data.minimumAssurance === 'high' ? 'high' : 'substantial'
+				this.sourceAbsence = data.sourceAbsence || null
 			} catch {
 				this.state = ''
 				this.canPublish = false
+				this.audience = 'public'
+				this.minimumAssurance = 'substantial'
+				this.sourceAbsence = null
 			}
 
+			await this.loadFiles()
+		},
+
+		/**
+		 * Read the publication's files: the documents a withdrawal can pick
+		 * from, and the ones already withdrawn.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+		 */
+		async loadFiles() {
 			try {
 				const { data } = await axios.get(
 					generateUrl(
@@ -213,8 +401,10 @@ export default {
 					),
 				)
 				this.documents = documentOptions(data)
+				this.withdrawn = withdrawnDocuments(data)
 			} catch {
 				this.documents = []
+				this.withdrawn = []
 			}
 		},
 
@@ -234,6 +424,27 @@ export default {
 				this.message = this.t('opencatalogi', 'The publication is public.')
 			} catch (error) {
 				this.showError(error)
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Unlist the publication, or list it again (REQ-PLC-006).
+		 *
+		 * @param {boolean} listed True to put it back on every surface.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+		 */
+		async setListed(listed) {
+			this.busy = true
+			this.message = ''
+			try {
+				const { data } = await axios.post(this.url(listed ? 'list' : 'unlist'))
+				this.unlisted = data.unlisted === true
+			} catch {
+				this.messageType = 'error'
+				this.message = this.t('opencatalogi', 'The list status could not be changed.')
 			} finally {
 				this.busy = false
 			}
@@ -280,6 +491,56 @@ export default {
 				'opencatalogi',
 				'The document was withdrawn. The rest of the publication stays public.',
 			)
+			this.loadFiles()
+		},
+
+		/**
+		 * Ask why a withdrawn document is put back.
+		 *
+		 * @param {{id: (string|number), label: string}} document The withdrawn document.
+		 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
+		 */
+		openRepublish(document) {
+			this.message = ''
+			this.republishing = document
+		},
+
+		/**
+		 * Put the chosen withdrawn document back, with the reason, and read the files again.
+		 *
+		 * @param {{reason: string}} answer What the dialog collected.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
+		 */
+		async republish(answer) {
+			const document = this.republishing
+			this.busy = true
+			try {
+				await axios.post(
+					this.url('files/' + encodeURIComponent(document.id) + '/republish'),
+					{ reason: answer.reason },
+				)
+				this.messageType = 'success'
+				this.message = this.t('opencatalogi', 'The document is public again.')
+				this.loadFiles()
+			} catch (error) {
+				this.showError(error)
+			} finally {
+				this.republishing = null
+				this.busy = false
+			}
+		},
+
+		/**
+		 * A moment as a local date, or as it came when it cannot be read.
+		 *
+		 * @param {string} iso The ISO-8601 moment.
+		 * @return {string} The date.
+		 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+		 */
+		formatDate(iso) {
+			const date = new Date(iso)
+			return Number.isNaN(date.getTime()) ? String(iso) : date.toLocaleDateString()
 		},
 
 		/**
@@ -343,13 +604,49 @@ export default {
 	padding: 12px;
 }
 
-.publication-visibility__state {
+.publication-visibility__state,
+.publication-visibility__audience,
+.publication-visibility__audience-link {
 	margin: 0;
+}
+
+.publication-visibility__audience-link {
+	color: var(--color-text-maxcontrast);
 }
 
 .publication-visibility__actions {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
+}
+
+.publication-visibility__withdrawn-title {
+	margin: 0 0 8px;
+}
+
+.publication-visibility__withdrawn-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.publication-visibility__withdrawn-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 8px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--border-radius);
+}
+
+.publication-visibility__withdrawn-text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	color: var(--color-main-text);
 }
 </style>

@@ -230,6 +230,12 @@
 							</div>
 						</li>
 					</ul>
+					<p
+						v-if="wooReadinessReport.mapping"
+						class="woo-readiness-mapping"
+						data-testid="woo-readiness-mapping">
+						{{ wooIndexMappingLine(wooReadinessReport.mapping) }}
+					</p>
 				</div>
 
 				<p v-else-if="!wooReadinessRunning" class="woo-readiness-empty">
@@ -251,7 +257,17 @@
 
 				<WooIndexConnection />
 
+				<RefusalGroundsSource />
+
+				<DonlHarvestStatus />
+
+				<DcatFeedValidation />
+
 				<PublishRightsLine />
+
+				<RecordHandover />
+
+				<WooIncidents />
 
 				<h3 class="woo-registration-heading">
 					{{ t('opencatalogi', 'National delivery channels') }}
@@ -297,6 +313,30 @@
 		</NcSettingsSection>
 
 		<NcSettingsSection
+			id="section-instance-mode"
+			:name="t('opencatalogi', 'Instance mode')"
+			:description="
+				t(
+					'opencatalogi',
+					'In staging nothing leaves this instance: every hand-over to the national index, PLOOI and federation partners is kept as a dry run, and the public pages answer only to signed-in users.',
+				)
+			">
+			<InstanceModeSection />
+		</NcSettingsSection>
+
+		<NcSettingsSection
+			id="section-capability-rights"
+			:name="t('opencatalogi', 'Rights per group')"
+			:description="
+				t(
+					'opencatalogi',
+					'Which groups may do each of these tasks. Administrators may always do all of them; a right without a group is for administrators only.',
+				)
+			">
+			<CapabilityRightsSection />
+		</NcSettingsSection>
+
+		<NcSettingsSection
 			id="section-publiccode-harvest"
 			:name="t('opencatalogi', 'GitHub harvest')"
 			:description="
@@ -306,6 +346,18 @@
 				)
 			">
 			<PubliccodeHarvest />
+		</NcSettingsSection>
+
+		<NcSettingsSection
+			id="section-council-harvest"
+			:name="t('opencatalogi', 'Council documents')"
+			:description="
+				t(
+					'opencatalogi',
+					'Read the public documents of the council from Notubiz or iBabs into the Raadsinformatie catalogue, every night. Runs through integriq.',
+				)
+			">
+			<CouncilHarvest />
 		</NcSettingsSection>
 
 		<NcSettingsSection
@@ -351,6 +403,24 @@
 					</p>
 				</div>
 
+				<!-- Review before publishing (publication-lifecycle-on-or REQ-PLC-001) -->
+				<div class="option-section">
+					<NcCheckboxRadioSwitch
+						v-model="publishingOptions.publicationReviewRequired"
+						:disabled="saving"
+						data-testid="publication-review-required">
+						{{ t('opencatalogi', 'Review publications before they are published') }}
+					</NcCheckboxRadioSwitch>
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.',
+							)
+						}}
+					</p>
+				</div>
+
 				<!-- Use Old Style Publishing View -->
 				<div class="option-section">
 					<NcCheckboxRadioSwitch
@@ -380,6 +450,39 @@
 						</template>
 						{{ t('opencatalogi', 'Save Publishing Options') }}
 					</NcButton>
+				</div>
+
+				<!-- Languages offered to editors (publication-translations D6) -->
+				<div class="option-section" data-testid="publication-languages">
+					<NcSelect
+						v-model="publicationLanguageSelection"
+						:options="publicationLanguageChoices"
+						:multiple="true"
+						:inputLabel="t('opencatalogi', 'Languages offered to editors')"
+						:disabled="savingPublicationLanguages" />
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'Editors can write the title, summary and description of a publication or catalogue in these languages. Dutch is the source language and is always offered.',
+							)
+						}}
+					</p>
+					<NcNoteCard v-if="publicationLanguagesError" type="error">
+						{{ publicationLanguagesError }}
+					</NcNoteCard>
+					<div class="button-container">
+						<NcButton
+							variant="secondary"
+							:disabled="savingPublicationLanguages"
+							@click="savePublicationLanguages">
+							<template #icon>
+								<NcLoadingIcon v-if="savingPublicationLanguages" :size="20" />
+								<Save v-else :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Save languages') }}
+						</NcButton>
+					</div>
 				</div>
 
 				<!-- Public API cache time (REQ-PAC-003) -->
@@ -412,6 +515,70 @@
 								<Save v-else :size="20" />
 							</template>
 							{{ t('opencatalogi', 'Save cache time') }}
+						</NcButton>
+					</div>
+				</div>
+
+				<!-- Websites that may call the public API from a browser (REQ-SCO-003) -->
+				<div class="option-section" data-testid="cors-allowed-origins">
+					<NcTextArea
+						v-model="corsOrigins"
+						:label="t('opencatalogi', 'Websites that may call the public API')"
+						:disabled="savingCors"
+						rows="4" />
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'One website per line, as scheme and host with an optional port and no path, for example https://www.example.nl. A browser on one of these websites may call the search and the other public endpoints. * allows every website.',
+							)
+						}}
+					</p>
+					<NcNoteCard v-if="corsError" type="error">
+						{{ corsError }}
+					</NcNoteCard>
+					<div class="button-container">
+						<NcButton
+							variant="secondary"
+							:disabled="savingCors"
+							@click="saveCorsOrigins">
+							<template #icon>
+								<NcLoadingIcon v-if="savingCors" :size="20" />
+								<Save v-else :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Save websites') }}
+						</NcButton>
+					</div>
+				</div>
+
+				<!-- Search engine indexing (REQ-WAB-003) -->
+				<div class="option-section" data-testid="search-indexing">
+					<NcCheckboxRadioSwitch
+						v-model="searchIndexingBlocked"
+						:disabled="savingSearchIndexing">
+						{{ t('opencatalogi', 'Keep this install out of search engines') }}
+					</NcCheckboxRadioSwitch>
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'For an acceptance or test install. Every page answers with noindex and robots.txt disallows everything. The public side is still served.',
+							)
+						}}
+					</p>
+					<NcNoteCard v-if="searchIndexingError" type="error">
+						{{ searchIndexingError }}
+					</NcNoteCard>
+					<div class="button-container">
+						<NcButton
+							variant="secondary"
+							:disabled="savingSearchIndexing"
+							@click="saveSearchIndexing">
+							<template #icon>
+								<NcLoadingIcon v-if="savingSearchIndexing" :size="20" />
+								<Save v-else :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Save search indexing') }}
 						</NcButton>
 					</div>
 				</div>
@@ -533,6 +700,7 @@ import {
 	NcNoteCard,
 	NcSelect,
 	NcSettingsSection,
+	NcTextArea,
 	NcTextField,
 } from '@nextcloud/vue'
 import { defineComponent } from 'vue'
@@ -543,15 +711,28 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import CapabilityRightsSection from './CapabilityRightsSection.vue'
+import CouncilHarvest from './CouncilHarvest.vue'
+import DcatFeedValidation from './DcatFeedValidation.vue'
+import DonlHarvestStatus from './DonlHarvestStatus.vue'
+import InstanceModeSection from './InstanceModeSection.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
+import RecordHandover from './RecordHandover.vue'
+import RefusalGroundsSource from './RefusalGroundsSource.vue'
+import WooIncidents from './WooIncidents.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
+	corsOriginLines,
+	corsSaveRefusal,
 	directorySyncCounts,
 	directorySyncFailed,
 	directorySyncFailure,
 	postSyncInterval,
+	publicationLanguageOptions,
+	publicationLanguagesFrom,
+	publicationLanguagesPayload,
 	publishingOptionsFrom,
 	publishingOptionsPayload,
 	requestDirectorySync,
@@ -565,6 +746,14 @@ import {
 } from './settingsSchemas.js'
 
 import '@nextcloud/dialogs/style.css'
+
+/** The directory sync interval the page shows until the stored one has loaded, in minutes. */
+const DEFAULT_SYNC_OPTIONS = Object.freeze({
+	intervalMinutes: 60,
+	minMinutes: 15,
+	maxMinutes: 1440,
+	defaultMinutes: 60,
+})
 
 /**
  * Fetch the federation sync options.
@@ -638,6 +827,7 @@ export default defineComponent({
 		NcSettingsSection,
 		NcNoteCard,
 		NcSelect,
+		NcTextArea,
 		NcTextField,
 		NcButton,
 		NcLoadingIcon,
@@ -650,9 +840,17 @@ export default defineComponent({
 		CloseCircle,
 		MinusCircle,
 		InformationOutline,
+		InstanceModeSection,
+		CapabilityRightsSection,
 		PublishRightsLine,
+		RecordHandover,
+		RefusalGroundsSource,
 		WooIndexConnection,
+		WooIncidents,
+		DcatFeedValidation,
+		DonlHarvestStatus,
 		PubliccodeHarvest,
+		CouncilHarvest,
 	},
 
 	/**
@@ -682,6 +880,7 @@ export default defineComponent({
 				autoPublishAttachments: false,
 				autoPublishObjects: false,
 				useOldStylePublishingView: false,
+				publicationReviewRequired: true,
 			},
 
 			versionInfo: {
@@ -709,19 +908,56 @@ export default defineComponent({
 			publicCacheSeconds: '60',
 			savingPublicCache: false,
 			publicCacheError: '',
+			// Languages offered to editors (publication-translations D6).
+			publicationLanguages: ['nl', 'en'],
+			savingPublicationLanguages: false,
+			publicationLanguagesError: '',
+			// Websites that may call the public API, one per line (REQ-SCO-003).
+			corsOrigins: '*',
+			savingCors: false,
+			corsError: '',
+			// Search engine indexing switch (REQ-WAB-003).
+			searchIndexingBlocked: false,
+			savingSearchIndexing: false,
+			searchIndexingError: '',
 			syncingDirectories: false,
 			loadingSyncOptions: true,
 			savingSyncOptions: false,
-			syncOptions: {
-				intervalMinutes: 60,
-				minMinutes: 15,
-				maxMinutes: 1440,
-				defaultMinutes: 60,
-			},
+			syncOptions: { ...DEFAULT_SYNC_OPTIONS },
 		}
 	},
 
 	computed: {
+		/**
+		 * The language options of the editors' language select.
+		 *
+		 * @return {Array<{id: string, label: string, locked: boolean}>} The options
+		 * @spec openspec/changes/publication-translations/design.md
+		 */
+		publicationLanguageChoices() {
+			return publicationLanguageOptions(this.publicationLanguages, document.documentElement.lang || 'en')
+		},
+
+		/**
+		 * The selected language options, read and written as tags.
+		 *
+		 * @spec openspec/changes/publication-translations/design.md
+		 */
+		publicationLanguageSelection: {
+			/** @spec openspec/changes/publication-translations/design.md */
+			get() {
+				return this.publicationLanguageChoices.filter((option) => this.publicationLanguages.includes(option.id))
+			},
+
+			/**
+			 * @param {Array<{id: string}>} options The selected options.
+			 * @spec openspec/changes/publication-translations/design.md
+			 */
+			set(options) {
+				this.publicationLanguages = publicationLanguagesPayload(options)
+			},
+		},
+
 		/**
 		 * The national channels a source can be set for, with their labels.
 		 *
@@ -851,11 +1087,13 @@ export default defineComponent({
 		},
 
 		/**
-		 * Take the channel sources and the public cache time from the stored
-		 * configuration.
+		 * Take the channel sources, the public cache time and the websites that
+		 * may call the public API from the stored configuration.
 		 *
 		 * @param {object|undefined} configuration - The stored configuration
 		 * @return {void}
+		 * @spec openspec/changes/publication-translations/design.md
+		 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
 		 */
 		applyStoredConfiguration(configuration) {
 			this.channelSources = {
@@ -873,6 +1111,17 @@ export default defineComponent({
 					configuration.public_api_cache_seconds,
 				)
 			}
+
+			this.publicationLanguages = publicationLanguagesFrom(
+				configuration && configuration.publication_languages,
+			)
+
+			if (configuration && configuration.cors_allowed_origins !== undefined) {
+				this.corsOrigins = corsOriginLines(configuration.cors_allowed_origins)
+			}
+			this.showStoredSearchIndexing(
+				configuration && configuration.search_indexing,
+			)
 		},
 
 		/**
@@ -1319,6 +1568,23 @@ export default defineComponent({
 		},
 
 		/**
+		 * The one line saying where the Woo-index fields come from (REQ-WIM-004).
+		 *
+		 * @param {{source: string, refusal: ?{code: string, reason: string}}} mapping The report's `mapping`.
+		 * @return {string} The line.
+		 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
+		 */
+		wooIndexMappingLine(mapping) {
+			const line = mapping.source === 'integriq'
+				? t('opencatalogi', 'Woo-index fields from integriq mapping woo-index-publication')
+				: t('opencatalogi', 'Woo-index fields built in')
+			if (!mapping.refusal) {
+				return line
+			}
+			return t('opencatalogi', '{line} (integriq refused: {code}, {reason})', { line, code: mapping.refusal.code, reason: mapping.refusal.reason })
+		},
+
+		/**
 		 * Loads the last persisted Woo-index harvester-readiness report.
 		 *
 		 * Read-only — performs no outbound checks itself (WOO-HR-002).
@@ -1445,6 +1711,59 @@ export default defineComponent({
 		},
 
 		/**
+		 * Saves the languages offered to editors. The server stores Dutch first
+		 * and drops what is not a language tag; what it stored is shown back.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-translations/design.md
+		 */
+		async savePublicationLanguages() {
+			this.savingPublicationLanguages = true
+			this.publicationLanguagesError = ''
+
+			try {
+				const response = await putSettings({ publication_languages: this.publicationLanguages })
+				const stored = response.data && response.data.publication_languages
+				if (stored !== undefined) {
+					this.publicationLanguages = publicationLanguagesFrom(stored)
+				}
+			} catch {
+				this.publicationLanguagesError = this.t(
+					'opencatalogi',
+					'The languages could not be saved. Try again.',
+				)
+			} finally {
+				this.savingPublicationLanguages = false
+			}
+		},
+
+		/**
+		 * Saves the websites that may call the public API from a browser. The
+		 * server refuses a line that is not a bare origin and names it; what it
+		 * stored is shown back.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+		 */
+		async saveCorsOrigins() {
+			this.savingCors = true
+			this.corsError = ''
+
+			try {
+				const response = await putSettings({ cors_allowed_origins: this.corsOrigins })
+				const stored = response && response.data && response.data.cors_allowed_origins
+				if (stored !== undefined) {
+					this.corsOrigins = corsOriginLines(stored)
+				}
+			} catch (error) {
+				this.corsError = corsSaveRefusal(error)
+					|| this.t('opencatalogi', 'The websites could not be saved. Try again.')
+			} finally {
+				this.savingCors = false
+			}
+		},
+
+		/**
 		 * Show the cache time the server stored, when it sent one back.
 		 *
 		 * @param {object} response The save response.
@@ -1454,6 +1773,47 @@ export default defineComponent({
 			const stored = response.data && response.data.public_api_cache_seconds
 			if (stored !== undefined) {
 				this.publicCacheSeconds = String(stored)
+			}
+		},
+
+		/**
+		 * Saves whether this install is kept out of search engines. The
+		 * server stores `blocked` or `allowed`, which is shown back.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+		 */
+		async saveSearchIndexing() {
+			this.savingSearchIndexing = true
+			this.searchIndexingError = ''
+
+			try {
+				const response = await putSettings({
+					search_indexing: this.searchIndexingBlocked ? 'blocked' : 'allowed',
+				})
+				this.showStoredSearchIndexing(
+					response.data && response.data.search_indexing,
+				)
+			} catch {
+				this.searchIndexingError = this.t(
+					'opencatalogi',
+					'The search indexing setting could not be saved. Try again.',
+				)
+			} finally {
+				this.savingSearchIndexing = false
+			}
+		},
+
+		/**
+		 * Shows the search indexing value the server stored, when it sent one.
+		 *
+		 * @param {string|undefined} stored `blocked`, `allowed`, or undefined when absent.
+		 * @return {void}
+		 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+		 */
+		showStoredSearchIndexing(stored) {
+			if (stored !== undefined) {
+				this.searchIndexingBlocked = stored === 'blocked'
 			}
 		},
 

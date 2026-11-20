@@ -17,10 +17,15 @@ parameters:
     # analysis reads those instead of excluding the two files.
     scanFiles:
         - tests/Stubs/OpenRegister/Mcp/Tool/ToolInterface.php
+        - tests/Stubs/OpenRegister/Lifecycle/LifecycleActionInterface.php
+        - tests/Stubs/OpenRegister/Lifecycle/LifecycleGuardInterface.php
+        - tests/Stubs/OpenRegister/Lifecycle/GuardResult.php
         - tests/Stubs/OpenRegister/Mcp/Db/Agent.php
         - tests/Stubs/AppHost/IMetricsProvider.php
         - tests/Stubs/AppHost/IHealthCheckProvider.php
         - tests/Stubs/AppHost/MetricSample.php
+        # ModeratorRecipients implements OpenRegister's notification recipient resolver contract.
+        - tests/Stubs/OpenRegister/Notifications/Service/Notification/RecipientResolverInterface.php
 
     ignoreErrors:
         # OCP\Files\Node::putContent() exists on File but not on the Node interface stub

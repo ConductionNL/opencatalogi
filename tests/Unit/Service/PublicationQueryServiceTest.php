@@ -361,7 +361,7 @@ class PublicationQueryServiceTest extends TestCase {
 		$fake = new FakeSearchObjectService();
 		$result = $this->service->assemblePublicSearchResults(['_search' => 'anything'], $fake);
 
-		$this->assertSame(['results' => [], 'total' => 0], $result);
+		$this->assertSame(['results' => [], 'total' => 0, 'facets' => ['resultType' => ['publication' => 0, 'document' => 0, 'subject' => 0]]], $result);
 		$this->assertEmpty($fake->capturedCalls, 'searchObjectsPaginated MUST NOT run without a resolved scope.');
 	}
 
@@ -548,6 +548,26 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame(28, $query['_schema']);
 		$this->assertSame(20, $query['_register']);
 	}//end testCatalogSearchQueryStripsACallerSuppliedSchemaAndRegister()
+
+	/**
+	 * REQ-CVS-002: the schemas saved on a catalogue decide what `GET /api/{catalogSlug}` lists.
+	 * "Raadsstukken" holds agendas (31); adding decisions (32) lists both; taking agendas off lists only decisions.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/catalogs/spec.md#requirement-an-administrator-chooses-the-kinds-of-publication-a-catalogue-holds-req-cvs-002
+	 *
+	 * @return void
+	 */
+	public function testTheCataloguesSavedSchemasDecideWhatItLists(): void {
+		$listed = fn (array $schemas): array => $this->service->buildCatalogSearchQuery(
+			catalog: ['slug' => 'raadsstukken', 'schemas' => $schemas, 'registers' => [20]],
+			queryParams: [],
+			objectService: new FakeSearchObjectService()
+		)['_schemas'];
+
+		$this->assertSame([31], $listed([31]));
+		$this->assertSame([31, 32], $listed([31, 32]));
+		$this->assertSame([32], $listed([32]));
+	}//end testTheCataloguesSavedSchemasDecideWhatItLists()
 
 	/**
 	 * A scalar `@self` (`?@self=x`) is not a filter set; it goes rather than
@@ -1086,6 +1106,24 @@ class PublicationQueryServiceTest extends TestCase {
 	}
 
 	/**
+	 * Publication-lifecycle-on-or REQ-PLC-006: search never finds an unlisted publication, and keeps a listed one.
+	 */
+	public function testSearchLeavesAnUnlistedPublicationOut(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [
+				['@self' => ['id' => 'pub-listed', 'schema' => 1], 'title' => 'Besluit gevonden', 'status' => 'published'],
+				['@self' => ['id' => 'pub-unlisted', 'schema' => 1], 'title' => 'Besluit niet in de lijst', 'status' => 'published', 'unlisted' => true],
+			], 'total' => 2, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertSame(['pub-listed'], array_map(static fn (array $row): string => $row['@self']['id'], $out['results']));
+		$this->assertSame(1, $out['total']);
+	}
+
+	/**
 	 * RET-006 belt-and-braces on the UUID fast-path: a document pointing at
 	 * a publication with `status: 'archived'` MUST be dropped, even when
 	 * a mis-configured schema RBAC would let the row through. The linked
@@ -1304,7 +1342,7 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$envelope = $this->service->assemblePublicSearchResults(['_search' => 'x', '_catalog' => 'default-catalog'], $fakeObjectService);
 
-		$this->assertSame(['results' => [], 'total' => 0], $envelope);
+		$this->assertSame(['results' => [], 'total' => 0, 'facets' => ['resultType' => ['publication' => 0, 'document' => 0, 'subject' => 0]]], $envelope);
 		$this->assertSame([], $fakeObjectService->capturedCalls, 'OR must not be queried at all when the anonymous scope is empty (fail-closed)');
 	}
 
@@ -1788,6 +1826,54 @@ class PublicationQueryServiceTest extends TestCase {
 		);
 
 		return $fakeObjectService;
+	}
+
+	/**
+	 * REQ-PRS-003: the public search matches `sourceIdentifier` on public
+	 * entries only and drops the caller's own filter on the property.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testThePublicSearchMatchesASourceIdentifierOnPublicEntriesOnly(): void {
+		$fake = $this->wireHappyPath();
+		$this->service->assemblePublicSearchResults(
+			queryParams: $this->withDefaultCatalog([
+				'sourceIdentifier' => 'decos:Z-2026-0412',
+				'sourceIdentifiers' => ['contains' => ['system' => 'case', 'identifier' => 'Z-1']],
+			]),
+			objectService: $fake
+		);
+
+		$query = $fake->capturedCalls[0]['query'];
+		$this->assertSame(['contains' => ['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => true]], $query['sourceIdentifiers']);
+		$this->assertArrayNotHasKey('sourceIdentifier', $query);
+	}
+
+	/**
+	 * REQ-PRS-003: the catalogue list drops a caller's own filter on
+	 * `sourceIdentifiers`, so a private identifier cannot be probed, and
+	 * matches `sourceIdentifier` on public entries only.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testTheCatalogListMatchesASourceIdentifierOnPublicEntriesOnly(): void {
+		$fake = new FakeSearchObjectService();
+		$catalog = ['registers' => [3], 'schemas' => [7]];
+
+		$probed = $this->service->buildCatalogSearchQuery(
+			catalog: $catalog,
+			queryParams: ['sourceIdentifiers' => ['contains' => ['system' => 'case', 'identifier' => 'Z-1']]],
+			objectService: $fake
+		);
+		$this->assertArrayNotHasKey('sourceIdentifiers', $probed);
+
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: $catalog,
+			queryParams: ['sourceIdentifier' => 'case:Z-1'],
+			objectService: $fake
+		);
+		$this->assertSame(['contains' => ['system' => 'case', 'identifier' => 'Z-1', 'public' => true]], $query['sourceIdentifiers']);
+		$this->assertArrayNotHasKey('sourceIdentifier', $query);
 	}
 
 	/**
@@ -2297,6 +2383,144 @@ class PublicationQueryServiceTest extends TestCase {
 		$m = $ref->getMethod($method);
 		$m->setAccessible(true);
 		return $m->invokeArgs($this->service, $args);
+	}
+
+	// -------------------------------------------------------------------------
+	// publication-translations REQ-PTR-002: the visitor's language.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * A fake of OpenRegister's request-scoped LanguageService recording what
+	 * it is told, wired into the container.
+	 *
+	 * @return object The fake.
+	 */
+	private function wireLanguageService(): object {
+		$fake = new class {
+			/** @var list<string> */
+			public array $accepted = [];
+			public ?string $preferred = null;
+			public ?string $source = null;
+			public bool $fallback = false;
+
+			public function setAcceptedLanguages(array $languages): void {
+				$this->accepted = $languages;
+			}
+
+			public function setPreferredLanguage(string $language): void {
+				$this->preferred = $language;
+			}
+
+			public function setRequestedLanguageSource(string $source): void {
+				$this->source = $source;
+			}
+
+			public function getPreferredLanguage(): string {
+				return $this->preferred ?? 'nl';
+			}
+
+			public function isFallbackUsed(): bool {
+				return $this->fallback;
+			}
+		};
+		$this->container->method('get')->willReturnCallback(
+			static function (string $id) use ($fake): object {
+				if ($id === 'OCA\OpenRegister\Service\LanguageService') {
+					return $fake;
+				}
+
+				throw new \RuntimeException('unexpected service ' . $id);
+			}
+		);
+
+		return $fake;
+	}
+
+	/**
+	 * `_lang` wins over Accept-Language, and the header's tags go to OpenRegister in q-order.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testTheVisitorsLanguageIsPassedToOpenRegister(): void {
+		$fake = $this->wireLanguageService();
+
+		$served = $this->service->applyVisitorLanguage(
+			queryParams: ['_lang' => 'en'],
+			acceptLanguage: 'de;q=0.5, fr, *;q=0.1'
+		);
+
+		$this->assertSame('en', $served);
+		$this->assertSame('en', $fake->preferred);
+		$this->assertSame('query', $fake->source);
+		$this->assertSame(['fr', 'de'], $fake->accepted);
+
+		$headerOnly = $this->service->applyVisitorLanguage(queryParams: [], acceptLanguage: 'en-GB,en;q=0.8');
+		$this->assertSame('en-GB', $headerOnly);
+		$this->assertSame('header', $fake->source);
+		$this->assertSame(['en-GB', 'en'], $fake->accepted);
+
+		$alias = $this->service->visitorLanguage(queryParams: ['language' => 'de'], acceptLanguage: 'en');
+		$this->assertSame(['language' => 'de', 'source' => 'query', 'accepted' => ['en']], $alias);
+	}
+
+	/**
+	 * A nonsense tag is skipped, never refused: the read falls through to the
+	 * header, and without one to Dutch.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testAnInvalidTagFallsBackToDutch(): void {
+		$fake = $this->wireLanguageService();
+
+		$served = $this->service->applyVisitorLanguage(queryParams: ['_lang' => 'xx-!!'], acceptLanguage: '');
+
+		$this->assertSame('nl', $served);
+		$this->assertSame('nl', $fake->preferred);
+		$this->assertSame('default', $fake->source);
+		$this->assertSame([], $fake->accepted);
+
+		$this->assertSame(
+			'en',
+			$this->service->visitorLanguage(queryParams: ['_lang' => '!!'], acceptLanguage: 'en, ??')['language']
+		);
+		$this->assertSame(
+			'nl',
+			$this->service->visitorLanguage(queryParams: [], acceptLanguage: '*, en;q=0')['language']
+		);
+	}
+
+	/**
+	 * The answer names the language OpenRegister served, Dutch as the source,
+	 * and says when a field fell back to Dutch.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testTheLanguageHeadersComeFromOpenRegister(): void {
+		$fake = $this->wireLanguageService();
+		$this->service->applyVisitorLanguage(queryParams: [], acceptLanguage: 'en');
+
+		$this->assertSame(
+			['Content-Language' => 'en', 'X-Source-Language' => 'nl'],
+			$this->service->languageHeaders()
+		);
+
+		$fake->fallback = true;
+		$this->assertSame('true', $this->service->languageHeaders()['X-Content-Language-Fallback']);
+	}
+
+	/**
+	 * Without OpenRegister's language service the read stays Dutch and says so.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testWithoutTheLanguageServiceTheReadStaysDutch(): void {
+		$this->container->method('get')->willThrowException(new \RuntimeException('no openregister'));
+
+		$this->assertSame('nl', $this->service->applyVisitorLanguage(queryParams: ['_lang' => 'en'], acceptLanguage: 'en'));
+		$this->assertSame(
+			['Content-Language' => 'nl', 'X-Source-Language' => 'nl'],
+			$this->service->languageHeaders()
+		);
 	}
 	// -------------------------------------------------------------------------
 	// api-says-what-it-filtered — each filter records itself where it applies.

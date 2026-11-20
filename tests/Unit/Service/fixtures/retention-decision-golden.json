@@ -299,7 +299,6 @@
                         "basis": "besluit"
                     }
                 ],
-                "status": "archived",
                 "depublicationDate": "<now>",
                 "saved": true
             }
@@ -326,12 +325,18 @@
                             "basis": "besluit"
                         }
                     ],
-                    "status": "archived",
                     "depublicationDate": "<now>"
                 },
                 "register": "pub-reg",
                 "schema": "pub-sch",
                 "uuid": "p1",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "delete": "p1",
+                "register": "pub-reg",
+                "schema": "pub-sch",
                 "rbac": false,
                 "multitenancy": false
             }
@@ -353,7 +358,6 @@
                         "basis": "besluit"
                     }
                 ],
-                "status": "archived",
                 "depublicationDate": "<now>",
                 "saved": true
             }
@@ -377,12 +381,18 @@
                             "basis": "besluit"
                         }
                     ],
-                    "status": "archived",
                     "depublicationDate": "<now>"
                 },
                 "register": "pub-reg",
                 "schema": "pub-sch",
                 "uuid": "p1",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "delete": "p1",
+                "register": "pub-reg",
+                "schema": "pub-sch",
                 "rbac": false,
                 "multitenancy": false
             }
@@ -547,6 +557,47 @@
                 "register": "pub-reg",
                 "schema": "pub-sch",
                 "uuid": "p1",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "dispose that OpenRegister does not remove": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "The disposal decision is recorded, but the publication could not be removed"
+        },
+        "calls": [
+            {
+                "find": "p1"
+            },
+            {
+                "save": {
+                    "id": "p1",
+                    "title": "T",
+                    "retentionCategory": "besluit",
+                    "retentionExpiresAt": "2030-01-31T00:00:00+00:00",
+                    "depublicationDate": "<now>",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "dispose",
+                            "by": "officer1",
+                            "at": "<now>",
+                            "note": "Legal hold",
+                            "basis": "besluit"
+                        }
+                    ]
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "p1",
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "delete": "p1",
+                "register": "pub-reg",
+                "schema": "pub-sch",
                 "rbac": false,
                 "multitenancy": false
             }

@@ -14,6 +14,7 @@ import {
 import { getRequestToken } from '@nextcloud/auth'
 import { defineStore } from 'pinia'
 import { normaliseIdList } from '../../services/catalogScope.js'
+import { translationSaveOptions } from '../../services/publicationTranslations.js'
 
 /**
  * @typedef {object} Schema
@@ -2227,6 +2228,25 @@ export const useObjectStore = defineStore('object', {
 				verb: 'updating',
 				perform: () => putExistingObject(this, { type, id, data }),
 			})
+		},
+
+		/**
+		 * Write one language's translation of an object's translatable fields
+		 * through OpenRegister's `X-Translation-Target-Language`
+		 * (publication-translations REQ-PTR-003). Only the given fields change.
+		 *
+		 * @param {string} url - The OpenRegister object URL
+		 * @param {{fields: object, language: string}} translation - The fields and their language
+		 * @return {Promise<boolean>} Whether the translation was stored
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		async saveObjectTranslation(url, { fields, language }) {
+			try {
+				const response = await fetch(url, translationSaveOptions(fields, language, getRequestToken()))
+				return response.ok
+			} catch {
+				return false
+			}
 		},
 
 		/**

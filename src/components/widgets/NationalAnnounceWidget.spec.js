@@ -9,7 +9,7 @@
 
 import { getCurrentUser } from '@nextcloud/auth'
 import axios from '@nextcloud/axios'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import NationalAnnounceWidget from './NationalAnnounceWidget.vue'
 
 jest.mock('@nextcloud/auth', () => ({ getCurrentUser: jest.fn() }))
@@ -100,6 +100,28 @@ describe('NationalAnnounceWidget', () => {
 
 	it('lists no rows for an answer without channels', () => {
 		expect(vm().toResults({})).toEqual([])
+	})
+	it('prefills the effective date with the stored validFrom', async () => {
+		axios.get.mockResolvedValueOnce({ data: { id: 'pub-1', validFrom: '2027-01-01' } })
+		const widget = vm()
+		await flushPromises()
+		expect(axios.get).toHaveBeenCalledWith('/apps/openregister/api/objects/{register}/{schema}/{id}')
+		expect(widget.effectiveDate).toBe('2027-01-01')
+	})
+
+	it('keeps a date the editor typed and leaves the field empty without a validFrom', async () => {
+		axios.get.mockResolvedValueOnce({ data: { id: 'pub-1' } })
+		const empty = vm()
+		await flushPromises()
+		expect(empty.effectiveDate).toBe('')
+
+		let answer
+		axios.get.mockReturnValueOnce(new Promise((resolve) => { answer = resolve }))
+		const typed = vm()
+		typed.effectiveDate = '2026-12-01'
+		answer({ data: { validFrom: '2027-01-01' } })
+		await flushPromises()
+		expect(typed.effectiveDate).toBe('2026-12-01')
 	})
 })
 

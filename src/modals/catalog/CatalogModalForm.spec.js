@@ -12,6 +12,10 @@ import { flushPromises, mount } from '@vue/test-utils'
 import CatalogModal from './CatalogModal.vue'
 import { navigationStore, objectStore } from '../../store/store.js'
 
+jest.mock('@nextcloud/axios', () => ({
+	get: jest.fn(() => Promise.resolve({ data: {} })),
+	post: jest.fn(() => Promise.resolve({ data: {} })),
+}))
 jest.mock('../../composables/useIsAdmin.js', () => ({
 	useIsAdmin: () => ({ isAdmin: { value: false }, loaded: { value: true } }),
 }))

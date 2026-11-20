@@ -378,6 +378,94 @@ class DcatMappingServiceTest extends TestCase {
 		$this->assertSame('http://www.w3.org/ns/dcat#', $context['dcat']);
 		$this->assertArrayHasKey('profile', $context);
 	}
+	public function testThePlainSummaryIsEmittedAsAbstractWithItsLanguage(): void {
+		$publication = [
+			'id' => 'uuid-p',
+			'title' => 'Besluit op bezwaar parkeervergunning',
+			'plainSummary' => 'U kreeg geen parkeervergunning. De gemeente blijft bij het besluit.',
+			'plainSummaryLevel' => 'B1',
+			'language' => 'nl',
+			'@self' => ['uuid' => 'uuid-p', 'updated' => '2026-11-14T10:00:00+00:00'],
+		];
+
+		$dataset = $this->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/uuid-p', []);
+
+		$this->assertSame(
+			['@value' => 'U kreeg geen parkeervergunning. De gemeente blijft bij het besluit.', '@language' => 'nl'],
+			$dataset['dct:abstract'] ?? null
+		);
+	}
+
+	public function testTheAbstractTakesThePublicationsLanguageAndDefaultsToDutch(): void {
+		$english = $this->mapDataset(['id' => 'e', 'plainSummary' => 'You got no permit.', 'language' => 'EN'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/e', []);
+		$this->assertSame('en', $english['dct:abstract']['@language']);
+
+		$unset = $this->mapDataset(['id' => 'u', 'plainSummary' => 'Kort.'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/u', []);
+		$this->assertSame('nl', $unset['dct:abstract']['@language']);
+
+		$garbage = $this->mapDataset(['id' => 'g', 'plainSummary' => 'Kort.', 'language' => 'not a tag'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/g', []);
+		$this->assertSame('nl', $garbage['dct:abstract']['@language']);
+	}
+
+	public function testNoAbstractWithoutAPlainSummary(): void {
+		$dataset = $this->mapDataset(['id' => 'x', 'title' => 'T', 'plainSummary' => '  '], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/x', []);
+		$this->assertArrayNotHasKey('dct:abstract', $dataset);
+	}
+
+	/**
+	 * A title and description read with all their translations become one
+	 * language-tagged literal per language, Dutch first; an empty translation
+	 * is left out and a plain value stays plain (publication-translations REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testEachLanguageIsATaggedLiteral(): void {
+		$dataset = $this->mapDataset(
+			publication: [
+				'id' => 'uuid-3',
+				'title' => ['en' => 'Annual report', 'nl' => 'Jaarverslag'],
+				'description' => ['nl' => 'Het verslag', 'en' => ''],
+				'@self' => ['uuid' => 'uuid-3'],
+			],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: [],
+			datasetIri: 'https://host/api/cat/uuid-3',
+			defaults: []
+		);
+
+		$this->assertSame(
+			[['@value' => 'Jaarverslag', '@language' => 'nl'], ['@value' => 'Annual report', '@language' => 'en']],
+			$dataset['dct:title']
+		);
+		$this->assertSame([['@value' => 'Het verslag', '@language' => 'nl']], $dataset['dct:description']);
+
+		$plain = $this->mapDataset(
+			publication: ['id' => 'uuid-4', 'title' => 'Jaarverslag', 'description' => ['nl' => '', 'en' => '']],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: [],
+			datasetIri: 'https://host/api/cat/uuid-4',
+			defaults: []
+		);
+		$this->assertSame('Jaarverslag', $plain['dct:title']);
+		$this->assertArrayNotHasKey('dct:description', $plain);
+	}
+
+	/**
+	 * An array that is not keyed by language is not turned into literals.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testAnArrayNotKeyedByLanguageStaysAsItIs(): void {
+		$dataset = $this->mapDataset(
+			publication: ['id' => 'uuid-5', 'title' => ['Title' => 'x', 'nl' => 'y']],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: [],
+			datasetIri: 'https://host/api/cat/uuid-5',
+			defaults: []
+		);
+
+		$this->assertSame(['Title' => 'x', 'nl' => 'y'], $dataset['dct:title']);
+	}
 
 	/**
 	 * REQ-PFF-001: the distribution's media type is the stored bytes' type, not

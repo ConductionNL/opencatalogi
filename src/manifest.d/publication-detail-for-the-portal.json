@@ -1,0 +1,86 @@
+{
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"_note": "publication-detail-for-the-portal (REQ-PDP-005): the error reports visitors posted on publications, per catalogue and with their status, over the errorReport schema. The generic index renderer lists, filters and opens them; a moderator sets the status on the report.",
+	"menu": [
+		{
+			"id": "ErrorReportsMenu",
+			"label": "Error reports",
+			"icon": "AlertCircleOutline",
+			"route": "ErrorReports",
+			"section": "settings",
+			"order": 96
+		}
+	],
+	"pages": [
+		{
+			"id": "ErrorReports",
+			"route": "/error-reports",
+			"type": "index",
+			"title": "Error reports",
+			"config": {
+				"register": "@resolve:publication_register",
+				"schema": "@resolve:error_report_schema",
+				"description": "Errors visitors reported in publications of catalogues that accept error reports",
+				"rowClickToView": true,
+				"quickFilters": [
+					{
+						"label": "New",
+						"default": true,
+						"filter": {
+							"status": "new"
+						}
+					},
+					{
+						"label": "Handled",
+						"filter": {
+							"status": "handled"
+						}
+					},
+					{
+						"label": "Dismissed",
+						"filter": {
+							"status": "dismissed"
+						}
+					}
+				],
+				"columns": [
+					{
+						"key": "catalog",
+						"label": "Catalogue",
+						"sortable": true
+					},
+					{
+						"key": "publication",
+						"label": "Publication"
+					},
+					{
+						"key": "message",
+						"label": "Message"
+					},
+					{
+						"key": "status",
+						"label": "Status",
+						"sortable": true
+					},
+					{
+						"key": "createdAt",
+						"label": "Received",
+						"formatter": "date",
+						"sortable": true
+					}
+				],
+				"sortKey": "createdAt",
+				"sortOrder": "desc",
+				"actionToggles": {
+					"showAdd": false,
+					"showEditAction": true,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showViewToggle": false,
+					"selectable": false
+				},
+				"documentationUrl": "https://opencatalogi.conduction.nl"
+			}
+		}
+	]
+}

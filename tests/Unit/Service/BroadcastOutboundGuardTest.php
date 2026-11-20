@@ -56,7 +56,9 @@ class BroadcastOutboundGuardTest extends TestCase {
 			'a .localhost name' => ['http://app.localhost/api', $name],
 			'a private 10/8 address' => ['http://10.1.2.3/api', $internal],
 			'a private 172.16/12 address' => ['http://172.20.0.1/api', $internal],
-			'a 172.32 address' => ['http://172.32.0.1/api', 'allowed'],
+			'a 172.32 address' => ['https://172.32.0.1/api', 'allowed'],
+			// FED-OR-001: a public host that is not allowlisted is reached over https only.
+			'a public address over plain http' => ['http://172.32.0.1/api', 'Broadcast URL must use https'],
 			'a private 192.168/16 address' => ['http://192.168.1.1/api', $internal],
 			'loopback' => ['http://127.0.0.1:8080/api', $internal],
 			'link-local' => ['http://169.254.169.254/latest', $internal],

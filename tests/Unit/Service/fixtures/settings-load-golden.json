@@ -322,6 +322,11 @@
                     "opencatalogi",
                     "service_catalogue_register",
                     "20"
+                ],
+                [
+                    "opencatalogi",
+                    "usageCounter_register",
+                    "20"
                 ]
             ],
             "warnings": [
@@ -1020,6 +1025,11 @@
                 [
                     "opencatalogi",
                     "service_catalogue_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "usageCounter_register",
                     "20"
                 ]
             ],

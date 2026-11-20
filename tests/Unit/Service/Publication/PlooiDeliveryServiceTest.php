@@ -49,6 +49,8 @@ class PlooiDeliveryServiceTest extends TestCase {
 	/** @var array<string, mixed>|null */
 	private ?array $saved = null;
 
+	private ObjectEntity $publication;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->settings = $this->createMock(SettingsService::class);
@@ -58,18 +60,32 @@ class PlooiDeliveryServiceTest extends TestCase {
 			->getMock();
 		$this->index = $this->getMockBuilder(NationalIndexService::class)
 			->disableOriginalConstructor()
-			->onlyMethods(['deliverToPlooi'])
+			->onlyMethods(['deliverToPlooi', 'withdraw'])
 			->getMock();
 		$this->settings->method('getObjectService')->willReturn($this->objects);
 		$this->settings->method('getSettings')->willReturn(
 			['configuration' => ['catalog_register' => '7', 'catalog_schema' => '3']]
 		);
 
-		$publication = new ObjectEntity();
+		// The files a publication carries under `@self.files`, as the delivery reads them.
+		$publication = new class extends ObjectEntity {
+			/** @var list<array<string, string>> */
+			public array $publicFiles = [];
+
+			public function jsonSerialize(): array {
+				$data = parent::jsonSerialize();
+				if ($this->publicFiles !== []) {
+					$data['@self']['files'] = $this->publicFiles;
+				}
+
+				return $data;
+			}
+		};
 		$publication->setUuid('pub-1');
 		$publication->setRegister('7');
 		$publication->setSchema('12');
 		$publication->setObject(['title' => 'Besluit', 'summary' => 'Kort', 'publicationDate' => '2026-09-01T00:00:00+00:00']);
+		$this->publication = $publication;
 		$this->objects->method('find')->willReturn($publication);
 		$this->objects->method('saveObject')->willReturnCallback(
 			function (array $object) use ($publication): ObjectEntity {
@@ -141,6 +157,22 @@ class PlooiDeliveryServiceTest extends TestCase {
 		$this->assertTheSchemaAccepts(array_intersect_key($this->saved, array_flip(PlooiDeliveryService::FIELDS)));
 	}
 
+	/** Publication-lifecycle-on-or REQ-PLC-006: an unlisted publication is not delivered, and the reason `unlisted` is recorded. */
+	public function testAnUnlistedPublicationIsNotDelivered(): void {
+		$this->catalogs([['registers' => ['7'], 'schemas' => ['12'], 'plooiDelivery' => true]]);
+		$entity = $this->objects->find(id: 'pub-1');
+		$entity->setObject(['title' => 'Besluit', 'publicationDate' => '2026-09-01T00:00:00+00:00', 'unlisted' => true]);
+		$this->index->expects($this->never())->method('deliverToPlooi');
+
+		$result = $this->service()->deliver(uuid: 'pub-1', register: '7', schema: '12');
+
+		$this->assertSame('failed', $result['plooiStatus']);
+		$this->assertSame('unlisted', $result['plooiReason']);
+		$this->assertSame('unlisted', $this->saved['plooiReason']);
+		$this->assertTrue($this->saved['unlisted']);
+		$this->assertTheSchemaAccepts(array_intersect_key($this->saved, array_flip(PlooiDeliveryService::FIELDS)));
+	}
+
 	/** A publication in no catalogue with PLOOI delivery on is left alone. */
 	public function testAPublicationOutsideAPlooiCatalogueIsNotDelivered(): void {
 		$this->catalogs([['registers' => ['7'], 'schemas' => ['99'], 'plooiDelivery' => true]]);
@@ -156,5 +188,87 @@ class PlooiDeliveryServiceTest extends TestCase {
 		$flag = $register['components']['schemas']['catalog']['properties']['plooiDelivery'] ?? null;
 		$this->assertSame('boolean', $flag['type'] ?? null);
 		$this->assertFalse($flag['default'] ?? null);
+	}
+	/**
+	 * A delivered publication with the given public files, as PLOOI last received the given links.
+	 *
+	 * @param list<string> $files     The download links public now.
+	 * @param list<string> $delivered The links PLOOI received last time.
+	 *
+	 * @return void
+	 */
+	private function delivered(array $files, array $delivered): void {
+		$this->publication->setObject(
+			[
+				'title' => 'Besluit',
+				'publicationDate' => '2026-09-01T00:00:00+00:00',
+				'plooiStatus' => 'delivered',
+				'plooiIdentifier' => 'plooi-42',
+				'plooiDocuments' => $delivered,
+			]
+		);
+		$this->publication->publicFiles = array_map(static fn (string $url): array => ['title' => basename($url), 'downloadUrl' => $url], $files);
+	}
+
+	/** REQ-WNO-001: a document no longer public is withdrawn with the next delivery. */
+	public function testADocumentNoLongerPublicIsWithdrawn(): void {
+		$this->catalogs([['registers' => ['7'], 'schemas' => ['12'], 'plooiDelivery' => true]]);
+		$this->delivered(files: ['https://example.test/besluit.pdf'], delivered: ['https://example.test/besluit.pdf', 'https://example.test/bijlage.pdf']);
+		$sent = null;
+		$this->index->expects($this->once())->method('deliverToPlooi')->willReturnCallback(
+			function (array $document) use (&$sent): array {
+				$sent = $document;
+				return ['answer' => '{"id":"plooi-42"}', 'identifier' => 'plooi-42'];
+			}
+		);
+		$this->index->expects($this->never())->method('withdraw');
+
+		$result = $this->service()->deliver(uuid: 'pub-1', register: '7', schema: '12');
+
+		$this->assertSame(['https://example.test/bijlage.pdf'], $sent['withdrawnDocuments']);
+		$this->assertSame([['title' => 'besluit.pdf', 'url' => 'https://example.test/besluit.pdf']], $sent['documents']);
+		$this->assertSame('delivered', $result['plooiStatus']);
+		$this->assertSame(['https://example.test/besluit.pdf'], $this->saved['plooiDocuments']);
+		$this->assertTheSchemaAccepts(array_intersect_key($this->saved, array_flip(PlooiDeliveryService::FIELDS)));
+	}
+
+	/** REQ-WNO-001: a delivery that withdraws nothing carries no withdrawal. */
+	public function testAnUnchangedDocumentSetWithdrawsNothing(): void {
+		$this->catalogs([['registers' => ['7'], 'schemas' => ['12'], 'plooiDelivery' => true]]);
+		$this->delivered(files: ['https://example.test/besluit.pdf'], delivered: ['https://example.test/besluit.pdf']);
+		$this->index->expects($this->once())->method('deliverToPlooi')
+			->with($this->callback(fn (array $document): bool => array_key_exists('withdrawnDocuments', $document) === false))
+			->willReturn(['answer' => '{}', 'identifier' => 'plooi-42']);
+
+		$this->service()->deliver(uuid: 'pub-1', register: '7', schema: '12');
+	}
+
+	/** REQ-WNO-001: a publication that stops being public is withdrawn as a whole. */
+	public function testAWithdrawalWithdrawsTheWholeRecord(): void {
+		$this->catalogs([['registers' => ['7'], 'schemas' => ['12'], 'plooiDelivery' => true]]);
+		$this->delivered(files: [], delivered: ['https://example.test/besluit.pdf']);
+		$this->index->expects($this->never())->method('deliverToPlooi');
+		$this->index->expects($this->once())->method('withdraw')
+			->with(NationalIndexService::CHANNEL_PLOOI, 'plooi-42', $this->isType('string'))
+			->willReturn(['channel' => 'plooi']);
+
+		$result = $this->service()->withdraw(uuid: 'pub-1', register: '7', schema: '12');
+
+		$this->assertSame('withdrawn', $result['plooiStatus']);
+		$this->assertSame([], $this->saved['plooiDocuments']);
+		$this->assertSame('', $this->saved['plooiReason']);
+		$this->assertTheSchemaAccepts(array_intersect_key($this->saved, array_flip(PlooiDeliveryService::FIELDS)));
+	}
+
+	/** REQ-WNO-001: a refused withdrawal is stored as failed, with the reason. */
+	public function testARefusedWithdrawalIsStoredAsFailed(): void {
+		$this->catalogs([['registers' => ['7'], 'schemas' => ['12'], 'plooiDelivery' => true]]);
+		$this->delivered(files: [], delivered: []);
+		$this->index->method('withdraw')->willThrowException(new IndexUnreachableException('The channel "plooi" answered HTTP 503.'));
+
+		$result = $this->service()->withdraw(uuid: 'pub-1', register: '7', schema: '12');
+
+		$this->assertSame('failed', $result['plooiStatus']);
+		$this->assertStringContainsString('503', $this->saved['plooiReason']);
 	}
 }

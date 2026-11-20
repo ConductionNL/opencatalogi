@@ -73,6 +73,22 @@ class QueuedDeliveryAndReadinessJobsTest extends TestCase {
 	}//end testAQueuedPublicationIsDelivered()
 
 	/**
+	 * A queued withdrawal withdraws the record and delivers nothing.
+	 *
+	 * @return void
+	 */
+	public function testAQueuedWithdrawalIsWithdrawn(): void {
+		$service = $this->createMock(PlooiDeliveryServiceInterface::class);
+		$service->expects($this->once())->method('withdraw')->with('pub-1', '7', '12')->willReturn(['plooiStatus' => 'withdrawn']);
+		$service->expects($this->never())->method('deliver');
+
+		self::runJob(
+			new PlooiDelivery($this->createMock(ITimeFactory::class), $service, $this->createMock(LoggerInterface::class)),
+			['uuid' => 'pub-1', 'register' => 7, 'schema' => 12, 'mode' => PlooiDelivery::MODE_WITHDRAW]
+		);
+	}//end testAQueuedWithdrawalIsWithdrawn()
+
+	/**
 	 * Without a uuid nothing is delivered; a missing register or schema goes as empty.
 	 *
 	 * @return void

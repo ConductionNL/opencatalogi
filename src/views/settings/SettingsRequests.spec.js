@@ -9,6 +9,14 @@
 
 import axios from '@nextcloud/axios'
 import Settings from './Settings.vue'
+import {
+	corsOriginLines,
+	corsSaveRefusal,
+	languageName,
+	publicationLanguageOptions,
+	publicationLanguagesFrom,
+	publicationLanguagesPayload,
+} from './settingsRequests.js'
 
 jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: { post: jest.fn(), put: jest.fn() } }))
 // @nextcloud/dialogs does not resolve under Jest in this tree.
@@ -19,6 +27,7 @@ jest.mock('@nextcloud/vue', () => ({}))
 jest.mock('@conduction/nextcloud-vue', () => ({}))
 jest.mock('./PubliccodeHarvest.vue', () => ({}))
 jest.mock('./WooIndexConnection.vue', () => ({}))
+jest.mock('./DonlHarvestStatus.vue', () => ({}))
 
 /**
  * A settings page state with its methods and `fields`.
@@ -166,6 +175,27 @@ describe('Settings savePublicCacheSeconds and saveChannelSources', () => {
 		expect(state).toMatchObject({ publicCacheError: 'The cache time could not be saved. Try again.', savingPublicCache: false })
 	})
 
+	it.each([
+		[true, { data: { search_indexing: 'blocked' } }, 'blocked', true],
+		[false, { data: { search_indexing: 'allowed' } }, 'allowed', false],
+		[true, { data: { search_indexing: 'allowed' } }, 'blocked', false],
+	])('saves search indexing %s and shows what the server stored', async (blocked, response, sent, shown) => {
+		axios.put.mockResolvedValue(response)
+		const state = page({ searchIndexingBlocked: blocked })
+		await Settings.methods.saveSearchIndexing.call(state)
+
+		expect(axios.put).toHaveBeenCalledWith('/apps/opencatalogi/api/settings', { search_indexing: sent })
+		expect(state).toMatchObject({ searchIndexingBlocked: shown, searchIndexingError: '', savingSearchIndexing: false })
+	})
+
+	it('reports a failed search indexing save', async () => {
+		axios.put.mockRejectedValue(new Error('down'))
+		const state = page({ searchIndexingBlocked: true })
+		await Settings.methods.saveSearchIndexing.call(state)
+
+		expect(state).toMatchObject({ searchIndexingError: 'The search indexing setting could not be saved. Try again.', savingSearchIndexing: false })
+	})
+
 	it('saves a copy of the channel sources', async () => {
 		axios.put.mockResolvedValue({})
 		const channelSources = { plooi: 'src' }
@@ -208,5 +238,123 @@ describe('Settings hasSchemas', () => {
 		['schema objects without id', [{ id: 1, schemas: [{}, null, 'x'] }], { value: '1' }, false],
 	])('is right for %s', (label, registers, selected, expected) => {
 		expect(has(registers, selected)).toBe(expected)
+	})
+})
+
+describe('Settings publication languages (publication-translations D6)', () => {
+	it.each([
+		['["nl","en","de"]', ['nl', 'en', 'de']],
+		['["de","nl"]', ['nl', 'de']],
+		[['fy', 'fy', ''], ['nl', 'fy']],
+		['not json', ['nl', 'en']],
+		['[]', ['nl', 'en']],
+		[undefined, ['nl', 'en']],
+	])('reads %j as %j', (stored, expected) => {
+		expect(publicationLanguagesFrom(stored)).toEqual(expected)
+	})
+
+	it('names a language in the reader\'s language and falls back to the tag', () => {
+		expect(languageName('de', 'en')).toBe('German')
+		expect(languageName('!!', 'en')).toBe('!!')
+	})
+
+	it('offers every language, a stored unknown one too, with Dutch locked', () => {
+		const options = publicationLanguageOptions(['nl', 'sv'], 'en')
+
+		expect(options[0]).toEqual({ id: 'nl', label: 'Dutch', locked: true })
+		expect(options.find((option) => option.id === 'en')).toEqual({ id: 'en', label: 'English', locked: false })
+		expect(options[options.length - 1].id).toBe('sv')
+	})
+
+	it('saves the selected options with Dutch first', () => {
+		expect(publicationLanguagesPayload([{ id: 'en' }, { id: 'de' }])).toEqual(['nl', 'en', 'de'])
+		expect(publicationLanguagesPayload([])).toEqual(['nl', 'en'])
+	})
+
+	it('takes the languages from the stored configuration', () => {
+		const state = page({ channelSources: {}, parseChannelSources: () => ({}) })
+		Settings.methods.applyStoredConfiguration.call(state, { publication_languages: '["nl","fr"]' })
+
+		expect(state.publicationLanguages).toEqual(['nl', 'fr'])
+	})
+
+	it('saves the languages and shows what the server stored', async () => {
+		axios.put.mockResolvedValue({ data: { publication_languages: '["nl","de"]' } })
+		const state = page({ publicationLanguages: ['nl', 'de', 'xx'] })
+		await Settings.methods.savePublicationLanguages.call(state)
+
+		expect(axios.put).toHaveBeenCalledWith('/apps/opencatalogi/api/settings', { publication_languages: ['nl', 'de', 'xx'] })
+		expect(state).toMatchObject({ publicationLanguages: ['nl', 'de'], publicationLanguagesError: '', savingPublicationLanguages: false })
+	})
+
+	it('reports a failed languages save', async () => {
+		axios.put.mockRejectedValue(new Error('down'))
+		const state = page({ publicationLanguages: ['nl'] })
+		await Settings.methods.savePublicationLanguages.call(state)
+
+		expect(state).toMatchObject({ publicationLanguagesError: 'The languages could not be saved. Try again.', savingPublicationLanguages: false })
+	})
+
+	it('selects and writes the languages through the select', () => {
+		const state = { publicationLanguages: ['nl', 'en'] }
+		state.publicationLanguageChoices = Settings.computed.publicationLanguageChoices.call(state)
+		const selection = Settings.computed.publicationLanguageSelection
+
+		expect(selection.get.call(state).map((option) => option.id)).toEqual(['nl', 'en'])
+		selection.set.call(state, [{ id: 'de' }])
+		expect(state.publicationLanguages).toEqual(['nl', 'de'])
+	})
+})
+
+describe('Settings saveCorsOrigins (REQ-SCO-003)', () => {
+	it('saves the lines and shows back what the server stored', async () => {
+		axios.put.mockResolvedValue({ data: { cors_allowed_origins: 'https://a.example,https://b.example' } })
+		const state = page({ corsOrigins: 'https://a.example\nhttps://b.example/' })
+		await Settings.methods.saveCorsOrigins.call(state)
+
+		expect(axios.put).toHaveBeenCalledWith('/apps/opencatalogi/api/settings', { cors_allowed_origins: 'https://a.example\nhttps://b.example/' })
+		expect(state).toMatchObject({ corsOrigins: 'https://a.example\nhttps://b.example', corsError: '', savingCors: false })
+	})
+
+	it('shows the server naming a refused line', async () => {
+		axios.put.mockRejectedValue({ response: { status: 400, data: { error: '"https://a.example/zoeken" is not a website origin.' } } })
+		const state = page({ corsOrigins: 'https://a.example/zoeken' })
+		await Settings.methods.saveCorsOrigins.call(state)
+
+		expect(state).toMatchObject({ corsOrigins: 'https://a.example/zoeken', corsError: '"https://a.example/zoeken" is not a website origin.', savingCors: false })
+	})
+
+	it('reports any other failed save', async () => {
+		axios.put.mockRejectedValue(new Error('down'))
+		const state = page({ corsOrigins: '*' })
+		await Settings.methods.saveCorsOrigins.call(state)
+
+		expect(state).toMatchObject({ corsError: 'The websites could not be saved. Try again.', savingCors: false })
+	})
+
+	it.each([
+		['https://a.example,https://b.example', 'https://a.example\nhttps://b.example'],
+		[' https://a.example , ', 'https://a.example'],
+		['*', '*'],
+		['', '*'],
+		[undefined, '*'],
+	])('shows the stored allowlist %j as lines', (stored, lines) => {
+		expect(corsOriginLines(stored)).toBe(lines)
+	})
+
+	it.each([
+		[{ response: { status: 500, data: { error: 'boom' } } }, ''],
+		[{ response: { status: 400, data: {} } }, ''],
+		[new Error('down'), ''],
+		[undefined, ''],
+	])('names no reason for %j', (error, reason) => {
+		expect(corsSaveRefusal(error)).toBe(reason)
+	})
+
+	it('loads the stored allowlist into the field', () => {
+		const state = page({ channelSources: {}, parseChannelSources: () => ({}) })
+		Settings.methods.applyStoredConfiguration.call(state, { cors_allowed_origins: 'https://a.example,https://b.example' })
+
+		expect(state.corsOrigins).toBe('https://a.example\nhttps://b.example')
 	})
 })

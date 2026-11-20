@@ -25,6 +25,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
@@ -89,6 +90,28 @@ final class RetentionRun {
 			_multitenancy: false
 		);
 	}//end save()
+
+	/**
+	 * Remove a publication from the run's register and schema, outside RBAC and multitenancy.
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return bool Whether OpenRegister removed it.
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.7
+	 * @spec exclude internal removal step of a recorded disposal decision; it pins the register, schema
+	 *   and RBAC-off flags for the retention run and is not a route wrapper.
+	 */
+	public function remove(string $id): bool {
+		return (bool)$this->objectService->deleteObject(
+			deletion: new ObjectDeletion(
+				uuid: $id,
+				target: new ObjectFindTarget(register: $this->register, schema: $this->schema)
+			),
+			_rbac: false,
+			_multitenancy: false,
+		);
+	}//end remove()
 
 	/**
 	 * Mark a publication evaluated at this run's moment and save it.

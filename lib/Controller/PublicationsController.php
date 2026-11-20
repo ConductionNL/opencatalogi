@@ -32,16 +32,29 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
+use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
+use OCA\OpenCatalogi\Contract\DatasetViewServiceInterface;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
+use OCA\OpenCatalogi\Contract\PublicDocumentsInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
+use OCA\OpenCatalogi\Http\DcatNegotiation;
+use OCA\OpenCatalogi\Service\Publication\SignedInReadService;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinkRules;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
+use OCA\OpenCatalogi\Service\Publication\PublicationRelations;
+use OCA\OpenRegister\Kernel\Contracts\RenderSelection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -76,6 +89,7 @@ use RuntimeException;
  */
 class PublicationsController extends Controller {
 	use AnswersCacheably;
+	use ResolvesAllowedOrigin;
 
 	/**
 	 * Maximum number of extend entries accepted on public read endpoints.
@@ -104,6 +118,8 @@ class PublicationsController extends Controller {
 	 * @param IAppConfig|null $appConfig App config for CORS allowlist (optional)
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
+	 * @param PublishedTableServiceInterface|null $tables The published tables listed on the publication answer (REQ-ODT-003); null lists none.
+	 * @param DatasetViewServiceInterface|null $views The views listed under each table on the publication answer (REQ-DSV-002); null lists none.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -121,6 +137,8 @@ class PublicationsController extends Controller {
 		private readonly ?IAppConfig $appConfig = null,
 		private readonly CorsSettings $cors = new CorsSettings(),
 		private readonly ?AppliedFilters $appliedFilters = null,
+		private readonly ?PublishedTableServiceInterface $tables = null,
+		private readonly ?DatasetViewServiceInterface $views = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -231,65 +249,64 @@ class PublicationsController extends Controller {
 	}//end countedView()
 
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
+	 * The `cors_allowed_origins` setting for ResolvesAllowedOrigin; '*' without an app config.
 	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
-	 * — the caller's Origin is NEVER echoed back unless it is explicitly listed in the
-	 * configured allowlist. This prevents arbitrary-origin reflection on public endpoints
-	 * (#735). When credentials are not allowed (as on these public read endpoints) a
-	 * static '*' is the safest default; only operators that need credentialed CORS
-	 * should configure a strict allowlist.
+	 * Called by ResolvesAllowedOrigin::resolveAllowedOrigin(), which PHPMD does not follow.
 	 *
-	 * @return string The header value to use for Access-Control-Allow-Origin.
+	 * @return string The setting.
 	 *
-	 * @spec exclude CORS-policy plumbing extracted to fail-closed on Origin reflection;
-	 *       reads an IAppConfig allowlist and never echoes an unvetted caller Origin.
+	 * @SuppressWarnings(PHPMD.UnusedPrivateMethod)
 	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->appConfig !== null) {
-			$configured = $this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*');
-		}
-
-		$configured = trim($configured);
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_filter(
-			array_map('trim', explode(',', $configured)),
-			static fn (string $entry): bool => $entry !== ''
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin === '') {
-			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
-		}
-
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		// Caller Origin not on the allowlist — fall back to the first configured entry
-		// (or '*' if the allowlist became empty after trimming). Crucially, we do NOT
-		// echo back the caller's unvetted Origin.
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
+	private function allowedOriginsSetting(): string {
+		return ($this->appConfig?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
+	}//end allowedOriginsSetting()
 
 	/**
 	 * Add standard CORS headers to a response.
 	 *
-	 * @param JSONResponse $response The response to add headers to.
+	 * @param Response $response The response to add headers to.
 	 *
 	 * @return void
 	 */
-	private function addCorsHeaders(JSONResponse $response): void {
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+	private function addCorsHeaders(Response $response): void {
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Methods', $this->cors->methods);
 		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);
 
 	}//end addCorsHeaders()
+
+	/**
+	 * Hand the visitor's language (`_lang`, `language` or `Accept-Language`) to
+	 * OpenRegister before a public read (publication-translations REQ-PTR-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function negotiateLanguage(): void {
+		$this->queryService->applyVisitorLanguage(
+			queryParams: $this->request->getParams(),
+			acceptLanguage: (string)($this->request->server['HTTP_ACCEPT_LANGUAGE'] ?? '')
+		);
+
+	}//end negotiateLanguage()
+
+	/**
+	 * Add the language headers of the read: Content-Language, X-Source-Language
+	 * and, when a field fell back to Dutch, X-Content-Language-Fallback.
+	 *
+	 * @param JSONResponse $response The response to add headers to.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function addLanguageHeaders(JSONResponse $response): void {
+		foreach ($this->queryService->languageHeaders() as $name => $value) {
+			$response->addHeader($name, $value);
+		}
+
+	}//end addLanguageHeaders()
 
 	/**
 	 * Sanitise a public extend list to the '@self.'-prefix allowlist with a max breadth.
@@ -539,7 +556,7 @@ class PublicationsController extends Controller {
 		// Determine the origin via the same allowlist-aware resolver used elsewhere
 		// so we never reflect an arbitrary caller-supplied Origin (#735).
 		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Methods', $this->cors->methods);
 		$response->addHeader('Access-Control-Max-Age', (string)$this->cors->maxAge);
 		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);
@@ -568,6 +585,7 @@ class PublicationsController extends Controller {
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(string $catalogSlug): JSONResponse {
 		try {
+			$this->negotiateLanguage();
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
 			if ($catalog === null) {
 				return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
@@ -682,8 +700,10 @@ class PublicationsController extends Controller {
 			queryParams: $this->publicListParams(),
 			objectService: $objectService
 		);
-		$result = $this->publicPage(
-			result: $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false)
+		$result = $this->withStates(
+			result: $this->publicPage(
+				result: $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false)
+			)
 		);
 
 		$result['@catalog'] = $this->catalogAbout(catalog: $catalog, catalogSlug: $catalogSlug);
@@ -694,6 +714,7 @@ class PublicationsController extends Controller {
 
 		$response = new JSONResponse($result, 200);
 		$this->addCorsHeaders(response: $response);
+		$this->addLanguageHeaders(response: $response);
 
 		return $this->cacheableForCaller(response: $response);
 	}//end catalogPublications()
@@ -763,7 +784,7 @@ class PublicationsController extends Controller {
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the configuration cannot be read; the read
 	 *                                                                     then fails rather than serving the record.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	private function anonymousView(mixed $result): mixed {
 		if (is_array($result) === false || $this->queryService->isAnonymous() === false) {
@@ -775,13 +796,50 @@ class PublicationsController extends Controller {
 	}//end anonymousView()
 
 	/**
+	 * Add the one server-computed `state` to every row for a signed-in caller (REQ-PLC-002).
+	 *
+	 * The editor list shows draft, in review, approved, scheduled, public, withdrawn or
+	 * archived from this value and never computes it in the browser. An anonymous caller
+	 * only ever sees public rows, so its page is left exactly as it was.
+	 *
+	 * @param array<string, mixed> $result The page.
+	 *
+	 * @return array<string, mixed> The page, each row with its `state`.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-the-state-of-a-publication-is-one-value-the-server-computes-req-plc-002
+	 */
+	private function withStates(array $result): array {
+		if (is_array($result['results'] ?? null) === false || $this->queryService->isAnonymous() === true) {
+			return $result;
+		}
+
+		try {
+			$states = $this->container->get(PublicationStateServiceInterface::class);
+		} catch (\Throwable $e) {
+			return $result;
+		}
+
+		if (($states instanceof PublicationStateServiceInterface) === false) {
+			return $result;
+		}
+
+		foreach ($result['results'] as $index => $row) {
+			if (is_array($row) === true) {
+				$result['results'][$index]['state'] = $states->stateOf(publication: $row);
+			}
+		}
+
+		return $result;
+	}//end withStates()
+
+	/**
 	 * A page of publications as the caller may read it: without empty values, then under the published collections.
 	 *
 	 * @param array<string, mixed> $result The search result.
 	 *
 	 * @return array<string, mixed> The page.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	private function publicPage(array $result): array {
 		return $this->anonymousResults(result: $this->withoutEmptyValues(result: $result));
@@ -801,12 +859,16 @@ class PublicationsController extends Controller {
 	 *
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the configuration cannot be read.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::withoutUnlisted() is a pure filter.
 	 */
 	private function anonymousResults(array $result): array {
 		if (is_array($result['results'] ?? null) === false || $this->queryService->isAnonymous() === false) {
 			return $result;
 		}
+
+		// REQ-PLC-006: an anonymous list never carries an unlisted publication; its own link still opens it.
+		$result = UnlistedPublications::withoutUnlisted(page: $result);
 
 		$views = $this->container->get(PublishedRecordViewInterface::class)->viewList(records: array_values($result['results']));
 		if (is_numeric($result['total'] ?? null) === true) {
@@ -836,7 +898,8 @@ class PublicationsController extends Controller {
 		}
 
 		if (is_array($item) === true) {
-			return $this->queryService->stripEmptyValues(data: $item);
+			// REQ-PRS-003: only public source identifiers on the public list.
+			return $this->queryService->stripEmptyValues(data: (new PublicationLinkRules())->withPublicSourceIdentifiers(publication: $item));
 		}
 
 		return $item;
@@ -851,7 +914,7 @@ class PublicationsController extends Controller {
 	 * @param string $catalogSlug The slug of the catalog
 	 * @param string $id The ID of the publication to retrieve
 	 *
-	 * @return JSONResponse JSON response containing the requested publication
+	 * @return Response The publication as JSON, or for a dataset IRI asked for RDF or HTML its graph or a redirect
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
 	 * @spec openspec/specs/publications/spec.md
@@ -861,8 +924,9 @@ class PublicationsController extends Controller {
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
-	public function show(string $catalogSlug, string $id): JSONResponse {
+	public function show(string $catalogSlug, string $id): Response {
 		try {
+			$this->negotiateLanguage();
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
 			if ($catalog === null) {
 				return $this->catalogNotFound(catalogSlug: $catalogSlug);
@@ -877,6 +941,11 @@ class PublicationsController extends Controller {
 			// Guarding the catalog covers this route and the scope it hands to the
 			// query builder and the object lookups.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
+			$dereferenced = $this->dereferencedDataset(catalog: $catalog, catalogSlug: $catalogSlug, id: $id);
+			if ($dereferenced !== null) {
+				return $dereferenced;
+			}
+
 			$query = new CatalogSlugQuery(
 				slug: $id,
 				catalogSlug: $catalogSlug,
@@ -897,6 +966,34 @@ class PublicationsController extends Controller {
 		}//end try
 
 	}//end show()
+
+	/**
+	 * The dataset IRI's own answer when the Accept header asks for RDF or HTML (REQ-DCC-003).
+	 *
+	 * The dataset IRI of the DCAT feed is this route. Turtle and RDF/XML answer the
+	 * DCAT graph, HTML redirects to the publication page. An explicit `?format=`
+	 * and every other Accept header, JSON-LD included (schema.org, SDD-001), keep
+	 * the publication answer.
+	 *
+	 * @param array<string, mixed> $catalog The guarded catalogue.
+	 * @param string $catalogSlug The catalogue slug.
+	 * @param string $id The publication id from the URL.
+	 *
+	 * @return Response|null The answer, or null to answer the publication as before.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-catalogue-is-served-as-linked-data-and-through-sparql-req-dcc-003
+	 */
+	private function dereferencedDataset(array $catalog, string $catalogSlug, string $id): ?Response {
+		$kind = DcatNegotiation::preferred(accept: $this->request->getHeader('Accept'));
+		if ($kind === null || (string)$this->request->getParam('format', '') !== '') {
+			return null;
+		}
+
+		$response = $this->container->get(DcatDereferenceInterface::class)->answer(catalog: $catalog, catalogSlug: $catalogSlug, id: $id, kind: $kind);
+		$this->addCorsHeaders(response: $response);
+
+		return $response;
+	}//end dereferencedDataset()
 
 	/**
 	 * The 404 answer for a catalogue slug that resolves to no catalogue.
@@ -1033,6 +1130,11 @@ class PublicationsController extends Controller {
 
 		$found = $this->findPublication(read: $read);
 		if ($found === null) {
+			$trusted = $this->signedInRead(read: $read);
+			if ($trusted !== null) {
+				return $trusted;
+			}
+
 			$this->logger->warning(
 				'[PublicationsController::show] Object not found in any register/schema',
 				['id' => $read->query->slug, 'catalogSlug' => $read->query->catalogSlug]
@@ -1042,6 +1144,47 @@ class PublicationsController extends Controller {
 
 		return $this->answerFound(read: $read, found: $found);
 	}//end showPublication()
+
+	/**
+	 * The trusted read of a publication for signed-in readers (REQ-PSR-003).
+	 *
+	 * Only on a miss, and only for a request that carries a feed consumer key
+	 * (`Authorization: Bearer oc_...`): {@see SignedInReadService::read()} checks
+	 * the key, its catalogue, `actForSignedInReaders` and the reader's level in
+	 * `X-Reader-Assurance`, reads the one object with RBAC off and audits the
+	 * read. The answer carries `Cache-Control: private, no-store`, so no shared
+	 * cache serves it to an anonymous reader. Any refusal returns null, and the
+	 * caller answers the same 404 as for a missing publication.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 *
+	 * @return JSONResponse|null The publication, or null.
+	 *
+	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-trusted-portal-reads-it-for-a-reader-at-the-required-level-req-psr-003
+	 */
+	private function signedInRead(PublicationRead $read): ?JSONResponse {
+		if (preg_match('/^Bearer\s+(oc_\S+)$/i', trim($this->request->getHeader('Authorization')), $match) !== 1) {
+			return null;
+		}
+
+		$catalogId = (string)($read->catalog['id'] ?? ($read->catalog['@self']['id'] ?? ''));
+		$object = $this->container->get(SignedInReadService::class)->read(
+			catalogId: $catalogId,
+			registers: $read->query->registers,
+			schemas: $read->query->schemas,
+			id: $read->query->slug,
+			key: $match[1],
+			level: $this->request->getHeader(SignedInReadService::ASSURANCE_HEADER)
+		);
+		if ($object === null) {
+			return null;
+		}
+
+		$response = $this->answerFound(read: $read, found: new FoundPublication(object: $object, publicationId: (string)$object->getUuid()));
+		$response->addHeader('Cache-Control', 'private, no-store');
+
+		return $response;
+	}//end signedInRead()
 
 	/**
 	 * Find a publication by UUID, then by slug, inside the catalogue scope.
@@ -1228,6 +1371,37 @@ class PublicationsController extends Controller {
 	}//end inCatalogScope()
 
 	/**
+	 * A rendered publication with its public and officer pages computed now.
+	 *
+	 * The stored values were computed when it was created; a setting changed
+	 * since then shows here at once (REQ-PTS-001). Only an object of the
+	 * publication schema carries them. When they cannot be computed the stored
+	 * values are answered.
+	 *
+	 * @param array<string, mixed> $result The rendered publication.
+	 * @param object               $object The publication entity.
+	 *
+	 * @return array<string, mixed> The publication.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	private function withFreshLinks(array $result, object $object): array {
+		$schema = (string)($this->appConfig?->getValueString('opencatalogi', 'publication_schema', '') ?? '');
+		if ($schema === '' || (string)$object->getSchema() !== $schema) {
+			return $result;
+		}
+
+		try {
+			$links = $this->container->get(PublicationLinks::class)->for(uuid: (string)$object->getUuid(), schema: $schema);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[PublicationsController::show] The publication pages could not be computed: ' . $e->getMessage());
+			return $result;
+		}
+
+		return array_merge($result, $links);
+	}//end withFreshLinks()
+
+	/**
 	 * Render a publication with the sanitised extend list and answer it as JSON or schema.org JSON-LD.
 	 *
 	 * A catalogue that opted in shows what was withheld and why
@@ -1248,9 +1422,18 @@ class PublicationsController extends Controller {
 			return $this->publicationNotAccessible(query: $read->query);
 		}
 
+		// REQ-PRS-003: an internal source identifier never leaves on the public API.
+		if (is_array($result) === true) {
+			$result = (new PublicationLinkRules())->withPublicSourceIdentifiers(publication: $result);
+		}
+
 		if ($this->wantsSchemaOrg() === true) {
 			$response = $this->schemaOrgResponse(read: $read, result: $result);
 		} else {
+			if (is_array($result) === true) {
+				$result = $this->withFreshLinks(result: $result, object: $found->object);
+			}
+
 			if (($read->catalog['showWithheld'] ?? false) === true && is_array($result) === true) {
 				$result = $this->container->get(WithheldFromPublicationInterface::class)->addForCatalog(
 					response: $result,
@@ -1259,13 +1442,135 @@ class PublicationsController extends Controller {
 				);
 			}
 
+			$result   = $this->withTables(result: $result, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
+			if (is_array($result) === true) {
+				$result['relations'] = $this->relationsOf(read: $read, found: $found);
+				$result = $this->withCommentPeriod(publication: $result);
+			}
+
 			$response = new JSONResponse($result, 200);
 		}
 
 		$this->addCorsHeaders(response: $response);
+		$this->addLanguageHeaders(response: $response);
 
 		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 	}//end renderedPublication()
+
+	/**
+	 * The relations of a shown publication a reader may see (REQ-PRS-002).
+	 *
+	 * Without the relations reader the answer carries none, never an unguarded list.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 * @param FoundPublication $found The publication found.
+	 *
+	 * @return array<int, array<string, mixed>> The relations.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-the-public-response-carries-the-relations-a-reader-may-see-req-prs-002
+	 */
+	private function relationsOf(PublicationRead $read, FoundPublication $found): array {
+		try {
+			$relations = $this->container->get(PublicationRelations::class);
+		} catch (\Throwable $e) {
+			return [];
+		}
+
+		if ($relations instanceof PublicationRelations === false) {
+			return [];
+		}
+
+		return $relations->forPublication(
+			objectService: $read->objectService,
+			publicationId: $found->publicationId,
+			registers: $read->query->registers,
+			schemas: $read->query->schemas,
+			catalogSlug: $read->query->catalogSlug
+		);
+	}//end relationsOf()
+
+	/**
+	 * Add the publication's published tables, with their rows and dictionary URLs (REQ-ODT-003).
+	 *
+	 * A publication without tables, or a failing lookup, answers as before.
+	 *
+	 * @param mixed  $result        The rendered publication.
+	 * @param string $publicationId The publication UUID.
+	 * @param string $catalogSlug   The catalogue slug from the URL.
+	 *
+	 * @return mixed The publication, with `tables` when it has any.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	private function withTables(mixed $result, string $publicationId, string $catalogSlug): mixed {
+		if (is_array($result) === false || $this->tables === null) {
+			return $result;
+		}
+
+		try {
+			$tables = $this->tables->tablesOf(publicationId: $publicationId, catalogSlug: $catalogSlug);
+		} catch (\Throwable $e) {
+			$this->logger->debug('[PublicationsController::show] Could not list the published tables', ['id' => $publicationId, 'error' => $e->getMessage()]);
+			return $result;
+		}
+
+		if ($tables !== []) {
+			$result['tables'] = $this->withViews(tables: $tables, where: ['catalogSlug' => $catalogSlug, 'publicationId' => $publicationId]);
+		}
+
+		return $result;
+	}//end withTables()
+
+	/**
+	 * The tables, each with its views and their data URLs (REQ-DSV-002).
+	 *
+	 * A view list that cannot be read leaves the tables as they are.
+	 *
+	 * @param array<int, array<string, mixed>>                  $tables The tables.
+	 * @param array{catalogSlug: string, publicationId: string} $where  The catalogue and the publication.
+	 *
+	 * @return array<int, array<string, mixed>> The tables.
+	 *
+	 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-anyone-reads-a-view-s-data-while-the-publication-is-public-req-dsv-002
+	 */
+	private function withViews(array $tables, array $where): array {
+		if ($this->views === null) {
+			return $tables;
+		}
+
+		try {
+			return $this->views->withViews(tables: $tables, where: $where);
+		} catch (\Throwable $e) {
+			$this->logger->debug(
+				'[PublicationsController::show] Could not list the dataset views',
+				['id' => $where['publicationId'], 'error' => $e->getMessage()]
+			);
+			return $tables;
+		}
+	}//end withViews()
+
+	/**
+	 * The publication with the state of its comment period (REQ-PDP-003).
+	 *
+	 * @param array<string, mixed> $publication The rendered publication.
+	 *
+	 * @return array<string, mixed> The publication, unchanged when the period cannot be added.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 */
+	private function withCommentPeriod(array $publication): array {
+		try {
+			$periods = $this->container->get(PublicationCommentPeriodInterface::class);
+		} catch (\Throwable $e) {
+			return $publication;
+		}
+
+		if (($periods instanceof PublicationCommentPeriodInterface) === false) {
+			return $publication;
+		}
+
+		return $periods->addTo(publication: $publication);
+	}//end withCommentPeriod()
 
 	/**
 	 * The found publication rendered by OpenRegister, as the caller may read it.
@@ -1275,17 +1580,13 @@ class PublicationsController extends Controller {
 	 *
 	 * @return mixed The rendered publication, or null when an anonymous reader may not read it.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	private function rendered(PublicationRead $read, FoundPublication $found): mixed {
 		return $this->anonymousView(
 			result: $read->objectService->renderEntity(
 				entity: $found->object,
-				_extend: $read->extend,
-				depth: 0,
-				filter: [],
-				fields: [],
-				unset: [],
+				selection: new RenderSelection(extend: $read->extend, filter: [], fields: [], unset: []),
 				_rbac: true,
 				_multitenancy: false,
 			)
@@ -1332,82 +1633,149 @@ class PublicationsController extends Controller {
 	public function attachments(string $catalogSlug, string $id): JSONResponse {
 
 		try {
-			// Get the catalog from cache or database.
-			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-
-			if ($catalog === null) {
-				return new JSONResponse(
-					[
-						'error' => $this->l10n->t('Catalog not found'),
-						'message' => $this->l10n->t('The catalog "%s" does not exist.', [$catalogSlug]),
-						'catalogSlug' => $catalogSlug,
-					],
-					404
-				);
+			$refusal = $this->refuseFileRead(catalogSlug: $catalogSlug, id: $id);
+			if ($refusal !== null) {
+				return $refusal;
 			}
 
-			// WOO-580: keep a schema without `authorization.read` rules out of the
-			// ANONYMOUS scope (SCH-PFTS-CAT-002). `/api/search` drops the same
-			// schemas but, since WOO-578, for every caller; here it is
-			// anonymous-only by design. What that keeps out — and why it is not
-			// the `bypass => true` case it is easy to mistake it for — is spelled
-			// out on {@see PublicationQueryService::dropSchemasWithoutReadRules()}.
-			// Guarding the catalog covers this route and the scope it hands to the
-			// query builder and the object lookups.
-			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
-
-			// First verify the object exists in this catalog register and schema.
-			$objectService = $this->getObjectService();
-			$object = $this->queryService->findObjectInCatalog(
-				catalog: $catalog,
-				id: $id,
-				objectService: $objectService
+			return $this->cacheableForCaller(response: $this->describedAttachments(catalogSlug: $catalogSlug, id: $id));
+		} catch (\Exception $e) {
+			return $this->fileReadFailed(
+				exception: $e,
+				context: [
+					'id' => $id,
+					'catalogSlug' => $catalogSlug,
+					'log' => '[PublicationsController::attachments] Failed to retrieve attachments',
+				]
 			);
+		}//end try
 
-			if ($object === null) {
-				return new JSONResponse(
-					[
-						'error' => $this->l10n->t('Publication not found'),
-						'message' => $this->l10n->t('The publication with ID "%s" does not exist.', [$id]),
-						'id' => $id,
-						'catalogSlug' => $catalogSlug,
-					],
-					404
-				);
-			}
+	}//end attachments()
 
-			return $this->cacheableForCaller(response: $this->publicationService->attachments(id: $id));
-		} catch (DoesNotExistException $exception) {
+	/**
+	 * The attachment list with each document's id, metadata and links (REQ-PDP-002).
+	 *
+	 * Without the documents service the list is answered as the publication service gives it.
+	 *
+	 * @param string $catalogSlug The catalogue the list is read through.
+	 * @param string $id The publication.
+	 *
+	 * @return JSONResponse The list.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 */
+	private function describedAttachments(string $catalogSlug, string $id): JSONResponse {
+		$response = $this->publicationService->attachments(id: $id);
+		try {
+			$documents = $this->container->get(PublicDocumentsInterface::class);
+		} catch (\Throwable) {
+			return $response;
+		}
+
+		if (($documents instanceof PublicDocumentsInterface) === false) {
+			return $response;
+		}
+
+		return $documents->describe(response: $response, catalogSlug: $catalogSlug, publicationId: $id);
+	}//end describedAttachments()
+
+	/**
+	 * The 404 answer when the catalogue or the publication of a file read does
+	 * not exist, else null.
+	 *
+	 * @param string $catalogSlug The slug of the catalog
+	 * @param string $id Id of publication
+	 *
+	 * @return JSONResponse|null The 404 answer, or null when both exist.
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function refuseFileRead(string $catalogSlug, string $id): ?JSONResponse {
+		// Get the catalog from cache or database.
+		$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
+
+		if ($catalog === null) {
+			return $this->catalogNotFound(catalogSlug: $catalogSlug);
+		}
+
+		// WOO-580: keep a schema without `authorization.read` rules out of the
+		// ANONYMOUS scope (SCH-PFTS-CAT-002). `/api/search` drops the same
+		// schemas but, since WOO-578, for every caller; here it is
+		// anonymous-only by design. What that keeps out — and why it is not
+		// the `bypass => true` case it is easy to mistake it for — is spelled
+		// out on {@see PublicationQueryService::dropSchemasWithoutReadRules()}.
+		// Guarding the catalog covers this route and the scope it hands to the
+		// query builder and the object lookups.
+		$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
+
+		// First verify the object exists in this catalog register and schema.
+		$objectService = $this->getObjectService();
+		$object = $this->queryService->findObjectInCatalog(
+			catalog: $catalog,
+			id: $id,
+			objectService: $objectService
+		);
+
+		if ($object === null) {
 			return new JSONResponse(
 				[
 					'error' => $this->l10n->t('Publication not found'),
-					'message' => $this->l10n->t(
-						'The publication with ID "%s" does not exist in the database.',
-						[$id]
-					),
+					'message' => $this->l10n->t('The publication with ID "%s" does not exist.', [$id]),
 					'id' => $id,
 					'catalogSlug' => $catalogSlug,
 				],
 				404
 			);
-		} catch (\Exception $e) {
-			// Public endpoint — log details server-side, return generic body (#735).
-			$this->logger->error(
-				'[PublicationsController::attachments] Failed to retrieve attachments',
-				[
-					'id' => $id,
-					'catalogSlug' => $catalogSlug,
-					'error' => $e->getMessage(),
-					'trace' => $e->getTraceAsString(),
-				]
-			);
-			return new JSONResponse(
-				['error' => $this->l10n->t('Internal server error')],
-				500
-			);
-		}//end try
+		}
 
-	}//end attachments()
+		return null;
+
+	}//end refuseFileRead()
+
+	/**
+	 * The answer for a file read that threw: a 404 for a missing row, else a logged 500.
+	 *
+	 * Public endpoint — log details server-side, return generic body (#735).
+	 *
+	 * @param \Exception $exception The exception.
+	 * @param array{id: string, catalogSlug: string, log: string} $context The id and the catalogue slug from the URL, and the log message.
+	 *
+	 * @return JSONResponse The 404 or 500 answer.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function fileReadFailed(\Exception $exception, array $context): JSONResponse {
+		if ($exception instanceof DoesNotExistException) {
+			return new JSONResponse(
+				[
+					'error' => $this->l10n->t('Publication not found'),
+					'message' => $this->l10n->t(
+						'The publication with ID "%s" does not exist in the database.',
+						[$context['id']]
+					),
+					'id' => $context['id'],
+					'catalogSlug' => $context['catalogSlug'],
+				],
+				404
+			);
+		}
+
+		$this->logger->error(
+			$context['log'],
+			[
+				'id' => $context['id'],
+				'catalogSlug' => $context['catalogSlug'],
+				'error' => $exception->getMessage(),
+				'trace' => $exception->getTraceAsString(),
+			]
+		);
+		return new JSONResponse(
+			['error' => $this->l10n->t('Internal server error')],
+			500
+		);
+
+	}//end fileReadFailed()
 
 	// Lower than the sibling reads: a download moves file bytes, so the cost of
 	// one call is materially higher than a metadata lookup.
@@ -1427,48 +1795,9 @@ class PublicationsController extends Controller {
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function download(string $catalogSlug, string $id): DataDownloadResponse|JSONResponse {
 		try {
-			// Get the catalog from cache or database.
-			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-
-			if ($catalog === null) {
-				return new JSONResponse(
-					[
-						'error' => $this->l10n->t('Catalog not found'),
-						'message' => $this->l10n->t('The catalog "%s" does not exist.', [$catalogSlug]),
-						'catalogSlug' => $catalogSlug,
-					],
-					404
-				);
-			}
-
-			// WOO-580: keep a schema without `authorization.read` rules out of the
-			// ANONYMOUS scope (SCH-PFTS-CAT-002). `/api/search` drops the same
-			// schemas but, since WOO-578, for every caller; here it is
-			// anonymous-only by design. What that keeps out — and why it is not
-			// the `bypass => true` case it is easy to mistake it for — is spelled
-			// out on {@see PublicationQueryService::dropSchemasWithoutReadRules()}.
-			// Guarding the catalog covers this route and the scope it hands to the
-			// query builder and the object lookups.
-			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
-
-			// First verify the object exists in this catalog register and schema.
-			$objectService = $this->getObjectService();
-			$object = $this->queryService->findObjectInCatalog(
-				catalog: $catalog,
-				id: $id,
-				objectService: $objectService
-			);
-
-			if ($object === null) {
-				return new JSONResponse(
-					[
-						'error' => $this->l10n->t('Publication not found'),
-						'message' => $this->l10n->t('The publication with ID "%s" does not exist.', [$id]),
-						'id' => $id,
-						'catalogSlug' => $catalogSlug,
-					],
-					404
-				);
+			$refusal = $this->refuseFileRead(catalogSlug: $catalogSlug, id: $id);
+			if ($refusal !== null) {
+				return $refusal;
 			}
 
 			$downloadResponse = $this->publicationService->download(id: $id);
@@ -1482,33 +1811,14 @@ class PublicationsController extends Controller {
 			}
 
 			return $downloadResponse;
-		} catch (DoesNotExistException $exception) {
-			return new JSONResponse(
-				[
-					'error' => $this->l10n->t('Publication not found'),
-					'message' => $this->l10n->t(
-						'The publication with ID "%s" does not exist in the database.',
-						[$id]
-					),
-					'id' => $id,
-					'catalogSlug' => $catalogSlug,
-				],
-				404
-			);
 		} catch (\Exception $e) {
-			// Public endpoint — log details server-side, return generic body (#735).
-			$this->logger->error(
-				'[PublicationsController::download] Failed to download publication',
-				[
+			return $this->fileReadFailed(
+				exception: $e,
+				context: [
 					'id' => $id,
 					'catalogSlug' => $catalogSlug,
-					'error' => $e->getMessage(),
-					'trace' => $e->getTraceAsString(),
+					'log' => '[PublicationsController::download] Failed to download publication',
 				]
-			);
-			return new JSONResponse(
-				['error' => $this->l10n->t('Internal server error')],
-				500
 			);
 		}//end try
 
@@ -1537,60 +1847,9 @@ class PublicationsController extends Controller {
 		try {
 			$objectService = $this->getObjectService();
 
-			// Set register/schema context so RelationHandler can find the object in
-			// magic tables. Constrain the lookup to this catalog's configured scope
-			// (#734) — a platform-wide scan would reveal arbitrary cross-catalog
-			// objects (#733).
-			//
-			// Failing to place the object inside the catalog is a refusal, not a reason to
-			// continue unscoped (#857): find() below with no register and no schema falls
-			// back to OpenRegister's every-magic-table path, and this route is #[PublicPage].
-			// A catalog with no configured scope has no namespace to serve from, which is
-			// the same C-1 policy attachments() and download() have carried since wave-7.
-			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-			// WOO-580: same read-rule guard as the sibling routes. This route checks
-			// for a missing catalog via the empty-scope refusal below rather than an
-			// explicit null test, so the cast keeps that shape: a null catalog guards
-			// to an empty scope and still lands on the 404 two lines down.
-			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: (array)$catalog);
-			$catalogRegisters = $this->normaliseIdList(raw: ($catalog['registers'] ?? []));
-			$catalogSchemas = $this->normaliseIdList(raw: ($catalog['schemas'] ?? []));
-			if (empty($catalogRegisters) === true || empty($catalogSchemas) === true) {
-				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
-			}
-
-			$location = $this->queryService->findObjectLocation(
-				uuid: $id,
-				allowedRegisters: $catalogRegisters,
-				allowedSchemas: $catalogSchemas
-			);
-			if ($location === null) {
-				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
-			}
-
-			$objectService->setRegister(register: (string)$location['register']);
-			$objectService->setSchema(schema: (string)$location['schema']);
-
-			// Published-predicate guard (WF2 / wave-12). Mirrors the guard applied to the
-			// federation path (PublicationService::uses, wave-9 C-3) that was missing from
-			// this older per-catalog route. An anonymous caller must not be able to enumerate
-			// the relation graph of an unpublished object by guessing its UUID.
-			// Return 404 (not 401) to avoid leaking object existence.
-			$rootObject = $objectService->find(id: $id);
-			if ($rootObject === null) {
-				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
-			}
-
-			if (is_array($rootObject) === true) {
-				$rootObjectArray = $rootObject;
-			} else {
-				$rootObjectArray = $rootObject->jsonSerialize();
-			}
-
-			if ($this->queryService->isAnonymous() === true
-				&& $this->queryService->isObjectPublic($rootObjectArray) === false
-			) {
-				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
+			$refusal = $this->placePublicRoot(objectService: $objectService, catalogSlug: $catalogSlug, id: $id);
+			if ($refusal !== null) {
+				return $refusal;
 			}
 
 			$queryParams = $this->request->getParams();
@@ -1611,23 +1870,11 @@ class PublicationsController extends Controller {
 			);
 			$result = $this->queryService->applyReadRuleGuardToRows(result: $result, page: $page);
 
-			// Add CORS headers for public API access.
-			$response = new JSONResponse($result, 200);
-			$this->addCorsHeaders(response: $response);
-
-			return $response;
+			return $this->relationsAnswer(result: $result);
 		} catch (\Exception $e) {
-			$this->logger->error(
-				'[PublicationsController::uses] Failed to retrieve publication uses',
-				[
-					'id' => $id,
-					'error' => $e->getMessage(),
-				]
-			);
-			// Public endpoint — return a generic error body to the caller (#735).
-			return new JSONResponse(
-				['error' => $this->l10n->t('Internal server error')],
-				500
+			return $this->relationReadFailed(
+				exception: $e,
+				context: ['id' => $id, 'log' => '[PublicationsController::uses] Failed to retrieve publication uses']
 			);
 		}//end try
 
@@ -1656,60 +1903,9 @@ class PublicationsController extends Controller {
 		try {
 			$objectService = $this->getObjectService();
 
-			// Set register/schema context so RelationHandler can find the object in
-			// magic tables. Constrain the lookup to this catalog's configured scope
-			// (#734) — a platform-wide scan would reveal arbitrary cross-catalog
-			// objects (#733).
-			//
-			// Failing to place the object inside the catalog is a refusal, not a reason to
-			// continue unscoped (#857): find() below with no register and no schema falls
-			// back to OpenRegister's every-magic-table path, and this route is #[PublicPage].
-			// A catalog with no configured scope has no namespace to serve from, which is
-			// the same C-1 policy attachments() and download() have carried since wave-7.
-			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-			// WOO-580: same read-rule guard as the sibling routes. This route checks
-			// for a missing catalog via the empty-scope refusal below rather than an
-			// explicit null test, so the cast keeps that shape: a null catalog guards
-			// to an empty scope and still lands on the 404 two lines down.
-			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: (array)$catalog);
-			$catalogRegisters = $this->normaliseIdList(raw: ($catalog['registers'] ?? []));
-			$catalogSchemas = $this->normaliseIdList(raw: ($catalog['schemas'] ?? []));
-			if (empty($catalogRegisters) === true || empty($catalogSchemas) === true) {
-				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
-			}
-
-			$location = $this->queryService->findObjectLocation(
-				uuid: $id,
-				allowedRegisters: $catalogRegisters,
-				allowedSchemas: $catalogSchemas
-			);
-			if ($location === null) {
-				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
-			}
-
-			$objectService->setRegister(register: (string)$location['register']);
-			$objectService->setSchema(schema: (string)$location['schema']);
-
-			// Published-predicate guard (WF2 / wave-12). Mirrors the guard applied to the
-			// federation path (PublicationService::used, wave-9 C-3) that was missing from
-			// this older per-catalog route. An anonymous caller must not be able to enumerate
-			// the incoming-relation graph of an unpublished object by guessing its UUID.
-			// Return 404 (not 401) to avoid leaking object existence.
-			$rootObject = $objectService->find(id: $id);
-			if ($rootObject === null) {
-				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
-			}
-
-			if (is_array($rootObject) === true) {
-				$rootObjectArray = $rootObject;
-			} else {
-				$rootObjectArray = $rootObject->jsonSerialize();
-			}
-
-			if ($this->queryService->isAnonymous() === true
-				&& $this->queryService->isObjectPublic($rootObjectArray) === false
-			) {
-				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
+			$refusal = $this->placePublicRoot(objectService: $objectService, catalogSlug: $catalogSlug, id: $id);
+			if ($refusal !== null) {
+				return $refusal;
 			}
 
 			$queryParams = $this->request->getParams();
@@ -1727,25 +1923,150 @@ class PublicationsController extends Controller {
 			// block as open. Same read-rule guard on the rows (WOO-581 review round 2).
 			$result = $this->queryService->applyReadRuleGuardToRows(result: $result);
 
-			// Add CORS headers for public API access.
-			$response = new JSONResponse($result, 200);
-			$this->addCorsHeaders(response: $response);
-
-			return $response;
+			return $this->relationsAnswer(result: $result);
 		} catch (\Exception $e) {
-			$this->logger->error(
-				'[PublicationsController::used] Failed to retrieve publication used',
-				[
-					'id' => $id,
-					'error' => $e->getMessage(),
-				]
-			);
-			// Public endpoint — return a generic error body to the caller (#735).
-			return new JSONResponse(
-				['error' => $this->l10n->t('Internal server error')],
-				500
+			return $this->relationReadFailed(
+				exception: $e,
+				context: ['id' => $id, 'log' => '[PublicationsController::used] Failed to retrieve publication used']
 			);
 		}//end try
 
 	}//end used()
+
+	/**
+	 * Place the root object of a relation read inside the catalogue's scope and
+	 * point the object service at its register and schema; the 404 answer when
+	 * it is not there or not public to an anonymous caller, else null.
+	 *
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param string $catalogSlug The slug of the catalog
+	 * @param string $id The ID of the publication
+	 *
+	 * @return JSONResponse|null The 404 answer, or null when the root may be read.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function placePublicRoot(object $objectService, string $catalogSlug, string $id): ?JSONResponse {
+		// Set register/schema context so RelationHandler can find the object in
+		// magic tables. Constrain the lookup to this catalog's configured scope
+		// (#734) — a platform-wide scan would reveal arbitrary cross-catalog
+		// objects (#733).
+		//
+		// Failing to place the object inside the catalog is a refusal, not a reason to
+		// continue unscoped (#857): find() below with no register and no schema falls
+		// back to OpenRegister's every-magic-table path, and this route is #[PublicPage].
+		// A catalog with no configured scope has no namespace to serve from, which is
+		// the same C-1 policy attachments() and download() have carried since wave-7.
+		$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
+		// WOO-580: same read-rule guard as the sibling routes. This route checks
+		// for a missing catalog via the empty-scope refusal below rather than an
+		// explicit null test, so the cast keeps that shape: a null catalog guards
+		// to an empty scope and still lands on the 404 two lines down.
+		$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: (array)$catalog);
+		$catalogRegisters = $this->normaliseIdList(raw: ($catalog['registers'] ?? []));
+		$catalogSchemas = $this->normaliseIdList(raw: ($catalog['schemas'] ?? []));
+		if (empty($catalogRegisters) === true || empty($catalogSchemas) === true) {
+			return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
+		}
+
+		$location = $this->queryService->findObjectLocation(
+			uuid: $id,
+			allowedRegisters: $catalogRegisters,
+			allowedSchemas: $catalogSchemas
+		);
+		if ($location === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
+		}
+
+		$objectService->setRegister(register: (string)$location['register']);
+		$objectService->setSchema(schema: (string)$location['schema']);
+
+		// Published-predicate guard (WF2 / wave-12). Mirrors the guard applied to the
+		// federation path (PublicationService::uses and ::used, wave-9 C-3) that was missing from
+		// this older per-catalog route. An anonymous caller must not be able to enumerate
+		// the relation graphs of an unpublished object by guessing its UUID.
+		// Return 404 (not 401) to avoid leaking object existence.
+		$rootObject = $objectService->find(id: $id);
+		if ($rootObject === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
+		}
+
+		if (is_array($rootObject) === true) {
+			$rootObjectArray = $rootObject;
+		} else {
+			$rootObjectArray = $rootObject->jsonSerialize();
+		}
+
+		if ($this->queryService->isAnonymous() === true
+			&& $this->queryService->isObjectPublic($rootObjectArray) === false
+		) {
+			return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
+		}
+
+		return null;
+
+	}//end placePublicRoot()
+
+	/**
+	 * The answer for a relation read: the rows, each with only its public
+	 * source identifiers, with CORS headers for public API access.
+	 *
+	 * @param array<string, mixed> $result The guarded rows.
+	 *
+	 * @return JSONResponse The 200 answer.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	private function relationsAnswer(array $result): JSONResponse {
+		if (is_array(($result['results'] ?? null)) === true) {
+			$rules = new PublicationLinkRules();
+			$result['results'] = array_map(
+				static function (mixed $row) use ($rules): mixed {
+					if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+						$row = $row->jsonSerialize();
+					}
+
+					if (is_array($row) === false) {
+						return $row;
+					}
+
+					return $rules->withPublicSourceIdentifiers(publication: $row);
+				},
+				$result['results']
+			);
+		}
+
+		$response = new JSONResponse($result, 200);
+		$this->addCorsHeaders(response: $response);
+
+		return $response;
+
+	}//end relationsAnswer()
+
+	/**
+	 * The answer for a relation read that threw: a logged 500 with a generic
+	 * body, since this is a public endpoint (#735).
+	 *
+	 * @param \Exception $exception The exception.
+	 * @param array{id: string, log: string} $context The id from the URL and the log message.
+	 *
+	 * @return JSONResponse The 500 answer.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function relationReadFailed(\Exception $exception, array $context): JSONResponse {
+		$this->logger->error(
+			$context['log'],
+			[
+				'id' => $context['id'],
+				'error' => $exception->getMessage(),
+			]
+		);
+		return new JSONResponse(
+			['error' => $this->l10n->t('Internal server error')],
+			500
+		);
+
+	}//end relationReadFailed()
 }//end class

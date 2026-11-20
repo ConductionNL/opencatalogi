@@ -1579,9 +1579,9 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "src/manifest.json:750 PublicationDetail sidebar History tab = audit widget; nextcloud-vue CnAuditTrailTab.vue:78-81 renders each entry's changed fields Not built: the publication page shows only the audit list (Geschiedenis); there is no list of versions to open and no compare. Task 2.4 of capability-rows-close-gaps.",
+				"evidence": "src/manifest.json PublicationDetail pub-versions card = the nextcloud-vue version-history integration (CnVersionHistory, registered by OpenRegister's registerBuiltinIntegrations): it lists the publication's versions from OpenRegister's object audit trail (GET /api/objects/{register}/{schema}/{id}/audit-trails: semantic version, action, date, user) newest first, opens one to see what it changed, and compares two checked versions field by field by folding the audit deltas between them (added, removed, changed, with old and new values). The sidebar History tab stays the raw event log (tests/vitest/publicationVersionHistory.spec.js). OpenRegister has no server-side diff endpoint and no revert from this card.",
 				"spec": "openregister/openspec/specs/enhanced-audit-trail",
 				"requirement": "openregister:openspec/specs/content-versioning :: The system MUST support version comparison with visual diffs",
 				"plan": "openspec/changes/capability-rows-close-gaps"
@@ -1729,9 +1729,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:205 GET /api/catalogs/{slug}/quality -> StatsController.php:223 + QualityService.php:106 scoreDataset; routes.php:28-29 DCAT validate endpoints; grep of src/ finds no caller of /quality; publication_register.json:289 hardValidation false, required only title Not built: the quality score is computed server side but no staff page shows it, so nobody sees the missing metadata before publishing. Task 2.5 of capability-rows-close-gaps.",
+				"evidence": "src/manifest.json PublicationDetail pub-quality card -> src/components/widgets/PublicationQualityWidget.vue -> services/publicationQuality.js GET /api/catalogs/{slug}/publications/{id}/quality -> StatsController::publicationQuality (readable catalogue) -> lib/Service/PublicationQuality.php reads the publication under RBAC, DcatService::buildPublicationDataset renders the same dcat:Dataset the feed holds, QualityService::scoreDataset scores it; the card shows the 0-100 score and names the missing fields, published or not, advisory only (PublicationQualityTest, StatsPublicationQualityTest, DcatCatalogDocumentTest, PublicationQualityWidget.spec.js, tests/vitest/publicationQuality.spec.js)",
 				"change": "publication-quality-metrics",
 				"requirement": [
 					"openspec/specs/publication-quality :: Per-publication metadata-quality score over MQA dimensions (PQM-001)",
@@ -3721,7 +3721,7 @@
 			"source": "competitor-derived",
 			"opencatalogi": "no",
 			"built": {
-				"state": "specified",
+				"state": "building",
 				"owner": "ConductionNL/portaliq",
 				"evidence": "grep chart/visuali/leaflet/maplibre: opencatalogi hits only dashboard widgets (src/composables/useChartColors.js); portaliq hits only traffic widgets (src/widgets/Traffic*.vue); PublicationDetailBlock.vue has no dataset preview",
 				"change": "dataset-views-on-the-public-page",
@@ -4887,7 +4887,7 @@
 				"evidence": "Code removed 2026-09-29 (openspec/changes/archive/2026-09-29-remove-decided-no-dead-code, DECISIONS row 9); before removal: lib/Controller/CommunityController.php:298 subscribe stores an unconfirmed subscription and drops the one-time token from SubscriptionService::request; no confirm route in appinfo/routes.php; SubscriptionService::confirm is never called outside tests; recipients() returns only confirmed addresses"
 			},
 			"reachedOn": "nothing: POST /api/status/subscribe answers 202 'confirm the address', but no mail is sent and no confirm route exists",
-			"note": "Decided no 2026-09-28: No competitor rated yes, no demand row, and the app sends no mail itself by design. No subscription can reach the confirmed state, so the recipient list is always empty. openspec/changes/the-public-and-community-surface/tasks.md:38 also says the app sends nothing itself.",
+			"note": "Decided no 2026-09-28: No competitor rated yes, no demand row, and the app sends no mail itself by design. No subscription can reach the confirmed state, so the recipient list is always empty. openspec/changes/archive/2026-10-10-the-public-and-community-surface/tasks.md:38 also says the app sends nothing itself.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "notices-status-and-feeds",
@@ -4987,11 +4987,11 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "planned",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:218 GET /api/feeds/{catalogSlug} @PublicPage; lib/Controller/CommunityController.php:394 filters publications by 'catalog', a property the publication schema does not declare (lib/Settings/publication_register.json); lib/Service/Publication/PublicationRuleService.php:331 keeps only records whose @type/recordType has a publicationRule Missing (spec-coverage pass 2026-11-12, development bba37fc7): CommunityController::feed() filters publications on 'catalog', which the publication schema does not declare, so no record reaches the feed; open task 3.3 of the-public-and-community-surface.",
+				"evidence": "GET /api/feeds/{catalogSlug} @PublicPage (appinfo/routes.php); CommunityController::feed reads the catalogue through CatalogueFeedReader::read (the publication schema's read rules, inside runAsAnonymous, for every caller, decision 138) and only the notices of the catalogue's own boards (AtomFeedService::noticesOfCatalogue); tests CommunityControllerTest::testTheFeedCarriesWhatAnAnonymousReaderMayReadInTheCatalogue, CatalogueFeedReaderTest::testThePublicationSchemaKeepsADraftFromAnAnonymousReader",
 				"change": "the-public-and-community-surface",
-				"requirement": "openspec/changes/the-public-and-community-surface/specs/public-and-community-surface :: A catalogue's activity is published as a feed (REQ-PCS-105)"
+				"requirement": "openspec/specs/public-and-community-surface :: A catalogue's activity is published as a feed (REQ-PCS-105)"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/feeds/{catalogSlug} (public, Atom). Nothing links to it",
 			"note": "Returns valid Atom. On shipped schemas an ordinary publication has no catalog or recordType field, so the feed likely holds notices only. Nobody has shown a record entry in a live feed.",
@@ -5055,9 +5055,9 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:220 POST /api/markup/render; lib/Controller/CommunityController.php:533 renderMarkup returns MarkupRenderService output; openspec/changes/the-public-and-community-surface/tasks.md:44 says ViewObject.vue and WooRedactionView.vue still render with marked, so byte-parity is not claimed",
+				"evidence": "appinfo/routes.php:220 POST /api/markup/render; lib/Controller/CommunityController.php:533 renderMarkup returns MarkupRenderService output; openspec/changes/archive/2026-10-10-the-public-and-community-surface/tasks.md:44 says ViewObject.vue and WooRedactionView.vue still render with marked, so byte-parity is not claimed",
 				"change": "the-public-and-community-surface",
-				"requirement": "openspec/changes/the-public-and-community-surface/specs/public-and-community-surface :: A client renders our markup the way we render it (REQ-PCS-107)"
+				"requirement": "openspec/specs/public-and-community-surface :: A client renders our markup the way we render it (REQ-PCS-107)"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/markup/render (public). No caller in opencatalogi src/ or portaliq",
 			"note": "Renders a documented subset. The app's own views do not use it, so 'exactly as the app renders' is not true today.",
@@ -5987,9 +5987,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/AppInfo/Application.php:114 registers the RetentionWidget; src/views/widgets/RetentionWidget.vue:137 fetches /api/retention/queue (counts only); :120 opens /apps/opencatalogi/?retention=<status>, but nothing in src/ reads that query Not built: the counts are real but there is no queue to work through; the deep link goes nowhere and src/services/retentionStatus.js is imported by nothing. Task 2.6 of capability-rows-close-gaps.",
+				"evidence": "src/manifest.d/retention-review-queue.json RetentionReview index page (/retention) lists the publications expiring within 30 days or expired, with quick filters, per-item and bulk extend, depublish and archive (RetentionDecisionDialog -> POST /api/retention/publications/{id}/decision) and the report; each row opens RetentionPublication (/retention/:id) with the retention fields and decision log; src/views/widgets/RetentionWidget.vue opens /retention; the unused src/services/retentionStatus.js is removed (validate-manifest, retentionActions.spec.js)",
 				"change": "publication-retention-lifecycle",
 				"requirement": "openspec/specs/publication-retention-lifecycle :: Retention review queue and dashboard widget (RET-007)",
 				"plan": "openspec/changes/capability-rows-close-gaps"
@@ -6024,9 +6024,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:56 POST /api/retention/publications/{id}/decision; lib/Controller/RetentionController.php:166 -> RetentionService.php:720 recordHumanDecision (extend|depublish|archive|dispose, rationale mandatory) -> recordDecision writes retentionDecisionLog Not built: 'dispose' only sets status archived and removes nothing, and retentionDecisionLog is not declared on the publication schema (lib/Settings/publication_register.json), so the recorded decision is not shown to survive the save. Task 2.7 of capability-rows-close-gaps.",
+				"evidence": "appinfo/routes.php POST /api/retention/publications/{id}/decision; RetentionController::decide -> RetentionService::recordHumanDecision (extend|depublish|archive|dispose, rationale mandatory) saves the decision in retentionDecisionLog (declared on the publication schema in lib/Settings/publication_register.json) first, then dispose removes the publication through RetentionRun::remove (RetentionDecisionGoldenTest, RetentionRulesTest)",
 				"change": "publication-retention-lifecycle",
 				"requirement": [
 					"openspec/specs/publication-retention-lifecycle :: Retention review queue and dashboard widget (RET-007)",
@@ -6067,9 +6067,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:54-55 GET/POST /api/retention/defaults; lib/Service/RetentionService.php:220/243 per-catalog, per-Woo-category term and action in app config; applied at publication by lib/Listener/ObjectCreatedEventListener.php:175 and ObjectUpdatedEventListener.php:195 Missing (spec-coverage pass 2026-11-12, development bba37fc7): no screen sets the retention defaults (no src caller of /api/retention/defaults), only the API does.",
+				"evidence": "appinfo/routes.php GET/POST /api/retention/defaults; lib/Service/RetentionService.php per-catalog, per-Woo-category term and action in app config, applied at publication by ObjectCreatedEventListener and ObjectUpdatedEventListener; src/components/CatalogRetentionDefaultsFields.vue on the catalogue edit page (CatalogModal, admins) reads and saves them per Woo information category with a catalogue-wide fallback (CatalogRetentionDefaultsFields.spec.js, tests/vitest/retentionDefaults.spec.js)",
 				"change": [
 					"publication-retention-lifecycle",
 					"retention-defaults-on-shared-decision-tables"
@@ -6334,9 +6334,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "PublicationsController.php:205-217 countReach -> UsageCounterService.php:221 increment stores only publication/date/kind/count, crawler UA discarded; called only from PublicationsController.php:831,842,1045; UsageCounterService.php:66 key usageCounter_register is never written by import (SettingsService.php:1185-1191 omits usageCounter), so increment skips (:241) Not built: the import never writes usageCounter_register or usageCounter_schema (SettingsService.php KEYED_SCHEMA_GROUPS has no usageCounter group, and WRITABLE_OBJECT_TYPES leaves it out), so UsageCounterService finds no schema and counts nothing on a default install; FederationController counts no reads. Task 2.1 of capability-rows-close-gaps.",
+				"evidence": "lib/Service/SettingsService.php KEYED_SCHEMA_GROUPS usageCounter group writes usageCounter_register and usageCounter_schema on import and repair (SettingsObjectTypeConfigurationTest); PublicationsController countReach and FederationController countReach -> UsageCounterService increment stores only publication/date/kind/count, crawler UA discarded (FederationUsageCountTest)",
 				"change": "publication-usage-analytics",
 				"requirement": [
 					"openspec/specs/publication-usage-analytics :: Count public publication views and file downloads (ANA-001)",
@@ -6377,9 +6377,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/views/dashboard/Dashboard.vue:185 usage area chart <- fetchUsageChart -> services/usageStats.js:56 GET /api/stats/series (routes.php:207, StatsController.php:185) Not built: the chart reads counters that a default install never writes (see ops-usage). Task 2.2 of capability-rows-close-gaps.",
+				"evidence": "src/views/dashboard/Dashboard.vue usage card \"Publication views\" <- fetchUsageChart -> services/usageStats.js GET /api/stats/series -> StatsController::series -> UsageCounterService::aggregateInstanceSeries over the usage counters, which a default install now writes (ops-usage, SettingsObjectTypeConfigurationTest); requests-not-visitors and counting-start notes on the card",
 				"change": "publication-usage-analytics",
 				"requirement": "openspec/specs/publication-usage-analytics :: Dashboard usage card shows publication views and downloads (ANA-009)",
 				"plan": "openspec/changes/capability-rows-close-gaps"
@@ -6414,9 +6414,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/AppInfo/Application.php:113 registers MostViewedPublicationsWidget; src/views/widgets/MostViewedPublicationsWidget.vue:66-69 catalogSlug hard-coded 'publications'; :95 shows the publication UUID as the title; :138 row link /publications/{id} lands on the catalogSlug route Not built: the list covers one catalogue slug, shows UUIDs instead of titles, its row link is broken, and it reads counters a default install never writes. Task 2.3 of capability-rows-close-gaps.",
+				"evidence": "lib/Dashboard/MostViewedPublicationsWidget.php -> src/views/widgets/MostViewedPublicationsWidget.vue -> services/usageStats.js fetchMostViewed GET /api/stats/top -> StatsController::top -> lib/Service/MostViewedPublications.php ranks the counted views of every catalogue the caller may read, keeps only publications the caller may read under RBAC and names them by title; the row opens /publications/{catalog}/{id} (MostViewedPublicationsTest, StatsTopTest, tests/vitest/mostViewedRows.spec.js)",
 				"change": "publication-usage-analytics",
 				"requirement": "openspec/specs/publication-usage-analytics :: Catalog roll-ups and top-N (ANA-005)",
 				"plan": "openspec/changes/capability-rows-close-gaps"
@@ -7317,9 +7317,9 @@
 			"originUrl": "https://github.com/GetDKAN/dkan/issues/4581",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/integriq",
-				"evidence": "source read at integriq development 5e903e546: each synchronisation now declares what happens to a record that disappears from its source: sourceConfig.disappearancePolicy delete, markEnded, keepAndFlag or purge (integriq@lib/Service/Ownership/DisappearancePolicy.php:35-63), applied by integriq@lib/Service/SynchronizationService.php:4354-4644 behind the existing deletion-ratio guard, chosen in the synchronisation editor (integriq@src/modals/v2/SynchronizationEditorModal.vue:191-206). Shipped by integriq change records-owned-by-an-external-source, archived 2026-09-28 (22 of 23 tasks; the open one is a nightly e2e). keepAndFlag is keep until someone acts; markEnded writes an end date instead of an opencatalogi unpublish. Source read at opencatalogi development 7a5a8a492: federated publications are still read live from peers (lib/Controller/FederationController.php), so a record gone at the peer disappears at once. Not built: the policy exists per integriq synchronisation, but it does not depublish or flag the opencatalogi publication made from the record. Task 2.8 of capability-rows-close-gaps.",
+				"evidence": "source read at integriq development 5e903e546: each synchronisation now declares what happens to a record that disappears from its source: sourceConfig.disappearancePolicy delete, markEnded, keepAndFlag or purge (integriq@lib/Service/Ownership/DisappearancePolicy.php:35-63), applied by integriq@lib/Service/SynchronizationService.php:4354-4644 behind the existing deletion-ratio guard, chosen in the synchronisation editor (integriq@src/modals/v2/SynchronizationEditorModal.vue:191-206). Shipped by integriq change records-owned-by-an-external-source, archived 2026-09-28 (22 of 23 tasks; the open one is a nightly e2e). keepAndFlag is keep until someone acts; markEnded writes an end date instead of an opencatalogi unpublish. Source read at opencatalogi development 7a5a8a492: federated publications are still read live from peers (lib/Controller/FederationController.php), so a record gone at the peer disappears at once. Built in opencatalogi by capability-rows-close-gaps task 2.8: lib/Listener/SourceAbsenceListener.php reacts to the markers the policy writes on a publication: when markEnded writes sourceEndedAt, it sets depublicationDate to that moment (lib/Service/Publication/SourceAbsence.php; an earlier depublication is kept, a republication is not undone); when keepAndFlag writes only absentAtSource, the publication stays up and its Publication status card tells the editor (GET /api/publications/{id}/visibility sourceAbsence, PublicationVisibilityWidget note). The markers are declared on the publication schema (lib/Settings/register.d/capability-rows-close-gaps.json, absentAtSource facetable). Tests: SourceAbsenceTest, SourceAbsenceListenerTest, PublicationStateControllerTest, PublicationVisibilityWidget.spec.js. Live federation (read from peers) still has no choice.",
 				"readOn": "2026-10-07",
 				"spec": "integriq/openspec/specs/source-owned-records",
 				"requirement": "integriq:openspec/specs/source-owned-records :: What happens when a record disappears is declared, not hardcoded (REQ-SOR-002)",

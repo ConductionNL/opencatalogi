@@ -23,10 +23,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 /**
- * Resolve the `Access-Control-Allow-Origin` value the way the list controllers do.
- *
- * Unlike AnswersCrossOriginRequests, the caller is read from the server's
- * HTTP_ORIGIN when the Origin header is empty.
+ * Resolve the `Access-Control-Allow-Origin` value for the list controllers,
+ * through ResolvesAllowedOrigin.
  *
  * Consuming controllers MUST expose a `private readonly IAppConfig $config`
  * property, and inherit `$appName` and `$request` from `OCP\AppFramework\Controller`.
@@ -34,31 +32,14 @@ namespace OCA\OpenCatalogi\Controller;
  * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
  */
 trait AnswersCrossOriginListRequests {
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * @return string The header value.
-	 *
-	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
-	 */
-	private function resolveAllowedOrigin(): string {
-		$allowlist = new CorsAllowlist($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		return $allowlist->allowedFor($this->callerOrigin());
-	}//end resolveAllowedOrigin()
+	use ResolvesAllowedOrigin;
 
 	/**
-	 * The caller's Origin header, or the server's HTTP_ORIGIN when the header is empty.
+	 * The `cors_allowed_origins` setting.
 	 *
-	 * @return string The caller's origin, or '' when it sent none.
-	 *
-	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 * @return string The setting.
 	 */
-	private function callerOrigin(): string {
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin === '') {
-			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
-		}
-
-		return $callerOrigin;
-	}//end callerOrigin()
+	private function allowedOriginsSetting(): string {
+		return $this->config->getValueString($this->appName, 'cors_allowed_origins', '*');
+	}//end allowedOriginsSetting()
 }//end trait

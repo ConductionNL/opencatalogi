@@ -23,9 +23,12 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
+use OCA\OpenCatalogi\Service\Publication\SourceIdentifierFilter;
+use OCA\OpenCatalogi\Service\Subject\SubjectSearch;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
@@ -46,6 +49,20 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.TooManyMethods) Small private steps keep each unit short; they are not a public surface.
  */
 class PublicationQueryService implements PublicationQueryServiceInterface {
+
+	/**
+	 * The `resultType` of a publication result (REQ-SUB-004).
+	 *
+	 * @var string
+	 */
+	public const RESULT_TYPE_PUBLICATION = 'publication';
+
+	/**
+	 * The `resultType` of a document result (REQ-SUB-004).
+	 *
+	 * @var string
+	 */
+	public const RESULT_TYPE_DOCUMENT = 'document';
 
 	/**
 	 * Order fields that exist in every magic-mapper table.
@@ -78,6 +95,30 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	public const PUBLIC_LIMIT_MAX = 100;
 
 	/**
+	 * The language publications are written in, and the one a visitor gets when
+	 * they ask for none or for one that is not a valid tag (publication-translations
+	 * REQ-PTR-002).
+	 *
+	 * @var string
+	 */
+	public const SOURCE_LANGUAGE = 'nl';
+
+	/**
+	 * Basic BCP 47 shape, the same check OpenRegister's own negotiation applies.
+	 *
+	 * @var string
+	 */
+	private const LANGUAGE_TAG = '/^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})*$/';
+
+	/**
+	 * OpenRegister's request-scoped language service, which its object reads
+	 * consult when they pick a translation.
+	 *
+	 * @var string
+	 */
+	private const OR_LANGUAGE_SERVICE = 'OCA\OpenRegister\Service\LanguageService';
+
+	/**
 	 * Whether the missing-runAsAnonymous() warning has been logged this request.
 	 *
 	 * @var bool
@@ -97,6 +138,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *                                     catalog-scope resolution failure is observable in production (WOO-536).
 	 * @param AppliedFilters|null $appliedFilters The request's collector; each filter this service applies
 	 *                                            records itself there (REQ-ASF-002).
+	 * @param SubjectSearch|null $subjects The subjects a search term matches (REQ-SUB-004).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -104,6 +146,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		private readonly ?IAppConfig $config = null,
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?AppliedFilters $appliedFilters = null,
+		private readonly ?SubjectSearch $subjects = null,
 	) {
 
 	}//end __construct()
@@ -203,12 +246,21 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @spec openspec/specs/search/spec.md
 	 */
 	private function assembleSearchResultsAsAnonymous(array $queryParams, object $objectService): array {
+		// REQ-SUB-004: `resultType=subject` asks for subjects only, `resultType=publication`
+		// for exactly today's results; anything else gets both.
+		$resultType = $this->requestedResultType(queryParams: $queryParams);
+		$subjects = [];
+		if ($resultType !== self::RESULT_TYPE_PUBLICATION) {
+			$subjects = $this->matchingSubjects(queryParams: $queryParams, objectService: $objectService);
+		}
+
+		if ($resultType === SubjectSearch::RESULT_TYPE) {
+			return $this->withSubjects(envelope: ['results' => [], 'total' => 0], subjects: $subjects);
+		}
+
 		$scope = $this->guardedCatalogScope(queryParams: $queryParams);
 		if ($scope === null) {
-			return [
-				'results' => [],
-				'total' => 0,
-			];
+			return $this->withSubjects(envelope: ['results' => [], 'total' => 0], subjects: $subjects);
 		}
 
 		$run = new PublicSearchAssembly(objectService: $objectService, scope: $scope);
@@ -249,8 +301,94 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 			$this->collectCandidateRow(candidate: $candidate, run: $run);
 		}
 
-		return $this->searchEnvelope(candidateResult: $candidateResult, run: $run);
+		return $this->withSubjects(
+			envelope: $this->searchEnvelope(candidateResult: $candidateResult, run: $run),
+			subjects: $subjects
+		);
 	}//end assembleSearchResultsAsAnonymous()
+
+	/**
+	 * The `resultType` the caller asked for, or null for every type.
+	 *
+	 * @param array $queryParams Raw request query parameters.
+	 *
+	 * @return string|null `publication`, `subject`, or null.
+	 *
+	 * @psalm-param   array<string, mixed> $queryParams
+	 * @phpstan-param array<string, mixed> $queryParams
+	 *
+	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+	 */
+	private function requestedResultType(array $queryParams): ?string {
+		$requested = ($queryParams['resultType'] ?? null);
+		if ($requested === self::RESULT_TYPE_PUBLICATION || $requested === SubjectSearch::RESULT_TYPE) {
+			return $requested;
+		}
+
+		return null;
+	}//end requestedResultType()
+
+	/**
+	 * The subjects the search term matches, read in the anonymous scope; none
+	 * without a term, without the subject search, or when the read fails.
+	 *
+	 * @param array  $queryParams   Raw request query parameters.
+	 * @param object $objectService OpenRegister ObjectService instance.
+	 *
+	 * @return array<int, array<string, mixed>> The subject results.
+	 *
+	 * @psalm-param   array<string, mixed> $queryParams
+	 * @phpstan-param array<string, mixed> $queryParams
+	 *
+	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+	 */
+	private function matchingSubjects(array $queryParams, object $objectService): array {
+		$term = ($queryParams['_search'] ?? '');
+		if ($this->subjects === null || is_string($term) === false || trim($term) === '') {
+			return [];
+		}
+
+		try {
+			return $this->evaluateAsAnonymous(
+				objectService: $objectService,
+				operation: fn (): array => $this->subjects->search(objectService: $objectService, term: $term)
+			);
+		} catch (\Throwable $e) {
+			// The publication results still answer; a failed subject read only drops the subjects.
+			$this->logger?->warning('Public search: the subject read failed', ['error' => $e->getMessage()]);
+			return [];
+		}
+	}//end matchingSubjects()
+
+	/**
+	 * The envelope with `resultType` on every row, the subjects appended, the
+	 * total raised by their count and a `resultType` facet counting this answer.
+	 *
+	 * @param array $envelope The publication and document envelope.
+	 * @param array $subjects The subject results.
+	 *
+	 * @return array<string, mixed> The envelope.
+	 *
+	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+	 */
+	private function withSubjects(array $envelope, array $subjects): array {
+		$counts = [self::RESULT_TYPE_PUBLICATION => 0, self::RESULT_TYPE_DOCUMENT => 0, SubjectSearch::RESULT_TYPE => count($subjects)];
+		foreach ($envelope['results'] as $index => $row) {
+			$type = self::RESULT_TYPE_PUBLICATION;
+			if (($row['@self']['schema'] ?? null) === 'document') {
+				$type = self::RESULT_TYPE_DOCUMENT;
+			}
+
+			$envelope['results'][$index]['resultType'] = $type;
+			$counts[$type]++;
+		}
+
+		$envelope['results'] = array_merge($envelope['results'], $subjects);
+		$envelope['total'] += count($subjects);
+		$envelope['facets'] = (($envelope['facets'] ?? []) + ['resultType' => $counts]);
+
+		return $envelope;
+	}//end withSubjects()
 
 	/**
 	 * The catalogue scope of the search with the read-rule guard applied, or null
@@ -363,7 +501,9 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		// precedence chain and bypassed the SCH-PFTS-CAT-002 guard (WOO-581 review).
 		$searchQuery = CallerScope::strip(query: $searchQuery, appliedFilters: $this->appliedFilters);
 		unset($searchQuery['catalogSlug'], $searchQuery['fq']);
-		unset($searchQuery['_content']);
+		unset($searchQuery['_content'], $searchQuery['resultType']);
+		// REQ-PRS-003: `sourceIdentifier` matches public entries only.
+		$searchQuery = SourceIdentifierFilter::forPublicQuery(query: $searchQuery, params: $queryParams);
 		// OC-level params consumed by resolveCatalogScope — strip before forwarding to OR.
 		unset($searchQuery['_catalog'], $searchQuery['_catalogi']);
 
@@ -570,6 +710,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @return array|null The shaped row, or null when it must be dropped.
 	 *
 	 * @spec openspec/specs/search/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::isUnlisted() is a pure predicate.
 	 */
 	private function shapeCandidateRow(array $rowArray, PublicSearchAssembly $run): ?array {
 		$schemaId = $this->extractSchemaId(rowArray: $rowArray);
@@ -596,6 +737,11 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 				name: AppliedFilters::ARCHIVED_EXCLUDED,
 				reason: 'Archived publications are never shown on a public list.'
 			);
+			return null;
+		}
+
+		// REQ-PLC-006: an unlisted publication is reachable at its own link, never found by search.
+		if (UnlistedPublications::isUnlisted(row: $rowArray) === true) {
 			return null;
 		}
 
@@ -1351,6 +1497,187 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	}//end isCatalogPubliclyAvailable()
 
 	/**
+	 * The language a public visitor asks for: `_lang`, then `language`, then the
+	 * first tag of `Accept-Language`, else Dutch.
+	 *
+	 * A value that is not a language tag is skipped, never refused, so a
+	 * nonsense `?_lang=` is read in the next language asked for or in Dutch.
+	 *
+	 * @param array<string, mixed> $queryParams The request query parameters.
+	 * @param string $acceptLanguage The Accept-Language header, or ''.
+	 *
+	 * @return array{language: string, source: string, accepted: list<string>} The language,
+	 *         where it came from (query, header or default) and the header's tags in order.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function visitorLanguage(array $queryParams, string $acceptLanguage): array {
+		$accepted = $this->acceptedLanguageTags(header: $acceptLanguage);
+
+		foreach (['_lang', 'language'] as $name) {
+			$value = $queryParams[$name] ?? null;
+			if (is_string($value) === true && preg_match(self::LANGUAGE_TAG, trim($value)) === 1) {
+				return ['language' => trim($value), 'source' => 'query', 'accepted' => $accepted];
+			}
+		}
+
+		if ($accepted !== []) {
+			return ['language' => $accepted[0], 'source' => 'header', 'accepted' => $accepted];
+		}
+
+		return ['language' => self::SOURCE_LANGUAGE, 'source' => 'default', 'accepted' => []];
+	}//end visitorLanguage()
+
+	/**
+	 * Hand the visitor's language to OpenRegister before a public read, so the
+	 * translatable fields come back in that language and fall back to Dutch per
+	 * field where no translation exists.
+	 *
+	 * Without OpenRegister's language service (an OpenRegister that predates
+	 * translations) nothing is set and the read stays in the source language.
+	 *
+	 * @param array<string, mixed> $queryParams The request query parameters.
+	 * @param string $acceptLanguage The Accept-Language header, or ''.
+	 *
+	 * @return string The language asked of OpenRegister, or Dutch when it could not be passed.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function applyVisitorLanguage(array $queryParams, string $acceptLanguage): string {
+		$languageService = $this->orLanguageService();
+		if ($languageService === null) {
+			return self::SOURCE_LANGUAGE;
+		}
+
+		$visitor = $this->visitorLanguage(queryParams: $queryParams, acceptLanguage: $acceptLanguage);
+		$languageService->setAcceptedLanguages($visitor['accepted']);
+		$languageService->setPreferredLanguage($visitor['language']);
+		$languageService->setRequestedLanguageSource($visitor['source']);
+
+		return $visitor['language'];
+	}//end applyVisitorLanguage()
+
+	/**
+	 * The language headers of a public answer, read back from OpenRegister after
+	 * the read: `Content-Language` (the language served), `X-Source-Language`
+	 * (the language the text is written in) and, when a field fell back to the
+	 * source, `X-Content-Language-Fallback: true`.
+	 *
+	 * @return array<string, string> Header name to value.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function languageHeaders(): array {
+		$languageService = $this->orLanguageService();
+		if ($languageService === null) {
+			return ['Content-Language' => self::SOURCE_LANGUAGE, 'X-Source-Language' => self::SOURCE_LANGUAGE];
+		}
+
+		$headers = [
+			'Content-Language' => (string)$languageService->getPreferredLanguage(),
+			'X-Source-Language' => self::SOURCE_LANGUAGE,
+		];
+		if ($languageService->isFallbackUsed() === true) {
+			$headers['X-Content-Language-Fallback'] = 'true';
+		}
+
+		return $headers;
+	}//end languageHeaders()
+
+	/**
+	 * The valid language tags of an Accept-Language header, by descending q-value.
+	 *
+	 * @param string $header The header value.
+	 *
+	 * @return list<string> The tags, lower-cased primary subtag first; `*` and malformed ranges dropped.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function acceptedLanguageTags(string $header): array {
+		$ranges = [];
+		foreach (explode(',', $header) as $position => $part) {
+			$range = self::languageRange(part: $part, position: $position);
+			if ($range !== null) {
+				$ranges[] = $range;
+			}
+		}
+
+		usort(
+			$ranges,
+			static fn (array $left, array $right): int => [$right['quality'], $left['position']] <=> [$left['quality'], $right['position']]
+		);
+
+		return array_values(array_column($ranges, 'tag'));
+	}//end acceptedLanguageTags()
+
+	/**
+	 * One range of an Accept-Language header with its q-value and position.
+	 *
+	 * @param string $part     The range as written, parameters included.
+	 * @param int    $position Its position in the header.
+	 *
+	 * @return array{tag: string, quality: float, position: int}|null The range; null for `*`, a malformed tag or q=0.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private static function languageRange(string $part, int $position): ?array {
+		$pieces = array_map('trim', explode(';', $part));
+		$tag = $pieces[0];
+		if ($tag === '' || $tag === '*' || preg_match(self::LANGUAGE_TAG, $tag) !== 1) {
+			return null;
+		}
+
+		$quality = self::rangeQuality(parameters: array_slice($pieces, 1));
+		if ($quality > 0.0) {
+			return ['tag' => $tag, 'quality' => $quality, 'position' => $position];
+		}
+
+		return null;
+	}//end languageRange()
+
+	/**
+	 * The q-value among a range's parameters; the last one wins, 1.0 without one.
+	 *
+	 * @param list<string> $parameters The trimmed parameters after the tag.
+	 *
+	 * @return float The q-value.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private static function rangeQuality(array $parameters): float {
+		$quality = 1.0;
+		foreach ($parameters as $parameter) {
+			if (str_starts_with($parameter, 'q=') === true) {
+				$quality = (float)substr($parameter, 2);
+			}
+		}
+
+		return $quality;
+	}//end rangeQuality()
+
+	/**
+	 * OpenRegister's request-scoped language service, or null when OpenRegister
+	 * is absent or predates translations.
+	 *
+	 * @return object|null The service.
+	 *
+	 * @spec exclude Lazy dependency-injection accessor for the OR LanguageService; framework plumbing.
+	 */
+	private function orLanguageService(): ?object {
+		try {
+			$service = $this->container->get(self::OR_LANGUAGE_SERVICE);
+		} catch (\Throwable) {
+			return null;
+		}
+
+		if (is_object($service) === false || method_exists($service, 'setPreferredLanguage') === false) {
+			return null;
+		}
+
+		return $service;
+	}//end orLanguageService()
+
+	/**
 	 * Whether the current caller is anonymous (no logged-in user).
 	 *
 	 * Consumed by {@see \OCA\OpenCatalogi\Controller\PublicationsController::getUses}
@@ -1383,11 +1710,21 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @param array $objectData The serialized object data (own fields + `@self` envelope).
 	 *
+	 * A publication limited to signed-in readers (`audience` set to anything but
+	 * `public`) is never public, the same check the `group: public` read rule
+	 * makes (REQ-PSR-002). An object without `audience` takes the schema default,
+	 * `public`.
+	 *
 	 * @return boolean True when the object is currently published.
 	 *
 	 * @spec openspec/specs/auto-publishing/spec.md#APB-006
+	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-every-public-surface-leaves-a-sign-in-publication-out-req-psr-002
 	 */
 	public function isObjectPublic(array $objectData): bool {
+		if (($objectData['audience'] ?? 'public') !== 'public') {
+			return false;
+		}
+
 		$publicationDate = ($objectData['publicationDate'] ?? null);
 		$depublicationDate = ($objectData['depublicationDate'] ?? null);
 
@@ -2354,6 +2691,8 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 			appliedFilters: $this->appliedFilters
 		);
 		unset($searchQuery['catalogSlug'], $searchQuery['fq']);
+		// REQ-PRS-003: `sourceIdentifier` matches public entries only.
+		$searchQuery = SourceIdentifierFilter::forPublicQuery(query: $searchQuery, params: $queryParams);
 
 		if (isset($searchQuery['_order']) === true && is_string($searchQuery['_order']) === true) {
 			$decodedOrder = json_decode($searchQuery['_order'], true);

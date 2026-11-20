@@ -69,7 +69,7 @@ class WooControllerTest extends TestCase {
 			$this->wooService,
 			$l10n,
 			$this->userSession,
-			$categories
+			$categories, capabilities: new \Unit\Support\AllowingCapabilityRights()
 		);
 
 	}//end setUp()
@@ -177,7 +177,8 @@ class WooControllerTest extends TestCase {
 		$routes = require __DIR__ . '/../../../appinfo/routes.php';
 		$verbs = [];
 		foreach ($routes['routes'] as $route) {
-			if ($route['name'] === 'woo#inventarislijst') {
+			// ApiPathAliases adds an /api/v1/ alias by the same name; check the unversioned route.
+			if ($route['name'] === 'woo#inventarislijst' && str_starts_with($route['url'], '/api/v1/') === false) {
 				$verbs[] = $route['verb'];
 			}
 		}

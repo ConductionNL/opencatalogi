@@ -1865,6 +1865,116 @@ class DirectoryServiceTest extends TestCase {
 	// Edge cases and integration-like scenarios
 	// =========================================================================
 
+	/**
+	 * OpenRegister serialises a listing flat, its fields at the top next to `@self`;
+	 * a failed sync keeps them and adds the error (REQ-FLS-001).
+	 *
+	 * @return void
+	 */
+	public function testUpdateDirectoryStatusOnErrorKeepsAListingInOpenRegistersShape(): void {
+		$objectService = $this->createMockObjectService();
+		$this->setupOpenRegisterAvailable($objectService);
+		$this->setupListingConfig();
+
+		$existingListing = $this->createFakeEntity([
+			'catalogusId' => '7f4b2c1e-0000-4000-8000-000000000001',
+			'title' => 'Peer',
+			'summary' => 'A peer',
+			'lastSuccessAt' => '2026-11-01T10:00:00+00:00',
+			'@self' => ['id' => 'existing-uuid'],
+			'id' => 'existing-uuid',
+		]);
+		$objectService->method('searchObjects')->willReturn([$existingListing]);
+
+		$savedData = null;
+		$objectService->expects($this->once())->method('saveObject')
+			->willReturnCallback(function ($data) use (&$savedData) {
+				$savedData = $data;
+			});
+
+		$this->invokePrivateMethod('updateDirectoryStatusOnError', ['https://example.com', 404, 'Not found']);
+
+		$this->assertSame('Peer', $savedData['title']);
+		$this->assertSame('7f4b2c1e-0000-4000-8000-000000000001', $savedData['catalogusId']);
+		$this->assertSame('2026-11-01T10:00:00+00:00', $savedData['lastSuccessAt']);
+		$this->assertSame('Not found', $savedData['lastError']);
+	}//end testUpdateDirectoryStatusOnErrorKeepsAListingInOpenRegistersShape()
+
+	/**
+	 * A failed listing sync keeps a stored listing in OpenRegister's flat shape and adds the error.
+	 *
+	 * @return void
+	 */
+	public function testRecordListingErrorKeepsAListingInOpenRegistersShape(): void {
+		$objectService = $this->createMockObjectService();
+		$existingListing = $this->createFakeEntity([
+			'catalogusId' => '7f4b2c1e-0000-4000-8000-000000000001',
+			'title' => 'Peer',
+			'summary' => 'A peer',
+			'@self' => ['id' => 'existing-uuid'],
+			'id' => 'existing-uuid',
+		]);
+
+		$savedData = null;
+		$objectService->expects($this->once())->method('saveObject')
+			->willReturnCallback(function ($data) use (&$savedData) {
+				$savedData = $data;
+			});
+
+		$target = ['objectService' => $objectService, 'register' => '1', 'schema' => '2'];
+		$this->invokePrivateMethod('recordListingError', [$target, [$existingListing], new \RuntimeException('Timed out')]);
+
+		$this->assertSame('Peer', $savedData['title']);
+		$this->assertSame('7f4b2c1e-0000-4000-8000-000000000001', $savedData['catalogusId']);
+		$this->assertSame('Timed out', $savedData['lastError']);
+	}//end testRecordListingErrorKeepsAListingInOpenRegistersShape()
+
+	/**
+	 * A sync keeps the administrator's default, status and integration level of a listing in OpenRegister's flat shape.
+	 *
+	 * @return void
+	 */
+	public function testSyncListingPreservesDefaultAndStatusOfAListingInOpenRegistersShape(): void {
+		$objectService = $this->createMockObjectService();
+		$this->setupOpenRegisterAvailable($objectService);
+		$this->setupListingConfig();
+
+		$existingListing = $this->createFakeEntity([
+			'id' => 'existing-uuid',
+			'title' => 'Old Title',
+			'catalog' => 'catalog-1',
+			'default' => true,
+			'status' => 'production',
+			'integrationLevel' => 'full',
+			'@self' => ['id' => 'existing-uuid'],
+		]);
+		$objectService->method('searchObjects')->willReturn([$existingListing]);
+
+		$savedData = null;
+		$objectService->method('saveObject')
+			->willReturnCallback(function ($data) use (&$savedData) {
+				$savedData = $data;
+			});
+
+		$this->service->syncListing(['id' => 'listing-1', 'title' => 'New Title', 'catalog' => 'catalog-1'], 'https://directory.example.com/api/directory');
+
+		$this->assertTrue($savedData['default']);
+		$this->assertSame('production', $savedData['status']);
+		$this->assertSame('full', $savedData['integrationLevel']);
+	}//end testSyncListingPreservesDefaultAndStatusOfAListingInOpenRegistersShape()
+
+	/**
+	 * Incoming data older than the last sync of a listing in OpenRegister's flat shape is outdated.
+	 *
+	 * @return void
+	 */
+	public function testIsListingDataOutdatedReadsAListingInOpenRegistersShape(): void {
+		$incoming = ['updated' => '2025-01-01T00:00:00+00:00'];
+		$existing = ['lastSync' => '2025-01-02T00:00:00+00:00', 'updated' => '2025-01-03T00:00:00+00:00', '@self' => []];
+
+		$this->assertTrue($this->invokePrivateMethod('isListingDataOutdated', [$incoming, $existing]));
+	}//end testIsListingDataOutdatedReadsAListingInOpenRegistersShape()
+
 	public function testSyncListingPreservesExistingDefaultAndStatus(): void {
 		$objectService = $this->createMockObjectService();
 		$this->setupOpenRegisterAvailable($objectService);
@@ -4748,6 +4858,27 @@ class DirectoryServiceTest extends TestCase {
 		$this->assertSame('/index.php/apps/opencatalogi/api/federation/publications/pub-1/used', $uri->getPath());
 		parse_str($uri->getQuery(), $query);
 		$this->assertSame('false', $query['_aggregate'] ?? null);
+	}
+
+	/**
+	 * A peer listing that names no directory is synced.
+	 *
+	 * @return void
+	 */
+	public function testAListingWithoutADirectoryIsSyncable(): void {
+		$this->assertTrue($this->invokePrivateMethod('isSyncableListing', [['id' => 'l-1']]));
+	}
+
+	/**
+	 * A listing without a title takes the name from its metadata.
+	 *
+	 * @return void
+	 */
+	public function testAListingWithoutATitleTakesItsMetadataName(): void {
+		$listing = $this->invokePrivateMethod('withListingIdentity', [['id' => 'l-1', '@self' => ['name' => 'Catalogus A']]]);
+
+		$this->assertSame('Catalogus A', $listing['title']);
+		$this->assertSame('l-1', $listing['catalog']);
 	}
 
 	/**

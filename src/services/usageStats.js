@@ -60,6 +60,47 @@ export async function fetchInstanceSeries(opts = {}) {
 }
 
 /**
+ * Fetch the most viewed publications across every catalogue the caller may read.
+ *
+ * @param {object} [opts] Optional { from, to, top }.
+ * @return {Promise<Array<{id: string, title: string, catalog: string, views: number, downloads: number}>>} most viewed first.
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.3
+ */
+export async function fetchMostViewed(opts = {}) {
+	const url = generateUrl('/apps/opencatalogi/api/stats/top')
+	const response = await axios.get(url, { params: opts })
+	return Array.isArray(response.data?.results) ? response.data.results : []
+}
+
+/**
+ * The most viewed widget's list rows: the publication's title and its view count.
+ *
+ * @param {Array<object>} results - the ranked publications.
+ * @param {(app: string, text: string, vars: object) => string} t - the translate function.
+ * @return {Array<{id: string, catalog: string, mainText: string, subText: string}>}
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.3
+ */
+export function mostViewedRows(results, t) {
+	return results.map((entry) => ({
+		id: entry.id,
+		catalog: entry.catalog,
+		mainText: entry.title || entry.id,
+		subText: t('opencatalogi', '{count} views', { count: formatCount(entry.views) }),
+	}))
+}
+
+/**
+ * The page of a publication in the catalogue it was counted in.
+ *
+ * @param {{id: string, catalog: string}} row - the list row.
+ * @return {string} the URL.
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.3
+ */
+export function publicationPageUrl(row) {
+	return generateUrl(`/apps/opencatalogi/publications/${encodeURIComponent(row.catalog)}/${encodeURIComponent(row.id)}`)
+}
+
+/**
  * Build the authenticated CSV export URL for a catalog + range.
  *
  * @param {string} slug Catalog slug.

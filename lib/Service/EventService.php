@@ -29,7 +29,9 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use DateTime;
+use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -287,10 +289,35 @@ class EventService implements EventServiceInterface {
 		$attachmentResult = $this->publishObjectAttachments(objectData: $objectData);
 		$outcome['detail']['actions'][] = 'attachments_processed';
 		$outcome['attachmentsPublished'] = $attachmentResult['published'];
+		if ($attachmentResult['published'] > 0) {
+			// Sharing files writes no publication: re-evaluate it now (REQ-PTS-002).
+			$this->reevaluateCompleteness(id: (string)($objectData['@self']['uuid'] ?? $objectData['@self']['id']));
+		}
+
 		$outcome['detail']['errors'] = array_merge($outcome['detail']['errors'], $attachmentResult['errors']);
 
 		return $outcome;
 	}//end withAttachments()
+
+	/**
+	 * Re-evaluate a publication's completeness after its files were shared.
+	 *
+	 * Only a run that shared a file calls this, so the save it may cause
+	 * (whose update event shares nothing new) does not call it again.
+	 *
+	 * @param string $id The publication's uuid.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 */
+	private function reevaluateCompleteness(string $id): void {
+		// Named by string, like the OpenRegister services this class resolves lazily.
+		$sweeps = 'OCA\OpenCatalogi\Service\Publication\CompletenessSweepService';
+		if ($this->container->has($sweeps) === true) {
+			$this->container->get($sweeps)->reevaluate(id: $id);
+		}
+	}//end reevaluateCompleteness()
 
 	/**
 	 * On a create event with auto-publishing on, publish an object that matches a catalog, and record the result.
@@ -444,6 +471,15 @@ class EventService implements EventServiceInterface {
 			$objectService = $this->getObjectService();
 			$target = self::publicationTarget(objectSelf: ($objectData['@self'] ?? []));
 			$data = self::publishedPayload(objectData: $objectData);
+			if ($this->isPublication(schema: (string)$target['schema']) === true) {
+				// A publication moves through its lifecycle; a refused move writes no date (REQ-PLC-003).
+				$this->container->get(PublishTransition::class)->publish(
+					id: (string)$target['id'],
+					stored: (string)($objectData['status'] ?? ''),
+					publicationDate: $data['publicationDate']
+				);
+				return ['success' => true, 'objectId' => $target['id'], 'publishedAt' => $data['publicationDate']];
+			}
 
 			$objectService->saveObject(
 				object: $data,
@@ -458,6 +494,21 @@ class EventService implements EventServiceInterface {
 			return ['success' => false, 'objectId' => ($objectData['@self']['id'] ?? 'unknown'), 'error' => $e->getMessage()];
 		}//end try
 	}//end publishObject()
+
+	/**
+	 * Whether a schema id is the configured publication schema, whose publish is a lifecycle transition.
+	 *
+	 * @param string $schema The object's schema id.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 */
+	private function isPublication(string $schema): bool {
+		$configured = (string)($this->settingsService->getSettings()['configuration']['publication_schema'] ?? '');
+
+		return $configured !== '' && $configured === $schema;
+	}//end isPublication()
 
 	/**
 	 * The id, register and schema an object is saved under.
@@ -534,7 +585,7 @@ class EventService implements EventServiceInterface {
 				continue;
 			}
 
-			$result = $this->withSharedFile(result: $result, share: ['fileService' => $fileService, 'file' => $file]);
+			$result = $this->withSharedFile(result: $result, share: ['fileService' => $fileService, 'file' => $file, 'publication' => (string)$objectId]);
 		}
 
 		return $result;
@@ -621,12 +672,37 @@ class EventService implements EventServiceInterface {
 		$error = $this->shareFileError(fileService: $share['fileService'], file: $share['file']);
 		if ($error === null) {
 			$result['published']++;
+			$this->readingQueue()?->queue(fileId: (int)($share['file']['fileid'] ?? 0), publicationId: (string)($share['publication'] ?? ''));
 			return $result;
 		}
 
 		$result['errors'][] = $error;
 		return $result;
 	}//end withSharedFile()
+
+	/**
+	 * The queue that reads each shared attachment, or null when it cannot be resolved.
+	 *
+	 * Resolved from the container on use rather than injected, so this
+	 * service's constructor keeps its four collaborators.
+	 *
+	 * @return AttachmentReadingQueueInterface|null
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
+	 */
+	private function readingQueue(): ?AttachmentReadingQueueInterface {
+		try {
+			$queue = $this->container->get(AttachmentReadingQueueInterface::class);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		if ($queue instanceof AttachmentReadingQueueInterface) {
+			return $queue;
+		}
+
+		return null;
+	}//end readingQueue()
 
 	/**
 	 * Create the share link of one file, and say why when that failed.

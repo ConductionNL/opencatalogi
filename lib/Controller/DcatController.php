@@ -28,6 +28,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
+use OCA\OpenCatalogi\Contract\DonlRegistrationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Http\DcatResponse;
@@ -65,6 +66,7 @@ class DcatController extends Controller {
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param StandardsVersionServiceInterface $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
+	 * @param DonlRegistrationServiceInterface|null $donl The data.overheid.nl registration and its harvest evidence.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -79,6 +81,7 @@ class DcatController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly StandardsVersionServiceInterface $standardsVersions,
 		private readonly ?IAppConfig $appConfig = null,
+		private readonly ?DonlRegistrationServiceInterface $donl = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -120,6 +123,7 @@ class DcatController extends Controller {
 				return $this->unsupportedFormat();
 			}
 
+			$this->recordHarvesterFetch();
 			$document = $this->dcatService->buildInstanceDocument();
 			return $this->respond(document: $document, format: $format);
 		} catch (\Throwable $e) {
@@ -171,6 +175,7 @@ class DcatController extends Controller {
 			// is the worst place to leak: it is crawled and cached by third parties.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 
+			$this->recordHarvesterFetch();
 			$page = max(1, (int)$this->request->getParam('page', 1));
 			$document = $this->dcatService->buildCatalogDocument(catalog: $catalog, catalogSlug: $catalogSlug, page: $page);
 
@@ -271,6 +276,7 @@ class DcatController extends Controller {
 					'valid' => empty($violations),
 					'violations' => $violations,
 					'profile' => $this->standardsVersions->dcatApNlVersion(),
+					'checked' => DcatServiceInterface::MANDATORY_DATASET_PROPERTIES,
 				],
 				200
 			);
@@ -313,6 +319,63 @@ class DcatController extends Controller {
 		}
 
 	}//end donlReport()
+
+	/**
+	 * The data.overheid.nl registration, its harvest evidence and whether it reads harvested.
+	 *
+	 * Admin-only.
+	 *
+	 * @return JSONResponse The status.
+	 *
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-data-overheid-nl-registration-and-its-harvest-are-tracked-req-dcc-002
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function donlRegistration(): JSONResponse {
+		if ($this->donl === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Internal server error')], 500);
+		}
+
+		return new JSONResponse($this->donl->status());
+	}//end donlRegistration()
+
+	/**
+	 * Record the operator's data.overheid.nl registration status and settings.
+	 *
+	 * Admin-only. DCAT-NPF-001: the registration itself stays operator-driven.
+	 *
+	 * @return JSONResponse The status after recording, or 400 on a value it refuses.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-data-overheid-nl-registration-and-its-harvest-are-tracked-req-dcc-002
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function recordDonlRegistration(): JSONResponse {
+		if ($this->donl === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Internal server error')], 500);
+		}
+
+		try {
+			return new JSONResponse($this->donl->record(input: $this->request->getParams()));
+		} catch (\InvalidArgumentException $e) {
+			return new JSONResponse(['error' => $this->l10n->t('The data.overheid.nl registration could not be saved: %s', [$e->getMessage()])], 400);
+		}
+	}//end recordDonlRegistration()
+
+	/**
+	 * Record this feed request when it comes from the data.overheid.nl harvester; never fails the feed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-data-overheid-nl-registration-and-its-harvest-are-tracked-req-dcc-002
+	 */
+	private function recordHarvesterFetch(): void {
+		try {
+			$this->donl?->recordFetch(userAgent: $this->request->getHeader('User-Agent'));
+		} catch (\Throwable $e) {
+			$this->logger->warning('[DcatController] the harvester fetch was not recorded', ['error' => $e->getMessage()]);
+		}
+	}//end recordHarvesterFetch()
 
 	/**
 	 * Serialize a document and wrap it in a CORS- and cache-headed DcatResponse.

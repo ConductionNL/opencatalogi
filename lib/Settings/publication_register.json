@@ -84,7 +84,7 @@
         "slug": "publication",
         "x-schema-org": "schema:CreativeWork",
         "title": "Publication",
-        "version": "0.0.6",
+        "version": "0.0.10",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A single publication entry within the catalog",
         "description": "A publication represents an individual piece of content within the catalog. It can be associated with themes and schemas, and is the primary unit of content that users can view and interact with. Publications can be linked to specific organizations and can be either public or private.",
@@ -252,22 +252,65 @@
             "facetable": false,
             "title": "Retention Last Evaluated At"
           },
+          "retentionDecisionLog": {
+            "type": "array",
+            "description": "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "decision": {"type": "string", "title": "Decision", "description": "What was decided about the publication."},
+                "by": {"type": "string", "title": "Decided by", "description": "The user who made the decision."},
+                "at": {"type": "string", "format": "date-time", "title": "Decided at", "description": "When the decision was made."},
+                "note": {"type": "string", "title": "Note", "description": "The explanation given with the decision."},
+                "basis": {"type": "string", "title": "Legal basis", "description": "The legal basis the decision rests on."}
+              }
+            },
+            "facetable": false,
+            "title": "Retention Decision Log"
+          },
           "status": {
             "type": "string",
-            "description": "Lifecycle status of the publication; the archived state retains the object internally while removing it from every public surface (RET-006).",
+            "description": "Stored lifecycle state of the publication (publication-lifecycle-on-or REQ-PLC-001): draft, in review, approved, published or archived. Only a published publication can be public; whether it is scheduled, public or withdrawn follows from its dates. The archived state retains the object internally while removing it from every public surface (RET-006).",
             "enum": [
+              "draft",
+              "in_review",
+              "approved",
               "published",
               "archived"
             ],
+            "default": "draft",
             "facetable": true,
             "title": "Status"
           },
+          "firstReleasedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the publication was first published. Set once by the publish transitions and never changed afterwards (REQ-PLC-001).",
+            "immutable": true,
+            "facetable": false,
+            "title": "First released at"
+          },
+          "approvedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the publication last entered the approved state; a calling system reconciles on it through GET /api/publications/ready (REQ-PLC-005).",
+            "facetable": false,
+            "title": "Approved at"
+          },
+          "unlisted": {
+            "type": "boolean",
+            "description": "When true, a public publication stays readable at its own link but is left out of search, the sitemaps, DCAT, PLOOI delivery and the federation list (REQ-PLC-006). Clearing it puts the publication back.",
+            "default": false,
+            "facetable": true,
+            "title": "Unlisted"
+          },
           "plooiStatus": {
             "type": "string",
-            "description": "Whether this publication reached PLOOI, the delivery API of open.overheid.nl: delivered or failed. Empty until a catalogue with PLOOI delivery on delivers it.",
+            "description": "Whether this publication reached PLOOI, the delivery API of open.overheid.nl: delivered, failed, or withdrawn once it stopped being public. Empty until a catalogue with PLOOI delivery on delivers it.",
             "enum": [
               "delivered",
-              "failed"
+              "failed",
+              "withdrawn"
             ],
             "facetable": true,
             "title": "PLOOI status"
@@ -290,15 +333,125 @@
             "description": "Why the last PLOOI delivery failed, as the platform or the connection said it.",
             "facetable": false,
             "title": "PLOOI failure reason"
+          },
+          "plooiDocuments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The document links PLOOI received with the last delivery, so a document that is no longer public is withdrawn with the next one.",
+            "facetable": false,
+            "title": "PLOOI documents"
           }
         },
         "x-openregister-lifecycle": {
           "field": "status",
-          "initial": "published",
+          "initial": "draft",
           "final": [
             "archived"
           ],
           "transitions": {
+            "submit": {
+              "from": [
+                "draft"
+              ],
+              "to": "in_review",
+              "label": "Submit for review",
+              "description": "Offer the draft for review"
+            },
+            "approve": {
+              "from": [
+                "in_review"
+              ],
+              "to": "approved",
+              "label": "Approve",
+              "description": "Approve the publication for publishing",
+              "actions": [
+                {
+                  "action": "set-fields",
+                  "actionParameters": {
+                    "approvedAt": "@now"
+                  }
+                }
+              ]
+            },
+            "reject": {
+              "from": [
+                "in_review"
+              ],
+              "to": "draft",
+              "label": "Reject",
+              "description": "Send the publication back to draft, with a reason",
+              "inputs": [
+                {
+                  "field": "reason",
+                  "required": true
+                }
+              ]
+            },
+            "retract": {
+              "from": [
+                "approved"
+              ],
+              "to": "draft",
+              "label": "Retract approval",
+              "description": "Take the approval back and return to draft"
+            },
+            "publish": {
+              "from": [
+                "approved"
+              ],
+              "to": "published",
+              "inputs": [
+                {
+                  "field": "publicationDate",
+                  "required": false
+                },
+                {
+                  "field": "depublicationDate",
+                  "required": false
+                }
+              ],
+              "label": "Publish",
+              "description": "Publish the approved publication",
+              "actions": [
+                {
+                  "action": "set-fields",
+                  "condition": "@previous.firstReleasedAt == ''",
+                  "actionParameters": {
+                    "firstReleasedAt": "@now"
+                  }
+                }
+              ]
+            },
+            "publishWithoutReview": {
+              "from": [
+                "draft"
+              ],
+              "to": "published",
+              "inputs": [
+                {
+                  "field": "publicationDate",
+                  "required": false
+                },
+                {
+                  "field": "depublicationDate",
+                  "required": false
+                }
+              ],
+              "label": "Publish without review",
+              "description": "Publish a draft directly; allowed only while review is not required",
+              "requires": "OCA\\OpenCatalogi\\Lifecycle\\ReviewNotRequiredGuard",
+              "actions": [
+                {
+                  "action": "set-fields",
+                  "condition": "@previous.firstReleasedAt == ''",
+                  "actionParameters": {
+                    "firstReleasedAt": "@now"
+                  }
+                }
+              ]
+            },
             "archive": {
               "from": [
                 "published"
@@ -370,6 +523,8 @@
             {
               "group": "public",
               "match": {
+                "status": "published",
+                "audience": "public",
                 "publicationDate": {
                   "$lte": "$now"
                 },
@@ -382,6 +537,8 @@
             {
               "group": "public",
               "match": {
+                "status": "published",
+                "audience": "public",
                 "publicationDate": {
                   "$lte": "$now"
                 },
@@ -453,7 +610,7 @@
           }
         },
         "title": "Catalog",
-        "version": "0.4.0",
+        "version": "0.6.0",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A collection of publications organized by theme and schema",
         "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface. Catalogs can be public or private and can be associated with specific organizations.",
@@ -585,6 +742,13 @@
             "facetable": false,
             "title": "Has OOAPI 5.0 Publication"
           },
+          "hasDcat": {
+            "type": "boolean",
+            "description": "Whether this catalog publishes its datasets as a DCAT-AP-NL feed (GET /api/catalogs/{slug}/dcat) and is listed in the instance document (GET /api/dcat). Read by DcatService and by DirectoryService to advertise dcatEndpoint. Without this declaration the catalog schema's hardValidation strips the key and the feed cannot be switched on.",
+            "default": false,
+            "facetable": false,
+            "title": "Has DCAT feed"
+          },
           "published": {
             "type": "string",
             "description": "Publication date — when set to a date in the past, this catalog becomes publicly accessible",
@@ -605,6 +769,29 @@
             "default": false,
             "facetable": false,
             "title": "Show withheld documents"
+          },
+          "acceptErrorReports": {
+            "type": "boolean",
+            "description": "Let anyone report an error in a publication of this catalogue. Reports reach the moderator groups and are never published.",
+            "default": false,
+            "facetable": false,
+            "title": "Accept error reports"
+          },
+          "errorReportModerators": {
+            "type": "array",
+            "description": "The groups whose members receive and handle the error reports. Without one, no report is taken.",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "facetable": false,
+            "title": "Error report moderators",
+            "authorization": {
+              "read": [
+                "authenticated"
+              ],
+              "reveal": "explicit"
+            }
           }
         },
         "configuration": {
@@ -869,7 +1056,7 @@
         "slug": "theme",
         "x-schema-org": "schema:DefinedTerm",
         "title": "Theme",
-        "version": "0.0.4",
+        "version": "0.0.5",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A category for organizing publications",
         "description": "Themes are used to categorize publications within catalogs. They provide a way to group related publications together, making it easier for users to find content they're interested in. Themes can be hierarchical and can be used for navigation and filtering purposes.",
@@ -940,6 +1127,28 @@
             "description": "Sort order for display",
             "facetable": false,
             "title": "Sort Order"
+          },
+          "featured": {
+            "type": "boolean",
+            "default": false,
+            "description": "Show this subject on the portal's home page",
+            "facetable": true,
+            "title": "Featured"
+          },
+          "featuredOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Position among the featured subjects, lowest first",
+            "facetable": false,
+            "title": "Featured order"
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 255,
+            "description": "Web address name of the subject, lowercase letters, digits and hyphens",
+            "facetable": false,
+            "title": "Slug"
           }
         },
         "configuration": {

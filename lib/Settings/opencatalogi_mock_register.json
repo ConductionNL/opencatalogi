@@ -1858,6 +1858,40 @@
       {
         "@self": {
           "register": "publication",
+          "schema": "wooPipelineIncident",
+          "slug": "woopipelineincident-1"
+        },
+        "kind": "plooi-delivery",
+        "subject": "example-municipality-annual-report",
+        "message": "PLOOI answered 502: the platform is not available.",
+        "at": "2026-11-16T07:12:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooPipelineIncident",
+          "slug": "woopipelineincident-2"
+        },
+        "kind": "diwoo-version",
+        "subject": "diwoo",
+        "message": "DiWoo 0.9.9 is current; this instance emits 0.9.8",
+        "at": "2026-11-16T03:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooPipelineIncident",
+          "slug": "woopipelineincident-3"
+        },
+        "kind": "sitemap-gap",
+        "subject": "gemeente-voorbeeld/2.1",
+        "message": "One document is missing from the sitemap.",
+        "at": "2026-11-10T03:00:00+00:00",
+        "resolvedAt": "2026-11-10T09:30:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
           "schema": "withheldDocument",
           "slug": "withhelddocument-1"
         },
@@ -1912,13 +1946,54 @@
       {
         "@self": {
           "register": "publication",
+          "schema": "documentReference",
+          "slug": "documentreference-1"
+        },
+        "publication": "@ref:publication:example-municipality-annual-report",
+        "url": "https://documenten.voorbeeldgemeente.nl/besluit-2026-001.pdf",
+        "title": "Besluit 2026-001",
+        "format": "pdf",
+        "sourceSystem": "Documentsysteem Voorbeeldgemeente",
+        "publicationDate": "2026-01-01T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "documentReference",
+          "slug": "documentreference-2"
+        },
+        "publication": "@ref:publication:example-municipality-council-agenda",
+        "url": "https://documenten.voorbeeldgemeente.nl/raadsvoorstel-2026-014.pdf",
+        "title": "Raadsvoorstel 2026-014",
+        "format": "pdf",
+        "sourceSystem": "Documentsysteem Voorbeeldgemeente",
+        "publicationDate": "2026-02-12T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "documentReference",
+          "slug": "documentreference-3"
+        },
+        "publication": "@ref:publication:example-conduction-quarterly-report",
+        "url": "https://documenten.voorbeeldgemeente.nl/bijlage-kwartaalrapportage-q1.pdf",
+        "title": "Bijlage kwartaalrapportage Q1",
+        "format": "pdf",
+        "sourceSystem": "Documentsysteem Voorbeeldgemeente",
+        "publicationDate": "2026-04-01T00:00:00+00:00",
+        "depublicationDate": "2027-04-01T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
           "schema": "publication",
           "slug": "example-municipality-annual-report"
         },
         "title": "Voorbeeld: Jaarverslag 2024 van Gemeente Voorbeeld",
         "summary": "Voorbeeldpublicatie uit de demodata: een verzonnen jaarverslag van een verzonnen gemeente.",
         "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd. Gemeente Voorbeeld bestaat niet en staat voor geen echte overheidsorganisatie.",
-        "publicationDate": "2024-01-01T00:00:00+00:00"
+        "publicationDate": "2024-01-01T00:00:00+00:00",
+        "status": "published"
       },
       {
         "@self": {
@@ -1930,6 +2005,7 @@
         "summary": "Voorbeeldpublicatie uit de demodata: een teruggetrokken kwartaalrapport, zodat Opnieuw publiceren te zien is.",
         "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd.",
         "publicationDate": "2024-04-01T00:00:00+00:00",
+        "status": "published",
         "depublicationDate": "2026-06-01T09:00:00+00:00"
       },
       {
@@ -1983,6 +2059,148 @@
             "answer": "not delivered: no integriq source is set for the channel"
           }
         ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "attachmentReading",
+          "slug": "attachmentreading-1"
+        },
+        "fileId": 9001,
+        "publication": "@ref:publication:example-municipality-annual-report",
+        "state": "typed",
+        "reason": "",
+        "updatedAt": "2026-10-01T10:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "attachmentReading",
+          "slug": "attachmentreading-2"
+        },
+        "fileId": 9002,
+        "publication": "@ref:publication:example-municipality-annual-report",
+        "state": "unavailable",
+        "reason": "OCR is not installed",
+        "updatedAt": "2026-10-01T10:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "attachmentReading",
+          "slug": "attachmentreading-3"
+        },
+        "fileId": 9003,
+        "publication": "@ref:publication:example-municipality-annual-report",
+        "state": "ocr",
+        "reason": "",
+        "updatedAt": "2026-10-01T10:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "publication",
+          "slug": "example-municipality-council-agenda"
+        },
+        "title": "Voorbeeld: Raadsagenda januari 2030 van Gemeente Voorbeeld",
+        "summary": "Voorbeeldpublicatie uit de demodata: een geplande publicatie, zodat het overzicht van niet-gepubliceerde publicaties er een laat zien.",
+        "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd. De publicatiedatum ligt ver in de toekomst, zodat de rij gepland blijft. Gemeente Voorbeeld bestaat niet en staat voor geen echte overheidsorganisatie.",
+        "publicationDate": "2030-01-01T09:00:00+00:00",
+        "status": "published"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "errorReport",
+          "slug": "errorreport-demo-1"
+        },
+        "publication": "Voorbeeld publicatie 1",
+        "catalog": "Voorbeeld catalogus",
+        "message": "De bijlage hoort bij een ander besluit.",
+        "status": "new",
+        "createdAt": "2026-11-02T09:00:00+00:00",
+        "moderators": [
+          "woo-redactie"
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "errorReport",
+          "slug": "errorreport-demo-2"
+        },
+        "publication": "Voorbeeld publicatie 2",
+        "catalog": "Voorbeeld catalogus",
+        "message": "De datum van het besluit klopt niet.",
+        "contact": "inwoner@example.nl",
+        "status": "handled",
+        "createdAt": "2026-10-20T14:30:00+00:00",
+        "moderators": [
+          "woo-redactie"
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "errorReport",
+          "slug": "errorreport-demo-3"
+        },
+        "publication": "Voorbeeld publicatie 3",
+        "catalog": "Voorbeeld catalogus",
+        "message": "Een naam in het document is niet weggelakt.",
+        "status": "dismissed",
+        "createdAt": "2026-10-05T11:15:00+00:00",
+        "moderators": [
+          "woo-redactie"
+        ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "metadataSuggestion",
+          "slug": "metadatasuggestion-metadatasuggestion-1-1"
+        },
+        "publication": "Voorbeeld Publication 1",
+        "field": "wooCategory",
+        "value": "Voorbeeld Value 1",
+        "source": "rules",
+        "status": "pending",
+        "valueLabel": "Voorbeeld Valuelabel 1",
+        "reason": "Voorbeeld Reason 1",
+        "decidedBy": "Voorbeeld Decidedby 1",
+        "decidedAt": "2026-03-01T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "metadataSuggestion",
+          "slug": "metadatasuggestion-metadatasuggestion-2-2"
+        },
+        "publication": "Voorbeeld Publication 2",
+        "field": "soortHandeling",
+        "value": "Voorbeeld Value 2",
+        "source": "hermiq",
+        "status": "accepted",
+        "valueLabel": "Voorbeeld Valuelabel 2",
+        "reason": "Voorbeeld Reason 2",
+        "decidedBy": "Voorbeeld Decidedby 2",
+        "decidedAt": "2026-03-02T09:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "metadataSuggestion",
+          "slug": "metadatasuggestion-metadatasuggestion-3-3"
+        },
+        "publication": "Voorbeeld Publication 3",
+        "field": "organization",
+        "value": "Voorbeeld Value 3",
+        "source": "rules",
+        "status": "rejected",
+        "valueLabel": "Voorbeeld Valuelabel 3",
+        "reason": "Voorbeeld Reason 3",
+        "decidedBy": "Voorbeeld Decidedby 3",
+        "decidedAt": "2026-03-03T09:00:00+00:00"
       }
     ]
   }

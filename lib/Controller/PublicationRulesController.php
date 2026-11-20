@@ -37,7 +37,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 
 declare(strict_types=1);
@@ -62,7 +62,7 @@ use OCP\IUserSession;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 class PublicationRulesController extends Controller {
 	use AnswersCrossOriginRequests;
@@ -114,7 +114,7 @@ class PublicationRulesController extends Controller {
 	 *
 	 * @return JSONResponse The preview.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function previewRule(): JSONResponse {
@@ -160,7 +160,7 @@ class PublicationRulesController extends Controller {
 	 * stored, and an unauthenticated caller is refused above, so there is no
 	 * object reference to substitute.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
 	 */
 	public function validateDecision(): JSONResponse {
 		if ($this->userSession->getUser() === null) {
@@ -208,7 +208,7 @@ class PublicationRulesController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function publicSearch(): JSONResponse {
@@ -233,7 +233,7 @@ class PublicationRulesController extends Controller {
 		}
 
 		$response = new JSONResponse(['results' => $results, 'total' => count($results)]);
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 
 		return $response;
 	}//end publicSearch()

@@ -172,6 +172,40 @@ class PublicationsControllerSlugTest extends TestCase {
 		);
 	}//end given()
 
+	/**
+	 * REQ-CVS-006: the UUID address keeps answering with the same id after an editor
+	 * changes the title and the slug; the old slug stops answering, the new one answers.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/publications/spec.md#requirement-a-publication-keeps-one-identifier-for-life-req-cvs-006
+	 */
+	public function testTheUuidAddressSurvivesATitleAndSlugEdit(): void {
+		$uuid = '4f2c9a1e-7b3d-4e8a-9c51-2d6f0b8e3a17';
+		$slug = 'besluit-op-woo-verzoek';
+		$publication = $this->publication($uuid);
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['title' => 'Woo-verzoeken', 'schemas' => [1], 'registers' => [1]]);
+		$this->objectService->method('searchObjects')->willReturnCallback(
+			static function (array $query) use (&$slug, $uuid, $publication): array {
+				$self = ($query['@self'] ?? []);
+				if (($self['uuid'] ?? null) === $uuid || (isset($self['slug']) === true && $self['slug'] === $slug)) {
+					return [$publication];
+				}
+
+				return [];
+			}
+		);
+
+		$before = $this->controller->show('woo-requests', $uuid);
+		$slug = 'besluit-op-woo-verzoek-gewijzigd';
+		$after = $this->controller->show('woo-requests', $uuid);
+
+		$this->assertSame(200, $before->getStatus());
+		$this->assertSame(200, $after->getStatus());
+		$this->assertSame($uuid, $before->getData()['id']);
+		$this->assertSame($uuid, $after->getData()['id']);
+		$this->assertSame(404, $this->controller->show('woo-requests', 'besluit-op-woo-verzoek')->getStatus());
+		$this->assertSame($uuid, $this->controller->show('woo-requests', $slug)->getData()['id']);
+	}//end testTheUuidAddressSurvivesATitleAndSlugEdit()
+
 	public function testAUuidUrlIsAnsweredByTheUuidLookupAlone(): void {
 		$this->given(['uuid:' . self::UUID_A . ':1:1' => [$this->publication(self::UUID_A)]]);
 

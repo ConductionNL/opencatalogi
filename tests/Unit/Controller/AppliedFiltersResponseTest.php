@@ -36,6 +36,7 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Controller\SearchController
  * @covers \OCA\OpenCatalogi\Controller\FederationController
  * @uses \OCA\OpenCatalogi\Service\AppliedFilters
+ * @uses \OCA\OpenCatalogi\Service\Publication\PublicationLinkRules
  * @uses \OCA\OpenCatalogi\Service\PublicationQueryService
  * @uses \OCA\OpenCatalogi\Service\CallerScope
  * @uses \OCA\OpenCatalogi\Service\CatalogScopeIds
@@ -395,7 +396,19 @@ class AppliedFiltersResponseTest extends TestCase {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParams')->willReturn([]);
 
-		return new FederationController($request, $publications, $this->l10n(), appliedFilters: $filters);
+		$container = $this->createMock(\Psr\Container\ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id) use ($filters): object {
+				if ($id === AppliedFilters::class) {
+					return $filters;
+				}
+
+				throw new class ('No ' . $id) extends \RuntimeException implements \Psr\Container\NotFoundExceptionInterface {
+				};
+			}
+		);
+
+		return new FederationController($request, $publications, $this->l10n(), container: $container);
 	}//end federationController()
 
 	/**

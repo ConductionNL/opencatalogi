@@ -1,0 +1,40 @@
+{
+	"components": {
+		"schemas": {
+			"publication": {
+				"version": "0.0.10",
+				"properties": {
+					"title": {
+						"translatable": true,
+						"sourceLanguage": "nl"
+					},
+					"summary": {
+						"translatable": true,
+						"sourceLanguage": "nl"
+					},
+					"description": {
+						"translatable": true,
+						"sourceLanguage": "nl"
+					}
+				}
+			},
+			"catalog": {
+				"version": "0.6.0",
+				"properties": {
+					"title": {
+						"translatable": true,
+						"sourceLanguage": "nl"
+					},
+					"summary": {
+						"translatable": true,
+						"sourceLanguage": "nl"
+					},
+					"description": {
+						"translatable": true,
+						"sourceLanguage": "nl"
+					}
+				}
+			}
+		}
+	}
+}
