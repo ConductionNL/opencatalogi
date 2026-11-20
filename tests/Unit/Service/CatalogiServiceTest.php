@@ -87,6 +87,84 @@ class CatalogiServiceTest extends TestCase {
 	}//end setUp()
 
 	// ──────────────────────────────────────────────────────────
+	// listCatalogs (catalogs task 3)
+	// ──────────────────────────────────────────────────────────
+
+	/**
+	 * The catalog list drops the caller's own scope keys (WOO-581), pins the configured
+	 * register and schema on both the routing keys and `@self`, keeps a non-scope
+	 * `@self` filter, and searches with RBAC on and deleted objects left out.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function testListCatalogsPinsTheConfiguredScopeOverTheCallers(): void {
+		$caller = [
+			'_schemas' => [56],
+			'_registers' => [99],
+			'_schema' => 56,
+			'schema' => 56,
+			'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
+		];
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->expects($this->once())->method('buildSearchQuery')
+			->with(['_search' => 'x'])
+			->willReturn($caller);
+		$objectService->expects($this->once())->method('searchObjectsPaginated')
+			->with(
+				$this->callback(static fn (array $q): bool => array_intersect(['_schemas', '_registers', 'schema', 'register'], array_keys($q)) === []
+					&& isset($q['@self']['schemas'], $q['@self']['registers']) === false
+					&& $q['@self']['owner'] === 'alice'
+					&& $q['@self']['schema'] === '5'
+					&& $q['@self']['register'] === '3'
+					&& $q['_schema'] === '5'
+					&& $q['_register'] === '3'),
+				true,
+				true,
+				false
+			)
+			->willReturn(['results' => [['id' => 1]], 'total' => 1]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$result = $this->service->listCatalogs(requestParams: ['_search' => 'x'], catalogConfig: ['register' => '3', 'schema' => '5']);
+
+		$this->assertSame(['results' => [['id' => 1]], 'total' => 1], $result);
+	}//end testListCatalogsPinsTheConfiguredScopeOverTheCallers()
+
+	/**
+	 * An empty configured register or schema pins nothing for that key; the query
+	 * from buildSearchQuery() reaches the search unchanged.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function testListCatalogsPinsNothingForAnEmptyConfiguredKey(): void {
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('buildSearchQuery')->willReturn(['_limit' => 10]);
+		$objectService->expects($this->once())->method('searchObjectsPaginated')
+			->with(['_limit' => 10], true, true, false)
+			->willReturn(['results' => [], 'total' => 0]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$this->assertSame(
+			['results' => [], 'total' => 0],
+			$this->service->listCatalogs(requestParams: [], catalogConfig: ['register' => '', 'schema' => ''])
+		);
+	}//end testListCatalogsPinsNothingForAnEmptyConfiguredKey()
+
+	/**
+	 * Without OpenRegister installed the list cannot be read and says so.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function testListCatalogsThrowsWithoutOpenRegister(): void {
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+
+		$this->expectException(RuntimeException::class);
+		$this->service->listCatalogs(requestParams: [], catalogConfig: ['register' => '3', 'schema' => '5']);
+	}//end testListCatalogsThrowsWithoutOpenRegister()
+
+	// ──────────────────────────────────────────────────────────
 	// getCatalogSlugs (integration-maintenance-commands)
 	// ──────────────────────────────────────────────────────────
 
