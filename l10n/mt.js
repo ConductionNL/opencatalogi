@@ -776,7 +776,12 @@ OC.L10N.register(
         "Publisher": "Pubblikatur",
         "The metadata quality could not be loaded": "Il-kwalità tal-metadata ma setgħetx titgħabba",
         "{score} of 100": "{score} minn 100",
-        "Could not compute the metadata quality.": "Il-kwalità tal-metadata ma setgħetx tiġi kkalkulata."
+        "Could not compute the metadata quality.": "Il-kwalità tal-metadata ma setgħetx tiġi kkalkulata.",
+        "Review publications before they are published": "Irrevedi l-pubblikazzjonijiet qabel ma jiġu ppubblikati",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Meta jkun mixgħul, abbozz irid jiġi sottomess u approvat qabel ma jkun jista' jiġi ppubblikat. Meta jkun mitfi, editur jista' jippubblika abbozz direttament.",
+        "Delete publication": "Ħassar il-pubblikazzjoni",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Trid tħassar \"{name}\"? Din l-azzjoni ma tistax titreġġa' lura.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Il-pubblikazzjoni u l-annessi tagħha jisparixxu mill-paġna pubblika u mill-mappa tas-sit Woo. L-arkivjar, minflok, iżommhom għall-perjodu taż-żamma."
     },
     "nplurals=2; plural=(n != 1);"
 )

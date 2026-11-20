@@ -776,7 +776,12 @@ OC.L10N.register(
         "Publisher": "Julkaisija",
         "The metadata quality could not be loaded": "Metatietojen laatua ei voitu ladata",
         "{score} of 100": "{score}/100",
-        "Could not compute the metadata quality.": "Metatietojen laatua ei voitu laskea."
+        "Could not compute the metadata quality.": "Metatietojen laatua ei voitu laskea.",
+        "Review publications before they are published": "Tarkista julkaisut ennen niiden julkaisemista",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Kun asetus on päällä, luonnos on lähetettävä tarkistettavaksi ja hyväksyttävä ennen kuin sen voi julkaista. Kun asetus on pois päältä, toimittaja voi julkaista luonnoksen suoraan.",
+        "Delete publication": "Poista julkaisu",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Haluatko poistaa kohteen \"{name}\"? Tätä toimintoa ei voi kumota.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Julkaisu ja sen liitteet katoavat julkiselta sivulta ja Woo-sivukartasta. Arkistointi sen sijaan säilyttää ne säilytysajan."
     },
     "nplurals=2; plural=(n != 1);"
 )

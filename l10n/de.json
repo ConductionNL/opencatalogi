@@ -775,7 +775,12 @@
         "Publisher": "Herausgeber",
         "The metadata quality could not be loaded": "Die Metadatenqualität konnte nicht geladen werden",
         "{score} of 100": "{score} von 100",
-        "Could not compute the metadata quality.": "Die Metadatenqualität konnte nicht berechnet werden."
+        "Could not compute the metadata quality.": "Die Metadatenqualität konnte nicht berechnet werden.",
+        "Review publications before they are published": "Veröffentlichungen vor der Veröffentlichung prüfen",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Wenn aktiviert, muss ein Entwurf eingereicht und genehmigt werden, bevor er veröffentlicht werden kann. Wenn deaktiviert, kann eine Redakteurin oder ein Redakteur einen Entwurf direkt veröffentlichen.",
+        "Delete publication": "Veröffentlichung löschen",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Möchten Sie \"{name}\" löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Die Veröffentlichung und ihre Anhänge verschwinden von der öffentlichen Seite und aus der Woo-Sitemap. Archivieren bewahrt sie stattdessen für die Aufbewahrungsfrist auf."
     },
     "plurals": {}
 }

@@ -775,7 +775,12 @@
         "Publisher": "Издавач",
         "The metadata quality could not be loaded": "Квалитет метаподатака није могуће учитати",
         "{score} of 100": "{score} од 100",
-        "Could not compute the metadata quality.": "Квалитет метаподатака није могуће израчунати."
+        "Could not compute the metadata quality.": "Квалитет метаподатака није могуће израчунати.",
+        "Review publications before they are published": "Прегледај објаве пре објављивања",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Када је укључено, нацрт мора бити поднет и одобрен пре него што може да се објави. Када је искључено, уредник може директно да објави нацрт.",
+        "Delete publication": "Обриши објаву",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Да ли желите да обришете \"{name}\"? Ова радња се не може опозвати.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Објава и њени прилози нестају са јавне странице и из Woo мапе сајта. Архивирање их, насупрот томе, чува током рока чувања."
     },
     "plurals": {}
 }

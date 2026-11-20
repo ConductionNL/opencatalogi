@@ -776,7 +776,12 @@ OC.L10N.register(
         "Publisher": "Yayıncı",
         "The metadata quality could not be loaded": "Üst veri kalitesi yüklenemedi",
         "{score} of 100": "{score} / 100",
-        "Could not compute the metadata quality.": "Üst veri kalitesi hesaplanamadı."
+        "Could not compute the metadata quality.": "Üst veri kalitesi hesaplanamadı.",
+        "Review publications before they are published": "Yayınları yayımlanmadan önce incele",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Açık olduğunda, bir taslağın yayımlanabilmesi için gönderilmesi ve onaylanması gerekir. Kapalı olduğunda, bir editör taslağı doğrudan yayımlayabilir.",
+        "Delete publication": "Yayını sil",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "\"{name}\" ögesini silmek istiyor musunuz? Bu eylem geri alınamaz.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Yayın ve ekleri herkese açık sayfadan ve Woo site haritasından kaybolur. Arşivleme ise bunları saklama süresi boyunca korur."
     },
     "nplurals=2; plural=(n != 1);"
 )

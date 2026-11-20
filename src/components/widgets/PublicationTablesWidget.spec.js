@@ -10,7 +10,7 @@ import axios from '@nextcloud/axios'
 import { flushPromises, mount } from '@vue/test-utils'
 import PublicationTablesWidget from './PublicationTablesWidget.vue'
 
-jest.mock('@nextcloud/axios', () => ({ get: jest.fn(), post: jest.fn(), put: jest.fn() }))
+jest.mock('@nextcloud/axios', () => ({ get: jest.fn(), post: jest.fn(), put: jest.fn(), delete: jest.fn() }))
 jest.mock('@nextcloud/router', () => ({
 	generateUrl: (path, params = {}) => path.replace(/{(\w+)}/g, (_, key) => params[key]),
 }))
@@ -134,5 +134,92 @@ describe('PublicationTablesWidget', () => {
 		await wrapper.find('[data-testid="publication-table-publish-78"]').trigger('click')
 		await flushPromises()
 		expect(wrapper.find('[data-testid="publication-tables-message"]').text()).toBe('You may not change this publication.')
+	})
+
+	describe('views on the public page', () => {
+		const VIEWS_URL = TABLES_URL + '/t1/views'
+		const VIEWS = [
+			{ id: 'v1', table: 't1', kind: 'table', title: 'Alle speeltuinen', columns: ['toestellen'], position: 0 },
+			{ id: 'v2', table: 't1', kind: 'bar', title: 'Per wijk', x: 'toestellen', aggregate: 'count', position: 1 },
+		]
+
+		/**
+		 * Answer the reads, the views of t1 included.
+		 *
+		 * @param {Array<object>} views The views t1 answers.
+		 * @return {void}
+		 */
+		function answerWithViews(views) {
+			axios.get.mockImplementation((url) => {
+				if (url === TABLES_URL) {
+					return Promise.resolve({ data: { results: [READY] } })
+				}
+				if (url === VIEWS_URL) {
+					return Promise.resolve({ data: { table: 't1', results: views } })
+				}
+				return Promise.resolve({ data: { results: [] } })
+			})
+		}
+
+		it('lists the saved views of a ready table in page order, with the add action', async () => {
+			answerWithViews(VIEWS)
+
+			const wrapper = await mountWidget()
+
+			const items = wrapper.findAll('[data-testid^="publication-table-view-v"]')
+			expect(items.map((item) => item.attributes('data-testid'))).toEqual(['publication-table-view-v1', 'publication-table-view-v2'])
+			expect(items[0].text()).toContain('Alle speeltuinen (Table)')
+			expect(items[1].text()).toContain('Per wijk (Bar chart)')
+			expect(wrapper.find('[data-testid="publication-table-view-up-v1"]').attributes('disabled')).toBeDefined()
+			expect(wrapper.find('[data-testid="publication-table-view-down-v2"]').attributes('disabled')).toBeDefined()
+			expect(wrapper.find('[data-testid="publication-table-add-view-t1"]').exists()).toBe(true)
+		})
+
+		it('says there are no views yet when the table has none', async () => {
+			answerWithViews([])
+
+			const wrapper = await mountWidget()
+
+			expect(wrapper.find('[data-testid="publication-table-views-t1"]').text()).toContain('No views yet.')
+		})
+
+		it('moves a view up by saving both views with their swapped positions', async () => {
+			answerWithViews(VIEWS)
+			axios.post.mockResolvedValue({ data: {} })
+			const wrapper = await mountWidget()
+
+			await wrapper.find('[data-testid="publication-table-view-up-v2"]').trigger('click')
+			await flushPromises()
+
+			expect(axios.post.mock.calls).toEqual([
+				[VIEWS_URL, { kind: 'bar', title: 'Per wijk', x: 'toestellen', aggregate: 'count', position: 0, viewId: 'v2' }],
+				[VIEWS_URL, { kind: 'table', title: 'Alle speeltuinen', columns: ['toestellen'], position: 1, viewId: 'v1' }],
+			])
+		})
+
+		it('removes a view and reads the views again', async () => {
+			answerWithViews(VIEWS)
+			axios.delete.mockResolvedValue({ data: [] })
+			const wrapper = await mountWidget()
+			const readsBefore = axios.get.mock.calls.filter(([url]) => url === VIEWS_URL).length
+
+			await wrapper.find('[data-testid="publication-table-view-remove-v1"]').trigger('click')
+			await flushPromises()
+
+			expect(axios.delete).toHaveBeenCalledWith(VIEWS_URL + '/v1')
+			expect(axios.get.mock.calls.filter(([url]) => url === VIEWS_URL).length).toBe(readsBefore + 1)
+			expect(wrapper.find('[data-testid="publication-tables-message"]').text()).toBe('The view "Alle speeltuinen" is removed.')
+		})
+
+		it('words a refused removal', async () => {
+			answerWithViews(VIEWS)
+			axios.delete.mockRejectedValue({ response: { status: 403 } })
+			const wrapper = await mountWidget()
+
+			await wrapper.find('[data-testid="publication-table-view-remove-v2"]').trigger('click')
+			await flushPromises()
+
+			expect(wrapper.find('[data-testid="publication-tables-message"]').text()).toBe('You may not change this publication.')
+		})
 	})
 })

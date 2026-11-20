@@ -775,7 +775,12 @@
         "Publisher": "Leidėjas",
         "The metadata quality could not be loaded": "Nepavyko įkelti metaduomenų kokybės",
         "{score} of 100": "{score} iš 100",
-        "Could not compute the metadata quality.": "Nepavyko apskaičiuoti metaduomenų kokybės."
+        "Could not compute the metadata quality.": "Nepavyko apskaičiuoti metaduomenų kokybės.",
+        "Review publications before they are published": "Peržiūrėti leidinius prieš juos paskelbiant",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Kai įjungta, juodraštis turi būti pateiktas ir patvirtintas, kad jį būtų galima paskelbti. Kai išjungta, redaktorius gali paskelbti juodraštį tiesiogiai.",
+        "Delete publication": "Ištrinti publikaciją",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Ar norite ištrinti \"{name}\"? Šio veiksmo atšaukti negalima.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikacija ir jos priedai dingsta iš viešojo puslapio ir iš Woo svetainės schemos. Archyvavimas, priešingai, juos išsaugo saugojimo terminui."
     },
     "plurals": {}
 }

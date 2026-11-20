@@ -4,62 +4,70 @@
 -->
 <template>
 	<div
-		v-if="available"
+		v-if="available || checked"
 		class="plain-summary-draft"
 		data-testid="plain-summary-draft">
-		<NcButton
-			v-if="!suggestion"
-			variant="secondary"
-			:disabled="busy"
-			data-testid="plain-summary-draft-start"
-			@click="startDraft">
-			{{ t('opencatalogi', 'Draft plain summary') }}
-		</NcButton>
-		<p
-			v-if="busy && !suggestion"
-			class="plain-summary-draft__hint"
-			data-testid="plain-summary-draft-waiting">
-			{{ t('opencatalogi', 'The text assistant is writing a suggestion.') }}
-		</p>
-
-		<template v-if="suggestion">
-			<p class="plain-summary-draft__hint">
-				{{ t('opencatalogi', 'This is a suggestion. It is saved only when you accept it.') }}
-			</p>
-			<NcTextArea
-				v-model="suggestion"
-				:label="t('opencatalogi', 'Suggested plain language summary')"
-				data-testid="plain-summary-draft-text" />
-			<NcSelect
-				v-model="level"
-				:options="levels"
-				:inputLabel="t('opencatalogi', 'Reading level')"
-				:clearable="false"
-				data-testid="plain-summary-draft-level" />
-			<div class="plain-summary-draft__actions">
-				<NcButton
-					variant="primary"
-					:disabled="busy || !suggestion.trim()"
-					data-testid="plain-summary-draft-accept"
-					@click="accept">
-					{{ t('opencatalogi', 'Accept') }}
-				</NcButton>
-				<NcButton
-					variant="tertiary"
-					:disabled="busy"
-					data-testid="plain-summary-draft-discard"
-					@click="discard">
-					{{ t('opencatalogi', 'Discard') }}
-				</NcButton>
-			</div>
-		</template>
-
 		<NcNoteCard
-			v-if="message"
-			:type="messageType"
-			data-testid="plain-summary-draft-message">
-			{{ message }}
+			v-if="!available"
+			type="info"
+			data-testid="plain-summary-no-assistant">
+			{{ t('opencatalogi', 'No text assistant is installed, so a plain summary cannot be drafted here. You can still write one yourself.') }}
 		</NcNoteCard>
+		<template v-else>
+			<NcButton
+				v-if="!suggestion"
+				variant="secondary"
+				:disabled="busy"
+				data-testid="plain-summary-draft-start"
+				@click="startDraft">
+				{{ t('opencatalogi', 'Draft plain summary') }}
+			</NcButton>
+			<p
+				v-if="busy && !suggestion"
+				class="plain-summary-draft__hint"
+				data-testid="plain-summary-draft-waiting">
+				{{ t('opencatalogi', 'The text assistant is writing a suggestion.') }}
+			</p>
+
+			<template v-if="suggestion">
+				<p class="plain-summary-draft__hint">
+					{{ t('opencatalogi', 'This is a suggestion. It is saved only when you accept it.') }}
+				</p>
+				<NcTextArea
+					v-model="suggestion"
+					:label="t('opencatalogi', 'Suggested plain language summary')"
+					data-testid="plain-summary-draft-text" />
+				<NcSelect
+					v-model="level"
+					:options="levels"
+					:inputLabel="t('opencatalogi', 'Reading level')"
+					:clearable="false"
+					data-testid="plain-summary-draft-level" />
+				<div class="plain-summary-draft__actions">
+					<NcButton
+						variant="primary"
+						:disabled="busy || !suggestion.trim()"
+						data-testid="plain-summary-draft-accept"
+						@click="accept">
+						{{ t('opencatalogi', 'Accept') }}
+					</NcButton>
+					<NcButton
+						variant="tertiary"
+						:disabled="busy"
+						data-testid="plain-summary-draft-discard"
+						@click="discard">
+						{{ t('opencatalogi', 'Discard') }}
+					</NcButton>
+				</div>
+			</template>
+
+			<NcNoteCard
+				v-if="message"
+				:type="messageType"
+				data-testid="plain-summary-draft-message">
+				{{ message }}
+			</NcNoteCard>
+		</template>
 	</div>
 </template>
 
@@ -99,6 +107,7 @@ export default {
 	data() {
 		return {
 			available: false,
+			checked: false,
 			busy: false,
 			taskId: null,
 			suggestion: '',
@@ -145,7 +154,8 @@ export default {
 		},
 
 		/**
-		 * Ask whether a text assistant is available; without one the widget stays hidden.
+		 * Ask whether a text assistant is available; without one the widget says
+		 * so instead of offering a draft.
 		 *
 		 * @return {Promise<void>}
 		 *
@@ -158,6 +168,7 @@ export default {
 			} catch {
 				this.available = false
 			}
+			this.checked = true
 		},
 
 		/**

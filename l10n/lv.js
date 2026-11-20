@@ -776,7 +776,12 @@ OC.L10N.register(
         "Publisher": "Izdevējs",
         "The metadata quality could not be loaded": "Metadatu kvalitāti neizdevās ielādēt",
         "{score} of 100": "{score} no 100",
-        "Could not compute the metadata quality.": "Metadatu kvalitāti neizdevās aprēķināt."
+        "Could not compute the metadata quality.": "Metadatu kvalitāti neizdevās aprēķināt.",
+        "Review publications before they are published": "Pārskatīt publikācijas pirms to publicēšanas",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Ja ieslēgts, melnraksts pirms publicēšanas ir jāiesniedz un jāapstiprina. Ja izslēgts, redaktors var publicēt melnrakstu uzreiz.",
+        "Delete publication": "Dzēst publikāciju",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Vai vēlaties dzēst \"{name}\"? Šo darbību nevar atsaukt.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikācija un tās pielikumi pazūd no publiskās lapas un no Woo vietnes kartes. Arhivēšana turpretī tos saglabā uz glabāšanas termiņu."
     },
     "nplurals=2; plural=(n != 1);"
 )

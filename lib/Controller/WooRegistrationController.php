@@ -29,12 +29,15 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\IndexRegistrationServiceInterface;
+use OCA\OpenCatalogi\Service\CapabilityRights;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 
 /**
  * The Woo-index registration and the root robots.txt rules.
@@ -43,17 +46,23 @@ use OCP\IRequest;
  */
 class WooRegistrationController extends Controller {
 
+	use CapabilityGuard;
+
 	/**
 	 * Constructor.
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IndexRegistrationServiceInterface $registration The registration service.
+	 * @param IUserSession|null     $userSession  The session, for the capability guard.
+	 * @param CapabilityRights|null $capabilities The capability rights (REQ-WAB-004).
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IndexRegistrationServiceInterface $registration,
+		private readonly ?IUserSession $userSession=null,
+		private readonly ?CapabilityRights $capabilities=null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -85,8 +94,13 @@ class WooRegistrationController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-woo-index-registration-is-requested-through-the-gateway-req-wih-003
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function request(): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'requestWooRegistration');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		$result = $this->registration->request();
 		if ($result['sent'] === false) {
 			return new JSONResponse(data: $result, statusCode: Http::STATUS_BAD_GATEWAY);
@@ -102,8 +116,13 @@ class WooRegistrationController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-woo-index-registration-is-requested-through-the-gateway-req-wih-003
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function confirm(): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'requestWooRegistration');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		return new JSONResponse(['registration' => $this->registration->confirm()]);
 	}//end confirm()
 }//end class

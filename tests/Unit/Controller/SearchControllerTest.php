@@ -435,6 +435,31 @@ class SearchControllerTest extends TestCase {
 	}//end testASignedInSearchAnswerStaysPrivate()
 
 	/**
+	 * REQ-PRS-003: a search row keeps only its public source identifiers.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testASearchRowCarriesOnlyItsPublicSourceIdentifiers(): void {
+		$this->container->method('get')->willReturn(new \stdClass());
+		$this->request->method('getParams')->willReturn([]);
+		$this->queryService->method('assemblePublicSearchResults')->willReturn([
+			'results' => [[
+				'id' => 'p1',
+				'sourceIdentifiers' => [
+					['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false],
+					['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true],
+				],
+			]],
+			'total' => 1,
+		]);
+
+		$data = $this->controller->index()->getData();
+
+		$this->assertSame([['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true]], $data['results'][0]['sourceIdentifiers']);
+		$this->assertStringNotContainsString('Z-2026-0412', (string)json_encode($data));
+	}//end testASearchRowCarriesOnlyItsPublicSourceIdentifiers()
+
+	/**
 	 * A search controller whose allowlist is $allowlist, called from $origin.
 	 *
 	 * @param string $allowlist The `cors_allowed_origins` setting.

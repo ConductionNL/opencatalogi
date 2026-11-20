@@ -31,12 +31,14 @@ use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Controller\PublicationsController;
+use OCA\OpenCatalogi\Service\Publication\PublicationRelations;
 use OCA\OpenRegister\Kernel\Contracts\RenderSelection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
+use OCP\IURLGenerator;
 use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -49,6 +51,8 @@ use RuntimeException;
  *
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @uses   \OCA\OpenCatalogi\Controller\CatalogSlugQuery
+ * @uses    \OCA\OpenCatalogi\Service\Publication\PublicationLinkRules
+ * @uses    \OCA\OpenCatalogi\Service\Publication\PublicationRelations
  * @uses   \OCA\OpenCatalogi\Controller\CorsSettings
  * @uses   \OCA\OpenCatalogi\Controller\FoundPublication
  * @uses   \OCA\OpenCatalogi\Controller\PublicationRead
@@ -311,6 +315,10 @@ class PublicationShowGoldenTest extends TestCase {
 			WithheldFromPublicationInterface::class => $withheld,
 			SchemaOrgServiceInterface::class => $schemaOrg,
 			'OCA\OpenRegister\Service\ObjectService' => $this->objects(case: $case),
+			PublicationRelations::class => new PublicationRelations(
+				queryService: $this->createMock(PublicationQueryServiceInterface::class),
+				urlGenerator: $this->createMock(IURLGenerator::class)
+			),
 		];
 
 		$container = $this->createMock(ContainerInterface::class);

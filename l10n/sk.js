@@ -776,7 +776,12 @@ OC.L10N.register(
         "Publisher": "Vydavateľ",
         "The metadata quality could not be loaded": "Kvalitu metadát sa nepodarilo načítať",
         "{score} of 100": "{score} zo 100",
-        "Could not compute the metadata quality.": "Kvalitu metadát sa nepodarilo vypočítať."
+        "Could not compute the metadata quality.": "Kvalitu metadát sa nepodarilo vypočítať.",
+        "Review publications before they are published": "Kontrolovať publikácie pred zverejnením",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Ak je zapnuté, koncept musí byť pred zverejnením odoslaný na kontrolu a schválený. Ak je vypnuté, redaktor môže koncept zverejniť priamo.",
+        "Delete publication": "Odstrániť publikáciu",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Chcete odstrániť \"{name}\"? Túto akciu nie je možné vrátiť späť.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikácia a jej prílohy zmiznú z verejnej stránky a z mapy stránok Woo. Archivácia ich naopak uchová počas lehoty uchovávania."
     },
     "nplurals=2; plural=(n != 1);"
 )

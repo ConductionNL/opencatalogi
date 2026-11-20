@@ -2221,6 +2221,28 @@ class PublicationServiceTest extends TestCase {
 		$this->assertArrayNotHasKey('deleted', $self);
 	}
 
+	/**
+	 * REQ-PRS-003: the federation and catalogue reads keep only public source identifiers.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testFilterUnwantedPropertiesKeepsOnlyPublicSourceIdentifiers(): void {
+		$method = new \ReflectionMethod(PublicationService::class, 'filterUnwantedProperties');
+		$method->setAccessible(true);
+
+		$obj = $this->createSerializableObject([
+			'@self' => ['id' => 'pub-1'],
+			'sourceIdentifiers' => [
+				['system' => 'case', 'identifier' => 'c-1', 'public' => false],
+				['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true],
+			],
+		]);
+
+		$result = $method->invoke($this->service, [$obj]);
+
+		$this->assertSame([['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true]], $result[0]['sourceIdentifiers']);
+	}
+
 	public function testFilterUnwantedPropertiesFiltersFilesWithoutPublished(): void {
 		$method = new \ReflectionMethod(PublicationService::class, 'filterUnwantedProperties');
 		$method->setAccessible(true);

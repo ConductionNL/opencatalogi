@@ -288,6 +288,28 @@ class FeedConsumerService implements FeedConsumerServiceInterface {
 	}//end disableConsumer()
 
 	/**
+	 * Let a consumer act for signed-in readers, or stop it (REQ-PSR-003).
+	 *
+	 * A portal holding a key of such a consumer may read a publication limited
+	 * to signed-in readers for a reader whose login level it sends.
+	 *
+	 * @param string $consumerId The consumer id.
+	 * @param bool   $allowed    Whether it may.
+	 *
+	 * @return array<string, mixed> The consumer, without verifiers.
+	 *
+	 * @throws OutOfBoundsException When the consumer does not exist.
+	 *
+	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-trusted-portal-reads-it-for-a-reader-at-the-required-level-req-psr-003
+	 */
+	public function setActForSignedInReaders(string $consumerId, bool $allowed): array {
+		$consumer = $this->consumer(consumerId: $consumerId);
+		$consumer['actForSignedInReaders'] = $allowed;
+
+		return $this->publicView(consumer: $this->store->save(schema: self::SCHEMA, data: $consumer, id: $consumerId));
+	}//end setActForSignedInReaders()
+
+	/**
 	 * The consumer and account a presented key belongs to, or null when the key
 	 * is malformed, unknown, revoked, expired or wrong, or its consumer or
 	 * account is disabled. A key that passes has its last use recorded, at most hourly.

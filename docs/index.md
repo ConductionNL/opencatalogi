@@ -85,7 +85,7 @@ Manuals for end users who use Open Catalogi daily for example:
 - 🗂️ **Content Management**: Glossary, themes, pages, and menus for building the public-facing catalogue site
 - 🏢 **Organization Profiles**: Publisher organizations with government identifiers (OIN/TOOI/RSIN/PKI)
 - ☁️ **Nextcloud & OpenRegister Integration**: Every catalogue entry is a typed OpenRegister object with RBAC-governed access
-- 🤖 **AI Chat Companion (MCP)**: Read-only MCP tools expose catalogue search and publication lookup to compatible LLM assistants
+- 🤖 **AI Chat Companion (MCP)**: Read-only MCP tools, derived from the register, expose publications, catalogs, themes, catalog-scoped search and publication files to compatible LLM assistants ([agent tools](features/agent-tools.md))
 - 🔍 **Faceted Search**: Full-text search across publications with filtering by metadata fields
 - 🔌 **API Access**: RESTful API for programmatic access to catalog data, with CORS support
 

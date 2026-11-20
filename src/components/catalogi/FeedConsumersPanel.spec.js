@@ -13,7 +13,7 @@ import FeedConsumersPanel from './FeedConsumersPanel.vue'
 import { refusalOf } from '../../services/feedConsumerRefusal.js'
 import { consumersUrl, isActiveKey, listConsumers } from '../../services/feedConsumers.js'
 
-jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn() } }))
+jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn(), put: jest.fn() } }))
 jest.mock('@nextcloud/l10n', () => ({ __esModule: true, translate: (app, text) => `t:${text}` }))
 jest.mock('@nextcloud/router', () => ({
 	__esModule: true,
@@ -44,6 +44,7 @@ const LISTING = {
 beforeEach(() => {
 	axios.get.mockReset()
 	axios.post.mockReset()
+	axios.put.mockReset()
 	axios.get.mockResolvedValue({ data: LISTING })
 })
 
@@ -105,4 +106,26 @@ test('a key is active until it is revoked or expires', () => {
 	expect(isActiveKey({ id: 'k', revokedAt: '2026-11-10T00:00:00Z' }, now)).toBe(false)
 	expect(isActiveKey(null, now)).toBe(false)
 	expect(consumersUrl('woo', '/x')).toBe(`${BASE}/x`)
+})
+
+test('the switch lets a consumer act for signed-in readers, and reloads', async () => {
+	axios.put.mockResolvedValue({ data: { id: 'c1', actForSignedInReaders: true } })
+	const vm = panel()
+
+	await vm.actForReaders({ id: 'c1' }, true)
+
+	expect(axios.put).toHaveBeenCalledWith(BASE + '/c1/signed-in-readers', { actForSignedInReaders: true })
+	expect(axios.get).toHaveBeenCalledWith(BASE)
+	expect(vm.error).toBe('')
+})
+
+test('switching it off sends false, and a refusal is shown', async () => {
+	axios.put.mockRejectedValue({ response: { status: 400, data: { error: 'actForSignedInReaders must be true or false' } } })
+	const vm = panel()
+
+	await vm.actForReaders({ id: 'c1' }, false)
+
+	expect(axios.put).toHaveBeenCalledWith(BASE + '/c1/signed-in-readers', { actForSignedInReaders: false })
+	expect(vm.error).not.toBe('')
+	expect(vm.busy).toBe(false)
 })

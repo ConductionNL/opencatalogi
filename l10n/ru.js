@@ -776,7 +776,12 @@ OC.L10N.register(
         "Publisher": "Издатель",
         "The metadata quality could not be loaded": "Не удалось загрузить качество метаданных",
         "{score} of 100": "{score} из 100",
-        "Could not compute the metadata quality.": "Не удалось рассчитать качество метаданных."
+        "Could not compute the metadata quality.": "Не удалось рассчитать качество метаданных.",
+        "Review publications before they are published": "Проверять публикации перед публикацией",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Если включено, черновик должен быть отправлен на проверку и одобрен, прежде чем его можно будет опубликовать. Если выключено, редактор может опубликовать черновик сразу.",
+        "Delete publication": "Удалить публикацию",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Хотите удалить \"{name}\"? Это действие нельзя отменить.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публикация и её вложения исчезают с публичной страницы и из карты сайта Woo. Архивирование, напротив, сохраняет их на срок хранения."
     },
     "nplurals=2; plural=(n != 1);"
 )

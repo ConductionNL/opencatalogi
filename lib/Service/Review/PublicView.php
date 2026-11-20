@@ -117,7 +117,16 @@ class PublicView {
 	private function publicMetadata(array $batch): array {
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 
-		return array_intersect_key($this->writer->payload(batch: $batch, now: $now), array_flip(self::PUBLIC_FIELDS));
+		// The publish transition writes the publication date (REQ-PLC-003); the payload no longer carries it.
+		$payload = $this->writer->payload(batch: $batch, now: $now) + ['publicationDate' => $now];
+		$public  = [];
+		foreach (self::PUBLIC_FIELDS as $field) {
+			if (array_key_exists($field, $payload) === true) {
+				$public[$field] = $payload[$field];
+			}
+		}
+
+		return $public;
 	}//end publicMetadata()
 
 	/**

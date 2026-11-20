@@ -2,7 +2,14 @@
     "catalogue not found": {
         "envelope": {
             "results": [],
-            "total": 0
+            "total": 0,
+            "facets": {
+                "resultType": {
+                    "publication": 0,
+                    "document": 0,
+                    "subject": 0
+                }
+            }
         },
         "calls": [],
         "logs": [
@@ -19,7 +26,14 @@
     "catalogue not yet published": {
         "envelope": {
             "results": [],
-            "total": 0
+            "total": 0,
+            "facets": {
+                "resultType": {
+                    "publication": 0,
+                    "document": 0,
+                    "subject": 0
+                }
+            }
         },
         "calls": [],
         "logs": [
@@ -45,16 +59,25 @@
                         "id": "p-r1",
                         "slug": "r-one",
                         "title": "Refined"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
                         "id": "p-1",
                         "schema": "publication"
-                    }
+                    },
+                    "resultType": "publication"
                 }
             ],
-            "total": 2
+            "total": 2,
+            "facets": {
+                "resultType": {
+                    "publication": 1,
+                    "document": 1,
+                    "subject": 0
+                }
+            }
         },
         "calls": [
             {
@@ -123,10 +146,18 @@
                     "@self": {
                         "id": "b-1",
                         "schema": "besluit"
-                    }
+                    },
+                    "resultType": "publication"
                 }
             ],
-            "total": 1
+            "total": 1,
+            "facets": {
+                "resultType": {
+                    "publication": 1,
+                    "document": 0,
+                    "subject": 0
+                }
+            }
         },
         "calls": [
             {
@@ -173,7 +204,14 @@
     "default scope unions listed catalogues": {
         "envelope": {
             "results": [],
-            "total": 0
+            "total": 0,
+            "facets": {
+                "resultType": {
+                    "publication": 0,
+                    "document": 0,
+                    "subject": 0
+                }
+            }
         },
         "calls": [
             {
@@ -239,7 +277,8 @@
                         "id": "p-a1",
                         "slug": "slug-a",
                         "title": "A first"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -250,7 +289,8 @@
                         "id": "p-a1",
                         "slug": "slug-a",
                         "title": "A first"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -262,7 +302,8 @@
                         "id": "p-r9",
                         "slug": "r-nine",
                         "title": "Nine"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -276,7 +317,8 @@
                         "id": "p-1",
                         "slug": "one",
                         "title": "One"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -287,10 +329,18 @@
                         "id": "p-r6",
                         "slug": "r-six",
                         "title": ""
-                    }
+                    },
+                    "resultType": "document"
                 }
             ],
-            "total": 5
+            "total": 5,
+            "facets": {
+                "resultType": {
+                    "publication": 0,
+                    "document": 5,
+                    "subject": 0
+                }
+            }
         },
         "calls": [
             {
@@ -415,10 +465,18 @@
                     "@self": {
                         "id": "b-1",
                         "schema": "besluit"
-                    }
+                    },
+                    "resultType": "publication"
                 }
             ],
-            "total": 1
+            "total": 1,
+            "facets": {
+                "resultType": {
+                    "publication": 1,
+                    "document": 0,
+                    "subject": 0
+                }
+            }
         },
         "calls": [
             {
@@ -456,7 +514,14 @@
     "empty first page by page number": {
         "envelope": {
             "results": [],
-            "total": 0
+            "total": 0,
+            "facets": {
+                "resultType": {
+                    "publication": 0,
+                    "document": 0,
+                    "subject": 0
+                }
+            }
         },
         "calls": [
             {
@@ -512,7 +577,14 @@
     "empty later page by page number": {
         "envelope": {
             "results": [],
-            "total": 31
+            "total": 31,
+            "facets": {
+                "resultType": {
+                    "publication": 0,
+                    "document": 0,
+                    "subject": 0
+                }
+            }
         },
         "calls": [
             {
@@ -552,7 +624,14 @@
     "empty later page keeps the total": {
         "envelope": {
             "results": [],
-            "total": 31
+            "total": 31,
+            "facets": {
+                "resultType": {
+                    "publication": 0,
+                    "document": 0,
+                    "subject": 0
+                }
+            }
         },
         "calls": [
             {
@@ -592,7 +671,14 @@
     "every schema lacks read rules": {
         "envelope": {
             "results": [],
-            "total": 0
+            "total": 0,
+            "facets": {
+                "resultType": {
+                    "publication": 0,
+                    "document": 0,
+                    "subject": 0
+                }
+            }
         },
         "calls": [],
         "logs": [
@@ -630,14 +716,16 @@
                         "id": "p-1",
                         "schema": "publication"
                     },
-                    "title": "One"
+                    "title": "One",
+                    "resultType": "publication"
                 },
                 {
                     "@self": {
                         "id": "p-5",
                         "schema": "besluit"
                     },
-                    "title": "Entity"
+                    "title": "Entity",
+                    "resultType": "publication"
                 },
                 {
                     "id": "p-6",
@@ -645,13 +733,15 @@
                     "title": "Top-level id",
                     "@self": {
                         "schema": "besluit"
-                    }
+                    },
+                    "resultType": "publication"
                 },
                 {
                     "@self": {
                         "schema": "besluit"
                     },
-                    "title": "No id at all"
+                    "title": "No id at all",
+                    "resultType": "publication"
                 },
                 {
                     "@self": {
@@ -662,7 +752,8 @@
                         "id": "p-1",
                         "slug": "one",
                         "title": "One"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -673,7 +764,8 @@
                         "id": "p-a1",
                         "slug": "slug-a",
                         "title": "A first"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -688,7 +780,8 @@
                         "id": "p-a1",
                         "slug": "slug-a",
                         "title": "A first"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -702,7 +795,8 @@
                         "id": "p-a1",
                         "slug": "slug-a",
                         "title": "A first"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -713,7 +807,8 @@
                         "id": "p-r1",
                         "slug": "r-one",
                         "title": "Refined"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -724,20 +819,27 @@
                         "id": "p-r2",
                         "slug": "r-two",
                         "title": ""
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
                         "id": "b-1",
                         "schema": "besluit"
                     },
-                    "status": "concept"
+                    "status": "concept",
+                    "resultType": "publication"
                 }
             ],
             "total": 33,
             "facets": {
                 "type": {
                     "a": 1
+                },
+                "resultType": {
+                    "publication": 5,
+                    "document": 6,
+                    "subject": 0
                 }
             },
             "facetable": {
@@ -962,14 +1064,16 @@
                         "id": "p-1",
                         "schema": "publication"
                     },
-                    "title": "One"
+                    "title": "One",
+                    "resultType": "publication"
                 },
                 {
                     "@self": {
                         "id": "p-5",
                         "schema": "besluit"
                     },
-                    "title": "Entity"
+                    "title": "Entity",
+                    "resultType": "publication"
                 },
                 {
                     "id": "p-6",
@@ -977,13 +1081,15 @@
                     "title": "Top-level id",
                     "@self": {
                         "schema": "besluit"
-                    }
+                    },
+                    "resultType": "publication"
                 },
                 {
                     "@self": {
                         "schema": "besluit"
                     },
-                    "title": "No id at all"
+                    "title": "No id at all",
+                    "resultType": "publication"
                 },
                 {
                     "@self": {
@@ -992,7 +1098,8 @@
                     },
                     "publication": {
                         "id": "p-1"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -1002,7 +1109,8 @@
                     "publication": {
                         "id": "p-archived",
                         "slug": "slug-a"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -1012,7 +1120,8 @@
                             "publication": "p-missing",
                             "publication.slug": "slug-a"
                         }
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -1021,7 +1130,8 @@
                     },
                     "_relations": {
                         "publication.slug": "slug-a"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
@@ -1030,50 +1140,62 @@
                     },
                     "_relations": {
                         "publication.slug": "slug-archived"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
                         "id": "d-6",
                         "schema": "document"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
                         "id": "d-7",
                         "schema": "document"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
                         "id": "d-8",
                         "schema": "document"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
                         "id": "d-9",
                         "schema": "document"
-                    }
+                    },
+                    "resultType": "document"
                 },
                 {
                     "@self": {
                         "schema": "document"
                     },
-                    "title": "Document without id"
+                    "title": "Document without id",
+                    "resultType": "document"
                 },
                 {
                     "@self": {
                         "id": "b-1",
                         "schema": "besluit"
                     },
-                    "status": "concept"
+                    "status": "concept",
+                    "resultType": "publication"
                 }
             ],
             "total": 37,
             "facets": {
                 "type": {
                     "a": 1
+                },
+                "resultType": {
+                    "publication": 5,
+                    "document": 10,
+                    "subject": 0
                 }
             },
             "facetable": {

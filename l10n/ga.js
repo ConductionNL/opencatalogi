@@ -776,7 +776,12 @@ OC.L10N.register(
         "Publisher": "Foilsitheoir",
         "The metadata quality could not be loaded": "Níorbh fhéidir cáilíocht na meiteashonraí a lódáil",
         "{score} of 100": "{score} as 100",
-        "Could not compute the metadata quality.": "Níorbh fhéidir cáilíocht na meiteashonraí a ríomh."
+        "Could not compute the metadata quality.": "Níorbh fhéidir cáilíocht na meiteashonraí a ríomh.",
+        "Review publications before they are published": "Athbhreithnigh foilseacháin sula bhfoilsítear iad",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Nuair atá sé ar siúl, ní mór dréacht a chur isteach agus a fhaomhadh sular féidir é a fhoilsiú. Nuair atá sé múchta, is féidir le heagarthóir dréacht a fhoilsiú go díreach.",
+        "Delete publication": "Scrios an foilseachán",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "An bhfuil fonn ort \"{name}\" a scriosadh? Ní féidir an gníomh seo a chealú.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Imíonn an foilseachán agus a cheangaltáin ón leathanach poiblí agus ó léarscáil láithreáin Woo. Coinníonn cartlannú iad ar feadh na tréimhse coinneála ina ionad sin."
     },
     "nplurals=2; plural=(n != 1);"
 )

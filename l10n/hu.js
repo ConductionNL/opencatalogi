@@ -776,7 +776,12 @@ OC.L10N.register(
         "Publisher": "Kiadó",
         "The metadata quality could not be loaded": "A metaadat-minőséget nem sikerült betölteni",
         "{score} of 100": "{score} / 100",
-        "Could not compute the metadata quality.": "A metaadat-minőséget nem sikerült kiszámítani."
+        "Could not compute the metadata quality.": "A metaadat-minőséget nem sikerült kiszámítani.",
+        "Review publications before they are published": "Kiadványok ellenőrzése közzététel előtt",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Ha be van kapcsolva, a piszkozatot be kell nyújtani és jóvá kell hagyni, mielőtt közzé lehetne tenni. Ha ki van kapcsolva, a szerkesztő közvetlenül közzéteheti a piszkozatot.",
+        "Delete publication": "Közzététel törlése",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Szeretné törölni a következőt: \"{name}\"? Ez a művelet nem vonható vissza.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "A közzététel és mellékletei eltűnnek a nyilvános oldalról és a Woo-oldaltérképről. Az archiválás ezzel szemben megőrzi őket a megőrzési időre."
     },
     "nplurals=2; plural=(n != 1);"
 )

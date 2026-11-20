@@ -776,7 +776,12 @@ OC.L10N.register(
         "Publisher": "Editor",
         "The metadata quality could not be loaded": "No se pudo cargar la calidad de los metadatos",
         "{score} of 100": "{score} de 100",
-        "Could not compute the metadata quality.": "No se pudo calcular la calidad de los metadatos."
+        "Could not compute the metadata quality.": "No se pudo calcular la calidad de los metadatos.",
+        "Review publications before they are published": "Revisar las publicaciones antes de publicarlas",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Si está activado, un borrador debe enviarse y aprobarse antes de poder publicarse. Si está desactivado, un editor puede publicar un borrador directamente.",
+        "Delete publication": "Eliminar publicación",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "¿Desea eliminar \"{name}\"? Esta acción no se puede deshacer.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicación y sus adjuntos desaparecen de la página pública y del mapa del sitio Woo. Archivarla, en cambio, los conserva durante el plazo de conservación."
     },
     "nplurals=2; plural=(n != 1);"
 )
