@@ -25,7 +25,7 @@ namespace OCA\OpenCatalogi\Service;
 /**
  * Flatten an OpenRegister row into a field map with its uuid resolved.
  *
- * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+ * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
  */
 trait FlattensObjectRows {
 	/**
@@ -37,7 +37,7 @@ trait FlattensObjectRows {
 	 *
 	 * @return array<string, mixed> The fields.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	public function toFields(mixed $row): array {
 		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {

@@ -19,7 +19,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+ * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
  *
  * @covers \OCA\OpenCatalogi\Service\CmsMigrationService
  * @covers \OCA\OpenCatalogi\Service\AttachmentMigrationService

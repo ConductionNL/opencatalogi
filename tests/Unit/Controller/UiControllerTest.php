@@ -110,18 +110,25 @@ class UiControllerTest extends TestCase {
 		$this->assertEquals('index', $response->getTemplateName());
 	}
 
-	public function testPagesReturnsSpaTemplate(): void {
-		$response = $this->controller->pages();
+	/**
+	 * Pages and menus are Portaliq's (cms-moves-to-portaliq, decision 138):
+	 * this app serves no `/pages` or `/menus` screen, so a deep link there
+	 * cannot open an empty CMS shell.
+	 *
+	 * @spec openspec/specs/content-management/spec.md
+	 *
+	 * @return void
+	 */
+	public function testThereIsNoPagesOrMenusScreenAnyMore(): void {
+		$this->assertFalse(condition: method_exists($this->controller, 'pages'));
+		$this->assertFalse(condition: method_exists($this->controller, 'menus'));
 
-		$this->assertInstanceOf(TemplateResponse::class, $response);
-		$this->assertEquals('index', $response->getTemplateName());
-	}
-
-	public function testMenusReturnsSpaTemplate(): void {
-		$response = $this->controller->menus();
-
-		$this->assertInstanceOf(TemplateResponse::class, $response);
-		$this->assertEquals('index', $response->getTemplateName());
+		$routes = include __DIR__ . '/../../../appinfo/routes.php';
+		$urls = array_column($routes['routes'], 'url');
+		$this->assertNotContains(needle: '/pages', haystack: $urls);
+		$this->assertNotContains(needle: '/menus', haystack: $urls);
+		$this->assertNotContains(needle: '/api/pages', haystack: $urls);
+		$this->assertNotContains(needle: '/api/menus', haystack: $urls);
 	}
 
 	public function testDirectoryReturnsSpaTemplate(): void {
@@ -142,8 +149,6 @@ class UiControllerTest extends TestCase {
 			'organizations',
 			'themes',
 			'glossary',
-			'pages',
-			'menus',
 			'directory',
 		];
 
@@ -169,8 +174,6 @@ class UiControllerTest extends TestCase {
 			'organizations',
 			'themes',
 			'glossary',
-			'pages',
-			'menus',
 			'directory',
 		];
 

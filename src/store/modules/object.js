@@ -656,8 +656,6 @@ function isBareFetch(params) {
  * Object types that are not indexed in Solr and are read from the database.
  */
 const NON_INDEXED_TYPES = [
-	'menu',
-	'page',
 	'glossary',
 	'theme',
 	'organization',

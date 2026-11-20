@@ -49,7 +49,7 @@ interface CmsMigrationServiceInterface {
 	 *
 	 * @return string The route.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	public function routeFor(mixed $slug): string;
 
@@ -66,7 +66,7 @@ interface CmsMigrationServiceInterface {
 	 *
 	 * Returns: The body, plus any block type with no mapping and any prop the target widget does not declare.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-content-blocks-become-widgets-req-cms-102
+	 * @spec openspec/specs/portal-content/spec.md#requirement-content-blocks-become-widgets-req-cms-102
 	 */
 	public function bodyFor(array $blocks, string $pageId): array;
 
@@ -80,7 +80,7 @@ interface CmsMigrationServiceInterface {
 	 *
 	 * Returns: The page to write, and what could not be carried.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	public function pageFor(array $page, string $portal): array;
 
@@ -95,7 +95,7 @@ interface CmsMigrationServiceInterface {
 	 *
 	 * @return array{menu: array<string, mixed>, dropped: array<int, string>} The menu, and what is lost.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-menu-becomes-a-portal-menu-req-cms-103
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-menu-becomes-a-portal-menu-req-cms-103
 	 */
 	public function menuFor(array $menu, string $portal): array;
 
@@ -106,7 +106,7 @@ interface CmsMigrationServiceInterface {
 	 *
 	 * @return object|null The service, or null.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	public function openRegister(string $id): ?object;
 
@@ -117,7 +117,7 @@ interface CmsMigrationServiceInterface {
 	 *
 	 * @return array<string, mixed> The fields.
 	 *
-	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 * @spec openspec/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	public function toFields(mixed $row): array;
 }//end interface
