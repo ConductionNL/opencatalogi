@@ -102,13 +102,14 @@ class DatasetViewData {
 	 * @return array<string, mixed> `kind`, `x`, `y`, `aggregate`, `points` and `truncated`.
 	 *
 	 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-anyone-reads-a-view-s-data-while-the-publication-is-public-req-dsv-002
+	 * @SuppressWarnings(PHPMD.StaticAccess) AggregationQuery::create() is OpenRegister's value factory.
 	 */
 	public function chart(array $view, array $table): array {
 		$aggregate = (string)($view['aggregate'] ?? 'count');
-		$y = (string)($view['y'] ?? '');
+		$measure = (string)($view['y'] ?? '');
 		$field = null;
-		if ($aggregate !== 'count' && $y !== '') {
-			$field = $y;
+		if ($aggregate !== 'count' && $measure !== '') {
+			$field = $measure;
 		}
 
 		$query = AggregationQuery::create(
@@ -132,7 +133,7 @@ class DatasetViewData {
 		return [
 			'kind' => (string)$view['kind'],
 			'x' => (string)$view['x'],
-			'y' => $y,
+			'y' => $measure,
 			'aggregate' => $aggregate,
 			'points' => array_slice($points, 0, self::MAX_GROUPS),
 			'truncated' => count($points) > self::MAX_GROUPS,

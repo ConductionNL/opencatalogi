@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Table;
 
+use stdClass;
+
 /**
  * Turns rows into GeoJSON point features until the limit is reached. A row whose
  * latitude or longitude is empty, not a number or out of range is skipped and counted.
@@ -118,7 +120,7 @@ final class MapPoints {
 		}
 
 		$label = (string)($this->view['label'] ?? '');
-		$properties = new \stdClass();
+		$properties = new stdClass();
 		if ($label !== '') {
 			$properties = ['label' => ($row[$label] ?? null)];
 		}

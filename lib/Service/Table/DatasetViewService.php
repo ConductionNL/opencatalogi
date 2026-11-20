@@ -39,6 +39,9 @@ use OCP\IURLGenerator;
  * {@see DatasetViewData} (D3).
  *
  * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-an-editor-adds-a-table-chart-or-map-view-to-a-published-table-req-dsv-001
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) It joins the table service, the view data and
+ *   OpenRegister's object store, the one place a view meets all three.
  */
 class DatasetViewService implements DatasetViewServiceInterface {
 
@@ -269,6 +272,8 @@ class DatasetViewService implements DatasetViewServiceInterface {
 	 * @return array<string, mixed> The record to store.
 	 *
 	 * @throws InvalidArgumentException When a check fails; the message names the column.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) ViewColumnRules holds the pure column checks of design D2.
 	 */
 	private function checked(array $view, array $table): array {
 		$kind = (string)($view['kind'] ?? '');
