@@ -25,9 +25,10 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
-use OCA\OpenCatalogi\Service\CallerScope;
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -42,48 +43,37 @@ use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Controller for handling catalog-related operations.
- *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One over the limit since index() strips caller scope via CallerScope (WOO-581).
+
  */
 class CatalogiController extends Controller {
 	use AnswersCrossOriginListRequests;
+	use AnswersInTheVisitorsLanguage;
 	use ResolvesRegisterConfiguration;
 	use SendsListCorsHeaders;
 
 	/**
 	 * CatalogiController constructor.
 	 *
-	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
 	 * @param CatalogiServiceInterface $catalogiService The catalogi service.
 	 * @param IAppConfig $config App configuration interface.
 	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
+	 * @param PublicationQueryServiceInterface|null $queryService Negotiates the visitor's language (REQ-PTR-002).
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
 	public function __construct(
-		$appName,
 		IRequest $request,
 		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly IAppConfig $config,
 		private readonly OpenRegisterLookupInterface $registers,
 		private readonly CorsSettings $cors = new CorsSettings(),
+		private readonly ?PublicationQueryServiceInterface $queryService = null,
 	) {
-		parent::__construct(appName: $appName, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Attempts to retrieve the OpenRegister ObjectService from the container.
-	 *
-	 * @return \OCA\OpenRegister\Service\ObjectService|null The ObjectService.
-	 *
-	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
-	 */
-	private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
-		return $this->registers->installedObjectService();
-	}//end getObjectService()
 
 	/**
 	 * Get the schema and register configuration for catalogs.
@@ -136,14 +126,16 @@ class CatalogiController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 * @spec openspec/changes/catalogs/tasks.md#task-3
-	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
 	#[NoAdminRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
+		$this->negotiateVisitorLanguage(queryService: $this->queryService);
+
 		// Get catalog configuration from settings (resolved via OpenRegister; 503 if unconfigured).
 		// The 503 carries the CORS headers too, so a cross-origin caller can read it (CAT-001).
 		try {
@@ -152,43 +144,13 @@ class CatalogiController extends Controller {
 			return $this->withListCorsHeaders(response: $this->registerConfigErrorResponse(e: $e));
 		}
 
-		// Retrieve all request parameters.
-		$requestParams = $this->request->getParams();
-
-		// Build search query for searchObjectsPaginated.
-		$searchQuery = $this->getObjectService()->buildSearchQuery($requestParams);
-
-		// The configured scope below wins for the rows, but OR's facet path reads
-		// `@self.schemas ?? _schemas` first; drop every caller scope key (WOO-581).
-		$searchQuery = CallerScope::strip(query: $searchQuery);
-
-		// Constrain the query to the configured catalog register/schema.
-		// Set the top-level _register/_schema keys directly: the @self keys produced
-		// by buildSearchQuery are overwritten/normalized downstream, so the configured
-		// scope must be pinned via the magic-mapper routing keys to actually take effect.
-		if (empty($catalogConfig['schema']) === false) {
-			$searchQuery['_schema'] = $catalogConfig['schema'];
-			$searchQuery['@self']['schema'] = $catalogConfig['schema'];
-		}
-
-		if (empty($catalogConfig['register']) === false) {
-			$searchQuery['_register'] = $catalogConfig['register'];
-			$searchQuery['@self']['register'] = $catalogConfig['register'];
-		}
-
-		// Fetch catalog objects using searchObjectsPaginated.
-		// _rbac: true enforces schema authorization rules (anonymous callers only see
-		// what RBAC permits); multitenancy is left enabled so org scoping is not bypassed.
-		$result = $this->getObjectService()->searchObjectsPaginated(
-			query: $searchQuery,
-			_rbac: true,
-			deleted: false
-		);
+		// Scope pinning, the WOO-581 caller-scope strip and the RBAC'd search live in the service.
+		$result = $this->catalogiService->listCatalogs(requestParams: $this->request->getParams(), catalogConfig: $catalogConfig);
 
 		// Visibility is governed by OpenRegister RBAC (the catalog schema grants the public
 		// group read only when published <= $now); the search above runs with _rbac: true.
 		// Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
-		$response = new JSONResponse($result);
+		$response = $this->withVisitorLanguageHeaders(response: new JSONResponse($result), queryService: $this->queryService);
 		return $this->withListCorsHeaders(response: $response);
 	}//end index()
 
@@ -205,6 +167,7 @@ class CatalogiController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 * @spec openspec/changes/catalogs/tasks.md#task-4
 	 */
 	#[PublicPage]
@@ -212,8 +175,10 @@ class CatalogiController extends Controller {
 	#[NoAdminRequired]
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string|int $id): JSONResponse {
+		$this->negotiateVisitorLanguage(queryService: $this->queryService);
+
 		// Get all objects using the catalog's registers and schemas as filters.
-		$response = $this->catalogiService->index($id);
+		$response = $this->withVisitorLanguageHeaders(response: $this->catalogiService->index($id), queryService: $this->queryService);
 
 		// Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
 		return $this->withListCorsHeaders(response: $response);

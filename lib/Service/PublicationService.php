@@ -144,6 +144,11 @@ class PublicationService implements PublicationServiceInterface {
 	];
 
 	/**
+	 * The folder of a download archive that holds the attachments (REQ-DWN-006).
+	 */
+	private const ATTACHMENTS_FOLDER = 'Bijlagen/';
+
+	/**
 	 * The object service instance.
 	 *
 	 * @var object|null
@@ -1251,7 +1256,7 @@ class PublicationService implements PublicationServiceInterface {
 			// Format the files with pagination using request parameters.
 			$formattedFiles = $fileService->formatFiles($files, $this->request->getParams());
 
-			return new JSONResponse(AttachmentOrder::withPositions(page: $formattedFiles));
+			return new JSONResponse($this->withReferences(formatted: AttachmentOrder::withPositions(page: $formattedFiles), publicationId: $id));
 		} catch (DoesNotExistException $e) {
 			return new JSONResponse(['error' => 'Object not found'], 404);
 		} catch (NotFoundException $e) {
@@ -1261,6 +1266,43 @@ class PublicationService implements PublicationServiceInterface {
 		}//end try
 
 	}//end attachments()
+
+	/**
+	 * The formatted files with the publication's public document references after them (REQ-PBR-002).
+	 *
+	 * Each reference carries `kind: reference` and its source URL. The
+	 * references are listed once, after the files on the first page, and
+	 * counted in `total`.
+	 *
+	 * @param array<string, mixed> $formatted The formatFiles result.
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<string, mixed> The result with the references.
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-a-reference-is-published-like-a-file-pointing-at-its-source-req-pbr-002
+	 */
+	public function withReferences(array $formatted, string $publicationId): array {
+		if ((int)($formatted['page'] ?? 1) > 1) {
+			return $formatted;
+		}
+
+		try {
+			$references = $this->container->get(DocumentReferences::class)->publishedFileEntries(publicationId: $publicationId);
+		} catch (\Throwable $e) {
+			return $formatted;
+		}
+
+		if ($references === []) {
+			return $formatted;
+		}
+
+		$formatted['results'] = array_merge(array_values((array)($formatted['results'] ?? [])), $references);
+		if (isset($formatted['total']) === true) {
+			$formatted['total'] = ((int)$formatted['total'] + count($references));
+		}
+
+		return $formatted;
+	}//end withReferences()
 
 	/**
 	 * Download all files of an object as a ZIP archive
@@ -1314,6 +1356,8 @@ class PublicationService implements PublicationServiceInterface {
 			if ($sharedNames !== null) {
 				$this->removeZipEntriesNotIn(zipPath: $zipInfo['path'], keepNames: $sharedNames);
 			}
+
+			$this->moveZipEntriesIntoAttachmentsFolder(zipPath: $zipInfo['path']);
 
 			// Render the publication metadata PDF and pipe it into the ZIP alongside the
 			// attachments streamed from OR's file service (DWN-OR-001 / DWN-OR-003).
@@ -1471,6 +1515,46 @@ class PublicationService implements PublicationServiceInterface {
 		$zip->close();
 
 	}//end removeZipEntriesNotIn()
+
+	/**
+	 * Move every entry of the archive under `Bijlagen/`.
+	 *
+	 * OpenRegister writes an object's files at the root of the archive; the download
+	 * puts the metadata PDF there and the attachments in `Bijlagen/` (REQ-DWN-006).
+	 *
+	 * @param string $zipPath Path of the ZIP archive to rewrite in place.
+	 *
+	 * @return void
+	 *
+	 * @throws Exception When the archive cannot be opened or an entry cannot be renamed.
+	 *
+	 * @spec openspec/specs/download-service/spec.md
+	 */
+	private function moveZipEntriesIntoAttachmentsFolder(string $zipPath): void {
+		$zip = new ZipArchive();
+		if ($zip->open($zipPath) !== true) {
+			// An archive whose every entry was removed no longer exists on disk.
+			return;
+		}
+
+		$renames = [];
+		for ($index = 0; $index < $zip->numFiles; $index++) {
+			$entryName = (string) $zip->getNameIndex($index);
+			if (str_starts_with($entryName, self::ATTACHMENTS_FOLDER) === false) {
+				$renames[$index] = self::ATTACHMENTS_FOLDER . $entryName;
+			}
+		}
+
+		foreach ($renames as $index => $newName) {
+			if ($zip->renameIndex($index, $newName) === false) {
+				$zip->close();
+				throw new Exception('Failed to move an attachment into the Bijlagen folder of the ZIP archive');
+			}
+		}
+
+		$zip->close();
+
+	}//end moveZipEntriesIntoAttachmentsFolder()
 
 	/**
 	 * Whether the current request has no signed-in user.

@@ -724,7 +724,21 @@ OC.L10N.register(
         "Open catalog": "Avrir il catalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creescha tes emprim catalog. El è il container, en il qual vegnan a star tias publicaziuns. Tscherna il register Publication ed il schema Publication, uschia ch'il catalog mussa las publicaziuns che ti agiuntas.",
         "Manage your publications and their status": "Administrai Vossas publicaziuns e lur status",
-        "Open at the source": "Avrir tar la funtauna"
+        "Open at the source": "Avrir tar la funtauna",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: versiun dad OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister cuntegna il motor che OpenCatalogi dovra.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi dovra OpenRegister %1$s u pli nov. A l'OpenRegister installà manca %2$s, perquai mussa OpenCatalogi in avis empè da sias paginas. Actualisai OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi na po betg cumenzar",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi dovra OpenRegister %1$s u pli nov. Dumandai Voss administratur d'actualisar OpenRegister.",
+        "Feed consumers": "Consumaders dal feed",
+        "Contact": "Contact",
+        "Generate key": "Generar clav",
+        "Revoke": "Revocar",
+        "Disable": "Deactivar",
+        "Last used": "Duvrà l'ultima giada",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Questa clav vegn mussada mo ina giada. Copiai ella ussa: ella na po betg vegnir mussada anc ina giada.",
+        "No feed consumers yet.": "Anc nagins consumaders dal feed.",
+        "Accounts that read every catalogue's feed": "Contos che leggian il feed da mintga catalog"
     },
     "nplurals=2; plural=(n != 1);"
 )

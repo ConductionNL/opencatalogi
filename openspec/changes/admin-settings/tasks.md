@@ -215,11 +215,12 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - **files:** N/A (manual testing and CI)
 - **acceptance_criteria:**
   - GIVEN the full implementation WHEN tested end-to-end THEN all REQ-SET-001 through REQ-SET-014 scenarios pass
-- [ ] 13.1 Restart Apache/php-fpm; run `GET /api/settings` with curl — verify shape matches spec (live pass, decision 139)
-- [ ] 13.2 Test `POST /api/settings` with admin credentials — verify config persists; test with non-admin — verify 403 (live pass, decision 139)
-- [ ] 13.3 Test `POST /api/settings/import` with `force: true` — verify import counts reported; test without force when versions match — verify import skipped (live pass, decision 139)
-- [ ] 13.4 Test `GET /api/settings/version` — verify `match` field is correct before and after import (live pass, decision 139)
+- [x] 13.1 Restart Apache/php-fpm; run `GET /api/settings` with curl — verify shape matches spec (live pass, decision 139) Live pass 17 Nov (livepass-opencatalogi): 200 with `objectTypes`, `openRegisters`, `availableRegisters`, `configuration` (per-type `_source`/`_schema`/`_register` keys).
+- [x] 13.2 Test `POST /api/settings` with admin credentials — verify config persists; test with non-admin — verify 403 (live pass, decision 139) Live pass 17 Nov (livepass-opencatalogi): admin POST `glossary_schema` 999 stored (occ and GET read it back), restored; editor1 POST 403 and the value unchanged. Note: editor1 GET /api/settings is 200.
+- [x] 13.3 Test `POST /api/settings/import` with `force: true` — verify import counts reported; test without force when versions match — verify import skipped (live pass, decision 139) Live pass 17 Nov (livepass-opencatalogi): force: 200 with counts (3 registers, 39 schemas, 1 mapping, 4 objects unchanged) and no duplicate schema (74 rows, 74 slugs); without force when the versions match: 400 `Configuration is already up to date`.
+- [x] 13.4 Test `GET /api/settings/version` — verify `match` field is correct before and after import (live pass, decision 139) Live pass 17 Nov (livepass-opencatalogi): `versionsMatch: true` after import; after clearing the stored version `configuredVersion: null, versionsMatch: false, needsUpdate: true`.
 - [ ] 13.5 Test repair step by simulating install: clear `configuredVersion` key, run `occ maintenance:repair` — verify settings are re-imported (live pass, decision 139)
+  - Live pass 17 Nov: left open, fails. With the configuration's version cleared (and the legacy `opencatalogi_config_version` key deleted), `occ maintenance:repair` runs "Initialize OpenCatalogi settings" and reports `Configuration loaded: 1 registers, 0 schemas, 0 objects`, but the version is not written back: `/api/settings/version` keeps `configuredVersion: null, needsUpdate: true` until a forced import. OpenRegister's `ImportHandler::importFromApp()` only calls `track()` (which sets the version) when the import changed a register, schema or object, so a no-change import never records the version.
 - [ ] 13.6 Open Nextcloud admin settings → OpenCatalogi — verify `CnVersionInfoCard` renders first, dropdowns populate, save works (live pass, decision 139)
 - [ ] 13.7 Run `npm run check:l10n` — zero MISSING, zero UNWRAPPED
 - [ ] 13.8 Verify `AdminRoot.vue` is absent from the vue-router: `grep -rn "AdminRoot" src/router/` must return no results

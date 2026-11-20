@@ -61,6 +61,21 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentReferencesInterface",
+        "OCA\\OpenCatalogi\\Service\\DocumentReferences"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentReferenceProbeInterface",
+        "OCA\\OpenCatalogi\\Service\\DocumentReferenceProbe"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentReferenceUrlPolicyInterface",
+        "OCA\\OpenCatalogi\\Service\\DocumentReferenceUrlPolicy"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\DonlRegistrationServiceInterface",
         "OCA\\OpenCatalogi\\Service\\DonlRegistrationService"
     ],
@@ -226,6 +241,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\FeedConsumerServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\FeedConsumerService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\DemoDataServiceInterface",
         "OCA\\OpenCatalogi\\Service\\DemoDataService"
     ],
@@ -248,6 +268,16 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\InformationRequestStoreInterface",
         "OCA\\OpenCatalogi\\Service\\Woo\\WooRequestStore"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\HandoverStateInterface",
+        "OCA\\OpenCatalogi\\Service\\Handover\\HandoverState"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\IntakeForwardInterface",
+        "OCA\\OpenCatalogi\\Service\\Woo\\DossiqWooForward"
     ],
     [
         "alias",

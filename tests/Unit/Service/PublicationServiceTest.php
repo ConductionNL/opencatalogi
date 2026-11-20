@@ -4213,11 +4213,11 @@ class PublicationServiceTest extends TestCase {
 				return $fileService;
 			});
 
-		// Create a real ZIP fixture so the metadata PDF can be piped into it (DWN-OR-001).
+		// A real ZIP in OpenRegister's shape, files at the root, so the metadata PDF can be piped into it (DWN-OR-001).
 		$tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
 		$fixture = new \ZipArchive();
 		$fixture->open($tmpFile, \ZipArchive::OVERWRITE);
-		$fixture->addFromString('Bijlagen/attachment1.txt', 'attachment content');
+		$fixture->addFromString('attachment1.txt', 'attachment content');
 		$fixture->close();
 
 		$sharedNode = $this->createMock(\OCP\Files\File::class);
@@ -4318,9 +4318,9 @@ class PublicationServiceTest extends TestCase {
 	public function testDownloadGivesAnAnonymousCallerOnlySharedFiles(): void {
 		$entries = $this->downloadEntriesFor($this->service, ['shared.pdf']);
 
-		$this->assertContains('shared.pdf', $entries);
+		$this->assertContains('Bijlagen/shared.pdf', $entries);
 		$this->assertContains('pub-1.pdf', $entries, 'The metadata PDF must stay in the download ZIP.');
-		$this->assertNotContains('unshared.pdf', $entries, 'An anonymous caller must not receive unshared files.');
+		$this->assertNotContains('Bijlagen/unshared.pdf', $entries, 'An anonymous caller must not receive unshared files.');
 	}
 
 	public function testDownloadGivesASignedInCallerEveryReadableFile(): void {
@@ -4329,8 +4329,8 @@ class PublicationServiceTest extends TestCase {
 
 		$entries = $this->downloadEntriesFor($this->serviceWithSession($session), ['shared.pdf']);
 
-		$this->assertContains('shared.pdf', $entries);
-		$this->assertContains('unshared.pdf', $entries);
+		$this->assertContains('Bijlagen/shared.pdf', $entries);
+		$this->assertContains('Bijlagen/unshared.pdf', $entries);
 		$this->assertContains('pub-1.pdf', $entries);
 	}
 

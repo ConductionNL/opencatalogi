@@ -30,6 +30,7 @@ import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
 import PlainSummaryDraftWidget from './components/widgets/PlainSummaryDraftWidget.vue'
 import PublicationAttachmentsWidget from './components/widgets/PublicationAttachmentsWidget.vue'
+import PublicationLanguagesWidget from './components/widgets/PublicationLanguagesWidget.vue'
 import PublicationTablesWidget from './components/widgets/PublicationTablesWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
@@ -99,6 +100,16 @@ registerDashboardWidget('publication-visibility', {
 	defaultContent: {},
 	displayName: 'Publication status',
 	icon: 'EyeOutline',
+	surfaces: ['detail-page'],
+})
+// Per enabled language what is translated, with Translate in the editor
+// (publication-translations REQ-PTR-004, board OcPublicatie).
+registerDashboardWidget('publication-languages', {
+	renderer: PublicationLanguagesWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Languages',
+	icon: 'Translate',
 	surfaces: ['detail-page'],
 })
 // Draft a plain language summary with the text assistant and accept it
