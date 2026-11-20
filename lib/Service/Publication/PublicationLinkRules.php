@@ -1,0 +1,179 @@
+<?php
+
+/**
+ * Rules over a publication's relations and source identifiers, applied before it is saved.
+ *
+ * @category Service
+ * @package  OCA\OpenCatalogi\Service\Publication
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-names-its-relation-to-another-publication-req-prs-001
+ */
+
+declare(strict_types=1);
+
+namespace OCA\OpenCatalogi\Service\Publication;
+
+/**
+ * Pure rules: which relation property points a publication at itself, and the
+ * source identifiers with the case reference mirrored in.
+ *
+ * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-names-its-relation-to-another-publication-req-prs-001
+ */
+final class PublicationLinkRules {
+
+	/**
+	 * The relation properties of a publication, in the order they are checked.
+	 */
+	public const RELATION_PROPERTIES = ['replaces', 'amends', 'implements', 'relatedTo'];
+
+	/**
+	 * The system a mirrored case reference is filed under.
+	 */
+	public const CASE_SYSTEM = 'case';
+
+	/**
+	 * The first relation property that holds the publication's own id, or null.
+	 *
+	 * An item may be the id itself or an object carrying `id` or `uuid`.
+	 *
+	 * @param array<string, mixed> $data The publication.
+	 * @param string $publicationId The publication's own id; empty for a new one.
+	 *
+	 * @return string|null The property name.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-names-its-relation-to-another-publication-req-prs-001
+	 */
+	public function selfRelation(array $data, string $publicationId): ?string {
+		if ($publicationId === '') {
+			return null;
+		}
+
+		foreach (self::RELATION_PROPERTIES as $property) {
+			$ids = array_map(static fn (mixed $item): mixed => self::itemId(item: $item), self::asList(value: ($data[$property] ?? [])));
+			if (in_array($publicationId, $ids, true) === true) {
+				return $property;
+			}
+		}
+
+		return null;
+	}//end selfRelation()
+
+	/**
+	 * The source identifiers with a non-empty case reference mirrored in as a private `case` entry.
+	 *
+	 * Never removes an entry. Returns null when nothing changes, so a caller
+	 * only writes when there is something to write.
+	 *
+	 * @param array<string, mixed> $data The publication.
+	 *
+	 * @return array<int, array<string, mixed>>|null The new list, or null when unchanged.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function withMirroredCaseReference(array $data): ?array {
+		$reference = ($data['caseReference'] ?? null);
+		if (is_string($reference) === false || trim($reference) === '') {
+			return null;
+		}
+
+		$identifiers = self::identifiers(value: ($data['sourceIdentifiers'] ?? []));
+		$mirrored    = array_filter(
+			$identifiers,
+			static fn (array $entry): bool => ($entry['system'] ?? null) === self::CASE_SYSTEM && ($entry['identifier'] ?? null) === $reference
+		);
+		if ($mirrored !== []) {
+			return null;
+		}
+
+		$identifiers[] = ['system' => self::CASE_SYSTEM, 'identifier' => $reference, 'public' => false];
+		return $identifiers;
+	}//end withMirroredCaseReference()
+
+	/**
+	 * The publication with only its public source identifiers, for a public answer.
+	 *
+	 * An entry is public only when `public` is exactly true; anything else,
+	 * including a missing flag, stays internal. A publication without the
+	 * property is returned unchanged.
+	 *
+	 * @param array<string, mixed> $publication The publication as read.
+	 *
+	 * @return array<string, mixed> The publication for the public answer.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function withPublicSourceIdentifiers(array $publication): array {
+		if (array_key_exists('sourceIdentifiers', $publication) === false) {
+			return $publication;
+		}
+
+		$publication['sourceIdentifiers'] = array_values(
+			array_filter(
+				self::identifiers(value: $publication['sourceIdentifiers']),
+				static fn (array $entry): bool => ($entry['public'] ?? false) === true
+			)
+		);
+
+		return $publication;
+	}//end withPublicSourceIdentifiers()
+
+	/**
+	 * The stored source identifiers as a list, dropping anything that is not an entry.
+	 *
+	 * @param mixed $value The stored value.
+	 *
+	 * @return array<int, array<string, mixed>> The entries.
+	 */
+	private static function identifiers(mixed $value): array {
+		if (is_array($value) === false) {
+			return [];
+		}
+
+		return array_values(array_filter($value, static fn (mixed $entry): bool => is_array($entry)));
+	}//end identifiers()
+
+	/**
+	 * A value as a list: an array as it is, anything else as a one-item list.
+	 *
+	 * @param mixed $value The relation value.
+	 *
+	 * @return array<int|string, mixed> The list.
+	 */
+	private static function asList(mixed $value): array {
+		if (is_array($value) === true) {
+			return $value;
+		}
+
+		return [$value];
+	}//end asList()
+
+	/**
+	 * The id a relation item names.
+	 *
+	 * @param mixed $item The item: an id, or an object with `id` or `uuid`.
+	 *
+	 * @return string The id, empty when it names none.
+	 */
+	private static function itemId(mixed $item): string {
+		if (is_array($item) === true) {
+			$item = ($item['id'] ?? $item['uuid'] ?? '');
+		}
+
+		if (is_string($item) === false && is_int($item) === false) {
+			return '';
+		}
+
+		return (string)$item;
+	}//end itemId()
+}//end class

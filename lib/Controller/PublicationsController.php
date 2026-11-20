@@ -51,7 +51,9 @@ use OCA\OpenCatalogi\Http\DcatNegotiation;
 use OCA\OpenCatalogi\Service\Publication\SignedInReadService;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinkRules;
 use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
+use OCA\OpenCatalogi\Service\Publication\PublicationRelations;
 use OCA\OpenRegister\Kernel\Contracts\RenderSelection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -929,7 +931,8 @@ class PublicationsController extends Controller {
 		}
 
 		if (is_array($item) === true) {
-			return $this->queryService->stripEmptyValues(data: $item);
+			// REQ-PRS-003: only public source identifiers on the public list.
+			return $this->queryService->stripEmptyValues(data: (new PublicationLinkRules())->withPublicSourceIdentifiers(publication: $item));
 		}
 
 		return $item;
@@ -1452,6 +1455,11 @@ class PublicationsController extends Controller {
 			return $this->publicationNotAccessible(query: $read->query);
 		}
 
+		// REQ-PRS-003: an internal source identifier never leaves on the public API.
+		if (is_array($result) === true) {
+			$result = (new PublicationLinkRules())->withPublicSourceIdentifiers(publication: $result);
+		}
+
 		if ($this->wantsSchemaOrg() === true) {
 			$response = $this->schemaOrgResponse(read: $read, result: $result);
 		} else {
@@ -1469,6 +1477,7 @@ class PublicationsController extends Controller {
 
 			$result   = $this->withTables(result: $result, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 			if (is_array($result) === true) {
+				$result['relations'] = $this->relationsOf(read: $read, found: $found);
 				$result = $this->withCommentPeriod(publication: $result);
 			}
 
@@ -1480,6 +1489,38 @@ class PublicationsController extends Controller {
 
 		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 	}//end renderedPublication()
+
+	/**
+	 * The relations of a shown publication a reader may see (REQ-PRS-002).
+	 *
+	 * Without the relations reader the answer carries none, never an unguarded list.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 * @param FoundPublication $found The publication found.
+	 *
+	 * @return array<int, array<string, mixed>> The relations.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-the-public-response-carries-the-relations-a-reader-may-see-req-prs-002
+	 */
+	private function relationsOf(PublicationRead $read, FoundPublication $found): array {
+		try {
+			$relations = $this->container->get(PublicationRelations::class);
+		} catch (\Throwable $e) {
+			return [];
+		}
+
+		if ($relations instanceof PublicationRelations === false) {
+			return [];
+		}
+
+		return $relations->forPublication(
+			objectService: $read->objectService,
+			publicationId: $found->publicationId,
+			registers: $read->query->registers,
+			schemas: $read->query->schemas,
+			catalogSlug: $read->query->catalogSlug
+		);
+	}//end relationsOf()
 
 	/**
 	 * Add the publication's published tables, with their rows and dictionary URLs (REQ-ODT-003).
@@ -2000,15 +2041,35 @@ class PublicationsController extends Controller {
 	}//end placePublicRoot()
 
 	/**
-	 * The answer for a relation read: the rows, with CORS headers for public API access.
+	 * The answer for a relation read: the rows, each with only its public
+	 * source identifiers, with CORS headers for public API access.
 	 *
 	 * @param array<string, mixed> $result The guarded rows.
 	 *
 	 * @return JSONResponse The 200 answer.
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
 	 */
 	private function relationsAnswer(array $result): JSONResponse {
+		if (is_array(($result['results'] ?? null)) === true) {
+			$rules = new PublicationLinkRules();
+			$result['results'] = array_map(
+				static function (mixed $row) use ($rules): mixed {
+					if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+						$row = $row->jsonSerialize();
+					}
+
+					if (is_array($row) === false) {
+						return $row;
+					}
+
+					return $rules->withPublicSourceIdentifiers(publication: $row);
+				},
+				$result['results']
+			);
+		}
+
 		$response = new JSONResponse($result, 200);
 		$this->addCorsHeaders(response: $response);
 

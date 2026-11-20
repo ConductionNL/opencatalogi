@@ -538,6 +538,37 @@ class PublicationsControllerTest extends TestCase {
 	}//end testUsesAndUsedAnswerWithTheReadRuleGuardedRows()
 
 	/**
+	 * REQ-PRS-003: a related publication in a /uses or /used answer carries only
+	 * its public source identifiers, as show, index and search do.
+	 *
+	 * @return void
+	 */
+	public function testUsesAndUsedAnswerOnlyPublicSourceIdentifiers(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->stubObjectInsideCatalogScope();
+
+		$rootObject = $this->createFindResultMock(['id' => 'pub-123', '@self' => ['published' => '2024-01-01T00:00:00+00:00']]);
+		$mockObjService->method('find')->willReturn($rootObject);
+		$identifiers = [
+			['system' => 'zaaksysteem', 'value' => 'Z-1', 'public' => true],
+			['system' => 'dms', 'value' => 'INTERN-7', 'public' => false],
+			['system' => 'dms', 'value' => 'INTERN-8'],
+		];
+		$raw = ['results' => [['id' => 'doc-ok', 'sourceIdentifiers' => $identifiers], ['id' => 'no-ids']], 'total' => 2];
+		$mockObjService->method('getObjectUses')->willReturn($raw);
+		$mockObjService->method('getObjectUsedBy')->willReturn($raw);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		foreach (['uses', 'used'] as $route) {
+			$data = json_decode($this->controller->$route('test-catalog', 'pub-123')->render(), true);
+			$this->assertSame(['Z-1'], array_column($data['results'][0]['sourceIdentifiers'], 'value'), $route);
+			$this->assertArrayNotHasKey('sourceIdentifiers', $data['results'][1], $route);
+			$this->assertSame(2, $data['total'], $route);
+		}
+	}//end testUsesAndUsedAnswerOnlyPublicSourceIdentifiers()
+
+	/**
 	 * WOO-581 review round 3 (f2): OR's getUses() counts every related object
 	 * and then cuts the page, so a guard over one page left the hidden rows of
 	 * the other pages in `total`. /uses now fetches the whole list and hands the
@@ -1177,7 +1208,7 @@ class PublicationsControllerTest extends TestCase {
 		$response = $controller->show('test-catalog', 'pub-123');
 
 		$this->assertSame(200, $response->getStatus());
-		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication', 'tables' => [$entry]], $response->getData());
+		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication', 'tables' => [$entry], 'relations' => []], $response->getData());
 	}
 
 	/**
@@ -1204,7 +1235,7 @@ class PublicationsControllerTest extends TestCase {
 		$mockObjService->method('renderEntity')->willReturn(['id' => 'pub-123', 'title' => 'Test Publication']);
 		$this->request->method('getParams')->willReturn([]);
 
-		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication', 'tables' => $withViews], $controller->show('test-catalog', 'pub-123')->getData());
+		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication', 'tables' => $withViews, 'relations' => []], $controller->show('test-catalog', 'pub-123')->getData());
 	}
 
 	/**
@@ -1225,8 +1256,8 @@ class PublicationsControllerTest extends TestCase {
 		$mockObjService->method('renderEntity')->willReturn(['id' => 'pub-123', 'title' => 'Test Publication']);
 		$this->request->method('getParams')->willReturn([]);
 
-		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication'], $controller->show('test-catalog', 'pub-123')->getData());
-		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication'], $controller->show('test-catalog', 'pub-123')->getData());
+		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication', 'relations' => []], $controller->show('test-catalog', 'pub-123')->getData());
+		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication', 'relations' => []], $controller->show('test-catalog', 'pub-123')->getData());
 	}
 
 	/**
@@ -1280,12 +1311,12 @@ class PublicationsControllerTest extends TestCase {
 
 		$links = $this->createMock(PublicationLinks::class);
 		$links->expects($this->never())->method('for');
-		$this->assertSame(['id' => 'pub-123', 'publicUrl' => 'https://stored.example/pub-123'], $this->controllerWithLinks(links: $links)->show('woo', 'pub-123')->getData());
+		$this->assertSame(['id' => 'pub-123', 'publicUrl' => 'https://stored.example/pub-123', 'relations' => []], $this->controllerWithLinks(links: $links)->show('woo', 'pub-123')->getData());
 
 		$failing = $this->createMock(PublicationLinks::class);
 		$failing->method('for')->willThrowException(new \RuntimeException('no catalogue register'));
 		$this->assertSame(
-			['id' => 'pub-123', 'publicUrl' => 'https://stored.example/pub-123'],
+			['id' => 'pub-123', 'publicUrl' => 'https://stored.example/pub-123', 'relations' => []],
 			$this->controllerWithLinks(links: $failing, schema: '2')->show('woo', 'pub-123')->getData()
 		);
 	}
@@ -2443,7 +2474,7 @@ class PublicationsControllerTest extends TestCase {
 	 *
 	 * @return JSONResponse The answer.
 	 */
-	private function showAs(bool $signedIn, string $accept, string $ifNoneMatch = ''): JSONResponse {
+	private function showAs(bool $signedIn, string $accept, string $ifNoneMatch = '', array $rendered = self::SHOWN_PUBLICATION): JSONResponse {
 		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		$schemaOrg = $this->createMock(\OCA\OpenCatalogi\Service\SchemaOrgService::class);
 		$schemaOrg->method('buildPublicationNode')->willReturn(self::SHOWN_NODE);
@@ -2464,7 +2495,7 @@ class PublicationsControllerTest extends TestCase {
 		$this->catalogiService->method('getCatalogBySlug')
 			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
 		$mockObjService->method('searchObjects')->willReturn([$this->createObjectEntityMock()]);
-		$mockObjService->method('renderEntity')->willReturn(self::SHOWN_PUBLICATION);
+		$mockObjService->method('renderEntity')->willReturn($rendered);
 		$this->request->method('getParams')->willReturn([]);
 		$this->request->method('getHeader')->willReturnCallback(
 			static fn (string $name): string => match ($name) {
@@ -2518,7 +2549,7 @@ class PublicationsControllerTest extends TestCase {
 		$response = $this->showAs(
 			signedIn: true,
 			accept: 'application/json',
-			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_PUBLICATION)
+			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_PUBLICATION + ['relations' => []])
 		);
 		$headers = $response->getHeaders();
 
@@ -2619,7 +2650,7 @@ class PublicationsControllerTest extends TestCase {
 		$response = $this->showAs(
 			signedIn: false,
 			accept: 'application/json',
-			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_PUBLICATION)
+			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_PUBLICATION + ['relations' => []])
 		);
 
 		$this->assertSame(304, $response->getStatus());
@@ -2845,5 +2876,44 @@ class PublicationsControllerTest extends TestCase {
 
 		$this->assertSame(404, $this->controller->show('wijk', 'pub-9')->getStatus());
 		$this->assertNotContains(\OCA\OpenCatalogi\Service\Publication\SignedInReadService::class, $asked);
+	}
+
+	/**
+	 * REQ-PRS-003: the public detail answer carries only the public source identifiers.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testAPrivateIdentifierIsNotReturnedOnThePublicDetail(): void {
+		$response = $this->showAs(
+			signedIn: false,
+			accept: 'application/json',
+			rendered: self::SHOWN_PUBLICATION + ['sourceIdentifiers' => [
+				['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false],
+				['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true],
+			]]
+		);
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame([['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true]], $response->getData()['sourceIdentifiers']);
+		$this->assertSame([], $response->getData()['relations']);
+	}
+
+	/**
+	 * REQ-PRS-003: a row of the public catalogue list keeps only its public source identifiers.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testACatalogueListRowCarriesOnlyItsPublicSourceIdentifiers(): void {
+		$method = new \ReflectionMethod(PublicationsController::class, 'withoutEmptyItemValues');
+
+		$row = $method->invoke($this->controller, [
+			'id' => 'p1',
+			'sourceIdentifiers' => [
+				['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false],
+				['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true],
+			],
+		]);
+
+		$this->assertSame([['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true]], $row['sourceIdentifiers']);
 	}
 }

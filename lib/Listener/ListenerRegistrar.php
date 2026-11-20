@@ -132,6 +132,10 @@ class ListenerRegistrar {
 
 		$this->registerWriteGuards(context: $context);
 
+		// Refuse a self-relation and mirror caseReference into sourceIdentifiers (REQ-PRS-001, REQ-PRS-003).
+		$context->registerEventListener(ObjectCreatingEvent::class, PublicationRelationsListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationRelationsListener::class);
+
 		// Document references (integration-publish-by-reference): refuse a URL
 		// that is not a public https address before OpenRegister stores it.
 		$context->registerEventListener(ObjectCreatingEvent::class, DocumentReferenceListener::class);

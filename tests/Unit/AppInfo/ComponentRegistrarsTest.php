@@ -50,6 +50,7 @@ use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\PublicationLinksListener;
 use OCA\OpenCatalogi\Listener\RuleCategoryListener;
+use OCA\OpenCatalogi\Listener\PublicationRelationsListener;
 use OCA\OpenCatalogi\Listener\TermRollListener;
 use OCA\OpenCatalogi\Listener\HandedOverRecordsListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
@@ -145,6 +146,8 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', TermRollListener::class],
 				[$e . 'ObjectCreatingEvent', HandedOverRecordsListener::class],
 				[$e . 'ObjectUpdatingEvent', HandedOverRecordsListener::class],
+				[$e . 'ObjectCreatingEvent', PublicationRelationsListener::class],
+				[$e . 'ObjectUpdatingEvent', PublicationRelationsListener::class],
 				[$e . 'ObjectCreatingEvent', DocumentReferenceListener::class],
 				[$e . 'ObjectUpdatingEvent', DocumentReferenceListener::class],
 				[$e . 'ObjectCreatingEvent', DiwooCompletenessListener::class],

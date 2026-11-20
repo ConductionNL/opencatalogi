@@ -42,6 +42,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinkRules;
 use Exception;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
@@ -1631,6 +1632,11 @@ class PublicationService implements PublicationServiceInterface {
 						);
 					}
 				}//end if
+
+				// REQ-PRS-003: only public source identifiers leave on these public reads.
+				if (is_array($objectArray) === true) {
+					$objectArray = (new PublicationLinkRules())->withPublicSourceIdentifiers(publication: $objectArray);
+				}
 
 				return $objectArray;
 			},

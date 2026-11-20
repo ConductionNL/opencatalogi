@@ -27,6 +27,7 @@ use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
+use OCA\OpenCatalogi\Service\Publication\SourceIdentifierFilter;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
@@ -389,6 +390,8 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		$searchQuery = CallerScope::strip(query: $searchQuery, appliedFilters: $this->appliedFilters);
 		unset($searchQuery['catalogSlug'], $searchQuery['fq']);
 		unset($searchQuery['_content']);
+		// REQ-PRS-003: `sourceIdentifier` matches public entries only.
+		$searchQuery = SourceIdentifierFilter::forPublicQuery(query: $searchQuery, params: $queryParams);
 		// OC-level params consumed by resolveCatalogScope — strip before forwarding to OR.
 		unset($searchQuery['_catalog'], $searchQuery['_catalogi']);
 
@@ -2576,6 +2579,8 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 			appliedFilters: $this->appliedFilters
 		);
 		unset($searchQuery['catalogSlug'], $searchQuery['fq']);
+		// REQ-PRS-003: `sourceIdentifier` matches public entries only.
+		$searchQuery = SourceIdentifierFilter::forPublicQuery(query: $searchQuery, params: $queryParams);
 
 		if (isset($searchQuery['_order']) === true && is_string($searchQuery['_order']) === true) {
 			$decodedOrder = json_decode($searchQuery['_order'], true);
