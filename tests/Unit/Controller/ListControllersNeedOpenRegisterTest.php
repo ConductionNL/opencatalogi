@@ -23,7 +23,6 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
-use OCA\OpenCatalogi\Controller\CatalogiController;
 use OCA\OpenCatalogi\Controller\GlossaryController;
 use OCA\OpenCatalogi\Controller\ThemesController;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
@@ -43,10 +42,14 @@ class ListControllersNeedOpenRegisterTest extends TestCase {
 	/**
 	 * getObjectService() throws a RuntimeException when OpenRegister is not installed.
 	 *
+	 * CatalogiController no longer reads the ObjectService itself: its list goes
+	 * through CatalogiService::listCatalogs(), whose own lookup throws the same
+	 * way (CatalogiServiceTest::testListCatalogsThrowsWithoutOpenRegister).
+	 *
 	 * @return void
 	 */
 	public function testObjectServiceRequiresOpenRegister(): void {
-		foreach ([CatalogiController::class, GlossaryController::class, ThemesController::class] as $class) {
+		foreach ([GlossaryController::class, ThemesController::class] as $class) {
 			$appManager = $this->createMock(IAppManager::class);
 			$appManager->method('getInstalledApps')->willReturn(['files']);
 			$args = [];

@@ -349,6 +349,48 @@ class DiwooCompletenessListenerTest extends TestCase {
 	}//end testAnUnknownDocumentsoortIsRefused()
 
 	/**
+	 * The publication filinq hands over, as recorded in tests/fixtures/filinq-handoff-publication.json.
+	 *
+	 * @return array<string, mixed> The payload, without its comment.
+	 */
+	private static function filinqHandoff(): array {
+		$payload = (array)json_decode((string)file_get_contents(__DIR__ . '/../../fixtures/filinq-handoff-publication.json'), true, 512, JSON_THROW_ON_ERROR);
+		unset($payload['$comment']);
+
+		return $payload;
+	}//end filinqHandoff()
+
+	/**
+	 * REQ-DWP-006: the payload filinq writes is accepted, its document type label is stored as the URI, and it carries no summary.
+	 *
+	 * @return void
+	 */
+	public function testTheFilinqHandoffPayloadIsAccepted(): void {
+		$payload = self::filinqHandoff();
+		$this->assertSame(['title', 'documentsoort', 'wooCategory', 'publicationDate'], array_keys($payload));
+
+		$event = $this->creating(data: $payload);
+		$this->listener()->handle($event);
+
+		$this->assertFalse($event->isPropagationStopped());
+		$this->assertSame(['documentsoort' => self::BESLUIT], $event->getModifiedData());
+	}//end testTheFilinqHandoffPayloadIsAccepted()
+
+	/**
+	 * REQ-DWP-006: a filinq handoff with a document type the list does not hold is refused, naming documentsoort.
+	 *
+	 * @return void
+	 */
+	public function testAFilinqHandoffWithAnUnknownTypeIsRefused(): void {
+		$event = $this->creating(data: array_merge(self::filinqHandoff(), ['documentsoort' => 'raadsvoorstel van de griffie']));
+		$this->listener()->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+		$this->assertSame(['documentsoort'], array_keys($event->getErrors()['fields']));
+		$this->assertSame([], $event->getModifiedData());
+	}//end testAFilinqHandoffWithAnUnknownTypeIsRefused()
+
+	/**
 	 * REQ-DWP-001: a validity that ends before it starts is refused naming validUntil.
 	 *
 	 * @return void

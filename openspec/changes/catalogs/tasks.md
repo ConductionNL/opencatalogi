@@ -13,9 +13,10 @@
 - **Files**: `lib/Settings/publication_register.json`
 - **Acceptance criteria**:
   - [x] The `catalog` schema is declared under `components.schemas` in `publication_register.json`.
-  - [ ] Schema fields match the data model table in `specs/catalogs/spec.md` exactly: `title` (required), `summary`, `description`, `image`, `listed`, `organization`, `registers`, `schemas`, `filters`, `status`, `view`, `slug` (pattern `^[a-z0-9-]+$`), `hasWooSitemap`.
+  - [x] Schema fields match the data model table in `specs/catalogs/spec.md` exactly: `title` (required), `summary`, `description`, `image`, `listed`, `organization`, `registers`, `schemas`, `filters`, `status`, `view`, `slug` (pattern `^[a-z0-9-]+$`), `hasWooSitemap`. (verified 17 Nov: every field with the spec's type, `title` the only required one, `status` the four-value enum, `slug` the pattern; the extra `hasOoapi`, `hasDcat`, `published`, `plooiDelivery` and `showWithheld` belong to later changes and stay)
   - [x] The `catalog` schema is associated with the `publication` register in the register definition.
   - [ ] Schema is idempotent on re-import (`force: false` MUST NOT create duplicates, matched by slug).
+    - Left open (17 Nov): OpenRegister's importer decides this; it needs a re-import on a running instance.
 
 ## Task 2: IAppConfig configuration keys
 
@@ -36,9 +37,10 @@
   - [x] `GET /api/catalogi` returns all catalogs as a paginated JSON response.
   - [x] Response includes pagination metadata: `total`, `page`, `pages`, `limit`.
   - [x] Controller method is annotated `#[PublicPage]`, `#[NoCSRFRequired]`, `#[NoAdminRequired]`.
-  - [ ] Controller method body is ≤10 lines; all logic is in `CatalogiService`.
+  - [x] Controller method body is ≤10 lines; all logic is in `CatalogiService`. (17 Nov: the query building, WOO-581 caller-scope strip, scope pinning and RBAC'd search moved to `CatalogiService::listCatalogs()`; the controller resolves the configured pair, answers 503 when it cannot, and adds the language and CORS headers)
   - [x] CORS headers (`Access-Control-Allow-Origin`, etc.) are present in all responses.
   - [ ] No RBAC or multitenancy filter is applied.
+    - Left open (17 Nov): superseded. The list runs with `_rbac: true` on purpose (CAT-AUTH-001, authenticated-read-parity): the catalog schema grants the public group read only when `published <= $now`. Dropping RBAC would expose unpublished catalogs.
   - [x] `@spec openspec/changes/catalogs/tasks.md#task-3` PHPDoc tag is on the controller method and service.
 
 ## Task 4: Public catalog detail endpoint (CAT-002)
@@ -50,6 +52,7 @@
   - [x] `GET /api/catalogi/{id}` calls `CatalogiService::index($catalog)`.
   - [x] Service fetches publications scoped to the catalog's `registers[]` and `schemas[]` arrays.
   - [ ] `@self` metadata fields (`schemaVersion`, `relations`, `locked`, `owner`, etc.) are stripped from all publication objects in the result.
+    - Left open (17 Nov): superseded. The strip applies to anonymous callers only (`UNWANTED_SELF_PROPERTIES`, authenticated-read-parity); signed-in staff keep the metadata they may already read.
   - [x] Paginated JSON response with CORS headers is returned.
   - [x] If catalog ID does not exist, `404 Not Found` with a static `message` field is returned — no stack trace, SQL, or internal path in the response body.
   - [x] Controller method annotated `#[PublicPage]`, `#[NoCSRFRequired]`, `#[NoAdminRequired]`. (verified: lib/Controller/CatalogiController.php, tests/Unit/Controller/CatalogiControllerTest.php)
@@ -111,10 +114,10 @@
   - [x] `CatalogiIndex.vue` uses `CnIndexPage` (or equivalent `@conduction/nextcloud-vue` list component) — no bespoke table. (verified: src/views/catalogi/CatalogiIndex.vue)
   - [ ] `CatalogModal.vue` uses `CnFormDialog` or `CnAdvancedFormDialog` for create/edit — no bespoke form component.
     - Left open (17 Nov): the modal's register-dependent schema picker (options narrow to the chosen registers and drop the chosen ones) and its entity validation have no equivalent in CnFormDialog's field model, and the rewrite needs a browser check this build session does not have.
-  - [ ] `ViewCatalogi.vue` uses `CnDetailPage` or `CnDetailCard` sections.
+  - [x] `ViewCatalogi.vue` uses `CnDetailPage` or `CnDetailCard` sections. (17 Nov: the details block is a `CnDetailCard` with a horizontal `CnDetailGrid`; the tabs below it are unchanged; needs a browser look)
   - [x] `CatalogiWidget.vue` uses `CnWidgetWrapper` / `CnInfoWidget` or equivalent — no custom widget shell. (verified: the ADR-049 CnDataTable list-widget with CnWidgetEmptyState for the empty case; no import from @nextcloud/vue left in the widget)
   - [x] All user-visible strings are wrapped in `t('opencatalogi', '...')`. No hardcoded Dutch or English strings in templates.
-  - [ ] All components import from `@conduction/nextcloud-vue`, not `@nextcloud/vue`.
+  - [x] All components import from `@conduction/nextcloud-vue`, not `@nextcloud/vue`. (17 Nov: CatalogiIndex.vue, CatalogModal.vue and ViewCatalogi.vue take their Nc* components from the library's `export * from '@nextcloud/vue'` re-export; the widget already did)
   - [x] Every `<NcFoo>` and `<CnFoo>` used in a template is imported AND listed in `components: {}`. (verified: every Nc*/Cn* tag in CatalogiIndex.vue, CatalogModal.vue, ViewCatalogi.vue and CatalogiWidget.vue is registered)
   - [x] SPDX header `<!-- SPDX-License-Identifier: EUPL-1.2 -->` present as first line of each `.vue` file. (verified: the first line of CatalogiIndex.vue, CatalogModal.vue, ViewCatalogi.vue and CatalogiWidget.vue; the copyright line follows it)
 
@@ -124,7 +127,7 @@
 - **Status**: todo
 - **Files**: `lib/Settings/publication_register.json`
 - **Acceptance criteria**:
-  - Left open (17 Nov): `publication_register.json` is imported on every install, so these five fictional government catalogs would appear in every production catalogue list and on the public `/api/catalogi`; the app keeps example data in the opt-in example sets (`lib/Settings/example-sets/`). Needs a decision on where the seed belongs before it is built.
+  - Left open (17 Nov, round 2 confirms): `publication_register.json` is imported on every install, so these five fictional government catalogs would appear in every production catalogue list and on the public `/api/catalogi`; the app keeps example data in the opt-in example sets (`lib/Settings/example-sets/`). Needs a decision on where the seed belongs before it is built.
   - [ ] 5 seed catalog objects are defined under `components.objects[]` using the `@self` envelope with `register: "publication"`, `schema: "catalog"`, and a unique `slug`.
   - [ ] Seed objects use realistic Dutch government values (see `design.md` for the full list).
   - [ ] Seed objects are loaded via `ConfigurationService::importFromApp()` on install; re-importing with `force: false` MUST NOT create duplicates (matched by slug).
@@ -136,6 +139,7 @@
 - **Acceptance criteria**:
   - [x] `grep -rL 'SPDX-License-Identifier' lib/Controller/CatalogiController.php lib/Service/CatalogiService.php lib/Listener/CatalogCacheEventListener.php` returns no output.
   - [ ] `grep -rn 'findObject\|saveObject\|findObjects' lib/Service/CatalogiService.php` — every call has 3 positional args.
+    - Left open (17 Nov): superseded by the move to OpenRegister main's object API (`find(id:, options: new ObjectFindOptions(...))`, `saveObject($entity)`), which the service already uses.
   - [x] `grep -rn 'getMessage()' lib/Controller/CatalogiController.php` returns no output (static error strings only).
   - [ ] `npm run check:l10n` reports zero MISSING and zero UNWRAPPED.
     - Measured: zero MISSING and zero UNUSED; the 3 UNWRAPPED are `actionIconName="Delete"` in the delete dialogs, an icon name and not prose, so they stay unwrapped and this item stays open.
