@@ -69,7 +69,7 @@ class WooControllerTest extends TestCase {
 			$this->wooService,
 			$l10n,
 			$this->userSession,
-			$categories
+			$categories, capabilities: new \Unit\Support\AllowingCapabilityRights()
 		);
 
 	}//end setUp()

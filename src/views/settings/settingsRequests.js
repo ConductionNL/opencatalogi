@@ -24,6 +24,8 @@ export function publishingOptionsFrom(data) {
 		autoPublishAttachments: data.auto_publish_attachments,
 		autoPublishObjects: data.auto_publish_objects,
 		useOldStylePublishingView: data.use_old_style_publishing_view,
+		// Publication-lifecycle-on-or REQ-PLC-001: on unless the server says otherwise.
+		publicationReviewRequired: data.publication_review_required !== false,
 	}
 }
 
@@ -38,6 +40,7 @@ export function publishingOptionsPayload(options) {
 		auto_publish_attachments: options.autoPublishAttachments,
 		auto_publish_objects: options.autoPublishObjects,
 		use_old_style_publishing_view: options.useOldStylePublishingView,
+		publication_review_required: options.publicationReviewRequired,
 	}
 }
 

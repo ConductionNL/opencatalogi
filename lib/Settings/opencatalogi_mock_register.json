@@ -2020,6 +2020,40 @@
       {
         "@self": {
           "register": "publication",
+          "schema": "wooPipelineIncident",
+          "slug": "woopipelineincident-1"
+        },
+        "kind": "plooi-delivery",
+        "subject": "example-municipality-annual-report",
+        "message": "PLOOI answered 502: the platform is not available.",
+        "at": "2026-11-16T07:12:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooPipelineIncident",
+          "slug": "woopipelineincident-2"
+        },
+        "kind": "diwoo-version",
+        "subject": "diwoo",
+        "message": "DiWoo 0.9.9 is current; this instance emits 0.9.8",
+        "at": "2026-11-16T03:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "wooPipelineIncident",
+          "slug": "woopipelineincident-3"
+        },
+        "kind": "sitemap-gap",
+        "subject": "gemeente-voorbeeld/2.1",
+        "message": "One document is missing from the sitemap.",
+        "at": "2026-11-10T03:00:00+00:00",
+        "resolvedAt": "2026-11-10T09:30:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
           "schema": "withheldDocument",
           "slug": "withhelddocument-1"
         },
@@ -2120,7 +2154,8 @@
         "title": "Voorbeeld: Jaarverslag 2024 van Gemeente Voorbeeld",
         "summary": "Voorbeeldpublicatie uit de demodata: een verzonnen jaarverslag van een verzonnen gemeente.",
         "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd. Gemeente Voorbeeld bestaat niet en staat voor geen echte overheidsorganisatie.",
-        "publicationDate": "2024-01-01T00:00:00+00:00"
+        "publicationDate": "2024-01-01T00:00:00+00:00",
+        "status": "published"
       },
       {
         "@self": {
@@ -2132,6 +2167,7 @@
         "summary": "Voorbeeldpublicatie uit de demodata: een teruggetrokken kwartaalrapport, zodat Opnieuw publiceren te zien is.",
         "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd.",
         "publicationDate": "2024-04-01T00:00:00+00:00",
+        "status": "published",
         "depublicationDate": "2026-06-01T09:00:00+00:00"
       },
       {
@@ -2231,7 +2267,8 @@
         "title": "Voorbeeld: Raadsagenda januari 2030 van Gemeente Voorbeeld",
         "summary": "Voorbeeldpublicatie uit de demodata: een geplande publicatie, zodat het overzicht van niet-gepubliceerde publicaties er een laat zien.",
         "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd. De publicatiedatum ligt ver in de toekomst, zodat de rij gepland blijft. Gemeente Voorbeeld bestaat niet en staat voor geen echte overheidsorganisatie.",
-        "publicationDate": "2030-01-01T09:00:00+00:00"
+        "publicationDate": "2030-01-01T09:00:00+00:00",
+        "status": "published"
       }
     ]
   }

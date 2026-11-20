@@ -86,8 +86,8 @@ final class CompletenessServiceTest extends TestCase {
 
 		$cases = [
 			'draft'     => [],
-			'scheduled' => ['publicationDate' => '2026-11-15T00:00:00+00:00'],
-			'withdrawn' => ['publicationDate' => '2026-11-01T00:00:00+00:00', 'depublicationDate' => '2026-11-14T09:00:00+00:00'],
+			'scheduled' => ['status' => 'published', 'publicationDate' => '2026-11-15T00:00:00+00:00'],
+			'withdrawn' => ['status' => 'published', 'publicationDate' => '2026-11-01T00:00:00+00:00', 'depublicationDate' => '2026-11-14T09:00:00+00:00'],
 			'archived'  => ['publicationDate' => '2026-11-01T00:00:00+00:00', 'status' => 'archived'],
 		];
 		foreach ($cases as $case => $publication) {
@@ -172,7 +172,7 @@ final class CompletenessServiceTest extends TestCase {
 	 * @return array<string, mixed> The properties.
 	 */
 	private function publication(?int $expected = null): array {
-		$publication = ['title' => 'Besluit', 'publicationDate' => '2026-11-01T00:00:00+00:00'];
+		$publication = ['title' => 'Besluit', 'status' => 'published', 'publicationDate' => '2026-11-01T00:00:00+00:00'];
 		if ($expected !== null) {
 			$publication['expectedDocuments'] = $expected;
 		}

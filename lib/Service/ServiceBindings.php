@@ -47,6 +47,7 @@ use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
 use OCA\OpenCatalogi\Contract\CmsMigrationServiceInterface;
 use OCA\OpenCatalogi\Contract\CollectionShareServiceInterface;
 use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
+use OCA\OpenCatalogi\Contract\CouncilHarvestServiceInterface;
 use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
@@ -187,6 +188,7 @@ final class ServiceBindings {
 		NationalIndexServiceInterface::class => NationalIndexService::class,
 		EventServiceInterface::class => EventService::class,
 		PubliccodeHarvestServiceInterface::class => PubliccodeHarvestService::class,
+		CouncilHarvestServiceInterface::class => CouncilHarvestService::class,
 		OoapiServiceInterface::class => OoapiService::class,
 		QualityServiceInterface::class => QualityService::class,
 		DcatSerializerInterface::class => DcatSerializer::class,

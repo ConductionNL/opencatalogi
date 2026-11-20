@@ -312,6 +312,7 @@ class WooFakeTransitionEngine {
  * @covers \OCA\OpenCatalogi\Service\WooService
  * @covers \OCA\OpenCatalogi\Service\RegisterBindings
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses \OCA\OpenCatalogi\Service\Woo\PipelineIncidents
  * @uses \OCA\OpenCatalogi\Service\BomCsv
  * @covers \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
  * @covers \OCA\OpenCatalogi\Service\Woo\DocumentRedactor
@@ -414,6 +415,10 @@ class WooServiceTest extends TestCase {
 					return $this->engine;
 				}
 
+				if ($id === \OCA\OpenCatalogi\Service\Publication\PublishTransition::class) {
+					return $this->publishTransition();
+				}
+
 				if ($id === 'OCA\OpenRegister\Service\FileService') {
 					return $this->files;
 				}
@@ -475,15 +480,27 @@ class WooServiceTest extends TestCase {
 		$this->assertNotEmpty($all);
 		$articles = array_column($all, 'article');
 		$this->assertContains('5.1.2.e', $articles);
-		$this->assertContains('5.2.e', $articles);
+		$this->assertContains('5.2.1', $articles);
 
 		$filtered = $this->service->getWeigeringsgronden('persoonlijke');
 		$fArticles = array_column($filtered, 'article');
 		$this->assertContains('5.1.2.e', $fArticles);
-		$this->assertContains('5.2.e', $fArticles);
+		$this->assertContains('5.2.1', $fArticles);
 		$this->assertNotContains('5.1.1.a', $fArticles);
+		// An article heading is a parent in dossiq's list, not a ground to cite.
+		$this->assertNotContains('5.2', $articles);
+		$this->assertSame('snapshot', $all[0]['source']);
 
 	}//end testWeigeringsgrondenCatalogueAndSearch()
+
+	public function testAGroundOutsideTheListIsRefused(): void {
+		// 5.2.e was a code of OpenCatalogi's own constant; dossiq's list has none.
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Unknown weigeringsgrond: 5.2.e');
+
+		$this->service->updateAssessment('a1', 'niet_openbaar', ['5.2.e']);
+
+	}//end testAGroundOutsideTheListIsRefused()
 
 	public function testCreateBatchPersistsAssessmentsAndBatch(): void {
 		$batch = $this->service->createBatch(
@@ -666,9 +683,9 @@ class WooServiceTest extends TestCase {
 
 	public function testUpdateAssessmentNietOpenbaarStoresGrounds(): void {
 		$this->objects->objects[] = ['id' => 'a1', 'assessment' => 'te_beoordelen'];
-		$result = $this->service->updateAssessment('a1', 'niet_openbaar', ['5.1.2.e', '5.2.e']);
+		$result = $this->service->updateAssessment('a1', 'niet_openbaar', ['5.1.2.e', '5.2.1']);
 		$this->assertSame('niet_openbaar', $result['assessment']);
-		$this->assertSame(['5.1.2.e', '5.2.e'], $result['weigeringsgronden']);
+		$this->assertSame(['5.1.2.e', '5.2.1'], $result['weigeringsgronden']);
 		$this->assertSame('alice', $result['assessedBy']);
 
 	}//end testUpdateAssessmentNietOpenbaarStoresGrounds()
@@ -828,6 +845,61 @@ class WooServiceTest extends TestCase {
 		$this->assertSame([], $this->createdPublications());
 
 	}//end testPublishingRunsThePublishTransitionAndNeedsTheEngine()
+
+	/**
+	 * A publish that fails past the gates raises a pipeline incident naming the batch
+	 * and the reason; a batch the approval gate refuses raises nothing (REQ-WNO-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	public function testAFailedPublishRaisesAPipelineIncident(): void {
+		$raised = [];
+		$incidents = $this->createMock(\OCA\OpenCatalogi\Service\Woo\PipelineIncidents::class);
+		$incidents->method('raise')->willReturnCallback(
+			static function (string $kind, string $subject, string $message) use (&$raised): void {
+				$raised[] = [$kind, $subject, $message];
+			}
+		);
+		$service = fn (ContainerInterface $container): WooService => new WooService(
+			new RegisterBindings($this->config, $container),
+			$this->userSession,
+			$this->logger,
+			$this->l10n,
+			$this->writer,
+			new \OCA\OpenCatalogi\Service\Woo\DocumentRedactor($this->writer, $this->container, $this->l10n, $this->logger),
+			incidents: $incidents
+		);
+
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+		$this->sequences->status = 'completed';
+		try {
+			$service($this->container)->publishBatch('batch-1');
+			$this->fail('A batch in review was published.');
+		} catch (\RuntimeException $e) {
+			$this->assertSame('Batch must be approved before publishing', $e->getMessage());
+		}
+
+		$this->assertSame([], $raised);
+
+		$this->setUp();
+		$this->approvedBatch();
+		$this->objects->refuse = static fn (array $object, mixed $schema): ?\Throwable => ($schema === 'publication')
+			? new \OCA\OpenRegister\Exception\HookStoppedException('refused', ['message' => 'refused', 'fields' => ['publisher' => 'missing']])
+			: null;
+		try {
+			$service($this->container)->publishBatch('batch-1');
+			$this->fail('Expected the publish to be refused');
+		} catch (\RuntimeException $e) {
+			$this->assertStringContainsString('publisher', $e->getMessage());
+			$this->assertCount(1, $raised);
+			$this->assertSame(['batch-publish', 'batch-1'], array_slice($raised[0], 0, 2));
+			$this->assertSame('Publishing Woo batch batch-1 failed: ' . $e->getMessage(), $raised[0][2]);
+		}
+
+	}//end testAFailedPublishRaisesAPipelineIncident()
 
 	/**
 	 * The test container, minus one service.
@@ -1061,7 +1133,9 @@ class WooServiceTest extends TestCase {
 		$this->assertSame('infocat014', $publication['wooCategory']);
 		$this->assertSame('WOO-2026-009', $publication['caseReference']);
 		$this->assertSame('Woo-publicatie WOO-2026-009', $publication['title']);
-		$this->assertNotEmpty($publication['publicationDate']);
+		// Created approved; the publish transition writes the publication date (REQ-PLC-003).
+		$this->assertSame('approved', $publication['status']);
+		$this->assertArrayNotHasKey('publicationDate', $publication);
 		$this->assertContains(['register' => 'publication', 'schema' => 'publication'], $this->objects->saveTargets);
 
 		$this->assertSame(['a.pdf', 'b.pdf', 'c-gelakt.pdf'], array_column($this->files->added, 'name'));
@@ -1295,7 +1369,7 @@ class WooServiceTest extends TestCase {
 		$this->approvedBatch();
 		$this->files->redacted = null;
 
-		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1');
 		$this->assertSame(1, $this->files->redactions);
 		$this->assertSame('failed', $assessed['redactionStatus']);
 		$this->assertSame('', $assessed['anonymizedDocument']);
@@ -1330,7 +1404,7 @@ class WooServiceTest extends TestCase {
 		$this->documents['id:4'] = $redacted;
 		$this->files->redacted = $redacted;
 
-		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1');
 		$this->assertSame('verified', $assessed['redactionStatus']);
 		$this->assertSame('4', $assessed['anonymizedDocument']);
 
@@ -1401,7 +1475,7 @@ class WooServiceTest extends TestCase {
 		$this->assertSame([], $this->service->getBatch('batch-1')['documentSummary']['unredacted']);
 
 		$this->files->redacted = null;
-		$this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1');
 		$this->objects->objects[] = ['id' => 'a5', 'assessment' => 'deels_openbaar', 'fileName' => 'e.pdf'];
 		foreach ($this->objects->objects as $i => $object) {
 			if ($object['id'] === 'batch-1') {
@@ -1440,7 +1514,7 @@ class WooServiceTest extends TestCase {
 		$this->documents['id:4'] = $this->documents['/alice/files/doc-c-anon'];
 		$this->files->redacted = $this->documents['/alice/files/doc-c-anon'];
 
-		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1');
 		$this->assertSame('verified', $assessed['redactionStatus']);
 		$this->assertSame('', $assessed['redactionVerifiedBy']);
 		$this->assertNull($assessed['redactionVerifiedAt']);
@@ -1475,7 +1549,7 @@ class WooServiceTest extends TestCase {
 		$this->files->redacted = null;
 
 		// A failing redaction changes the status, so the verification goes.
-		$this->assertSame('', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1')['redactionVerifiedBy']);
+		$this->assertSame('', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1')['redactionVerifiedBy']);
 
 		$this->seedBatchWithAssessments(false);
 		$saved = $this->service->updateAssessment('a1', 'openbaar', [], 'batch-1');
@@ -1490,7 +1564,7 @@ class WooServiceTest extends TestCase {
 	public function testVerifyRedactionRefusesAFailedRedactionAndAForeignDocument(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->files->redacted = null;
-		$this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1');
 		$saves = count($this->objects->saveTargets);
 
 		$refusal = null;
@@ -1518,8 +1592,8 @@ class WooServiceTest extends TestCase {
 		$this->seedBatchWithAssessments(false);
 		$this->files->redacted = $this->documents['/alice/files/doc-c-anon'];
 
-		$this->assertSame('verified', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'])['redactionStatus']);
-		$this->assertSame('verified', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'no-such-batch')['redactionStatus']);
+		$this->assertSame('verified', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'])['redactionStatus']);
+		$this->assertSame('verified', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'no-such-batch')['redactionStatus']);
 	}//end testWithoutABatchTheOfficersFilesAreSearched()
 
 	/**
@@ -1562,4 +1636,16 @@ class WooServiceTest extends TestCase {
 		];
 
 	}//end seedBatchWithAssessments()
+
+	/**
+	 * A PublishTransition double: the batch's publication is published by the lifecycle (REQ-PLC-003).
+	 *
+	 * @return \OCA\OpenCatalogi\Service\Publication\PublishTransition
+	 */
+	private function publishTransition(): \OCA\OpenCatalogi\Service\Publication\PublishTransition {
+		$publisher = $this->createMock(\OCA\OpenCatalogi\Service\Publication\PublishTransition::class);
+		$publisher->method('publish')->willReturn(new \stdClass());
+
+		return $publisher;
+	}//end publishTransition()
 }//end class

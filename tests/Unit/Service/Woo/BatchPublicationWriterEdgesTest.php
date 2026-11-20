@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Unit\Service\Woo;
 
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
+use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCP\App\IAppManager;
 use OCP\Files\Folder;
@@ -82,7 +83,22 @@ class BatchPublicationWriterEdgesTest extends TestCase {
 
 	private bool $installed = true;
 
+	/** @var array<int, array{0: string, 1: string, 2: string, 3: bool}> Every publish the writer ran: id, stored state, date, as system. */
+	private array $publishes = [];
+
+	/** A PublishTransition double recording each publish. */
+	private PublishTransition $publisher;
+
 	protected function setUp(): void {
+		$this->publisher = $this->createMock(PublishTransition::class);
+		foreach (['publish' => false, 'publishAsSystem' => true] as $method => $asSystem) {
+			$this->publisher->method($method)->willReturnCallback(
+				function (string $id, string $stored, string $publicationDate) use ($asSystem): object {
+					$this->publishes[] = [$id, $stored, $publicationDate, $asSystem];
+					return new \stdClass();
+				}
+			);
+		}
 		$this->objects = new WriterFakeObjectService();
 
 	}//end setUp()
@@ -100,6 +116,10 @@ class BatchPublicationWriterEdgesTest extends TestCase {
 			function (string $id): object {
 				if ($id === 'OCA\OpenRegister\Service\ObjectService') {
 					return $this->objects;
+				}
+
+				if ($id === PublishTransition::class) {
+					return $this->publisher;
 				}
 
 				throw new RuntimeException('not registered: ' . $id);
@@ -176,14 +196,31 @@ class BatchPublicationWriterEdgesTest extends TestCase {
 	}//end testAnEarlierPublicationThatIsGoneIsReplacedByANewOne()
 
 	public function testAnEarlierPublicationThatStillExistsIsTakenAsItIs(): void {
-		$this->objects->found = (object)['kept' => true];
+		$this->objects->found = new class {
+			public bool $kept = true;
+
+			public function getObject(): array {
+				return ['status' => 'published'];
+			}
+		};
 
 		$result = $this->writer()->publication(batch: ['wooPublication' => ['publication' => 'pub-old']], now: '2026-11-13');
 
 		$this->assertSame('pub-old', $result['id']);
 		$this->assertSame($this->objects->found, $result['entity']);
 		$this->assertSame([], $this->objects->saves);
+		$this->assertSame([], $this->publishes);
 	}//end testAnEarlierPublicationThatStillExistsIsTakenAsItIs()
+
+	/** REQ-PLC-003: an earlier attempt's publication still approved is published now, as the system. */
+	public function testAnEarlierApprovedPublicationIsPublishedNow(): void {
+		$this->objects->found = ['id' => 'pub-old', 'status' => 'approved'];
+
+		$this->writer()->publication(batch: ['wooPublication' => ['publication' => 'pub-old']], now: '2026-11-13T10:00:00+00:00');
+
+		$this->assertSame([['pub-old', 'approved', '2026-11-13T10:00:00+00:00', true]], $this->publishes);
+		$this->assertSame([], $this->objects->saves);
+	}//end testAnEarlierApprovedPublicationIsPublishedNow()
 
 	public function testASerialisedEntityGivesItsIdFromSelf(): void {
 		$this->objects->saved = new class implements \JsonSerializable {

@@ -1,0 +1,139 @@
+{
+    "$comment": "openspec/changes/council-documents-from-notubiz-and-ibabs. The integriq synchronization and fetch-file rule CouncilHarvestService::setUp() writes for the council system an administrator picks, and the source settings each system needs before it can run. Not seeded: OpenRegister skips an object whose register is missing, so an install without integriq would never get them.",
+    "kinds": {
+        "notubiz": {
+            "label": "Notubiz",
+            "source": "notubiz-ris-v1",
+            "flow": "Council documents harvest (Notubiz)",
+            "required": [
+                {
+                    "key": "organisation_id",
+                    "missing": "Fill in the Notubiz organisation id in integriq first."
+                }
+            ],
+            "synchronization": {
+                "slug": "opencatalogi-council-documents-notubiz",
+                "name": "Notubiz council documents for OpenCatalogi",
+                "description": "The public documents of the council meetings, read by OpenCatalogi's council documents harvest. Written by OpenCatalogi when an administrator sets the harvest up.",
+                "version": "0.0.1",
+                "sourceId": "notubiz-ris-v1",
+                "sourceType": "api",
+                "sourceConfig": {
+                    "idPosition": "id",
+                    "resultsPosition": "documents",
+                    "endpoint": "/documents",
+                    "deleteInvalidObjects": "false",
+                    "headers": [],
+                    "query": {
+                        "organisation_id": "{{organisation_id}}",
+                        "format": "json",
+                        "version": "1.21.1"
+                    }
+                },
+                "currentPage": 1,
+                "targetType": "register/schema",
+                "targetId": "publication/publication",
+                "conditions": {
+                    "!!": {
+                        "var": "id"
+                    }
+                }
+            },
+            "rule": {
+                "slug": "opencatalogi-council-document-file-notubiz",
+                "name": "Fetch Notubiz council document files",
+                "description": "Attaches the document file to the publication OpenCatalogi's council documents harvest wrote.",
+                "version": "0.0.1",
+                "action": "post",
+                "timing": "after",
+                "conditions": {
+                    "==": [
+                        1,
+                        1
+                    ]
+                },
+                "type": "fetch_file",
+                "configuration": {
+                    "fetch_file": {
+                        "source": "notubiz-ris-v1",
+                        "filePath": "document.url",
+                        "method": "GET",
+                        "sourceConfiguration": [],
+                        "tags": [
+                            "raadsinformatie"
+                        ]
+                    }
+                },
+                "order": 0
+            }
+        },
+        "ibabs": {
+            "label": "iBabs",
+            "source": "ibabs-ris-v1",
+            "flow": "Council documents harvest (iBabs)",
+            "required": [
+                {
+                    "key": "headers.Authorization",
+                    "missing": "Fill in the iBabs key in integriq first."
+                },
+                {
+                    "key": "organisatieId",
+                    "missing": "Fill in the iBabs organisation id in integriq first."
+                }
+            ],
+            "synchronization": {
+                "slug": "opencatalogi-council-documents-ibabs",
+                "name": "iBabs council documents for OpenCatalogi",
+                "description": "The public documents of the council meetings, read by OpenCatalogi's council documents harvest. Written by OpenCatalogi when an administrator sets the harvest up.",
+                "version": "0.0.1",
+                "sourceId": "ibabs-ris-v1",
+                "sourceType": "api",
+                "sourceConfig": {
+                    "idPosition": "id",
+                    "resultsPosition": "documents",
+                    "endpoint": "/documents",
+                    "deleteInvalidObjects": "false",
+                    "headers": [],
+                    "query": {
+                        "organisatieId": "{{organisatieId}}"
+                    }
+                },
+                "currentPage": 1,
+                "targetType": "register/schema",
+                "targetId": "publication/publication",
+                "conditions": {
+                    "!!": {
+                        "var": "id"
+                    }
+                }
+            },
+            "rule": {
+                "slug": "opencatalogi-council-document-file-ibabs",
+                "name": "Fetch iBabs council document files",
+                "description": "Attaches the document file to the publication OpenCatalogi's council documents harvest wrote.",
+                "version": "0.0.1",
+                "action": "post",
+                "timing": "after",
+                "conditions": {
+                    "==": [
+                        1,
+                        1
+                    ]
+                },
+                "type": "fetch_file",
+                "configuration": {
+                    "fetch_file": {
+                        "source": "ibabs-ris-v1",
+                        "filePath": "document.downloadUrl",
+                        "method": "GET",
+                        "sourceConfiguration": [],
+                        "tags": [
+                            "raadsinformatie"
+                        ]
+                    }
+                },
+                "order": 0
+            }
+        }
+    }
+}

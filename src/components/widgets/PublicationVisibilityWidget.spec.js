@@ -157,6 +157,47 @@ describe('PublicationVisibilityWidget states', () => {
 	})
 })
 
+describe('PublicationVisibilityWidget audience', () => {
+	it('shows a publication for everyone as Everyone, without the sign-in link line', async () => {
+		answerReads({
+			visibility: Promise.resolve({ data: { state: 'public', audience: 'public' } }),
+			files: Promise.resolve({ data: [] }),
+		})
+		const wrapper = await mountWidget()
+
+		expect(wrapper.vm.audienceLabel).toBe('Everyone')
+		expect(wrapper.find('[data-testid="publication-visibility-audience"]').text()).toContain('Everyone')
+		expect(wrapper.find('[data-testid="publication-visibility-audience-link"]').exists()).toBe(false)
+	})
+
+	it('shows a sign-in publication with its level and the link line', async () => {
+		answerReads({
+			visibility: Promise.resolve({ data: { state: 'scheduled', audience: 'signedIn', minimumAssurance: 'substantial' } }),
+			files: Promise.resolve({ data: [] }),
+		})
+		const wrapper = await mountWidget()
+
+		expect(wrapper.vm.audienceLabel).toBe('Readers who log in with DigiD or eHerkenning, level Substantial')
+		expect(wrapper.find('[data-testid="publication-visibility-audience-link"]').text()).toBe('The link works for readers who log in')
+	})
+
+	it('names the level High, and falls back to Everyone when the read fails', async () => {
+		answerReads({
+			visibility: Promise.resolve({ data: { state: 'public', audience: 'signedIn', minimumAssurance: 'high' } }),
+			files: Promise.resolve({ data: [] }),
+		})
+		const wrapper = await mountWidget()
+		expect(wrapper.vm.audienceLabel).toBe('Readers who log in with DigiD or eHerkenning, level High')
+
+		answerReads({
+			visibility: Promise.reject(new Error('down')),
+			files: Promise.resolve({ data: [] }),
+		})
+		await wrapper.vm.load()
+		expect(wrapper.vm.audienceLabel).toBe('Everyone')
+	})
+})
+
 describe('PublicationVisibilityWidget.publish', () => {
 	beforeEach(() => {
 		answerReads({

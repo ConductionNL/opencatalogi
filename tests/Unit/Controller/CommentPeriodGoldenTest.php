@@ -29,7 +29,6 @@ use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCA\OpenCatalogi\Controller\CommentPeriodController;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
-use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -255,21 +254,24 @@ class CommentPeriodGoldenTest extends TestCase {
 	}//end testCommentPeriodMatchesTheRecording()
 
 	/**
-	 * Opening a period is an admin setting: exactly one AuthorizedAdminSetting
-	 * naming the OpenCatalogi admin section, and nothing that opens it wider.
+	 * Opening a period is the right openCommentPeriod, granted per group
+	 * (woo-access-boundary-hardening REQ-WAB-004): no admin setting, a signed-in
+	 * route, and the guard is the method's first statement.
 	 *
 	 * @return void
 	 */
-	public function testOpenIsGuardedByTheAdminSettingOnly(): void {
+	public function testOpenIsGuardedByTheOpenCommentPeriodRight(): void {
 		$method = new \ReflectionMethod(CommentPeriodController::class, 'open');
 
-		$admin = $method->getAttributes(AuthorizedAdminSetting::class);
-		$this->assertCount(1, $admin);
-		$this->assertSame(OpenCatalogiAdmin::class, $admin[0]->newInstance()->getSettings());
-		$this->assertSame([], $method->getAttributes(NoAdminRequired::class));
+		$this->assertSame([], $method->getAttributes(AuthorizedAdminSetting::class));
+		$this->assertCount(1, $method->getAttributes(NoAdminRequired::class));
 		$this->assertSame([], $method->getAttributes(PublicPage::class));
 
-	}//end testOpenIsGuardedByTheAdminSettingOnly()
+		$lines = file((string) $method->getFileName());
+		$body  = implode('', array_slice($lines, $method->getStartLine(), 3));
+		$this->assertStringContainsString('$refusal = $this->capabilityRefusal(verb: \'openCommentPeriod\');', $body);
+
+	}//end testOpenIsGuardedByTheOpenCommentPeriodRight()
 
 	/**
 	 * The controller over recording doubles for one case.
@@ -372,6 +374,6 @@ class CommentPeriodGoldenTest extends TestCase {
 			}
 		);
 
-		return new CommentPeriodController('opencatalogi', $request, new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $l10n, $session, $periods);
+		return new CommentPeriodController('opencatalogi', $request, new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $l10n, $session, $periods, capabilities: new \Unit\Support\AllowingCapabilityRights());
 	}//end controller()
 }//end class

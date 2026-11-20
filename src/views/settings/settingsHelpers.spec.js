@@ -85,12 +85,20 @@ describe('settingsRequests', () => {
 		const api = { auto_publish_attachments: true, auto_publish_objects: false, use_old_style_publishing_view: true, other: 1 }
 		const form = publishingOptionsFrom(api)
 
-		expect(form).toEqual({ autoPublishAttachments: true, autoPublishObjects: false, useOldStylePublishingView: true })
+		// publication_review_required absent from the answer: review stays on.
+		expect(form).toEqual({ autoPublishAttachments: true, autoPublishObjects: false, useOldStylePublishingView: true, publicationReviewRequired: true })
 		expect(publishingOptionsPayload(form)).toEqual({
 			auto_publish_attachments: true,
 			auto_publish_objects: false,
 			use_old_style_publishing_view: true,
+			publication_review_required: true,
 		})
+	})
+
+	it('carries the review setting both ways, and only false turns review off', () => {
+		expect(publishingOptionsFrom({ publication_review_required: false }).publicationReviewRequired).toBe(false)
+		expect(publishingOptionsFrom({ publication_review_required: true }).publicationReviewRequired).toBe(true)
+		expect(publishingOptionsPayload({ publicationReviewRequired: false }).publication_review_required).toBe(false)
 	})
 
 	it('turns the sync interval into seconds, falling back to the default minutes', () => {
