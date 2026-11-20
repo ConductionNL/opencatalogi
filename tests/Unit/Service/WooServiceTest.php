@@ -312,6 +312,7 @@ class WooFakeTransitionEngine {
  * @covers \OCA\OpenCatalogi\Service\WooService
  * @covers \OCA\OpenCatalogi\Service\RegisterBindings
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses \OCA\OpenCatalogi\Service\Woo\PipelineIncidents
  * @uses \OCA\OpenCatalogi\Service\BomCsv
  * @covers \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
  * @covers \OCA\OpenCatalogi\Service\Woo\DocumentRedactor
@@ -840,6 +841,61 @@ class WooServiceTest extends TestCase {
 		$this->assertSame([], $this->createdPublications());
 
 	}//end testPublishingRunsThePublishTransitionAndNeedsTheEngine()
+
+	/**
+	 * A publish that fails past the gates raises a pipeline incident naming the batch
+	 * and the reason; a batch the approval gate refuses raises nothing (REQ-WNO-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	public function testAFailedPublishRaisesAPipelineIncident(): void {
+		$raised = [];
+		$incidents = $this->createMock(\OCA\OpenCatalogi\Service\Woo\PipelineIncidents::class);
+		$incidents->method('raise')->willReturnCallback(
+			static function (string $kind, string $subject, string $message) use (&$raised): void {
+				$raised[] = [$kind, $subject, $message];
+			}
+		);
+		$service = fn (ContainerInterface $container): WooService => new WooService(
+			new RegisterBindings($this->config, $container),
+			$this->userSession,
+			$this->logger,
+			$this->l10n,
+			$this->writer,
+			new \OCA\OpenCatalogi\Service\Woo\DocumentRedactor($this->writer, $this->container, $this->l10n, $this->logger),
+			incidents: $incidents
+		);
+
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+		$this->sequences->status = 'completed';
+		try {
+			$service($this->container)->publishBatch('batch-1');
+			$this->fail('A batch in review was published.');
+		} catch (\RuntimeException $e) {
+			$this->assertSame('Batch must be approved before publishing', $e->getMessage());
+		}
+
+		$this->assertSame([], $raised);
+
+		$this->setUp();
+		$this->approvedBatch();
+		$this->objects->refuse = static fn (array $object, mixed $schema): ?\Throwable => ($schema === 'publication')
+			? new \OCA\OpenRegister\Exception\HookStoppedException('refused', ['message' => 'refused', 'fields' => ['publisher' => 'missing']])
+			: null;
+		try {
+			$service($this->container)->publishBatch('batch-1');
+			$this->fail('Expected the publish to be refused');
+		} catch (\RuntimeException $e) {
+			$this->assertStringContainsString('publisher', $e->getMessage());
+			$this->assertCount(1, $raised);
+			$this->assertSame(['batch-publish', 'batch-1'], array_slice($raised[0], 0, 2));
+			$this->assertSame('Publishing Woo batch batch-1 failed: ' . $e->getMessage(), $raised[0][2]);
+		}
+
+	}//end testAFailedPublishRaisesAPipelineIncident()
 
 	/**
 	 * The test container, minus one service.

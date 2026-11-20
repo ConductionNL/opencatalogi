@@ -80,4 +80,71 @@ class PlooiDeliveryListenerTest extends TestCase {
 
 		$this->listener->handle(new ObjectUpdatedEvent($this->publication('2999-01-01T00:00:00+00:00'), $this->publication(null)));
 	}
+	/**
+	 * A public publication PLOOI holds, with the given fields over a delivered base.
+	 *
+	 * @param array<string, mixed> $fields The fields to set or override.
+	 *
+	 * @return ObjectEntity
+	 */
+	private function delivered(array $fields = []): ObjectEntity {
+		$entity = $this->publication('2020-01-01T00:00:00+00:00');
+		$entity->setObject(
+			array_merge(
+				[
+					'title' => 'Besluit',
+					'publicationDate' => '2020-01-01T00:00:00+00:00',
+					'depublicationDate' => null,
+					'plooiStatus' => 'delivered',
+					'retentionNote' => 'bewaren',
+				],
+				$fields
+			)
+		);
+		return $entity;
+	}
+
+	/** REQ-WNO-001: a corrected title on a delivered publication queues an update. */
+	public function testAChangedTitleOnADeliveredPublicationQueuesAnUpdate(): void {
+		$this->jobList->expects($this->once())->method('add')->with(
+			PlooiDelivery::class,
+			['uuid' => 'pub-1', 'register' => '7', 'schema' => '12', 'mode' => PlooiDelivery::MODE_UPDATE]
+		);
+
+		$this->listener->handle(new ObjectUpdatedEvent($this->delivered(['title' => 'Besluit (gecorrigeerd)']), $this->delivered()));
+	}
+
+	/** REQ-WNO-001: a change to a field DiWoo does not carry queues nothing. */
+	public function testAChangeOutsideDiwooQueuesNothing(): void {
+		$this->jobList->expects($this->never())->method('add');
+
+		$this->listener->handle(new ObjectUpdatedEvent($this->delivered(['retentionNote' => 'vernietigen']), $this->delivered()));
+	}
+
+	/** REQ-WNO-001: depublishing a delivered publication queues a withdrawal of the record. */
+	public function testDepublishingADeliveredPublicationQueuesAWithdrawal(): void {
+		$this->jobList->expects($this->once())->method('add')->with(
+			PlooiDelivery::class,
+			['uuid' => 'pub-1', 'register' => '7', 'schema' => '12', 'mode' => PlooiDelivery::MODE_WITHDRAW]
+		);
+
+		$this->listener->handle(
+			new ObjectUpdatedEvent($this->delivered(['depublicationDate' => '2020-06-01T00:00:00+00:00']), $this->delivered())
+		);
+	}
+
+	/** A publication PLOOI does not hold is not updated or withdrawn there. */
+	public function testAnUndeliveredPublicationQueuesNoUpdate(): void {
+		$this->jobList->expects($this->never())->method('add');
+
+		$this->listener->handle(
+			new ObjectUpdatedEvent($this->delivered(['title' => 'Nieuw', 'plooiStatus' => 'failed']), $this->delivered(['plooiStatus' => 'failed']))
+		);
+		$this->listener->handle(
+			new ObjectUpdatedEvent(
+				$this->delivered(['depublicationDate' => '2020-06-01T00:00:00+00:00', 'plooiStatus' => '']),
+				$this->delivered(['plooiStatus' => ''])
+			)
+		);
+	}
 }
