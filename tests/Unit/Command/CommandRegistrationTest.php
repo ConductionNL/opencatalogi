@@ -30,7 +30,7 @@ class CommandRegistrationTest extends TestCase {
 	 */
 	private function registeredCommands(): array {
 		$xml = simplexml_load_file(__DIR__ . '/../../../appinfo/info.xml');
-		$this->assertNotFalse($xml, 'appinfo/info.xml must parse');
+		$this->assertNotFalse(condition: $xml, message: 'appinfo/info.xml must parse');
 
 		$commands = [];
 		foreach ($xml->commands->command ?? [] as $command) {
@@ -47,7 +47,12 @@ class CommandRegistrationTest extends TestCase {
 	 */
 	private function concreteCommands(): array {
 		$commands = [];
-		foreach (glob(__DIR__ . '/../../../lib/Command/*.php') ?: [] as $file) {
+		$files = glob(pattern: __DIR__ . '/../../../lib/Command/*.php');
+		if ($files === false) {
+			$files = [];
+		}
+
+		foreach ($files as $file) {
 			$class = 'OCA\\OpenCatalogi\\Command\\' . basename($file, '.php');
 			if (class_exists($class) === false) {
 				continue;
@@ -79,7 +84,11 @@ class CommandRegistrationTest extends TestCase {
 			'WooReadinessCommand',
 			'CatalogCacheCommand',
 		] as $short) {
-			$this->assertContains('OCA\\OpenCatalogi\\Command\\' . $short, $registered, $short . ' must be in info.xml');
+			$this->assertContains(
+				needle: 'OCA\\OpenCatalogi\\Command\\' . $short,
+				haystack: $registered,
+				message: $short . ' must be in info.xml'
+			);
 		}
 	}//end testTheFiveMaintenanceCommandsAreRegistered()
 
@@ -92,45 +101,23 @@ class CommandRegistrationTest extends TestCase {
 		$registered = $this->registeredCommands();
 		sort($registered);
 
-		$this->assertSame($this->concreteCommands(), $registered);
+		$this->assertSame(expected: $this->concreteCommands(), actual: $registered);
 	}//end testInfoXmlRegistersExactlyTheConcreteCommands()
 
 	/**
-	 * Each registered command answers to a name in the opencatalogi namespace.
+	 * Each registered command names itself in the opencatalogi namespace.
 	 *
 	 * @return void
 	 */
 	public function testEveryRegisteredCommandIsInTheAppNamespace(): void {
 		foreach ($this->registeredCommands() as $class) {
-			$reflection = new ReflectionClass($class);
-			$name = null;
-			foreach ($reflection->getAttributes() as $attribute) {
-				$arguments = $attribute->getArguments();
-				if (isset($arguments['name']) === true) {
-					$name = $arguments['name'];
-				}
-			}
-
-			if ($name === null) {
-				$property = $reflection->hasProperty('defaultName') === true ? $reflection->getProperty('defaultName') : null;
-				$name = $property?->getDefaultValue();
-			}
-
-			if ($name === null) {
-				// The name is set in configure(); read it from a constructor-free instance.
-				$instance = $reflection->newInstanceWithoutConstructor();
-				$configure = $reflection->getMethod('configure');
-				$configure->setAccessible(true);
-				$ref = new ReflectionClass(Command::class);
-				$definition = $ref->getProperty('definition');
-				$definition->setAccessible(true);
-				$definition->setValue($instance, new \Symfony\Component\Console\Input\InputDefinition());
-				$configure->invoke($instance);
-				$name = $instance->getName();
-			}
-
-			$this->assertIsString($name, $class . ' must have a command name');
-			$this->assertStringStartsWith('opencatalogi:', $name, $class . ' must be in the opencatalogi namespace');
+			$file   = (string) (new ReflectionClass(objectOrClass: $class))->getFileName();
+			$source = (string) file_get_contents(filename: $file);
+			$this->assertMatchesRegularExpression(
+				pattern: "/setName\\(name: 'opencatalogi:[a-z:-]+'\\)/",
+				string: $source,
+				message: $class . ' must name itself opencatalogi:*'
+			);
 		}
 	}//end testEveryRegisteredCommandIsInTheAppNamespace()
 }//end class
