@@ -286,6 +286,7 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			ContainerInterface::class => $this->container(),
 			IAppManager::class => $this->appManager(),
 			IUserSession::class => $this->userSession(),
+			\OCA\OpenCatalogi\Service\CapabilityRights::class => new \Unit\Support\AllowingCapabilityRights(),
 			IL10N::class => $this->l10n(),
 			ServiceCatalogueServiceInterface::class => $this->catalogue(),
 			InspectionServiceInterface::class => $this->double(

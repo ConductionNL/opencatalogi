@@ -1,9 +1,3 @@
----
-status: proposed
----
-
-# Publish rights
-
 ## ADDED Requirements
 
 ### Requirement: Only publishers change whether a publication is public (REQ-OPR-001)

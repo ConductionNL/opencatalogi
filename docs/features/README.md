@@ -45,6 +45,7 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [Dashboard](./dashboard.md) | The app shell: deep-link routes to every page, the Nextcloud dashboard widgets, and what the app registers on start | [dashboard.md](./dashboard.md) |
 | [Directory](./directory.md) | Listings of federated catalogues, their endpoints, directory synchronisation and the scheduled sync and broadcast jobs | [directory.md](./directory.md) |
 | [Document references](./document-references.md) | Publish a document that stays in its source system by its public URL: listed in the DiWoo sitemap, the DCAT feed and the attachments list, checked daily for broken links | [document-references.md](./document-references.md) |
+| [Council documents from Notubiz and iBabs](./council-documents-harvest.md) | The public council documents from the council information system become concept publications in the Raadsinformatie catalogue every night, with their files, through integriq | [council-documents-harvest.md](./council-documents-harvest.md) |
 | Publiek zoeken | Unauthenticated full-text search with filters and facets | — |
 | [Publieke fulltext search — publicaties + documenten](./public-fulltext-search.md) | Public `GET /apps/opencatalogi/api/search` — RBAC-filtered mixed envelope of publications and documents, `@self.schema` as row discriminator, embedded `publication: {id, slug, title}` on document rows | [public-fulltext-search.md](./public-fulltext-search.md) |
 | DCAT-AP export | Dataset metadata export in DCAT-AP NL and EU DCAT-AP format | — |

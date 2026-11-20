@@ -31,6 +31,8 @@ use OCA\OpenCatalogi\Dashboard\RetentionWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
 use OCA\OpenCatalogi\Listener\BatchReviewTaskListener;
+use OCA\OpenCatalogi\Listener\CapabilityDeclarationListener;
+use OCA\OpenCatalogi\Listener\CapabilityScopeListener;
 use OCA\OpenCatalogi\Listener\CatalogAccessListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
@@ -136,6 +138,8 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectCreatedEvent', CatalogAccessListener::class],
 				[$e . 'ObjectUpdatedEvent', CatalogAccessListener::class],
 				[$e . 'ObjectDeletedEvent', CatalogAccessListener::class],
+				[$e . 'PermissionsDeclaringEvent', CapabilityDeclarationListener::class],
+				[$e . 'CustomScopeEvaluatingEvent', CapabilityScopeListener::class],
 				[$e . 'ObjectCreatingEvent', TermRollListener::class],
 				[$e . 'ObjectUpdatingEvent', TermRollListener::class],
 				[$e . 'ObjectCreatingEvent', HandedOverRecordsListener::class],

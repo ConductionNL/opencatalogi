@@ -36,6 +36,8 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
+use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
+use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -50,6 +52,8 @@ use OCP\IUserSession;
 
 /**
  * The publication's visibility, and the three moves an editor makes on it.
+ *
+ * @SuppressWarnings(PHPMD.TooManyMethods) Each move is split into short private steps to stay under the unit size and complexity limits.
  *
  * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
  */
@@ -66,6 +70,7 @@ class PublicationStateController extends Controller {
 	 * @param IUserSession $userSession The current session.
 	 * @param PublicationRightsInterface $rights The update right on one publication, and the publish right.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
+ * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003).
 	 */
 	public function __construct(
 		$appName,
@@ -74,6 +79,7 @@ class PublicationStateController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly PublicationRightsInterface $rights,
 		private readonly PublicationTransitions $registers,
+		private readonly PublishTransition $publisher,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -106,29 +112,96 @@ class PublicationStateController extends Controller {
 			return $this->notFound();
 		}
 
-		$data = $this->asArray(object: $publication);
+		$properties = $this->asArray(object: $publication);
 
-		// Who can read it (publications-for-signed-in-readers, REQ-PSR-001); anything
-		// the schema does not know reads as its default.
+		return new JSONResponse(
+			array_merge(
+				[
+					'state' => $this->registers->stateOf(publication: $properties),
+					'canPublish' => $this->rights->mayPublish(),
+					'unlisted' => ($properties['unlisted'] ?? false) === true,
+					'canUpdate' => $this->rights->mayUpdate(publication: $publication),
+				],
+				self::readers(properties: $properties)
+			)
+		);
+	}//end visibility()
+
+	/**
+	 * Who can read the publication (publications-for-signed-in-readers, REQ-PSR-001);
+	 * anything the schema does not know reads as its default.
+	 *
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return array{audience: string, minimumAssurance: string}
+	 */
+	private static function readers(array $properties): array {
 		$audience = 'public';
-		if (($data['audience'] ?? null) === 'signedIn') {
+		if (($properties['audience'] ?? null) === 'signedIn') {
 			$audience = 'signedIn';
 		}
 
 		$minimumAssurance = 'substantial';
-		if (($data['minimumAssurance'] ?? null) === 'high') {
+		if (($properties['minimumAssurance'] ?? null) === 'high') {
 			$minimumAssurance = 'high';
 		}
 
-		return new JSONResponse(
-			[
-				'state' => $this->registers->stateOf(publication: $data),
-				'canPublish' => $this->rights->mayPublish(),
-				'audience' => $audience,
-				'minimumAssurance' => $minimumAssurance,
-			]
-		);
-	}//end visibility()
+		return ['audience' => $audience, 'minimumAssurance' => $minimumAssurance];
+	}//end readers()
+
+	/**
+	 * Unlist a publication: it stays readable at its own link and leaves search, feeds and sitemaps (REQ-PLC-006).
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return JSONResponse `{unlisted: true}`, 403 without the update right.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+	 */
+	#[NoAdminRequired]
+	public function unlist(string $id): JSONResponse {
+		return $this->setUnlisted(id: $id, unlisted: true);
+	}//end unlist()
+
+	/**
+	 * Put an unlisted publication back on every surface (REQ-PLC-006).
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return JSONResponse `{unlisted: false}`, 403 without the update right.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+	 */
+	#[NoAdminRequired]
+	public function relist(string $id): JSONResponse {
+		return $this->setUnlisted(id: $id, unlisted: false);
+	}//end relist()
+
+	/**
+	 * Store the unlisted flag only: no depublication, no withdrawal sent.
+	 *
+	 * @param string $id       The publication id.
+	 * @param bool   $unlisted The flag.
+	 *
+	 * @return JSONResponse The flag, or the refusal.
+	 */
+	private function setUnlisted(string $id, bool $unlisted): JSONResponse {
+		[$publication, $refusal] = $this->guardWrite(id: $id);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$record = $this->asArray(object: $publication);
+		unset($record['@self']);
+		$record['unlisted'] = $unlisted;
+		try {
+			$this->save(id: $id, record: $record);
+		} catch (\Throwable $e) {
+			return $this->refused(e: $e);
+		}
+
+		return new JSONResponse(['unlisted' => $unlisted]);
+	}//end setUnlisted()
 
 	/**
 	 * Publish now, or publish again after a withdrawal.
@@ -154,13 +227,54 @@ class PublicationStateController extends Controller {
 		}
 
 		try {
-			$this->save(id: $id, record: $this->registers->publishedRecord(publication: $properties));
+			$this->publishNow(id: $id, properties: $properties);
+		} catch (PublishRefusedException $e) {
+			return $this->transitionRefused(state: $e->state);
 		} catch (\Throwable $e) {
 			return $this->refused(e: $e);
 		}
 
 		return new JSONResponse(['state' => PublicationStateServiceInterface::STATE_PUBLIC]);
 	}//end publish()
+
+	/**
+	 * Publish now: a stored `published` publication (scheduled or withdrawn) gets today's date; any other runs
+	 * the publish transition with that date in the same call, so a refused move writes no date (REQ-PLC-003).
+	 *
+	 * @param string               $id         The publication id.
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return void
+	 *
+	 * @throws PublishRefusedException When the lifecycle allows no publish from the stored state.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 * @SuppressWarnings(PHPMD.StaticAccess) PublishTransition::storedState() is a pure state helper.
+	 */
+	private function publishNow(string $id, array $properties): void {
+		$record = $this->registers->publishedRecord(publication: $properties);
+		$stored = PublishTransition::storedState(stored: (string)($properties['status'] ?? ''));
+		if ($stored === 'published') {
+			$this->save(id: $id, record: $record);
+			return;
+		}
+
+		$this->publisher->publish(id: $id, stored: $stored, publicationDate: (string)$record['publicationDate']);
+	}//end publishNow()
+
+	/**
+	 * The 422 for a publish the lifecycle does not allow, naming the transition and the state.
+	 *
+	 * @param string $state The stored state.
+	 *
+	 * @return JSONResponse 422.
+	 */
+	private function transitionRefused(string $state): JSONResponse {
+		return new JSONResponse(
+			data: ['error' => 'transition-not-allowed', 'action' => PublishTransition::PUBLISH, 'state' => $state],
+			statusCode: Http::STATUS_UNPROCESSABLE_ENTITY
+		);
+	}//end transitionRefused()
 
 	/**
 	 * Withdraw the publication with a reason, and tell every channel it reached.

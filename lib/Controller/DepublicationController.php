@@ -43,16 +43,16 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
+use OCA\OpenCatalogi\Service\CapabilityRights;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\ObjectInPair;
-use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
-use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -68,6 +68,7 @@ use OCP\IUserSession;
  * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
  */
 class DepublicationController extends Controller {
+	use CapabilityGuard;
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
 
@@ -81,6 +82,7 @@ class DepublicationController extends Controller {
 	 * @param DepublicationServiceInterface $depublicationService Taking a publication back.
 	 * @param PublicationTransitions $registers The configured register pairs and the ObjectService, refusing rather
 	 *                                          than defaulting, and the publication's state and its withdrawn record.
+	 * @param CapabilityRights|null $capabilities The capability rights (REQ-WAB-004).
 	 */
 	public function __construct(
 		$appName,
@@ -89,6 +91,7 @@ class DepublicationController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly DepublicationServiceInterface $depublicationService,
 		private readonly PublicationTransitions $registers,
+		private readonly ?CapabilityRights $capabilities=null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -134,8 +137,13 @@ class DepublicationController extends Controller {
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function depublish(): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'depublish');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		$publication = $this->request->getParam('publication', []);
 		if (is_array($publication) === false || $publication === []) {
 			return new JSONResponse(data: ['error' => 'missing-publication'], statusCode: Http::STATUS_BAD_REQUEST);
@@ -408,8 +416,13 @@ class DepublicationController extends Controller {
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function acknowledgeWithdrawal(): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'depublish');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		$id = trim((string)$this->request->getParam('depublication', ''));
 		$channel = trim((string)$this->request->getParam('channel', ''));
 		if ($id === '' || $channel === '') {

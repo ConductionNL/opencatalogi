@@ -56,7 +56,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl. Voor een Service Level Agreement (SLA), neem contact op via sales@conduction.nl.
     ]]></description>
-	<version>2.1.16-unstable.20261117071500</version>
+	<version>2.1.55-unstable.20261117203721</version>
 	<licence>EUPL-1.2</licence>
 	<author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
 	<author mail="info@acato.nl" homepage="https://acato.nl/">Acato</author>
@@ -142,6 +142,8 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 		<job>OCA\OpenCatalogi\BackgroundJob\DocumentReferenceCheck</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\CompletenessSweep</job>
 		<job>OCA\OpenCatalogi\BackgroundJob\DonlHarvestCheck</job>
+		<job>OCA\OpenCatalogi\BackgroundJob\DiwooStandardCheck</job>
+		<job>OCA\OpenCatalogi\BackgroundJob\DiwooSitemapReconciliation</job>
 		<!--
 			Broadcast was written but never registered here, so the 4-hourly
 			directory broadcast required by dashboard/spec.md DIR-007 silently
@@ -157,6 +159,8 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 	<repair-steps>
 		<post-migration>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+			<!-- Right after InitializeSettings: the imported read rule requires the stored state published, so every legacy publication gets its state before anything reads it (publication-lifecycle-on-or REQ-PLC-007). Idempotent. -->
+			<step>OCA\OpenCatalogi\Repair\BackfillPublicationLifecycleState</step>
 			<!-- After InitializeSettings: hands the stored Woo requests to dossiq and stops their timers here (woo-request-intake-hands-over-to-dossiq REQ-WHD-003). -->
 			<step>OCA\OpenCatalogi\Repair\HandWooRequestsToDossiq</step>
 			<!--
@@ -174,6 +178,14 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				publications. Idempotent.
 			-->
 			<step>OCA\OpenCatalogi\Repair\SetPublicationAudiencePublic</step>
+			<!--
+				Maps the refusal grounds stored on Woo assessments to dossiq's settled
+				codes, flags a code it cannot map and lists it
+				(woo-value-lists-on-the-concept-register, REQ-WVC-003). After
+				InitializeSettings, which imports the assessment schema's marker field.
+				Idempotent: a mapped assessment carries the list version.
+			-->
+			<step>OCA\OpenCatalogi\Repair\MapStoredRefusalGrounds</step>
 			<!--
 				Must run AFTER the register sync that adds the English columns, so it
 				can tell the rename case from the back-fill case. Idempotent and
@@ -250,6 +262,20 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				bundled one. Idempotent: a schema whose rules already match is not written.
 			-->
 			<step>OCA\OpenCatalogi\Repair\RecomputeCatalogAccess</step>
+			<!--
+				Grants the eight capability rights (woo-access-boundary-hardening REQ-WAB-004)
+				to every group delegated the OpenCatalogi admin section, so nobody loses a
+				capability when the routes stop riding on the admin delegation. After
+				InitializeSettings, which may reset the catalog schema's authorization.
+				Idempotent: grants already there are kept and a complete block is not written.
+			-->
+			<step>OCA\OpenCatalogi\Repair\GrantCapabilitiesToDelegatedAdmins</step>
+			<!--
+				Seeds the processing activity opencatalogi-woo-records that the five Woo
+				schemas attribute their logged reads to (woo-access-boundary-hardening
+				REQ-WAB-001). Idempotent: an activity with the code is left as it is.
+			-->
+			<step>OCA\OpenCatalogi\Repair\SeedWooProcessingActivity</step>
 			<!-- Hands depublication, inspection, comment-period, community and Woo-request records an
 			     editor came to own to the system. Needs OpenRegister's release-to-system call; idempotent. -->
 			<step>OCA\OpenCatalogi\Repair\HandRecordsToSystem</step>
