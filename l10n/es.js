@@ -739,6 +739,8 @@ OC.L10N.register(
         "This key is shown once. Copy it now: it cannot be shown again.": "Esta clave se muestra una sola vez. Cópiela ahora: no se podrá volver a mostrar.",
         "No feed consumers yet.": "Todavía no hay consumidores del feed.",
         "Accounts that read every catalogue's feed": "Cuentas que leen el feed de cada catálogo",
+        "Review publications before they are published": "Revisar las publicaciones antes de publicarlas",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Si está activado, un borrador debe enviarse y aprobarse antes de poder publicarse. Si está desactivado, un editor puede publicar un borrador directamente.",
         "Delete publication": "Eliminar publicación",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "¿Desea eliminar \"{name}\"? Esta acción no se puede deshacer.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicación y sus adjuntos desaparecen de la página pública y del mapa del sitio Woo. Archivarla, en cambio, los conserva durante el plazo de conservación."

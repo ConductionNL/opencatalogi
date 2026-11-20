@@ -139,9 +139,17 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'depublication#acknowledgeWithdrawal', 'url' => '/api/publications/depublish/acknowledge', 'verb' => 'POST'],
 		// Publish now, withdraw with a reason, publish again, withdraw one document
 		// (publications-publish-and-withdraw-action, REQ-PPW-001..004).
+		// The publication lifecycle (publication-lifecycle-on-or REQ-PLC-001): literal
+		// paths, declared before every /api/{catalogSlug}/{id} route so they are not read as an id.
+		['name' => 'publicationLifecycle#index', 'url' => '/api/publications/lifecycle', 'verb' => 'GET'],
+		// The publications ready to publish, for a calling system to reconcile (REQ-PLC-005).
+		['name' => 'readyPublications#index', 'url' => '/api/publications/ready', 'verb' => 'GET'],
 		['name' => 'publicationState#visibility', 'url' => '/api/publications/{id}/visibility', 'verb' => 'GET'],
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
+		// Unlist and list again (publication-lifecycle-on-or REQ-PLC-006): readable by link, off search and feeds.
+		['name' => 'publicationState#unlist', 'url' => '/api/publications/{id}/unlist', 'verb' => 'POST'],
+		['name' => 'publicationState#relist', 'url' => '/api/publications/{id}/list', 'verb' => 'POST'],
 		// Published tables, editor side: list, publish a CSV attachment, edit the dictionary (REQ-ODT-001, REQ-ODT-003).
 		['name' => 'publishedTableEdit#index', 'url' => '/api/publications/{id}/tables', 'verb' => 'GET'],
 		['name' => 'publishedTableEdit#create', 'url' => '/api/publications/{id}/tables', 'verb' => 'POST'],

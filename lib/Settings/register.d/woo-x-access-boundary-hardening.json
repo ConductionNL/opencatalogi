@@ -51,7 +51,7 @@
 				}
 			},
 			"publication": {
-				"version": "0.0.9",
+				"version": "0.0.10",
 				"configuration": {
 					"x-openregister-processing": {
 						"logReads": true,

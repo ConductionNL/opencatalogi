@@ -68,7 +68,7 @@ final class PublicationTellsItsSourceSchemaTest extends TestCase {
 		$merged = $merge->invoke(null, $base, $root . '/register.d');
 		$publication = $merged['components']['schemas']['publication'];
 
-		// A later change may bump it again (woo-access-boundary-hardening: 0.0.9); it never drops below this one's.
+		// Later changes bump it further (publication-lifecycle-on-or: 0.0.9); this change needs at least its own bump.
 		self::assertTrue(version_compare($publication['version'], '0.0.8', '>='), $publication['version']);
 		foreach (['publicUrl', 'officerUrl', 'completeness', 'completeAt', 'expectedDocuments', 'wooCategory', 'publicationKind'] as $property) {
 			self::assertArrayHasKey($property, $publication['properties'], $property);

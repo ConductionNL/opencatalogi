@@ -32,10 +32,12 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
@@ -724,8 +726,10 @@ class PublicationsController extends Controller {
 			queryParams: $this->publicListParams(),
 			objectService: $objectService
 		);
-		$result = $this->publicPage(
-			result: $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false)
+		$result = $this->withStates(
+			result: $this->publicPage(
+				result: $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false)
+			)
 		);
 
 		$result['@catalog'] = $this->catalogAbout(catalog: $catalog, catalogSlug: $catalogSlug);
@@ -818,6 +822,43 @@ class PublicationsController extends Controller {
 	}//end anonymousView()
 
 	/**
+	 * Add the one server-computed `state` to every row for a signed-in caller (REQ-PLC-002).
+	 *
+	 * The editor list shows draft, in review, approved, scheduled, public, withdrawn or
+	 * archived from this value and never computes it in the browser. An anonymous caller
+	 * only ever sees public rows, so its page is left exactly as it was.
+	 *
+	 * @param array<string, mixed> $result The page.
+	 *
+	 * @return array<string, mixed> The page, each row with its `state`.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-the-state-of-a-publication-is-one-value-the-server-computes-req-plc-002
+	 */
+	private function withStates(array $result): array {
+		if (is_array($result['results'] ?? null) === false || $this->queryService->isAnonymous() === true) {
+			return $result;
+		}
+
+		try {
+			$states = $this->container->get(PublicationStateServiceInterface::class);
+		} catch (\Throwable $e) {
+			return $result;
+		}
+
+		if (($states instanceof PublicationStateServiceInterface) === false) {
+			return $result;
+		}
+
+		foreach ($result['results'] as $index => $row) {
+			if (is_array($row) === true) {
+				$result['results'][$index]['state'] = $states->stateOf(publication: $row);
+			}
+		}
+
+		return $result;
+	}//end withStates()
+
+	/**
 	 * A page of publications as the caller may read it: without empty values, then under the published collections.
 	 *
 	 * @param array<string, mixed> $result The search result.
@@ -845,11 +886,15 @@ class PublicationsController extends Controller {
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the configuration cannot be read.
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::withoutUnlisted() is a pure filter.
 	 */
 	private function anonymousResults(array $result): array {
 		if (is_array($result['results'] ?? null) === false || $this->queryService->isAnonymous() === false) {
 			return $result;
 		}
+
+		// REQ-PLC-006: an anonymous list never carries an unlisted publication; its own link still opens it.
+		$result = UnlistedPublications::withoutUnlisted(page: $result);
 
 		$views = $this->container->get(PublishedRecordViewInterface::class)->viewList(records: array_values($result['results']));
 		if (is_numeric($result['total'] ?? null) === true) {

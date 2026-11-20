@@ -44,6 +44,27 @@ class PublicationStateService implements PublicationStateServiceInterface {
 	public const STATE_DRAFT = 'draft';
 
 	/**
+	 * Stored lifecycle state: offered for review (publication-lifecycle-on-or REQ-PLC-002).
+	 *
+	 * @var string
+	 */
+	public const STATE_IN_REVIEW = 'in_review';
+
+	/**
+	 * Stored lifecycle state: approved, ready to publish.
+	 *
+	 * @var string
+	 */
+	public const STATE_APPROVED = 'approved';
+
+	/**
+	 * The stored states answered as they are stored.
+	 *
+	 * @var list<string>
+	 */
+	private const STORED_AS_IS = [self::STATE_DRAFT, self::STATE_IN_REVIEW, self::STATE_APPROVED];
+
+	/**
 	 * The state of a publication at a moment.
 	 *
 	 * Archived wins, because the archived lifecycle state removes a publication
@@ -59,8 +80,20 @@ class PublicationStateService implements PublicationStateServiceInterface {
 	 * @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001
 	 */
 	public function stateOf(array $publication, ?DateTimeInterface $now = null): string {
-		if (($publication['status'] ?? '') === 'archived') {
+		$stored = (string)($publication['status'] ?? '');
+		if ($stored === 'archived') {
 			return self::STATE_ARCHIVED;
+		}
+
+		// Publication-lifecycle-on-or REQ-PLC-002: only a stored `published` reads its
+		// dates. Draft, in review and approved are answered as stored, an empty status
+		// is a draft, and a value the lifecycle does not know is a draft too (fail closed).
+		if (in_array($stored, self::STORED_AS_IS, true) === true) {
+			return $stored;
+		}
+
+		if ($stored !== 'published') {
+			return self::STATE_DRAFT;
 		}
 
 		$moment = $this->moment(now: $now);

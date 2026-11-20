@@ -2154,7 +2154,8 @@
         "title": "Voorbeeld: Jaarverslag 2024 van Gemeente Voorbeeld",
         "summary": "Voorbeeldpublicatie uit de demodata: een verzonnen jaarverslag van een verzonnen gemeente.",
         "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd. Gemeente Voorbeeld bestaat niet en staat voor geen echte overheidsorganisatie.",
-        "publicationDate": "2024-01-01T00:00:00+00:00"
+        "publicationDate": "2024-01-01T00:00:00+00:00",
+        "status": "published"
       },
       {
         "@self": {
@@ -2166,6 +2167,7 @@
         "summary": "Voorbeeldpublicatie uit de demodata: een teruggetrokken kwartaalrapport, zodat Opnieuw publiceren te zien is.",
         "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd.",
         "publicationDate": "2024-04-01T00:00:00+00:00",
+        "status": "published",
         "depublicationDate": "2026-06-01T09:00:00+00:00"
       },
       {
@@ -2265,7 +2267,8 @@
         "title": "Voorbeeld: Raadsagenda januari 2030 van Gemeente Voorbeeld",
         "summary": "Voorbeeldpublicatie uit de demodata: een geplande publicatie, zodat het overzicht van niet-gepubliceerde publicaties er een laat zien.",
         "description": "**Voorbeeld uit de demodata.** Dit is geen echte publicatie. Deze rij staat er alleen als een beheerder de demodata heeft geïnstalleerd. De publicatiedatum ligt ver in de toekomst, zodat de rij gepland blijft. Gemeente Voorbeeld bestaat niet en staat voor geen echte overheidsorganisatie.",
-        "publicationDate": "2030-01-01T09:00:00+00:00"
+        "publicationDate": "2030-01-01T09:00:00+00:00",
+        "status": "published"
       }
     ]
   }

@@ -1873,6 +1873,8 @@
         "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.",
         "Invalid listing": "Invalid listing",
         "Listing not found in scope": "Listing not found in scope",
+        "Review publications before they are published": "Review publications before they are published",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.",
         "Pipeline failures": "Pipeline failures",
         "A failed delivery, a refused sitemap or a gap in the sitemap is sent to the members of this group by notification and e-mail.": "A failed delivery, a refused sitemap or a gap in the sitemap is sent to the members of this group by notification and e-mail.",
         "Nobody receives pipeline failures. Set a group.": "Nobody receives pipeline failures. Set a group.",

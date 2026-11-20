@@ -739,6 +739,8 @@ OC.L10N.register(
         "This key is shown once. Copy it now: it cannot be shown again.": "Ta ključ je prikazan samo enkrat. Kopirajte ga zdaj: znova ga ni mogoče prikazati.",
         "No feed consumers yet.": "Prejemnikov vira še ni.",
         "Accounts that read every catalogue's feed": "Računi, ki berejo vir vsakega kataloga",
+        "Review publications before they are published": "Preglej objave, preden so objavljene",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Ko je vklopljeno, je treba osnutek oddati in odobriti, preden ga je mogoče objaviti. Ko je izklopljeno, lahko urednik osnutek objavi neposredno.",
         "Delete publication": "Izbriši objavo",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Ali želite izbrisati \"{name}\"? Tega dejanja ni mogoče razveljaviti.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Objava in njene priloge izginejo z javne strani in iz zemljevida strani Woo. Arhiviranje pa jih ohrani za čas hrambe."

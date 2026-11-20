@@ -127,6 +127,7 @@ import {
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
+import { publishesThroughLifecycle, publishThroughLifecycle } from '../../services/publicationTransition.js'
 import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 
 /**
@@ -536,6 +537,14 @@ export default {
 						this.mode !== 'retroactive'
 						&& this.isAlreadyPublished(obj)
 					) {
+						continue
+					}
+
+					// A publication that is not yet published moves through its
+					// lifecycle; a refused move writes no date (REQ-PLC-003).
+					if (this.mode !== 'retroactive' && publishesThroughLifecycle(obj)) {
+						await publishThroughLifecycle(obj, targetDate)
+						successful.push(obj)
 						continue
 					}
 

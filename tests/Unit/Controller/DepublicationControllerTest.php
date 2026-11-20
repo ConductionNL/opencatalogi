@@ -354,7 +354,7 @@ class DepublicationControllerTest extends TestCase {
 	 * @return array<string, mixed> The stored properties.
 	 */
 	private function publicPublication(): array {
-		return ['title' => 'Besluit', 'publicationDate' => '2020-01-01T00:00:00+00:00'];
+		return ['title' => 'Besluit', 'status' => 'published', 'publicationDate' => '2020-01-01T00:00:00+00:00'];
 
 	}//end publicPublication()
 

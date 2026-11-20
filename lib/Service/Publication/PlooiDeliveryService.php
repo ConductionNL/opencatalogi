@@ -140,7 +140,7 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 	 *
 	 * @return array<string, mixed>|null The PLOOI fields stored, the dry run in staging (nothing stored), or null when no catalogue asks for PLOOI.
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) PipelineIncidents::plooiFailure() is a pure message helper.
+	 * @SuppressWarnings(PHPMD.StaticAccess) PipelineIncidents::plooiFailure() is a pure message helper and UnlistedPublications::isUnlisted() a pure predicate.
 	 */
 	private function send(string $uuid, string $register, string $schema, string $action): ?array {
 		if ($this->isInPlooiCatalogue(register: $register, schema: $schema) === false) {
@@ -159,6 +159,11 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		}
 
 		$publication = $entity->jsonSerialize();
+		// REQ-PLC-006: an unlisted publication is not delivered; the refusal is recorded as `unlisted`.
+		if ($action === self::ACTION_DELIVERY && UnlistedPublications::isUnlisted(row: $publication) === true) {
+			return $this->recordUnlisted(publication: $publication, uuid: $uuid, target: new ObjectFindTarget(register: $register, schema: $schema));
+		}
+
 		$document = $this->document(publication: $publication, uuid: $uuid);
 		// In staging the document is kept as a dry run, and the publication is left as it is:
 		// no plooiStatus and no plooiDeliveredAt claim a delivery that never happened.
@@ -239,6 +244,35 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 			'plooiDocuments' => array_column($document['documents'], 'url'),
 		];
 	}//end sendToPlooi()
+
+	/**
+	 * Record that an unlisted publication was not delivered, and say so.
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param string               $uuid        Its uuid.
+	 * @param ObjectFindTarget     $target      Its register and schema.
+	 *
+	 * @return array<string, string> The fields written.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006
+	 */
+	private function recordUnlisted(array $publication, string $uuid, ObjectFindTarget $target): array {
+		$fields = [
+			'plooiStatus' => 'failed',
+			'plooiReason' => 'unlisted',
+			'plooiDeliveredAt' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM),
+		];
+		$record = $publication;
+		unset($record['@self']);
+		$this->settingsService->getObjectService()?->saveObject(
+			object: array_merge($record, $fields),
+			options: new ObjectSaveOptions(target: $target, uuid: $uuid, policy: new SavePolicy(silent: true)),
+			_rbac: false,
+			_multitenancy: false
+		);
+
+		return $fields;
+	}//end recordUnlisted()
 
 	/**
 	 * The DiWoo metadata and document links sent to PLOOI.

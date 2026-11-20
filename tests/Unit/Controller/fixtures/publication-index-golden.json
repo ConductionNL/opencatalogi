@@ -184,10 +184,12 @@
         "data": {
             "results": [
                 {
-                    "id": "a"
+                    "id": "a",
+                    "state": "draft"
                 },
                 {
-                    "id": "e"
+                    "id": "e",
+                    "state": "draft"
                 },
                 "raw"
             ],
@@ -225,7 +227,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"b8db1992cb0ea29fb1cc37cfb391f75286fa58e7\"",
+            "ETag": "W/\"99994a4f99a9a619570099f800c9f3d2039d63f5\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -287,6 +289,9 @@
                 }
             },
             {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface"
+            },
+            {
                 "resolve": {
                     "slug": "woo",
                     "title": "Woo",
@@ -314,7 +319,8 @@
             "results": [
                 {
                     "id": "a",
-                    "empty": ""
+                    "empty": "",
+                    "state": "draft"
                 },
                 [],
                 "raw"
@@ -353,7 +359,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"250a666f7e7f26cdf0679bad668d67b037db26e1\"",
+            "ETag": "W/\"6c6f147412ba0bdca1082dbfa8477e3c8aea14ab\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -405,6 +411,9 @@
                 },
                 "rbac": true,
                 "multitenancy": false
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface"
             },
             {
                 "resolve": {
@@ -649,10 +658,12 @@
         "data": {
             "results": [
                 {
-                    "id": "a"
+                    "id": "a",
+                    "state": "draft"
                 },
                 {
-                    "id": "e"
+                    "id": "e",
+                    "state": "draft"
                 },
                 "raw"
             ],
@@ -690,7 +701,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"b8db1992cb0ea29fb1cc37cfb391f75286fa58e7\"",
+            "ETag": "W/\"99994a4f99a9a619570099f800c9f3d2039d63f5\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -760,6 +771,9 @@
                     "id": "e",
                     "blank": ""
                 }
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface"
             },
             {
                 "resolve": {
@@ -788,10 +802,12 @@
         "data": {
             "results": [
                 {
-                    "id": "a"
+                    "id": "a",
+                    "state": "draft"
                 },
                 {
-                    "id": "e"
+                    "id": "e",
+                    "state": "draft"
                 },
                 "raw"
             ],
@@ -829,7 +845,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"b8db1992cb0ea29fb1cc37cfb391f75286fa58e7\"",
+            "ETag": "W/\"99994a4f99a9a619570099f800c9f3d2039d63f5\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -899,6 +915,9 @@
                     "id": "e",
                     "blank": ""
                 }
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface"
             },
             {
                 "resolve": {
@@ -927,10 +946,12 @@
         "data": {
             "results": [
                 {
-                    "id": "a"
+                    "id": "a",
+                    "state": "draft"
                 },
                 {
-                    "id": "e"
+                    "id": "e",
+                    "state": "draft"
                 },
                 "raw"
             ],
@@ -968,7 +989,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"b8db1992cb0ea29fb1cc37cfb391f75286fa58e7\"",
+            "ETag": "W/\"99994a4f99a9a619570099f800c9f3d2039d63f5\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -1036,6 +1057,9 @@
                     "id": "e",
                     "blank": ""
                 }
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface"
             },
             {
                 "resolve": {
@@ -1064,10 +1088,12 @@
         "data": {
             "results": [
                 {
-                    "id": "a"
+                    "id": "a",
+                    "state": "draft"
                 },
                 {
-                    "id": "e"
+                    "id": "e",
+                    "state": "draft"
                 },
                 "raw"
             ],
@@ -1105,7 +1131,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"b8db1992cb0ea29fb1cc37cfb391f75286fa58e7\"",
+            "ETag": "W/\"99994a4f99a9a619570099f800c9f3d2039d63f5\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -1169,6 +1195,9 @@
                     "id": "e",
                     "blank": ""
                 }
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface"
             },
             {
                 "resolve": {
@@ -1197,10 +1226,12 @@
         "data": {
             "results": [
                 {
-                    "id": "a"
+                    "id": "a",
+                    "state": "draft"
                 },
                 {
-                    "id": "e"
+                    "id": "e",
+                    "state": "draft"
                 },
                 "raw"
             ],
@@ -1238,7 +1269,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"b8db1992cb0ea29fb1cc37cfb391f75286fa58e7\"",
+            "ETag": "W/\"99994a4f99a9a619570099f800c9f3d2039d63f5\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -1306,6 +1337,9 @@
                 }
             },
             {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface"
+            },
+            {
                 "resolve": {
                     "slug": "woo",
                     "title": "Woo",
@@ -1332,10 +1366,12 @@
         "data": {
             "results": [
                 {
-                    "id": "a"
+                    "id": "a",
+                    "state": "draft"
                 },
                 {
-                    "id": "e"
+                    "id": "e",
+                    "state": "draft"
                 },
                 "raw"
             ],
@@ -1433,6 +1469,9 @@
                 }
             },
             {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface"
+            },
+            {
                 "resolve": {
                     "slug": "woo",
                     "title": "Woo",
@@ -1463,7 +1502,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"b8db1992cb0ea29fb1cc37cfb391f75286fa58e7\"",
+            "ETag": "W/\"99994a4f99a9a619570099f800c9f3d2039d63f5\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -1523,6 +1562,9 @@
                     "id": "e",
                     "blank": ""
                 }
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface"
             },
             {
                 "resolve": {
@@ -1647,10 +1689,12 @@
         "data": {
             "results": [
                 {
-                    "id": "a"
+                    "id": "a",
+                    "state": "draft"
                 },
                 {
-                    "id": "e"
+                    "id": "e",
+                    "state": "draft"
                 },
                 "raw"
             ],
@@ -1687,7 +1731,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"fbcae796a347cabd91527bc0ced9b2a3c7bcdb9b\"",
+            "ETag": "W/\"65fcd1309912aab6580be41957bd14cfa290e72a\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -1747,6 +1791,9 @@
                 }
             },
             {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface"
+            },
+            {
                 "resolve": {
                     "schemas": [
                         1
@@ -1772,10 +1819,12 @@
         "data": {
             "results": [
                 {
-                    "id": "a"
+                    "id": "a",
+                    "state": "draft"
                 },
                 {
-                    "id": "e"
+                    "id": "e",
+                    "state": "draft"
                 },
                 "raw"
             ],
@@ -1813,7 +1862,7 @@
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
             "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
-            "ETag": "W/\"b8db1992cb0ea29fb1cc37cfb391f75286fa58e7\"",
+            "ETag": "W/\"99994a4f99a9a619570099f800c9f3d2039d63f5\"",
             "Vary": "Origin, Accept, Accept-Language"
         },
         "log": [
@@ -1885,6 +1934,9 @@
                     "id": "e",
                     "blank": ""
                 }
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface"
             },
             {
                 "resolve": {

@@ -28,6 +28,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
@@ -907,6 +908,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @return array<int, array<string, mixed>>
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::isUnlisted() is a pure predicate.
 	 */
 	private function publicationsWithFiles(iterable $rows): array {
 		$fileService = $this->getFileService();
@@ -914,6 +916,11 @@ class SitemapService implements SitemapServiceInterface {
 		foreach ($rows as $publication) {
 			if (is_array($publication) === false) {
 				$publication = $publication->jsonSerialize();
+			}
+
+			// REQ-PLC-006: an unlisted publication is left out of the DiWoo sitemaps.
+			if (UnlistedPublications::isUnlisted(row: $publication) === true) {
+				continue;
 			}
 
 			$files = ($fileService->formatFiles($fileService->getFiles(object: $publication['id']))['results'] ?? []);
