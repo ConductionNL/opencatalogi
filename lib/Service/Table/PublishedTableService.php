@@ -190,11 +190,8 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
 	 */
 	public function reimport(array $table, ?string $importedBy = null): array {
-		$pair = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
-		$where = new ObjectFindOptions(register: $pair['register'], schema: $pair['schema']);
 		try {
-			$objects = $this->registers->objectService();
-			$publication = $objects->find(id: (string)($table['publication'] ?? ''), options: $where, _rbac: false, _multitenancy: false);
+			$publication = $this->findAsSystem(id: (string)($table['publication'] ?? ''), schemaKey: 'publication_schema');
 		} catch (\Throwable $e) {
 			throw new InvalidArgumentException('The publication of this table is gone.');
 		}
@@ -431,14 +428,8 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-anyone-queries-the-rows-of-a-public-table-req-odt-002
 	 */
 	public function findTable(string $tableId): ?array {
-		$config = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'published_table_schema');
 		try {
-			$table = $this->registers->objectService()->find(
-				id: $tableId,
-				options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
-				_rbac: false,
-				_multitenancy: false
-			);
+			$table = $this->findAsSystem(id: $tableId, schemaKey: 'published_table_schema');
 		} catch (\Throwable $e) {
 			return null;
 		}
@@ -450,6 +441,23 @@ class PublishedTableService implements PublishedTableServiceInterface {
 
 		return $table;
 	}//end findTable()
+
+	/**
+	 * One object of the publication register, found as the system.
+	 *
+	 * @param string $id        The object id.
+	 * @param string $schemaKey The configuration key of its schema.
+	 *
+	 * @return mixed The object as OpenRegister returns it.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
+	 */
+	private function findAsSystem(string $id, string $schemaKey): mixed {
+		$pair = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: $schemaKey);
+		$where = new ObjectFindOptions(register: $pair['register'], schema: $pair['schema']);
+
+		return $this->registers->objectService()->find(id: $id, options: $where, _rbac: false, _multitenancy: false);
+	}//end findAsSystem()
 
 	/**
 	 * Whether the caller may read a publication: OpenRegister finds it with RBAC on.
