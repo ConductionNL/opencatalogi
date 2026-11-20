@@ -13,6 +13,7 @@
 // vue-material-design-icons.
 
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
 import BookOpenPageVariantOutline from 'vue-material-design-icons/BookOpenPageVariantOutline.vue'
@@ -41,6 +42,7 @@ import FolderMultiple from 'vue-material-design-icons/FolderMultiple.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
 import History from 'vue-material-design-icons/History.vue'
+import LightbulbOnOutline from 'vue-material-design-icons/LightbulbOnOutline.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
@@ -69,6 +71,7 @@ import Web from 'vue-material-design-icons/Web.vue'
 
 export default {
 	AccountGroup,
+	AlertCircleOutline,
 	AlertOutline,
 	ArchiveOutline,
 	BookOpenPageVariantOutline,
@@ -97,6 +100,7 @@ export default {
 	FolderOutline,
 	FormatListBulleted,
 	History,
+	LightbulbOnOutline,
 	LinkVariant,
 	ListBoxOutline,
 	Lock,

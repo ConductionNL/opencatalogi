@@ -366,6 +366,24 @@ class FeedConsumerServiceTest extends TestCase {
 		$this->assertFalse($consumer['enabled']);
 	}
 
+	public function testSetActForSignedInReadersStoresTheFlagAndHidesTheVerifiers(): void {
+		$this->givenConsumer(keys: [['id' => 'k1', 'hash' => 'verifier', 'createdAt' => '2026-11-01T00:00:00+00:00']]);
+
+		$consumer = $this->service->setActForSignedInReaders(self::CONSUMER_ID, true);
+
+		$this->assertTrue($this->saved[0]['actForSignedInReaders']);
+		$this->assertSame('verifier', $this->saved[0]['keys'][0]['hash']);
+		$this->assertTrue($consumer['actForSignedInReaders']);
+		$this->assertArrayNotHasKey('hash', $consumer['keys'][0]);
+
+		$this->assertFalse($this->service->setActForSignedInReaders(self::CONSUMER_ID, false)['actForSignedInReaders']);
+	}
+
+	public function testSetActForSignedInReadersRefusesAnUnknownConsumer(): void {
+		$this->expectException(OutOfBoundsException::class);
+		$this->service->setActForSignedInReaders('nope', true);
+	}
+
 	public function testConsumerOfRefusesAConsumerOfAnotherCatalogue(): void {
 		$this->givenConsumer();
 		$this->assertSame(self::CONSUMER_ID, $this->service->consumerOf('cat-1', self::CONSUMER_ID)['id']);

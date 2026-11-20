@@ -196,7 +196,7 @@ class PublicationsPublishedCollectionsTest extends TestCase {
 
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame(
-			['id' => self::UUID, '@self' => ['id' => self::UUID, 'register' => 1, 'schema' => 1], 'title' => 'Besluit geluid'],
+			['id' => self::UUID, '@self' => ['id' => self::UUID, 'register' => 1, 'schema' => 1], 'title' => 'Besluit geluid', 'relations' => []],
 			$response->getData()
 		);
 
@@ -226,7 +226,8 @@ class PublicationsPublishedCollectionsTest extends TestCase {
 		$response = $this->controller->show('woo', self::UUID);
 
 		$this->assertSame(200, $response->getStatus());
-		$this->assertSame($this->record, $response->getData());
+		// The detail answer also carries the relations a reader may see (REQ-PRS-002); none here.
+		$this->assertSame($this->record + ['relations' => []], $response->getData());
 
 	}//end testASignedInReadIsUnchanged()
 

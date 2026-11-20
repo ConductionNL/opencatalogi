@@ -56,6 +56,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\ChangesServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\ChangesService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\DcatDereferenceInterface",
         "OCA\\OpenCatalogi\\Service\\DcatDereference"
     ],
@@ -121,6 +126,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\CouncilHarvestServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\CouncilHarvestService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\OoapiServiceInterface",
         "OCA\\OpenCatalogi\\Service\\OoapiService"
     ],
@@ -158,6 +168,11 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\PublishedTableServiceInterface",
         "OCA\\OpenCatalogi\\Service\\Table\\PublishedTableService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DatasetViewServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\Table\\DatasetViewService"
     ],
     [
         "alias",
@@ -266,6 +281,16 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublicDocumentsInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublicDocuments"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\ErrorReportIntakeInterface",
+        "OCA\\OpenCatalogi\\Service\\ErrorReport\\ErrorReportIntake"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\InformationRequestStoreInterface",
         "OCA\\OpenCatalogi\\Service\\Woo\\WooRequestStore"
     ],
@@ -366,6 +391,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\OpenRegisterServicesInterface",
+        "OCA\\OpenCatalogi\\Service\\OpenRegisterLookup"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\AttachmentReadingQueueInterface",
         "OCA\\OpenCatalogi\\BackgroundJob\\AttachmentReadingQueue"
     ],
@@ -373,6 +403,26 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\AttachmentReadingStoreInterface",
         "OCA\\OpenCatalogi\\Service\\AttachmentReading\\AttachmentReadingStore"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\MetadataRuleSuggesterInterface",
+        "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\MetadataSuggestionService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\MetadataSuggestionStoreInterface",
+        "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\MetadataSuggestionStore"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\MetadataSuggestionDecisionsInterface",
+        "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\MetadataSuggestionDecisions"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\SingleLawfulValueInterface",
+        "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\SingleLawfulValue"
     ],
     [
         "alias",

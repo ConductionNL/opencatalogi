@@ -102,7 +102,9 @@ class UnpublishedOverviewService implements UnpublishedOverviewServiceInterface 
 
 		$items = [];
 		foreach ($read['publications'] as $publication) {
-			if ($this->publications->isObjectPublic(objectData: $publication) === true
+			// The overview asks about the publication window only: a live publication
+			// for signed-in readers is published, not waiting (REQ-PSR-002).
+			if ($this->publications->isObjectPublic(objectData: ['audience' => 'public'] + $publication) === true
 				|| $this->rows->isLive(moment: ($publication['depublicationDate'] ?? null)) === true
 			) {
 				continue;

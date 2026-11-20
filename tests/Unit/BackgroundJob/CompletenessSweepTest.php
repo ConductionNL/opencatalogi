@@ -71,7 +71,7 @@ final class CompletenessSweepTest extends TestCase {
 	 * @return void
 	 */
 	public function testAPublicationWhoseDatePassedIsMarkedComplete(): void {
-		$due = ['title' => 'Due', 'publicationDate' => '2026-11-14T09:59:00+00:00', 'completeness' => 'incomplete'];
+		$due = ['title' => 'Due', 'status' => 'published', 'publicationDate' => '2026-11-14T09:59:00+00:00', 'completeness' => 'incomplete'];
 		$job = $this->job(rows: ['pub-1' => $due], files: [['share_token' => 'a']], mark: '2026-11-14T09:45:00+00:00');
 
 		$this->runJob(job: $job);
@@ -91,10 +91,10 @@ final class CompletenessSweepTest extends TestCase {
 	 */
 	public function testOnlyChangedPublicationsInTheWindowAreSaved(): void {
 		$rows = [
-			'old'       => ['publicationDate' => '2026-11-01T00:00:00+00:00', 'completeness' => 'incomplete'],
-			'future'    => ['publicationDate' => '2026-11-14T10:05:00+00:00'],
-			'unchanged' => ['publicationDate' => '2026-11-14T09:50:00+00:00', 'completeness' => 'complete', 'completeAt' => '2026-11-14T09:50:00+00:00'],
-			'withdrawn' => ['publicationDate' => '2026-11-01T00:00:00+00:00', 'depublicationDate' => '2026-11-14T09:55:00+00:00', 'completeness' => 'complete'],
+			'old'       => ['status' => 'published', 'publicationDate' => '2026-11-01T00:00:00+00:00', 'completeness' => 'incomplete'],
+			'future'    => ['status' => 'published', 'publicationDate' => '2026-11-14T10:05:00+00:00'],
+			'unchanged' => ['status' => 'published', 'publicationDate' => '2026-11-14T09:50:00+00:00', 'completeness' => 'complete', 'completeAt' => '2026-11-14T09:50:00+00:00'],
+			'withdrawn' => ['status' => 'published', 'publicationDate' => '2026-11-01T00:00:00+00:00', 'depublicationDate' => '2026-11-14T09:55:00+00:00', 'completeness' => 'complete'],
 		];
 		$service = $this->service(rows: $rows, files: [['share_token' => 'a']]);
 
@@ -104,7 +104,7 @@ final class CompletenessSweepTest extends TestCase {
 		self::assertSame('withdrawn', $this->saved[0][1]);
 		self::assertSame('incomplete', $this->saved[0][0]['completeness']);
 
-		$failing = $this->service(rows: ['due' => ['publicationDate' => '2026-11-14T09:50:00+00:00']], files: new RuntimeException('gone'));
+		$failing = $this->service(rows: ['due' => ['status' => 'published', 'publicationDate' => '2026-11-14T09:50:00+00:00']], files: new RuntimeException('gone'));
 		self::assertSame(['checked' => 1, 'changed' => 0, 'failed' => 1], $failing->sweep(since: new DateTimeImmutable('2026-11-14T09:45:00+00:00'), now: new DateTimeImmutable(self::NOW)));
 	}//end testOnlyChangedPublicationsInTheWindowAreSaved()
 
@@ -134,7 +134,7 @@ final class CompletenessSweepTest extends TestCase {
 	 * @return void
 	 */
 	public function testReevaluatingAfterAWithdrawnFileStoresIncomplete(): void {
-		$stored  = ['title' => 'Kept', 'publicationDate' => '2026-01-01T00:00:00+00:00', 'completeness' => 'complete', 'completeAt' => '2026-02-01T00:00:00+00:00'];
+		$stored  = ['title' => 'Kept', 'status' => 'published', 'publicationDate' => '2026-01-01T00:00:00+00:00', 'completeness' => 'complete', 'completeAt' => '2026-02-01T00:00:00+00:00'];
 		$service = $this->service(rows: ['pub-1' => $stored], files: [['share_token' => 'a'], ['share_token' => '']]);
 
 		self::assertSame('changed', $service->reevaluate(id: 'pub-1'));
@@ -153,13 +153,13 @@ final class CompletenessSweepTest extends TestCase {
 	 * @return void
 	 */
 	public function testReevaluatingSavesOnlyAChangedValue(): void {
-		$due     = ['publicationDate' => '2026-01-01T00:00:00+00:00', 'completeness' => 'incomplete'];
+		$due     = ['status' => 'published', 'publicationDate' => '2026-01-01T00:00:00+00:00', 'completeness' => 'incomplete'];
 		$service = $this->service(rows: ['pub-1' => $due], files: [['share_token' => 'a'], ['share_token' => 'b']]);
 		self::assertSame('changed', $service->reevaluate(id: 'pub-1'));
 		self::assertSame('complete', $this->saved[0][0]['completeness']);
 
 		$this->saved = [];
-		$done        = ['publicationDate' => '2026-01-01T00:00:00+00:00', 'completeness' => 'complete'];
+		$done        = ['status' => 'published', 'publicationDate' => '2026-01-01T00:00:00+00:00', 'completeness' => 'complete'];
 		self::assertSame('unchanged', $this->service(rows: ['pub-2' => $done], files: [['share_token' => 'a']])->reevaluate(id: 'pub-2'));
 		self::assertSame([], $this->saved);
 

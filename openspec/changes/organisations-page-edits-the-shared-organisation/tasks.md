@@ -6,13 +6,15 @@ Read `openspec/woo-build-rules.md` first. Read the projection's real keys in ope
 
 - [x] 1.1 Point the `Organizations` and `OrganizationDetail` pages in `src/manifest.json` (lines 1035 and 1060) at `"register": "@resolve:organization_register"` and `"schema": "@resolve:organization_schema"`; keep `showDeleteAction` and `showMassDelete` false (REQ-SHO-103). Verify: `tests/vitest/organisationsPage.spec.js` asserts both pages resolve the organisation keys and neither names the schema `organization`.
 - [x] 1.2 Check that `SettingsService` resolves `organization_register` and `organization_schema` to the directory register and `nc-organisation` on a fresh install and after an upgrade (task 2.2 of `publications-reference-the-shared-organisation`); add the two keys to the manifest's `@resolve` set if the loader does not know them (REQ-SHO-103). Verify: `tests/Unit/Service/SettingsServiceTest.php::testOrganisationKeysResolveToTheProjection`.
-- [ ] 1.3 Set the detail page's `org-data` widget to show `name`, `summary`, `oin`, `tooi`, `rsin`, `pki` in two columns, and gate its edit action on the projection's write answer (REQ-SHO-103). Verify: `tests/vitest/organisationsPage.spec.js` asserts the field list.
+- [x] 1.3 Set the detail page's `org-data` widget to show `name`, `summary`, `oin`, `tooi`, `rsin`, `pki` in two columns, and gate its edit action on the projection's write answer (REQ-SHO-103). Verify: `tests/vitest/organisationsPage.spec.js` asserts the field list.
 - Build note (c2): the field list is done (#2666). The edit gate is not: the shared detail page withdraws Edit only for `showEditAction` and an edit lock (`CnDetailPage.canEditRecord`), and has no reading of the object's write answer; OpenRegister still refuses the write for a user who may not edit. It needs that gate in @conduction/nextcloud-vue first.
+- Build note (round 2, 17 Nov): the edit gate is built. The installed `@conduction/nextcloud-vue` `CnDetailPage` takes `config.permissions`: it reads the record's `@self.can` and withdraws Edit and the data widget's inline editors while `can.update` is false. `OrganizationDetail` sets `permissions: true`; `tests/vitest/organisationsPage.spec.js` asserts it.
 
 ## 2. Live and end to end
 
 - [x] 2.1 Live on the dev instance: as organisation administrator enter RSIN 002220647, read it back from `GET /apps/openregister/api/objects/directory/nc-organisation/{id}`, and paste the read-back in the PR body (REQ-SHO-103). Verify: the pasted read-back. Live pass 17 Nov (livepass-opencatalogi): as admin through `PATCH /apps/openregister/api/objects/directory/nc-organisation/{id}` (not the page): read back `rsin: 002220647`, stored in `oc_openregister_organisations`.
 - [ ] 2.2 Playwright: `tests/e2e/organisations-page.spec.ts` "an administrator enters the RSIN" and "another user reads but cannot edit", carrying `@e2e` REQ-SHO-103.
+  - Spec written (round 2, 17 Nov): `tests/e2e/organisations-page.spec.ts` with both scenarios, the second user a provisioned non-admin account with an empty storage state. Not run here: it needs a live instance, so the box stays open until a live run passes.
 
 ## 3. Docs and parity
 

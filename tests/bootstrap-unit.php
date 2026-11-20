@@ -329,11 +329,11 @@ if (OC::$server instanceof OC_Server_Stub) {
 	);
 }//end if
 
-// IMcpToolProvider stub — loaded when the openregister runtime (PR #1466) is absent.
-// OpenCatalogiToolProvider implements this interface in production; the stub keeps the
-// class loadable in bare CI containers until the real interface ships.
-if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpToolProvider') === false) {
-	require_once __DIR__ . '/Stubs/Mcp/IMcpToolProvider.php';
+// IMcpScannableServices stub — loaded when the openregister runtime is absent.
+// OpenCatalogiScannableServices implements this interface in production; the stub keeps the
+// class loadable in bare CI containers.
+if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpScannableServices') === false) {
+	require_once __DIR__ . '/Stubs/Mcp/IMcpScannableServices.php';
 }
 
 // AppHost observability stubs — loaded when the openregister runtime is absent.
@@ -366,6 +366,7 @@ unset($integriqStubEvent);
 
 // IRequest double base for the controller tests (needs the OCP autoloader above).
 require_once __DIR__ . '/Unit/Support/ServerAwareRequest.php';
+require_once __DIR__ . '/Unit/Support/AllowingCapabilityRights.php';
 
 // Test helpers for OpenRegister's option objects (tests carry no PSR-4 test namespace).
 require_once __DIR__ . '/Support/ReleaseObjectSignatures.php';
