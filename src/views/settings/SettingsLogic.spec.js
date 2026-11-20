@@ -397,3 +397,36 @@ describe('Settings register change and schema options', () => {
 		expect(ctx.configuration).toEqual({ a: 1 })
 	})
 })
+
+/** @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004 */
+describe('Settings wooIndexMappingLine', () => {
+	beforeEach(() => {
+		global.t = (app, text, vars) => (vars ? `${text} ${JSON.stringify(vars)}` : text)
+	})
+
+	afterEach(() => {
+		delete global.t
+	})
+
+	it('names integriq mapping woo-index-publication when the mapping filled fields', () => {
+		expect(vm().wooIndexMappingLine({ source: 'integriq', refusal: null, fieldsFromMapping: ['officieleTitel'] }))
+			.toBe('Woo-index fields from integriq mapping woo-index-publication')
+	})
+
+	it('says the fields are built in without integriq', () => {
+		expect(vm().wooIndexMappingLine({ source: 'built-in', refusal: null, fieldsFromMapping: [] }))
+			.toBe('Woo-index fields built in')
+	})
+
+	it('adds the refusal code and reason when integriq refused', () => {
+		const line = vm().wooIndexMappingLine({
+			source: 'built-in',
+			refusal: { code: 'not-found', reason: 'No mapping has this slug.' },
+			fieldsFromMapping: [],
+		})
+		expect(line).toContain('{line} (integriq refused: {code}, {reason})')
+		expect(line).toContain('"line":"Woo-index fields built in"')
+		expect(line).toContain('"code":"not-found"')
+		expect(line).toContain('"reason":"No mapping has this slug."')
+	})
+})
