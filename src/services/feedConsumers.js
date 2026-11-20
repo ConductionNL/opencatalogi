@@ -90,6 +90,20 @@ export async function disableConsumer(catalogSlug, consumerId) {
 }
 
 /**
+ * Let a consumer act for signed-in readers, or stop it (REQ-PSR-003).
+ *
+ * @param {string} catalogSlug The catalogue slug.
+ * @param {string} consumerId The consumer id.
+ * @param {boolean} allowed Whether its portal may read publications for signed-in readers.
+ * @return {Promise<object>} The consumer.
+ * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-trusted-portal-reads-it-for-a-reader-at-the-required-level-req-psr-003
+ */
+export async function setActForSignedInReaders(catalogSlug, consumerId, allowed) {
+	const { data } = await axios.put(consumersUrl(catalogSlug, `/${encodeURIComponent(consumerId)}/signed-in-readers`), { actForSignedInReaders: allowed === true })
+	return data
+}
+
+/**
  * Whether a key still opens the feed: not revoked and not past its expiry.
  *
  * @param {object} key A key as listed (no hash).

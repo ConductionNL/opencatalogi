@@ -115,14 +115,39 @@ class PublicationStateController extends Controller {
 		$properties = $this->asArray(object: $publication);
 
 		return new JSONResponse(
-			[
-				'state' => $this->registers->stateOf(publication: $properties),
-				'canPublish' => $this->rights->mayPublish(),
-				'unlisted' => ($properties['unlisted'] ?? false) === true,
-				'canUpdate' => $this->rights->mayUpdate(publication: $publication),
-			]
+			array_merge(
+				[
+					'state' => $this->registers->stateOf(publication: $properties),
+					'canPublish' => $this->rights->mayPublish(),
+					'unlisted' => ($properties['unlisted'] ?? false) === true,
+					'canUpdate' => $this->rights->mayUpdate(publication: $publication),
+				],
+				self::readers(properties: $properties)
+			)
 		);
 	}//end visibility()
+
+	/**
+	 * Who can read the publication (publications-for-signed-in-readers, REQ-PSR-001);
+	 * anything the schema does not know reads as its default.
+	 *
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return array{audience: string, minimumAssurance: string}
+	 */
+	private static function readers(array $properties): array {
+		$audience = 'public';
+		if (($properties['audience'] ?? null) === 'signedIn') {
+			$audience = 'signedIn';
+		}
+
+		$minimumAssurance = 'substantial';
+		if (($properties['minimumAssurance'] ?? null) === 'high') {
+			$minimumAssurance = 'high';
+		}
+
+		return ['audience' => $audience, 'minimumAssurance' => $minimumAssurance];
+	}//end readers()
 
 	/**
 	 * Unlist a publication: it stays readable at its own link and leaves search, feeds and sitemaps (REQ-PLC-006).

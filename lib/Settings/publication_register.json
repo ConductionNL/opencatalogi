@@ -518,6 +518,7 @@
               "group": "public",
               "match": {
                 "status": "published",
+                "audience": "public",
                 "publicationDate": {
                   "$lte": "$now"
                 },
@@ -531,6 +532,7 @@
               "group": "public",
               "match": {
                 "status": "published",
+                "audience": "public",
                 "publicationDate": {
                   "$lte": "$now"
                 },

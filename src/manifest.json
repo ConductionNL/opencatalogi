@@ -777,6 +777,8 @@
 								"description",
 								"publicationDate",
 								"depublicationDate",
+								"audience",
+								"minimumAssurance",
 								"wooCategory",
 								"status"
 							],

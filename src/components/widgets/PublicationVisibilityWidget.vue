@@ -15,6 +15,19 @@
 			data-testid="publication-visibility-unlisted">
 			{{ t('opencatalogi', 'Unlisted: reachable by its link, left out of search and feeds.') }}
 		</p>
+		<p
+			v-if="state"
+			class="publication-visibility__audience"
+			data-testid="publication-visibility-audience">
+			<strong>{{ t('opencatalogi', 'Who can read it') }}:</strong>
+			{{ audienceLabel }}
+		</p>
+		<p
+			v-if="audience === 'signedIn'"
+			class="publication-visibility__audience-link"
+			data-testid="publication-visibility-audience-link">
+			{{ t('opencatalogi', 'The link works for readers who log in') }}
+		</p>
 
 		<div class="publication-visibility__actions">
 			<NcButton
@@ -169,6 +182,8 @@ export default {
 			canPublish: false,
 			canUpdate: false,
 			unlisted: false,
+			audience: 'public',
+			minimumAssurance: 'substantial',
 			documents: [],
 			withdrawn: [],
 			republishing: null,
@@ -209,6 +224,21 @@ export default {
 		withdrawable() {
 			const withdrawnIds = new Set(this.withdrawn.map((document) => String(document.id)))
 			return this.documents.filter((document) => !withdrawnIds.has(String(document.id)))
+		},
+
+		/**
+		 * Who can read the publication, as the Visibility card shows it (design D5).
+		 *
+		 * @return {string} The label.
+		 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-publication-says-who-can-read-it-req-psr-001
+		 */
+		audienceLabel() {
+			if (this.audience !== 'signedIn') {
+				return this.t('opencatalogi', 'Everyone')
+			}
+			return this.minimumAssurance === 'high'
+				? this.t('opencatalogi', 'Readers who log in with DigiD or eHerkenning, level High')
+				: this.t('opencatalogi', 'Readers who log in with DigiD or eHerkenning, level Substantial')
 		},
 
 		/** @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001 */
@@ -281,9 +311,13 @@ export default {
 				this.canPublish = data.canPublish === true
 				this.canUpdate = data.canUpdate === true
 				this.unlisted = data.unlisted === true
+				this.audience = data.audience === 'signedIn' ? 'signedIn' : 'public'
+				this.minimumAssurance = data.minimumAssurance === 'high' ? 'high' : 'substantial'
 			} catch {
 				this.state = ''
 				this.canPublish = false
+				this.audience = 'public'
+				this.minimumAssurance = 'substantial'
 			}
 
 			await this.loadFiles()
@@ -513,8 +547,14 @@ export default {
 	padding: 12px;
 }
 
-.publication-visibility__state {
+.publication-visibility__state,
+.publication-visibility__audience,
+.publication-visibility__audience-link {
 	margin: 0;
+}
+
+.publication-visibility__audience-link {
+	color: var(--color-text-maxcontrast);
 }
 
 .publication-visibility__actions {

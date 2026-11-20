@@ -310,7 +310,7 @@ class PublicationStateControllerTest extends TestCase {
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$response = $this->controller->visibility('p1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(['state' => 'public', 'canPublish' => true, 'unlisted' => false, 'canUpdate' => true], $response->getData());
+		$this->assertSame(['state' => 'public', 'canPublish' => true, 'unlisted' => false, 'canUpdate' => true, 'audience' => 'public', 'minimumAssurance' => 'substantial'], $response->getData());
 	}
 
 	/** REQ-PLC-006: unlist stores the flag only, with the caller's rights; list again clears it; no depublication is sent. */
@@ -338,6 +338,19 @@ class PublicationStateControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->unlist('p1')->getStatus());
 		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-PSR-001: the page is told who can read the publication. */
+	public function testVisibilityTellsWhoCanReadIt(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'audience' => 'signedIn', 'minimumAssurance' => 'high'];
+		$data = $this->controller->visibility('p1')->getData();
+		$this->assertSame('signedIn', $data['audience']);
+		$this->assertSame('high', $data['minimumAssurance']);
+
+		$this->publication = ['id' => 'p1', 'audience' => 'staff', 'minimumAssurance' => 'low'];
+		$data = $this->controller->visibility('p1')->getData();
+		$this->assertSame('public', $data['audience']);
+		$this->assertSame('substantial', $data['minimumAssurance']);
 	}
 
 	/** REQ-OPR-002: an editor outside the publishers group is told it cannot publish. */

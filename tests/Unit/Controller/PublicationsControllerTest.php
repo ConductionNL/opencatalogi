@@ -2721,4 +2721,68 @@ class PublicationsControllerTest extends TestCase {
 			$this->assertStringNotContainsString($fragment, $body);
 		}
 	}
+	/**
+	 * A miss with a feed consumer key goes to the trusted read, and its answer is private (REQ-PSR-003).
+	 *
+	 * @return void
+	 */
+	public function testAMissWithAConsumerKeyIsServedByTheTrustedReadAndNotCached(): void {
+		$objects = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objects->method('searchObjects')->willReturn([]);
+		$objects->method('renderEntity')->willReturn(['id' => 'pub-9', 'title' => 'Wijkplan Noord']);
+		$trusted = $this->createObjectEntityMock();
+		$trusted->setUuid('pub-9');
+
+		$signedIn = $this->createMock(\OCA\OpenCatalogi\Service\Publication\SignedInReadService::class);
+		$signedIn->expects($this->once())->method('read')
+			->with('cat-1', [1], [1], 'pub-9', 'oc_c1.k1.secret', 'high')
+			->willReturn($trusted);
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id): object => match ($id) {
+				'OCA\OpenRegister\Service\ObjectService' => $objects,
+				\OCA\OpenCatalogi\Service\Publication\SignedInReadService::class => $signedIn,
+			}
+		);
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'title' => 'Wijk', 'schemas' => [1], 'registers' => [1]]);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->method('getHeader')->willReturnCallback(
+			static fn (string $name): string => ['Authorization' => 'Bearer oc_c1.k1.secret', 'X-Reader-Assurance' => 'high'][$name] ?? ''
+		);
+		$this->request->server = [];
+
+		$response = $this->controller->show('wijk', 'pub-9');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame('private, no-store', $response->getHeaders()['Cache-Control']);
+		$this->assertSame('Wijkplan Noord', $response->getData()['title']);
+	}
+
+	/**
+	 * A miss without a consumer key never reaches the trusted read and answers 404.
+	 *
+	 * @return void
+	 */
+	public function testAMissWithoutAConsumerKeyAnswers404WithoutTheTrustedRead(): void {
+		$objects = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objects->method('searchObjects')->willReturn([]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$asked = [];
+		$this->container->method('get')->willReturnCallback(
+			static function (string $id) use ($objects, &$asked): object {
+				$asked[] = $id;
+				return $objects;
+			}
+		);
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'title' => 'Wijk', 'schemas' => [1], 'registers' => [1]]);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->method('getHeader')->willReturnCallback(
+			static fn (string $name): string => ['Authorization' => 'Bearer nc-app-token', 'X-Reader-Assurance' => 'high'][$name] ?? ''
+		);
+		$this->request->server = [];
+
+		$this->assertSame(404, $this->controller->show('wijk', 'pub-9')->getStatus());
+		$this->assertNotContains(\OCA\OpenCatalogi\Service\Publication\SignedInReadService::class, $asked);
+	}
 }
