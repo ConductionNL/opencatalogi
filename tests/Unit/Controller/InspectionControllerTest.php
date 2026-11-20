@@ -119,7 +119,7 @@ class InspectionControllerTest extends TestCase {
 			new InspectionRecords(
 				new InspectionService($this->termRoll()),
 				new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
-			)
+			), capabilities: new \Unit\Support\AllowingCapabilityRights()
 		);
 
 	}//end setUp()
@@ -575,7 +575,7 @@ class InspectionControllerTest extends TestCase {
 			new InspectionRecords(
 				new InspectionService($this->termRoll(engineAvailable: false)),
 				new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
-			)
+			), capabilities: new \Unit\Support\AllowingCapabilityRights()
 		);
 
 		$response = $controller->open();
@@ -754,4 +754,110 @@ class InspectionControllerTest extends TestCase {
 
 	}//end testAnEnvelopedStoredInspectionAnswersItsPropertiesWithTheEnvelopeId()
 
+	/**
+	 * Capability rights that grant exactly one right.
+	 *
+	 * @param string $only The one right granted.
+	 *
+	 * @return \Unit\Support\AllowingCapabilityRights The rights, recording what was asked.
+	 */
+	private function rightsGranting(string $only): \Unit\Support\AllowingCapabilityRights {
+		return new class($only) extends \Unit\Support\AllowingCapabilityRights {
+			/**
+			 * Constructor.
+			 *
+			 * @param string $only The one right granted.
+			 */
+			public function __construct(private readonly string $only) {
+				parent::__construct(false);
+			}
+
+			/**
+			 * Only the one right.
+			 *
+			 * @param string      $verb   The right.
+			 * @param string|null $userId The user.
+			 *
+			 * @return bool Whether it is the granted one.
+			 */
+			public function may(string $verb, ?string $userId): bool {
+				$this->asked[] = [$verb, $userId];
+				return $verb === $this->only;
+			}
+		};
+
+	}//end rightsGranting()
+
+	/**
+	 * The inspection controller over the shared doubles with the given rights.
+	 *
+	 * @param \Unit\Support\AllowingCapabilityRights $rights The rights.
+	 *
+	 * @return InspectionController The controller.
+	 */
+	private function controllerWith(\Unit\Support\AllowingCapabilityRights $rights): InspectionController {
+		return new InspectionController(
+			'opencatalogi',
+			$this->request,
+			$this->config,
+			$this->l10n,
+			$this->userSession,
+			new InspectionRecords(
+				new InspectionService($this->termRoll()),
+				new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
+			),
+			capabilities: $rights
+		);
+
+	}//end controllerWith()
+
+	/**
+	 * A non-administrator granted only openInspection opens a period (REQ-WAB-004).
+	 *
+	 * @return void
+	 */
+	public function testAUserWithOnlyOpenInspectionMayOpen(): void {
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(
+			[
+				'record' => ['id' => 'besluit-1'],
+				'recordType' => ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 42],
+				'documents' => ['doc-a'],
+			]
+		);
+		$rights = $this->rightsGranting('openInspection');
+
+		$response = $this->controllerWith($rights)->open();
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertCount(1, $store->saved);
+		$this->assertSame('openInspection', $rights->asked[0][0]);
+
+	}//end testAUserWithOnlyOpenInspectionMayOpen()
+
+	/**
+	 * A user holding another right but not openInspection gets 403 naming it, and nothing is stored (REQ-WAB-004).
+	 *
+	 * @return void
+	 */
+	public function testAUserWithoutTheRightGets403(): void {
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(
+			[
+				'record' => ['id' => 'besluit-1'],
+				'recordType' => ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 42],
+				'documents' => ['doc-a'],
+			]
+		);
+
+		$response = $this->controllerWith($this->rightsGranting('publishWooBatch'))->open();
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame('openInspection', $response->getData()['right']);
+		$this->assertStringContainsString('openInspection', $response->getData()['message']);
+		$this->assertSame([], $store->saved);
+
+	}//end testAUserWithoutTheRightGets403()
 }//end class

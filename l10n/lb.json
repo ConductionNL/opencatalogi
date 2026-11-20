@@ -737,7 +737,12 @@
         "Last used": "Lescht benotzt",
         "This key is shown once. Copy it now: it cannot be shown again.": "Dëse Schlëssel gëtt nëmmen eemol ugewisen. Kopéiert e lo: hie kann net nach eng Kéier ugewise ginn.",
         "No feed consumers yet.": "Nach keng Feed-Empfänger.",
-        "Accounts that read every catalogue's feed": "Konten, déi de Feed vun all Katalog liesen"
+        "Accounts that read every catalogue's feed": "Konten, déi de Feed vun all Katalog liesen",
+        "Review publications before they are published": "Verëffentlechungen iwwerpréiwen, ier se verëffentlecht ginn",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Wann et aktivéiert ass, muss en Entworf agereecht an ugeholl ginn, ier e verëffentlecht ka ginn. Wann et desaktivéiert ass, kann e Redakter en Entworf direkt verëffentlechen.",
+        "Delete publication": "Verëffentlechung läschen",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Wëllt Dir \"{name}\" läschen? Dës Aktioun kann net réckgängeg gemaach ginn.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "D’Verëffentlechung an hir Unhäng verschwannen vun der ëffentlecher Säit an aus der Woo-Sitemap. Archivéieren behält se amplaz fir d’Openthalsfrist."
     },
     "plurals": {}
 }

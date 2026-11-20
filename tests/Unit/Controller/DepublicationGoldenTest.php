@@ -79,7 +79,7 @@ class DepublicationGoldenTest extends TestCase {
 		$ack = ['depublication' => ' d-1 ', 'channel' => ' plooi ', 'answer' => ' gone '];
 
 		return [
-			'depublish' => [['action' => 'depublish', 'stored' => $publication + ['depublicationDate' => '2021-01-01T00:00:00+00:00'], 'params' => ['publication' => $publication, 'channels' => ['plooi', 7], 'reason' => '  wrong  ']]],
+			'depublish' => [['action' => 'depublish', 'stored' => $publication + ['status' => 'published', 'depublicationDate' => '2021-01-01T00:00:00+00:00'], 'params' => ['publication' => $publication, 'channels' => ['plooi', 7], 'reason' => '  wrong  ']]],
 			'depublish ignores a forged depublishedBy' => [['action' => 'depublish', 'params' => ['publication' => $publication, 'depublishedBy' => 'mallory', 'requestedBy' => 'mallory', 'userId' => 'mallory']]],
 			'depublish ignores a depublishedBy inside the publication' => [['action' => 'depublish', 'params' => ['publication' => $publication + ['depublishedBy' => 'mallory'], 'depublishedBy' => 'mallory', 'userId' => 'mallory']]],
 			'depublish without a session user' => [['action' => 'depublish', 'user' => null, 'params' => ['publication' => $publication]]],
@@ -222,7 +222,7 @@ class DepublicationGoldenTest extends TestCase {
 
 		$transitions = new PublicationTransitions(new PublicationStateService(), $service, $container, $registers);
 
-		return new DepublicationController('opencatalogi', $request, $l10n, $session, $service, $transitions);
+		return new DepublicationController('opencatalogi', $request, $l10n, $session, $service, $transitions, capabilities: new \Unit\Support\AllowingCapabilityRights());
 	}//end controller()
 
 	/**

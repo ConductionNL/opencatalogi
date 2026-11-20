@@ -11,11 +11,12 @@ status: proposed
 The publication schema SHALL carry `audience` (`public`, `signedIn`, default `public`) and `minimumAssurance` (`substantial`, `high`, default `substantial`). A migration MUST set `audience: public` on every existing publication before the public read rule changes. The Visibility card of the publication page SHALL show "Who can read it", editable in the publication editor.
 
 #### Scenario: An editor limits a publication to signed-in readers
-<!-- @e2e exclude Visibility field not yet on the canvas board; proven by tests/e2e/publications-for-signed-in-readers.spec.ts once task 3.1 lands. -->
 
 - **GIVEN** a draft publication without a Woo category
 - **WHEN** an editor sets "Who can read it" to readers who log in, level Substantial, and saves
 - **THEN** the Visibility card reads "Readers who log in with DigiD or eHerkenning, level Substantial"
+
+@e2e tests/e2e/publications-for-signed-in-readers.spec.ts
 
 #### Scenario: Existing publications stay public
 <!-- @e2e exclude Migration; proven by AudienceMigrationTest::testEveryExistingPublicationGetsAudiencePublic. -->

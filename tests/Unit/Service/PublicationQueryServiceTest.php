@@ -550,6 +550,26 @@ class PublicationQueryServiceTest extends TestCase {
 	}//end testCatalogSearchQueryStripsACallerSuppliedSchemaAndRegister()
 
 	/**
+	 * REQ-CVS-002: the schemas saved on a catalogue decide what `GET /api/{catalogSlug}` lists.
+	 * "Raadsstukken" holds agendas (31); adding decisions (32) lists both; taking agendas off lists only decisions.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/catalogs/spec.md#requirement-an-administrator-chooses-the-kinds-of-publication-a-catalogue-holds-req-cvs-002
+	 *
+	 * @return void
+	 */
+	public function testTheCataloguesSavedSchemasDecideWhatItLists(): void {
+		$listed = fn (array $schemas): array => $this->service->buildCatalogSearchQuery(
+			catalog: ['slug' => 'raadsstukken', 'schemas' => $schemas, 'registers' => [20]],
+			queryParams: [],
+			objectService: new FakeSearchObjectService()
+		)['_schemas'];
+
+		$this->assertSame([31], $listed([31]));
+		$this->assertSame([31, 32], $listed([31, 32]));
+		$this->assertSame([32], $listed([32]));
+	}//end testTheCataloguesSavedSchemasDecideWhatItLists()
+
+	/**
 	 * A scalar `@self` (`?@self=x`) is not a filter set; it goes rather than
 	 * reaching OR, which would read `@self['schema']` off a string.
 	 *
@@ -1083,6 +1103,24 @@ class PublicationQueryServiceTest extends TestCase {
 		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
 
 		$this->assertCount(0, $out['results'], 'orphan document must be silent-dropped (N4a)');
+	}
+
+	/**
+	 * Publication-lifecycle-on-or REQ-PLC-006: search never finds an unlisted publication, and keeps a listed one.
+	 */
+	public function testSearchLeavesAnUnlistedPublicationOut(): void {
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [
+				['@self' => ['id' => 'pub-listed', 'schema' => 1], 'title' => 'Besluit gevonden', 'status' => 'published'],
+				['@self' => ['id' => 'pub-unlisted', 'schema' => 1], 'title' => 'Besluit niet in de lijst', 'status' => 'published', 'unlisted' => true],
+			], 'total' => 2, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertSame(['pub-listed'], array_map(static fn (array $row): string => $row['@self']['id'], $out['results']));
+		$this->assertSame(1, $out['total']);
 	}
 
 	/**
@@ -1788,6 +1826,54 @@ class PublicationQueryServiceTest extends TestCase {
 		);
 
 		return $fakeObjectService;
+	}
+
+	/**
+	 * REQ-PRS-003: the public search matches `sourceIdentifier` on public
+	 * entries only and drops the caller's own filter on the property.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testThePublicSearchMatchesASourceIdentifierOnPublicEntriesOnly(): void {
+		$fake = $this->wireHappyPath();
+		$this->service->assemblePublicSearchResults(
+			queryParams: $this->withDefaultCatalog([
+				'sourceIdentifier' => 'decos:Z-2026-0412',
+				'sourceIdentifiers' => ['contains' => ['system' => 'case', 'identifier' => 'Z-1']],
+			]),
+			objectService: $fake
+		);
+
+		$query = $fake->capturedCalls[0]['query'];
+		$this->assertSame(['contains' => ['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => true]], $query['sourceIdentifiers']);
+		$this->assertArrayNotHasKey('sourceIdentifier', $query);
+	}
+
+	/**
+	 * REQ-PRS-003: the catalogue list drops a caller's own filter on
+	 * `sourceIdentifiers`, so a private identifier cannot be probed, and
+	 * matches `sourceIdentifier` on public entries only.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testTheCatalogListMatchesASourceIdentifierOnPublicEntriesOnly(): void {
+		$fake = new FakeSearchObjectService();
+		$catalog = ['registers' => [3], 'schemas' => [7]];
+
+		$probed = $this->service->buildCatalogSearchQuery(
+			catalog: $catalog,
+			queryParams: ['sourceIdentifiers' => ['contains' => ['system' => 'case', 'identifier' => 'Z-1']]],
+			objectService: $fake
+		);
+		$this->assertArrayNotHasKey('sourceIdentifiers', $probed);
+
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: $catalog,
+			queryParams: ['sourceIdentifier' => 'case:Z-1'],
+			objectService: $fake
+		);
+		$this->assertSame(['contains' => ['system' => 'case', 'identifier' => 'Z-1', 'public' => true]], $query['sourceIdentifiers']);
+		$this->assertArrayNotHasKey('sourceIdentifier', $query);
 	}
 
 	/**

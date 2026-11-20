@@ -18,6 +18,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { describe, expect, it } from 'vitest'
 import * as connectionRegistry from '../../src/services/connectionRegistry.js'
+import { PUBLICATION_FORMATTERS } from '../../src/services/publicationState.js'
 
 // The built-ins import @nextcloud/l10n, whose auth dependency reads `window`
 // at load. The node environment has none, and an untranslated call returns
@@ -50,7 +51,9 @@ function pageFormatters() {
 describe('connection formatters', () => {
 	it('reads a switched-off connection as Switched off, from the built-in', () => {
 		expect(pageFormatters().connectionStatus('disabled')).toBe('Switched off')
-		expect(read('src', 'App.vue')).not.toContain(':formatters=')
+		// App.vue passes only its own formatters (publication-lifecycle-on-or REQ-PLC-002), none under a built-in's name.
+		expect(read('src', 'App.vue')).not.toMatch(/createConnectionFormatters\(/)
+		expect(Object.keys(PUBLICATION_FORMATTERS).filter((name) => name in BUILT_IN_FORMATTERS)).toEqual([])
 	})
 
 	it('ships an English and a Dutch catalogue entry for every label the page shows', () => {

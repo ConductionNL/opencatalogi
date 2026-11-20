@@ -43,7 +43,7 @@ class WooRegistrationControllerTest extends TestCase {
 			->getMock();
 		$service->method('request')->willReturn($result);
 
-		return new WooRegistrationController('opencatalogi', $this->createMock(IRequest::class), $service);
+		return new WooRegistrationController('opencatalogi', $this->createMock(IRequest::class), $service, capabilities: new \Unit\Support\AllowingCapabilityRights());
 	}
 
 	/** REQ-WIH-003: the gateway takes the request. */

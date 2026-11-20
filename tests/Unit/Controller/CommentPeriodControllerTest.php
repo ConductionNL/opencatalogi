@@ -180,7 +180,7 @@ class CommentPeriodControllerTest extends TestCase {
 			new OpenRegisterLookup($container, $this->createMock(IAppManager::class)),
 			$l10n,
 			$userSession,
-			$periods
+			$periods, capabilities: new \Unit\Support\AllowingCapabilityRights()
 		);
 
 	}//end build()
@@ -327,7 +327,7 @@ class CommentPeriodControllerTest extends TestCase {
 			new OpenRegisterLookup($container, $this->createMock(IAppManager::class)),
 			$l10n,
 			$userSession,
-			new CommentPeriodService(new TermRoll($engineless, $appManager), $config, $urls)
+			new CommentPeriodService(new TermRoll($engineless, $appManager), $config, $urls), capabilities: new \Unit\Support\AllowingCapabilityRights()
 		);
 		$this->params($this->openParams());
 

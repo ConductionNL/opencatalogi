@@ -47,6 +47,7 @@ use RuntimeException;
  *
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @uses   \OCA\OpenCatalogi\Controller\CatalogSlugQuery
+ * @uses   \OCA\OpenCatalogi\Service\Publication\PublicationLinkRules
  * @uses   \OCA\OpenCatalogi\Controller\CorsSettings
  * @uses   \OCA\OpenCatalogi\Controller\FoundPublication
  * @uses   \OCA\OpenCatalogi\Controller\PublicationRead
@@ -266,6 +267,8 @@ class PublicationIndexGoldenTest extends TestCase {
 			WithheldFromPublicationInterface::class => $withheld,
 			SchemaOrgServiceInterface::class => $schemaOrg,
 			'OCA\OpenRegister\Service\ObjectService' => $this->objects(case: $case),
+			// Publication-lifecycle-on-or REQ-PLC-002: the per-row state of a signed-in page.
+			\OCA\OpenCatalogi\Contract\PublicationStateServiceInterface::class => new \OCA\OpenCatalogi\Service\Publication\PublicationStateService(),
 		];
 
 		$container = $this->createMock(ContainerInterface::class);

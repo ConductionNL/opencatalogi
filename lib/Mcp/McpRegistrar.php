@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Registers the MCP tool provider of OpenCatalogi.
+ * Registers OpenCatalogi's opt-in to OpenRegister's MCP tool scanner.
  *
  * @category Mcp
  * @package  OCA\OpenCatalogi\Mcp
@@ -25,30 +25,33 @@ namespace OCA\OpenCatalogi\Mcp;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
- * Registers the MCP tool provider of OpenCatalogi.
+ * Registers OpenCatalogi's opt-in to OpenRegister's MCP tool scanner.
+ *
+ * OpenCatalogi writes no MCP tool provider (ADR-063): the schema tools are
+ * derived from the register's `x-openregister-mcp` blocks, and the two curated
+ * tools are `#[McpTool]` methods on PublicationService.
  *
  * @spec exclude Component wiring; registers existing classes, no behaviour of its own.
  */
 class McpRegistrar {
 
 	/**
-	 * Register OpenCatalogiToolProvider as the MCP tool provider for the AI Chat Companion.
+	 * Register OpenCatalogiScannableServices so OpenRegister scans PublicationService.
 	 *
-	 * The alias key 'OCA\OpenRegister\Mcp\IMcpToolProvider::opencatalogi' is the format
-	 * that OpenRegister's McpToolsService enumerates to discover per-app providers
-	 * (hydra ADR-034/035). It stays a quoted string, so it is never resolved as a class
-	 * at register() time.
+	 * The alias key 'OCA\OpenRegister\Mcp\IMcpScannableServices::opencatalogi' is the
+	 * per-app format OpenRegister's attribute scanner enumerates. It stays a quoted
+	 * string, so it is never resolved as a class at register() time.
 	 *
 	 * @param IRegistrationContext $context The registration context.
 	 *
 	 * @return void
 	 *
-	 * @spec exclude Component wiring; binds an existing provider, no behaviour of its own.
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-no-hand-written-mcp-tool-provider-remains-in-opencatalogi-req-006
 	 */
 	public function register(IRegistrationContext $context): void {
 		$context->registerServiceAlias(
-			'OCA\\OpenRegister\\Mcp\\IMcpToolProvider::opencatalogi',
-			OpenCatalogiToolProvider::class
+			'OCA\\OpenRegister\\Mcp\\IMcpScannableServices::opencatalogi',
+			OpenCatalogiScannableServices::class
 		);
 
 	}//end register()

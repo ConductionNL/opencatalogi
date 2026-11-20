@@ -18,7 +18,7 @@ A new schema `metadataSuggestion` in `lib/Settings/register.d/woo-metadata-sugge
 
 ## D2. The rules floor
 
-`WooMetadataSuggestionService::suggestFromRules(array $publication)`:
+`MetadataSuggestionService::suggestFromRules(array $publication)`:
 
 - `category`: the `WooCategoryMapping` row for the publication's schema slug when that schema exists (open change `woo-category-mapping-intake`), else the category of the Woo catalogue schema the publication sits in (`SitemapService::INFO_CAT`, :76, maps each category's sitemap index name to the category title the Woo schema carries).
 - `organization`: the organisation of the catalogue when the publication has none.

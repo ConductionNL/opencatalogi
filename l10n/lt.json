@@ -737,7 +737,12 @@
         "Last used": "Paskutinį kartą naudota",
         "This key is shown once. Copy it now: it cannot be shown again.": "Šis raktas rodomas tik vieną kartą. Nukopijuokite jį dabar: jo nebebus galima parodyti.",
         "No feed consumers yet.": "Srauto naudotojų dar nėra.",
-        "Accounts that read every catalogue's feed": "Paskyros, skaitančios kiekvieno katalogo srautą"
+        "Accounts that read every catalogue's feed": "Paskyros, skaitančios kiekvieno katalogo srautą",
+        "Review publications before they are published": "Peržiūrėti leidinius prieš juos paskelbiant",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Kai įjungta, juodraštis turi būti pateiktas ir patvirtintas, kad jį būtų galima paskelbti. Kai išjungta, redaktorius gali paskelbti juodraštį tiesiogiai.",
+        "Delete publication": "Ištrinti publikaciją",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Ar norite ištrinti \"{name}\"? Šio veiksmo atšaukti negalima.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikacija ir jos priedai dingsta iš viešojo puslapio ir iš Woo svetainės schemos. Archyvavimas, priešingai, juos išsaugo saugojimo terminui."
     },
     "plurals": {}
 }

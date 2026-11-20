@@ -1,0 +1,120 @@
+<?php
+
+/**
+ * Unit tests for PublishTransition: which transition publishes from which stored state, the date passed in the
+ * same call, and the refusal before anything is written.
+ *
+ * @category Test
+ * @package  OCA\OpenCatalogi\Tests\Unit\Service\Publication
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ *
+ * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+ */
+
+declare(strict_types=1);
+
+namespace Unit\Service\Publication;
+
+use OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy;
+use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
+use OCA\OpenCatalogi\Service\Publication\PublishTransition;
+use OCP\IAppConfig;
+use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+
+/**
+ * @covers \OCA\OpenCatalogi\Service\Publication\PublishTransition
+ * @covers \OCA\OpenCatalogi\Service\Publication\PublishRefusedException
+ * @uses \OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy
+ */
+class PublishTransitionTest extends TestCase {
+
+	/**
+	 * The transitions the engine double ran.
+	 *
+	 * @var array<int, array{0: string, 1: string, 2: array<string, mixed>}>
+	 */
+	public array $runs = [];
+
+	/**
+	 * A PublishTransition over an engine double, with the review setting given.
+	 *
+	 * @param string $reviewRequired The stored `publication_review_required` value.
+	 *
+	 * @return PublishTransition The subject.
+	 */
+	private function subject(string $reviewRequired): PublishTransition {
+		$engine = new class ($this) {
+			public function __construct(private readonly PublishTransitionTest $test) {
+			}
+
+			public function transition(string $objectId, string $action, array $data = []): object {
+				$this->test->runs[] = [$objectId, $action, $data];
+				return (object)['id' => $objectId];
+			}
+		};
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->with(PublishTransition::ENGINE)->willReturn($engine);
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturn($reviewRequired);
+
+		return new PublishTransition($container, new PublicationReviewPolicy($config));
+	}//end subject()
+
+	/**
+	 * REQ-PLC-003: approved publishes with `publish`; a draft only while review is off; nothing else publishes.
+	 *
+	 * @return void
+	 */
+	public function testTheTransitionFollowsTheStoredState(): void {
+		$required = $this->subject(reviewRequired: 'true');
+		$this->assertSame('publish', $required->actionFor(stored: 'approved'));
+		$this->assertNull($required->actionFor(stored: 'draft'));
+		$this->assertNull($required->actionFor(stored: ''));
+		$this->assertNull($required->actionFor(stored: 'in_review'));
+		$this->assertNull($required->actionFor(stored: 'archived'));
+
+		$off = $this->subject(reviewRequired: 'false');
+		$this->assertSame('publishWithoutReview', $off->actionFor(stored: ' draft '));
+		$this->assertSame('publishWithoutReview', $off->actionFor(stored: ''));
+		$this->assertSame('publish', $off->actionFor(stored: 'approved'));
+		$this->assertNull($off->actionFor(stored: 'in_review'));
+	}//end testTheTransitionFollowsTheStoredState()
+
+	/**
+	 * REQ-PLC-003: the publication date goes in the same call, and a depublication date is cleared.
+	 *
+	 * @return void
+	 */
+	public function testPublishPassesTheDateInTheSameCall(): void {
+		$answer = $this->subject(reviewRequired: 'true')->publish(id: 'pub-1', stored: 'approved', publicationDate: '2026-11-17T10:00:00+00:00');
+
+		$this->assertSame('pub-1', $answer->id);
+		$this->assertSame([['pub-1', 'publish', ['publicationDate' => '2026-11-17T10:00:00+00:00', 'depublicationDate' => null]]], $this->runs);
+	}//end testPublishPassesTheDateInTheSameCall()
+
+	/**
+	 * REQ-PLC-003: a refused publish names the state and never reaches the engine.
+	 *
+	 * @return void
+	 */
+	public function testARefusedPublishNeverReachesTheEngine(): void {
+		try {
+			$this->subject(reviewRequired: 'true')->publish(id: 'pub-2', stored: '', publicationDate: '2026-11-17T10:00:00+00:00');
+			$this->fail('A draft must not be published while review is required.');
+		} catch (PublishRefusedException $e) {
+			$this->assertSame('draft', $e->state);
+			$this->assertSame('The transition publish is not allowed from the state draft.', $e->getMessage());
+		}
+
+		$this->assertSame([], $this->runs);
+	}//end testARefusedPublishNeverReachesTheEngine()
+}//end class
