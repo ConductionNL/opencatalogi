@@ -55,6 +55,7 @@ use OCA\OpenCatalogi\Listener\PublicationRelationsListener;
 use OCA\OpenCatalogi\Listener\SingleLawfulValueListener;
 use OCA\OpenCatalogi\Listener\TermRollListener;
 use OCA\OpenCatalogi\Listener\HandedOverRecordsListener;
+use OCA\OpenCatalogi\Listener\ThemeFeaturedCheckListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Listener\WooReadinessTriggerListener;
 use OCA\OpenCatalogi\Mcp\McpRegistrar;
@@ -154,6 +155,8 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectCreatingEvent', DocumentReferenceListener::class],
 				[$e . 'ObjectUpdatingEvent', DocumentReferenceListener::class],
 				[$e . 'ObjectCreatingEvent', SingleLawfulValueListener::class],
+				[$e . 'ObjectCreatingEvent', ThemeFeaturedCheckListener::class],
+				[$e . 'ObjectUpdatingEvent', ThemeFeaturedCheckListener::class],
 				[$e . 'ObjectCreatingEvent', DiwooCompletenessListener::class],
 				[$e . 'ObjectUpdatingEvent', DiwooCompletenessListener::class],
 				[$e . 'ObjectCreatingEvent', PlainSummaryCheck::class],

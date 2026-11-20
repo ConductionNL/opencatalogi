@@ -155,6 +155,10 @@ class ListenerRegistrar {
 
 		// A field with one lawful value for the officer fills itself before the first write (REQ-WMS-004).
 		$context->registerEventListener(ObjectCreatingEvent::class, SingleLawfulValueListener::class);
+		// A featured subject is shown by its title, so a featured save without one is
+		// refused through any API (subjects-as-first-class-records, REQ-SUB-001).
+		$context->registerEventListener(ObjectCreatingEvent::class, ThemeFeaturedCheckListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, ThemeFeaturedCheckListener::class);
 
 		// A Woo publication does not go public without its mandatory DiWoo metadata,
 		// and a document type is stored as its list member's URI (REQ-DWP-002, REQ-DWP-003).

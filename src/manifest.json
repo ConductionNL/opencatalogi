@@ -1499,8 +1499,8 @@
 								"themes": "@objectId"
 							},
 							"sort": {
-								"field": "title",
-								"dir": "asc"
+								"field": "publicationDate",
+								"dir": "desc"
 							},
 							"columns": [
 								{
@@ -1510,6 +1510,14 @@
 								{
 									"key": "status",
 									"label": "Status"
+								},
+								{
+									"key": "publicationDate",
+									"label": "Publication date"
+								},
+								{
+									"key": "depublicationDate",
+									"label": "Depublication date"
 								}
 							],
 							"limit": 25,

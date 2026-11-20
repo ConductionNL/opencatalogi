@@ -349,6 +349,9 @@ class ThemesControllerTest extends TestCase {
 			->willReturnMap([
 				['opencatalogi', 'theme_schema', '', '10'],
 				['opencatalogi', 'theme_register', '', '2'],
+				// The publication count reads the publication register (subjects-as-first-class-records).
+				['opencatalogi', 'publication_register', '', '2'],
+				['opencatalogi', 'publication_schema', '', '20'],
 				['opencatalogi', 'cors_allowed_origins', '*', '*'],
 			]);
 
@@ -386,6 +389,9 @@ class ThemesControllerTest extends TestCase {
 			->willReturnMap([
 				['opencatalogi', 'theme_schema', '', '10'],
 				['opencatalogi', 'theme_register', '', '2'],
+				// The publication count reads the publication register (subjects-as-first-class-records).
+				['opencatalogi', 'publication_register', '', '2'],
+				['opencatalogi', 'publication_schema', '', '20'],
 				['opencatalogi', 'cors_allowed_origins', '*', '*'],
 			]);
 
@@ -421,6 +427,9 @@ class ThemesControllerTest extends TestCase {
 			->willReturnMap([
 				['opencatalogi', 'theme_schema', '', '10'],
 				['opencatalogi', 'theme_register', '', '2'],
+				// The publication count reads the publication register (subjects-as-first-class-records).
+				['opencatalogi', 'publication_register', '', '2'],
+				['opencatalogi', 'publication_schema', '', '20'],
 				['opencatalogi', 'cors_allowed_origins', '*', '*'],
 			]);
 
