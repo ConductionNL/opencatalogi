@@ -1,0 +1,218 @@
+{
+	"info": {
+		"_postman_id": "opencatalogi-prometheus-metrics",
+		"name": "OpenCatalogi - Prometheus metrics and health",
+		"description": "API-only smoke tests for the prometheus-metrics change (tasks 6.1 to 6.6): the Prometheus text exposition as admin, its refusal without credentials, the health JSON and its tiers, and the info, up and federation gauges.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "userAuth",
+			"value": "Basic YWRtaW46YWRtaW4=",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "6.1 Metrics as admin: Prometheus text with HELP and TYPE",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{userAuth}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/index.php/apps/opencatalogi/api/metrics",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"index.php",
+						"apps",
+						"opencatalogi",
+						"api",
+						"metrics"
+					]
+				},
+				"description": "prometheus-metrics 6.1."
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200', () => pm.response.to.have.status(200));",
+							"pm.test('Prometheus text exposition 0.0.4', () => {",
+							"  const ct = pm.response.headers.get('Content-Type') || '';",
+							"  pm.expect(ct).to.include('text/plain');",
+							"  pm.expect(ct).to.include('version=0.0.4');",
+							"});",
+							"const text = pm.response.text();",
+							"pm.test('every metric family has # HELP and # TYPE', () => {",
+							"  const families = new Set(text.split('\\n').filter((l) => l.startsWith('# TYPE ')).map((l) => l.split(' ')[2]));",
+							"  pm.expect(families.size).to.be.above(0);",
+							"  families.forEach((f) => pm.expect(text, f).to.include('# HELP ' + f + ' '));",
+							"});",
+							"pm.collectionVariables.set('metricsText', text);"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "6.2 Metrics unauthenticated: refused, no data",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/index.php/apps/opencatalogi/api/metrics",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"index.php",
+						"apps",
+						"opencatalogi",
+						"api",
+						"metrics"
+					]
+				},
+				"description": "prometheus-metrics 6.2. Sent without credentials; Newman does not follow the redirect into the login page here because the assertion is on the first answer."
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('401 or a redirect to the login', () => pm.expect([401, 302, 303, 403]).to.include(pm.response.code));",
+							"pm.test('no metrics in the body', () => pm.expect(pm.response.text()).to.not.include('opencatalogi_info'));"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "6.3 Health: status, version and checks",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/index.php/apps/opencatalogi/api/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"index.php",
+						"apps",
+						"opencatalogi",
+						"api",
+						"health"
+					]
+				},
+				"description": "prometheus-metrics 6.3. Health is anonymous on the engine."
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('200 or 503 by tier', () => pm.expect([200, 503]).to.include(pm.response.code));",
+							"const body = pm.response.json();",
+							"pm.test('status, version and checks', () => {",
+							"  pm.expect(body).to.have.property('status');",
+							"  pm.expect(['ok', 'degraded', 'error']).to.include(body.status);",
+							"  pm.expect(body).to.have.property('version');",
+							"  pm.expect(body.checks).to.be.an('object');",
+							"});",
+							"pm.test('the database, filesystem and search backend checks', () => {",
+							"  ['database', 'filesystem', 'search_backend'].forEach((c) => pm.expect(body.checks, c).to.have.property(c));",
+							"});",
+							"pm.test('the HTTP status follows the tier', () => pm.expect(pm.response.code).to.eql(body.status === 'error' ? 503 : 200));"
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "6.4 to 6.6 Metrics: info labels, up and the federation gauges",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{userAuth}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/index.php/apps/opencatalogi/api/metrics",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"index.php",
+						"apps",
+						"opencatalogi",
+						"api",
+						"metrics"
+					]
+				},
+				"description": "prometheus-metrics 6.4, 6.5 and 6.6; the gauges may be 0 without federation."
+			},
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"const text = pm.response.text();",
+							"pm.test('200', () => pm.response.to.have.status(200));",
+							"pm.test('6.4 opencatalogi_info carries non-empty version, php_version and nextcloud_version', () => {",
+							"  const line = text.split('\\n').find((l) => l.startsWith('opencatalogi_info{'));",
+							"  pm.expect(line, 'opencatalogi_info sample').to.be.a('string');",
+							"  ['version', 'php_version', 'nextcloud_version'].forEach((label) => {",
+							"    const m = line.match(new RegExp('[{,]' + label + '=\"([^\"]*)\"'));",
+							"    pm.expect(m, label).to.not.be.null;",
+							"    pm.expect(m[1], label).to.not.eql('');",
+							"  });",
+							"});",
+							"pm.test('6.5 opencatalogi_up 1', () => pm.expect(text).to.match(/^opencatalogi_up 1$/m));",
+							"pm.test('6.6 the directory and federation gauges are present with numbers', () => {",
+							"  ['opencatalogi_directory_entries_total', 'opencatalogi_federation_reachable_total', 'opencatalogi_federation_unreachable_total'].forEach((g) => {",
+							"    pm.expect(text, g).to.match(new RegExp('^' + g + '(\\\\{[^}]*\\\\})? [0-9.eE+-]+$', 'm'));",
+							"  });",
+							"});"
+						]
+					}
+				}
+			]
+		}
+	]
+}
