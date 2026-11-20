@@ -41,6 +41,7 @@ use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
+use OCA\OpenCatalogi\Contract\DatasetViewServiceInterface;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
@@ -114,6 +115,7 @@ class PublicationsController extends Controller {
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 * @param PublishedTableServiceInterface|null $tables The published tables listed on the publication answer (REQ-ODT-003); null lists none.
+	 * @param DatasetViewServiceInterface|null $views The views listed under each table on the publication answer (REQ-DSV-002); null lists none.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -132,6 +134,7 @@ class PublicationsController extends Controller {
 		private readonly CorsSettings $cors = new CorsSettings(),
 		private readonly ?AppliedFilters $appliedFilters = null,
 		private readonly ?PublishedTableServiceInterface $tables = null,
+		private readonly ?DatasetViewServiceInterface $views = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -1503,11 +1506,39 @@ class PublicationsController extends Controller {
 		}
 
 		if ($tables !== []) {
-			$result['tables'] = $tables;
+			$result['tables'] = $this->withViews(tables: $tables, where: ['catalogSlug' => $catalogSlug, 'publicationId' => $publicationId]);
 		}
 
 		return $result;
 	}//end withTables()
+
+	/**
+	 * The tables, each with its views and their data URLs (REQ-DSV-002).
+	 *
+	 * A view list that cannot be read leaves the tables as they are.
+	 *
+	 * @param array<int, array<string, mixed>>                  $tables The tables.
+	 * @param array{catalogSlug: string, publicationId: string} $where  The catalogue and the publication.
+	 *
+	 * @return array<int, array<string, mixed>> The tables.
+	 *
+	 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-anyone-reads-a-view-s-data-while-the-publication-is-public-req-dsv-002
+	 */
+	private function withViews(array $tables, array $where): array {
+		if ($this->views === null) {
+			return $tables;
+		}
+
+		try {
+			return $this->views->withViews(tables: $tables, where: $where);
+		} catch (\Throwable $e) {
+			$this->logger->debug(
+				'[PublicationsController::show] Could not list the dataset views',
+				['id' => $where['publicationId'], 'error' => $e->getMessage()]
+			);
+			return $tables;
+		}
+	}//end withViews()
 
 	/**
 	 * The publication with the state of its comment period (REQ-PDP-003).
