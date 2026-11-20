@@ -994,6 +994,12 @@
 						"icon": "EyeOutline"
 					},
 					{
+						"id": "pub-metadata-suggestions",
+						"type": "metadata-suggestions",
+						"title": "Metadata suggestions",
+						"icon": "LightbulbOnOutline"
+					},
+					{
 						"id": "pub-languages",
 						"type": "publication-languages",
 						"title": "Languages",
@@ -1134,6 +1140,14 @@
 						"gridY": 42,
 						"gridWidth": 12,
 						"gridHeight": 4
+					},
+					{
+						"id": "17",
+						"widgetId": "pub-metadata-suggestions",
+						"gridX": 0,
+						"gridY": 4,
+						"gridWidth": 8,
+						"gridHeight": 2
 					}
 				],
 				"lifecycleActions": {

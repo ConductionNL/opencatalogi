@@ -33,6 +33,8 @@ use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
+use OCA\OpenCatalogi\BackgroundJob\MetadataSuggestionQueue;
+use OCA\OpenCatalogi\Contract\MetadataSuggestionQueueInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 
@@ -61,6 +63,16 @@ class ListenerRegistrar {
 			event: ObjectCreatedEvent::class,
 			listener: ObjectCreatedEventListener::class
 		);
+
+		// Woo metadata suggestions (REQ-WMS-001): queue the rules floor for a new
+		// publication, so missing Woo metadata is proposed after the save.
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: MetadataSuggestionListener::class
+		);
+		// The listener queues through this contract; bound here, beside its only
+		// caller, so the service bindings take no further dependency on BackgroundJob/.
+		$context->registerServiceAlias(MetadataSuggestionQueueInterface::class, MetadataSuggestionQueue::class);
 		$context->registerEventListener(
 			event: ObjectUpdatedEvent::class,
 			listener: ObjectUpdatedEventListener::class
@@ -140,6 +152,9 @@ class ListenerRegistrar {
 		// that is not a public https address before OpenRegister stores it.
 		$context->registerEventListener(ObjectCreatingEvent::class, DocumentReferenceListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, DocumentReferenceListener::class);
+
+		// A field with one lawful value for the officer fills itself before the first write (REQ-WMS-004).
+		$context->registerEventListener(ObjectCreatingEvent::class, SingleLawfulValueListener::class);
 
 		// A Woo publication does not go public without its mandatory DiWoo metadata,
 		// and a document type is stored as its list member's URI (REQ-DWP-002, REQ-DWP-003).

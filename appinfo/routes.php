@@ -180,6 +180,11 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'plainSummary#poll', 'url' => '/api/publications/{id}/plain-summary-draft/{taskId}', 'verb' => 'GET', 'requirements' => ['taskId' => '\d+']],
 		['name' => 'plainSummary#accept', 'url' => '/api/publications/{id}/plain-summary', 'verb' => 'POST'],
 		['name' => 'publicationDisclosure#announce', 'url' => '/api/publications/announce', 'verb' => 'POST'],
+		// Woo metadata suggestions: list, ask Hermiq, and a person's accept or reject, woo-metadata-suggestions D3 and D4.
+		['name' => 'metadataSuggestion#index', 'url' => '/api/publications/{id}/metadata-suggestions', 'verb' => 'GET'],
+		['name' => 'metadataSuggestion#create', 'url' => '/api/publications/{id}/metadata-suggestions', 'verb' => 'POST'],
+		['name' => 'metadataSuggestion#accept', 'url' => '/api/metadata-suggestions/{id}/accept', 'verb' => 'POST'],
+		['name' => 'metadataSuggestion#reject', 'url' => '/api/metadata-suggestions/{id}/reject', 'verb' => 'POST'],
 		['name' => 'publicationDisclosure#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
 		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
 		['name' => 'inspection#open', 'url' => '/api/inspections', 'verb' => 'POST'],

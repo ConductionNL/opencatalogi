@@ -391,6 +391,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\OpenRegisterServicesInterface",
+        "OCA\\OpenCatalogi\\Service\\OpenRegisterLookup"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\AttachmentReadingQueueInterface",
         "OCA\\OpenCatalogi\\BackgroundJob\\AttachmentReadingQueue"
     ],
@@ -398,6 +403,26 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\AttachmentReadingStoreInterface",
         "OCA\\OpenCatalogi\\Service\\AttachmentReading\\AttachmentReadingStore"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\MetadataRuleSuggesterInterface",
+        "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\MetadataSuggestionService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\MetadataSuggestionStoreInterface",
+        "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\MetadataSuggestionStore"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\MetadataSuggestionDecisionsInterface",
+        "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\MetadataSuggestionDecisions"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\SingleLawfulValueInterface",
+        "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\SingleLawfulValue"
     ],
     [
         "alias",

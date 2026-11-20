@@ -41,6 +41,7 @@ use OCA\OpenCatalogi\Listener\CompletenessListener;
 use OCA\OpenCatalogi\Listener\DiwooCompletenessListener;
 use OCA\OpenCatalogi\Listener\DocumentReferenceListener;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
+use OCA\OpenCatalogi\Listener\MetadataSuggestionListener;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
@@ -51,6 +52,7 @@ use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\PublicationLinksListener;
 use OCA\OpenCatalogi\Listener\RuleCategoryListener;
 use OCA\OpenCatalogi\Listener\PublicationRelationsListener;
+use OCA\OpenCatalogi\Listener\SingleLawfulValueListener;
 use OCA\OpenCatalogi\Listener\TermRollListener;
 use OCA\OpenCatalogi\Listener\HandedOverRecordsListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
@@ -125,6 +127,7 @@ class ComponentRegistrarsTest extends TestCase {
 		$this->assertSame(
 			[
 				[$e . 'ObjectCreatedEvent', ObjectCreatedEventListener::class],
+				[$e . 'ObjectCreatedEvent', MetadataSuggestionListener::class],
 				[$e . 'ObjectUpdatedEvent', ObjectUpdatedEventListener::class],
 				[$e . 'ObjectUpdatedEvent', PortalAccountRemovedListener::class],
 				[$e . 'ObjectUpdatedEvent', PlooiDeliveryListener::class],
@@ -150,6 +153,7 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', PublicationRelationsListener::class],
 				[$e . 'ObjectCreatingEvent', DocumentReferenceListener::class],
 				[$e . 'ObjectUpdatingEvent', DocumentReferenceListener::class],
+				[$e . 'ObjectCreatingEvent', SingleLawfulValueListener::class],
 				[$e . 'ObjectCreatingEvent', DiwooCompletenessListener::class],
 				[$e . 'ObjectUpdatingEvent', DiwooCompletenessListener::class],
 				[$e . 'ObjectCreatingEvent', PlainSummaryCheck::class],
@@ -172,6 +176,22 @@ class ComponentRegistrarsTest extends TestCase {
 		);
 
 	}//end testListenerRegistrarSubscribesEveryListener()
+
+	/**
+	 * The metadata suggestion listener's queue contract is bound beside it.
+	 *
+	 * @return void
+	 */
+	public function testListenerRegistrarBindsTheSuggestionQueue(): void {
+		$context = $this->createMock(IRegistrationContext::class);
+		$context->expects($this->once())->method('registerServiceAlias')->with(
+			'OCA\\OpenCatalogi\\Contract\\MetadataSuggestionQueueInterface',
+			'OCA\\OpenCatalogi\\BackgroundJob\\MetadataSuggestionQueue'
+		);
+
+		(new ListenerRegistrar())->register($context);
+
+	}//end testListenerRegistrarBindsTheSuggestionQueue()
 
 	/**
 	 * The MCP and metrics providers are bound under the keys OpenRegister enumerates.

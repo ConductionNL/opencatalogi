@@ -36,6 +36,14 @@ use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use OCA\OpenCatalogi\BackgroundJob\AttachmentReadingQueue;
 use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Contract\AttachmentReadingStoreInterface;
+use OCA\OpenCatalogi\Contract\MetadataRuleSuggesterInterface;
+use OCA\OpenCatalogi\Contract\MetadataSuggestionStoreInterface;
+use OCA\OpenCatalogi\Contract\MetadataSuggestionDecisionsInterface;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionDecisions;
+use OCA\OpenCatalogi\Contract\SingleLawfulValueInterface;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionService;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionStore;
+use OCA\OpenCatalogi\Service\MetadataSuggestion\SingleLawfulValue;
 use OCA\OpenCatalogi\Contract\RedactedOriginalGuardInterface;
 use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingStore;
 use OCA\OpenCatalogi\Service\AttachmentReading\RedactedOriginalGuard;
@@ -81,6 +89,7 @@ use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
 use OCA\OpenCatalogi\Contract\ObligationReadServiceInterface;
 use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
@@ -247,8 +256,13 @@ final class ServiceBindings {
 		PublishedRecordViewInterface::class => PublishedRecordView::class,
 		SitemapServiceInterface::class => SitemapService::class,
 		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
+		OpenRegisterServicesInterface::class => OpenRegisterLookup::class,
 		AttachmentReadingQueueInterface::class => AttachmentReadingQueue::class,
 		AttachmentReadingStoreInterface::class => AttachmentReadingStore::class,
+		MetadataRuleSuggesterInterface::class => MetadataSuggestionService::class,
+		MetadataSuggestionStoreInterface::class => MetadataSuggestionStore::class,
+		MetadataSuggestionDecisionsInterface::class => MetadataSuggestionDecisions::class,
+		SingleLawfulValueInterface::class => SingleLawfulValue::class,
 		RedactedOriginalGuardInterface::class => RedactedOriginalGuard::class,
 		PlainSummaryDrafterInterface::class => PlainLanguageDrafter::class,
 		PlainSummaryProvenanceInterface::class => PlainSummaryProvenance::class,
