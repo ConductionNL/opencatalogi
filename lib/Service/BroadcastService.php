@@ -695,7 +695,8 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * Assert that a URL is safe for outbound HTTP requests.
 	 *
 	 * Performs DNS resolution and rejects URLs that resolve to an internal address,
-	 * in any IPv4 or IPv6 notation.
+	 * in any IPv4 or IPv6 notation, and any URL that is not https. A host on the
+	 * dev federation allowlist skips both checks.
 	 *
 	 * @param string $url The URL to validate.
 	 *
@@ -717,6 +718,11 @@ class BroadcastService implements BroadcastServiceInterface {
 			if ($this->urlGuard()->isInternal(ipAddress: $ipAddress) === true) {
 				throw new InvalidArgumentException('Broadcast URL resolves to a disallowed (internal) address');
 			}
+		}
+
+		// FED-OR-001: outside the dev allowlist a broadcast travels over https only.
+		if (strtolower((string)parse_url($url, PHP_URL_SCHEME)) !== 'https') {
+			throw new InvalidArgumentException('Broadcast URL must use https');
 		}
 
 	}//end assertSafeOutboundUrl()

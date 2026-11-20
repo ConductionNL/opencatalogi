@@ -234,8 +234,6 @@ const { isAdmin } = useIsAdmin()
 </template>
 
 <script>
-import { translate as t } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -244,7 +242,9 @@ import {
 	NcNoteCard,
 	NcSelect,
 	NcTextField,
-} from '@nextcloud/vue'
+} from '@conduction/nextcloud-vue'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import CatalogStaffAccessFields from '../../components/CatalogStaffAccessFields.vue'
