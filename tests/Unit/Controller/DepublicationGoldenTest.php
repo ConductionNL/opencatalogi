@@ -222,7 +222,7 @@ class DepublicationGoldenTest extends TestCase {
 
 		$transitions = new PublicationTransitions(new PublicationStateService(), $service, $container, $registers);
 
-		return new DepublicationController('opencatalogi', $request, $l10n, $session, $service, $transitions);
+		return new DepublicationController('opencatalogi', $request, $l10n, $session, $service, $transitions, capabilities: new \Unit\Support\AllowingCapabilityRights());
 	}//end controller()
 
 	/**

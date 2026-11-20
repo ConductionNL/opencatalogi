@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Последно използван",
         "This key is shown once. Copy it now: it cannot be shown again.": "Този ключ се показва само веднъж. Копирайте го сега: не може да бъде показан отново.",
         "No feed consumers yet.": "Все още няма потребители на емисията.",
-        "Accounts that read every catalogue's feed": "Профили, които четат емисията на всеки каталог"
+        "Accounts that read every catalogue's feed": "Профили, които четат емисията на всеки каталог",
+        "Delete publication": "Изтриване на публикацията",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Искате ли да изтриете \"{name}\"? Това действие не може да бъде отменено.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публикацията и нейните прикачени файлове изчезват от публичната страница и от картата на сайта на Woo. Архивирането, напротив, ги запазва за срока на съхранение."
     },
     "nplurals=2; plural=(n != 1);"
 )

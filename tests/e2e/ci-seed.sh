@@ -265,6 +265,88 @@ else
 	echo "[ci-seed] manifest declares no enabled setup wizard — nothing to complete."
 fi
 
+# ── 2c. One record of every non-public kind (REQ-WAB-002) ────────────────────
+# woo-access-boundary-hardening task 2.1. `tests/e2e/public-boundary.spec.ts`
+# calls every public route anonymously and fails when a response carries one of
+# these records' ids or titles. It finds them by their fixed `Boundary fixture:`
+# title through the admin API, so nothing has to be handed over from here.
+# Idempotent: a fixture that already exists (by title) is left as it is.
+#
+#   publication  draft      no publicationDate
+#   publication  scheduled  publicationDate a year ahead
+#   publication  withdrawn  depublicationDate in the past
+#   publication  archived   status archived, published in the past
+#   wooAssessment, wooBatch, depublication, wooRequest (admin-only schemas)
+#   a file that is not shared, on a publication that is public
+#
+# The publication schema has no "unlisted" property, so there is no such kind.
+seed_boundary_fixture () {
+	# $1 schema slug, $2 JSON body (must carry the title field named in $3)
+	local schema="$1" body="$2" field="$3" title found
+	title="$(printf '%s' "$body" | python3 -c "import json,sys; print(json.load(sys.stdin)['$field'])")"
+	found="$(curl -sS -G -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+		--data-urlencode "${field}=${title}" --data-urlencode '_limit=1' \
+		"${BASE}/index.php/apps/openregister/api/objects/publication/${schema}" \
+		| python3 -c 'import json,sys
+try:
+    d=json.load(sys.stdin); rows=d.get("results", d if isinstance(d,list) else [])
+    print((rows[0].get("id") or rows[0].get("@self",{}).get("id") or "") if rows else "")
+except Exception:
+    print("")' 2>/dev/null || true)"
+	if [ -n "$found" ]; then
+		echo "[ci-seed] boundary fixture ${schema} '${title}' -> ${found} (already there)"
+		BOUNDARY_LAST_ID="$found"
+		return 0
+	fi
+	BOUNDARY_LAST_ID="$(curl -sS -X POST -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
+		-H 'Content-Type: application/json' --data "$body" \
+		"${BASE}/index.php/apps/openregister/api/objects/publication/${schema}" \
+		| python3 -c 'import json,sys
+try:
+    d=json.load(sys.stdin); print(d.get("id") or d.get("@self",{}).get("id") or "")
+except Exception:
+    print("")' 2>/dev/null || true)"
+	if [ -z "$BOUNDARY_LAST_ID" ]; then
+		echo "::error::Could not create the boundary fixture ${schema} '${title}'; public-boundary.spec.ts needs it."
+		exit 1
+	fi
+	echo "[ci-seed] boundary fixture ${schema} '${title}' -> ${BOUNDARY_LAST_ID}"
+}
+
+PAST="$(date -u -d '-30 days' +%Y-%m-%dT%H:%M:%SZ)"
+LONG_PAST="$(date -u -d '-60 days' +%Y-%m-%dT%H:%M:%SZ)"
+FUTURE="$(date -u -d '+365 days' +%Y-%m-%dT%H:%M:%SZ)"
+
+seed_boundary_fixture publication '{"title":"Boundary fixture: draft publication","summary":"Not published yet."}' title
+seed_boundary_fixture publication "{\"title\":\"Boundary fixture: scheduled publication\",\"publicationDate\":\"${FUTURE}\"}" title
+seed_boundary_fixture publication "{\"title\":\"Boundary fixture: withdrawn publication\",\"publicationDate\":\"${LONG_PAST}\",\"depublicationDate\":\"${PAST}\"}" title
+WITHDRAWN_ID="$BOUNDARY_LAST_ID"
+seed_boundary_fixture publication "{\"title\":\"Boundary fixture: archived publication\",\"publicationDate\":\"${LONG_PAST}\",\"status\":\"archived\"}" title
+seed_boundary_fixture wooAssessment '{"documentReference":"Boundary fixture: woo assessment","assessment":"niet_openbaar"}' documentReference
+seed_boundary_fixture wooBatch '{"caseReference":"Boundary fixture: woo batch","status":"in_progress"}' caseReference
+seed_boundary_fixture wooRequest "{\"reference\":\"Boundary fixture: woo request\",\"receivedAt\":\"${PAST}\",\"requestedInformation\":\"Boundary fixture: what was asked\",\"status\":\"received\"}" reference
+seed_boundary_fixture publication "{\"title\":\"Boundary fixture: public publication with a withdrawn file\",\"publicationDate\":\"${LONG_PAST}\",\"status\":\"published\"}" title
+PUBLIC_WITH_FILE="$BOUNDARY_LAST_ID"
+seed_boundary_fixture depublication "{\"publication\":\"${WITHDRAWN_ID}\",\"reason\":\"Boundary fixture: depublication\",\"depublishedBy\":\"admin\",\"depublishedAt\":\"${PAST}\"}" reason
+
+# The file is added unshared (`share: false`), which is how a withdrawn file
+# stands: on the object, never on a public link. Re-runs see it and skip.
+FILE_NAME='boundary-fixture-withdrawn-file.txt'
+FILES_URL="${BASE}/index.php/apps/openregister/api/objects/publication/publication/${PUBLIC_WITH_FILE}/files"
+if curl -sS -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' "$FILES_URL" | grep -q "$FILE_NAME"; then
+	echo "[ci-seed] boundary fixture file '${FILE_NAME}' (already there)"
+else
+	FILE_CODE="$(curl -sS -o /dev/null -w '%{http_code}' -X POST -u "${USER_NAME}:${USER_PASS}" \
+		-H 'OCS-APIRequest: true' -H 'Content-Type: application/json' \
+		--data "{\"name\":\"${FILE_NAME}\",\"content\":\"Boundary fixture: withdrawn file\",\"share\":false}" \
+		"$FILES_URL" || echo 000)"
+	echo "[ci-seed] boundary fixture file '${FILE_NAME}' -> HTTP ${FILE_CODE}"
+	case "$FILE_CODE" in
+		2??) ;;
+		*) echo "::error::Could not add the withdrawn file fixture; public-boundary.spec.ts needs it."; exit 1 ;;
+	esac
+fi
+
 # ── 3. Warm the SPA so the first spec doesn't pay the cold start ─────────────
 # The shared workflow serves Nextcloud with `php -S 0.0.0.0:8080` and does not
 # set PHP_CLI_SERVER_WORKERS, so the built-in server runs ONE worker: every

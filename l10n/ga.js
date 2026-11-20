@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Úsáidte go deireanach",
         "This key is shown once. Copy it now: it cannot be shown again.": "Ní thaispeántar an eochair seo ach uair amháin. Cóipeáil anois í: ní féidir í a thaispeáint arís.",
         "No feed consumers yet.": "Níl aon tomhaltóirí fotha fós.",
-        "Accounts that read every catalogue's feed": "Cuntais a léann fotha gach catalóige"
+        "Accounts that read every catalogue's feed": "Cuntais a léann fotha gach catalóige",
+        "Delete publication": "Scrios an foilseachán",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "An bhfuil fonn ort \"{name}\" a scriosadh? Ní féidir an gníomh seo a chealú.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Imíonn an foilseachán agus a cheangaltáin ón leathanach poiblí agus ó léarscáil láithreáin Woo. Coinníonn cartlannú iad ar feadh na tréimhse coinneála ina ionad sin."
     },
     "nplurals=2; plural=(n != 1);"
 )

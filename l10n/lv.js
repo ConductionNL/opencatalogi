@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Pēdējoreiz izmantots",
         "This key is shown once. Copy it now: it cannot be shown again.": "Šī atslēga tiek parādīta tikai vienreiz. Nokopējiet to tagad: to nevarēs parādīt vēlreiz.",
         "No feed consumers yet.": "Vēl nav plūsmas patērētāju.",
-        "Accounts that read every catalogue's feed": "Konti, kas lasa katra kataloga plūsmu"
+        "Accounts that read every catalogue's feed": "Konti, kas lasa katra kataloga plūsmu",
+        "Delete publication": "Dzēst publikāciju",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Vai vēlaties dzēst \"{name}\"? Šo darbību nevar atsaukt.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikācija un tās pielikumi pazūd no publiskās lapas un no Woo vietnes kartes. Arhivēšana turpretī tos saglabā uz glabāšanas termiņu."
     },
     "nplurals=2; plural=(n != 1);"
 )

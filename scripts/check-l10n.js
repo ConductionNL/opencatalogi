@@ -180,6 +180,8 @@ const NON_DISPLAY_ATTRS = new Set([
 	// never text, so translating it would break the lookup. Compared lowercased.
 	'actioniconname',
 	'action-icon-name',
+	'iconname',
+	'icon-name',
 ])
 
 /**
@@ -309,15 +311,18 @@ function collectPhpTranslated() {
 			const source = fs.readFileSync(file, 'utf8')
 			// ->t('…') / ->n('…') and their double-quoted forms. Escapes are
 			// honoured so a string containing a quote is captured whole rather
-			// than truncated at it.
+			// than truncated at it. A key split over lines as `'a' . 'b'` (the
+			// 150-column limit forces it on long sentences) is joined back into
+			// the one string the server translates.
 			const patterns = [
-				/->[tn]\(\s*'((?:\\.|[^'\\])*)'/g,
-				/->[tn]\(\s*"((?:\\.|[^"\\])*)"/g,
+				[/->[tn]\(\s*('(?:\\.|[^'\\])*'(?:\s*\.\s*'(?:\\.|[^'\\])*')*)/g, /'((?:\\.|[^'\\])*)'/g],
+				[/->[tn]\(\s*("(?:\\.|[^"\\])*"(?:\s*\.\s*"(?:\\.|[^"\\])*")*)/g, /"((?:\\.|[^"\\])*)"/g],
 			]
-			for (const re of patterns) {
+			for (const [re, part] of patterns) {
 				let m
 				while ((m = re.exec(source)) !== null) {
-					used.add(m[1].replace(/\\(['"\\])/g, '$1'))
+					const joined = [...m[1].matchAll(part)].map((p) => p[1]).join('')
+					used.add(joined.replace(/\\(['"\\])/g, '$1'))
 				}
 			}
 		}
@@ -460,6 +465,9 @@ function collectManifestStrings() {
 			) {
 				// A record-list or stat template: one string or a list of them.
 				;[value].flat().forEach(remember)
+			} else if (key === 'deleteDialog' && value && typeof value === 'object') {
+				// An index page's delete dialog: title, question and consequence line.
+				Object.values(value).forEach(remember)
 			} else if (key === 'meta' && value && Array.isArray(value.parts)) {
 				value.parts.forEach(remember)
 			} else if (

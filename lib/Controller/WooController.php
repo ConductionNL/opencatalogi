@@ -38,11 +38,13 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
+use OCA\OpenCatalogi\Service\CapabilityRights;
 use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
@@ -55,6 +57,9 @@ use OCP\IUserSession;
  * @spec openspec/specs/woo-transparency/spec.md
  */
 class WooController extends Controller {
+
+	use CapabilityGuard;
+
 	/**
 	 * Constructor.
 	 *
@@ -64,6 +69,7 @@ class WooController extends Controller {
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The current user session.
 	 * @param InformationCategoryRegistryInterface $categories The information categories, bundled plus local.
+	 * @param CapabilityRights|null $capabilities The capability rights (REQ-WAB-004).
 	 */
 	public function __construct(
 		$appName,
@@ -72,6 +78,7 @@ class WooController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly InformationCategoryRegistryInterface $categories,
+		private readonly ?CapabilityRights $capabilities=null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -176,8 +183,13 @@ class WooController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function createBatch(): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'processWooBatch');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		try {
 			$caseReference = (string)$this->request->getParam('caseReference', '');
 			$documents = (array)$this->request->getParam('documents', []);
@@ -225,8 +237,13 @@ class WooController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function getBatch(string $batchId): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'processWooBatch');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		try {
 			return new JSONResponse($this->wooService->getBatch($batchId));
 		} catch (\Throwable $e) {
@@ -253,8 +270,13 @@ class WooController extends Controller {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-api-endpoints
 	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function updateAssessment(string $batchId, string $docId): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'processWooBatch');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		try {
 			$assessment = (string)$this->request->getParam('assessment', '');
 			$weigeringsgronden = (array)$this->request->getParam('weigeringsgronden', []);
@@ -314,8 +336,13 @@ class WooController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function markReadyForReview(string $batchId): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'processWooBatch');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		try {
 			return new JSONResponse($this->wooService->markReadyForReview($batchId));
 		} catch (\Throwable $e) {
@@ -339,8 +366,13 @@ class WooController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function inventarislijst(string $batchId): DataDownloadResponse|JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'processWooBatch');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		try {
 			$rows = $this->wooService->buildInventarislijst($batchId);
 			$format = (string)$this->request->getParam('format', 'csv');
@@ -378,8 +410,13 @@ class WooController extends Controller {
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-reading-room-publication
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function publishBatch(string $batchId): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'publishWooBatch');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		try {
 			return new JSONResponse($this->wooService->publishBatch($batchId));
 		} catch (\Throwable $e) {

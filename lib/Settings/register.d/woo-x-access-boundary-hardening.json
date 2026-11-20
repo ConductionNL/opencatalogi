@@ -1,0 +1,67 @@
+{
+	"_note": "woo-access-boundary-hardening REQ-WAB-001: reads of the five Woo schemas write an OpenRegister processing log entry attributed to the activity opencatalogi-woo-records, seeded by the SeedWooProcessingActivity repair step. OpenRegister reads `attribution.default`; `activity` names the same code as the spec does. The file name sorts after every other fragment so these version bumps win the scalar merge.",
+	"components": {
+		"schemas": {
+			"wooAssessment": {
+				"version": "0.6.1",
+				"configuration": {
+					"x-openregister-processing": {
+						"logReads": true,
+						"activity": "opencatalogi-woo-records",
+						"attribution": {
+							"default": "opencatalogi-woo-records"
+						}
+					}
+				}
+			},
+			"wooBatch": {
+				"version": "0.3.1",
+				"configuration": {
+					"x-openregister-processing": {
+						"logReads": true,
+						"activity": "opencatalogi-woo-records",
+						"attribution": {
+							"default": "opencatalogi-woo-records"
+						}
+					}
+				}
+			},
+			"depublication": {
+				"version": "0.2.3",
+				"configuration": {
+					"x-openregister-processing": {
+						"logReads": true,
+						"activity": "opencatalogi-woo-records",
+						"attribution": {
+							"default": "opencatalogi-woo-records"
+						}
+					}
+				}
+			},
+			"wooRequest": {
+				"version": "0.2.1",
+				"configuration": {
+					"x-openregister-processing": {
+						"logReads": true,
+						"activity": "opencatalogi-woo-records",
+						"attribution": {
+							"default": "opencatalogi-woo-records"
+						}
+					}
+				}
+			},
+			"publication": {
+				"version": "0.0.9",
+				"configuration": {
+					"x-openregister-processing": {
+						"logReads": true,
+						"activity": "opencatalogi-woo-records",
+						"attribution": {
+							"default": "opencatalogi-woo-records"
+						}
+					}
+				}
+			}
+		}
+	}
+}

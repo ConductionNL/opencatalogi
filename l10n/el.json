@@ -737,7 +737,10 @@
         "Last used": "Τελευταία χρήση",
         "This key is shown once. Copy it now: it cannot be shown again.": "Αυτό το κλειδί εμφανίζεται μία φορά. Αντιγράψτε το τώρα: δεν μπορεί να εμφανιστεί ξανά.",
         "No feed consumers yet.": "Δεν υπάρχουν ακόμη καταναλωτές ροής.",
-        "Accounts that read every catalogue's feed": "Λογαριασμοί που διαβάζουν τη ροή κάθε καταλόγου"
+        "Accounts that read every catalogue's feed": "Λογαριασμοί που διαβάζουν τη ροή κάθε καταλόγου",
+        "Delete publication": "Διαγραφή δημοσίευσης",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Θέλετε να διαγράψετε το \"{name}\"; Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Η δημοσίευση και τα συνημμένα της εξαφανίζονται από τη δημόσια σελίδα και από τον χάρτη ιστότοπου Woo. Η αρχειοθέτηση, αντίθετα, τα διατηρεί για την περίοδο διατήρησης."
     },
     "plurals": {}
 }

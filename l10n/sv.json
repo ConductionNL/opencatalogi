@@ -737,7 +737,10 @@
         "Last used": "Senast använd",
         "This key is shown once. Copy it now: it cannot be shown again.": "Den här nyckeln visas bara en gång. Kopiera den nu: den kan inte visas igen.",
         "No feed consumers yet.": "Inga flödesmottagare ännu.",
-        "Accounts that read every catalogue's feed": "Konton som läser flödet för varje katalog"
+        "Accounts that read every catalogue's feed": "Konton som läser flödet för varje katalog",
+        "Delete publication": "Radera publikation",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Vill du radera \"{name}\"? Den här åtgärden kan inte ångras.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikationen och dess bilagor försvinner från den offentliga sidan och från Woo-webbplatskartan. Arkivering bevarar dem i stället under bevarandetiden."
     },
     "plurals": {}
 }

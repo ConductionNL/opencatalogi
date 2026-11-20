@@ -22,11 +22,13 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
+use OCA\OpenRegister\Event\CustomScopeEvaluatingEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
+use OCA\OpenRegister\Event\PermissionsDeclaringEvent;
 use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
@@ -122,6 +124,11 @@ class ListenerRegistrar {
 		foreach ($catalogAccessEvents as $catalogAccessEvent) {
 			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
 		}
+
+		// Capability rights (woo-access-boundary-hardening REQ-WAB-004): declare the
+		// eight verbs to OpenRegister and decide them from the catalog schema's grants.
+		$context->registerEventListener(PermissionsDeclaringEvent::class, CapabilityDeclarationListener::class);
+		$context->registerEventListener(CustomScopeEvaluatingEvent::class, CapabilityScopeListener::class);
 
 		$this->registerWriteGuards(context: $context);
 

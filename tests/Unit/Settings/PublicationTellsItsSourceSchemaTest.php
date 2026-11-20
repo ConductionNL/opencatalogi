@@ -68,7 +68,8 @@ final class PublicationTellsItsSourceSchemaTest extends TestCase {
 		$merged = $merge->invoke(null, $base, $root . '/register.d');
 		$publication = $merged['components']['schemas']['publication'];
 
-		self::assertSame('0.0.8', $publication['version']);
+		// A later change may bump it again (woo-access-boundary-hardening: 0.0.9); it never drops below this one's.
+		self::assertTrue(version_compare($publication['version'], '0.0.8', '>='), $publication['version']);
 		foreach (['publicUrl', 'officerUrl', 'completeness', 'completeAt', 'expectedDocuments', 'wooCategory', 'publicationKind'] as $property) {
 			self::assertArrayHasKey($property, $publication['properties'], $property);
 		}
