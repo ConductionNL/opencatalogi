@@ -768,10 +768,13 @@ class PublishedTableServiceTest extends TestCase {
 	 * @return PublishedTableService The service.
 	 */
 	private function serviceWithQueue(?\OCA\OpenCatalogi\Contract\TableImportQueueInterface $queue): PublishedTableService {
-		$registers = $this->createMock(OpenRegisterLookupInterface::class);
+		$registers = $this->createMock(originalClassName: OpenRegisterLookupInterface::class);
 		$registers->method('objectService')->willReturn($this->openRegister);
-		$registers->method('registerConfiguration')->willReturnCallback(
-			static fn (string $register, string $schema): array => ['register' => 'pub', 'schema' => $schema === 'publication_schema' ? 'publ' : 'tbl']
+		$registers->method('registerConfiguration')->willReturnMap(
+			[
+				['publication_register', 'publication_schema', ['register' => 'pub', 'schema' => 'publ']],
+				['publication_register', 'published_table_schema', ['register' => 'pub', 'schema' => 'tbl']],
+			]
 		);
 
 		return new PublishedTableService(registers: $registers, container: $this->container, queue: $queue);
@@ -786,9 +789,9 @@ class PublishedTableServiceTest extends TestCase {
 	 */
 	public function testALargeFileIsQueuedNotImported(): void {
 		$this->openRegister->rows = array_fill(0, PublishedTableService::LARGE_FILE_ROWS + 1, ['data' => ['naam' => 'Park', 'toestellen' => '4']]);
-		$queue = $this->createMock(\OCA\OpenCatalogi\Contract\TableImportQueueInterface::class);
+		$queue = $this->createMock(originalClassName: \OCA\OpenCatalogi\Contract\TableImportQueueInterface::class);
 		$queue->expects($this->once())->method('queue')->with('t1', 'anna')->willReturn(true);
-		$user = $this->createMock(\OCP\IUser::class);
+		$user = $this->createMock(originalClassName: \OCP\IUser::class);
 		$user->method('getUID')->willReturn('anna');
 
 		$table = $this->serviceWithQueue(queue: $queue)->createFromFile(
@@ -797,11 +800,11 @@ class PublishedTableServiceTest extends TestCase {
 			user: $user
 		);
 
-		$this->assertSame('importing', $table['status']);
-		$this->assertSame('anna', $table['importedBy']);
-		$this->assertSame([], $this->openRegister->previews);
-		$this->assertCount(1, $this->openRegister->saved);
-		$this->assertCount(1, $this->openRegister->createdSchemas);
+		$this->assertSame(expected: 'importing', actual: $table['status']);
+		$this->assertSame(expected: 'anna', actual: $table['importedBy']);
+		$this->assertSame(expected: [], actual: $this->openRegister->previews);
+		$this->assertCount(expectedCount: 1, haystack: $this->openRegister->saved);
+		$this->assertCount(expectedCount: 1, haystack: $this->openRegister->createdSchemas);
 	}//end testALargeFileIsQueuedNotImported()
 
 	/**
@@ -813,21 +816,21 @@ class PublishedTableServiceTest extends TestCase {
 	 */
 	public function testAFileAtTheLimitIsImportedInTheRequest(): void {
 		$this->openRegister->rows = array_fill(0, PublishedTableService::LARGE_FILE_ROWS, ['data' => ['naam' => 'Park']]);
-		$queue = $this->createMock(\OCA\OpenCatalogi\Contract\TableImportQueueInterface::class);
+		$queue = $this->createMock(originalClassName: \OCA\OpenCatalogi\Contract\TableImportQueueInterface::class);
 		$queue->expects($this->never())->method('queue');
 
 		$table = $this->serviceWithQueue(queue: $queue)->createFromFile(
 			publication: ['id' => 'p1'],
 			file: new TableFile(path: '/tmp/a.csv', id: '77', name: 'a.csv')
 		);
-		$this->assertSame('ready', $table['status']);
+		$this->assertSame(expected: 'ready', actual: $table['status']);
 
 		$this->openRegister->rows = array_fill(0, PublishedTableService::LARGE_FILE_ROWS + 1, ['data' => ['naam' => 'Park']]);
 		$table = $this->serviceWithQueue(queue: null)->createFromFile(
 			publication: ['id' => 'p1'],
 			file: new TableFile(path: '/tmp/a.csv', id: '77', name: 'a.csv')
 		);
-		$this->assertSame('ready', $table['status']);
+		$this->assertSame(expected: 'ready', actual: $table['status']);
 	}//end testAFileAtTheLimitIsImportedInTheRequest()
 
 	/**
@@ -849,10 +852,10 @@ class PublishedTableServiceTest extends TestCase {
 			importedBy: 'bram'
 		);
 
-		$this->assertSame('p1', $this->openRegister->finds[0]['id']);
-		$this->assertSame(['getFile' => [$publication, 77]], $this->openRegister->finds[1]);
-		$this->assertSame('ready', $table['status']);
-		$this->assertSame('bram', $table['importedBy']);
+		$this->assertSame(expected: 'p1', actual: $this->openRegister->finds[0]['id']);
+		$this->assertSame(expected: ['getFile' => [$publication, 77]], actual: $this->openRegister->finds[1]);
+		$this->assertSame(expected: 'ready', actual: $table['status']);
+		$this->assertSame(expected: 'bram', actual: $table['importedBy']);
 		unlink($this->openRegister->tempPath);
 	}//end testReimportReadsTheAttachmentOfThePublication()
 
@@ -866,8 +869,8 @@ class PublishedTableServiceTest extends TestCase {
 	public function testReimportOfATableWhosePublicationIsGoneIsRefused(): void {
 		$this->openRegister->found = new \RuntimeException('not found');
 
-		$this->expectException(InvalidArgumentException::class);
-		$this->expectExceptionMessage('The publication of this table is gone.');
+		$this->expectException(exception: InvalidArgumentException::class);
+		$this->expectExceptionMessage(message: 'The publication of this table is gone.');
 		$this->serviceWithQueue(queue: null)->reimport(table: ['id' => 't9', 'publication' => 'p1', 'file' => '77']);
 	}//end testReimportOfATableWhosePublicationIsGoneIsRefused()
 }//end class

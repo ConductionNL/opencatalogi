@@ -193,7 +193,8 @@ class PublishedTableService implements PublishedTableServiceInterface {
 		$pair = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
 		$where = new ObjectFindOptions(register: $pair['register'], schema: $pair['schema']);
 		try {
-			$publication = $this->registers->objectService()->find(id: (string)($table['publication'] ?? ''), options: $where, _rbac: false, _multitenancy: false);
+			$objects = $this->registers->objectService();
+			$publication = $objects->find(id: (string)($table['publication'] ?? ''), options: $where, _rbac: false, _multitenancy: false);
 		} catch (\Throwable $e) {
 			throw new InvalidArgumentException('The publication of this table is gone.');
 		}
@@ -215,7 +216,9 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	public function findTables(array $filters): array {
 		$found = (array)self::plain(value: $this->tables()->search(filters: $filters));
 
-		return array_values(array_filter(array_map(static fn (mixed $record): mixed => self::plain(value: $record), (array)($found['results'] ?? [])), 'is_array'));
+		$records = array_map(static fn (mixed $record): mixed => self::plain(value: $record), (array)($found['results'] ?? []));
+
+		return array_values(array_filter($records, 'is_array'));
 	}//end findTables()
 
 	/**
