@@ -719,6 +719,58 @@ class ListingsControllerTest extends TestCase {
 	}//end testShowReturns404WhenTheListingDoesNotExist()
 
 	/**
+	 * Show() answers a cross-origin read with the CORS headers (DIR-008): with no
+	 * allowlist configured, any origin may read the listing.
+	 *
+	 * @spec openspec/changes/dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
+	 *
+	 * @return void
+	 */
+	public function testShowAnswersWithTheCorsHeaders(): void {
+		$mockEntity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$mockEntity->method('jsonSerialize')->willReturn(['id' => '123']);
+		$this->mockObjectService()->method('find')->willReturn($mockEntity);
+		$this->configureListingScope();
+		$this->request->method('getHeader')->willReturnMap([['Origin', 'https://other.example']]);
+
+		$headers = $this->controller->show('123')->getHeaders();
+
+		$this->assertSame('*', $headers['Access-Control-Allow-Origin']);
+		$this->assertSame('GET, OPTIONS', $headers['Access-Control-Allow-Methods']);
+		$this->assertSame('Authorization, Content-Type, Accept', $headers['Access-Control-Allow-Headers']);
+		$this->assertSame('false', $headers['Access-Control-Allow-Credentials']);
+	}//end testShowAnswersWithTheCorsHeaders()
+
+	/**
+	 * Show() never reflects an origin outside a configured allowlist, and its 404
+	 * carries the headers too, so a cross-origin caller can read the refusal.
+	 *
+	 * @spec openspec/changes/dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
+	 *
+	 * @return void
+	 */
+	public function testShowFollowsTheAllowlistOnA404(): void {
+		$this->mockObjectService()->method('find')
+			->willThrowException(new DoesNotExistException('Object not found in magic table'));
+		$this->config->method('getValueString')
+			->willReturnCallback(
+				static fn (string $app, string $key, string $default = ''): string => match ($key) {
+					'listing_register' => '3',
+					'listing_schema' => '5',
+					'cors_allowed_origins' => 'https://portal.example',
+					default => $default,
+				}
+			);
+		$this->request->method('getHeader')->willReturnMap([['Origin', 'https://evil.example']]);
+
+		$response = $this->controller->show('missing');
+
+		$this->assertSame(404, $response->getStatus());
+		$this->assertNotSame('https://evil.example', $response->getHeaders()['Access-Control-Allow-Origin']);
+		$this->assertNotSame('*', $response->getHeaders()['Access-Control-Allow-Origin']);
+	}//end testShowFollowsTheAllowlistOnA404()
+
+	/**
 	 * Update() answers 404 for an id that is not a listing, and saves nothing.
 	 *
 	 * @return void

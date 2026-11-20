@@ -175,6 +175,11 @@ const NON_DISPLAY_ATTRS = new Set([
 	'src',
 	'for',
 	'role',
+	// The name of a material-design icon component (CnDeleteDialog and friends
+	// resolve `actionIconName="Delete"` to the Delete icon). It renders an icon,
+	// never text, so translating it would break the lookup. Compared lowercased.
+	'actioniconname',
+	'action-icon-name',
 ])
 
 /**
