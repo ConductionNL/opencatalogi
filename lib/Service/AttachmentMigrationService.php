@@ -3,6 +3,9 @@
 /**
  * Turns `document` objects into files on the publication they belong to.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A `document` was never a thing in its own right. It is a wrapper around one
  * attached file, and everything it carries has a home elsewhere now:
  *
@@ -34,9 +37,6 @@
  * @version GIT: <git-id>
  *
  * @link https://OpenCatalogi.nl
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  */
 
 declare(strict_types=1);

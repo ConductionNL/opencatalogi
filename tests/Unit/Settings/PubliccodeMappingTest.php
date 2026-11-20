@@ -22,6 +22,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-003-each-harvested-file-becomes-one-publiccode-object-and-a-re-harvest-updates-it
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -131,7 +134,8 @@ class PubliccodeMappingTest extends TestCase {
 	 * @return string
 	 */
 	private function ownPubliccode(): string {
-		return (string)file_get_contents(__DIR__ . '/../../../publiccode.yml');
+		// A frozen copy of this app's publiccode.yml (0.7.34), so updating the real file does not move the fixture.
+		return (string)file_get_contents(__DIR__ . '/../../Fixtures/publiccode/opencatalogi-0.7.34.yml');
 	}//end ownPubliccode()
 
 	/**

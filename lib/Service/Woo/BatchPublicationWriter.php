@@ -30,8 +30,14 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
+use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
+use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\WooCategory;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
@@ -62,6 +68,7 @@ class BatchPublicationWriter {
 	 * @param PublicationLinker $linker The public link to the publication.
 	 * @param IL10N $l10n The refusal message.
 	 * @param IAppManager|null $appManager Whether OpenRegister is installed.
+	 * @param EmbeddedTitleWriter|null $titles Writes the official title into each attached copy (REQ-PFF-002).
 	 */
 	public function __construct(
 		private readonly IRootFolder $rootFolder,
@@ -69,6 +76,7 @@ class BatchPublicationWriter {
 		private readonly PublicationLinker $linker,
 		private readonly IL10N $l10n,
 		private readonly ?IAppManager $appManager = null,
+		private readonly ?EmbeddedTitleWriter $titles = null,
 	) {
 
 	}//end __construct()
@@ -108,6 +116,9 @@ class BatchPublicationWriter {
 				$listing['original'] = $document;
 				$listing['redactionStatus'] = (string)($assessment['redactionStatus'] ?? '');
 				$listing['redactionHash'] = (string)($assessment['anonymizedDocumentHash'] ?? '');
+				// Only whether the log may carry a publish; its values stay on the assessment.
+				$listing['redactionLogState'] = DocumentRedactor::redactionLogState(log: ($assessment['redactionLog'] ?? null));
+				$listing['redactionVerifiedBy'] = (string)($assessment['redactionVerifiedBy'] ?? '');
 			}
 
 			$listings[] = $listing;
@@ -203,7 +214,7 @@ class BatchPublicationWriter {
 	 * @param string $now The moment of publishing.
 	 * @param callable $keepProgress Stores the batch with its progress.
 	 *
-	 * @return array{id: string, url: string, wooCategory: string, attached: array<int, string>}
+	 * @return array{id: string, url: string, wooCategory: string, attached: array<int, string>, embeddedTitles: array<string, mixed>}
 	 *
 	 * @throws RuntimeException When a document is missing or an attachment fails.
 	 *
@@ -212,33 +223,55 @@ class BatchPublicationWriter {
 	public function publishDocuments(array $batch, array $listings, string $now, callable $keepProgress): array {
 		$files = $this->resolveAll(listings: $listings, owner: (string)($batch['createdBy'] ?? ''));
 		$publication = $this->publication(batch: $batch, now: $now);
-		$attached = array_values(array_map('strval', (array)($batch['wooPublication']['attached'] ?? [])));
+		$progress = self::progressOf(batch: $batch, publicationId: $publication['id']);
 
 		foreach ($files as $file) {
-			if (in_array($file->getName(), $attached, true) === true) {
+			if (in_array($file->getName(), $progress['attached'], true) === true) {
 				continue;
 			}
 
 			try {
-				$this->attach(publication: $publication, file: $file);
+				$title = $this->attach(publication: $publication, file: $file);
 			} catch (Throwable $e) {
-				$batch['wooPublication'] = array_merge((array)($batch['wooPublication'] ?? []), ['publication' => $publication['id'], 'attached' => $attached]);
+				$batch['wooPublication'] = array_merge((array)($batch['wooPublication'] ?? []), $progress);
 				unset($batch['documentSummary']);
 				$keepProgress($batch);
 				throw new RuntimeException($this->l10n->t('Publishing stopped at %s. Publish again to continue.', [$file->getName()]), 0, $e);
 			}
 
-			$attached[] = $file->getName();
+			$progress['attached'][] = $file->getName();
+			if ($title !== null) {
+				$progress['embeddedTitles'][$file->getName()] = $title;
+			}
 		}//end foreach
 
 		return [
 			'id' => $publication['id'],
 			'url' => $this->url(id: $publication['id']),
 			'wooCategory' => $this->category(batch: $batch),
-			'attached' => $attached,
+			'attached' => $progress['attached'],
+			'embeddedTitles' => $progress['embeddedTitles'],
 		];
 
 	}//end publishDocuments()
+
+	/**
+	 * How far an earlier attempt got: the publication, the files attached and the titles written into them.
+	 *
+	 * @param array<string, mixed> $batch         The batch.
+	 * @param string               $publicationId The publication the documents are attached to.
+	 *
+	 * @return array{publication: string, attached: array<int, string>, embeddedTitles: array<string, mixed>}
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-the-published-file-carries-its-official-title-req-pff-002
+	 */
+	private static function progressOf(array $batch, string $publicationId): array {
+		return [
+			'publication' => $publicationId,
+			'attached' => array_values(array_map('strval', (array)($batch['wooPublication']['attached'] ?? []))),
+			'embeddedTitles' => (array)($batch['wooPublication']['embeddedTitles'] ?? []),
+		];
+	}//end progressOf()
 
 	/**
 	 * Create the batch's publication, or take the one an earlier attempt made.
@@ -246,7 +279,7 @@ class BatchPublicationWriter {
 	 * @param array<string, mixed> $batch The batch.
 	 * @param string $now The moment of publishing.
 	 *
-	 * @return array{id: string, entity: mixed}
+	 * @return array{id: string, entity: mixed, title: string}
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 */
@@ -256,24 +289,29 @@ class BatchPublicationWriter {
 		$earlier = (string)($batch['wooPublication']['publication'] ?? '');
 		if ($earlier !== '') {
 			try {
-				$entity = $objects->find(id: $earlier, register: self::REGISTER, schema: self::SCHEMA, _rbac: false, _multitenancy: false);
+				$entity = $objects->find(
+					id: $earlier,
+					options: new ObjectFindOptions(register: self::REGISTER, schema: self::SCHEMA),
+					_rbac: false,
+					_multitenancy: false
+				);
 				if ($entity !== null) {
-					return ['id' => $earlier, 'entity' => $entity];
+					return ['id' => $earlier, 'entity' => $entity, 'title' => $this->titleOf(entity: $entity)];
 				}
 			} catch (Throwable) {
 				// Gone since the last attempt: make a new one below.
 			}
 		}
 
+		$payload = $this->payload(batch: $batch, now: $now);
 		$entity = $objects->saveObject(
-			object: $this->payload(batch: $batch, now: $now),
-			register: self::REGISTER,
-			schema: self::SCHEMA,
+			object: $payload,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: self::REGISTER, schema: self::SCHEMA)),
 			_rbac: false,
 			_multitenancy: false
 		);
 
-		return ['id' => $this->idOf(entity: $entity), 'entity' => $entity];
+		return ['id' => $this->idOf(entity: $entity), 'entity' => $entity, 'title' => $payload['title']];
 	}//end publication()
 
 	/**
@@ -326,16 +364,24 @@ class BatchPublicationWriter {
 	}//end category()
 
 	/**
-	 * Attach one file to the publication and publish it.
+	 * Attach one file to the publication, write the official title into the
+	 * attached copy, and publish it.
 	 *
-	 * @param array{id: string, entity: mixed} $publication The publication.
+	 * The batch's documents reach this only after the publish gate passed
+	 * (`DocumentRedactor::assertPublishable()` in WooService::publishBatch()).
+	 * The title goes into the copy OpenRegister made for the publication, never
+	 * into the officer's own document, so a verified redacted file keeps its
+	 * hash and stays the exact prefix of the published PDF.
+	 *
+	 * @param array{id: string, entity: mixed, title?: string} $publication The publication.
 	 * @param File $file The document.
 	 *
-	 * @return void
+	 * @return array<string, mixed>|null What was written into the copy (`embeddedTitle`), null without a writer.
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-the-published-file-carries-its-official-title-req-pff-002
 	 */
-	public function attach(array $publication, File $file): void {
+	public function attach(array $publication, File $file): ?array {
 		$this->requireOpenRegister();
 		$files = $this->container->get('OCA\OpenRegister\Service\FileService');
 		$target = $publication['entity'];
@@ -359,9 +405,42 @@ class BatchPublicationWriter {
 			}
 		}
 
-		$files->publishFile(object: $target, file: $created->getId());
+		$embedded = null;
+		if ($this->titles !== null && $created instanceof File) {
+			$facts = new EmbeddedTitle(title: (string)($publication['title'] ?? ''), identifier: $publication['id']);
+			$embedded = $this->titles->write(file: $created, facts: $facts);
+		}
 
+		$files->publishFile(object: $target, file: $created->getId());
+		$this->readingQueue()?->queue(fileId: (int)$created->getId(), publicationId: (string)$publication['id']);
+
+		return $embedded;
 	}//end attach()
+
+	/**
+	 * The queue that reads each attached document, or null when it cannot be resolved.
+	 *
+	 * Resolved from the container on use rather than injected, so this
+	 * writer's constructor keeps its five collaborators.
+	 *
+	 * @return AttachmentReadingQueueInterface|null
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
+	 */
+	private function readingQueue(): ?AttachmentReadingQueueInterface {
+		$queue = null;
+		try {
+			$queue = $this->container->get(AttachmentReadingQueueInterface::class);
+		} catch (\Throwable) {
+			// No queue: the document is published unread, as without OCR.
+		}
+
+		if ($queue instanceof AttachmentReadingQueueInterface === false) {
+			return null;
+		}
+
+		return $queue;
+	}//end readingQueue()
 
 	/**
 	 * The public link to the publication.
@@ -389,6 +468,25 @@ class BatchPublicationWriter {
 		}
 
 	}//end requireOpenRegister()
+
+	/**
+	 * The title of a saved publication entity or array.
+	 *
+	 * @param mixed $entity The saved publication.
+	 *
+	 * @return string
+	 */
+	private function titleOf(mixed $entity): string {
+		if (is_object($entity) === true && method_exists($entity, 'getObject') === true) {
+			return (string)(((array)$entity->getObject())['title'] ?? '');
+		}
+
+		if (is_object($entity) === true && method_exists($entity, 'jsonSerialize') === true) {
+			$entity = $entity->jsonSerialize();
+		}
+
+		return (string)(((array)$entity)['title'] ?? '');
+	}//end titleOf()
 
 	/**
 	 * The uuid of a saved entity or array.

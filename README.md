@@ -17,11 +17,17 @@
 
 ---
 
-OpenCatalogi turns Nextcloud into a publication platform for open data and government transparency. Create catalogs, manage publications with metadata and attachments, and federate them across organizations so that citizens, businesses, and other government entities can discover and access public information. The app supports the Dutch WOO (Open Government Act) and follows Common Ground principles for interoperability.
+OpenCatalogi turns Nextcloud into a publication platform for open data and government transparency. Create catalogs, manage publications with metadata and attachments, and federate them across organizations so that citizens, businesses, and other government entities can discover and access public information. The app supports the Dutch WOO (Open Government Act) and follows Common Ground principles for interoperability. Install it from the [Nextcloud App Store](https://apps.nextcloud.com/apps/opencatalogi).
 
 It connects to a federated directory of other OpenCatalogi instances, enabling cross-organization search and discovery without centralized infrastructure. A public-facing frontend can be deployed separately for citizen access, while administrators manage everything from within Nextcloud.
 
 > **Requires:** [OpenRegister](https://github.com/ConductionNL/openregister) — all data is stored as OpenRegister objects (no own database tables).
+
+## Test coverage
+
+<!-- coverage:start -->
+Measured test coverage: 94.1% of statements (PHP 94.1% of 17,158 statements), at commit `b2e2f42bc` on 2026-11-12. The JavaScript frontend is not in this figure, because it has no coverage measurement yet. The figures come from [`coverage-summary.json`](coverage-summary.json); refresh them with `composer coverage:publish`.
+<!-- coverage:end -->
 
 ## Screenshots
 
@@ -167,6 +173,29 @@ npm install
 npm run build
 php occ app:enable opencatalogi
 ```
+
+### Try it with Docker
+
+The repository builds an evaluation image: the official Nextcloud image with opencatalogi and OpenRegister installed and enabled. It is meant for trying the app out and for test environments. For production, install the app from the Nextcloud App Store.
+
+```bash
+docker compose -f docker/docker-compose.yml up -d --build
+```
+
+Open http://localhost:8080/apps/opencatalogi/ and sign in as `admin` with password `admin`. The first start takes a minute or two. Set `NEXTCLOUD_ADMIN_PASSWORD` and `APP_PORT` to change the password and the port; `docker/docker-compose.yml` lists every setting. `docker compose -f docker/docker-compose.yml down -v` removes the stack and its data.
+
+Released versions are published as `ghcr.io/conductionnl/opencatalogi`, so leaving out `--build` uses the published image.
+
+### Run it on Kubernetes
+
+`charts/opencatalogi` wraps the official [Nextcloud Helm chart](https://github.com/nextcloud/helm) and runs the same image with PostgreSQL:
+
+```bash
+helm dependency build charts/opencatalogi
+helm install opencatalogi charts/opencatalogi --set nextcloud.nextcloud.host=opencatalogi.example.org
+```
+
+Change the passwords in `charts/opencatalogi/values.yaml` before you install it anywhere that matters.
 
 ## Development
 

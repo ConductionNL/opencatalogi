@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service\Publication;
@@ -104,6 +109,69 @@ class DecisionAndProcessTest extends TestCase {
 		$this->assertTrue($validation['publishable']);
 
 	}//end testATypeWithoutAnObligationPublishesWithoutADate()
+
+	/**
+	 * The whole verdict, key for key, for each way validate() can answer.
+	 */
+	public function testValidateAnswersWithTheWholeVerdictInEachCase(): void {
+		$this->assertSame(
+			['publishable' => true, 'reasons' => [], 'responseDate' => null, 'publicationText' => 'Zie bijlage.'],
+			$this->validator->validate(
+				decision: ['publicationDate' => 'binnenkort'],
+				decisionType: ['publicationObligation' => false, 'responseTermDays' => 0, 'publicationText' => ' Zie bijlage. ']
+			)
+		);
+
+		$this->assertSame(
+			[
+				'publishable' => false,
+				'reasons' => [
+					'This decision type obliges publication, and the decision carries no publication date.',
+					'This decision type obliges publication but declares no statutory response term.',
+				],
+				'responseDate' => null,
+				'publicationText' => null,
+			],
+			$this->validator->validate(decision: [], decisionType: ['publicationObligation' => true])
+		);
+
+		$this->assertSame(
+			[
+				'publishable' => false,
+				'reasons' => ['This decision type obliges publication but declares no statutory response term.'],
+				'responseDate' => null,
+				'publicationText' => null,
+			],
+			$this->validator->validate(
+				decision: ['publicationDate' => '2026-09-01T00:00:00+00:00'],
+				decisionType: ['publicationObligation' => true, 'responseTermDays' => -3]
+			)
+		);
+
+		$this->assertSame(
+			[
+				'publishable' => false,
+				'reasons' => ['The publication date on this decision cannot be read as a date: "binnenkort".'],
+				'responseDate' => null,
+				'publicationText' => 'Tegen dit besluit kunt u bezwaar maken.',
+			],
+			$this->validator->validate(decision: ['publicationDate' => 'binnenkort'], decisionType: $this->obligedType())
+		);
+
+		$this->assertSame(
+			[
+				'publishable' => true,
+				'reasons' => [],
+				'responseDate' => '2026-10-13T00:00:00+00:00',
+				'publicationText' => 'Tegen dit besluit kunt u bezwaar maken.',
+			],
+			$this->validator->validate(
+				decision: ['publicationDate' => '2026-09-01T00:00:00+00:00'],
+				decisionType: $this->obligedType()
+			)
+		);
+
+	}//end testValidateAnswersWithTheWholeVerdictInEachCase()
 
 	public function testApplyingARefusedValidationThrows(): void {
 		$validation = $this->validator->validate(decision: [], decisionType: $this->obligedType());

@@ -117,13 +117,26 @@ class WithheldFromPublicationStore {
 			return [];
 		}
 
+		return $this->assessmentsOf(batch: $batch);
+	}//end batchAssessments()
+
+	/**
+	 * The assessment of every document a batch lists, in the batch's order.
+	 *
+	 * @param array<string, mixed> $batch The batch.
+	 *
+	 * @return list<array<string, mixed>>
+	 *
+	 * @throws RuntimeException When an assessment cannot be read.
+	 */
+	private function assessmentsOf(array $batch): array {
 		$assessments = [];
 		foreach (array_values((array)($batch['documents'] ?? [])) as $ref) {
 			$assessments[] = $this->assessment(id: (string)$ref);
 		}
 
 		return $assessments;
-	}//end batchAssessments()
+	}//end assessmentsOf()
 
 	/**
 	 * The batch a publication was made from, scanning the batch register page by page.
@@ -149,10 +162,9 @@ class WithheldFromPublicationStore {
 				schema: $schema,
 				filters: ['_page' => $page, '_order' => ['@self.created' => 'asc', '_uuid' => 'asc']]
 			);
-			foreach ($batches as $batch) {
-				if ((string)($batch['wooPublication']['publication'] ?? '') === $publicationId) {
-					return $batch;
-				}
+			$batch = $this->batchIn(batches: $batches, publicationId: $publicationId);
+			if ($batch !== null) {
+				return $batch;
 			}
 
 			if (count($batches) < self::SEARCH_LIMIT) {
@@ -162,6 +174,24 @@ class WithheldFromPublicationStore {
 
 		throw new RuntimeException('The batch register is larger than the scan cap, so the batch of a publication cannot be told.');
 	}//end findBatch()
+
+	/**
+	 * The first batch of a page that names the publication, or null.
+	 *
+	 * @param list<array<string, mixed>> $batches One page of batches.
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function batchIn(array $batches, string $publicationId): ?array {
+		foreach ($batches as $batch) {
+			if ((string)($batch['wooPublication']['publication'] ?? '') === $publicationId) {
+				return $batch;
+			}
+		}
+
+		return null;
+	}//end batchIn()
 
 	/**
 	 * The catalogues whose registers and schemas hold the given register and schema.

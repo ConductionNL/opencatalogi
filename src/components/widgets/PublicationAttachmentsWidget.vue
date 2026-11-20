@@ -33,6 +33,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { NcButton } from '@nextcloud/vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import { navigationStore, objectStore } from '../../store/store.js'
+import { injectedObjectContext } from './objectContext.js'
 
 /**
  * PublicationAttachmentsWidget: the publication's attachments with an Add
@@ -73,12 +74,7 @@ export default {
 	computed: {
 		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
 		ctx() {
-			const injected =
-				this.cnObjectContext
-				&& (this.cnObjectContext.value || this.cnObjectContext)
-			const holder =
-				this.cnDetailObjectContext && this.cnDetailObjectContext.value
-			return injected || holder || {}
+			return injectedObjectContext(this)
 		},
 
 		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */

@@ -83,10 +83,27 @@ class RedactorFakeEntityRelationMapper {
 	/** @var array<int, int> */
 	public array $asked = [];
 
+	/** @var array<int, array<string, mixed>> */
+	public array $anonymised = [];
+
+	/** @var array<int, int> */
+	public array $logAsked = [];
+
+	public ?\Throwable $logThrow = null;
+
 	public function findEntitiesForAnonymization(int $fileId): array {
 		$this->asked[] = $fileId;
 		return $this->rows;
 	}//end findEntitiesForAnonymization()
+
+	public function findAnonymisedEntitiesWithBasesForFile(int $fileId): array {
+		$this->logAsked[] = $fileId;
+		if ($this->logThrow !== null) {
+			throw $this->logThrow;
+		}
+
+		return $this->anonymised;
+	}//end findAnonymisedEntitiesWithBasesForFile()
 }//end class
 
 /**
@@ -280,4 +297,261 @@ class DocumentRedactorTest extends TestCase {
 		$file->method('hash')->willThrowException(new \RuntimeException('storage gone'));
 		$this->assertFailedClosed($this->redactor()->verify($this->original, $file, []), 'cannot be verified');
 	}//end testAnUnhashableRedactedFileFailsClosed()
+	/**
+	 * A redacted file whose hash reads as empty cannot be verified.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyHashFailsClosed(): void {
+		$file = $this->createMock(File::class);
+		$file->method('getId')->willReturn(15);
+		$file->method('hash')->willReturn('');
+		$this->assertFailedClosed($this->redactor()->verify($this->original, $file, []), 'cannot be verified');
+	}//end testAnEmptyHashFailsClosed()
+
+	/**
+	 * Each OpenRegister failure is logged with the file and the exception
+	 * class only, never the message, which may quote the text to redact.
+	 *
+	 * @return void
+	 */
+	public function testFailuresAreLoggedWithoutTheirMessage(): void {
+		$logged = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('warning')->willReturnCallback(
+			static function (string $message) use (&$logged): void {
+				$logged[] = $message;
+			}
+		);
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('isInstalled')->willReturn(true);
+		$redactor = new DocumentRedactor($this->writer, $this->container, $this->l10n, $logger, $apps);
+
+		$this->files->throw = new \RuntimeException('Jan Jansen could not be removed');
+		$redactor->redact(['documentReference' => 'doc-c'], 'alice');
+
+		$this->files->throw = null;
+		$broken = new class extends RedactorFakeEntityRelationMapper {
+			public function findEntitiesForAnonymization(int $fileId): array {
+				throw new \LogicException('Jan Jansen');
+			}
+		};
+		$this->relations = $broken;
+		$redactor->redact(['documentReference' => 'doc-c'], 'alice');
+
+		$this->containerBroken = true;
+		$redactor->redact(['documentReference' => 'doc-c'], 'alice');
+
+		$this->assertSame(
+			[
+				'[DocumentRedactor] redaction failed for file 11: RuntimeException',
+				'[DocumentRedactor] findings unreadable for file 11: LogicException',
+				'[DocumentRedactor] OpenRegister redaction unavailable: RuntimeException',
+			],
+			$logged
+		);
+	}//end testFailuresAreLoggedWithoutTheirMessage()
+
+	/**
+	 * A verified redaction stores what OpenRegister removed, per passage, with its grounds (REQ-WRV-003).
+	 *
+	 * @return void
+	 */
+	public function testTheRedactionLogListsEachPassageWithItsGrounds(): void {
+		$this->relations->anonymised = [
+			['relation_id' => 7, 'entity_type' => 'PERSON', 'entity_value' => 'Jan Jansen', 'position_start' => 0, 'position_end' => 10, 'bases' => ['5.1.2.e']],
+			['relation_id' => 8, 'entity_type' => 'PHONE', 'entity_value' => '0612345678', 'position_start' => 17, 'position_end' => 27, 'bases' => ['5.1.2.e']],
+		];
+
+		$result = $this->redact();
+
+		$this->assertSame(DocumentRedactor::VERIFIED, $result['redactionStatus']);
+		$this->assertSame([11], $this->relations->logAsked);
+		$this->assertSame(
+			[
+				['relationId' => 7, 'entityType' => 'PERSON', 'positionStart' => 0, 'positionEnd' => 10, 'value' => 'Jan Jansen', 'grounds' => ['5.1.2.e']],
+				['relationId' => 8, 'entityType' => 'PHONE', 'positionStart' => 17, 'positionEnd' => 27, 'value' => '0612345678', 'grounds' => ['5.1.2.e']],
+			],
+			$result['redactionLog']
+		);
+		$this->assertSame(DocumentRedactor::LOG_GROUNDED, DocumentRedactor::redactionLogState($result['redactionLog']));
+	}//end testTheRedactionLogListsEachPassageWithItsGrounds()
+
+	/**
+	 * A passage OpenRegister holds without bases is logged with no grounds, so the log does not carry a publish.
+	 *
+	 * @return void
+	 */
+	public function testAPassageWithoutBasesIsLoggedWithoutAGround(): void {
+		$this->relations->anonymised = [
+			['relation_id' => 7, 'entity_type' => 'PERSON', 'entity_value' => 'Jan Jansen', 'position_start' => 0, 'position_end' => 10, 'bases' => ['5.1.2.e']],
+			['relation_id' => 8, 'entity_type' => 'PHONE', 'entity_value' => '0612345678', 'position_start' => 17, 'position_end' => 27, 'bases' => null],
+		];
+
+		$log = $this->redact()['redactionLog'];
+
+		$this->assertSame([], $log[1]['grounds']);
+		$this->assertSame(DocumentRedactor::LOG_UNGROUNDED, DocumentRedactor::redactionLogState($log));
+	}//end testAPassageWithoutBasesIsLoggedWithoutAGround()
+
+	/**
+	 * A log that cannot be read leaves no verified redacted version (fail closed).
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableLogFailsTheRedactionClosed(): void {
+		$this->relations->logThrow = new \RuntimeException('Jan Jansen');
+
+		$result = $this->redact();
+
+		$this->assertFailedClosed($result, 'redaction log cannot be read');
+		$this->assertSame([], $result['redactionLog']);
+	}//end testAnUnreadableLogFailsTheRedactionClosed()
+
+	/**
+	 * A failed redaction neither reads nor keeps a log.
+	 *
+	 * @return void
+	 */
+	public function testAFailedRedactionReadsNoLog(): void {
+		$this->files->result = $this->original;
+
+		$result = $this->redact();
+
+		$this->assertSame([], $result['redactionLog']);
+		$this->assertSame([], $this->relations->logAsked);
+	}//end testAFailedRedactionReadsNoLog()
+
+	/**
+	 * The log states: only a non-empty list whose every entry names a ground carries a publish.
+	 *
+	 * @return void
+	 */
+	public function testTheLogStateOfEachShape(): void {
+		$this->assertSame(DocumentRedactor::LOG_UNREADABLE, DocumentRedactor::redactionLogState(null));
+		$this->assertSame(DocumentRedactor::LOG_UNREADABLE, DocumentRedactor::redactionLogState('[]'));
+		$this->assertSame(DocumentRedactor::LOG_UNREADABLE, DocumentRedactor::redactionLogState(['a' => ['grounds' => ['5.1.2.e']]]));
+		$this->assertSame(DocumentRedactor::LOG_EMPTY, DocumentRedactor::redactionLogState([]));
+		$this->assertSame(DocumentRedactor::LOG_UNGROUNDED, DocumentRedactor::redactionLogState([['grounds' => ['5.1.2.e']], ['grounds' => []]]));
+		$this->assertSame(DocumentRedactor::LOG_UNGROUNDED, DocumentRedactor::redactionLogState([['value' => 'x']]));
+		$this->assertSame(DocumentRedactor::LOG_UNGROUNDED, DocumentRedactor::redactionLogState(['not an entry']));
+		$this->assertSame(DocumentRedactor::LOG_GROUNDED, DocumentRedactor::redactionLogState([['grounds' => ['5.1.2.e']]]));
+	}//end testTheLogStateOfEachShape()
+
+	/**
+	 * A document that is not partly public carries no log, so an earlier one is dropped.
+	 *
+	 * @return void
+	 */
+	public function testANonPartlyPublicAssessmentDropsTheLog(): void {
+		$result = $this->redactor()->forAssessment(['assessment' => 'openbaar', 'redactionLog' => [['value' => 'x']]], null, 'alice');
+
+		$this->assertSame([], $result['redactionLog']);
+	}//end testANonPartlyPublicAssessmentDropsTheLog()
+
+	/**
+	 * A writer that resolves the original and the redacted file of document c.
+	 *
+	 * @param string $redactedContent The bytes of the redacted file as it is now.
+	 *
+	 * @return void
+	 */
+	private function withRedactedFile(string $redactedContent): void {
+		$redacted = $this->file(id: 12, content: $redactedContent);
+		$this->writer = $this->createMock(BatchPublicationWriter::class);
+		$this->writer->method('resolve')->willReturnCallback(
+			fn (string $reference, string $owner): ?File => match ([$reference, $owner]) {
+				['doc-c', 'alice'] => $this->original,
+				['12', 'alice'] => $redacted,
+				default => null,
+			}
+		);
+	}//end withRedactedFile()
+
+	/**
+	 * REQ-WDA-004: a mechanically verified redaction nobody checked blocks the
+	 * publish and names the document; once a person checked it, it passes.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testAnUncheckedRedactionBlocksThePublish(): void {
+		$this->withRedactedFile(redactedContent: 'gelakt');
+		$listing = [
+			'assessment' => 'deels_openbaar',
+			'title' => 'Email thread with residents',
+			'original' => 'doc-c',
+			'document' => '12',
+			'redactionStatus' => DocumentRedactor::VERIFIED,
+			'redactionHash' => hash('sha256', 'gelakt'),
+			'redactionVerifiedBy' => '',
+			'redactionLogState' => DocumentRedactor::LOG_GROUNDED,
+		];
+
+		$refusal = null;
+		try {
+			$this->redactor()->assertPublishable(listings: [$listing], owner: 'alice');
+		} catch (\RuntimeException $e) {
+			$refusal = $e->getMessage();
+		}
+
+		$this->assertSame('Publishing is blocked, redaction not checked by a person: Email thread with residents', $refusal);
+
+		$listing['redactionVerifiedBy'] = 'bob';
+		$this->redactor()->assertPublishable(listings: [$listing], owner: 'alice');
+		$this->addToAssertionCount(1);
+	}//end testAnUncheckedRedactionBlocksThePublish()
+
+	/**
+	 * REQ-WDA-004: the batch lists an unchecked redaction with its reason, and
+	 * drops it once a person checked it.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testAnUncheckedRedactionIsListedAsUnpublishable(): void {
+		$assessment = ['assessment' => 'deels_openbaar', 'fileName' => 'c.pdf', 'redactionStatus' => DocumentRedactor::VERIFIED];
+
+		$this->assertSame(
+			[['fileName' => 'c.pdf', 'reason' => 'Redaction not checked by a person.']],
+			$this->redactor()->unredacted([$assessment])
+		);
+
+		$assessment['redactionVerifiedBy'] = 'bob';
+		$this->assertSame([], $this->redactor()->unredacted([$assessment]));
+	}//end testAnUncheckedRedactionIsListedAsUnpublishable()
+
+	/**
+	 * REQ-WDA-004: only a mechanically verified redaction whose file still
+	 * carries its hash can be marked verified by a person.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testOnlyAnIntactVerifiedRedactionCanBeMarkedVerified(): void {
+		$this->withRedactedFile(redactedContent: 'gelakt');
+		$assessment = [
+			'assessment' => 'deels_openbaar',
+			'documentReference' => 'doc-c',
+			'anonymizedDocument' => '12',
+			'anonymizedDocumentHash' => hash('sha256', 'gelakt'),
+			'redactionStatus' => DocumentRedactor::VERIFIED,
+		];
+		$redactor = $this->redactor();
+
+		$this->assertNull($redactor->verificationRefusal($assessment, null, 'alice'));
+		$this->assertSame(
+			'The redaction status is failed, not verified.',
+			$redactor->verificationRefusal(array_merge($assessment, ['redactionStatus' => DocumentRedactor::FAILED]), null, 'alice')
+		);
+		$this->assertSame(
+			'The redaction status is none, not verified.',
+			$redactor->verificationRefusal(array_merge($assessment, ['redactionStatus' => '']), null, 'alice')
+		);
+		$this->assertSame(
+			'Only a partly public document has a redaction to verify.',
+			$redactor->verificationRefusal(array_merge($assessment, ['assessment' => 'openbaar']), null, 'alice')
+		);
+		$this->assertSame(
+			'The redacted file no longer matches the version that was verified.',
+			$redactor->verificationRefusal(array_merge($assessment, ['anonymizedDocumentHash' => hash('sha256', 'anders')]), null, 'alice')
+		);
+	}//end testOnlyAnIntactVerifiedRedactionCanBeMarkedVerified()
 }//end class

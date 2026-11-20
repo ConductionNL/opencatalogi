@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
@@ -27,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for CatalogiService.
@@ -79,6 +85,155 @@ class CatalogiServiceTest extends TestCase {
 			$this->userSession,
 		);
 	}//end setUp()
+
+	// ──────────────────────────────────────────────────────────
+	// listCatalogs (catalogs task 3)
+	// ──────────────────────────────────────────────────────────
+
+	/**
+	 * The catalog list drops the caller's own scope keys (WOO-581), pins the configured
+	 * register and schema on both the routing keys and `@self`, keeps a non-scope
+	 * `@self` filter, and searches with RBAC on and deleted objects left out.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function testListCatalogsPinsTheConfiguredScopeOverTheCallers(): void {
+		$caller = [
+			'_schemas' => [56],
+			'_registers' => [99],
+			'_schema' => 56,
+			'schema' => 56,
+			'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
+		];
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->expects($this->once())->method('buildSearchQuery')
+			->with(['_search' => 'x'])
+			->willReturn($caller);
+		$objectService->expects($this->once())->method('searchObjectsPaginated')
+			->with(
+				$this->callback(static fn (array $q): bool => array_intersect(['_schemas', '_registers', 'schema', 'register'], array_keys($q)) === []
+					&& isset($q['@self']['schemas'], $q['@self']['registers']) === false
+					&& $q['@self']['owner'] === 'alice'
+					&& $q['@self']['schema'] === '5'
+					&& $q['@self']['register'] === '3'
+					&& $q['_schema'] === '5'
+					&& $q['_register'] === '3'),
+				true,
+				true,
+				false
+			)
+			->willReturn(['results' => [['id' => 1]], 'total' => 1]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$result = $this->service->listCatalogs(requestParams: ['_search' => 'x'], catalogConfig: ['register' => '3', 'schema' => '5']);
+
+		$this->assertSame(['results' => [['id' => 1]], 'total' => 1], $result);
+	}//end testListCatalogsPinsTheConfiguredScopeOverTheCallers()
+
+	/**
+	 * An empty configured register or schema pins nothing for that key; the query
+	 * from buildSearchQuery() reaches the search unchanged.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function testListCatalogsPinsNothingForAnEmptyConfiguredKey(): void {
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('buildSearchQuery')->willReturn(['_limit' => 10]);
+		$objectService->expects($this->once())->method('searchObjectsPaginated')
+			->with(['_limit' => 10], true, true, false)
+			->willReturn(['results' => [], 'total' => 0]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$this->assertSame(
+			['results' => [], 'total' => 0],
+			$this->service->listCatalogs(requestParams: [], catalogConfig: ['register' => '', 'schema' => ''])
+		);
+	}//end testListCatalogsPinsNothingForAnEmptyConfiguredKey()
+
+	/**
+	 * Without OpenRegister installed the list cannot be read and says so.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function testListCatalogsThrowsWithoutOpenRegister(): void {
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+
+		$this->expectException(RuntimeException::class);
+		$this->service->listCatalogs(requestParams: [], catalogConfig: ['register' => '3', 'schema' => '5']);
+	}//end testListCatalogsThrowsWithoutOpenRegister()
+
+	// ──────────────────────────────────────────────────────────
+	// getCatalogSlugs (integration-maintenance-commands)
+	// ──────────────────────────────────────────────────────────
+
+	/**
+	 * Every catalogue's slug in the configured register and schema, each once,
+	 * read outside RBAC; rows without a slug are left out.
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function testGetCatalogSlugsListsEveryCatalogueOnce(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'catalog_schema' => '5',
+				'catalog_register' => '2',
+				default => $default,
+			}
+		);
+		$entity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$entity->method('jsonSerialize')->willReturn(['slug' => 'open-data']);
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->expects($this->once())->method('searchObjects')
+			->with(['@self' => ['register' => '2', 'schema' => '5']], false, false)
+			->willReturn([['slug' => 'woo'], $entity, ['slug' => 'woo'], ['title' => 'no slug'], ['slug' => '']]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$this->assertSame(['woo', 'open-data'], $this->service->getCatalogSlugs());
+	}//end testGetCatalogSlugsListsEveryCatalogueOnce()
+
+	/**
+	 * Without a configured catalogue register or schema there is nothing to list, and nothing is searched.
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function testGetCatalogSlugsIsEmptyWhenUnconfigured(): void {
+		$this->config->method('getValueString')->willReturn('');
+		$this->container->expects($this->never())->method('get');
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$this->assertSame([], $this->service->getCatalogSlugs());
+	}//end testGetCatalogSlugsIsEmptyWhenUnconfigured()
+
+	/**
+	 * The slug of the first catalogue whose schemas include the schema, read outside RBAC.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	public function testGetCatalogSlugForSchemaFindsTheFirstListingCatalogue(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'catalog_schema' => '5',
+				'catalog_register' => '2',
+				default => $default,
+			}
+		);
+		$entity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$entity->method('jsonSerialize')->willReturn(['slug' => 'woo', 'schemas' => ['12', 7]]);
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')
+			->with(['@self' => ['register' => '2', 'schema' => '5']], false, false)
+			->willReturn([['slug' => 'open-data', 'schemas' => [3]], ['slug' => '', 'schemas' => [12]], $entity, ['slug' => 'later', 'schemas' => [12]]]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$this->assertSame('woo', $this->service->getCatalogSlugForSchema(schemaId: '12'));
+		$this->assertSame('woo', $this->service->getCatalogSlugForSchema(schemaId: '7'));
+		$this->assertNull($this->service->getCatalogSlugForSchema(schemaId: '99'));
+		$this->assertNull($this->service->getCatalogSlugForSchema(schemaId: ''));
+	}//end testGetCatalogSlugForSchemaFindsTheFirstListingCatalogue()
 
 	// ──────────────────────────────────────────────────────────
 	// getObjectService
@@ -349,7 +504,7 @@ class CatalogiServiceTest extends TestCase {
 		$cachedData = ['id' => '1', 'slug' => 'test-catalog', 'title' => 'Test'];
 
 		$this->cache->method('get')
-			->with('catalog_slug_test-catalog')
+			->with('catalog_public_slug_test-catalog')
 			->willReturn($cachedData);
 
 		$result = $this->service->getCatalogBySlug('test-catalog');
@@ -361,7 +516,7 @@ class CatalogiServiceTest extends TestCase {
 		$catalogData = ['id' => '2', 'slug' => 'my-catalog', 'title' => 'My Catalog'];
 
 		$this->cache->method('get')
-			->with('catalog_slug_my-catalog')
+			->with('catalog_public_slug_my-catalog')
 			->willReturn(null);
 
 		$this->config->method('getValueString')
@@ -380,7 +535,7 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->cache->expects($this->once())
 			->method('set')
-			->with('catalog_slug_my-catalog', $catalogData, 3600);
+			->with('catalog_public_slug_my-catalog', $catalogData, 3600);
 
 		$this->injectObjectService($objectService);
 
@@ -458,13 +613,103 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertNull($result);
 	}//end testGetCatalogBySlugExceptionReturnsNull()
 
+	public function testGetCatalogBySlugDoesNotServeAnAnonymousCallerWhatASignedInCallerLoaded(): void {
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		// RBAC admits the signed-in caller (first search) and refuses the anonymous one.
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')
+			->willReturnOnConsecutiveCalls([$this->createMockCatalogObject(['slug' => 'draft'])], []);
+		$this->injectObjectService($objectService);
+
+		$cacheFactory = $this->arrayBackedCacheFactory();
+		$signedIn = $this->createMock(IUserSession::class);
+		$signedIn->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$this->assertSame(['slug' => 'draft'], $this->catalogiServiceFor($cacheFactory, $signedIn)->getCatalogBySlug('draft'));
+		$this->assertNull($this->catalogiServiceFor($cacheFactory, $this->userSession)->getCatalogBySlug('draft'));
+	}//end testGetCatalogBySlugDoesNotServeAnAnonymousCallerWhatASignedInCallerLoaded()
+
+	public function testGetCatalogBySlugDoesNotServeASignedInCallerWhatAnotherSignedInCallerLoaded(): void {
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')
+			->willReturnOnConsecutiveCalls([$this->createMockCatalogObject(['slug' => 'draft'])], []);
+		$this->injectObjectService($objectService);
+
+		$cacheFactory = $this->arrayBackedCacheFactory();
+		$admin = $this->createMock(IUserSession::class);
+		$admin->method('getUser')->willReturn($this->createMock(IUser::class));
+		$reader = $this->createMock(IUserSession::class);
+		$reader->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$this->assertSame(['slug' => 'draft'], $this->catalogiServiceFor($cacheFactory, $admin)->getCatalogBySlug('draft'));
+		$this->assertNull($this->catalogiServiceFor($cacheFactory, $reader)->getCatalogBySlug('draft'));
+	}//end testGetCatalogBySlugDoesNotServeASignedInCallerWhatAnotherSignedInCallerLoaded()
+
+	/**
+	 * A cache factory whose distributed cache keeps values in memory, shared by every
+	 * service built from it.
+	 *
+	 * @return ICacheFactory&MockObject
+	 */
+	private function arrayBackedCacheFactory(): ICacheFactory {
+		$store = new \ArrayObject();
+		$cache = $this->createMock(ICache::class);
+		$cache->method('get')->willReturnCallback(static fn (string $key) => $store[$key] ?? null);
+		$cache->method('set')->willReturnCallback(
+			static function (string $key, $value) use ($store): bool {
+				$store[$key] = $value;
+				return true;
+			}
+		);
+
+		$factory = $this->createMock(ICacheFactory::class);
+		$factory->method('createDistributed')->willReturn($cache);
+
+		return $factory;
+	}//end arrayBackedCacheFactory()
+
+	/**
+	 * Build a CatalogiService on the shared mocks with its own cache factory and session.
+	 *
+	 * @param ICacheFactory $cacheFactory The cache factory to use.
+	 * @param IUserSession  $userSession  The caller's session.
+	 *
+	 * @return CatalogiService
+	 */
+	private function catalogiServiceFor(ICacheFactory $cacheFactory, IUserSession $userSession): CatalogiService {
+		return new CatalogiService(
+			$this->config,
+			$this->request,
+			$this->container,
+			$this->appManager,
+			$cacheFactory,
+			$this->logger,
+			$userSession,
+		);
+	}//end catalogiServiceFor()
+
 	// ──────────────────────────────────────────────────────────
 	// invalidateCatalogCache
 	// ──────────────────────────────────────────────────────────
 	public function testInvalidateCatalogCache(): void {
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_test-slug');
+			->with('catalog_public_slug_test-slug');
 
 		$this->service->invalidateCatalogCache('test-slug');
 	}//end testInvalidateCatalogCache()
@@ -518,8 +763,9 @@ class CatalogiServiceTest extends TestCase {
 		$finds = [];
 		$objectService->method('find')->willReturnCallback(
 			static function (...$args) use (&$finds, $catalogEntity) {
+				$args = LegacyObjectArgs::positional(method: 'find', args: $args);
 				$named = [];
-				foreach ((new \ReflectionMethod(ObjectService::class, 'find'))->getParameters() as $i => $param) {
+				foreach (LegacyObjectArgs::parameters(ObjectService::class, 'find') as $i => $param) {
 					$named[$param->getName()] = ($args[$param->getName()] ?? $args[$i] ?? null);
 				}
 
@@ -575,7 +821,7 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_found-slug');
+			->with('catalog_public_slug_found-slug');
 
 		$this->service->invalidateCatalogCacheById(42);
 	}//end testInvalidateCatalogCacheByIdSuccess()
@@ -633,7 +879,7 @@ class CatalogiServiceTest extends TestCase {
 		// warmupCatalogCache invalidates, then calls getCatalogBySlug.
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_warm-slug');
+			->with('catalog_public_slug_warm-slug');
 
 		// getCatalogBySlug will try cache first (returns null after invalidation),
 		// then query the DB.
@@ -689,7 +935,7 @@ class CatalogiServiceTest extends TestCase {
 		// Should call invalidateCatalogCache (remove) then getCatalogBySlug.
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_warmup-by-id');
+			->with('catalog_public_slug_warmup-by-id');
 
 		$this->cache->method('get')
 			->willReturn(null);
@@ -1537,7 +1783,9 @@ class CatalogiServiceTest extends TestCase {
 			->with(['title' => 'C', 'registers' => [21], 'schemas' => ['7']]);
 
 		$objectService = $this->createMock(ObjectService::class);
-		$objectService->expects($this->once())->method('saveObject')->with($entity);
+		$objectService->expects($this->once())->method('saveObject')->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+				'object' => $entity,
+			]));
 
 		$this->injectAll($registerMapper, $schemaMapper, $objectService);
 
@@ -1950,4 +2198,55 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame(['results' => [], 'total' => 0], $response->getData());
 	}//end testIndexFailsClosedWhenTheGuardEmptiesTheScope()
+
+	/**
+	 * A catalogue id that matches no catalogue answers 404 with a static message, and no publication search runs.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 */
+	public function testIndexAnswers404ForAnUnknownCatalogId(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+		$this->injectObjectService($objectService);
+
+		$response = $this->service->index('no-such-catalog');
+
+		$this->assertSame(404, $response->getStatus());
+		$this->assertSame(['message' => 'Catalog not found'], $response->getData());
+	}//end testIndexAnswers404ForAnUnknownCatalogId()
+
+	/**
+	 * Without a catalogue id, no catalogues at all is still an empty list, not a 404.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 */
+	public function testIndexWithoutAnIdAndNoCatalogsIsAnEmptyList(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([]);
+		$this->injectObjectService($objectService);
+
+		$response = $this->service->index();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['results' => [], 'total' => 0], $response->getData());
+	}//end testIndexWithoutAnIdAndNoCatalogsIsAnEmptyList()
 }//end class

@@ -1,9 +1,15 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Controller\FederationController;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Http\JSONResponse;
@@ -11,6 +17,9 @@ use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Unit tests for FederationController.
@@ -31,7 +40,6 @@ class FederationControllerTest extends TestCase {
 			->willReturnCallback(fn (string $text, array $params = []) => $text);
 
 		$this->controller = new FederationController(
-			'opencatalogi',
 			$this->request,
 			$this->publicationService,
 			$this->l10n
@@ -181,16 +189,23 @@ class FederationControllerTest extends TestCase {
 		$this->assertEquals(500, $response->getStatus());
 	}
 
-	public function testPublicationAttachmentsDelegatesToService(): void {
-		$expectedResponse = new JSONResponse(['files' => []]);
+	/**
+	 * The attachments come from the federated lookup with the request's parameters,
+	 * so a remote publication's attachments are read from its source.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testPublicationAttachmentsDelegatesToTheFederatedLookup(): void {
+		$expectedResponse = new JSONResponse(['results' => []]);
+		$this->request->method('getParams')->willReturn(['_aggregate' => 'false']);
 
-		$this->publicationService->method('attachments')
-			->with('pub-123')
+		$this->publicationService->expects($this->never())->method('attachments');
+		$this->publicationService->expects($this->once())
+			->method('getFederatedAttachments')
+			->with('pub-123', ['_aggregate' => 'false'])
 			->willReturn($expectedResponse);
 
-		$response = $this->controller->publicationAttachments('pub-123');
-
-		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame($expectedResponse, $this->controller->publicationAttachments('pub-123'));
 	}
 
 	public function testPublicationDownloadDelegatesToService(): void {
@@ -204,4 +219,326 @@ class FederationControllerTest extends TestCase {
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
 	}
+
+	/**
+	 * A controller over a request carrying an Accept-Language header and a
+	 * query service that records the order of the language and the read.
+	 *
+	 * @param array<int, string> $order The recorded order.
+	 *
+	 * @return FederationController The controller.
+	 */
+	private function controllerInEnglish(array &$order): FederationController {
+		$request = $this->createMock(ServerAwareRequest::class);
+		$request->method('getParams')->willReturn([]);
+		$request->server = ['HTTP_ACCEPT_LANGUAGE' => 'en'];
+
+		$queryService = $this->createMock(PublicationQueryServiceInterface::class);
+		$queryService->expects($this->once())
+			->method('applyVisitorLanguage')
+			->with([], 'en')
+			->willReturnCallback(static function () use (&$order): string {
+				$order[] = 'language';
+				return 'en';
+			});
+		$queryService->method('languageHeaders')->willReturn(['Content-Language' => 'en', 'X-Source-Language' => 'nl']);
+
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(static function (string $class) use ($queryService): object {
+			if ($class === PublicationQueryServiceInterface::class) {
+				return $queryService;
+			}
+
+			throw new class ('not registered') extends \RuntimeException implements NotFoundExceptionInterface {
+			};
+		});
+
+		return new FederationController(
+			request: $request,
+			publicationService: $this->publicationService,
+			l10n: $this->l10n,
+			container: $container
+		);
+	}
+
+	/**
+	 * The federated list sets the visitor's language before it reads locally or
+	 * asks a peer, and names the language served (REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testPublicationsAreReadInTheVisitorsLanguage(): void {
+		$order = [];
+		$controller = $this->controllerInEnglish(order: $order);
+		$this->publicationService->method('getAggregatedPublications')
+			->willReturnCallback(static function () use (&$order): array {
+				$order[] = 'read';
+				return ['results' => [], 'total' => 0];
+			});
+
+		$response = $controller->publications();
+
+		$this->assertSame(['language', 'read'], $order);
+		$this->assertSame('en', $response->getHeaders()['Content-Language']);
+		$this->assertSame('nl', $response->getHeaders()['X-Source-Language']);
+	}
+
+	/**
+	 * A federated publication is read in the visitor's language too.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testAPublicationIsReadInTheVisitorsLanguage(): void {
+		$order = [];
+		$controller = $this->controllerInEnglish(order: $order);
+		$this->publicationService->method('getFederatedPublication')
+			->willReturnCallback(static function () use (&$order): array {
+				$order[] = 'read';
+				return ['data' => ['id' => 'p1'], 'status' => 200, 'federated' => true];
+			});
+
+		$response = $controller->publication('p1');
+
+		$this->assertSame(['language', 'read'], $order);
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame('en', $response->getHeaders()['Content-Language']);
+	}
+
+	/**
+	 * A federation controller whose allowlist is $allowlist, called from $origin.
+	 *
+	 * @param string $allowlist The `cors_allowed_origins` setting.
+	 * @param string $origin    The caller's Origin header.
+	 *
+	 * @return FederationController The controller.
+	 */
+	private function controllerCalledFrom(string $allowlist, string $origin): FederationController {
+		$config = $this->createMock(\OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default): string => ($key === 'cors_allowed_origins' ? $allowlist : $default)
+		);
+		$this->request->method('getHeader')->willReturnCallback(
+			static fn (string $name): string => ($name === 'Origin' ? $origin : '')
+		);
+
+		return new FederationController(
+			request: $this->request,
+			publicationService: $this->publicationService,
+			l10n: $this->l10n,
+			container: $this->containerWith(service: $config, class: \OCP\IAppConfig::class)
+		);
+	}//end controllerCalledFrom()
+
+	/**
+	 * A municipality's website on the allowlist is named on every federation answer.
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
+	 *
+	 * @return void
+	 */
+	public function testAnAllowedWebsiteIsNamedOnEveryFederationAnswer(): void {
+		$_SERVER['HTTP_HOST'] = 'localhost';
+		$_SERVER['REQUEST_URI'] = '/api/federation/publications';
+		$this->request->method('getParams')->willReturn([]);
+		$this->publicationService->method('getAggregatedPublications')->willReturn(['results' => []]);
+		$this->publicationService->method('getFederatedPublication')->willReturn(['data' => ['id' => 'pub-1'], 'status' => 200]);
+		$this->publicationService->method('getFederatedUses')->willThrowException(new \RuntimeException('peer down'));
+		$this->publicationService->method('getFederatedUsed')->willReturn(['data' => [], 'status' => 200]);
+		$this->publicationService->method('getFederatedAttachments')->willReturn(new JSONResponse([]));
+		$this->publicationService->method('download')->willReturn(new JSONResponse([], 404));
+		$controller = $this->controllerCalledFrom(allowlist: 'https://www.voorbeeldgemeente.nl', origin: 'https://www.voorbeeldgemeente.nl');
+
+		$answers = [
+			'publications' => $controller->publications(),
+			'publication' => $controller->publication('pub-1'),
+			'publicationUses' => $controller->publicationUses('pub-1'),
+			'publicationUsed' => $controller->publicationUsed('pub-1'),
+			'publicationAttachments' => $controller->publicationAttachments('pub-1'),
+			'publicationDownload' => $controller->publicationDownload('pub-1'),
+		];
+
+		foreach ($answers as $action => $response) {
+			$headers = $response->getHeaders();
+			$this->assertSame('https://www.voorbeeldgemeente.nl', $headers['Access-Control-Allow-Origin'], $action);
+			$this->assertSame('false', $headers['Access-Control-Allow-Credentials'], $action);
+			$this->assertSame('Origin', $headers['Vary'], $action);
+		}
+
+		$this->assertSame(500, $answers['publicationUses']->getStatus());
+
+	}//end testAnAllowedWebsiteIsNamedOnEveryFederationAnswer()
+
+	/**
+	 * A preflight from a site that is not on the list does not name that site.
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
+	 *
+	 * @return void
+	 */
+	public function testAPreflightFromAnUnlistedSiteDoesNotNameIt(): void {
+		$controller = $this->controllerCalledFrom(allowlist: 'https://www.voorbeeldgemeente.nl', origin: 'https://elders.example');
+
+		$headers = $controller->preflightedCors()->getHeaders();
+
+		$this->assertSame('https://www.voorbeeldgemeente.nl', $headers['Access-Control-Allow-Origin']);
+		$this->assertSame('GET, OPTIONS', $headers['Access-Control-Allow-Methods']);
+		$this->assertSame('false', $headers['Access-Control-Allow-Credentials']);
+
+	}//end testAPreflightFromAnUnlistedSiteDoesNotNameIt()
+
+	/**
+	 * A federation controller whose publication has a comment period with these dates.
+	 *
+	 * @param array<string, mixed>|null $period The stored period, or null for none.
+	 *
+	 * @return FederationController
+	 */
+	private function controllerWithPeriod(?array $period): FederationController {
+		$config = $this->createMock(\OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key): string => match ($key) {
+				'publication_register' => '5',
+				'comment_period_schema' => '9',
+				default => '',
+			}
+		);
+		$objects = new class ($period) {
+			/** @var list<array<string, mixed>> */
+			public array $queries = [];
+
+			/**
+			 * @param array<string, mixed>|null $period The period it holds.
+			 */
+			public function __construct(private ?array $period) {
+			}
+
+			/**
+			 * @return array<string, mixed>
+			 */
+			public function searchObjectsPaginated(array $query, bool $_rbac = true, bool $_multitenancy = true): array {
+				$this->queries[] = ['query' => $query, 'rbac' => $_rbac];
+				return ['results' => ($this->period === null ? [] : [$this->period])];
+			}
+		};
+		$container = $this->createMock(\Psr\Container\ContainerInterface::class);
+		$container->method('get')->willReturn($objects);
+		$this->objects = $objects;
+
+		$periods = new \OCA\OpenCatalogi\Service\Publication\CommentPeriodService(
+			$this->createMock(\OCA\OpenCatalogi\Service\Publication\TermRoll::class),
+			$this->createMock(\OCP\IAppConfig::class),
+			$this->createMock(\OCP\IURLGenerator::class)
+		);
+		$commentPeriods = new \OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod(
+			$periods,
+			$config,
+			$container,
+			$this->createMock(\Psr\Log\LoggerInterface::class)
+		);
+
+		$this->publicationService->method('getFederatedPublication')
+			->willReturn(['status' => 200, 'data' => ['id' => 'pub-1', 'title' => 'Besluit']]);
+		$this->request->method('getParams')->willReturn([]);
+
+		return new FederationController(
+			$this->request,
+			$this->publicationService,
+			$this->l10n,
+			null,
+			new \OCA\OpenCatalogi\Service\Publication\LocalPublicationState(null, $commentPeriods)
+		);
+	}
+
+	/** @var object|null The object service double of the last controllerWithPeriod(). */
+	private ?object $objects = null;
+
+	/**
+	 * REQ-PDP-003: an open period on the federation endpoint carries its end and the reaction form.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 */
+	public function testThePublicationCarriesItsOpenCommentPeriod(): void {
+		$end = (new \DateTimeImmutable('+7 days', new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z');
+		$controller = $this->controllerWithPeriod([
+			'publication' => 'pub-1',
+			'startDate' => (new \DateTimeImmutable('-1 day', new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z'),
+			'endDate' => $end,
+			'termDays' => 14,
+			'legalRemedy' => 'zienswijze',
+			'reactionFormUrl' => 'https://example.org/reageer',
+		]);
+
+		$data = $controller->publication('pub-1')->getData();
+
+		$this->assertSame('open', $data['commentPeriod']['state']);
+		$this->assertSame($end, $data['commentPeriod']['endDate']);
+		$this->assertSame('https://example.org/reageer', $data['commentPeriod']['reactionFormUrl']);
+		$this->assertArrayNotHasKey('commentPeriodError', $data);
+		$this->assertSame('pub-1', $this->objects->queries[0]['query']['publication']);
+		$this->assertSame(['register' => '5', 'schema' => '9'], $this->objects->queries[0]['query']['@self']);
+	}
+
+	/**
+	 * REQ-PDP-003: dates that cannot be read give an error, not a state.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 */
+	public function testUnreadableDatesGiveAnErrorNotAState(): void {
+		$controller = $this->controllerWithPeriod([
+			'publication' => 'pub-1',
+			'startDate' => 'not a date',
+			'endDate' => 'also not',
+		]);
+
+		$data = $controller->publication('pub-1')->getData();
+
+		$this->assertSame('unreadable-dates', $data['commentPeriodError']);
+		$this->assertArrayNotHasKey('commentPeriod', $data);
+	}
+
+	/**
+	 * A closed period carries no reaction form, and a publication without a period carries no key.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 */
+	public function testAClosedPeriodHasNoFormAndNoPeriodHasNoKey(): void {
+		$controller = $this->controllerWithPeriod([
+			'publication' => 'pub-1',
+			'startDate' => '2020-01-01T00:00:00Z',
+			'endDate' => '2020-01-15T00:00:00Z',
+			'reactionFormUrl' => 'https://example.org/reageer',
+		]);
+		$closed = $controller->publication('pub-1')->getData();
+		$this->assertSame('closed', $closed['commentPeriod']['state']);
+		$this->assertNull($closed['commentPeriod']['reactionFormUrl']);
+
+		$this->setUp();
+		$none = $this->controllerWithPeriod(null)->publication('pub-1')->getData();
+		$this->assertArrayNotHasKey('commentPeriod', $none);
+		$this->assertArrayNotHasKey('commentPeriodError', $none);
+	}
+
+	/**
+	 * A container that holds one service.
+	 *
+	 * @param object $service The service.
+	 * @param string $class   The id it is resolved by.
+	 *
+	 * @return \Psr\Container\ContainerInterface The container.
+	 */
+	private function containerWith(object $service, string $class): \Psr\Container\ContainerInterface {
+		$container = $this->createMock(originalClassName: \Psr\Container\ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id) use ($service, $class): object {
+				if ($id === $class) {
+					return $service;
+				}
+
+				throw new class ('No ' . $id) extends \RuntimeException implements \Psr\Container\NotFoundExceptionInterface {
+				};
+			}
+		);
+
+		return $container;
+	}//end containerWith()
 }

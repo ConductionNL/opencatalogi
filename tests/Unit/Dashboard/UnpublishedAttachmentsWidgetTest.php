@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Dashboard;
@@ -29,7 +34,7 @@ class UnpublishedAttachmentsWidgetTest extends TestCase {
 	}
 
 	public function testGetTitle(): void {
-		$this->assertSame('Concept bijlage', $this->widget->getTitle());
+		$this->assertSame('Unpublished documents', $this->widget->getTitle());
 	}
 
 	public function testGetOrder(): void {

@@ -17,6 +17,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -27,7 +30,9 @@ use DateTime;
 use OCA\OpenCatalogi\Service\PubliccodeHarvestService;
 use OCA\OpenRegister\Db\Flow;
 use OCA\OpenRegister\Db\FlowRun;
+use OCA\OpenRegister\Db\FlowRunListing;
 use OCA\OpenRegister\Db\FlowRunMapper;
+use OCA\OpenRegister\Db\FlowRunViewer;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\Flow\FlowService;
 use OCA\OpenRegister\Service\ObjectService;
@@ -36,6 +41,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\PubliccodeHarvestService
@@ -100,12 +107,17 @@ class PubliccodeHarvestServiceTest extends TestCase {
 
 		$objects->method('find')->willReturnCallback(
 			function (int|string $id, ...$rest): ?ObjectEntity {
+				$rest = array_slice(LegacyObjectArgs::positional(method: 'find', args: [$id, ...$rest]), 1);
 				$this->calls[] = ['find', self::passedArguments(method: 'find', arguments: func_get_args())];
 				return ($this->store[(string)$id] ?? null);
 			}
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array|ObjectEntity $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, mixed ...$rest): ObjectEntity {
+			function (array|ObjectEntity $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true, mixed ...$rest): ObjectEntity {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$arguments = self::passedArguments(method: 'saveObject', arguments: func_get_args());
 				$arguments['object'] = $object['slug'];
 				$this->calls[] = ['saveObject', $arguments];
@@ -138,7 +150,7 @@ class PubliccodeHarvestServiceTest extends TestCase {
 	 */
 	private static function passedArguments(string $method, array $arguments): array {
 		$named = [];
-		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $index => $parameter) {
+		foreach (LegacyObjectArgs::parameters(ObjectService::class, $method) as $index => $parameter) {
 			if (array_key_exists($index, $arguments) === false) {
 				break;
 			}
@@ -232,8 +244,9 @@ class PubliccodeHarvestServiceTest extends TestCase {
 			$runs = ($runsByWorld[$name] ?? []);
 			$runMapper = $this->getMockBuilder(FlowRunMapper::class)->disableOriginalConstructor()->onlyMethods(['findAllRuns'])->getMock();
 			$runMapper->method('findAllRuns')->willReturnCallback(
-				function (?string $flowId = null, ?string $status = null, int $limit = 50) use ($runs): array {
-					$this->calls[] = ['findAllRuns', $flowId, $status, $limit];
+				function (FlowRunListing $listing, FlowRunViewer $viewer) use ($runs): array {
+					$this->assertNull($viewer->requesterUid, 'The harvest status reads its own flow as the system.');
+					$this->calls[] = ['findAllRuns', $listing->filter->flowId, $listing->filter->status, $listing->limit];
 					return $runs;
 				}
 			);
@@ -521,9 +534,10 @@ class PubliccodeHarvestServiceTest extends TestCase {
 			->onlyMethods(['findAllRuns'])
 			->getMock();
 		$mapper->method('findAllRuns')->willReturnCallback(
-			function (?string $flowId = null, ?string $status = null, int $limit = 50) use ($runs): array {
-				$this->assertSame('flow-1', $flowId, 'The last run is read for the harvest flow only.');
-				$this->assertSame(1, $limit);
+			function (FlowRunListing $listing, FlowRunViewer $viewer) use ($runs): array {
+				$this->assertSame('flow-1', $listing->filter->flowId, 'The last run is read for the harvest flow only.');
+				$this->assertSame(1, $listing->limit);
+				$this->assertNull($viewer->requesterUid, 'The harvest status reads its own flow as the system.');
 				return $runs;
 			}
 		);

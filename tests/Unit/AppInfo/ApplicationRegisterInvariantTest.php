@@ -4,6 +4,9 @@
  * Pins the load-order invariant that keeps OpenCatalogi's register() safe
  * WITHOUT an autoloader prelude.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * THE HAZARD
  *
  * OC_App::getEnabledApps() sort()s the app list, and Coordinator::registerApps()
@@ -48,9 +51,6 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  *
  * @link https://www.OpenCatalogi.nl
  */
@@ -284,4 +284,149 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		}
 
 	}//end testRegisterCallsEveryComponentRegistrar()
+
+	/**
+	 * The read-only guard of the Woo request schema listens on OpenRegister's real pre-save events.
+	 *
+	 * A listener on an event OpenRegister never dispatches, or on the post-save
+	 * events, refuses nothing: the write would already have happened.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-4.1
+	 */
+	public function testTheWooRequestReadOnlyGuardListensOnTheRealPreSaveEvents(): void {
+		$src = $this->source($this->registrars()['ListenerRegistrar']);
+		$this->assertStringContainsString(
+			'$this->registerWriteGuards(context: $context);',
+			$this->methodBody($src, 'public function register('),
+			'register() must register the write guards'
+		);
+		$body = $this->methodBody($src, 'private function registerWriteGuards(');
+
+		foreach (['ObjectCreatingEvent', 'ObjectUpdatingEvent'] as $event) {
+			$this->assertMatchesRegularExpression(
+				'/registerEventListener\(\s*' . $event . '::class,\s*HandedOverRecordsListener::class\s*\)/',
+				$body,
+				'the Woo request read-only guard must listen on ' . $event
+			);
+			$this->assertStringContainsString('use OCA\\OpenRegister\\Event\\' . $event . ';', $src, $event . ' must be OpenRegister\'s own event');
+		}
+
+		$this->assertDoesNotMatchRegularExpression(
+			'/registerEventListener\(\s*Object(Created|Updated)Event::class,\s*HandedOverRecordsListener::class/',
+			$body,
+			'on a post-save event the guard would refuse a write that already happened'
+		);
+	}//end testTheWooRequestReadOnlyGuardListensOnTheRealPreSaveEvents()
+
+	/**
+	 * The Woo request routes are guarded by the hand-over middleware.
+	 *
+	 * Without it the routes keep answering without dossiq and keep changing
+	 * requests that moved to dossiq.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-5.1
+	 */
+	public function testTheWooRequestRoutesAreGuardedByTheHandoverMiddleware(): void {
+		$this->assertMatchesRegularExpression(
+			'/registerMiddleware\(\s*HandoverMiddleware::class\s*\)/',
+			$this->methodBody($this->source($this->registrars()['MiddlewareRegistrar']), 'public function register('),
+			'MiddlewareRegistrar::register() must register HandoverMiddleware'
+		);
+	}//end testTheWooRequestRoutesAreGuardedByTheHandoverMiddleware()
+
+	/**
+	 * The listener that writes a publication's public and officer pages runs on every create (REQ-PTS-001).
+	 *
+	 * @return void
+	 */
+	public function testThePublicationLinksListenerIsRegistered(): void {
+		$pairs   = [];
+		$context = $this->createMock(\OCP\AppFramework\Bootstrap\IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$pairs): void {
+				$pairs[] = [$event, $listener];
+			}
+		);
+
+		(new \OCA\OpenCatalogi\Listener\ListenerRegistrar())->register($context);
+
+		$this->assertContains(
+			['OCA\OpenRegister\Event\ObjectCreatingEvent', \OCA\OpenCatalogi\Listener\PublicationLinksListener::class],
+			$pairs
+		);
+		$this->assertStringContainsString('(new ListenerRegistrar())->register($context);', $this->methodBody($this->source(), 'public function register('));
+	}//end testThePublicationLinksListenerIsRegistered()
+
+	/**
+	 * Application::register() subscribes the DiWoo completeness listener to both pre-save events.
+	 *
+	 * Without it on ObjectCreatingEvent, a new Woo publication goes public with its
+	 * mandatory metadata missing; without it on ObjectUpdatingEvent, an edit does
+	 * (REQ-DWP-003). Recorded through the context register() is handed, so the
+	 * registrar it delegates to is followed as Nextcloud follows it.
+	 *
+	 * @return void
+	 */
+	public function testTheDiwooCompletenessListenerIsRegisteredOnBothPreSaveEvents(): void {
+		$listeners = [];
+		$context = $this->createMock(\OCP\AppFramework\Bootstrap\IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$listeners): void {
+				$listeners[$listener][] = $event;
+			}
+		);
+
+		$application = (new \ReflectionClass(\OCA\OpenCatalogi\AppInfo\Application::class))->newInstanceWithoutConstructor();
+		$application->register($context);
+
+		$this->assertSame(
+			['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'],
+			($listeners[\OCA\OpenCatalogi\Listener\DiwooCompletenessListener::class] ?? [])
+		);
+
+	}//end testTheDiwooCompletenessListenerIsRegisteredOnBothPreSaveEvents()
+
+	/**
+	 * The no-index middleware is registered, so officer responses carry noindex (REQ-WAB-003).
+	 *
+	 * @return void
+	 */
+	public function testRegisterRegistersTheNoIndexMiddleware(): void {
+		$file = $this->registrars()['MiddlewareRegistrar'] ?? null;
+		$this->assertIsString($file, 'lib/Middleware/MiddlewareRegistrar.php must exist');
+
+		$body = $this->methodBody($this->source($file), 'public function register(');
+
+		$this->assertStringContainsString(
+			'$context->registerMiddleware(NoIndexMiddleware::class);',
+			$body,
+			'MiddlewareRegistrar::register() does not register NoIndexMiddleware, so officer responses are not marked noindex'
+		);
+
+	}//end testRegisterRegistersTheNoIndexMiddleware()
+
+	/**
+	 * register() subscribes the batch review listener to OpenRegister's task terminal event,
+	 * by name and unconditionally (woo-review-surface REQ-WRV-002).
+	 *
+	 * The event class is named, never probed: at register() time the OpenRegister
+	 * prefix is not on the autoloader yet, and a probe would silently drop the
+	 * subscription, leaving a rejected review task without effect on its batch.
+	 *
+	 * @return void
+	 */
+	public function testRegisterSubscribesTheBatchReviewListener(): void {
+		$body = $this->methodBody($this->source($this->registrars()['ListenerRegistrar']), 'public function register(');
+
+		$this->assertStringContainsString(
+			'registerEventListener(TaskTerminalEvent::class, BatchReviewTaskListener::class)',
+			$body,
+			'ListenerRegistrar::register() does not subscribe BatchReviewTaskListener to TaskTerminalEvent'
+		);
+
+	}//end testRegisterSubscribesTheBatchReviewListener()
 }//end class

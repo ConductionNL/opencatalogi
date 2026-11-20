@@ -34,7 +34,9 @@ namespace OCA\OpenCatalogi\Service;
 use Exception;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\Common\Exception\NotFoundException;
 use OCP\IAppConfig;
@@ -127,6 +129,13 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @var array<string> List of available schemas from catalogs
 	 */
 	private array $availableSchemas = [];
+
+	/**
+	 * Whether the last getCatalogFilters() search found a catalogue; null when no scope is configured.
+	 *
+	 * @var boolean|null
+	 */
+	private ?bool $catalogFound = null;
 
 	/**
 	 * Cache instance for storing catalog data.
@@ -518,6 +527,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	public function getCatalogFilters(null|string|int $catalogId = null): array {
 		$resolver = new CatalogScopeResolver(config: $this->config, logger: $this->logger);
 		$scope = $resolver->configuredScope();
+		$this->catalogFound = null;
 		if ($scope === null) {
 			return $this->storeCatalogFilters(registers: [], schemas: []);
 		}
@@ -525,6 +535,7 @@ class CatalogiService implements CatalogiServiceInterface {
 		// Get catalogs using searchObjects (handles deleted field correctly).
 		$query = $resolver->searchQuery(scope: $scope, catalogId: $catalogId);
 		$catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
+		$this->catalogFound = (empty($catalogs) === false);
 
 		// SCH-PFTS-CAT-002 (WOO-581): this scope serves `#[PublicPage]`
 		// `/api/catalogi/{id}`, which searched it with `_rbac: true` unguarded, so an
@@ -673,10 +684,114 @@ class CatalogiService implements CatalogiServiceInterface {
 	}//end intParam()
 
 	/**
+	 * The slug of the first catalogue whose `schemas` include this schema, read outside RBAC.
+	 *
+	 * @param string $schemaId The schema id.
+	 *
+	 * @return string|null The slug, or null when no catalogue lists the schema.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	public function getCatalogSlugForSchema(string $schemaId): ?string {
+		if ($schemaId === '') {
+			return null;
+		}
+
+		foreach ($this->allCatalogs() as $catalog) {
+			if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
+				$catalog = $catalog->jsonSerialize();
+			}
+
+			$schemas = [];
+			if (is_array($catalog) === true && is_array($catalog['schemas'] ?? null) === true) {
+				$schemas = array_map('strval', array_filter($catalog['schemas'], 'is_scalar'));
+			}
+
+			$slug = self::catalogSlugOf(catalog: $catalog);
+			if ($slug !== null && in_array($schemaId, $schemas, true) === true) {
+				return $slug;
+			}
+		}
+
+		return null;
+	}//end getCatalogSlugForSchema()
+
+	/**
+	 * The slugs of every catalogue in the configured catalogue register and schema.
+	 *
+	 * Read outside RBAC: the maintenance command that asks acts for the operator on
+	 * every catalogue, not for a caller.
+	 *
+	 * @return array<int, string> The slugs, each once, in the order found; empty when unconfigured.
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function getCatalogSlugs(): array {
+		$slugs = [];
+		foreach ($this->allCatalogs() as $catalog) {
+			$slug = self::catalogSlugOf(catalog: $catalog);
+			if ($slug !== null) {
+				$slugs[$slug] = $slug;
+			}
+		}
+
+		return array_values($slugs);
+	}//end getCatalogSlugs()
+
+	/**
+	 * Every catalogue in the configured register and schema; none when unconfigured.
+	 *
+	 * @return iterable<mixed>
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private function allCatalogs(): iterable {
+		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+		$objectService = null;
+		if ($schema !== '' && $register !== '') {
+			$objectService = $this->getObjectService();
+		}
+
+		if ($objectService === null) {
+			return [];
+		}
+
+		return $objectService->searchObjects(query: ['@self' => ['register' => $register, 'schema' => $schema]], _rbac: false, _multitenancy: false);
+	}//end allCatalogs()
+
+	/**
+	 * A catalogue's slug, or null when it has none.
+	 *
+	 * @param mixed $catalog The catalogue object or array.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private static function catalogSlugOf(mixed $catalog): ?string {
+		if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
+			$catalog = $catalog->jsonSerialize();
+		}
+
+		$slug = null;
+		if (is_array($catalog) === true) {
+			$slug = ($catalog['slug'] ?? null);
+		}
+
+		if (is_string($slug) === true && $slug !== '') {
+			return $slug;
+		}
+
+		return null;
+	}//end catalogSlugOf()
+
+	/**
 	 * Get a catalog by its slug from cache or database.
 	 *
-	 * This method first attempts to retrieve the catalog from cache. If not found in cache,
-	 * it queries the database and stores the result in cache for future requests.
+	 * The lookup runs with RBAC, so its result depends on the caller. Only the anonymous
+	 * view is cached, because it is the same for every anonymous caller; a signed-in
+	 * caller always queries the database.
 	 *
 	 * @param string $slug The slug of the catalog to retrieve
 	 *
@@ -686,16 +801,18 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function getCatalogBySlug(string $slug): ?array {
-		// Step 1: Try to get from cache.
-		$cacheKey = 'catalog_slug_' . $slug;
-		$cachedCatalog = $this->cache->get($cacheKey);
+		$cacheKey = $this->publicCatalogCacheKey(slug: $slug);
+		$useCache = $this->isAnonymousCaller();
+		$cachedCatalog = null;
+		if ($useCache === true) {
+			$cachedCatalog = $this->cache->get($cacheKey);
+		}
 
 		if ($cachedCatalog !== null) {
 			$this->logger->debug('Catalog retrieved from cache', ['slug' => $slug]);
 			return $cachedCatalog;
 		}
 
-		// Step 2: Not in cache, query the database.
 		$this->logger->debug('Catalog not in cache, querying database', ['slug' => $slug]);
 
 		try {
@@ -740,9 +857,10 @@ class CatalogiService implements CatalogiServiceInterface {
 			// (catalog schema grants public read only when published <= $now).
 			$catalog = $catalogs[0]->jsonSerialize();
 
-			// Step 3: Store in cache (TTL: 1 hour = 3600 seconds).
-			$this->cache->set($cacheKey, $catalog, 3600);
-			$this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
+			if ($useCache === true) {
+				$this->cache->set($cacheKey, $catalog, 3600);
+				$this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
+			}
 
 			return $catalog;
 		} catch (Exception $e) {
@@ -771,11 +889,36 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function invalidateCatalogCache(string $slug): void {
-		$cacheKey = 'catalog_slug_' . $slug;
-		$this->cache->remove($cacheKey);
+		$this->cache->remove($this->publicCatalogCacheKey(slug: $slug));
 		$this->logger->debug('Catalog cache invalidated', ['slug' => $slug]);
 
 	}//end invalidateCatalogCache()
+
+	/**
+	 * Cache key of the anonymous view of a catalog.
+	 *
+	 * @param string $slug The catalog slug.
+	 *
+	 * @return string The cache key.
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	private function publicCatalogCacheKey(string $slug): string {
+		return 'catalog_public_slug_' . $slug;
+
+	}//end publicCatalogCacheKey()
+
+	/**
+	 * Whether the current request has no signed-in user.
+	 *
+	 * @return bool True for an anonymous caller.
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	private function isAnonymousCaller(): bool {
+		return $this->userSession === null || $this->userSession->getUser() === null;
+
+	}//end isAnonymousCaller()
 
 	/**
 	 * Invalidate cache for a catalog by its ID.
@@ -881,8 +1024,7 @@ class CatalogiService implements CatalogiServiceInterface {
 
 		$catalog = $this->getObjectService()->find(
 			id: $catalogId,
-			register: $register,
-			schema: $schema
+			options: new ObjectFindOptions(register: $register, schema: $schema)
 		);
 
 		return ($catalog->jsonSerialize()['slug'] ?? null);
@@ -903,6 +1045,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+	 * @spec openspec/changes/catalogs/tasks.md#task-4
 	 */
 	public function index(null|string|int $catalogId = null): JSONResponse {
 		// Get config and fetch objects.
@@ -910,6 +1053,11 @@ class CatalogiService implements CatalogiServiceInterface {
 
 		// Get the context for the catalog.
 		$context = $this->getCatalogFilters(catalogId: $catalogId);
+
+		// CAT-002: a named catalogue that does not exist is a 404 with a static message.
+		if ($catalogId !== null && $this->catalogFound === false) {
+			return $this->catalogNotFound();
+		}
 
 		// FAIL CLOSED on an empty schema or register scope (WOO-581): nothing
 		// configured, or every schema dropped by the read-rule guard. Without this the
@@ -936,6 +1084,66 @@ class CatalogiService implements CatalogiServiceInterface {
 		// Return paginated results.
 		return new JSONResponse($result);
 	}//end index()
+
+	/**
+	 * Lists the catalog objects themselves for the public `GET /api/catalogi`.
+	 *
+	 * The caller's own register/schema scope keys are dropped first (WOO-581) and
+	 * the configured catalog register/schema is pinned on both the top-level
+	 * magic-mapper routing keys (`_register`/`_schema`) and the `@self` filter, so
+	 * a query parameter can never widen the scope. RBAC decides which catalogs the
+	 * caller may read (the catalog schema grants the public group read only when
+	 * `published <= $now`); multitenancy stays enabled and deleted objects are left out.
+	 *
+	 * @param array<string, mixed>  $requestParams The request parameters.
+	 * @param array<string, string> $catalogConfig The resolved `register`/`schema` pair.
+	 *
+	 * @return array<string, mixed> The paginated result of searchObjectsPaginated().
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function listCatalogs(array $requestParams, array $catalogConfig): array {
+		$objectService = $this->getObjectService();
+
+		// The configured scope below wins for the rows, but OR's facet path reads
+		// `@self.schemas ?? _schemas` first; drop every caller scope key (WOO-581).
+		$searchQuery = CallerScope::strip(query: $objectService->buildSearchQuery($requestParams));
+
+		// The @self keys produced by buildSearchQuery are normalised downstream, so the
+		// configured scope is pinned via the magic-mapper routing keys as well.
+		if (empty($catalogConfig['schema']) === false) {
+			$searchQuery['_schema'] = $catalogConfig['schema'];
+			$searchQuery['@self']['schema'] = $catalogConfig['schema'];
+		}
+
+		if (empty($catalogConfig['register']) === false) {
+			$searchQuery['_register'] = $catalogConfig['register'];
+			$searchQuery['@self']['register'] = $catalogConfig['register'];
+		}
+
+		return $objectService->searchObjectsPaginated(
+			query: $searchQuery,
+			_rbac: true,
+			deleted: false
+		);
+	}//end listCatalogs()
+
+	/**
+	 * The answer for a catalogue id that matches no catalogue.
+	 *
+	 * The message is static: no id, query or internal detail is echoed back.
+	 *
+	 * @return JSONResponse A 404 with a `message` field.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 */
+	private function catalogNotFound(): JSONResponse {
+		return new JSONResponse(['message' => 'Catalog not found'], Http::STATUS_NOT_FOUND);
+	}//end catalogNotFound()
 
 	/**
 	 * Build the search query for index() from the request config and the catalogue scope.
@@ -982,7 +1190,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @return array<int, array<string, mixed>> The result rows as arrays.
 	 */
 	private function envelopeResults(array $results): array {
-		$isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
+		$isAnonymous = $this->isAnonymousCaller();
 
 		return array_map(
 			fn ($object): array => $this->envelopeOf(object: $object, isAnonymous: $isAnonymous),

@@ -7,9 +7,9 @@
 // partial-PUT semantics.
 
 import { translate as t } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcModal, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import { navigationStore } from '../../store/store.js'
+import { updateListingLevel } from './listingRequests.js'
 
 // `value` = wire enum for ListingsController::UPDATABLE_LISTING_FIELDS;
 // `label` = the rendering also shown in the row's integrationLevel column.
@@ -101,29 +101,10 @@ export default {
 			this.submitting = true
 			this.error = null
 			try {
-				const endpoint = generateUrl(
-					`/apps/opencatalogi/api/listings/${this.listing.id}`,
+				const body = await updateListingLevel(
+					this.listing.id,
+					this.integrationLevel?.value,
 				)
-				const res = await fetch(endpoint, {
-					method: 'PUT',
-					headers: {
-						'OCS-APIRequest': 'true',
-						'Content-Type': 'application/json',
-						Accept: 'application/json',
-					},
-					body: JSON.stringify({
-						integrationLevel: this.integrationLevel?.value,
-					}),
-				})
-				const body = await res.json().catch(() => ({}))
-				if (!res.ok) {
-					throw new Error(
-						body?.data?.error
-							|| body?.error
-							|| body?.message
-							|| `HTTP ${res.status}`,
-					)
-				}
 				this.$emit('saved', body)
 				this.close()
 			} catch (e) {

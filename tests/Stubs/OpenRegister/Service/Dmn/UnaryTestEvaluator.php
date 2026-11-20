@@ -6,6 +6,9 @@
  * Loaded by tests/bootstrap-unit.php only when no sibling openregister
  * checkout is present; signatures MUST track OR development.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * OpenRegister DMN Expression Evaluator
  *
  * A pure, closed, bounded evaluator for DMN-style "input entry" cell
@@ -29,9 +32,6 @@
  * @author    Conduction Development Team <dev@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  *
  * @version GIT: <git-id>
  *

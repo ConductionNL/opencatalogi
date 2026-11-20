@@ -1,0 +1,499 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DeleteObjectDialog.deleteObject, a selection does nothing with an empty selection, and throws without a selection getter 1`] = `
+[
+  [
+    "loading after call",
+    true,
+    null,
+  ],
+  [
+    "loading after settle",
+    true,
+    false,
+  ],
+  [
+    "loading after timers",
+    true,
+  ],
+]
+`;
+
+exports[`DeleteObjectDialog.deleteObject, a selection does nothing with an empty selection, and throws without a selection getter 2`] = `
+[
+  [
+    "loading after call",
+    true,
+    "TypeError",
+  ],
+  [
+    "loading after settle",
+    true,
+    false,
+  ],
+  [
+    "loading after timers",
+    true,
+  ],
+]
+`;
+
+exports[`DeleteObjectDialog.deleteObject, a selection one fails 1`] = `
+[
+  [
+    "getSelectedObjects",
+    "publication",
+  ],
+  [
+    "deleteObject",
+    "publication",
+    "a",
+  ],
+  [
+    "deleteObject",
+    "publication",
+    "b",
+  ],
+  [
+    "loading after call",
+    true,
+    null,
+  ],
+  [
+    "console.error",
+    "Error deleting multiple objects:",
+    "Error: boom",
+  ],
+  [
+    "fetchPublications",
+  ],
+  [
+    "setDialog",
+    false,
+  ],
+  [
+    "setState",
+    "publication",
+    {
+      "error": null,
+      "success": null,
+    },
+  ],
+  [
+    "loading after settle",
+    false,
+    false,
+  ],
+  [
+    "loading after timers",
+    false,
+  ],
+]
+`;
+
+exports[`DeleteObjectDialog.deleteObject, a selection one unconfigured publication 1`] = `
+[
+  [
+    "getSelectedObjects",
+    "publication",
+  ],
+  [
+    "deleteObject",
+    "publication",
+    "a",
+  ],
+  [
+    "deleteObject",
+    "publication",
+    "b",
+  ],
+  [
+    "loading after call",
+    true,
+    null,
+  ],
+  [
+    "setState",
+    "publication",
+    {
+      "error": null,
+      "success": true,
+    },
+  ],
+  [
+    "fetchPublications",
+  ],
+  [
+    "setDialog",
+    false,
+  ],
+  [
+    "setState",
+    "publication",
+    {
+      "error": null,
+      "success": null,
+    },
+  ],
+  [
+    "loading after settle",
+    false,
+    false,
+  ],
+  [
+    "loading after timers",
+    false,
+  ],
+]
+`;
+
+exports[`DeleteObjectDialog.deleteObject, a selection works 1`] = `
+[
+  [
+    "getSelectedObjects",
+    "theme",
+  ],
+  [
+    "deleteObject",
+    "theme",
+    "a",
+  ],
+  [
+    "deleteObject",
+    "theme",
+    "b",
+  ],
+  [
+    "loading after call",
+    true,
+    null,
+  ],
+  [
+    "fetchCollection",
+    "theme",
+  ],
+  [
+    "setDialog",
+    false,
+  ],
+  [
+    "setState",
+    "theme",
+    {
+      "error": null,
+      "success": null,
+    },
+  ],
+  [
+    "loading after settle",
+    false,
+    false,
+  ],
+  [
+    "loading after timers",
+    false,
+  ],
+]
+`;
+
+exports[`DeleteObjectDialog.deleteObject, one object does nothing without an active object 1`] = `
+[
+  [
+    "loading after call",
+    true,
+    null,
+  ],
+  [
+    "loading after settle",
+    true,
+    false,
+  ],
+  [
+    "loading after timers",
+    true,
+  ],
+]
+`;
+
+exports[`DeleteObjectDialog.deleteObject, one object fails 1`] = `
+[
+  [
+    "deleteObject",
+    {
+      "id": "pub-1",
+      "register": 3,
+      "schema": 7,
+      "type": "publication",
+    },
+  ],
+  [
+    "loading after call",
+    true,
+    null,
+  ],
+  [
+    "console.error",
+    "Error deleting one object:",
+    "Error: boom",
+  ],
+  [
+    "fetchPublications",
+  ],
+  [
+    "setDialog",
+    false,
+  ],
+  [
+    "setState",
+    "publication",
+    {
+      "error": null,
+      "success": null,
+    },
+  ],
+  [
+    "loading after settle",
+    false,
+    false,
+  ],
+  [
+    "loading after timers",
+    false,
+  ],
+]
+`;
+
+exports[`DeleteObjectDialog.deleteObject, one object fails without a message 1`] = `
+[
+  [
+    "deleteObject",
+    {
+      "id": "pub-1",
+      "register": 3,
+      "schema": 7,
+      "type": "publication",
+    },
+  ],
+  [
+    "loading after call",
+    true,
+    null,
+  ],
+  [
+    "console.error",
+    "Error deleting one object:",
+    "[object Object]",
+  ],
+  [
+    "fetchPublications",
+  ],
+  [
+    "setDialog",
+    false,
+  ],
+  [
+    "setState",
+    "publication",
+    {
+      "error": null,
+      "success": null,
+    },
+  ],
+  [
+    "loading after settle",
+    false,
+    false,
+  ],
+  [
+    "loading after timers",
+    false,
+  ],
+]
+`;
+
+exports[`DeleteObjectDialog.deleteObject, one object unconfigured message on another type 1`] = `
+[
+  [
+    "deleteObject",
+    {
+      "id": "theme-1",
+      "register": undefined,
+      "schema": undefined,
+      "type": "theme",
+    },
+  ],
+  [
+    "loading after call",
+    true,
+    null,
+  ],
+  [
+    "console.error",
+    "Error deleting one object:",
+    "Error: Invalid configuration for object type: publication",
+  ],
+  [
+    "fetchCollection",
+    "theme",
+  ],
+  [
+    "setDialog",
+    false,
+  ],
+  [
+    "setState",
+    "theme",
+    {
+      "error": null,
+      "success": null,
+    },
+  ],
+  [
+    "loading after settle",
+    false,
+    false,
+  ],
+  [
+    "loading after timers",
+    false,
+  ],
+]
+`;
+
+exports[`DeleteObjectDialog.deleteObject, one object unconfigured publication 1`] = `
+[
+  [
+    "deleteObject",
+    {
+      "id": "pub-1",
+      "register": 3,
+      "schema": 7,
+      "type": "publication",
+    },
+  ],
+  [
+    "loading after call",
+    true,
+    null,
+  ],
+  [
+    "setState",
+    "publication",
+    {
+      "error": null,
+      "success": true,
+    },
+  ],
+  [
+    "fetchPublications",
+  ],
+  [
+    "setDialog",
+    false,
+  ],
+  [
+    "setState",
+    "publication",
+    {
+      "error": null,
+      "success": null,
+    },
+  ],
+  [
+    "loading after settle",
+    false,
+    false,
+  ],
+  [
+    "loading after timers",
+    false,
+  ],
+]
+`;
+
+exports[`DeleteObjectDialog.deleteObject, one object works 1`] = `
+[
+  [
+    "deleteObject",
+    {
+      "id": "pub-1",
+      "register": 3,
+      "schema": 7,
+      "type": "publication",
+    },
+  ],
+  [
+    "loading after call",
+    true,
+    null,
+  ],
+  [
+    "fetchPublications",
+  ],
+  [
+    "setDialog",
+    false,
+  ],
+  [
+    "setState",
+    "publication",
+    {
+      "error": null,
+      "success": null,
+    },
+  ],
+  [
+    "loading after settle",
+    false,
+    false,
+  ],
+  [
+    "loading after timers",
+    false,
+  ],
+]
+`;
+
+exports[`DeleteObjectDialog.deleteObject, one object works for another type 1`] = `
+[
+  [
+    "deleteObject",
+    {
+      "id": "theme-1",
+      "register": undefined,
+      "schema": undefined,
+      "type": "theme",
+    },
+  ],
+  [
+    "loading after call",
+    true,
+    null,
+  ],
+  [
+    "fetchCollection",
+    "theme",
+  ],
+  [
+    "setDialog",
+    false,
+  ],
+  [
+    "setState",
+    "theme",
+    {
+      "error": null,
+      "success": null,
+    },
+  ],
+  [
+    "loading after settle",
+    false,
+    false,
+  ],
+  [
+    "loading after timers",
+    false,
+  ],
+]
+`;

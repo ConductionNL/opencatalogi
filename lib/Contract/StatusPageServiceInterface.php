@@ -45,25 +45,16 @@ interface StatusPageServiceInterface {
 	 * path in this class that derives a state from anything, which is what
 	 * makes "the page probes nothing" true rather than merely intended.
 	 *
-	 * @param string $component The component a reader recognises.
-	 * @param string $state The state.
-	 * @param string $message What a reader should do about it.
-	 * @param string $setBy Who set it.
+	 * @param StatusChange $change The component, its state, the message and who set it.
 	 * @param DateTimeInterface|null $now The moment; defaults to now.
 	 *
 	 * @return array<string, mixed> The status to save.
 	 *
 	 * @throws DomainException When the state is not one this page knows.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
-	public function setState(
-		string $component,
-		string $state,
-		string $message,
-		string $setBy,
-		?DateTimeInterface $now = null,
-	): array;
+	public function setState(StatusChange $change, ?DateTimeInterface $now = null): array;
 
 	/**
 	 * The page as an anonymous reader sees it.
@@ -74,7 +65,7 @@ interface StatusPageServiceInterface {
 	 *
 	 * @return array{components: array<int, array<string, mixed>>, stale: integer, probed: boolean}
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
 	public function render(
 		array $components,

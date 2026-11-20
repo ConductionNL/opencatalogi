@@ -3,6 +3,9 @@
 /**
  * The GitHub publiccode harvest, as the administrator sees and drives it.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The harvest itself is a flow OpenCatalogi ships on the `publiccode` schema
  * (`lib/Settings/register.d/publiccode-github-harvest.json`) and OpenRegister
  * runs. This service is the admin's handle on it: it reports whether the pieces
@@ -34,6 +37,13 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\PubliccodeHarvestServiceInterface;
+use OCA\OpenRegister\Db\FlowRunFilter;
+use OCA\OpenRegister\Db\FlowRunListing;
+use OCA\OpenRegister\Db\FlowRunMapper;
+use OCA\OpenRegister\Db\FlowRunViewer;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -194,7 +204,13 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	private function saveShard(array $shard, array $context): string {
 		$synchronization = self::synchronizationFor(definitions: $context['definitions'], shard: $shard);
 		$existing = $this->findIntegriqObject(schema: 'synchronization', slug: (string)$synchronization['slug']);
-		$context['objects']->saveObject(object: $synchronization, register: self::INTEGRIQ_REGISTER, schema: 'synchronization', uuid: $existing);
+		$context['objects']->saveObject(
+			object: $synchronization,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: self::INTEGRIQ_REGISTER, schema: 'synchronization'),
+				uuid: $existing
+			)
+		);
 
 		if ($existing === null) {
 			return 'created';
@@ -399,7 +415,11 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	private function findIntegriqEntity(string $schema, string $slug): ?object {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$object = $objectService->find(id: $slug, register: self::INTEGRIQ_REGISTER, schema: $schema, _multitenancy: false);
+			$object = $objectService->find(
+				id: $slug,
+				options: new ObjectFindOptions(register: self::INTEGRIQ_REGISTER, schema: $schema),
+				_multitenancy: false
+			);
 		} catch (Throwable) {
 			return null;
 		}
@@ -520,7 +540,11 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	 */
 	private function lastRun(string $flowUuid): ?array {
 		try {
-			$runs = $this->container->get('OCA\OpenRegister\Db\FlowRunMapper')->findAllRuns(flowId: $flowUuid, limit: 1);
+			// A system read of the app's own harvest flow: no requester, so no per-user scoping.
+			$runs = $this->container->get(FlowRunMapper::class)->findAllRuns(
+				listing: new FlowRunListing(filter: new FlowRunFilter(flowId: $flowUuid), limit: 1),
+				viewer: new FlowRunViewer(requesterUid: null, ownedFlowIds: [])
+			);
 		} catch (Throwable) {
 			return null;
 		}

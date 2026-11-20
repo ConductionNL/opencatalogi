@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CallerScope;
 use OCP\AppFramework\Http\JSONResponse;
 
@@ -45,7 +46,11 @@ trait ListsConfiguredObjects {
 	 * The configured scope wins for the rows, but OpenRegister's facet path reads
 	 * `@self.schemas ?? _schemas` first, so every caller scope key is dropped (WOO-581).
 	 *
+	 * With a collector, the stripped caller keys and the configured scope are
+	 * recorded as applied filters (REQ-ASF-002).
+	 *
 	 * @param array<string, string> $objectConfig The configured `register` and `schema`.
+	 * @param AppliedFilters|null $appliedFilters The request's collector.
 	 *
 	 * @return array<string, mixed> The search query.
 	 *
@@ -53,11 +58,19 @@ trait ListsConfiguredObjects {
 	 *
 	 * @spec openspec/specs/content-management/spec.md
 	 */
-	private function scopedSearchQuery(array $objectConfig): array {
+	private function scopedSearchQuery(array $objectConfig, ?AppliedFilters $appliedFilters = null): array {
 		$searchQuery = $this->request->getParams();
 		unset($searchQuery['id'], $searchQuery['_route']);
 
-		$searchQuery = CallerScope::strip(query: $searchQuery);
+		$searchQuery = CallerScope::strip(query: $searchQuery, appliedFilters: $appliedFilters);
+		$appliedFilters?->record(
+			name: AppliedFilters::CATALOG_SCOPE,
+			value: [
+				'schemas' => array_values(array_filter([($objectConfig['schema'] ?? null)])),
+				'registers' => array_values(array_filter([($objectConfig['register'] ?? null)])),
+			],
+			reason: 'The list is limited to the configured schema and register.'
+		);
 
 		if (empty($objectConfig['schema']) === false) {
 			$searchQuery['@self']['schema'] = $objectConfig['schema'];
@@ -90,30 +103,47 @@ trait ListsConfiguredObjects {
 			'pages' => ($result['pages'] ?? 1),
 		];
 
-		if (isset($result['next']) === true) {
-			$responseData['next'] = $result['next'];
-		}
+		return $this->withOptionalParts(responseData: $responseData, result: $result);
+	}//end paginatedResponseData()
 
-		if (isset($result['prev']) === true) {
-			$responseData['prev'] = $result['prev'];
-		}
-
-		if (isset($result['facets']) === true) {
-			$facetsData = $result['facets'];
-			// Unwrap nested facets if needed.
-			if (isset($facetsData['facets']) === true && is_array($facetsData['facets']) === true) {
-				$facetsData = $facetsData['facets'];
+	/**
+	 * The response data with the links, facets and facetable fields the search
+	 * result carries, in that order; the facets unwrapped.
+	 *
+	 * @param array<string, mixed> $responseData The rows and paging.
+	 * @param array<string, mixed> $result The paginated search result.
+	 *
+	 * @return array<string, mixed> The response data.
+	 */
+	private function withOptionalParts(array $responseData, array $result): array {
+		foreach (['next', 'prev', 'facets', 'facetable'] as $part) {
+			if (isset($result[$part]) === true) {
+				$responseData[$part] = $result[$part];
 			}
-
-			$responseData['facets'] = $facetsData;
 		}
 
-		if (isset($result['facetable']) === true) {
-			$responseData['facetable'] = $result['facetable'];
+		if (isset($responseData['facets']) === true) {
+			$responseData['facets'] = $this->unwrappedFacets(facets: $responseData['facets']);
 		}
 
 		return $responseData;
-	}//end paginatedResponseData()
+	}//end withOptionalParts()
+
+	/**
+	 * The facets of a search result, unwrapped when they arrive nested under
+	 * their own `facets` key.
+	 *
+	 * @param mixed $facets The result's facets.
+	 *
+	 * @return mixed The facets.
+	 */
+	private function unwrappedFacets(mixed $facets): mixed {
+		if (isset($facets['facets']) === true && is_array($facets['facets']) === true) {
+			return $facets['facets'];
+		}
+
+		return $facets;
+	}//end unwrappedFacets()
 
 	/**
 	 * A JSON answer with the CORS headers for public API access (#735: never reflect an arbitrary Origin).

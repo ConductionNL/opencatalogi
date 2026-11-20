@@ -11,6 +11,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -344,6 +347,10 @@ if (interface_exists('OCA\\OpenRegister\\AppHost\\IMetricsProvider') === false) 
 	require_once __DIR__ . '/Stubs/AppHost/IMetricsProvider.php';
 }
 
+if (interface_exists('OCA\\OpenRegister\\AppHost\\IHealthCheckProvider') === false) {
+	require_once __DIR__ . '/Stubs/AppHost/IHealthCheckProvider.php';
+}
+
 // Integriq's connection-registry events (adopt-connection-registry).
 // ConnectionReporter sends them by string class name behind class_exists
 // (ADR-041), so OpenCatalogi stays installable without integriq. The stubs
@@ -359,3 +366,7 @@ unset($integriqStubEvent);
 
 // IRequest double base for the controller tests (needs the OCP autoloader above).
 require_once __DIR__ . '/Unit/Support/ServerAwareRequest.php';
+
+// Test helpers for OpenRegister's option objects (tests carry no PSR-4 test namespace).
+require_once __DIR__ . '/Support/ReleaseObjectSignatures.php';
+require_once __DIR__ . '/Support/LegacyObjectArgs.php';

@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
@@ -365,6 +370,33 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 
 	}//end testGetDirectoryUrlsFiltersInvalid()
 
+	/**
+	 * Test getDirectoryUrls reads a listing's nested `object` before its own
+	 * fields, and answers the unique valid URLs under their first position.
+	 */
+	public function testGetDirectoryUrlsReadsTheNestedObjectAndKeepsPositions(): void {
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+
+		$listings = [
+			['object' => ['directory' => 'https://nested.example/api/directory'], 'directory' => 'https://outer.example/api/directory'],
+			['directory' => 'not-a-url'],
+			['object' => ['title' => 'no directory'], 'directory' => 'https://ignored.example/api/directory'],
+			['directory' => 'https://flat.example/api/directory'],
+			['object' => ['directory' => 'https://nested.example/api/directory']],
+		];
+
+		$mockObjectService = $this->createMockObjectService($listings);
+
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
+
+		$result = $this->invokePrivateMethod($this->broadcastService, 'getDirectoryUrls');
+
+		$this->assertSame([0 => 'https://nested.example/api/directory', 2 => 'https://flat.example/api/directory'], $result);
+
+	}//end testGetDirectoryUrlsReadsTheNestedObjectAndKeepsPositions()
+
 	// ===== sendBroadcastRequest tests =====
 
 	/**
@@ -492,6 +524,27 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 	/**
 	 * Test broadcast with a specific valid URL.
 	 */
+	/**
+	 * Test broadcast counts an unsafe target as not reached, without calling it.
+	 */
+	public function testBroadcastToAnUnsafeTargetIsNotASuccess(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+		$this->containerMock->method('get')
+			->willReturn($this->createMockObjectService([]));
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$result = $this->broadcastService->broadcast('http://169.254.169.254/latest/meta-data');
+
+		$this->assertSame(['http://169.254.169.254/latest/meta-data' => false], $result);
+
+	}//end testBroadcastToAnUnsafeTargetIsNotASuccess()
+
 	/**
 	 * @group network
 	 */
@@ -874,6 +927,96 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->broadcastService->enqueueBroadcast('http://169.254.169.254/latest/meta-data', 'https://self.example.com/api/directory');
 
 	}//end testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery()
+
+	/**
+	 * FED-OR-001: an http URL to a public host that is not allowlisted is refused before delivery.
+	 *
+	 * @return void
+	 */
+	public function testEnqueueBroadcastRefusesPlainHttpToAPublicHost(): void {
+		$this->clientMock->expects($this->never())->method('post');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Broadcast URL must use https');
+
+		$this->broadcastService->enqueueBroadcast('http://203.0.113.10/directory', 'https://self.example.com/api/directory');
+	}//end testEnqueueBroadcastRefusesPlainHttpToAPublicHost()
+
+	/**
+	 * FED-OR-001: an allowlisted dev host passes the pre-flight on http and is delivered to.
+	 *
+	 * @return void
+	 */
+	public function testEnqueueBroadcastLetsAnAllowlistedDevHostThroughOnHttp(): void {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'local_federation_hosts' => 'nc-fed-2',
+				default => $default,
+			}
+		);
+		$config->method('getValueInt')->willReturnCallback(static fn (string $app, string $key, int $default = 0): int => $default);
+		$service = new BroadcastService(
+			$this->urlGeneratorMock,
+			$this->containerMock,
+			$this->appManagerMock,
+			$this->loggerMock,
+			$config,
+			new FederationHostPolicy($config)
+		);
+		$client = $this->createMock(Client::class);
+		$client->expects($this->once())->method('post')->with('http://nc-fed-2/apps/opencatalogi/api/directory')->willReturn(new Response(200));
+		$property = (new \ReflectionClass($service))->getProperty('client');
+		$property->setAccessible(true);
+		$property->setValue($service, $client);
+		$this->appManagerMock->method('getAppInfo')->willReturn(['version' => '1.0.0']);
+
+		$result = $service->enqueueBroadcast('http://nc-fed-2/apps/opencatalogi/api/directory', 'https://self.example.com/api/directory');
+
+		$this->assertSame(BroadcastResult::STATUS_DELIVERED, $result->status);
+	}//end testEnqueueBroadcastLetsAnAllowlistedDevHostThroughOnHttp()
+
+	/**
+	 * Internal targets written in another notation are refused before delivery.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function internalTargetsInOtherNotations(): array {
+		return [
+			'ipv4-mapped loopback'        => ['http://[::ffff:127.0.0.1]/directory'],
+			'ipv4-mapped loopback in hex' => ['http://[::ffff:7f00:1]/directory'],
+			'ipv4-mapped private'         => ['http://[::ffff:10.0.0.1]/directory'],
+			'ipv4-mapped metadata'        => ['http://[::ffff:169.254.169.254]/latest/meta-data'],
+			'ipv4-compatible loopback'    => ['http://[::127.0.0.1]/directory'],
+			'unspecified ipv4'            => ['http://0.0.0.0/directory'],
+			'this-network ipv4'           => ['http://0.1.2.3/directory'],
+			'shared address space'        => ['http://100.64.0.1/directory'],
+			'limited broadcast'           => ['http://255.255.255.255/directory'],
+		];
+
+	}//end internalTargetsInOtherNotations()
+
+
+	/**
+	 * Test enqueueBroadcast refuses an internal target in any notation.
+	 *
+	 * @dataProvider internalTargetsInOtherNotations
+	 *
+	 * @param string $url The broadcast target.
+	 *
+	 * @return void
+	 */
+	public function testEnqueueBroadcastRejectsInternalTargetInOtherNotation(string $url): void {
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('disallowed (internal) address');
+
+		$this->broadcastService->enqueueBroadcast($url, 'https://self.example.com/api/directory');
+
+	}//end testEnqueueBroadcastRejectsInternalTargetInOtherNotation()
+
 
 	/**
 	 * A localhost instance must not advertise itself to a real directory.

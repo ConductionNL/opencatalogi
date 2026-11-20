@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Listener;
@@ -60,8 +65,10 @@ class ProvideManifestConfigStateListenerTest extends TestCase {
 			new BeforeTemplateRenderedEvent(true, new TemplateResponse('opencatalogi', 'index'))
 		);
 
-		// 23 register/schema keys (incl. the 3 WOO and 4 service catalogue keys) + default_directory_url.
-		$this->assertCount(24, $this->provided);
+		// 23 register/schema keys (incl. the 3 WOO and 4 service catalogue keys) + default_directory_url + instance_mode.
+		$this->assertCount(25, $this->provided);
+		// Anything but production reads as staging, so the banner shows.
+		$this->assertSame('staging', $this->provided['instance_mode']);
 		$this->assertSame('42', $this->provided['catalog_register']);
 		$this->assertSame('42', $this->provided['publication_schema']);
 		$this->assertSame('42', $this->provided['woo_register']);
@@ -71,6 +78,25 @@ class ProvideManifestConfigStateListenerTest extends TestCase {
 		$this->assertSame('42', $this->provided['knowledge_article_schema']);
 		$this->assertArrayHasKey('default_directory_url', $this->provided);
 		$this->assertNotSame('', $this->provided['default_directory_url']);
+	}
+
+	/**
+	 * A production instance tells the pages so, and they show no staging banner.
+	 *
+	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 */
+	public function testProvidesTheInstanceMode(): void {
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			function (string $app, string $key, string $default = ''): string {
+				return $key === 'instance_mode' ? 'production' : $default;
+			}
+		);
+
+		$this->listener->handle(
+			new BeforeTemplateRenderedEvent(true, new TemplateResponse('opencatalogi', 'index'))
+		);
+
+		$this->assertSame('production', $this->provided['instance_mode']);
 	}
 
 	public function testSkipsEmptyConfigValues(): void {
@@ -89,8 +115,8 @@ class ProvideManifestConfigStateListenerTest extends TestCase {
 			new BeforeTemplateRenderedEvent(true, new TemplateResponse('opencatalogi', 'index'))
 		);
 
-		// Only the one non-empty key + default_directory_url are provided.
-		$this->assertCount(2, $this->provided);
+		// Only the one non-empty key + default_directory_url + instance_mode are provided.
+		$this->assertCount(3, $this->provided);
 		$this->assertSame('18', $this->provided['catalog_register']);
 		$this->assertArrayNotHasKey('catalog_schema', $this->provided);
 		$this->assertArrayHasKey('default_directory_url', $this->provided);

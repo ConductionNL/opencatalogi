@@ -14,6 +14,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -29,6 +32,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\JSONResponse;
 use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionClass;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for the DownloadService class.
@@ -54,6 +58,43 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	private FileService&MockObject $fileService;
 
 	/**
+	 * An IL10N that answers the English text unchanged.
+	 *
+	 * @return \OCP\IL10N The translator.
+	 */
+	private function passthroughL10n(): \OCP\IL10N {
+		$l10n = $this->createMock(\OCP\IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
+		return $l10n;
+	}//end passthroughL10n()
+
+	/**
+	 * The error messages are fixed texts in the caller's language (download-service task 6).
+	 *
+	 * @spec openspec/changes/download-service/tasks.md
+	 *
+	 * @return void
+	 */
+	public function testTheErrorMessagesAreTranslated(): void {
+		$l10n = $this->createMock(\OCP\IL10N::class);
+		$l10n->method('t')->willReturnMap([
+			['At least one output option must be enabled; "download" was false', [], 'Er moet minstens één uitvoeroptie aan staan; "download" stond uit'],
+			['Publication not found', [], 'Publicatie niet gevonden'],
+		]);
+		$service = new DownloadService($this->fileService, $l10n);
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('find')->willReturn(null);
+
+		$refused = $service->createPublicationFile(objectService: $objectService, id: 'p1', options: ['download' => false]);
+		$this->assertSame(400, $refused->getStatus());
+		$this->assertSame('Er moet minstens één uitvoeroptie aan staan; "download" stond uit', $refused->getData()['error']);
+
+		$missing = $service->createPublicationFile(objectService: $objectService, id: 'p1');
+		$this->assertSame(404, $missing->getStatus());
+		$this->assertSame('Publicatie niet gevonden', $missing->getData()['error']);
+	}//end testTheErrorMessagesAreTranslated()
+
+	/**
 	 * Sets up mocks and instantiates DownloadService.
 	 *
 	 * @return void
@@ -62,7 +103,8 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->fileService = $this->createMock(FileService::class);
 
 		$this->downloadService = new DownloadService(
-			$this->fileService
+			$this->fileService,
+			$this->passthroughL10n()
 		);
 
 	}//end setUp()
@@ -120,7 +162,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 		$entity = $this->createObjectEntityFromData($pubData);
 
 		$objectService->method('find')
-			->with('42')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => '42',
+			]))
 			->willReturn($entity);
 
 		$result = $this->invokePrivateMethod('getPublicationData', ['42', $objectService]);
@@ -137,7 +181,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	public function testGetPublicationDataNotFound(): void {
 		$objectService = $this->createObjectServiceMock();
 		$objectService->method('find')
-			->with('999')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => '999',
+			]))
 			->willThrowException(new DoesNotExistException('Publication not found'));
 
 		$result = $this->invokePrivateMethod('getPublicationData', ['999', $objectService]);
@@ -292,7 +338,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	public function testCreatePublicationFileFetchFails(): void {
 		$objectService = $this->createObjectServiceMock();
 		$objectService->method('find')
-			->with('99')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => '99',
+			]))
 			->willThrowException(new DoesNotExistException('Not found'));
 
 		$result = $this->downloadService->createPublicationFile(
@@ -443,7 +491,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	public function testGetPublicationDataReturnsErrorOnException(): void {
 		$objectService = $this->createObjectServiceMock();
 		$objectService->method('find')
-			->with('null-id')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'null-id',
+			]))
 			->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
 
 		$result = $this->invokePrivateMethod('getPublicationData', ['null-id', $objectService]);
@@ -564,7 +614,7 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 			$this->createMock(\Psr\Container\ContainerInterface::class)
 		);
 
-		$downloadService = new DownloadService($fileService);
+		$downloadService = new DownloadService($fileService, $this->passthroughL10n());
 		$objectService = $this->createObjectServiceMock();
 
 		$publication = [

@@ -1,13 +1,20 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenRegister\Kernel\Contracts\RenderSelection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -182,6 +189,23 @@ class PublicationsControllerTest extends TestCase {
 	 * Rebuilds the controller using the current $this->queryService mock. Used by
 	 * tests that need to re-stub query-service behaviour after setUp().
 	 */
+	private function controllerWithTables(\OCA\OpenCatalogi\Contract\PublishedTableServiceInterface $tables): PublicationsController {
+		return new PublicationsController(
+			appName: 'opencatalogi',
+			request: $this->request,
+			publicationService: $this->publicationService,
+			catalogiService: $this->catalogiService,
+			queryService: $this->queryService,
+			container: $this->container,
+			appManager: $this->appManager,
+			logger: $this->logger,
+			l10n: $this->l10n,
+			usageCounterService: $this->usageCounterService,
+			appConfig: $this->appConfig,
+			tables: $tables
+		);
+	}
+
 	private function newControllerWithQueryService(): PublicationsController {
 		return new PublicationsController(
 			'opencatalogi',
@@ -1032,6 +1056,148 @@ class PublicationsControllerTest extends TestCase {
 		$this->assertEquals(200, $response->getStatus());
 	}
 
+	/**
+	 * A publication with a published table lists it, with its rows and dictionary URLs (REQ-ODT-003).
+	 *
+	 * @return void
+	 */
+	public function testShowListsThePublishedTables(): void {
+		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$tables = $this->createMock(\OCA\OpenCatalogi\Contract\PublishedTableServiceInterface::class);
+		$entry = ['id' => 't1', 'title' => 'speeltuinen.csv', 'file' => '77', 'rowCount' => 2, 'rowsUrl' => 'https://h/rows', 'dictionaryUrl' => 'https://h/dictionary'];
+		$tables->expects($this->once())->method('tablesOf')->with('pub-123', 'test-catalog')->willReturn([$entry]);
+		$this->container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($mockObjService);
+		$controller = $this->controllerWithTables(tables: $tables);
+
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$mockObjService->method('searchObjects')->willReturn([$this->createObjectEntityMock()]);
+		$mockObjService->method('renderEntity')->willReturn(['id' => 'pub-123', 'title' => 'Test Publication']);
+		$this->request->method('getParams')->willReturn([]);
+
+		$response = $controller->show('test-catalog', 'pub-123');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication', 'tables' => [$entry]], $response->getData());
+	}
+
+	/**
+	 * Without tables, or when the table service fails, the publication answers as before.
+	 *
+	 * @return void
+	 */
+	public function testShowWithoutTablesAnswersAsBefore(): void {
+		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$tables = $this->createMock(\OCA\OpenCatalogi\Contract\PublishedTableServiceInterface::class);
+		$tables->method('tablesOf')->willReturnOnConsecutiveCalls([], $this->throwException(new \RuntimeException('down')));
+		$this->container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($mockObjService);
+		$controller = $this->controllerWithTables(tables: $tables);
+
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$mockObjService->method('searchObjects')->willReturn([$this->createObjectEntityMock()]);
+		$mockObjService->method('renderEntity')->willReturn(['id' => 'pub-123', 'title' => 'Test Publication']);
+		$this->request->method('getParams')->willReturn([]);
+
+		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication'], $controller->show('test-catalog', 'pub-123')->getData());
+		$this->assertSame(['id' => 'pub-123', 'title' => 'Test Publication'], $controller->show('test-catalog', 'pub-123')->getData());
+	}
+
+	/**
+	 * REQ-PTS-001: the show answer carries the public and officer pages computed now, over the stored values.
+	 */
+	public function testShowCarriesThePublicAndOfficerPages(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['title' => 'Woo', 'schemas' => [1], 'registers' => [1]]);
+
+		$mockObj = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['getSchema', 'getRegister', 'getUuid'])
+			->addMethods(['getId'])
+			->getMock();
+		$mockObj->method('getId')->willReturn(42);
+		$mockObj->method('getUuid')->willReturn('pub-123');
+		$mockObj->method('getSchema')->willReturn('1');
+		$mockObj->method('getRegister')->willReturn('1');
+		$mockObjService->method('searchObjects')->willReturn([$mockObj]);
+		$mockObjService->method('renderEntity')->willReturn(
+			['id' => 'pub-123', 'title' => 'Besluit', 'publicUrl' => 'https://old.example/pub-123', 'officerUrl' => '']
+		);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$links = $this->createMock(PublicationLinks::class);
+		$links->expects($this->once())->method('for')->with('pub-123', '1')->willReturn(
+			['publicUrl' => 'https://gemeente.nl/p/pub-123', 'officerUrl' => 'https://gemeente.nl/index.php/apps/opencatalogi/publications/woo/pub-123']
+		);
+
+		$response = $this->controllerWithLinks(links: $links)->show('woo', 'pub-123');
+
+		$this->assertSame(200, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame('Besluit', $data['title']);
+		$this->assertSame('https://gemeente.nl/p/pub-123', $data['publicUrl']);
+		$this->assertSame('https://gemeente.nl/index.php/apps/opencatalogi/publications/woo/pub-123', $data['officerUrl']);
+	}
+
+	/**
+	 * REQ-PTS-001: an object of another schema gets no pages, and a failing computation answers the stored values.
+	 */
+	public function testShowLeavesOtherSchemasAndAFailedComputationAlone(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['title' => 'Woo', 'schemas' => [1, 2], 'registers' => [1]]);
+		$other = $this->createObjectEntityMock(schema: 2);
+		$mockObjService->method('searchObjects')->willReturn([$other]);
+		$mockObjService->method('renderEntity')->willReturn(['id' => 'pub-123', 'publicUrl' => 'https://stored.example/pub-123']);
+		$this->request->method('getParams')->willReturn([]);
+		$this->request->server = [];
+
+		$links = $this->createMock(PublicationLinks::class);
+		$links->expects($this->never())->method('for');
+		$this->assertSame(['id' => 'pub-123', 'publicUrl' => 'https://stored.example/pub-123'], $this->controllerWithLinks(links: $links)->show('woo', 'pub-123')->getData());
+
+		$failing = $this->createMock(PublicationLinks::class);
+		$failing->method('for')->willThrowException(new \RuntimeException('no catalogue register'));
+		$this->assertSame(
+			['id' => 'pub-123', 'publicUrl' => 'https://stored.example/pub-123'],
+			$this->controllerWithLinks(links: $failing, schema: '2')->show('woo', 'pub-123')->getData()
+		);
+	}
+
+	/**
+	 * The controller with `publication_schema` set and a container holding these page builders.
+	 *
+	 * @param PublicationLinks $links  The page builders.
+	 * @param string           $schema The publication schema id.
+	 *
+	 * @return PublicationsController The controller.
+	 */
+	private function controllerWithLinks(PublicationLinks $links, string $schema = '1'): PublicationsController {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => ($key === 'publication_schema' ? $schema : $default)
+		);
+		$objects = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static fn (string $id): mixed => ($id === PublicationLinks::class ? $links : $objects)
+		);
+
+		return new PublicationsController(
+			'opencatalogi',
+			$this->request,
+			$this->publicationService,
+			$this->catalogiService,
+			$this->queryService,
+			$container,
+			$this->appManager,
+			$this->logger,
+			$this->l10n,
+			$this->usageCounterService,
+			$config
+		);
+	}
+
 	public function testShowWithExtendParameter(): void {
 		$mockObjService = $this->mockObjectService();
 
@@ -1787,8 +1953,9 @@ class PublicationsControllerTest extends TestCase {
 		// Inspect the rendered-entity call: only '@self.'-prefixed entries should survive.
 		$this->assertGreaterThan(0, count($captured));
 		$renderArgs = $captured[0];
-		// The _extend arg is the 2nd positional one.
-		$extendArg = $renderArgs[1];
+		// The extend list travels on the RenderSelection, the 2nd argument.
+		$this->assertInstanceOf(RenderSelection::class, $renderArgs[1]);
+		$extendArg = $renderArgs[1]->extend;
 		$this->assertContains('@self.files', $extendArg);
 		$this->assertContains('@self.metadata', $extendArg);
 		$this->assertNotContains('parent', $extendArg);
@@ -1827,7 +1994,8 @@ class PublicationsControllerTest extends TestCase {
 		$response = $this->controller->show('test-catalog', 'pub-123');
 
 		$this->assertEquals(200, $response->getStatus());
-		$this->assertCount(5, $captured[0][1]);
+		$this->assertInstanceOf(RenderSelection::class, $captured[0][1]);
+		$this->assertCount(5, $captured[0][1]->extend);
 	}
 
 	// =======================================================================
@@ -2329,5 +2497,133 @@ class PublicationsControllerTest extends TestCase {
 		$response = $this->showAs(signedIn: false, accept: 'application/json');
 
 		$this->assertSame(200, $response->getStatus());
+	}
+
+	/**
+	 * The list read hands the visitor's language to OpenRegister before it
+	 * searches, and the answer carries the language headers OpenRegister
+	 * reports (publication-translations REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testIndexPassesTheVisitorsLanguageAndAnswersInIt(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn(['title' => 'T', 'schemas' => [1], 'registers' => [1]]);
+		$this->request->method('getParams')->willReturn(['_lang' => 'en']);
+		$this->request->server = ['HTTP_ACCEPT_LANGUAGE' => 'de, en;q=0.5'];
+
+		$order = [];
+		$this->queryService->expects($this->once())
+			->method('applyVisitorLanguage')
+			->with(['_lang' => 'en'], 'de, en;q=0.5')
+			->willReturnCallback(function () use (&$order): string {
+				$order[] = 'language';
+				return 'en';
+			});
+		$mockObjService->method('searchObjectsPaginated')
+			->willReturnCallback(function () use (&$order): array {
+				$order[] = 'search';
+				return ['results' => [], 'total' => 0];
+			});
+		$this->queryService->method('languageHeaders')->willReturn(
+			['Content-Language' => 'en', 'X-Source-Language' => 'nl', 'X-Content-Language-Fallback' => 'true']
+		);
+
+		$response = $this->controller->index('test');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['language', 'search'], $order);
+		$headers = $response->getHeaders();
+		$this->assertSame('en', $headers['Content-Language']);
+		$this->assertSame('nl', $headers['X-Source-Language']);
+		$this->assertSame('true', $headers['X-Content-Language-Fallback']);
+	}
+
+	/**
+	 * Fragments that would betray internals in a public error body.
+	 *
+	 * @return array<int, string>
+	 */
+	private function internalFragments(): array {
+		return ['SELECT', 'oc_openregister', 'Stack trace', '#0 ', '.php', '/lib/'];
+	}
+
+	/**
+	 * Assert a public 404 body names the problem and carries no internal detail.
+	 *
+	 * @param JSONResponse $response The answer.
+	 *
+	 * @return void
+	 */
+	private function assertCleanNotFound(JSONResponse $response): void {
+		$this->assertSame(404, $response->getStatus());
+		$data = $response->getData();
+		$this->assertArrayHasKey('message', $data);
+		$this->assertNotSame('', $data['message']);
+		$body = json_encode($data);
+		foreach ($this->internalFragments() as $fragment) {
+			$this->assertStringNotContainsString($fragment, $body);
+		}
+	}
+
+	/**
+	 * An unknown catalogue slug answers 404 with a message and nothing internal (REQ-PUB-011).
+	 *
+	 * @spec openspec/changes/publications/tasks.md#task-9
+	 *
+	 * @return void
+	 */
+	public function testUnknownCatalogSlugAnswersACleanNotFound(): void {
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(null);
+
+		$response = $this->controller->show('no-such-catalog', 'pub-1');
+
+		$this->assertCleanNotFound($response);
+		$this->assertSame('Catalog not found', $response->getData()['error']);
+		$this->assertSame('no-such-catalog', $response->getData()['catalogSlug']);
+	}
+
+	/**
+	 * An unknown UUID answers 404 with a message, and the storage error text it came from stays out (REQ-PUB-011).
+	 *
+	 * @spec openspec/changes/publications/tasks.md#task-9
+	 *
+	 * @return void
+	 */
+	public function testUnknownUuidAnswersACleanNotFound(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
+		$mockObjService->method('searchObjects')
+			->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('SELECT * FROM oc_openregister_table_1_1 WHERE _uuid = ?'));
+		$this->request->method('getParams')->willReturn([]);
+
+		$response = $this->controller->show('test-catalog', '0b6f3a3c-0000-4000-8000-000000000001');
+
+		$this->assertCleanNotFound($response);
+		$this->assertSame('Publication not found', $response->getData()['error']);
+		$this->assertSame('0b6f3a3c-0000-4000-8000-000000000001', $response->getData()['id']);
+	}
+
+	/**
+	 * A failing read answers a generic 500: the exception text goes to the log, not the body.
+	 *
+	 * @spec openspec/changes/publications/tasks.md#task-9
+	 *
+	 * @return void
+	 */
+	public function testAFailedReadKeepsTheExceptionOutOfTheBody(): void {
+		$this->catalogiService->method('getCatalogBySlug')
+			->willThrowException(new \RuntimeException('SELECT * FROM oc_openregister_table_1_1 failed in /lib/Db/Mapper.php'));
+		$this->logger->expects($this->once())->method('error');
+
+		$response = $this->controller->show('test-catalog', 'pub-1');
+
+		$this->assertSame(500, $response->getStatus());
+		$body = json_encode($response->getData());
+		foreach ($this->internalFragments() as $fragment) {
+			$this->assertStringNotContainsString($fragment, $body);
+		}
 	}
 }

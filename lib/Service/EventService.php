@@ -30,7 +30,10 @@
 namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
+use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -285,10 +288,35 @@ class EventService implements EventServiceInterface {
 		$attachmentResult = $this->publishObjectAttachments(objectData: $objectData);
 		$outcome['detail']['actions'][] = 'attachments_processed';
 		$outcome['attachmentsPublished'] = $attachmentResult['published'];
+		if ($attachmentResult['published'] > 0) {
+			// Sharing files writes no publication: re-evaluate it now (REQ-PTS-002).
+			$this->reevaluateCompleteness(id: (string)($objectData['@self']['uuid'] ?? $objectData['@self']['id']));
+		}
+
 		$outcome['detail']['errors'] = array_merge($outcome['detail']['errors'], $attachmentResult['errors']);
 
 		return $outcome;
 	}//end withAttachments()
+
+	/**
+	 * Re-evaluate a publication's completeness after its files were shared.
+	 *
+	 * Only a run that shared a file calls this, so the save it may cause
+	 * (whose update event shares nothing new) does not call it again.
+	 *
+	 * @param string $id The publication's uuid.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 */
+	private function reevaluateCompleteness(string $id): void {
+		// Named by string, like the OpenRegister services this class resolves lazily.
+		$sweeps = 'OCA\OpenCatalogi\Service\Publication\CompletenessSweepService';
+		if ($this->container->has($sweeps) === true) {
+			$this->container->get($sweeps)->reevaluate(id: $id);
+		}
+	}//end reevaluateCompleteness()
 
 	/**
 	 * On a create event with auto-publishing on, publish an object that matches a catalog, and record the result.
@@ -443,7 +471,13 @@ class EventService implements EventServiceInterface {
 			$target = self::publicationTarget(objectSelf: ($objectData['@self'] ?? []));
 			$data = self::publishedPayload(objectData: $objectData);
 
-			$objectService->saveObject(object: $data, register: (string)$target['register'], schema: (string)$target['schema'], uuid: (string)$target['id']);
+			$objectService->saveObject(
+				object: $data,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: (string)$target['register'], schema: (string)$target['schema']),
+					uuid: (string)$target['id']
+				)
+			);
 
 			return ['success' => true, 'objectId' => $target['id'], 'publishedAt' => $data['publicationDate']];
 		} catch (\Exception $e) {
@@ -514,17 +548,63 @@ class EventService implements EventServiceInterface {
 		try {
 			$fileService = $this->getFileService();
 			$files = $this->objectFiles(objectId: $objectId);
+			$withdrawn = $this->withdrawnFileIds(files: $files);
 		} catch (\Exception $e) {
 			$result['errors'][] = 'Failed to access file service: ' . $e->getMessage();
 			return $result;
 		}
 
 		foreach ($files as $file) {
-			$result = $this->withSharedFile(result: $result, share: ['fileService' => $fileService, 'file' => $file]);
+			if (isset($withdrawn[(int)($file['fileid'] ?? 0)]) === true) {
+				$result['skipped']++;
+				continue;
+			}
+
+			$result = $this->withSharedFile(result: $result, share: ['fileService' => $fileService, 'file' => $file, 'publication' => (string)$objectId]);
 		}
 
 		return $result;
 	}//end publishObjectAttachments()
+
+	/**
+	 * The ids of the files whose own publication window has ended.
+	 *
+	 * A withdrawn attachment keeps its withdrawal on the file's window
+	 * (REQ-ATT-103), so an automatic path must never share it again
+	 * (REQ-ATT-104). The windows are read through FileMapper, like the files.
+	 * An OpenRegister without file publication windows has no withdrawn files;
+	 * a failure to read the windows is thrown, so the caller shares nothing.
+	 *
+	 * @param array $files The files, as FileMapper lists them.
+	 *
+	 * @return array<int, true> The withdrawn file ids.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
+	 */
+	private function withdrawnFileIds(array $files): array {
+		$fileIds = [];
+		foreach ($files as $file) {
+			if (isset($file['fileid']) === true) {
+				$fileIds[] = (int)$file['fileid'];
+			}
+		}
+
+		$fileMapper = $this->getFileMapper();
+		if ($fileIds === [] || method_exists($fileMapper, 'findByFileIds') === false) {
+			return [];
+		}
+
+		$now = new DateTime();
+		$withdrawn = [];
+		foreach ($fileMapper->findByFileIds($fileIds) as $fileId => $record) {
+			$end = $record->getDepublished();
+			if ($end instanceof \DateTimeInterface && $end <= $now) {
+				$withdrawn[(int)$fileId] = true;
+			}
+		}
+
+		return $withdrawn;
+	}//end withdrawnFileIds()
 
 	/**
 	 * The files of an object, read through FileMapper, or none when the object does not exist.
@@ -567,12 +647,37 @@ class EventService implements EventServiceInterface {
 		$error = $this->shareFileError(fileService: $share['fileService'], file: $share['file']);
 		if ($error === null) {
 			$result['published']++;
+			$this->readingQueue()?->queue(fileId: (int)($share['file']['fileid'] ?? 0), publicationId: (string)($share['publication'] ?? ''));
 			return $result;
 		}
 
 		$result['errors'][] = $error;
 		return $result;
 	}//end withSharedFile()
+
+	/**
+	 * The queue that reads each shared attachment, or null when it cannot be resolved.
+	 *
+	 * Resolved from the container on use rather than injected, so this
+	 * service's constructor keeps its four collaborators.
+	 *
+	 * @return AttachmentReadingQueueInterface|null
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
+	 */
+	private function readingQueue(): ?AttachmentReadingQueueInterface {
+		try {
+			$queue = $this->container->get(AttachmentReadingQueueInterface::class);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		if ($queue instanceof AttachmentReadingQueueInterface) {
+			return $queue;
+		}
+
+		return null;
+	}//end readingQueue()
 
 	/**
 	 * Create the share link of one file, and say why when that failed.

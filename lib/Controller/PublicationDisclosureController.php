@@ -33,7 +33,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 
 declare(strict_types=1);
@@ -54,7 +54,7 @@ use OCP\IRequest;
 /**
  * What is published outward, how it is announced, and how a reader checks it.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 class PublicationDisclosureController extends Controller {
 	/**
@@ -80,7 +80,7 @@ class PublicationDisclosureController extends Controller {
 	 *
 	 * @return JSONResponse What was composed and what each destination answered.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function announce(): JSONResponse {
@@ -90,46 +90,66 @@ class PublicationDisclosureController extends Controller {
 		}
 
 		$notices = $this->indexService->composeNotices(decision: $decision);
-		$deliveries = [];
-		$unreachable = [];
 
+		return $this->announcementAnswer(notices: $notices, outcome: $this->deliverAll(notices: $notices));
+
+	}//end announce()
+
+	/**
+	 * Hand every notice to the gateway: what each destination answered, and
+	 * each channel that could not be reached with why.
+	 *
+	 * @param array<int, array<string, mixed>> $notices The composed notices.
+	 *
+	 * @return array<string, array<int, array<string, mixed>>> The `delivered` answers and the `unreachable` channels.
+	 */
+	private function deliverAll(array $notices): array {
+		$outcome = ['delivered' => [], 'unreachable' => []];
 		foreach ($notices as $notice) {
 			try {
-				$deliveries[] = $this->indexService->deliver(notice: $notice);
+				$outcome['delivered'][] = $this->indexService->deliver(notice: $notice);
 			} catch (IndexUnreachableException $e) {
-				$unreachable[] = [
+				$outcome['unreachable'][] = [
 					'channel' => (string)($notice['channel'] ?? ''),
 					'reason' => $e->getMessage(),
 				];
 			}
 		}
 
-		// The notices are returned whether or not they were delivered, and an
-		// undelivered channel is named. Answering 200 with only the deliveries
-		// would let an operator read a partial announcement as a complete one.
+		return $outcome;
+	}//end deliverAll()
+
+	/**
+	 * The answer to an announcement.
+	 *
+	 * The notices are returned whether or not they were delivered, and an
+	 * undelivered channel is named. Answering 200 with only the deliveries
+	 * would let an operator read a partial announcement as a complete one.
+	 *
+	 * @param array<int, array<string, mixed>> $notices The composed notices.
+	 * @param array<string, array<int, array<string, mixed>>> $outcome What the deliveries did: `delivered` and `unreachable`.
+	 *
+	 * @return JSONResponse 200 when every channel was reached, else 502.
+	 */
+	private function announcementAnswer(array $notices, array $outcome): JSONResponse {
+		$complete = ($outcome['unreachable'] === []);
 		$statusCode = Http::STATUS_BAD_GATEWAY;
-		if ($unreachable === []) {
+		if ($complete === true) {
 			$statusCode = Http::STATUS_OK;
 		}
 
 		return new JSONResponse(
-			data: [
-				'notices' => $notices,
-				'delivered' => $deliveries,
-				'unreachable' => $unreachable,
-				'complete' => ($unreachable === []),
-			],
+			data: ['notices' => $notices] + $outcome + ['complete' => $complete],
 			statusCode: $statusCode
 		);
-
-	}//end announce()
+	}//end announcementAnswer()
 
 	/**
 	 * Read or write which collections publish, and on what conditions.
 	 *
 	 * @return JSONResponse The configured set.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function publishedCollections(): JSONResponse {
@@ -149,7 +169,7 @@ class PublicationDisclosureController extends Controller {
 	 *
 	 * @return JSONResponse The outcome.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function savePublishedCollections(): JSONResponse {

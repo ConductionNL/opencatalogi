@@ -136,4 +136,51 @@ class DcatSerializerTest extends TestCase {
 		$this->assertSame(['jsonld', 'turtle', 'rdfxml'], array_keys(DcatSerializer::FORMATS));
 		$this->assertSame('application/ld+json', DcatSerializer::FORMATS['jsonld']);
 	}
-}//end class
+
+	/**
+	 * A language-tagged literal is written with its tag in Turtle and with
+	 * xml:lang in RDF/XML, once per language (publication-translations REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testALanguageTaggedLiteralKeepsItsLanguage(): void {
+		$document = [
+			'@context' => ['dct' => 'http://purl.org/dc/terms/', 'dcat' => 'http://www.w3.org/ns/dcat#'],
+			'@graph' => [
+				[
+					'@id' => 'https://host/d/1',
+					'@type' => 'dcat:Dataset',
+					'dct:title' => [['@value' => 'Jaarverslag', '@language' => 'nl'], ['@value' => 'Annual "report"', '@language' => 'en']],
+				],
+			],
+		];
+
+		$turtle = $this->serializer->toTurtle($document);
+		$this->assertStringContainsString('dct:title "Jaarverslag"@nl , "Annual \"report\""@en', $turtle);
+
+		$xml = $this->serializer->toRdfXml($document);
+		$this->assertStringContainsString('<dct:title xml:lang="nl">Jaarverslag</dct:title>', $xml);
+		$this->assertStringContainsString('<dct:title xml:lang="en">Annual &quot;report&quot;</dct:title>', $xml);
+		$this->assertStringNotContainsString('@value', $xml);
+	}
+
+	public function testALanguageTaggedLiteralKeepsItsLanguageInEveryFormat(): void {
+		$document = [
+			'@context' => ['dcat' => 'http://www.w3.org/ns/dcat#', 'dct' => 'http://purl.org/dc/terms/'],
+			'@graph' => [
+				[
+					'@id' => 'https://host/api/woo/u1',
+					'@type' => 'dcat:Dataset',
+					'dct:abstract' => ['@value' => 'U kreeg "geen" vergunning & bezwaar.', '@language' => 'nl'],
+				],
+			],
+		];
+
+		$this->assertStringContainsString('dct:abstract "U kreeg \\"geen\\" vergunning & bezwaar."@nl', $this->serializer->toTurtle($document));
+		$this->assertStringContainsString(
+			'<dct:abstract xml:lang="nl">U kreeg &quot;geen&quot; vergunning &amp; bezwaar.</dct:abstract>',
+			$this->serializer->toRdfXml($document)
+		);
+		$this->assertStringContainsString('"@language": "nl"', $this->serializer->toJsonLd($document));
+	}
+}

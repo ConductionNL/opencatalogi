@@ -87,4 +87,64 @@ class OpenRegisterLookupMissingConfigTest extends TestCase {
 		}
 
 	}//end testAnUnsetSettingNamesItsKey()
+
+	/**
+	 * Both settings present: the pair comes back keyed register then schema.
+	 *
+	 * @return void
+	 */
+	public function testBothSettingsSetAreReturnedAsThePair(): void {
+		$config = $this->createMock(originalClassName: IAppConfig::class);
+		$config->method('getValueString')->willReturnMap(
+			[
+				['opencatalogi', 'notice_register', '', 'r-1'],
+				['opencatalogi', 'notice_schema', '', 's-1'],
+			]
+		);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id) use ($config): mixed {
+				if ($id === IAppConfig::class) {
+					return $config;
+				}
+
+				throw new RuntimeException('not available: ' . $id);
+			}
+		);
+		$lookup = new OpenRegisterLookup($container, $this->createMock(originalClassName: IAppManager::class));
+
+		$this->assertSame(
+			expected: ['register' => 'r-1', 'schema' => 's-1'],
+			actual: $lookup->registerConfiguration(registerKey: 'notice_register', schemaKey: 'notice_schema')
+		);
+
+	}//end testBothSettingsSetAreReturnedAsThePair()
+
+	/**
+	 * Without the resolver and without the app config, the lookup refuses with a
+	 * RuntimeException naming the register key and chaining the cause.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreachableAppConfigRefusesNamingTheKey(): void {
+		$cause = new RuntimeException('nothing here');
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willThrowException($cause);
+		$lookup = new OpenRegisterLookup($container, $this->createMock(originalClassName: IAppManager::class));
+
+		try {
+			$lookup->registerConfiguration(registerKey: 'notice_register', schemaKey: 'notice_schema');
+			$this->fail(message: 'No exception for an unreachable app config.');
+		} catch (MissingConfigException $e) {
+			$this->fail(message: 'A missing setting was reported instead of the unreachable app config.');
+		} catch (RuntimeException $e) {
+			$this->assertSame(
+				expected: 'Cannot resolve register configuration for notice_register: IAppConfig unavailable',
+				actual: $e->getMessage()
+			);
+			$this->assertSame(expected: 0, actual: $e->getCode());
+			$this->assertSame(expected: $cause, actual: $e->getPrevious());
+		}
+
+	}//end testAnUnreachableAppConfigRefusesNamingTheKey()
 }//end class

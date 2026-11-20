@@ -79,11 +79,7 @@ final class CatalogScopeIds {
 	 */
 	public static function normalizeIds(mixed $value): array {
 		if (is_string($value) === true) {
-			$decoded = json_decode($value, true);
-			$value = [];
-			if (is_array($decoded) === true) {
-				$value = $decoded;
-			}
+			$value = self::decodedList(json: $value);
 		}
 		if (is_array($value) === false) {
 			return [];
@@ -92,11 +88,38 @@ final class CatalogScopeIds {
 		// An int, or a string of digits; whatever else casts to 0 and drops out.
 		$digits = array_filter(
 			$value,
-			static fn (mixed $id): bool => is_int($id) === true || (is_string($id) === true && ctype_digit($id) === true)
+			static fn (mixed $id): bool => self::isDigitId(id: $id)
 		);
 
 		return array_values(array_filter(array_map('intval', $digits), static fn (int $id): bool => $id > 0));
 	}//end normalizeIds()
+
+	/**
+	 * A JSON list decoded, or an empty list when it is no JSON array.
+	 *
+	 * @param string $json The stored value.
+	 *
+	 * @return array<mixed>
+	 */
+	private static function decodedList(string $json): array {
+		$decoded = json_decode($json, true);
+		if (is_array($decoded) === true) {
+			return $decoded;
+		}
+
+		return [];
+	}//end decodedList()
+
+	/**
+	 * Whether an entry is an int or a string of digits.
+	 *
+	 * @param mixed $id The entry.
+	 *
+	 * @return bool
+	 */
+	private static function isDigitId(mixed $id): bool {
+		return is_int($id) === true || (is_string($id) === true && ctype_digit($id) === true);
+	}//end isDigitId()
 
 	/**
 	 * Whether a catalogue's register or schema field names anything, id or not.

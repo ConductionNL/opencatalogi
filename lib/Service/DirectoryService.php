@@ -43,6 +43,9 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
+use OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -91,6 +94,13 @@ class DirectoryService implements DirectoryServiceInterface {
 	private readonly Client $client;
 
 	/**
+	 * Parses, resolves and classifies outbound URLs.
+	 *
+	 * @var OutboundUrlGuard|null
+	 */
+	private ?OutboundUrlGuard $urlGuard = null;
+
+	/**
 	 * Cached unique directory URLs for cross-directory checks.
 	 *
 	 * @var array<string>
@@ -108,6 +118,19 @@ class DirectoryService implements DirectoryServiceInterface {
 		'unchanged' => 'listings_unchanged',
 		'skipped_outdated' => 'listings_skipped',
 		'skipped_other_directory' => 'listings_skipped',
+	];
+
+	/**
+	 * Where a listing keeps its freshness timestamp, most relevant first.
+	 *
+	 * @var list<list<string>>
+	 */
+	private const array TIMESTAMP_PATHS = [
+		['updated'],
+		['@self', 'updated'],
+		['created'],
+		['@self', 'created'],
+		['lastSync'],
 	];
 
 	/**
@@ -149,6 +172,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @param IRequest $request Request interface for accessing HTTP headers
 	 * @param LoggerInterface|null $logger PSR-3 logger for the SSRF-allowance warning
 	 * @param ConnectionReporter|null $connectionReporter Tells integriq what a sync met, or nothing when absent.
+	 * @param DryRunRecorder|null $dryRuns Holds the announcement to a peer as a dry run in staging (REQ-STG-002).
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
@@ -168,6 +192,8 @@ class DirectoryService implements DirectoryServiceInterface {
 		// The integriq connection report (adopt-connection-registry). Nullable
 		// and last for the same reason as the logger above.
 		private readonly ?ConnectionReporter $connectionReporter = null,
+		// Holds the announcement to a peer in staging (instance-staging-mode REQ-STG-002).
+		private readonly ?DryRunRecorder $dryRuns = null,
 	) {
 		$this->appName = 'opencatalogi';
 		$this->client = new Client([]);
@@ -780,12 +806,31 @@ class DirectoryService implements DirectoryServiceInterface {
 			return;
 		}
 
+		// In staging the announcement is kept as a dry run and the peer is not told.
+		if ($this->announcementHeld(directoryUrl: $directoryUrl, ourDirectoryUrl: $ourDirectoryUrl) === true) {
+			return;
+		}
+
 		try {
 			$this->broadcastService->broadcast($directoryUrl);
 		} catch (\Exception $e) {
 			// A peer that cannot be reached learns about us on its own next sync.
 		}
 	}//end broadcastToDirectory()
+
+	/**
+	 * Whether the announcement to a peer is held as a dry run (staging) instead of sent.
+	 *
+	 * @param string $directoryUrl    The peer's directory.
+	 * @param string $ourDirectoryUrl Our directory.
+	 *
+	 * @return bool
+	 */
+	private function announcementHeld(string $directoryUrl, string $ourDirectoryUrl): bool {
+		$announcement = ['directoryUrl' => $directoryUrl, 'ourDirectoryUrl' => $ourDirectoryUrl];
+
+		return $this->dryRuns?->hold(channel: 'directory-announce', payload: $announcement) !== null;
+	}//end announcementHeld()
 
 	/**
 	 * Mark the directory's listings with a failed fetch and build the exception to rethrow.
@@ -1151,7 +1196,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		$existingListingData = $existingListings[0]->jsonSerialize();
-		$existingObject = ($existingListingData['object'] ?? []);
+		$existingObject = ($existingListingData['object'] ?? $existingListingData);
 		$listingData['default'] = ($existingObject['default'] ?? $listingData['default']);
 		$listingData['status'] = ($existingObject['status'] ?? 'development');
 		$listingData['integrationLevel'] = ($existingObject['integrationLevel'] ?? 'search');
@@ -1183,10 +1228,10 @@ class DirectoryService implements DirectoryServiceInterface {
 	private function saveListing(array $target, array $listingData, $uuid): void {
 		$target['objectService']->saveObject(
 			object: $listingData,
-			extend: [],
-			register: $target['register'],
-			schema: $target['schema'],
-			uuid: $uuid
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $target['register'], schema: $target['schema']),
+				uuid: $uuid
+			)
 		);
 	}//end saveListing()
 
@@ -1211,7 +1256,7 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		try {
 			$existingListingData = $existingListings[0]->jsonSerialize();
-			$errorData = ($existingListingData['object'] ?? []);
+			$errorData = ($existingListingData['object'] ?? $existingListingData);
 			$errorData['statusCode'] = 500;
 			$errorData['lastSync'] = (new DateTime())->format('c');
 			$errorData['lastError'] = self::sanitizeSyncError(message: $exception->getMessage());
@@ -1562,7 +1607,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	private function isListingDataOutdated(array $incomingData, array $existingData): bool {
 		try {
 			// Get existing object data.
-			$existingObject = ($existingData['object'] ?? []);
+			$existingObject = ($existingData['object'] ?? $existingData);
 
 			// Get the last sync time from existing data.
 			$existingLastSync = $existingObject['lastSync'] ?? null;
@@ -1603,63 +1648,86 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * @return \DateTime|null The extracted timestamp or null if not found
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function extractTimestamp(array $data): ?\DateTime {
-		// Priority order for timestamp fields.
-		$timestampFields = [
-			'updated',
-			// Standard updated field.
-			'@self.updated',
-			// Metadata updated field.
-			'created',
-			// Creation timestamp.
-			'@self.created',
-			// Metadata creation timestamp.
-			'lastSync',
-			// Last sync timestamp.
-		];
-
-		foreach ($timestampFields as $field) {
-			$value = null;
-
-			// Handle nested field notation (e.g., '@self.updated').
-			$value = $data[$field] ?? null;
-			if (str_contains($field, '.') === true) {
-				$parts = explode('.', $field);
-				$value = $data;
-				foreach ($parts as $part) {
-					if (isset($value[$part]) === false) {
-						$value = null;
-						break;
-					}
-
-					$value = $value[$part];
-				}
+		foreach (self::TIMESTAMP_PATHS as $path) {
+			$timestamp = $this->timestampFrom(value: $this->valueAtPath(data: $data, path: $path));
+			if ($timestamp !== null) {
+				return $timestamp;
 			}
-
-			if ($value !== null) {
-				try {
-					// Handle different timestamp formats.
-					if (is_string($value) === true) {
-						return new DateTime($value);
-					} elseif (is_array($value) === true && isset($value['date']) === true) {
-						// Handle DateTime object serialized as array.
-						return new DateTime($value['date']);
-					} elseif ($value instanceof \DateTime) {
-						return $value;
-					}
-				} catch (\Exception $e) {
-					// Continue to next field if this one is invalid.
-					continue;
-				}
-			}
-		}//end foreach
+		}
 
 		return null;
 	}//end extractTimestamp()
+
+	/**
+	 * Read a nested value from listing data.
+	 *
+	 * @param array<string, mixed> $data The listing data.
+	 * @param list<string>         $path The keys to follow, outermost first.
+	 *
+	 * @return mixed The value, or null when a key on the path is not set.
+	 */
+	private function valueAtPath(array $data, array $path): mixed {
+		$value = $data;
+		foreach ($path as $part) {
+			if (isset($value[$part]) === false) {
+				return null;
+			}
+
+			$value = $value[$part];
+		}
+
+		return $value;
+	}//end valueAtPath()
+
+	/**
+	 * Turn one timestamp value into a DateTime.
+	 *
+	 * Accepts a date string, a DateTime serialised as an array with a `date`
+	 * key, or a DateTime itself.
+	 *
+	 * @param mixed $value The stored value.
+	 *
+	 * @return \DateTime|null The timestamp, or null when the value is missing,
+	 *                        of another kind, or not a valid date.
+	 */
+	private function timestampFrom(mixed $value): ?\DateTime {
+		if ($value instanceof \DateTime) {
+			return $value;
+		}
+
+		$text = $this->timestampText(value: $value);
+		if ($text === null) {
+			return null;
+		}
+
+		try {
+			return new DateTime($text);
+		} catch (\Exception $e) {
+			return null;
+		}
+	}//end timestampFrom()
+
+	/**
+	 * The date text of a timestamp value: a string itself, or the `date` of a serialised DateTime.
+	 *
+	 * @param mixed $value The stored value.
+	 *
+	 * @return mixed The date text, or null when the value holds none.
+	 */
+	private function timestampText(mixed $value): mixed {
+		if (is_string($value) === true) {
+			return $value;
+		}
+
+		if (is_array($value) === true && isset($value['date']) === true) {
+			return $value['date'];
+		}
+
+		return null;
+	}//end timestampText()
 
 	/**
 	 * Update directory status on error
@@ -1710,7 +1778,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			// Update each listing with error status.
 			foreach ($existingListings as $listing) {
 				$listingData = $listing->jsonSerialize();
-				$errorData = ($listingData['object'] ?? []);
+				$errorData = ($listingData['object'] ?? $listingData);
 
 				// Update with error status. lastSuccessAt is left as it was.
 				$errorData['statusCode'] = $statusCode;
@@ -1720,10 +1788,10 @@ class DirectoryService implements DirectoryServiceInterface {
 				// Use positional parameters for compatibility with different ObjectService versions.
 				$objectService->saveObject(
 					object: $errorData,
-					extend: [],
-					register: $listingRegister,
-					schema: $listingSchema,
-					uuid: $listingData['id']
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $listingRegister, schema: $listingSchema),
+						uuid: $listingData['id']
+					)
 				);
 			}
 		} catch (\Exception $e) {
@@ -1958,24 +2026,11 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 *
 	 * @spec exclude SSRF input-validation guard for outbound directory fetches; security
 	 *       plumbing that hardens an existing fetch, no new domain behavior.
 	 */
 	private function assertSafeOutboundUrl(string $url): void {
-		$parsed = parse_url($url);
-		if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
-			throw new InvalidArgumentException('Invalid directory URL provided');
-		}
-
-		$scheme = strtolower($parsed['scheme']);
-		if (in_array($scheme, ['http', 'https'], true) === false) {
-			throw new InvalidArgumentException('Directory URL scheme must be http or https');
-		}
-
-		$host = strtolower($parsed['host']);
+		$host = $this->urlGuard()->hostOf(url: $url, label: 'Directory');
 
 		// Dev-only: explicitly allowlisted hosts skip the local/private-address guard so
 		// two local instances on a private network can federate. Empty by default, so a
@@ -1984,56 +2039,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			return;
 		}
 
-		// Reject obvious local hostnames outright.
-		if ($host === 'localhost' || str_ends_with($host, '.local') === true
-			|| str_ends_with($host, '.localhost') === true
-		) {
-			throw new InvalidArgumentException('Directory URL host is not allowed');
-		}
-
-		// Collect the IPs to check: the literal host if it is already an IP,
-		// otherwise every address the host resolves to via DNS.
-		$ipsToCheck = [];
-		if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-			$ipsToCheck[] = $host;
-		}
-
-		if (empty($ipsToCheck) === true) {
-			// Strip IPv6 brackets if present.
-			$lookupHost = trim($host, '[]');
-			if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
-				$ipsToCheck[] = $lookupHost;
-			}
-
-			if (empty($ipsToCheck) === true) {
-				$records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
-				if ($records !== false) {
-					foreach ($records as $record) {
-						if (isset($record['ip']) === true) {
-							$ipsToCheck[] = $record['ip'];
-						}
-
-						if (isset($record['ipv6']) === true) {
-							$ipsToCheck[] = $record['ipv6'];
-						}
-					}
-				}
-
-				// Fallback to gethostbyname for A records when dns_get_record is empty.
-				if (empty($ipsToCheck) === true) {
-					$resolved = gethostbyname($lookupHost);
-					if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
-						$ipsToCheck[] = $resolved;
-					}
-				}
-			}//end if
-		}//end if
-
-		if (empty($ipsToCheck) === true) {
-			throw new InvalidArgumentException('Directory URL host could not be resolved');
-		}
-
-		foreach ($ipsToCheck as $ipAddress) {
+		foreach ($this->urlGuard()->addressesOf(host: $host, label: 'Directory') as $ipAddress) {
 			if ($this->isBlockedIp(ipAddress: $ipAddress) === true) {
 				throw new InvalidArgumentException('Directory URL resolves to a disallowed (internal) address');
 			}
@@ -2067,7 +2073,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * Blocks loopback (127.0.0.0/8, ::1), private RFC1918 ranges, link-local
 	 * (169.254.0.0/16 incl. the 169.254.169.254 metadata endpoint, fe80::/10),
-	 * unique-local IPv6 (fc00::/7), and other reserved ranges via PHP's range flags.
+	 * unique-local IPv6 (fc00::/7), and other reserved ranges, as classified by
+	 * {@see OutboundUrlGuard} after IPv4-in-IPv6 forms are normalised.
 	 *
 	 * @param string $ipAddress The IP address to evaluate.
 	 *
@@ -2076,39 +2083,17 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec exclude SSRF range check supporting assertSafeOutboundUrl(); security plumbing.
 	 */
 	private function isBlockedIp(string $ipAddress): bool {
-		if (filter_var($ipAddress, FILTER_VALIDATE_IP) === false) {
-			// Unparseable address — treat as blocked to fail safe.
-			return true;
-		}
-
 		// NEVER ALLOWED, whatever the configuration says. These are checked
 		// FIRST so the private-range allowance below cannot reach them: the
 		// cloud-metadata endpoint is the single most valuable SSRF target on a
 		// hosted instance, and it lives in a link-local range that a naive
 		// "allow internal" switch would open along with everything else.
-		$blockedExact = [
-			'169.254.169.254',
-			'::1',
-			'0.0.0.0',
-			'::',
-		];
-		if (in_array($ipAddress, $blockedExact, true) === true) {
+		// Unparseable addresses are refused here too, to fail safe.
+		if ($this->urlGuard()->isNeverAllowed(ipAddress: $ipAddress) === true) {
 			return true;
 		}
 
-		if ($this->isBlockedIpv6Prefix(ipAddress: $ipAddress) === true) {
-			return true;
-		}
-
-		// FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE returns false for
-		// private (RFC1918), loopback, link-local, and reserved ranges (IPv4 + IPv6).
-		$isPublic = filter_var(
-			value: $ipAddress,
-			filter: FILTER_VALIDATE_IP,
-			options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
-		);
-
-		if ($isPublic !== false) {
+		if ($this->urlGuard()->isInternal(ipAddress: $ipAddress) === false) {
 			return false;
 		}
 
@@ -2141,6 +2126,17 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end isBlockedIp()
 
 	/**
+	 * The outbound URL guard, created on first use.
+	 *
+	 * @return OutboundUrlGuard The guard.
+	 */
+	private function urlGuard(): OutboundUrlGuard {
+		$this->urlGuard ??= new OutboundUrlGuard();
+		return $this->urlGuard;
+	}//end urlGuard()
+
+
+	/**
 	 * Whether this instance may federate with directories on private addresses.
 	 *
 	 * Defaults to OFF. Enabled with:
@@ -2159,32 +2155,6 @@ class DirectoryService implements DirectoryServiceInterface {
 	private function allowsInternalDirectories(): bool {
 		return $this->config->getValueString($this->appName, 'allow_internal_directories', 'no') === 'yes';
 	}//end allowsInternalDirectories()
-
-	/**
-	 * Determine whether an IPv6 address matches a blocked prefix range.
-	 *
-	 * Checks fc00::/7 (unique-local) and fe80::/10 (link-local) by inspecting
-	 * the lower-cased string prefix. Extracted from isBlockedIp() to reduce
-	 * cyclomatic complexity.
-	 *
-	 * @param string $ipAddress The IP address string to check.
-	 *
-	 * @return boolean True when the address has a blocked IPv6 prefix.
-	 *
-	 * @spec exclude SSRF range-check helper extracted from isBlockedIp(); security plumbing.
-	 */
-	private function isBlockedIpv6Prefix(string $ipAddress): bool {
-		$lower = strtolower($ipAddress);
-		// Match fc00::/7 (unique-local) and fe80::/10 (link-local) IPv6 prefixes.
-		if (str_starts_with($lower, 'fc') === true || str_starts_with($lower, 'fd') === true
-			|| str_starts_with($lower, 'fe8') === true || str_starts_with($lower, 'fe9') === true
-			|| str_starts_with($lower, 'fea') === true || str_starts_with($lower, 'feb') === true
-		) {
-			return true;
-		}
-
-		return false;
-	}//end isBlockedIpv6Prefix()
 
 	/**
 	 * Perform a GET request with SSRF-safe, per-hop-validated bounded redirects.
@@ -2465,6 +2435,97 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end getPublication()
 
 	/**
+	 * The attachments of a publication another instance holds.
+	 *
+	 * Asks each available peer's `/api/federation/publications/{id}/attachments`
+	 * with `_aggregate=false`, so the peer answers with its own attachments and
+	 * never fans out again, and returns the first answer. A peer that does not
+	 * hold the publication answers 404 and is passed over. The peer addresses go
+	 * through the outbound URL guard in peerTargets(), so an address on a private
+	 * network is never called. Each attachment keeps the peer's download URL and
+	 * is marked with the instance it came from.
+	 *
+	 * @param string $publicationId The ID of the publication
+	 * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
+	 *
+	 * @return array|null The attachments (`results`) and the peer that answered (`source`),
+	 *                    or null when no reachable peer holds the publication
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function getRemoteAttachments(string $publicationId, array $guzzleConfig = []): ?array {
+		$directories = $this->getUniqueDirectories(availableOnly: true);
+		if (empty($directories) === true) {
+			return null;
+		}
+
+		$lookup = [
+			'guzzleConfig' => $guzzleConfig,
+			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
+			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl)
+				. '/' . urlencode($publicationId) . '/attachments',
+			'parse' => $this->parsePeerResults(...),
+		];
+		$targets = $this->peerTargets(directories: $directories, lookup: $lookup);
+		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
+
+		foreach ($answers as $index => $attachments) {
+			if ($attachments === null) {
+				continue;
+			}
+
+			$instance = self::peerOrigin(url: $targets[$index]['url']);
+			return [
+				'results' => array_map(
+					static fn (mixed $attachment): mixed => self::withAttachmentSource(attachment: $attachment, instance: $instance),
+					array_values($attachments)
+				),
+				'source' => [$targets[$index]['name'] => $targets[$index]['url']],
+			];
+		}
+
+		return null;
+	}//end getRemoteAttachments()
+
+	/**
+	 * One remote attachment, marked with the instance it was read from.
+	 *
+	 * @param mixed $attachment The attachment as the peer returned it
+	 * @param string $instance The peer's origin, `scheme://host[:port]`
+	 *
+	 * @return mixed The attachment with `source.instance`, or the value as it was when it is no attachment
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	private static function withAttachmentSource(mixed $attachment, string $instance): mixed {
+		if (is_array($attachment) === false) {
+			return $attachment;
+		}
+
+		$attachment['source'] = ['instance' => $instance];
+		return $attachment;
+	}//end withAttachmentSource()
+
+	/**
+	 * The origin of a peer URL: scheme, host and, when set, port.
+	 *
+	 * @param string $url A URL on the peer
+	 *
+	 * @return string The origin, e.g. `https://peer.example.org`
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	private static function peerOrigin(string $url): string {
+		$parts = parse_url($url);
+		$origin = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '');
+		if (isset($parts['port']) === true) {
+			$origin .= ':' . $parts['port'];
+		}
+
+		return $origin;
+	}//end peerOrigin()
+
+	/**
 	 * The query every peer lookup sends: the caller's `query_params`, the extra
 	 * parameters, no fan-out on the peer's side and the schema and register extended.
 	 *
@@ -2549,10 +2610,13 @@ class DirectoryService implements DirectoryServiceInterface {
 		$defaultGuzzleConfig = [
 			RequestOptions::TIMEOUT => 5,
 			RequestOptions::CONNECT_TIMEOUT => 2,
-			RequestOptions::HEADERS => [
-				'Accept' => 'application/json',
-				'User-Agent' => 'OpenCatalogi-DirectoryService/1.0',
-			],
+			RequestOptions::HEADERS => array_merge(
+				[
+					'Accept' => 'application/json',
+					'User-Agent' => 'OpenCatalogi-DirectoryService/1.0',
+				],
+				$this->peerLanguageHeaders()
+			),
 			RequestOptions::HTTP_ERRORS => false,
 		];
 		$lookup['client'] = new Client(array_merge($defaultGuzzleConfig, $lookup['guzzleConfig']));
@@ -2564,6 +2628,54 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		return $answers;
 	}//end fetchFromPeers()
+
+	/**
+	 * The language header a peer read forwards: the language the visitor asked
+	 * this instance for, so the peer answers in it and falls back to Dutch per
+	 * field the same way (publication-translations REQ-PTR-002).
+	 *
+	 * Nothing is forwarded when the visitor asked for no language, or when
+	 * OpenRegister has no language service: the peer then answers in its default.
+	 *
+	 * @return array<string, string> `Accept-Language` to the visitor's language, or empty.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function peerLanguageHeaders(): array {
+		try {
+			$languageService = $this->container->get('OCA\OpenRegister\Service\LanguageService');
+		} catch (\Throwable) {
+			return [];
+		}
+
+		if (self::visitorAskedForALanguage(languageService: $languageService) === false) {
+			return [];
+		}
+
+		$language = (string)$languageService->getPreferredLanguage();
+		if ($language === '') {
+			return [];
+		}
+
+		return ['Accept-Language' => $language];
+	}//end peerLanguageHeaders()
+
+	/**
+	 * Whether OpenRegister's language service can name the visitor's language
+	 * and the visitor asked for one (not OpenRegister's default).
+	 *
+	 * @param mixed $languageService OpenRegister's LanguageService.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private static function visitorAskedForALanguage(mixed $languageService): bool {
+		return is_object($languageService) === true
+			&& method_exists($languageService, 'getRequestedLanguageSource') === true
+			&& method_exists($languageService, 'getPreferredLanguage') === true
+			&& $languageService->getRequestedLanguageSource() !== 'default';
+	}//end visitorAskedForALanguage()
 
 	/**
 	 * Call one peer and parse its answer.

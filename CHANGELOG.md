@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Mail intake for publications** — with the Nextcloud Mail app, an email becomes a draft publication from the Mail sidebar (title from the subject, summary and a provenance description from the message). The template never sets the publication date, status, organization, themes or retention, so an emailed request is never public until an editor publishes it (change `leaf-integrations`).
+- **Publication planning panel** — "Planning (does not publish)" on the publication page links calendar events to a publication; it never changes whether the publication is public.
+
+### Changed
+
+- **Woo requests are handled by dossiq** (woo-request-intake-hands-over-to-dossiq). With dossiq installed, nothing changes for the requester: a new request from the portal form or the API goes to dossiq, which gives it its reference and its term, and the requests stored in OpenCatalogi move to dossiq with their remaining time on upgrade; their old reference still finds them. OpenCatalogi stops its own term reminders for every moved request. The Woo section of the admin settings and the readiness report show how many requests are not moved yet and how many dossiq could not move. Once none is left, the stored requests are read-only: a change answers 410 naming dossiq. **Behaviour change:** without dossiq, OpenCatalogi no longer takes Woo requests; the request routes answer 404 and the portal form answers that the intake is unavailable. Install dossiq to keep taking them. Publishing decisions and documents works as before. See `docs/features/woo-request-handover.md`.
+- **Separate publish right** (operations-publish-rights). Only members of the Nextcloud group `opencatalogi-publishers` and administrators may change a publication's `publicationDate` or `depublicationDate`. OpenRegister enforces this through a property-level update rule in the publication schema. The publish and withdraw endpoints answer 403 naming the group, `GET /api/publications/{id}/visibility` returns `canPublish`, and the Publish now, Withdraw and Publish again buttons only show to publishers. The group is created on install and upgrade, without members. **Behaviour change:** an editor outside the group can no longer publish or withdraw; until the group has a member, only administrators can. The Woo section of the admin settings shows the group and its member count. See `docs/features/publish-rights.md`.
+
 ## [0.7.54] - 2026-07-16
 
 ### Added

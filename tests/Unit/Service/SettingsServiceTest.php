@@ -22,6 +22,9 @@ use RuntimeException;
 /**
  * Unit tests for SettingsService.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * @category Tests
  * @package  Unit\Service
  * @author   Conduction b.v. <info@conduction.nl>
@@ -638,6 +641,54 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame(['channel_sources', '{"plooi":"plooi-api"}'], $stored);
 
 	}//end testChannelSourcesKeepOnlyKnownChannelsWithASlug()
+
+	/**
+	 * The publication languages are stored as a JSON list of valid tags,
+	 * Dutch first and once, whether sent as a list or as its JSON text
+	 * (publication-translations D6).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-translations/design.md
+	 */
+	public function testPublicationLanguagesAreStoredAsTagsWithDutchFirst(): void {
+		$stored = [];
+		$this->config->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored[] = [$key, $value];
+				return true;
+			}
+		);
+
+		$this->service->updateSettings(['publication_languages' => ['EN', ' de ', 'en', 'xx-!!', 42, 'nl', 'fr-BE']]);
+		$this->service->updateSettings(['publication_languages' => '["fy"]']);
+		$this->service->updateSettings(['publication_languages' => 'not json']);
+
+		$this->assertSame(
+			[
+				['publication_languages', '["nl","en","de","fr-BE"]'],
+				['publication_languages', '["nl","fy"]'],
+				['publication_languages', '["nl"]'],
+			],
+			$stored
+		);
+	}//end testPublicationLanguagesAreStoredAsTagsWithDutchFirst()
+
+	/**
+	 * Without a stored value the settings report Dutch and English.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-translations/design.md
+	 */
+	public function testPublicationLanguagesDefaultToDutchAndEnglish(): void {
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => $default
+		);
+
+		$this->assertSame('["nl","en"]', $this->service->getSettings()['configuration']['publication_languages']);
+	}//end testPublicationLanguagesDefaultToDutchAndEnglish()
 
 	/**
 	 * Returns empty array when no settings are passed.
@@ -1980,6 +2031,70 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testTheOrganisationKeysComeFromOpenRegister()
 
 	/**
+	 * The import path, on a fresh install and after an upgrade alike, points the
+	 * organisation keys at OpenRegister's `directory` register and its
+	 * `nc-organisation` projection, the keys the Organizations pages resolve.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/organisations-page-edits-the-shared-organisation/specs/shared-organisation/spec.md
+	 */
+	public function testOrganisationKeysResolveToTheProjection(): void {
+		$register = new \OCA\OpenRegister\Db\Register();
+		$schema = new \OCA\OpenRegister\Db\Schema();
+		foreach ([[$register, 4], [$schema, 51]] as [$entity, $id]) {
+			$property = (new \ReflectionClass($entity))->getProperty('id');
+			$property->setAccessible(true);
+			$property->setValue($entity, $id);
+		}
+
+		// Other lookups on the import path ask the same mappers for other slugs; only these two exist.
+		$asked = [];
+		$only = static function (string $slug, object $entity) use (&$asked): \Closure {
+			return static function ($id) use ($slug, $entity, &$asked): object {
+				$asked[] = $id;
+				if ($id === $slug) {
+					return $entity;
+				}
+
+				throw new \OCP\AppFramework\Db\DoesNotExistException('no ' . (string)$id);
+			};
+		};
+		$registerMapper = $this->createMock(\OCA\OpenRegister\Db\RegisterMapper::class);
+		$registerMapper->method('find')->willReturnCallback($only('directory', $register));
+		$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
+		$schemaMapper->method('find')->willReturnCallback($only('nc-organisation', $schema));
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static function (string $id) use ($registerMapper, $schemaMapper) {
+				if (str_contains($id, 'RegisterMapper') === true) {
+					return $registerMapper;
+				}
+
+				return $schemaMapper;
+			}
+		);
+
+		$stored = [];
+		$this->config->method('setValueString')
+			->willReturnCallback(
+				function (string $app, string $key, string $value) use (&$stored) {
+					$stored[$key] = $value;
+					return true;
+				}
+			);
+
+		$this->invokePrivateMethod($this->service, 'updateObjectTypeConfiguration', [['schemas' => [], 'registers' => []]]);
+
+		$this->assertSame('4', $stored['organization_register']);
+		$this->assertSame('51', $stored['organization_schema']);
+		$this->assertContains('directory', $asked);
+		$this->assertContains('nc-organisation', $asked);
+
+	}//end testOrganisationKeysResolveToTheProjection()
+
+	/**
 	 * OpenRegister being absent leaves the keys unset rather than failing.
 	 *
 	 * A missing picker option is a smaller failure than an import that dies, and
@@ -2450,6 +2565,100 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => '-5'])['public_api_cache_seconds']);
 		$this->assertSame('0', $this->service->updateSettings(['public_api_cache_seconds' => 'soon'])['public_api_cache_seconds']);
 		$this->assertSame('3600', $this->service->updateSettings(['public_api_cache_seconds' => 31536000])['public_api_cache_seconds']);
+		// REQ-PTS-001: the two settings that shape a publication's pages can be saved.
+		$this->assertSame(
+			['publication_url_template' => 'https://open.gemeente.nl/p/{id}', 'publication_url_catalog' => 'woo'],
+			$this->service->updateSettings(['publication_url_template' => 'https://open.gemeente.nl/p/{id}', 'publication_url_catalog' => 'woo'])
+		);
 
 	}//end testTheAdministratorSetsThePublicCacheTime()
+
+	/**
+	 * The administrator saves a valid list of websites; it is stored as the CSV the allowlist reads (REQ-SCO-003).
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+	 *
+	 * @return void
+	 */
+	public function testTheAdministratorSavesTheAllowedWebsites(): void {
+		$stored = [];
+		$this->config->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key) use (&$stored): string {
+				return ($stored[$key] ?? '');
+			}
+		);
+
+		$result = $this->service->updateSettings(['cors_allowed_origins' => "https://www.voorbeeldgemeente.nl
+https://andere.example"]);
+
+		$this->assertSame(['cors_allowed_origins' => 'https://www.voorbeeldgemeente.nl,https://andere.example'], $result);
+
+	}//end testTheAdministratorSavesTheAllowedWebsites()
+
+	/**
+	 * A line with a path refuses the save before anything is written, naming the line (REQ-SCO-003).
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+	 *
+	 * @return void
+	 */
+	public function testALineWithAPathIsRefusedByName(): void {
+		$this->config->expects($this->never())->method('setValueString');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('"https://www.voorbeeldgemeente.nl/zoeken" is not a website origin');
+
+		$this->service->updateSettings(['public_api_cache_seconds' => 30, 'cors_allowed_origins' => 'https://www.voorbeeldgemeente.nl/zoeken']);
+
+	}//end testALineWithAPathIsRefusedByName()
+
+	/**
+	 * The allowlist is reported with the other settings, `*` until an administrator sets it.
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+	 *
+	 * @return void
+	 */
+	public function testTheAllowlistIsReportedWithItsDefault(): void {
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+		$this->config->method('getValueString')->willReturnArgument(2);
+
+		$this->assertSame('*', $this->service->getSettings()['configuration']['cors_allowed_origins']);
+
+	}//end testTheAllowlistIsReportedWithItsDefault()
+
+	/**
+	 * Search indexing defaults to allowed, and only `blocked` is stored as blocked (REQ-WAB-003).
+	 *
+	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 *
+	 * @return void
+	 */
+	public function testTheAdministratorSwitchesSearchIndexing(): void {
+		$stored = [];
+		$this->appManager->method('getInstalledApps')->willReturn([]);
+		$this->config->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored) {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+		$this->config->method('getValueString')->willReturnCallback(
+			function (string $app, string $key, string $default = '') use (&$stored) {
+				return ($stored[$key] ?? $default);
+			}
+		);
+
+		$this->assertSame('allowed', $this->service->getSettings()['configuration']['search_indexing']);
+		$this->assertSame('blocked', $this->service->updateSettings(['search_indexing' => 'blocked'])['search_indexing']);
+		$this->assertSame('allowed', $this->service->updateSettings(['search_indexing' => 'allowed'])['search_indexing']);
+		$this->assertSame('allowed', $this->service->updateSettings(['search_indexing' => 'BLOCK'])['search_indexing']);
+
+	}//end testTheAdministratorSwitchesSearchIndexing()
 }//end class

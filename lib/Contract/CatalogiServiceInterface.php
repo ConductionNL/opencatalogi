@@ -158,6 +158,15 @@ interface CatalogiServiceInterface {
 	public function getCatalogBySlug(string $slug): ?array;
 
 	/**
+	 * The slugs of every catalogue in the configured catalogue register and schema.
+	 *
+	 * @return array<int, string> The slugs, each once, in the order found; empty when unconfigured.
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function getCatalogSlugs(): array;
+
+	/**
 	 * Invalidate the cache for a specific catalog.
 	 *
 	 * This method removes the catalog from cache, forcing the next request
@@ -229,4 +238,17 @@ interface CatalogiServiceInterface {
 	 * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
 	 */
 	public function index(null|string|int $catalogId = null): JSONResponse;
+
+	/**
+	 * Lists the catalog objects for the public catalog list, scoped to the configured
+	 * catalog register/schema (the caller's own scope keys are dropped) and RBAC-filtered.
+	 *
+	 * @param array<string, mixed>  $requestParams The request parameters.
+	 * @param array<string, string> $catalogConfig The resolved `register`/`schema` pair.
+	 *
+	 * @return array<string, mixed> The paginated search result.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 */
+	public function listCatalogs(array $requestParams, array $catalogConfig): array;
 }//end interface

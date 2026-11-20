@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Controller\PublicationsController;
+use OCA\OpenRegister\Kernel\Contracts\RenderSelection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
@@ -299,7 +300,12 @@ class PublicationShowGoldenTest extends TestCase {
 			}
 		);
 
+		// REQ-PDP-003: the comment period is looked up for every JSON answer; none is held here.
+		$commentPeriods = $this->createMock(\OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod::class);
+		$commentPeriods->method('addTo')->willReturnArgument(0);
+
 		$services = [
+			\OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface::class => $commentPeriods,
 			IUserSession::class => $session,
 			IAppConfig::class => $config,
 			WithheldFromPublicationInterface::class => $withheld,
@@ -378,8 +384,10 @@ class PublicationShowGoldenTest extends TestCase {
 				);
 			}
 
-			public function renderEntity(object $entity, array $_extend = [], int $depth = 0, array $filter = [], array $fields = [], array $unset = [], bool $_rbac = true, bool $_multitenancy = true): array {
-				$this->log[] = ['render' => [$entity->getUuid(), $_extend, $depth, $filter, $fields, $unset, $_rbac, $_multitenancy]];
+			public function renderEntity(object $entity, ?\OCA\OpenRegister\Kernel\Contracts\RenderSelection $selection = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				$selection ??= new \OCA\OpenRegister\Kernel\Contracts\RenderSelection(extend: [], filter: [], fields: [], unset: []);
+				// The recording keeps the old layout; a page render is always at depth 0.
+				$this->log[] = ['render' => [$entity->getUuid(), $selection->extend, 0, $selection->filter, $selection->fields, $selection->unset, $_rbac, $_multitenancy]];
 				return ['id' => $entity->getUuid(), 'title' => 'T'];
 			}
 		};

@@ -46,6 +46,7 @@ use Psr\Log\LoggerInterface;
  *
  * @covers \OCA\OpenCatalogi\Service\CatalogiService
  * @uses   \OCA\OpenCatalogi\Service\CatalogScopeSlugResolver
+ * @uses   \OCA\OpenCatalogi\Service\SchemaSlugIndex
  */
 class CatalogRewriteGoldenTest extends TestCase {
 

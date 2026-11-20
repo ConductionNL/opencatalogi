@@ -1,4 +1,8 @@
 #!/usr/bin/env node
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 /* eslint-disable jsdoc/require-param */
 
 /**
@@ -171,6 +175,11 @@ const NON_DISPLAY_ATTRS = new Set([
 	'src',
 	'for',
 	'role',
+	// The name of a material-design icon component (CnDeleteDialog and friends
+	// resolve `actionIconName="Delete"` to the Delete icon). It renders an icon,
+	// never text, so translating it would break the lookup. Compared lowercased.
+	'actioniconname',
+	'action-icon-name',
 ])
 
 /**

@@ -61,27 +61,19 @@ class SetupStepRunner {
 	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
 	 */
 	public function run(string $actionId, IRequest $request): ?JSONResponse {
-		switch ($actionId) {
-			// `install-demo-data` is the id the step used before it asked WHICH
-			// dataset, and it still means "import the one this app ships". Kept
-			// so an older manifest or a runbook that posts it keeps working.
-			case 'load-demo-data':
-				return $this->demoSteps->loadDataset(request: $request);
-			case 'install-demo-data':
-				return $this->demoSteps->installDemoData(dataset: DemoDataServiceInterface::DEMO_DATASET);
-			case 'skip-demo-data':
-				return $this->demoSteps->skipDemoData();
-			case 'reload-settings':
-				return $this->settingsStep->reloadSettings();
-			case 'create-first-catalog':
-				return $this->catalogSteps->createFirstCatalog();
-			case 'connect-federation':
-				return $this->federationSteps->connectFederation();
-			case 'sync-all-directories':
-				return $this->federationSteps->syncAllDirectories();
-			default:
-				return null;
-		}//end switch
+		// `install-demo-data` is the id the step used before it asked WHICH
+		// dataset, and it still means "import the one this app ships". Kept
+		// so an older manifest or a runbook that posts it keeps working.
+		return match ($actionId) {
+			'load-demo-data' => $this->demoSteps->loadDataset(request: $request),
+			'install-demo-data' => $this->demoSteps->installDemoData(dataset: DemoDataServiceInterface::DEMO_DATASET),
+			'skip-demo-data' => $this->demoSteps->skipDemoData(),
+			'reload-settings' => $this->settingsStep->reloadSettings(),
+			'create-first-catalog' => $this->catalogSteps->createFirstCatalog(),
+			'connect-federation' => $this->federationSteps->connectFederation(),
+			'sync-all-directories' => $this->federationSteps->syncAllDirectories(),
+			default => null,
+		};
 
 	}//end run()
 

@@ -143,8 +143,58 @@ class WooControllerTest extends TestCase {
 
 	}//end testInventarislijstHonoursHtmlFormat()
 
-	public function testInventarislijstUnknownFormatFallsBackToCsv(): void {
+	/**
+	 * format=pdf answers with the PDF/A bytes as application/pdf.
+	 *
+	 * @return void
+	 */
+	public function testInventarislijstPdfFormatReturnsAPdf(): void {
 		$this->withParams(['format' => 'pdf']);
+
+		$rows = [['document' => 'doc-1']];
+		$this->wooService->method('buildInventarislijst')->willReturn($rows);
+		$this->wooService->expects($this->once())
+			->method('renderInventarislijstPdf')
+			->with('batch-1', $rows)
+			->willReturn('%PDF-1.4 inventarislijst');
+		$this->wooService->expects($this->never())->method('renderInventarislijstCsv');
+
+		$response = $this->controller->inventarislijst('batch-1');
+
+		$this->assertInstanceOf(expected: DataDownloadResponse::class, actual: $response);
+		$this->assertSame(expected: 'application/pdf', actual: $response->getHeaders()['Content-Type']);
+		$this->assertStringContainsString(needle: 'inventarislijst.pdf', haystack: $response->getHeaders()['Content-Disposition']);
+		$this->assertStringStartsWith(prefix: '%PDF', string: $response->render());
+
+	}//end testInventarislijstPdfFormatReturnsAPdf()
+
+	/**
+	 * The download route is registered for the GET its links send.
+	 *
+	 * @return void
+	 */
+	public function testInventarislijstRouteIsAGet(): void {
+		$routes = require __DIR__ . '/../../../appinfo/routes.php';
+		$verbs = [];
+		foreach ($routes['routes'] as $route) {
+			// ApiPathAliases adds an /api/v1/ alias by the same name; check the unversioned route.
+			if ($route['name'] === 'woo#inventarislijst' && str_starts_with($route['url'], '/api/v1/') === false) {
+				$verbs[] = $route['verb'];
+			}
+		}
+
+		// The batch page downloads the list through a link, which always sends a GET.
+		$this->assertSame(expected: ['GET'], actual: $verbs);
+
+	}//end testInventarislijstRouteIsAGet()
+
+	/**
+	 * An unknown format falls back to CSV.
+	 *
+	 * @return void
+	 */
+	public function testInventarislijstUnknownFormatFallsBackToCsv(): void {
+		$this->withParams(params: ['format' => 'xlsx']);
 
 		$this->wooService->method('buildInventarislijst')->willReturn([]);
 		$this->wooService->expects($this->once())
@@ -291,4 +341,56 @@ class WooControllerTest extends TestCase {
 		$this->assertSame(0, $response->getData()['total']);
 
 	}//end testWeigeringsgrondenEmptyVocabularyReportsZeroTotal()
+
+	/*
+	 * ------------------------------------------------------------------
+	 * verifyRedaction — POST /api/woo/batches/{batchId}/documents/{docId}/verify-redaction
+	 * ------------------------------------------------------------------
+	 */
+
+	/**
+	 * REQ-WDA-004: marking a redaction verified needs a verified file; a refusal
+	 * answers 409 with the reason, and a success returns the stored assessment.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testVerifyRedactionNeedsAVerifiedFile(): void {
+		$this->wooService->expects($this->exactly(2))
+			->method('verifyRedaction')
+			->with('batch-1', 'a3')
+			->willReturnOnConsecutiveCalls(
+				$this->throwException(new \OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException('The redaction status is failed, not verified.')),
+				['id' => 'a3', 'redactionVerifiedBy' => 'alice']
+			);
+
+		$refused = $this->controller->verifyRedaction(batchId: 'batch-1', docId: 'a3');
+		$this->assertSame(409, $refused->getStatus());
+		$this->assertSame(['error' => 'The redaction status is failed, not verified.'], $refused->getData());
+
+		$stored = $this->controller->verifyRedaction(batchId: 'batch-1', docId: 'a3');
+		$this->assertSame(200, $stored->getStatus());
+		$this->assertSame(['id' => 'a3', 'redactionVerifiedBy' => 'alice'], $stored->getData());
+	}//end testVerifyRedactionNeedsAVerifiedFile()
+
+	/**
+	 * A missing assessment is a 400, not a 409, and the route is a POST.
+	 *
+	 * @return void
+	 */
+	public function testVerifyRedactionOfAMissingAssessmentIs400AndTheRouteIsAPost(): void {
+		$this->wooService->method('verifyRedaction')->willThrowException(new \RuntimeException('Assessment not found: x'));
+
+		$response = $this->controller->verifyRedaction(batchId: 'batch-1', docId: 'x');
+		$this->assertSame(400, $response->getStatus());
+		$this->assertSame(['error' => 'Assessment not found: x'], $response->getData());
+
+		$routes = require __DIR__ . '/../../../appinfo/routes.php';
+		$found = array_values(array_filter($routes['routes'], static fn (array $r): bool => $r['name'] === 'woo#verifyRedaction' && isset($r['postfix']) === false));
+		$this->assertSame([['name' => 'woo#verifyRedaction', 'url' => '/api/woo/batches/{batchId}/documents/{docId}/verify-redaction', 'verb' => 'POST']], $found);
+
+		$attributes = (new \ReflectionMethod(WooController::class, 'verifyRedaction'))->getAttributes(\OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting::class);
+		$this->assertCount(1, $attributes, 'the same right as updateAssessment');
+	}//end testVerifyRedactionOfAMissingAssessmentIs400AndTheRouteIsAPost()
 }//end class

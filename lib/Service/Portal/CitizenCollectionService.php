@@ -112,7 +112,36 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 		$note = $this->input->text(value: ($input['note'] ?? ''), max: self::MAX_NOTE, field: 'note');
 
 		$dossier = $this->targetDossier(owner: $owner, collectionId: $collectionId, title: ($input['title'] ?? ''));
+		$publication = $this->publicPublication(publicationId: $publicationId);
 
+		$items = (array)($dossier['items'] ?? []);
+		$entry = ['publication' => $publicationId, 'attachment' => $attachment];
+		if ($this->holdsItem(items: $items, entry: $entry) === true) {
+			return $this->ownerView(dossier: $dossier);
+		}
+
+		if (count($items) >= self::MAX_ITEMS) {
+			throw new PortalInputException(message: 'This dossier is full');
+		}
+
+		$entry['note'] = $note;
+		$items[] = $this->newItem(entry: $entry, publication: $publication);
+		$dossier['items'] = $items;
+
+		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: ($dossier['id'] ?? null)));
+	}//end addItem()
+
+	/**
+	 * The public publication an item points at.
+	 *
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<string, mixed> The publication.
+	 *
+	 * @throws PortalInputException When no publication is given.
+	 * @throws PortalNotFoundException When it is not public.
+	 */
+	private function publicPublication(string $publicationId): array {
 		if ($publicationId === '') {
 			throw new PortalInputException(message: 'A publication is needed');
 		}
@@ -122,35 +151,52 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 			throw new PortalNotFoundException(message: 'Not found');
 		}
 
-		$items = (array)($dossier['items'] ?? []);
+		return $publication;
+	}//end publicPublication()
+
+	/**
+	 * Whether a dossier already holds this publication and document.
+	 *
+	 * @param array<int, array<string, mixed>> $items The dossier's items.
+	 * @param array{publication: string, attachment: string|null} $entry The publication and document.
+	 *
+	 * @return bool
+	 */
+	private function holdsItem(array $items, array $entry): bool {
 		foreach ($items as $item) {
-			if (($item['publication'] ?? '') === $publicationId && ($item['attachment'] ?? null) === $attachment) {
-				return $this->ownerView(dossier: $dossier);
+			if (($item['publication'] ?? '') === $entry['publication'] && ($item['attachment'] ?? null) === $entry['attachment']) {
+				return true;
 			}
 		}
 
-		if (count($items) >= self::MAX_ITEMS) {
-			throw new PortalInputException(message: 'This dossier is full');
-		}
+		return false;
+	}//end holdsItem()
 
-		// A missing attachment or note is left out rather than written as null:
-		// the schema types them as plain strings.
-		$items[] = array_filter(
+	/**
+	 * A new dossier item for a publication, or one of its documents.
+	 *
+	 * A missing attachment or note is left out rather than written as null:
+	 * the schema types them as plain strings.
+	 *
+	 * @param array{publication: string, attachment: string|null, note: string|null} $entry The publication, document and note.
+	 * @param array<string, mixed> $publication The public publication.
+	 *
+	 * @return array<string, mixed> The item.
+	 */
+	private function newItem(array $entry, array $publication): array {
+		return array_filter(
 			[
 				'id' => $this->uuid(),
-				'publication' => $publicationId,
-				'attachment' => $attachment,
-				'note' => $note,
+				'publication' => $entry['publication'],
+				'attachment' => $entry['attachment'],
+				'note' => $entry['note'],
 				'addedAt' => $this->now(),
 				'addedBy' => 'resident',
 				'title' => mb_substr((string)($publication['title'] ?? ''), 0, 500),
 			],
 			static fn (mixed $value): bool => $value !== null
 		);
-		$dossier['items'] = $items;
-
-		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: ($dossier['id'] ?? null)));
-	}//end addItem()
+	}//end newItem()
 
 	/**
 	 * The dossier to add to: the owner's own, or a new one with a title.
@@ -327,24 +373,59 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 
 		$deleted = 0;
 		foreach ([self::SCHEMA, self::SAVED_SEARCH_SCHEMA] as $schema) {
-			foreach ($this->store->findByOwner(schema: $schema, owner: $owner) as $row) {
-				$id = (string)($row['id'] ?? '');
-				if ($id === '' || ($row['owner'] ?? null) !== $owner) {
-					continue;
-				}
-
-				try {
-					if ($this->store->delete(schema: $schema, id: $id) === true) {
-						$deleted++;
-					}
-				} catch (Throwable $e) {
-					$this->logger->warning('OpenCatalogi: could not delete a removed resident\'s object', ['schema' => $schema, 'reason' => $e->getMessage()]);
-				}
-			}
+			$deleted += $this->removeOwnedIn(schema: $schema, owner: $owner);
 		}
 
 		return $deleted;
 	}//end removeEverythingOf()
+
+	/**
+	 * Delete a removed resident's own objects of one schema.
+	 *
+	 * @param string $schema The schema.
+	 * @param string $owner The subject reference of the removed account.
+	 *
+	 * @return int How many objects were deleted.
+	 */
+	private function removeOwnedIn(string $schema, string $owner): int {
+		$deleted = 0;
+		foreach ($this->store->findByOwner(schema: $schema, owner: $owner) as $row) {
+			if ($this->isOwnedRow(row: $row, owner: $owner) === true && $this->deleteRow(schema: $schema, id: (string)$row['id']) === true) {
+				$deleted++;
+			}
+		}
+
+		return $deleted;
+	}//end removeOwnedIn()
+
+	/**
+	 * Whether a row the owner lookup returned has an id and is this owner's.
+	 *
+	 * @param array<string, mixed> $row The row.
+	 * @param string $owner The subject reference.
+	 *
+	 * @return bool
+	 */
+	private function isOwnedRow(array $row, string $owner): bool {
+		return (string)($row['id'] ?? '') !== '' && ($row['owner'] ?? null) === $owner;
+	}//end isOwnedRow()
+
+	/**
+	 * Delete one object of a removed resident; a failure is logged, not thrown.
+	 *
+	 * @param string $schema The schema.
+	 * @param string $id The object.
+	 *
+	 * @return bool True when the object was deleted.
+	 */
+	private function deleteRow(string $schema, string $id): bool {
+		try {
+			return $this->store->delete(schema: $schema, id: $id);
+		} catch (Throwable $e) {
+			$this->logger->warning('OpenCatalogi: could not delete a removed resident\'s object', ['schema' => $schema, 'reason' => $e->getMessage()]);
+			return false;
+		}
+	}//end deleteRow()
 
 	/**
 	 * The dossier when this owner owns it.

@@ -1,6 +1,9 @@
+<!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
-import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -26,12 +29,12 @@ import { objectStore } from '../../store/store.js'
 <script>
 // Components
 import { CnDataTable, registerIcons } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
 import { NcEmptyContent } from '@nextcloud/vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 // Icons
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
-import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
+import { fetchUnpublished, publicationRow, publicationUrl } from './unpublishedOverview.js'
+import { LIST_WIDGET_OPTIONS, navigateTo } from './widgetTable.js'
 
 // The row's leading icon renders through CnDataTable's shared CnIcon
 // registry; MDI icons use currentColor, so light/dark theming is automatic
@@ -55,86 +58,48 @@ export default {
 		NcEmptyContent,
 	},
 
-	props: {
-		title: {
-			type: String,
-			required: true,
-		},
-	},
+	...LIST_WIDGET_OPTIONS,
 
 	data() {
-		return {
-			loading: false,
-			columns: LIST_COLUMNS,
-		}
+		return { ...LIST_WIDGET_OPTIONS.data(), overview: [] }
 	},
 
 	computed: {
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
+		/**
+		 * The not yet public publications the reader can see (REQ-PUO-002).
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+		 */
 		items() {
-			return objectStore
-				.getCollection('publication')
-				.results.filter((publication) => publication.status === 'Concept')
-				.map((publication) => ({
-					id: publication.id,
-					mainText: publication.title,
-					subText: publication.summary,
-					// Keep the source object on the row so a click can
-					// resolve the owning catalog's slug for the deep link.
-					publication,
-				}))
+			return this.overview.map(publicationRow)
 		},
-	},
-
-	mounted() {
-		this.fetchData()
 	},
 
 	methods: {
 		/**
-		 * Open the clicked publication's detail page in the same tab.
+		 * Open the clicked publication's detail page; a row without a catalogue does nothing.
 		 *
-		 * Resolves the publication's catalog (id or embedded object) against
-		 * the fetched catalog collection to obtain the slug required by the
-		 * `/publications/{catalogSlug}/{id}` route. When no slug can be
-		 * resolved the click is a no-op.
-		 *
-		 * @param {object} row - The clicked row (a shaped publication item).
+		 * @param {object} row The clicked row.
 		 * @return {void}
-		 */
-		/**
-		 * @param row
-		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3
+		 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
 		 */
 		onRowClick(row) {
-			const publication = row.publication
-			const catalogId = publication?.catalog?.id || publication?.catalog
-			const catalogs = objectStore.getCollection('catalog')?.results || []
-			const matchedCatalog = catalogs.find(
-				(c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''),
-			)
-			const slug = matchedCatalog?.slug || publication?.catalog?.slug
-			if (!slug || !publication?.id) return
-			navigateTo(
-				generateUrl(
-					`/apps/opencatalogi/publications/${slug}/${publication.id}`,
-				),
-			)
+			const url = publicationUrl(row.item)
+			if (url !== null) {
+				navigateTo(url)
+			}
 		},
 
 		/**
-		 * Fetch the publication data (and the catalog collection used to
-		 * resolve catalog slugs for row-click deep links).
+		 * Read the publications list of the unpublished overview.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
 		async fetchData() {
 			this.loading = true
-			await Promise.all([
-				objectStore.fetchCollection('publication'),
-				objectStore.fetchCollection('catalog'),
-			])
+			this.overview = await fetchUnpublished('publications')
 			this.loading = false
 		},
 	},

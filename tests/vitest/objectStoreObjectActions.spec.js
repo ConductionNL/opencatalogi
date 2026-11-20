@@ -14,6 +14,8 @@ import path from 'path'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'test-request-token' }))
+
 vi.mock('@conduction/nextcloud-vue', () => {
 	const plugin = () => ({})
 	return {

@@ -3,6 +3,9 @@
 /**
  * OpenCatalogi Manifest-Config Initial-State Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Surfaces the configured register/schema ids (and the national-directory URL)
  * as frontend initial state whenever the OpenCatalogi SPA `index` template is
  * rendered — regardless of which controller served the page.
@@ -26,9 +29,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -36,6 +36,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Listener;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Service\InstanceMode;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\Event;
@@ -147,5 +148,25 @@ class ProvideManifestConfigStateListener implements IEventListener {
 			)
 		);
 
+		// Every page shows the staging banner while the instance is in staging
+		// (instance-staging-mode REQ-STG-001); an unreadable mode reads as staging.
+		$this->initialState->provideInitialState('instance_mode', $this->instanceMode());
+
 	}//end handle()
+
+	/**
+	 * The instance mode for the staging banner: production, or staging for anything else.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 */
+	private function instanceMode(): string {
+		$reason = (new InstanceMode(appConfig: $this->appConfig))->stagingReason();
+		if ($reason === null) {
+			return InstanceMode::PRODUCTION;
+		}
+
+		return InstanceMode::STAGING;
+	}//end instanceMode()
 }//end class

@@ -26,6 +26,8 @@ namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenRegister\Service\ConfigLookup;
+use OCA\OpenRegister\Service\RegisterResolverService;
 use OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -120,8 +122,8 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 		$resolver = $this->registerResolver();
 		if ($resolver !== null) {
 			return [
-				'register' => $resolver->resolveRegisterId(AppIdentity::APP_ID, $registerKey),
-				'schema' => $resolver->resolveSchemaId(AppIdentity::APP_ID, $schemaKey),
+				'register' => $resolver->lookupId(lookup: new ConfigLookup(appId: AppIdentity::APP_ID, configKey: $registerKey)),
+				'schema' => $resolver->lookupId(lookup: new ConfigLookup(appId: AppIdentity::APP_ID, configKey: $schemaKey)),
 			];
 		}
 
@@ -132,7 +134,7 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 	 * OpenRegister's RegisterResolverService, or null when the container cannot resolve it.
 	 *
 	 * Returned as a loose `object` because the resolver class is `final`; callers
-	 * only use its resolveRegisterId() and resolveSchemaId() methods.
+	 * only use its lookupId(ConfigLookup) method.
 	 *
 	 * @return object|null The resolver.
 	 *
@@ -140,7 +142,7 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 	 */
 	private function registerResolver(): ?object {
 		try {
-			return $this->container->get('OCA\OpenRegister\Service\RegisterResolverService');
+			return $this->container->get(RegisterResolverService::class);
 		} catch (\Throwable $e) {
 			return null;
 		}
@@ -161,15 +163,7 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
 	 */
 	private function configuredRegister(string $registerKey, string $schemaKey): array {
-		try {
-			$appConfig = $this->container->get(IAppConfig::class);
-		} catch (\Throwable $e) {
-			throw new RuntimeException(
-				message: 'Cannot resolve register configuration for ' . $registerKey . ': IAppConfig unavailable',
-				code: 0,
-				previous: $e
-			);
-		}
+		$appConfig = $this->appConfigFor(registerKey: $registerKey);
 
 		$register = $appConfig->getValueString(AppIdentity::APP_ID, $registerKey, '');
 		$schema = $appConfig->getValueString(AppIdentity::APP_ID, $schemaKey, '');
@@ -188,6 +182,28 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 		];
 
 	}//end configuredRegister()
+
+	/**
+	 * The app config, from the container.
+	 *
+	 * @param string $registerKey The register key being resolved, named in the refusal.
+	 *
+	 * @return IAppConfig The app config.
+	 *
+	 * @throws RuntimeException When the container cannot give it.
+	 */
+	private function appConfigFor(string $registerKey): IAppConfig {
+		try {
+			return $this->container->get(IAppConfig::class);
+		} catch (\Throwable $e) {
+			throw new RuntimeException(
+				message: 'Cannot resolve register configuration for ' . $registerKey . ': IAppConfig unavailable',
+				code: 0,
+				previous: $e
+			);
+		}
+
+	}//end appConfigFor()
 
 	/**
 	 * An OpenRegister service from the container when OpenRegister is among the installed apps.

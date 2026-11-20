@@ -26,7 +26,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use OCP\IAppConfig;
 /**
  * Reads and writes the published-collection configuration.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
  */
 class PublishedCollectionsService implements PublishedCollectionsServiceInterface {
 
@@ -72,7 +72,7 @@ class PublishedCollectionsService implements PublishedCollectionsServiceInterfac
 	 *
 	 * @throws UnreadableRuleException When the stored configuration is not readable JSON.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
 	 */
 	public function collections(): array {
 		$stored = trim($this->config->getValueString($this->appName, self::CONFIG_KEY, ''));
@@ -97,28 +97,12 @@ class PublishedCollectionsService implements PublishedCollectionsServiceInterfac
 	 *
 	 * @return array{saved: boolean, errors: array<int, string>}
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
 	 */
 	public function save(array $collections): array {
 		$errors = [];
-
 		foreach ($collections as $index => $collection) {
-			if (is_array($collection) === false) {
-				$errors[] = 'Collection ' . $index . ' cannot be read.';
-				continue;
-			}
-
-			$validation = $this->ruleService->validateRule(
-				rule: [
-					'recordType' => ($collection['recordType'] ?? ''),
-					'anonymousProperties' => ($collection['anonymousProperties'] ?? []),
-					'conditions' => ($collection['conditions'] ?? []),
-				]
-			);
-
-			foreach ($validation['errors'] as $error) {
-				$errors[] = 'Collection ' . $index . ': ' . $error;
-			}
+			$errors = array_merge($errors, $this->collectionErrors(index: $index, collection: $collection));
 		}
 
 		if ($errors !== []) {
@@ -131,6 +115,46 @@ class PublishedCollectionsService implements PublishedCollectionsServiceInterfac
 	}//end save()
 
 	/**
+	 * What is wrong with one collection, each error prefixed with its index.
+	 *
+	 * @param integer|string $index The collection's position in the submitted set.
+	 * @param mixed $collection The collection as submitted.
+	 *
+	 * @return array<int, string> The errors, empty when the collection is valid.
+	 */
+	private function collectionErrors(int|string $index, mixed $collection): array {
+		if (is_array($collection) === false) {
+			return ['Collection ' . $index . ' cannot be read.'];
+		}
+
+		$validation = $this->ruleService->validateRule(rule: $this->ruleOf(collection: $collection));
+
+		$errors = [];
+		foreach ($validation['errors'] as $error) {
+			$errors[] = 'Collection ' . $index . ': ' . $error;
+		}
+
+		return $errors;
+	}//end collectionErrors()
+
+	/**
+	 * The publication rule a collection declares.
+	 *
+	 * @param array<string, mixed> $collection The collection.
+	 *
+	 * @return array{recordType: mixed, anonymousProperties: mixed, conditions: mixed, wooCategory: mixed}
+	 */
+	private function ruleOf(array $collection): array {
+		return [
+			'recordType' => ($collection['recordType'] ?? ''),
+			'anonymousProperties' => ($collection['anonymousProperties'] ?? []),
+			'conditions' => ($collection['conditions'] ?? []),
+			'wooCategory' => ($collection['wooCategory'] ?? null),
+		];
+
+	}//end ruleOf()
+
+	/**
 	 * Whether a record publishes under the configured set.
 	 *
 	 * @param array<string, mixed> $record The record.
@@ -139,7 +163,7 @@ class PublishedCollectionsService implements PublishedCollectionsServiceInterfac
 	 *
 	 * @throws UnreadableRuleException When the configuration or a condition cannot be read.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
 	 */
 	public function publishes(array $record): bool {
 		foreach ($this->collections() as $collection) {
