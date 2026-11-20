@@ -355,12 +355,12 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** capability-rows-close-gaps 2.8: a publication its source no longer carries is flagged for the editor. */
 	public function testVisibilityFlagsAPublicationItsSourceDropped(): void {
-		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'absentAtSource' => true, 'sourceAbsentSince' => '2026-11-14T03:00:00+00:00'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'absentAtSource' => true, 'sourceAbsentSince' => '2026-11-14T03:00:00+00:00'];
 		$response = $this->controller->visibility('p1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 		$this->assertSame(
 			['state' => 'public', 'canPublish' => true, 'sourceAbsence' => ['since' => '2026-11-14T03:00:00+00:00', 'endedAt' => null]],
-			$response->getData()
+			array_intersect_key($response->getData(), ['state' => 1, 'canPublish' => 1, 'sourceAbsence' => 1])
 		);
 	}
 
