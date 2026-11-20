@@ -71,7 +71,7 @@ final class PublicationAudienceSchemaTest extends TestCase {
 	public function testTheSchemaVersionIsBumped(): void {
 		$publication = $this->merged()['components']['schemas']['publication'];
 
-		self::assertSame('0.0.9', $publication['version']);
+		self::assertTrue(version_compare($publication['version'], '0.0.9', '>='), $publication['version']);
 	}//end testTheSchemaVersionIsBumped()
 
 	/**

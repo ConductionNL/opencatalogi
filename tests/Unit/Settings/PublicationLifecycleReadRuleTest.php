@@ -87,8 +87,9 @@ final class PublicationLifecycleReadRuleTest extends TestCase {
 	public function testOnlyThePublishedStateWithItsDatesIsPublic(): void {
 		$past = '2020-01-01T00:00:00+00:00';
 
-		self::assertTrue($this->isPublic(['status' => 'published', 'publicationDate' => $past]), 'published, past date');
-		self::assertTrue($this->isPublic(['status' => 'published', 'publicationDate' => $past, 'depublicationDate' => '2099-01-01T00:00:00+00:00']), 'published, withdrawal ahead');
+		self::assertTrue($this->isPublic(['status' => 'published', 'audience' => 'public', 'publicationDate' => $past]), 'published, past date');
+		self::assertTrue($this->isPublic(['status' => 'published', 'audience' => 'public', 'publicationDate' => $past, 'depublicationDate' => '2099-01-01T00:00:00+00:00']), 'published, withdrawal ahead');
+		self::assertFalse($this->isPublic(['status' => 'published', 'audience' => 'signedIn', 'publicationDate' => $past]), 'published for signed-in readers');
 		self::assertFalse($this->isPublic(['status' => 'published', 'publicationDate' => $past, 'depublicationDate' => '2021-01-01T00:00:00+00:00']), 'withdrawn');
 		self::assertFalse($this->isPublic(['status' => 'published', 'publicationDate' => '2099-01-01T00:00:00+00:00']), 'scheduled');
 		foreach (['in_review', 'approved', 'archived', ''] as $status) {
