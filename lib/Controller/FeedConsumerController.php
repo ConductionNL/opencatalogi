@@ -191,6 +191,7 @@ class FeedConsumerController extends Controller {
 	 * @return JSONResponse The consumer.
 	 *
 	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-trusted-portal-reads-it-for-a-reader-at-the-required-level-req-psr-003
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) inCatalog() hands every action the catalogue; this one needs only its id.
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function signedInReaders(string $catalogSlug, string $id): JSONResponse {
