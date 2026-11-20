@@ -24,6 +24,7 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [Federatie & Synchronisatie](./register-i18n.md) | Cross-organization catalogue synchronization with source configuration and directory sync | — |
 | [WOO Transparantie](./woo-transparency.md) | WOO/FOIA document queue, redaction workflow, weigeringsgronden, inventarislijst | [woo-transparency.md](./woo-transparency.md) |
 | [Woo compliance](./woo-compliance.md) | DiWoo sitemap index and pages per catalogue and information category, `robots.txt` for catalogues with `hasWooSitemap`, and where every DiWoo field comes from, and a default informatiecategorie per (app, kind of object) for a publication that names none | [woo-compliance.md](./woo-compliance.md) |
+| [Publication download](./download-service.md) | One ZIP per publication: the metadata PDF at the root and the attachments under `Bijlagen/`; nothing stored in Nextcloud | [download-service.md](./download-service.md) |
 | [Meertalige content](./register-i18n.md) | Multi-language publications and catalogs (NL + EN minimum), EU SDG-compliant | [register-i18n.md](./register-i18n.md) |
 | [GEMMA ArchiMate Export](./org-archimate-export.md) | Export organization-enriched AMEFF XML for Archi/BiZZdesign/ADOIT with modules, gebruik, deelnames | [org-archimate-export.md](./org-archimate-export.md) |
 | [DCAT linked data and data.overheid.nl](./dcat-linked-data-and-donl.md) | Dataset IRIs answer Turtle and RDF/XML; the admin settings track whether data.overheid.nl harvests the feed | [dcat-linked-data-and-donl.md](./dcat-linked-data-and-donl.md) |
@@ -31,6 +32,7 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [Module Overlay Rendering](./module-overlay-rendering.md) | Renders organization application nodes on top of GEMMA ArchiMate views with visual distinction | [module-overlay-rendering.md](./module-overlay-rendering.md) |
 | [Deelnames Gebruik](./deelnames-gebruik.md) | Query and display shared usage (inter-organizational cooperation) alongside owned modules | [deelnames-gebruik.md](./deelnames-gebruik.md) |
 | [Publish rights](./publish-rights.md) | Editors edit, publishers publish: a separate right for publishing and withdrawing, through the group `opencatalogi-publishers` | [publish-rights.md](./publish-rights.md) |
+| [Woo requests are handled by dossiq](./woo-request-handover.md) | New Woo requests go to dossiq, the stored ones move there with their remaining time, and without dossiq OpenCatalogi takes none | [woo-request-handover.md](./woo-request-handover.md) |
 | [Prometheus Metrics](./prometheus-metrics.md) | Monitoring endpoint in Prometheus text format: publication counts, catalog metrics, listing health | [prometheus-metrics.md](./prometheus-metrics.md) |
 | [Public API: `_extend=files`](./public-api-files-extend.md) | Opt-in switch for full attachment metadata in publication responses; default is lightweight file IDs | [public-api-files-extend.md](./public-api-files-extend.md) |
 | [Open data tables](./open-data-tables.md) | Publish a CSV attachment as a table, query its rows through the public API and read its data dictionary | [open-data-tables.md](./open-data-tables.md) |
@@ -42,6 +44,7 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [Completeness webhook](./completeness-webhook.md) | A source system learns once, through an OpenRegister webhook, when its publication is complete and public | [completeness-webhook.md](./completeness-webhook.md) |
 | [Dashboard](./dashboard.md) | The app shell: deep-link routes to every page, the Nextcloud dashboard widgets, and what the app registers on start | [dashboard.md](./dashboard.md) |
 | [Directory](./directory.md) | Listings of federated catalogues, their endpoints, directory synchronisation and the scheduled sync and broadcast jobs | [directory.md](./directory.md) |
+| [Document references](./document-references.md) | Publish a document that stays in its source system by its public URL: listed in the DiWoo sitemap, the DCAT feed and the attachments list, checked daily for broken links | [document-references.md](./document-references.md) |
 | Publiek zoeken | Unauthenticated full-text search with filters and facets | — |
 | [Publieke fulltext search — publicaties + documenten](./public-fulltext-search.md) | Public `GET /apps/opencatalogi/api/search` — RBAC-filtered mixed envelope of publications and documents, `@self.schema` as row discriminator, embedded `publication: {id, slug, title}` on document rows | [public-fulltext-search.md](./public-fulltext-search.md) |
 | DCAT-AP export | Dataset metadata export in DCAT-AP NL and EU DCAT-AP format | — |

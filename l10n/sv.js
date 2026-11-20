@@ -724,7 +724,21 @@ OC.L10N.register(
         "Open catalog": "Öppna katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Skapa din första katalog. Den är behållaren som dina publikationer ska ligga i. Välj registret Publication och schemat Publication, så att katalogen visar publikationerna du lägger till.",
         "Manage your publications and their status": "Hantera dina publikationer och deras status",
-        "Open at the source": "Öppna vid källan"
+        "Open at the source": "Öppna vid källan",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegister-version",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister innehåller motorn som OpenCatalogi behöver.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi kräver OpenRegister %1$s eller senare. Den installerade OpenRegister saknar %2$s, så OpenCatalogi visar ett meddelande i stället för sina sidor. Uppdatera OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi kan inte starta",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi kräver OpenRegister %1$s eller senare. Be din administratör att uppdatera OpenRegister.",
+        "Feed consumers": "Flödesmottagare",
+        "Contact": "Kontakt",
+        "Generate key": "Skapa nyckel",
+        "Revoke": "Återkalla",
+        "Disable": "Inaktivera",
+        "Last used": "Senast använd",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Den här nyckeln visas bara en gång. Kopiera den nu: den kan inte visas igen.",
+        "No feed consumers yet.": "Inga flödesmottagare ännu.",
+        "Accounts that read every catalogue's feed": "Konton som läser flödet för varje katalog"
     },
     "nplurals=2; plural=(n != 1);"
 )

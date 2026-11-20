@@ -724,7 +724,21 @@ OC.L10N.register(
         "Open catalog": "Ouvrir le catalogue",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Créez votre premier catalogue. C'est le conteneur dans lequel vivront vos publications. Choisissez le registre Publication et le schéma Publication, afin que le catalogue affiche les publications que vous ajoutez.",
         "Manage your publications and their status": "Gérez vos publications et leur statut",
-        "Open at the source": "Ouvrir à la source"
+        "Open at the source": "Ouvrir à la source",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi : version d'OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister contient le moteur dont OpenCatalogi a besoin.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi nécessite OpenRegister %1$s ou une version plus récente. Il manque %2$s dans l'OpenRegister installé, OpenCatalogi affiche donc un avis au lieu de ses pages. Mettez OpenRegister à jour.",
+        "OpenCatalogi cannot start": "OpenCatalogi ne peut pas démarrer",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi nécessite OpenRegister %1$s ou une version plus récente. Demandez à votre administrateur de mettre OpenRegister à jour.",
+        "Feed consumers": "Consommateurs du flux",
+        "Contact": "Contact",
+        "Generate key": "Générer une clé",
+        "Revoke": "Révoquer",
+        "Disable": "Désactiver",
+        "Last used": "Dernière utilisation",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Cette clé n'est affichée qu'une fois. Copiez-la maintenant : elle ne pourra plus être affichée.",
+        "No feed consumers yet.": "Aucun consommateur du flux pour l'instant.",
+        "Accounts that read every catalogue's feed": "Comptes qui lisent le flux de chaque catalogue"
     },
     "nplurals=2; plural=(n != 1);"
 )
