@@ -26,6 +26,7 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\TableFile;
+use OCA\OpenCatalogi\Contract\TableImportQueueInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Service\Import\ImportCommit;
 use OCP\IURLGenerator;
@@ -50,6 +51,13 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 * @var string
 	 */
 	public const ROWS_REGISTER = 'open-data-tables';
+
+	/**
+	 * A file with more rows than this is imported by a queued job, not in the request.
+	 *
+	 * @var integer
+	 */
+	public const LARGE_FILE_ROWS = 5000;
 
 	/**
 	 * A table whose rows are being imported.
@@ -97,11 +105,13 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 * @param OpenRegisterLookupInterface $registers The OpenRegister ObjectService and register configuration.
 	 * @param ContainerInterface $container Resolves OpenRegister's schema, register and import services.
 	 * @param IURLGenerator|null $urls The URL generator for the rows and dictionary URLs; null leaves them empty.
+	 * @param TableImportQueueInterface|null $queue Queues the import of a large file; null imports every file in the request.
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookupInterface $registers,
 		private readonly ContainerInterface $container,
 		private readonly ?IURLGenerator $urls = null,
+		private readonly ?TableImportQueueInterface $queue = null,
 	) {
 	}//end __construct()
 
@@ -122,9 +132,11 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 * @throws InvalidArgumentException When the file has no rows.
 	 *
 	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-an-editor-publishes-a-csv-attachment-as-a-table-req-odt-001
+	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
 	 */
 	public function createFromFile(array $publication, TableFile $file, ?IUser $user = null): array {
-		$sample = $this->sampleOf(file: $file);
+		$rows = $this->rowsOf(file: $file);
+		$sample = array_slice($rows, 0, ColumnTypes::SAMPLE_SIZE);
 		$register = $this->service(class: 'OCA\OpenRegister\Db\RegisterMapper')->find(self::ROWS_REGISTER);
 		$schema = $this->createRowSchema(register: $register, publication: $publication, file: $file, sample: $sample);
 
@@ -136,30 +148,85 @@ class PublishedTableService implements PublishedTableServiceInterface {
 			'rowCount' => 0,
 		];
 
+		if ($this->queue !== null && count($rows) > self::LARGE_FILE_ROWS) {
+			return $this->queued(table: $table, importedBy: (string)$user?->getUID());
+		}
+
 		return $this->lifecycle(table: $table, run: new TableImportRun(file: $file, user: $user, schema: $schema));
 	}//end createFromFile()
 
 	/**
-	 * The first rows of a CSV file, which the row schema's column types are read from.
+	 * Store a table importing and hand its import to the queue (REQ-DFA-002).
+	 *
+	 * @param array<string, mixed> $table      The table record.
+	 * @param string               $importedBy Who started it.
+	 *
+	 * @return array<string, mixed> The stored table record, `importing`.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
+	 */
+	private function queued(array $table, string $importedBy): array {
+		$table['status'] = self::STATUS_IMPORTING;
+		$table['importedBy'] = $importedBy;
+		$stored = (array)self::plain(value: $this->tables()->save(object: $table));
+		$this->queue?->queue(tableId: (string)($stored['id'] ?? ''), importedBy: $importedBy);
+
+		return $stored;
+	}//end queued()
+
+	/**
+	 * Import a stored table again from its publication's attachment.
+	 *
+	 * Used by the queued import of a large file, a retry and a replaced file.
+	 * The table goes through importing to ready or failed like a first import.
+	 *
+	 * @param array<string, mixed> $table      The stored table record.
+	 * @param string|null          $importedBy Who started it.
+	 *
+	 * @return array<string, mixed> The stored table record.
+	 *
+	 * @throws InvalidArgumentException When the publication or its attachment is gone.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
+	 */
+	public function reimport(array $table, ?string $importedBy = null): array {
+		$config = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
+		try {
+			$publication = $this->registers->objectService()->find(
+				id: (string)($table['publication'] ?? ''),
+				options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
+				_rbac: false,
+				_multitenancy: false
+			);
+		} catch (\Throwable $e) {
+			throw new InvalidArgumentException('The publication of this table is gone.');
+		}
+
+		$file = $this->attachmentFile(publication: $publication, fileId: (string)($table['file'] ?? ''));
+
+		return $this->importTable(table: $table, file: $file, importedBy: $importedBy);
+	}//end reimport()
+
+	/**
+	 * The rows of a CSV file; the first ones give the row schema's column types.
 	 *
 	 * @param TableFile $file The CSV on disk and its identity.
 	 *
-	 * @return array<int, array<string, mixed>> The first rows.
+	 * @return array<int, array<string, mixed>> The rows.
 	 *
 	 * @throws InvalidArgumentException When the file has no rows.
 	 */
-	private function sampleOf(TableFile $file): array {
-		$rows = $this->service(class: 'OCA\OpenRegister\Service\Import\SourceRowReader')->read($file->path, 'csv');
-		$sample = array_map(
+	private function rowsOf(TableFile $file): array {
+		$rows = array_map(
 			static fn (array $row): array => (array)($row['data'] ?? []),
-			array_slice($rows, 0, ColumnTypes::SAMPLE_SIZE)
+			$this->service(class: 'OCA\OpenRegister\Service\Import\SourceRowReader')->read($file->path, 'csv')
 		);
-		if ($sample === []) {
+		if ($rows === []) {
 			throw new InvalidArgumentException('The file "'.$file->name.'" holds no rows.');
 		}
 
-		return $sample;
-	}//end sampleOf()
+		return $rows;
+	}//end rowsOf()
 
 	/**
 	 * Import a table's file into its row schema, from importing to ready or failed.
