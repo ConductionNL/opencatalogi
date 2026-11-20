@@ -121,6 +121,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\CouncilHarvestServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\CouncilHarvestService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\OoapiServiceInterface",
         "OCA\\OpenCatalogi\\Service\\OoapiService"
     ],
@@ -158,6 +163,11 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\PublishedTableServiceInterface",
         "OCA\\OpenCatalogi\\Service\\Table\\PublishedTableService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DatasetViewServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\Table\\DatasetViewService"
     ],
     [
         "alias",

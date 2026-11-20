@@ -23,6 +23,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
@@ -594,6 +595,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @return array|null The shaped row, or null when it must be dropped.
 	 *
 	 * @spec openspec/specs/search/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::isUnlisted() is a pure predicate.
 	 */
 	private function shapeCandidateRow(array $rowArray, PublicSearchAssembly $run): ?array {
 		$schemaId = $this->extractSchemaId(rowArray: $rowArray);
@@ -620,6 +622,11 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 				name: AppliedFilters::ARCHIVED_EXCLUDED,
 				reason: 'Archived publications are never shown on a public list.'
 			);
+			return null;
+		}
+
+		// REQ-PLC-006: an unlisted publication is reachable at its own link, never found by search.
+		if (UnlistedPublications::isUnlisted(row: $rowArray) === true) {
 			return null;
 		}
 
@@ -1588,11 +1595,21 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @param array $objectData The serialized object data (own fields + `@self` envelope).
 	 *
+	 * A publication limited to signed-in readers (`audience` set to anything but
+	 * `public`) is never public, the same check the `group: public` read rule
+	 * makes (REQ-PSR-002). An object without `audience` takes the schema default,
+	 * `public`.
+	 *
 	 * @return boolean True when the object is currently published.
 	 *
 	 * @spec openspec/specs/auto-publishing/spec.md#APB-006
+	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-every-public-surface-leaves-a-sign-in-publication-out-req-psr-002
 	 */
 	public function isObjectPublic(array $objectData): bool {
+		if (($objectData['audience'] ?? 'public') !== 'public') {
+			return false;
+		}
+
 		$publicationDate = ($objectData['publicationDate'] ?? null);
 		$depublicationDate = ($objectData['depublicationDate'] ?? null);
 

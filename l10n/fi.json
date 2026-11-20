@@ -737,7 +737,12 @@
         "Last used": "Viimeksi käytetty",
         "This key is shown once. Copy it now: it cannot be shown again.": "Tämä avain näytetään vain kerran. Kopioi se nyt: sitä ei voi näyttää uudelleen.",
         "No feed consumers yet.": "Ei vielä syötteen käyttäjiä.",
-        "Accounts that read every catalogue's feed": "Tilit, jotka lukevat jokaisen luettelon syötettä"
+        "Accounts that read every catalogue's feed": "Tilit, jotka lukevat jokaisen luettelon syötettä",
+        "Review publications before they are published": "Tarkista julkaisut ennen niiden julkaisemista",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Kun asetus on päällä, luonnos on lähetettävä tarkistettavaksi ja hyväksyttävä ennen kuin sen voi julkaista. Kun asetus on pois päältä, toimittaja voi julkaista luonnoksen suoraan.",
+        "Delete publication": "Poista julkaisu",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Haluatko poistaa kohteen \"{name}\"? Tätä toimintoa ei voi kumota.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Julkaisu ja sen liitteet katoavat julkiselta sivulta ja Woo-sivukartasta. Arkistointi sen sijaan säilyttää ne säilytysajan."
     },
     "plurals": {}
 }

@@ -22,11 +22,13 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
+use OCA\OpenRegister\Event\CustomScopeEvaluatingEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
+use OCA\OpenRegister\Event\PermissionsDeclaringEvent;
 use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
@@ -123,6 +125,11 @@ class ListenerRegistrar {
 			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
 		}
 
+		// Capability rights (woo-access-boundary-hardening REQ-WAB-004): declare the
+		// eight verbs to OpenRegister and decide them from the catalog schema's grants.
+		$context->registerEventListener(PermissionsDeclaringEvent::class, CapabilityDeclarationListener::class);
+		$context->registerEventListener(CustomScopeEvaluatingEvent::class, CapabilityScopeListener::class);
+
 		$this->registerWriteGuards(context: $context);
 
 		// Document references (integration-publish-by-reference): refuse a URL
@@ -139,6 +146,11 @@ class ListenerRegistrar {
 		// provenance is the server's to write (publication-plain-language-and-translation, REQ-PPL-001).
 		$context->registerEventListener(ObjectCreatingEvent::class, PlainSummaryCheck::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PlainSummaryCheck::class);
+
+		// A Woo publication is public by law: it cannot be limited to signed-in
+		// readers (publications-for-signed-in-readers, REQ-PSR-004).
+		$context->registerEventListener(ObjectCreatingEvent::class, PublicationAudienceCheck::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationAudienceCheck::class);
 
 		// A Woo batch whose review task is rejected in OpenRegister goes back to its
 		// author with the task's comment (woo-review-surface, REQ-WRV-002).

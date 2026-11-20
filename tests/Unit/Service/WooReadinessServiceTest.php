@@ -32,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\OpenCatalogi\Service\WooReadinessService
  * @covers \OCA\OpenCatalogi\Service\SitemapStandards
  * @uses \OCA\OpenCatalogi\Service\CatalogReadinessChecks
+ * @uses \OCA\OpenCatalogi\BackgroundJob\DiwooSitemapReconciliation
  * @uses \OCA\OpenCatalogi\Service\Handover\HandoverState
  */
 class WooReadinessServiceTest extends TestCase {
@@ -500,6 +501,94 @@ XML;
 		);
 		$this->assertNotContains('woo-requests', array_column($report['checks'], 'id'));
 		$this->assertArrayNotHasKey('wooRequests', $this->service->runCheck());
+	}
+
+	/**
+	 * The report carries how many Woo reads fell back to the unclassified activity, without it deciding the verdict (REQ-WAB-001).
+	 *
+	 * @return void
+	 */
+	public function testFallbackAttributedReadsAreReported(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+		$versions = $this->createMock(StandardsVersionService::class);
+		$versions->method('diwooVersion')->willReturn(['declared' => '0.9.8', 'published' => '0.9.8', 'status' => StandardsVersionService::STATUS_CURRENT]);
+		$attribution = $this->createMock(\OCA\OpenCatalogi\Service\WooReadAttribution::class);
+		$attribution->method('report')->willReturn(['fallbackAttributedReads' => 3, 'days' => 30]);
+		$service = new WooReadinessService(
+			$this->clientService,
+			$this->directoryService,
+			new SitemapStandards($this->sitemapService, $versions),
+			$this->settingsService,
+			$this->config,
+			$this->urlGenerator,
+			readAttribution: $attribution
+		);
+
+		$report = $service->runCheck();
+
+		$this->assertSame(['fallbackAttributedReads' => 3, 'days' => 30], $report['readLogging']);
+		$this->assertNotContains('read-logging', array_column($report['checks'], 'id'));
+		$this->assertArrayNotHasKey('readLogging', $this->service->runCheck());
+
+	}//end testFallbackAttributedReadsAreReported()
+
+	/**
+	 * REQ-WNO-003: the readiness report shows the last reconciliation, and leaves it out before the first run.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 */
+	public function testTheReportShowsTheLastReconciliation(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+		$stored = '';
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$stored): string {
+				return $key === \OCA\OpenCatalogi\BackgroundJob\DiwooSitemapReconciliation::CONFIG_KEY ? $stored : $default;
+			}
+		);
+
+		$this->assertArrayNotHasKey('reconciliation', $this->service->runCheck());
+
+		$stored = '[{"catalog":"woo","category":"sitemapindex-diwoo-infocat012.xml","missing":["https://example.com/b.pdf"],"extra":[],"complete":true}]';
+		$report = $this->service->runCheck();
+
+		$this->assertSame(['https://example.com/b.pdf'], $report['reconciliation'][0]['missing']);
+		$this->assertSame('woo', $report['reconciliation'][0]['catalog']);
+	}
+
+	/**
+	 * REQ-WNO-004: while no incident group is set, nobody receives pipeline failures and readiness fails.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	public function testNoIncidentGroupFailsReadiness(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+		$group = '';
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$group): string {
+				return $key === 'woo_incident_group' ? $group : $default;
+			}
+		);
+		$service = new WooReadinessService(
+			$this->clientService,
+			$this->directoryService,
+			new SitemapStandards($this->sitemapService, $this->standardsVersionService),
+			$this->settingsService,
+			$this->config,
+			$this->urlGenerator,
+			incidents: $this->createMock(\OCA\OpenCatalogi\Service\Woo\PipelineIncidents::class)
+		);
+
+		$report = $service->runCheck();
+		$checks = array_column($report['checks'], null, 'id');
+		$this->assertSame('not-ready', $report['verdict']);
+		$this->assertSame(['id' => 'incident-group', 'status' => 'fail', 'reason' => 'nobody receives pipeline failures'], $checks['incident-group']);
+
+		$group = 'woo-team';
+		$checks = array_column($service->runCheck()['checks'], null, 'id');
+		$this->assertSame(['id' => 'incident-group', 'status' => 'pass'], $checks['incident-group']);
 	}
 
 	public function testBeingBehindTheDiwooStandardFailsTheReport(): void {

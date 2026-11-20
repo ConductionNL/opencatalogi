@@ -4,7 +4,7 @@
 -->
 <script>
 import { translate as t } from '@nextcloud/l10n'
-import { NcButton, NcNoteCard, NcTextField } from '@nextcloud/vue'
+import { NcButton, NcCheckboxRadioSwitch, NcNoteCard, NcTextField } from '@nextcloud/vue'
 import { refusalOf } from '../../services/feedConsumerRefusal.js'
 import {
 	addConsumer,
@@ -13,6 +13,7 @@ import {
 	isActiveKey,
 	listConsumers,
 	revokeKey,
+	setActForSignedInReaders,
 } from '../../services/feedConsumers.js'
 
 /**
@@ -24,7 +25,7 @@ import {
  */
 export default {
 	name: 'FeedConsumersPanel',
-	components: { NcButton, NcNoteCard, NcTextField },
+	components: { NcButton, NcCheckboxRadioSwitch, NcNoteCard, NcTextField },
 
 	props: {
 		/** The catalogue's slug. */
@@ -130,6 +131,21 @@ export default {
 		},
 
 		/**
+		 * Let the consumer's portal read publications for signed-in readers, or stop it.
+		 *
+		 * @param {object} consumer The consumer.
+		 * @param {boolean} allowed Whether it may.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-trusted-portal-reads-it-for-a-reader-at-the-required-level-req-psr-003
+		 */
+		async actForReaders(consumer, allowed) {
+			await this.run(async () => {
+				await setActForSignedInReaders(this.catalogSlug, consumer.id, allowed)
+				await this.load()
+			})
+		},
+
+		/**
 		 * Run one admin call, showing its refusal instead of failing silently.
 		 *
 		 * @param {() => Promise<void>} work The call.
@@ -192,6 +208,14 @@ export default {
 						</NcButton>
 					</li>
 				</ul>
+				<NcCheckboxRadioSwitch
+					v-if="!consumer.disabled"
+					type="switch"
+					:modelValue="consumer.actForSignedInReaders === true"
+					:disabled="busy"
+					@update:modelValue="actForReaders(consumer, $event)">
+					{{ t('opencatalogi', 'May read publications for readers who log in with DigiD or eHerkenning') }}
+				</NcCheckboxRadioSwitch>
 				<div v-if="!consumer.disabled" class="feed-consumers__actions">
 					<NcButton :disabled="busy" @click="issue(consumer)">
 						{{ t('opencatalogi', 'Generate key') }}

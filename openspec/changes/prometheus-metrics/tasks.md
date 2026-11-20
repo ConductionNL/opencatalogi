@@ -65,6 +65,8 @@
 
 ## 6. Smoke Tests (ADR-008)
 
+Written as Newman, not yet run (it needs the live instance): `tests/integration/prometheus-metrics.postman_collection.json` asserts 6.1 to 6.6, so the CI Newman job runs them on every build instead of a hand curl.
+
 - [ ] 6.1 Call `GET /index.php/apps/opencatalogi/api/metrics` as admin via curl — verify `Content-Type: text/plain; version=0.0.4` header and presence of `# HELP` and `# TYPE` lines for all metric families
 - [ ] 6.2 Call `GET /index.php/apps/opencatalogi/api/metrics` unauthenticated — verify HTTP 401 or redirect to login and no metrics data in response body
 - [ ] 6.3 Call `GET /index.php/apps/opencatalogi/api/health` — verify JSON structure with `status`, `version`, and `checks` keys; verify `checks.search_backend` is present
