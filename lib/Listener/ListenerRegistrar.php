@@ -38,6 +38,7 @@ use OCA\OpenCatalogi\BackgroundJob\MetadataSuggestionQueue;
 use OCA\OpenCatalogi\Contract\MetadataSuggestionQueueInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
+use OCP\Files\Events\Node\NodeWrittenEvent;
 
 /**
  * Registers the event listeners of OpenCatalogi.
@@ -101,14 +102,8 @@ class ListenerRegistrar {
 		);
 
 		// Queue a readiness check when a catalogue is switched on for Woo (REQ-WIH-004).
-		$context->registerEventListener(
-			event: ObjectCreatedEvent::class,
-			listener: WooReadinessTriggerListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: WooReadinessTriggerListener::class
-		);
+		$context->registerEventListener(event: ObjectCreatedEvent::class, listener: WooReadinessTriggerListener::class);
+		$context->registerEventListener(event: ObjectUpdatedEvent::class, listener: WooReadinessTriggerListener::class);
 
 		// Register catalog cache event listeners.
 		$context->registerEventListener(
@@ -152,6 +147,7 @@ class ListenerRegistrar {
 		$context->registerEventListener(CustomScopeEvaluatingEvent::class, CapabilityScopeListener::class);
 
 		$this->registerWriteGuards(context: $context);
+		$this->registerTableImports(context: $context);
 
 		// Refuse a self-relation and mirror caseReference into sourceIdentifiers (REQ-PRS-001, REQ-PRS-003).
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationRelationsListener::class);
@@ -250,4 +246,23 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectCreatingEvent::class, HandedOverRecordsListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, HandedOverRecordsListener::class);
 	}//end registerWriteGuards()
+
+	/**
+	 * The listeners that re-import a published table when its file is replaced
+	 * (data-file-import-failure-alert, REQ-DFA-003): Nextcloud's write of the
+	 * file's content and OpenRegister's restore of an older version.
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.4
+	 */
+	private function registerTableImports(IRegistrationContext $context): void {
+		$context->registerEventListener(event: NodeWrittenEvent::class, listener: PublishedTableReimportListener::class);
+		$context->registerEventListener(
+			event: PublishedTableReimportListener::VERSION_RESTORED_EVENT,
+			listener: PublishedTableReimportListener::class
+		);
+	}//end registerTableImports()
 }//end class

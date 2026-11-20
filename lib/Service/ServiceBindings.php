@@ -31,9 +31,11 @@ use OCA\OpenCatalogi\Contract\PlainSummaryDrafterInterface;
 use OCA\OpenCatalogi\Contract\PlainSummaryProvenanceInterface;
 use OCA\OpenCatalogi\Contract\CatalogueFeedReaderInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
+use OCA\OpenCatalogi\Contract\TableImportQueueInterface;
 use OCA\OpenCatalogi\Contract\DatasetViewServiceInterface;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use OCA\OpenCatalogi\BackgroundJob\AttachmentReadingQueue;
+use OCA\OpenCatalogi\BackgroundJob\PublishedTableImportQueue;
 use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Contract\AttachmentReadingStoreInterface;
 use OCA\OpenCatalogi\Contract\MetadataRuleSuggesterInterface;
@@ -258,6 +260,7 @@ final class ServiceBindings {
 		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
 		OpenRegisterServicesInterface::class => OpenRegisterLookup::class,
 		AttachmentReadingQueueInterface::class => AttachmentReadingQueue::class,
+		TableImportQueueInterface::class => PublishedTableImportQueue::class,
 		AttachmentReadingStoreInterface::class => AttachmentReadingStore::class,
 		MetadataRuleSuggesterInterface::class => MetadataSuggestionService::class,
 		MetadataSuggestionStoreInterface::class => MetadataSuggestionStore::class,

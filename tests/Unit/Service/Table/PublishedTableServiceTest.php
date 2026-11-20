@@ -759,4 +759,118 @@ class PublishedTableServiceTest extends TestCase {
 		$this->assertSame('bram', $table['importedBy']);
 		$this->assertArrayNotHasKey('lastError', $table);
 	}//end testAReimportOfAStoredTable()
+
+	/**
+	 * A service whose OpenRegister lookup answers the publication pair as well as the table pair.
+	 *
+	 * @param \OCA\OpenCatalogi\Contract\TableImportQueueInterface|null $queue The import queue.
+	 *
+	 * @return PublishedTableService The service.
+	 */
+	private function serviceWithQueue(?\OCA\OpenCatalogi\Contract\TableImportQueueInterface $queue): PublishedTableService {
+		$registers = $this->createMock(originalClassName: OpenRegisterLookupInterface::class);
+		$registers->method('objectService')->willReturn($this->openRegister);
+		$registers->method('registerConfiguration')->willReturnMap(
+			[
+				['publication_register', 'publication_schema', ['register' => 'pub', 'schema' => 'publ']],
+				['publication_register', 'published_table_schema', ['register' => 'pub', 'schema' => 'tbl']],
+			]
+		);
+
+		return new PublishedTableService(registers: $registers, container: $this->container, queue: $queue);
+	}//end serviceWithQueue()
+
+	/**
+	 * A file over the large-file limit is stored importing and queued, not imported in the request (REQ-DFA-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
+	 */
+	public function testALargeFileIsQueuedNotImported(): void {
+		$this->openRegister->rows = array_fill(0, PublishedTableService::LARGE_FILE_ROWS + 1, ['data' => ['naam' => 'Park', 'toestellen' => '4']]);
+		$queue = $this->createMock(originalClassName: \OCA\OpenCatalogi\Contract\TableImportQueueInterface::class);
+		$queue->expects($this->once())->method('queue')->with('t1', 'anna')->willReturn(true);
+		$user = $this->createMock(originalClassName: \OCP\IUser::class);
+		$user->method('getUID')->willReturn('anna');
+
+		$table = $this->serviceWithQueue(queue: $queue)->createFromFile(
+			publication: ['id' => 'p1', 'slug' => 'speeltuinen'],
+			file: new TableFile(path: '/tmp/speeltuinen.csv', id: '77', name: 'speeltuinen.csv'),
+			user: $user
+		);
+
+		$this->assertSame(expected: 'importing', actual: $table['status']);
+		$this->assertSame(expected: 'anna', actual: $table['importedBy']);
+		$this->assertSame(expected: [], actual: $this->openRegister->previews);
+		$this->assertCount(expectedCount: 1, haystack: $this->openRegister->saved);
+		$this->assertCount(expectedCount: 1, haystack: $this->openRegister->createdSchemas);
+	}//end testALargeFileIsQueuedNotImported()
+
+	/**
+	 * Without a queue, and at the limit, a file is imported in the request.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
+	 */
+	public function testAFileAtTheLimitIsImportedInTheRequest(): void {
+		$this->openRegister->rows = array_fill(0, PublishedTableService::LARGE_FILE_ROWS, ['data' => ['naam' => 'Park']]);
+		$queue = $this->createMock(originalClassName: \OCA\OpenCatalogi\Contract\TableImportQueueInterface::class);
+		$queue->expects($this->never())->method('queue');
+
+		$table = $this->serviceWithQueue(queue: $queue)->createFromFile(
+			publication: ['id' => 'p1'],
+			file: new TableFile(path: '/tmp/a.csv', id: '77', name: 'a.csv')
+		);
+		$this->assertSame(expected: 'ready', actual: $table['status']);
+
+		$this->openRegister->rows = array_fill(0, PublishedTableService::LARGE_FILE_ROWS + 1, ['data' => ['naam' => 'Park']]);
+		$table = $this->serviceWithQueue(queue: null)->createFromFile(
+			publication: ['id' => 'p1'],
+			file: new TableFile(path: '/tmp/a.csv', id: '77', name: 'a.csv')
+		);
+		$this->assertSame(expected: 'ready', actual: $table['status']);
+	}//end testAFileAtTheLimitIsImportedInTheRequest()
+
+	/**
+	 * A stored table is imported again from its publication's attachment, as the publication's system read.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
+	 */
+	public function testReimportReadsTheAttachmentOfThePublication(): void {
+		$this->openRegister->tempPath = (string)tempnam(sys_get_temp_dir(), 'odt');
+		$this->openRegister->schema = new TableFakeEntity(['id' => 42]);
+		$publication = new TableFakeEntity(['uuid' => 'p1']);
+		$this->openRegister->found = $publication;
+		$this->openRegister->file = new TableFakeEntity(['name' => 'speeltuinen.csv', 'id' => 77, 'content' => "naam\nPark\n"]);
+
+		$table = $this->serviceWithQueue(queue: null)->reimport(
+			table: ['id' => 't9', 'publication' => 'p1', 'file' => '77', 'schema' => '42', 'status' => 'importing'],
+			importedBy: 'bram'
+		);
+
+		$this->assertSame(expected: 'p1', actual: $this->openRegister->finds[0]['id']);
+		$this->assertSame(expected: ['getFile' => [$publication, 77]], actual: $this->openRegister->finds[1]);
+		$this->assertSame(expected: 'ready', actual: $table['status']);
+		$this->assertSame(expected: 'bram', actual: $table['importedBy']);
+		unlink($this->openRegister->tempPath);
+	}//end testReimportReadsTheAttachmentOfThePublication()
+
+	/**
+	 * A table whose publication is gone cannot be imported again.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.3
+	 */
+	public function testReimportOfATableWhosePublicationIsGoneIsRefused(): void {
+		$this->openRegister->found = new \RuntimeException('not found');
+
+		$this->expectException(exception: InvalidArgumentException::class);
+		$this->expectExceptionMessage(message: 'The publication of this table is gone.');
+		$this->serviceWithQueue(queue: null)->reimport(table: ['id' => 't9', 'publication' => 'p1', 'file' => '77']);
+	}//end testReimportOfATableWhosePublicationIsGoneIsRefused()
 }//end class
