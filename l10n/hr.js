@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Zadnje korišteno",
         "This key is shown once. Copy it now: it cannot be shown again.": "Ovaj se ključ prikazuje samo jednom. Kopirajte ga sada: ne može se ponovno prikazati.",
         "No feed consumers yet.": "Još nema korisnika feeda.",
-        "Accounts that read every catalogue's feed": "Računi koji čitaju feed svakog kataloga"
+        "Accounts that read every catalogue's feed": "Računi koji čitaju feed svakog kataloga",
+        "Delete publication": "Izbriši objavu",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Želite li izbrisati \"{name}\"? Ova radnja ne može se poništiti.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Objava i njezini privici nestaju s javne stranice i iz Woo karte web-mjesta. Arhiviranje ih, naprotiv, čuva tijekom roka čuvanja."
     },
     "nplurals=2; plural=(n != 1);"
 )

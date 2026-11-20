@@ -68,6 +68,12 @@ class WooRedactionVerificationFragmentTest extends TestCase {
 			}
 		}
 
-		$this->assertSame($bumped, end($versions));
+		// A later change may bump it again in a later fragment; what must hold is
+		// that the version that wins is the highest, never below this bump.
+		$merged = end($versions);
+		$this->assertTrue(version_compare($merged, $bumped, '>='), $merged . ' must not be below ' . $bumped);
+		foreach ($versions as $file => $version) {
+			$this->assertTrue(version_compare($merged, $version, '>='), $file . ' carries ' . $version . ', above the merged ' . $merged);
+		}
 	}//end testTheSchemaVersionIsBumpedAndMergedLast()
 }//end class

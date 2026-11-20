@@ -51,7 +51,7 @@ class AdminPanelControllersTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->createMock(NationalIndexServiceInterface::class),
-			$collections
+			$collections, capabilities: new \Unit\Support\AllowingCapabilityRights()
 		);
 	}
 
@@ -61,7 +61,7 @@ class AdminPanelControllersTest extends TestCase {
 		$service->expects($this->once())->method('compose')->willReturn(['robotsTxt' => 'https://woo.example.nl/robots.txt']);
 		$service->expects($this->once())->method('rootRules')->willReturn(['nginx' => 'location = /robots.txt {}']);
 
-		$response = (new WooRegistrationController('opencatalogi', $this->request, $service))->show();
+		$response = (new WooRegistrationController('opencatalogi', $this->request, $service, capabilities: new \Unit\Support\AllowingCapabilityRights()))->show();
 
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 		$this->assertSame(
@@ -78,7 +78,7 @@ class AdminPanelControllersTest extends TestCase {
 		$service = $this->createMock(IndexRegistrationServiceInterface::class);
 		$service->expects($this->once())->method('confirm')->willReturn(['status' => 'registered']);
 
-		$response = (new WooRegistrationController('opencatalogi', $this->request, $service))->confirm();
+		$response = (new WooRegistrationController('opencatalogi', $this->request, $service, capabilities: new \Unit\Support\AllowingCapabilityRights()))->confirm();
 
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 		$this->assertSame(['registration' => ['status' => 'registered']], $response->getData());

@@ -257,6 +257,8 @@
 
 				<WooIndexConnection />
 
+				<RefusalGroundsSource />
+
 				<DonlHarvestStatus />
 
 				<DcatFeedValidation />
@@ -320,6 +322,18 @@
 				)
 			">
 			<InstanceModeSection />
+		</NcSettingsSection>
+
+		<NcSettingsSection
+			id="section-capability-rights"
+			:name="t('opencatalogi', 'Rights per group')"
+			:description="
+				t(
+					'opencatalogi',
+					'Which groups may do each of these tasks. Administrators may always do all of them; a right without a group is for administrators only.',
+				)
+			">
+			<CapabilityRightsSection />
 		</NcSettingsSection>
 
 		<NcSettingsSection
@@ -667,12 +681,14 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import CapabilityRightsSection from './CapabilityRightsSection.vue'
 import DcatFeedValidation from './DcatFeedValidation.vue'
 import DonlHarvestStatus from './DonlHarvestStatus.vue'
 import InstanceModeSection from './InstanceModeSection.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
 import RecordHandover from './RecordHandover.vue'
+import RefusalGroundsSource from './RefusalGroundsSource.vue'
 import WooIncidents from './WooIncidents.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
@@ -794,8 +810,10 @@ export default defineComponent({
 		MinusCircle,
 		InformationOutline,
 		InstanceModeSection,
+		CapabilityRightsSection,
 		PublishRightsLine,
 		RecordHandover,
+		RefusalGroundsSource,
 		WooIndexConnection,
 		WooIncidents,
 		DcatFeedValidation,

@@ -50,6 +50,8 @@ use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
 use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
+use OCA\OpenCatalogi\Service\Woo\RefusalGrounds;
+use OCA\OpenCatalogi\Service\Woo\RefusalGroundsUnavailableException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IL10N;
@@ -153,6 +155,13 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	private ?object $transitionEngine = null;
 
 	/**
+	 * The Woo refusal grounds: dossiq's list, or the vendored snapshot without dossiq.
+	 *
+	 * @var RefusalGrounds
+	 */
+	private readonly RefusalGrounds $refusalGrounds;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param RegisterBindings $bindings The configured register ids and the OpenRegister services.
@@ -162,6 +171,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @param BatchPublicationWriter $publications Makes the batch's publication (woo-batch-creates-publications).
 	 * @param DocumentRedactor $redactor Redacts a partly public document through OpenRegister (woo-redaction-pipeline).
 	 * @param FileFacts|null $fileFacts Reads a document's type from its stored bytes (REQ-PFF-001).
+	 * @param RefusalGrounds|null $refusalGrounds The Woo refusal grounds (dossiq's list or the vendored snapshot).
 	 * @param PipelineIncidents|null $incidents Tells the incident group about a failure (REQ-WNO-004).
 	 */
 	public function __construct(
@@ -172,10 +182,11 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		private readonly BatchPublicationWriter $publications,
 		private readonly DocumentRedactor $redactor,
 		private readonly ?FileFacts $fileFacts = null,
+		?RefusalGrounds $refusalGrounds = null,
 		// Tells the incident group about a batch that failed to publish (REQ-WNO-004).
 		private readonly ?PipelineIncidents $incidents = null,
 	) {
-
+		$this->refusalGrounds = ($refusalGrounds ?? new RefusalGrounds());
 	}//end __construct()
 
 	/**
@@ -318,13 +329,19 @@ class WooService implements TransparencyWorkflowServiceInterface {
 
 	/**
 	 * Return the WOO weigeringsgronden catalogue, optionally filtered by a search
-	 * term (matched against article reference and description, case-insensitive).
+	 * term (matched against the code and label, case-insensitive).
+	 *
+	 * The grounds are dossiq's list, or the vendored snapshot without dossiq
+	 * (REQ-WVC-003); only citable grounds are offered.
 	 *
 	 * @param string|null $search Optional filter term.
 	 *
-	 * @return array<int, array{article: string, description: string}> The grounds.
+	 * @return array<int, array<string, mixed>> The grounds, each with `article` (the code) and `description` (the label).
+	 *
+	 * @throws RefusalGroundsUnavailableException When the grounds cannot be read.
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-weigeringsgronden-refusal-grounds
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-refusal-grounds-come-from-dossiq-with-a-read-only-snapshot-for-redaction-only-req-wvc-003
 	 */
 	public function getWeigeringsgronden(?string $search = null): array {
 		$needle = '';
@@ -333,17 +350,24 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		}
 
 		$rows = [];
-		foreach (self::WEIGERINGSGRONDEN as $article => $description) {
+		foreach ($this->refusalGrounds->citable() as $ground) {
+			$code = (string)$ground['code'];
+			$label = (string)($ground['label'] ?? '');
 			if ($needle !== ''
-				&& mb_strpos(mb_strtolower($article . ' ' . $description), $needle) === false
+				&& mb_strpos(mb_strtolower($code . ' ' . $label), $needle) === false
 			) {
 				continue;
 			}
 
-			$rows[] = [
-				'article' => $article,
-				'description' => $description,
-			];
+			// `article` and `description` stay the keys the assessment form
+			// reads; the rest is dossiq's shape, with where the row came from.
+			$rows[] = array_merge(
+				$ground,
+				[
+					'article' => $code,
+					'description' => $label,
+				]
+			);
 		}
 
 		return $rows;
@@ -652,10 +676,20 @@ class WooService implements TransparencyWorkflowServiceInterface {
 			throw new RuntimeException('At least one weigeringsgrond is required for "Niet openbaar"');
 		}
 
-		// Reject grounds outside the WOO catalogue.
-		foreach ($weigeringsgronden as $ground) {
-			if (array_key_exists((string)$ground, self::WEIGERINGSGRONDEN) === false) {
-				throw new RuntimeException('Unknown weigeringsgrond: ' . $ground);
+		// Reject grounds outside the refusal grounds list. With dossiq installed
+		// but unreadable the save is refused with the reason, and the snapshot
+		// is not used in its place (REQ-WVC-003).
+		if (count($weigeringsgronden) > 0) {
+			try {
+				$citable = $this->refusalGrounds->citableCodes();
+			} catch (RefusalGroundsUnavailableException $e) {
+				throw new RuntimeException('The refusal grounds cannot be read: ' . $e->getMessage(), 0, $e);
+			}
+
+			foreach ($weigeringsgronden as $ground) {
+				if (in_array((string)$ground, $citable, true) === false) {
+					throw new RuntimeException('Unknown weigeringsgrond: ' . $ground);
+				}
 			}
 		}
 
@@ -684,6 +718,11 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		} else {
 			$data['weigeringsgronden'] = array_values(array_unique(array_map('strval', $weigeringsgronden)));
 		}
+
+		// The codes just saved are dossiq's settled codes: mark them so the
+		// repair step that maps earlier codes never shifts them (REQ-WVC-003).
+		$data['groundsListVersion'] = RefusalGrounds::SETTLED_LIST_VERSION;
+		$data['unmappedGrounds'] = [];
 
 		$assessedBy = 'system';
 		if ($user !== null) {

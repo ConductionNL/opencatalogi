@@ -476,15 +476,27 @@ class WooServiceTest extends TestCase {
 		$this->assertNotEmpty($all);
 		$articles = array_column($all, 'article');
 		$this->assertContains('5.1.2.e', $articles);
-		$this->assertContains('5.2.e', $articles);
+		$this->assertContains('5.2.1', $articles);
 
 		$filtered = $this->service->getWeigeringsgronden('persoonlijke');
 		$fArticles = array_column($filtered, 'article');
 		$this->assertContains('5.1.2.e', $fArticles);
-		$this->assertContains('5.2.e', $fArticles);
+		$this->assertContains('5.2.1', $fArticles);
 		$this->assertNotContains('5.1.1.a', $fArticles);
+		// An article heading is a parent in dossiq's list, not a ground to cite.
+		$this->assertNotContains('5.2', $articles);
+		$this->assertSame('snapshot', $all[0]['source']);
 
 	}//end testWeigeringsgrondenCatalogueAndSearch()
+
+	public function testAGroundOutsideTheListIsRefused(): void {
+		// 5.2.e was a code of OpenCatalogi's own constant; dossiq's list has none.
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Unknown weigeringsgrond: 5.2.e');
+
+		$this->service->updateAssessment('a1', 'niet_openbaar', ['5.2.e']);
+
+	}//end testAGroundOutsideTheListIsRefused()
 
 	public function testCreateBatchPersistsAssessmentsAndBatch(): void {
 		$batch = $this->service->createBatch(
@@ -667,9 +679,9 @@ class WooServiceTest extends TestCase {
 
 	public function testUpdateAssessmentNietOpenbaarStoresGrounds(): void {
 		$this->objects->objects[] = ['id' => 'a1', 'assessment' => 'te_beoordelen'];
-		$result = $this->service->updateAssessment('a1', 'niet_openbaar', ['5.1.2.e', '5.2.e']);
+		$result = $this->service->updateAssessment('a1', 'niet_openbaar', ['5.1.2.e', '5.2.1']);
 		$this->assertSame('niet_openbaar', $result['assessment']);
-		$this->assertSame(['5.1.2.e', '5.2.e'], $result['weigeringsgronden']);
+		$this->assertSame(['5.1.2.e', '5.2.1'], $result['weigeringsgronden']);
 		$this->assertSame('alice', $result['assessedBy']);
 
 	}//end testUpdateAssessmentNietOpenbaarStoresGrounds()
@@ -1351,7 +1363,7 @@ class WooServiceTest extends TestCase {
 		$this->approvedBatch();
 		$this->files->redacted = null;
 
-		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1');
 		$this->assertSame(1, $this->files->redactions);
 		$this->assertSame('failed', $assessed['redactionStatus']);
 		$this->assertSame('', $assessed['anonymizedDocument']);
@@ -1386,7 +1398,7 @@ class WooServiceTest extends TestCase {
 		$this->documents['id:4'] = $redacted;
 		$this->files->redacted = $redacted;
 
-		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1');
 		$this->assertSame('verified', $assessed['redactionStatus']);
 		$this->assertSame('4', $assessed['anonymizedDocument']);
 
@@ -1457,7 +1469,7 @@ class WooServiceTest extends TestCase {
 		$this->assertSame([], $this->service->getBatch('batch-1')['documentSummary']['unredacted']);
 
 		$this->files->redacted = null;
-		$this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1');
 		$this->objects->objects[] = ['id' => 'a5', 'assessment' => 'deels_openbaar', 'fileName' => 'e.pdf'];
 		foreach ($this->objects->objects as $i => $object) {
 			if ($object['id'] === 'batch-1') {
@@ -1496,7 +1508,7 @@ class WooServiceTest extends TestCase {
 		$this->documents['id:4'] = $this->documents['/alice/files/doc-c-anon'];
 		$this->files->redacted = $this->documents['/alice/files/doc-c-anon'];
 
-		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1');
 		$this->assertSame('verified', $assessed['redactionStatus']);
 		$this->assertSame('', $assessed['redactionVerifiedBy']);
 		$this->assertNull($assessed['redactionVerifiedAt']);
@@ -1531,7 +1543,7 @@ class WooServiceTest extends TestCase {
 		$this->files->redacted = null;
 
 		// A failing redaction changes the status, so the verification goes.
-		$this->assertSame('', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1')['redactionVerifiedBy']);
+		$this->assertSame('', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1')['redactionVerifiedBy']);
 
 		$this->seedBatchWithAssessments(false);
 		$saved = $this->service->updateAssessment('a1', 'openbaar', [], 'batch-1');
@@ -1546,7 +1558,7 @@ class WooServiceTest extends TestCase {
 	public function testVerifyRedactionRefusesAFailedRedactionAndAForeignDocument(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->files->redacted = null;
-		$this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'batch-1');
 		$saves = count($this->objects->saveTargets);
 
 		$refusal = null;
@@ -1574,8 +1586,8 @@ class WooServiceTest extends TestCase {
 		$this->seedBatchWithAssessments(false);
 		$this->files->redacted = $this->documents['/alice/files/doc-c-anon'];
 
-		$this->assertSame('verified', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'])['redactionStatus']);
-		$this->assertSame('verified', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'no-such-batch')['redactionStatus']);
+		$this->assertSame('verified', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'])['redactionStatus']);
+		$this->assertSame('verified', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.1'], 'no-such-batch')['redactionStatus']);
 	}//end testWithoutABatchTheOfficersFilesAreSearched()
 
 	/**

@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "OpenCatalogi",
-    "version": "2.1.16-unstable.20261117071500",
+    "version": "2.1.55-unstable.20261117203721",
     "description": "OpenCatalogi's public, anonymously-reachable API surface: full-text search, catalog and publication read access, DCAT-AP-NL and schema.org harvest feeds, DIWOO sitemaps/robots.txt, the federation read surface, the federated-directory sync endpoint, and the CMS read APIs (pages/menus/themes/glossary/listings). Every path in this document corresponds to a route in `appinfo/routes.php` whose controller method carries `@PublicPage` / `#[PublicPage]` \u2014 admin-gated and authenticated-only endpoints (settings, retention, Woo batches, setup, OOAPI 5.0 resource reads, DCAT/DIWOO/OOAPI validation reports) are out of scope; see the `public-api-openapi-document` OpenSpec change.\n\nEvery path is served under `/api/v1/`, the version this document describes. The unversioned `/api/` paths keep working, are deprecated, and name their `/api/v1/` successor in a `Link` header next to a `Deprecation` header. Paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, robots.txt, Atom feeds, federation) keep their own URLs and formats; openapi.standards.json describes them.",
     "license": {
       "name": "EUPL-1.2",
@@ -555,6 +555,58 @@
     }
   },
   "paths": {
+    "/value-lists": {
+      "get": {
+        "operationId": "value-lists-index",
+        "summary": "Every controlled-list entry",
+        "description": "Every entry of every controlled list OpenCatalogi uses (the TOOI and DiWoo lists, the DCAT lists and the Woo refusal grounds) as scheme, scheme URI, code, label, resource URI, status and the moment of the last refresh. A list that cannot be read is named in `unavailable` rather than answered empty.",
+        "tags": [
+          "Portal"
+        ],
+        "parameters": [
+          {
+            "name": "scheme",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "informatiecategorieen",
+                "soortHandeling",
+                "documentsoorten",
+                "talen",
+                "hvdCategories",
+                "dataThemes",
+                "weigeringsgronden"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown scheme"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/catalogi": {
       "get": {
         "operationId": "catalogi-index",
