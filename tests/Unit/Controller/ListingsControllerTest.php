@@ -21,7 +21,9 @@ namespace Unit\Controller;
 use OCA\OpenCatalogi\Controller\ListingsController;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenRegister\Exception\ValidationException;
 use OCP\App\IAppManager;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
@@ -649,6 +651,145 @@ class ListingsControllerTest extends TestCase {
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(200, $response->getStatus());
 	}//end testCreateAcceptsSafeDirectoryUrl()
+
+	/**
+	 * Create() keeps `catalogusId`, the property the listing schema requires.
+	 *
+	 * @return void
+	 */
+	public function testCreateKeepsTheRequiredCatalogusId(): void {
+		$mockObjService = $this->mockObjectService();
+
+		$captured = null;
+		$mockObjService->method('saveObject')
+			->willReturnCallback(
+				function (...$args) use (&$captured) {
+					$captured = $args['object'] ?? $args[0];
+					return $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+				}
+			);
+
+		$this->configureListingScope();
+
+		$this->request->method('getParams')
+			->willReturn(['title' => 'New Listing', 'summary' => 'S', 'catalogusId' => '7f4b2c1e-0000-4000-8000-000000000001']);
+
+		$response = $this->controller->create();
+
+		$this->assertEquals(200, $response->getStatus());
+		$this->assertSame('7f4b2c1e-0000-4000-8000-000000000001', $captured['catalogusId'] ?? null);
+	}//end testCreateKeepsTheRequiredCatalogusId()
+
+	/**
+	 * Create() answers 400 with the reason when the listing schema refuses the payload.
+	 *
+	 * @return void
+	 */
+	public function testCreateReturns400WhenTheListingSchemaRefusesThePayload(): void {
+		$mockObjService = $this->mockObjectService();
+		$mockObjService->method('saveObject')
+			->willThrowException(new ValidationException('The required property (catalogusId) is missing.'));
+
+		$this->configureListingScope();
+
+		$this->request->method('getParams')
+			->willReturn(['title' => 'New Listing']);
+
+		$response = $this->controller->create();
+
+		$this->assertEquals(400, $response->getStatus());
+		$this->assertStringContainsString('catalogusId', $response->getData()['error']);
+	}//end testCreateReturns400WhenTheListingSchemaRefusesThePayload()
+
+	/**
+	 * Show() answers 404 for an id that is not a listing.
+	 *
+	 * @return void
+	 */
+	public function testShowReturns404WhenTheListingDoesNotExist(): void {
+		$mockObjService = $this->mockObjectService();
+		$mockObjService->method('find')
+			->willThrowException(new DoesNotExistException('Object not found in magic table'));
+
+		$this->configureListingScope();
+
+		$response = $this->controller->show('missing');
+
+		$this->assertEquals(404, $response->getStatus());
+	}//end testShowReturns404WhenTheListingDoesNotExist()
+
+	/**
+	 * Show() answers a cross-origin read with the CORS headers (DIR-008): with no
+	 * allowlist configured, any origin may read the listing.
+	 *
+	 * @spec openspec/changes/dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
+	 *
+	 * @return void
+	 */
+	public function testShowAnswersWithTheCorsHeaders(): void {
+		$mockEntity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$mockEntity->method('jsonSerialize')->willReturn(['id' => '123']);
+		$this->mockObjectService()->method('find')->willReturn($mockEntity);
+		$this->configureListingScope();
+		$this->request->method('getHeader')->willReturnMap([['Origin', 'https://other.example']]);
+
+		$headers = $this->controller->show('123')->getHeaders();
+
+		$this->assertSame('*', $headers['Access-Control-Allow-Origin']);
+		$this->assertSame('GET, OPTIONS', $headers['Access-Control-Allow-Methods']);
+		$this->assertSame('Authorization, Content-Type, Accept', $headers['Access-Control-Allow-Headers']);
+		$this->assertSame('false', $headers['Access-Control-Allow-Credentials']);
+	}//end testShowAnswersWithTheCorsHeaders()
+
+	/**
+	 * Show() never reflects an origin outside a configured allowlist, and its 404
+	 * carries the headers too, so a cross-origin caller can read the refusal.
+	 *
+	 * @spec openspec/changes/dashboard/specs/dashboard/spec.md#requirement-cors-must-be-supported-on-listing-and-directory-endpoints-dir-008
+	 *
+	 * @return void
+	 */
+	public function testShowFollowsTheAllowlistOnA404(): void {
+		$this->mockObjectService()->method('find')
+			->willThrowException(new DoesNotExistException('Object not found in magic table'));
+		$this->config->method('getValueString')
+			->willReturnCallback(
+				static fn (string $app, string $key, string $default = ''): string => match ($key) {
+					'listing_register' => '3',
+					'listing_schema' => '5',
+					'cors_allowed_origins' => 'https://portal.example',
+					default => $default,
+				}
+			);
+		$this->request->method('getHeader')->willReturnMap([['Origin', 'https://evil.example']]);
+
+		$response = $this->controller->show('missing');
+
+		$this->assertSame(404, $response->getStatus());
+		$this->assertNotSame('https://evil.example', $response->getHeaders()['Access-Control-Allow-Origin']);
+		$this->assertNotSame('*', $response->getHeaders()['Access-Control-Allow-Origin']);
+	}//end testShowFollowsTheAllowlistOnA404()
+
+	/**
+	 * Update() answers 404 for an id that is not a listing, and saves nothing.
+	 *
+	 * @return void
+	 */
+	public function testUpdateReturns404WhenTheListingDoesNotExist(): void {
+		$mockObjService = $this->mockObjectService();
+		$mockObjService->method('find')
+			->willThrowException(new DoesNotExistException('Object not found in magic table'));
+		$mockObjService->expects($this->never())->method('saveObject');
+
+		$this->configureListingScope();
+
+		$this->request->method('getParams')
+			->willReturn(['title' => 'Updated Listing']);
+
+		$response = $this->controller->update('missing');
+
+		$this->assertEquals(404, $response->getStatus());
+	}//end testUpdateReturns404WhenTheListingDoesNotExist()
 
 	/**
 	 * Update() returns the updated listing as a 200 JSON response.

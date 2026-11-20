@@ -724,7 +724,26 @@ OC.L10N.register(
         "Open catalog": "Deschide catalogul",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creați primul dumneavoastră catalog. Este containerul în care vor sta publicațiile dumneavoastră. Alegeți registrul Publication și schema Publication, astfel încât catalogul să afișeze publicațiile pe care le adăugați.",
         "Manage your publications and their status": "Gestionați publicațiile dvs. și starea acestora",
-        "Open at the source": "Deschide la sursă"
+        "Open at the source": "Deschide la sursă",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: versiunea OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister conține motorul de care are nevoie OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi necesită OpenRegister %1$s sau mai nou. Din OpenRegister instalat lipsește %2$s, așa că OpenCatalogi afișează o notificare în locul paginilor sale. Actualizați OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi nu poate porni",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi necesită OpenRegister %1$s sau mai nou. Rugați administratorul să actualizeze OpenRegister.",
+        "Feed consumers": "Consumatori ai fluxului",
+        "Contact": "Contact",
+        "Generate key": "Generează cheie",
+        "Revoke": "Revocă",
+        "Disable": "Dezactivează",
+        "Last used": "Ultima utilizare",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Această cheie este afișată o singură dată. Copiați-o acum: nu mai poate fi afișată.",
+        "No feed consumers yet.": "Încă nu există consumatori ai fluxului.",
+        "Accounts that read every catalogue's feed": "Conturi care citesc fluxul fiecărui catalog",
+        "Review publications before they are published": "Revizuiește publicațiile înainte de a fi publicate",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Când este activat, o ciornă trebuie trimisă și aprobată înainte de a putea fi publicată. Când este dezactivat, un editor poate publica direct o ciornă.",
+        "Delete publication": "Ștergeți publicația",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Doriți să ștergeți \"{name}\"? Această acțiune nu poate fi anulată.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publicația și atașamentele ei dispar de pe pagina publică și din harta site-ului Woo. Arhivarea, în schimb, le păstrează pe durata termenului de păstrare."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

@@ -724,7 +724,26 @@ OC.L10N.register(
         "Open catalog": "Адкрыць каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Стварыце свой першы каталог. Гэта кантэйнер, у якім будуць вашы публікацыі. Выберыце рэестр Publication і схему Publication, каб каталог паказваў публікацыі, якія вы дадаеце.",
         "Manage your publications and their status": "Кіруйце сваімі публікацыямі і іх статусам",
-        "Open at the source": "Адкрыць у крыніцы"
+        "Open at the source": "Адкрыць у крыніцы",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: версія OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister змяшчае рухавік, патрэбны OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi патрабуе OpenRegister %1$s або навейшы. У ўсталяваным OpenRegister няма %2$s, таму OpenCatalogi паказвае паведамленне замест сваіх старонак. Абнавіце OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi не можа запусціцца",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi патрабуе OpenRegister %1$s або навейшы. Папрасіце адміністратара абнавіць OpenRegister.",
+        "Feed consumers": "Спажыўцы стужкі",
+        "Contact": "Кантакт",
+        "Generate key": "Стварыць ключ",
+        "Revoke": "Адклікаць",
+        "Disable": "Адключыць",
+        "Last used": "Апошняе выкарыстанне",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Гэты ключ паказваецца толькі адзін раз. Скапіруйце яго зараз: паказаць яго зноў нельга.",
+        "No feed consumers yet.": "Спажыўцоў стужкі пакуль няма.",
+        "Accounts that read every catalogue's feed": "Уліковыя запісы, якія чытаюць стужку кожнага каталога",
+        "Review publications before they are published": "Правяраць публікацыі перад апублікаваннем",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Калі ўключана, чарнавік трэба падаць і зацвердзіць, перш чым яго можна апублікаваць. Калі выключана, рэдактар можа апублікаваць чарнавік адразу.",
+        "Delete publication": "Выдаліць публікацыю",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Вы хочаце выдаліць \"{name}\"? Гэта дзеянне нельга адмяніць.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публікацыя і яе далучэнні знікаюць з публічнай старонкі і з карты сайта Woo. Архіваванне, наадварот, захоўвае іх на тэрмін захоўвання."
     },
     "nplurals=2; plural=(n != 1);"
 )

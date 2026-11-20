@@ -13,6 +13,7 @@
 // vue-material-design-icons.
 
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
+import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
 import BookOpenPageVariantOutline from 'vue-material-design-icons/BookOpenPageVariantOutline.vue'
@@ -62,12 +63,14 @@ import StoreOutline from 'vue-material-design-icons/StoreOutline.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
 import TableColumn from 'vue-material-design-icons/TableColumn.vue'
 import TagOutline from 'vue-material-design-icons/TagOutline.vue'
+import Translate from 'vue-material-design-icons/Translate.vue'
 import Tune from 'vue-material-design-icons/Tune.vue'
 import ViewDashboardOutline from 'vue-material-design-icons/ViewDashboardOutline.vue'
 import Web from 'vue-material-design-icons/Web.vue'
 
 export default {
 	AccountGroup,
+	AlertCircleOutline,
 	AlertOutline,
 	ArchiveOutline,
 	BookOpenPageVariantOutline,
@@ -117,6 +120,7 @@ export default {
 	Sync,
 	TableColumn,
 	TagOutline,
+	Translate,
 	Tune,
 	ViewDashboardOutline,
 	Web,

@@ -724,7 +724,26 @@ OC.L10N.register(
         "Open catalog": "Otvoriť katalóg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Vytvorte svoj prvý katalóg. Je to kontajner, v ktorom budú vaše publikácie. Vyberte register Publication a schému Publication, aby katalóg zobrazoval publikácie, ktoré pridáte.",
         "Manage your publications and their status": "Spravujte svoje publikácie a ich stav",
-        "Open at the source": "Otvoriť pri zdroji"
+        "Open at the source": "Otvoriť pri zdroji",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: verzia OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister obsahuje jadro, ktoré OpenCatalogi potrebuje.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi vyžaduje OpenRegister %1$s alebo novší. V nainštalovanom OpenRegister chýba %2$s, preto OpenCatalogi namiesto svojich stránok zobrazuje upozornenie. Aktualizujte OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi sa nedá spustiť",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vyžaduje OpenRegister %1$s alebo novší. Požiadajte správcu o aktualizáciu OpenRegister.",
+        "Feed consumers": "Odberatelia kanála",
+        "Contact": "Kontakt",
+        "Generate key": "Vygenerovať kľúč",
+        "Revoke": "Odvolať",
+        "Disable": "Zakázať",
+        "Last used": "Naposledy použité",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Tento kľúč sa zobrazí iba raz. Skopírujte si ho teraz: znova ho zobraziť nemožno.",
+        "No feed consumers yet.": "Zatiaľ žiadni odberatelia kanála.",
+        "Accounts that read every catalogue's feed": "Účty, ktoré čítajú kanál každého katalógu",
+        "Review publications before they are published": "Kontrolovať publikácie pred zverejnením",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Ak je zapnuté, koncept musí byť pred zverejnením odoslaný na kontrolu a schválený. Ak je vypnuté, redaktor môže koncept zverejniť priamo.",
+        "Delete publication": "Odstrániť publikáciu",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Chcete odstrániť \"{name}\"? Túto akciu nie je možné vrátiť späť.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikácia a jej prílohy zmiznú z verejnej stránky a z mapy stránok Woo. Archivácia ich naopak uchová počas lehoty uchovávania."
     },
     "nplurals=2; plural=(n != 1);"
 )

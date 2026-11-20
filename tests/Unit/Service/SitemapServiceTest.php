@@ -1164,10 +1164,11 @@ class SitemapServiceTest extends TestCase {
 	 *
 	 * @param array<int, mixed> $calls The organisation lookups, recorded by parameter name.
 	 * @param array<int, array<string, mixed>> $extra Extra fields per file position, such as labels.
+	 * @param object|null $references The document references the container hands out, or none.
 	 *
 	 * @return string
 	 */
-	private function documentsPage(array &$calls, array $extra = []): string {
+	private function documentsPage(array &$calls, array $extra = [], ?object $references = null): string {
 		$this->setupValidSitemapContext('reg-woo', 'sch-1');
 		$catalogObj = $this->createCatalogObj(['sch-1']);
 		$pubObject = $this->createSerializableObject([
@@ -1220,6 +1221,7 @@ class SitemapServiceTest extends TestCase {
 				'OCA\OpenRegister\Service\ObjectService' => $objectService,
 				'OCA\OpenRegister\Service\FileService' => $fileService,
 				'OCA\OpenRegister\Db\OrganisationMapper' => $organisations,
+				\OCA\OpenCatalogi\Service\DocumentReferences::class => $references,
 				default => null,
 			}
 		);
@@ -1476,6 +1478,168 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	/**
+	 * REQ-WNO-002: a document the shipped XSD refuses is left out of the page at render
+	 * time, the page that remains validates, and the validator lists the document with
+	 * `xsd-invalid` and the XSD message.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 */
+	public function testAnXsdInvalidDocumentIsLeftOutAndReported(): void {
+		$publications = [
+			['id' => 'goed', 'wooCategory' => 'infocat012', 'creationDate' => '2026-09-30'],
+			// A zero date from an import: the mapper accepts it, xs:date has no year 0000.
+			['id' => 'fout', 'wooCategory' => 'infocat012', 'creationDate' => '0000-01-01'],
+		];
+		$xml = $this->storedValuesPage($publications);
+
+		$this->assertStringContainsString('goed.pdf', $xml);
+		$this->assertStringNotContainsString('fout.pdf', $xml);
+		$this->assertSame(1, substr_count($xml, '<diwoo:Document>'));
+		$this->assertSame([[]], self::diwooXsdErrors($xml));
+
+		$report = $this->service->validateDiwooOutput('woo', 'sitemapindex-diwoo-infocat012.xml');
+		$this->assertFalse($report['valid']);
+		$xsd = array_values(array_filter($report['violations'], static fn (array $violation): bool => $violation['reason'] === SitemapService::XSD_INVALID));
+		$this->assertCount(1, $xsd);
+		$this->assertSame('https://example.com/fout.pdf', $xsd[0]['documentLoc']);
+		$this->assertStringContainsString('creatiedatum', $xsd[0]['message']);
+		$this->assertStringContainsString("'0000-01-01' is not a valid value", $xsd[0]['message']);
+	}
+
+	/**
+	 * The service as setUp() builds it, with an incident double.
+	 *
+	 * @param \OCA\OpenCatalogi\Service\Woo\PipelineIncidents $incidents The incidents.
+	 *
+	 * @return SitemapService
+	 */
+	private function serviceRaisingInto(\OCA\OpenCatalogi\Service\Woo\PipelineIncidents $incidents): SitemapService {
+		$instance = new InstanceSettings($this->urlGenerator, $this->config);
+
+		return new SitemapService(
+			new OpenRegisterLookup($this->container, $this->appManager),
+			$this->settingsService,
+			$instance,
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new \OCA\OpenCatalogi\Service\TooiVocabularyService(), $this->wooCategories, new OpenRegisterLookup($this->container, $this->appManager), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this), $instance),
+			$this->queryService,
+			$this->wooCategories,
+			incidents: $incidents
+		);
+	}
+
+	/**
+	 * REQ-WNO-004: a document held back for its XSD errors raises an incident naming it.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	public function testADocumentHeldBackByTheXsdRaisesAnIncident(): void {
+		$incidents = $this->createMock(\OCA\OpenCatalogi\Service\Woo\PipelineIncidents::class);
+		$incidents->expects($this->once())->method('raise')->with(
+			SitemapService::XSD_INVALID,
+			'https://example.com/fout.pdf',
+			$this->stringContains("'0000-01-01' is not a valid value")
+		);
+		$this->service = $this->serviceRaisingInto($incidents);
+
+		$xml = $this->storedValuesPage([
+			['id' => 'goed', 'wooCategory' => 'infocat012', 'creationDate' => '2026-09-30'],
+			['id' => 'fout', 'wooCategory' => 'infocat012', 'creationDate' => '0000-01-01'],
+		]);
+
+		$this->assertStringNotContainsString('fout.pdf', $xml);
+	}
+
+	/**
+	 * REQ-WNO-004: a sitemap the instance cannot serve raises an incident; a name nothing is served at does not.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	public function testARefusedSitemapRaisesAndAnUnknownNameDoesNot(): void {
+		$raised = [];
+		$incidents = $this->createMock(\OCA\OpenCatalogi\Service\Woo\PipelineIncidents::class);
+		$incidents->method('raise')->willReturnCallback(
+			static function (string $kind, string $subject, string $message) use (&$raised): void {
+				$raised[] = [$kind, $subject, $message];
+			}
+		);
+		$this->service = $this->serviceRaisingInto($incidents);
+		$this->storedValuesPage([]);
+
+		$unknown = $this->service->buildSitemap('woo', 'sitemapindex-diwoo-infocat999.xml', 1);
+		$this->assertSame(400, $unknown->getStatus());
+		$this->assertSame([], $raised);
+
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getSettings')->willReturn(['configuration' => []]);
+		$this->settingsService = $settings;
+		$refused = $this->serviceRaisingInto($incidents)->buildSitemapIndex('woo', 'sitemapindex-diwoo-infocat012.xml');
+
+		$this->assertSame(500, $refused->getStatus());
+		$this->assertCount(1, $raised);
+		$this->assertSame(['sitemap-refused', 'woo/sitemapindex-diwoo-infocat012.xml'], array_slice($raised[0], 0, 2));
+		$this->assertStringContainsString('HTTP 500', $raised[0][2]);
+	}
+
+	/**
+	 * REQ-WNO-003: the register side of the reconciliation lists every public document,
+	 * also the one the page holds back, so the difference shows as missing.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 */
+	public function testTheRegisterSideListsADocumentThePageHoldsBack(): void {
+		$publications = [
+			['id' => 'goed', 'wooCategory' => 'infocat012', 'creationDate' => '2026-09-30'],
+			['id' => 'fout', 'wooCategory' => 'infocat012', 'creationDate' => '0000-01-01'],
+		];
+		$xml = $this->storedValuesPage($publications);
+
+		$register = $this->service->publicDocumentLocations('woo', 'sitemapindex-diwoo-infocat012.xml');
+
+		$this->assertSame(2, $register['publications']);
+		$this->assertSame(['https://example.com/goed.pdf', 'https://example.com/fout.pdf'], $register['locations']);
+		$listed = self::documentsOf($xml)->evaluate('string(//s:url/s:loc)');
+		$this->assertSame(['https://example.com/fout.pdf'], array_values(array_diff($register['locations'], [$listed])));
+	}
+
+	/**
+	 * REQ-WNO-003: a category the registry does not know is a failed read, not an empty one.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 */
+	public function testTheRegisterSideRefusesAnUnknownCategory(): void {
+		$this->storedValuesPage([]);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('the category cannot be read: HTTP 400');
+		$this->service->publicDocumentLocations('woo', 'sitemapindex-diwoo-infocat999.xml');
+	}
+
+	/**
+	 * REQ-WNO-002: the XSD the app ships and validates with at render time is the
+	 * authority's file, and a rendered page validates against it.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 */
+	public function testARenderedPageValidatesAgainstTheShippedXsd(): void {
+		$shipped = dirname(__DIR__, 3) . '/lib/Settings/diwoo';
+		foreach (['diwoo-metadata.xsd', 'diwoo-metadata-lijsten.xsd', 'MDTO-XML1.0.1.xsd'] as $file) {
+			$this->assertSame(
+				hash_file('sha256', __DIR__ . '/fixtures/diwoo-0.9.8/' . $file),
+				hash_file('sha256', $shipped . '/' . $file),
+				$file . ' differs from the authority copy'
+			);
+		}
+
+		$xml = $this->storedValuesPage([
+			['id' => 'een', 'wooCategory' => 'infocat012', 'documentsoort' => 'besluit', 'creationDate' => '2026-09-30'],
+			['id' => 'twee', 'wooCategory' => 'infocat012', 'language' => 'en', 'creationDate' => '2026-10-01', 'validFrom' => '2027-01-01'],
+		]);
+
+		$this->assertSame(2, substr_count($xml, '<diwoo:Document>'));
+		$this->assertSame([[], []], (new \OCA\OpenCatalogi\Service\DiwooXsdValidator($shipped))->documentErrors($xml));
+	}
+
+	/**
 	 * Every DiWoo document of a rendered page validates against the official DiWoo 0.9.8 XSD.
 	 *
 	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
@@ -1550,6 +1714,71 @@ class SitemapServiceTest extends TestCase {
 		], $urls);
 		$this->assertSame(0, $dom->getElementsByTagNameNS($diwoo, 'DiWoo')->item(0)->getElementsByTagNameNS($sitemap, '*')->length, 'diwoo:DiWoo holds no sitemap element');
 	}
+
+	/**
+	 * Spec scenario "The Woo-index reads a referenced document": a publication with one
+	 * file and one reference inside its window lists both, the reference with its source
+	 * URL as `loc` (REQ-PBR-002).
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-a-reference-is-published-like-a-file-pointing-at-its-source-req-pbr-002
+	 */
+	public function testAReferenceIsADocumentWithItsSourceUrlAsLoc(): void {
+		$source = 'https://documenten.voorbeeldgemeente.nl/besluit-2026-001.pdf';
+		$references = $this->createMock(\OCA\OpenCatalogi\Service\DocumentReferences::class);
+		$references->expects($this->once())->method('appendTo')->willReturnCallback(
+			static fn (array $files, string $publicationId): array => array_merge(
+				$files,
+				$publicationId === 'pub-1' ? [(new \OCA\OpenCatalogi\Service\DocumentReferenceMapper())->asFileEntry(reference: ['url' => $source, 'title' => 'Besluit', 'format' => 'pdf', 'publicationDate' => '2024-04-01'])] : []
+			)
+		);
+		$instance = new InstanceSettings($this->urlGenerator, $this->config);
+		$this->service = new SitemapService(
+			new OpenRegisterLookup($this->container, $this->appManager),
+			$this->settingsService,
+			$instance,
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new \OCA\OpenCatalogi\Service\TooiVocabularyService(), $this->wooCategories, new OpenRegisterLookup($this->container, $this->appManager), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this), $instance),
+			$this->queryService,
+			$this->wooCategories
+		);
+
+		$calls = [];
+		$dom = new \DOMDocument();
+		$dom->loadXML($this->documentsPage(calls: $calls, references: $references));
+		$locs = [];
+		foreach ($dom->getElementsByTagNameNS(StandardsVersionService::SITEMAP_NAMESPACE, 'loc') as $loc) {
+			$locs[] = $loc->textContent;
+		}
+
+		$this->assertSame(['https://example.com/a.pdf', 'https://example.com/b.odt', $source], $locs);
+	}//end testAReferenceIsADocumentWithItsSourceUrlAsLoc()
+
+	/**
+	 * The validator report lists the references whose last check found no answer;
+	 * files and answering references are not listed (REQ-PBR-003).
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-broken-references-are-shown-before-readers-find-them-req-pbr-003
+	 */
+	public function testTheUnreachableReferencesAreListed(): void {
+		$mapper = new \OCA\OpenCatalogi\Service\DocumentReferenceMapper();
+		$publications = [
+			[
+				'id' => 'pub-1',
+				'@self' => [
+					'files' => [
+						['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf', 'reachable' => false],
+						$mapper->asFileEntry(reference: ['url' => 'https://dms.example/ok.pdf', 'format' => 'pdf', 'reachable' => true, 'lastStatus' => 200]),
+						$mapper->asFileEntry(reference: ['url' => 'https://dms.example/new.pdf', 'format' => 'pdf']),
+						$mapper->asFileEntry(reference: ['url' => 'https://dms.example/gone.pdf', 'title' => 'Gone', 'format' => 'pdf', 'reachable' => false, 'lastStatus' => 404, 'lastCheckedAt' => '2026-11-13T03:00:00+00:00']),
+					],
+				],
+			],
+		];
+
+		$this->assertSame(
+			[['publication' => 'pub-1', 'title' => 'Gone', 'url' => 'https://dms.example/gone.pdf', 'lastStatus' => 404, 'lastCheckedAt' => '2026-11-13T03:00:00+00:00']],
+			SitemapService::unreachableReferences(publications: $publications)
+		);
+	}//end testTheUnreachableReferencesAreListed()
 
 	/**
 	 * lastmod and atTime are xs:dateTime values in UTC, the same in every server time zone.
@@ -1657,7 +1886,7 @@ class SitemapServiceTest extends TestCase {
 	 */
 	public function testAPublicationWithoutATitleIsReported(): void {
 		$file = ['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf'];
-		foreach (['missing' => null, 'blank' => '   ', 'not text' => ['nl' => 'Besluit']] as $name => $title) {
+		foreach (['missing' => null, 'blank' => '   ', 'not text' => 42, 'empty language map' => ['nl' => ' ']] as $name => $title) {
 			$publication = ['id' => 'p', 'category' => 'infocat014', '@self' => ['files' => [$file]]];
 			if ($title !== null) {
 				$publication['title'] = $title;
@@ -1669,6 +1898,10 @@ class SitemapServiceTest extends TestCase {
 
 		$titled = ['id' => 'p', 'title' => 'Besluit', 'category' => 'infocat014', '@self' => ['files' => [$file]]];
 		$this->assertNotContains('officieleTitel', array_column($this->service->collectDiwooViolations([$titled]), 'axis'));
+
+		// The title is translatable: OpenRegister may hand it over as a language map.
+		$translated = ['id' => 'p', 'title' => ['nl' => 'Besluit', 'en' => 'Decision'], 'category' => 'infocat014', '@self' => ['files' => [$file]]];
+		$this->assertNotContains('officieleTitel', array_column($this->service->collectDiwooViolations([$translated]), 'axis'));
 	}
 
 	/**

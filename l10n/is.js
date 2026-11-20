@@ -724,7 +724,26 @@ OC.L10N.register(
         "Open catalog": "Opna skrá",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Búðu til fyrstu skrána þína. Hún er ílátið sem útgáfurnar þínar verða í. Veldu skráninguna Publication og skemað Publication svo skráin birti útgáfurnar sem þú bætir við.",
         "Manage your publications and their status": "Stjórnaðu útgáfum þínum og stöðu þeirra",
-        "Open at the source": "Opna hjá upprunanum"
+        "Open at the source": "Opna hjá upprunanum",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: útgáfa OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister inniheldur vélina sem OpenCatalogi þarf.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi krefst OpenRegister %1$s eða nýrra. Í uppsettu OpenRegister vantar %2$s, svo OpenCatalogi sýnir tilkynningu í stað síðna sinna. Uppfærðu OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi getur ekki ræst",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi krefst OpenRegister %1$s eða nýrra. Biddu kerfisstjórann þinn að uppfæra OpenRegister.",
+        "Feed consumers": "Notendur straums",
+        "Contact": "Tengiliður",
+        "Generate key": "Búa til lykil",
+        "Revoke": "Afturkalla",
+        "Disable": "Óvirkja",
+        "Last used": "Síðast notað",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Þessi lykill er aðeins sýndur einu sinni. Afritaðu hann núna: ekki er hægt að sýna hann aftur.",
+        "No feed consumers yet.": "Engir notendur straums enn.",
+        "Accounts that read every catalogue's feed": "Aðgangar sem lesa straum hverrar skrár",
+        "Review publications before they are published": "Yfirfara útgáfur áður en þær eru birtar",
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Þegar kveikt er á þessu þarf að senda inn drög og samþykkja þau áður en hægt er að birta þau. Þegar slökkt er á þessu getur ritstjóri birt drög beint.",
+        "Delete publication": "Eyða útgáfu",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Viltu eyða \"{name}\"? Þessa aðgerð er ekki hægt að afturkalla.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Útgáfan og viðhengi hennar hverfa af opinberu síðunni og úr Woo-veftrénu. Geymsla í safni varðveitir þau hins vegar út varðveislutímann."
     },
     "nplurals=2; plural=(n != 1);"
 )

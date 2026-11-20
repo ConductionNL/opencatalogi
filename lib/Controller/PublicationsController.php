@@ -32,18 +32,23 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
+use OCA\OpenCatalogi\Contract\DatasetViewServiceInterface;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
+use OCA\OpenCatalogi\Contract\PublicDocumentsInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Http\DcatNegotiation;
+use OCA\OpenCatalogi\Service\Publication\SignedInReadService;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
 use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
@@ -111,6 +116,7 @@ class PublicationsController extends Controller {
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 * @param PublishedTableServiceInterface|null $tables The published tables listed on the publication answer (REQ-ODT-003); null lists none.
+	 * @param DatasetViewServiceInterface|null $views The views listed under each table on the publication answer (REQ-DSV-002); null lists none.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -129,6 +135,7 @@ class PublicationsController extends Controller {
 		private readonly CorsSettings $cors = new CorsSettings(),
 		private readonly ?AppliedFilters $appliedFilters = null,
 		private readonly ?PublishedTableServiceInterface $tables = null,
+		private readonly ?DatasetViewServiceInterface $views = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -298,6 +305,39 @@ class PublicationsController extends Controller {
 		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);
 
 	}//end addCorsHeaders()
+
+	/**
+	 * Hand the visitor's language (`_lang`, `language` or `Accept-Language`) to
+	 * OpenRegister before a public read (publication-translations REQ-PTR-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function negotiateLanguage(): void {
+		$this->queryService->applyVisitorLanguage(
+			queryParams: $this->request->getParams(),
+			acceptLanguage: (string)($this->request->server['HTTP_ACCEPT_LANGUAGE'] ?? '')
+		);
+
+	}//end negotiateLanguage()
+
+	/**
+	 * Add the language headers of the read: Content-Language, X-Source-Language
+	 * and, when a field fell back to Dutch, X-Content-Language-Fallback.
+	 *
+	 * @param JSONResponse $response The response to add headers to.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function addLanguageHeaders(JSONResponse $response): void {
+		foreach ($this->queryService->languageHeaders() as $name => $value) {
+			$response->addHeader($name, $value);
+		}
+
+	}//end addLanguageHeaders()
 
 	/**
 	 * Sanitise a public extend list to the '@self.'-prefix allowlist with a max breadth.
@@ -576,6 +616,7 @@ class PublicationsController extends Controller {
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(string $catalogSlug): JSONResponse {
 		try {
+			$this->negotiateLanguage();
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
 			if ($catalog === null) {
 				return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
@@ -690,8 +731,10 @@ class PublicationsController extends Controller {
 			queryParams: $this->publicListParams(),
 			objectService: $objectService
 		);
-		$result = $this->publicPage(
-			result: $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false)
+		$result = $this->withStates(
+			result: $this->publicPage(
+				result: $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false)
+			)
 		);
 
 		$result['@catalog'] = $this->catalogAbout(catalog: $catalog, catalogSlug: $catalogSlug);
@@ -702,6 +745,7 @@ class PublicationsController extends Controller {
 
 		$response = new JSONResponse($result, 200);
 		$this->addCorsHeaders(response: $response);
+		$this->addLanguageHeaders(response: $response);
 
 		return $this->cacheableForCaller(response: $response);
 	}//end catalogPublications()
@@ -783,6 +827,43 @@ class PublicationsController extends Controller {
 	}//end anonymousView()
 
 	/**
+	 * Add the one server-computed `state` to every row for a signed-in caller (REQ-PLC-002).
+	 *
+	 * The editor list shows draft, in review, approved, scheduled, public, withdrawn or
+	 * archived from this value and never computes it in the browser. An anonymous caller
+	 * only ever sees public rows, so its page is left exactly as it was.
+	 *
+	 * @param array<string, mixed> $result The page.
+	 *
+	 * @return array<string, mixed> The page, each row with its `state`.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-the-state-of-a-publication-is-one-value-the-server-computes-req-plc-002
+	 */
+	private function withStates(array $result): array {
+		if (is_array($result['results'] ?? null) === false || $this->queryService->isAnonymous() === true) {
+			return $result;
+		}
+
+		try {
+			$states = $this->container->get(PublicationStateServiceInterface::class);
+		} catch (\Throwable $e) {
+			return $result;
+		}
+
+		if (($states instanceof PublicationStateServiceInterface) === false) {
+			return $result;
+		}
+
+		foreach ($result['results'] as $index => $row) {
+			if (is_array($row) === true) {
+				$result['results'][$index]['state'] = $states->stateOf(publication: $row);
+			}
+		}
+
+		return $result;
+	}//end withStates()
+
+	/**
 	 * A page of publications as the caller may read it: without empty values, then under the published collections.
 	 *
 	 * @param array<string, mixed> $result The search result.
@@ -810,11 +891,15 @@ class PublicationsController extends Controller {
 	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the configuration cannot be read.
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::withoutUnlisted() is a pure filter.
 	 */
 	private function anonymousResults(array $result): array {
 		if (is_array($result['results'] ?? null) === false || $this->queryService->isAnonymous() === false) {
 			return $result;
 		}
+
+		// REQ-PLC-006: an anonymous list never carries an unlisted publication; its own link still opens it.
+		$result = UnlistedPublications::withoutUnlisted(page: $result);
 
 		$views = $this->container->get(PublishedRecordViewInterface::class)->viewList(records: array_values($result['results']));
 		if (is_numeric($result['total'] ?? null) === true) {
@@ -871,6 +956,7 @@ class PublicationsController extends Controller {
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string $catalogSlug, string $id): Response {
 		try {
+			$this->negotiateLanguage();
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
 			if ($catalog === null) {
 				return $this->catalogNotFound(catalogSlug: $catalogSlug);
@@ -1074,6 +1160,11 @@ class PublicationsController extends Controller {
 
 		$found = $this->findPublication(read: $read);
 		if ($found === null) {
+			$trusted = $this->signedInRead(read: $read);
+			if ($trusted !== null) {
+				return $trusted;
+			}
+
 			$this->logger->warning(
 				'[PublicationsController::show] Object not found in any register/schema',
 				['id' => $read->query->slug, 'catalogSlug' => $read->query->catalogSlug]
@@ -1083,6 +1174,47 @@ class PublicationsController extends Controller {
 
 		return $this->answerFound(read: $read, found: $found);
 	}//end showPublication()
+
+	/**
+	 * The trusted read of a publication for signed-in readers (REQ-PSR-003).
+	 *
+	 * Only on a miss, and only for a request that carries a feed consumer key
+	 * (`Authorization: Bearer oc_...`): {@see SignedInReadService::read()} checks
+	 * the key, its catalogue, `actForSignedInReaders` and the reader's level in
+	 * `X-Reader-Assurance`, reads the one object with RBAC off and audits the
+	 * read. The answer carries `Cache-Control: private, no-store`, so no shared
+	 * cache serves it to an anonymous reader. Any refusal returns null, and the
+	 * caller answers the same 404 as for a missing publication.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 *
+	 * @return JSONResponse|null The publication, or null.
+	 *
+	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-trusted-portal-reads-it-for-a-reader-at-the-required-level-req-psr-003
+	 */
+	private function signedInRead(PublicationRead $read): ?JSONResponse {
+		if (preg_match('/^Bearer\s+(oc_\S+)$/i', trim($this->request->getHeader('Authorization')), $match) !== 1) {
+			return null;
+		}
+
+		$catalogId = (string)($read->catalog['id'] ?? ($read->catalog['@self']['id'] ?? ''));
+		$object = $this->container->get(SignedInReadService::class)->read(
+			catalogId: $catalogId,
+			registers: $read->query->registers,
+			schemas: $read->query->schemas,
+			id: $read->query->slug,
+			key: $match[1],
+			level: $this->request->getHeader(SignedInReadService::ASSURANCE_HEADER)
+		);
+		if ($object === null) {
+			return null;
+		}
+
+		$response = $this->answerFound(read: $read, found: new FoundPublication(object: $object, publicationId: (string)$object->getUuid()));
+		$response->addHeader('Cache-Control', 'private, no-store');
+
+		return $response;
+	}//end signedInRead()
 
 	/**
 	 * Find a publication by UUID, then by slug, inside the catalogue scope.
@@ -1344,6 +1476,7 @@ class PublicationsController extends Controller {
 		}
 
 		$this->addCorsHeaders(response: $response);
+		$this->addLanguageHeaders(response: $response);
 
 		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 	}//end renderedPublication()
@@ -1374,11 +1507,39 @@ class PublicationsController extends Controller {
 		}
 
 		if ($tables !== []) {
-			$result['tables'] = $tables;
+			$result['tables'] = $this->withViews(tables: $tables, where: ['catalogSlug' => $catalogSlug, 'publicationId' => $publicationId]);
 		}
 
 		return $result;
 	}//end withTables()
+
+	/**
+	 * The tables, each with its views and their data URLs (REQ-DSV-002).
+	 *
+	 * A view list that cannot be read leaves the tables as they are.
+	 *
+	 * @param array<int, array<string, mixed>>                  $tables The tables.
+	 * @param array{catalogSlug: string, publicationId: string} $where  The catalogue and the publication.
+	 *
+	 * @return array<int, array<string, mixed>> The tables.
+	 *
+	 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-anyone-reads-a-view-s-data-while-the-publication-is-public-req-dsv-002
+	 */
+	private function withViews(array $tables, array $where): array {
+		if ($this->views === null) {
+			return $tables;
+		}
+
+		try {
+			return $this->views->withViews(tables: $tables, where: $where);
+		} catch (\Throwable $e) {
+			$this->logger->debug(
+				'[PublicationsController::show] Could not list the dataset views',
+				['id' => $where['publicationId'], 'error' => $e->getMessage()]
+			);
+			return $tables;
+		}
+	}//end withViews()
 
 	/**
 	 * The publication with the state of its comment period (REQ-PDP-003).
@@ -1469,7 +1630,7 @@ class PublicationsController extends Controller {
 				return $refusal;
 			}
 
-			return $this->cacheableForCaller(response: $this->publicationService->attachments(id: $id));
+			return $this->cacheableForCaller(response: $this->describedAttachments(catalogSlug: $catalogSlug, id: $id));
 		} catch (\Exception $e) {
 			return $this->fileReadFailed(
 				exception: $e,
@@ -1482,6 +1643,33 @@ class PublicationsController extends Controller {
 		}//end try
 
 	}//end attachments()
+
+	/**
+	 * The attachment list with each document's id, metadata and links (REQ-PDP-002).
+	 *
+	 * Without the documents service the list is answered as the publication service gives it.
+	 *
+	 * @param string $catalogSlug The catalogue the list is read through.
+	 * @param string $id The publication.
+	 *
+	 * @return JSONResponse The list.
+	 *
+	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 */
+	private function describedAttachments(string $catalogSlug, string $id): JSONResponse {
+		$response = $this->publicationService->attachments(id: $id);
+		try {
+			$documents = $this->container->get(PublicDocumentsInterface::class);
+		} catch (\Throwable) {
+			return $response;
+		}
+
+		if (($documents instanceof PublicDocumentsInterface) === false) {
+			return $response;
+		}
+
+		return $documents->describe(response: $response, catalogSlug: $catalogSlug, publicationId: $id);
+	}//end describedAttachments()
 
 	/**
 	 * The 404 answer when the catalogue or the publication of a file read does

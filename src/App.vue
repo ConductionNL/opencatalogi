@@ -5,6 +5,7 @@
 			:aiCompanion="true"
 			:manifest="manifest"
 			:customComponents="customComponents"
+			:formatters="formatters"
 			:pageTypes="pageTypes"
 			appId="opencatalogi"
 			:translate="translateForApp"
@@ -39,6 +40,7 @@ import StagingBanner from './components/StagingBanner.vue'
 import Dialogs from './dialogs/Dialogs.vue'
 import Modals from './modals/Modals.vue'
 import CatalogNavigation from './navigation/CatalogNavigation.vue'
+import { PUBLICATION_FORMATTERS } from './services/publicationState.js'
 import { objectStore } from './store/store.js'
 
 /**
@@ -89,6 +91,8 @@ export default {
 
 	data() {
 		return {
+			/** App cell formatters for manifest columns, such as the publication state (REQ-PLC-002). */
+			formatters: PUBLICATION_FORMATTERS,
 			objectSidebarState: reactive({
 				active: false,
 				open: true,

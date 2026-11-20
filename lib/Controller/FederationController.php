@@ -31,8 +31,10 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicDocumentsInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -53,6 +55,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/federation/spec.md
  */
 class FederationController extends Controller {
+	use AnswersInTheVisitorsLanguage;
 	use AnswersCrossOriginSearchRequests;
 
 	/**
@@ -70,6 +73,20 @@ class FederationController extends Controller {
 	private readonly ?AppliedFilters $appliedFilters;
 
 	/**
+	 * Adds each document's id, metadata and links to a local attachment list (REQ-PDP-002); null leaves the list as is.
+	 *
+	 * @var PublicDocumentsInterface|null
+	 */
+	private readonly ?PublicDocumentsInterface $documents;
+
+	/**
+	 * Negotiates the visitor's language (REQ-PTR-002); null leaves the response untranslated.
+	 *
+	 * @var PublicationQueryServiceInterface|null
+	 */
+	private readonly ?PublicationQueryServiceInterface $queryService;
+
+	/**
 	 * FederationController constructor.
 	 *
 	 * @param IRequest $request The request object.
@@ -79,7 +96,8 @@ class FederationController extends Controller {
 	 * @param LocalPublicationStateInterface|null $localState Adds the withheld list (REQ-WDW-003) and the comment period state (REQ-PDP-003).
 	 * @param ContainerInterface|null $container DI container for the optional collaborators: the app config
 	 *                                           holding the CORS allowlist (without it every origin is allowed)
-	 *                                           and the request's collector of applied filters (REQ-ASF-001).
+	 *                                           and the request's collector of applied filters (REQ-ASF-001),
+	 *                                           and the query service negotiating the visitor's language (REQ-PTR-002).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -102,6 +120,15 @@ class FederationController extends Controller {
 
 		$this->appConfig = $appConfig;
 		$this->appliedFilters = $appliedFilters;
+		$documents = self::optional(container: $container, class: PublicDocumentsInterface::class);
+		if ($documents instanceof PublicDocumentsInterface === false) {
+			$documents = null;
+		}
+
+		$this->documents = $documents;
+
+		$queryService = self::optional(container: $container, class: PublicationQueryServiceInterface::class);
+		$this->queryService = $queryService instanceof PublicationQueryServiceInterface ? $queryService : null;
 
 	}//end __construct()
 
@@ -140,9 +167,12 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publications(): JSONResponse {
+		$this->negotiateVisitorLanguage(queryService: $this->queryService);
+
 		// Get all current query parameters.
 		$queryParams = $this->request->getParams();
 		$baseUrl = $this->paginationBaseUrl();
@@ -156,7 +186,10 @@ class FederationController extends Controller {
 			);
 			$responseData['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
 
-			return $this->withSearchCorsHeaders(response: new JSONResponse($responseData));
+			return $this->withVisitorLanguageHeaders(
+				response: $this->withSearchCorsHeaders(response: new JSONResponse($responseData)),
+				queryService: $this->queryService
+			);
 		} catch (\Exception $e) {
 			return $this->withSearchCorsHeaders(response: $this->publicationsFailed(exception: $e));
 		}
@@ -216,9 +249,12 @@ class FederationController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publication(string $id): JSONResponse {
+		$this->negotiateVisitorLanguage(queryService: $this->queryService);
+
 		try {
 			// Use the service method to get the publication with federation support.
 			$result = $this->publicationService->getFederatedPublication($id, $this->request->getParams());
@@ -234,7 +270,10 @@ class FederationController extends Controller {
 				$result['data'] = $this->localState->addTo(publication: $result['data']);
 			}
 
-			return $this->withSearchCorsHeaders(response: new JSONResponse($result['data'], $result['status']));
+			return $this->withVisitorLanguageHeaders(
+				response: $this->withSearchCorsHeaders(response: new JSONResponse($result['data'], $result['status'])),
+				queryService: $this->queryService
+			);
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publication] Failed to retrieve publication',
@@ -354,12 +393,16 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationAttachments(string $id): JSONResponse {
-		return $this->withSearchCorsHeaders(
-			response: $this->publicationService->getFederatedAttachments(id: $id, queryParams: $this->request->getParams())
-		);
+		$response = $this->publicationService->getFederatedAttachments(id: $id, queryParams: $this->request->getParams());
+		if ($this->documents !== null) {
+			$response = $this->documents->describe(response: $response, catalogSlug: null, publicationId: $id);
+		}
+
+		return $this->withSearchCorsHeaders(response: $response);
 	}//end publicationAttachments()
 
 	// Lower than the sibling reads: a download moves file bytes, so the cost of

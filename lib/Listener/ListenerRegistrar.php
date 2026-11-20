@@ -22,11 +22,13 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
+use OCA\OpenRegister\Event\CustomScopeEvaluatingEvent;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectDeletedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
+use OCA\OpenRegister\Event\PermissionsDeclaringEvent;
 use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
@@ -123,10 +125,17 @@ class ListenerRegistrar {
 			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
 		}
 
-		// A statutory end date written through any API lands on a working day
-		// (inspection-period-rolls-on-the-calendar, REQ-IPR-002).
-		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
-		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
+		// Capability rights (woo-access-boundary-hardening REQ-WAB-004): declare the
+		// eight verbs to OpenRegister and decide them from the catalog schema's grants.
+		$context->registerEventListener(PermissionsDeclaringEvent::class, CapabilityDeclarationListener::class);
+		$context->registerEventListener(CustomScopeEvaluatingEvent::class, CapabilityScopeListener::class);
+
+		$this->registerWriteGuards(context: $context);
+
+		// Document references (integration-publish-by-reference): refuse a URL
+		// that is not a public https address before OpenRegister stores it.
+		$context->registerEventListener(ObjectCreatingEvent::class, DocumentReferenceListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, DocumentReferenceListener::class);
 
 		// A Woo publication does not go public without its mandatory DiWoo metadata,
 		// and a document type is stored as its list member's URI (REQ-DWP-002, REQ-DWP-003).
@@ -137,6 +146,11 @@ class ListenerRegistrar {
 		// provenance is the server's to write (publication-plain-language-and-translation, REQ-PPL-001).
 		$context->registerEventListener(ObjectCreatingEvent::class, PlainSummaryCheck::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PlainSummaryCheck::class);
+
+		// A Woo publication is public by law: it cannot be limited to signed-in
+		// readers (publications-for-signed-in-readers, REQ-PSR-004).
+		$context->registerEventListener(ObjectCreatingEvent::class, PublicationAudienceCheck::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationAudienceCheck::class);
 
 		// A Woo batch whose review task is rejected in OpenRegister goes back to its
 		// author with the task's comment (woo-review-surface, REQ-WRV-002).
@@ -183,4 +197,25 @@ class ListenerRegistrar {
 		);
 
 	}//end register()
+
+	/**
+	 * The listeners that check an object before OpenRegister writes it.
+	 *
+	 * A statutory end date written through any API lands on a working day
+	 * (inspection-period-rolls-on-the-calendar, REQ-IPR-002). Once every stored
+	 * Woo request moved to dossiq, the request schema is read-only here except
+	 * for dossiq's stamp (woo-request-intake-hands-over-to-dossiq, REQ-WHD-004).
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-with-nothing-left-to-migrate-the-request-schema-is-read-only-req-whd-004
+	 */
+	private function registerWriteGuards(IRegistrationContext $context): void {
+		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
+		$context->registerEventListener(ObjectCreatingEvent::class, HandedOverRecordsListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, HandedOverRecordsListener::class);
+	}//end registerWriteGuards()
 }//end class

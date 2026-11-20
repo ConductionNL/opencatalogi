@@ -134,7 +134,8 @@ class PubliccodeMappingTest extends TestCase {
 	 * @return string
 	 */
 	private function ownPubliccode(): string {
-		return (string)file_get_contents(__DIR__ . '/../../../publiccode.yml');
+		// A frozen copy of this app's publiccode.yml (0.7.34), so updating the real file does not move the fixture.
+		return (string)file_get_contents(__DIR__ . '/../../Fixtures/publiccode/opencatalogi-0.7.34.yml');
 	}//end ownPubliccode()
 
 	/**

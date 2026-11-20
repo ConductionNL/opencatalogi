@@ -28,11 +28,16 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Http\XMLResponse;
+use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+use RuntimeException;
 
 /**
  * Service for generating DIWOO-compliant sitemaps.
@@ -44,6 +49,8 @@ use Psr\Container\NotFoundExceptionInterface;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  *
  * @spec openspec/specs/woo-compliance/spec.md
+ *
+ * @SuppressWarnings(PHPMD.TooManyMethods) The sitemap, its validator and the register side of the reconciliation share one request resolution.
  */
 class SitemapService implements SitemapServiceInterface {
 
@@ -82,6 +89,27 @@ class SitemapService implements SitemapServiceInterface {
 	 */
 	private const CONFIG_MAX_PER_PAGE = 'sitemap_max_per_page';
 
+	/**
+	 * The reason a document the shipped DiWoo XSD refuses is reported with (REQ-WNO-002).
+	 *
+	 * @var string
+	 */
+	public const XSD_INVALID = 'xsd-invalid';
+
+	/**
+	 * Validates each rendered document against the shipped DiWoo XSD.
+	 *
+	 * @var DiwooXsdValidator
+	 */
+	private readonly DiwooXsdValidator $xsdValidator;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private readonly LoggerInterface $logger;
+
 
 	/**
 	 * Constructor for SitemapService.
@@ -92,6 +120,9 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param SitemapDocumentMapper $documentMapper Maps a file of a publication to its DiWoo document
 	 * @param PublicationQueryService $queryService The SCH-PFTS-CAT-002 read-rule guard
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local
+	 * @param DiwooXsdValidator|null $xsdValidator Validates each rendered document against the shipped XSD (REQ-WNO-002)
+	 * @param LoggerInterface|null $logger Logs a document held back for its XSD errors
+	 * @param PipelineIncidents|null $incidents Tells the incident group about a refused sitemap or document (REQ-WNO-004)
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookup $openRegister,
@@ -100,7 +131,12 @@ class SitemapService implements SitemapServiceInterface {
 		private readonly SitemapDocumentMapper $documentMapper,
 		private readonly PublicationQueryService $queryService,
 		private readonly WooCategoryRegistry $categories,
+		?DiwooXsdValidator $xsdValidator = null,
+		?LoggerInterface $logger = null,
+		private readonly ?PipelineIncidents $incidents = null,
 	) {
+		$this->xsdValidator = ($xsdValidator ?? new DiwooXsdValidator());
+		$this->logger = ($logger ?? new NullLogger());
 	}//end __construct()
 
 	/**
@@ -172,6 +208,7 @@ class SitemapService implements SitemapServiceInterface {
 		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
 		$error = $this->resolveSitemapRequest(request: $request, objectService: $objectService);
 		if ($error !== null) {
+			$this->raiseWhenRefused(request: $request, error: $error);
 			return $error;
 		}
 
@@ -217,6 +254,7 @@ class SitemapService implements SitemapServiceInterface {
 		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
 		$error = $this->resolveSitemapRequest(request: $request, objectService: $objectService);
 		if ($error !== null) {
+			$this->raiseWhenRefused(request: $request, error: $error);
 			return $error;
 		}
 
@@ -231,7 +269,7 @@ class SitemapService implements SitemapServiceInterface {
 			foreach (SitemapDocumentRelations::forPublication(publication: $publication, apiBase: $apiBase) as [$file, $relations]) {
 				// A document the Woo-index would refuse is held back; validateDiwooOutput() reports it (REQ-DWP-004).
 				$document = $this->documentMapper->mapComplete(publication: $publication, file: $file, relations: $relations);
-				if ($document !== null) {
+				if ($document !== null && $this->passesXsd(entry: $document) === true) {
 					$documents[] = $document;
 				}
 			}
@@ -239,6 +277,118 @@ class SitemapService implements SitemapServiceInterface {
 
 		return new XMLResponse(data: self::documentsXml(documents: $documents));
 	}//end buildSitemap()
+
+	/**
+	 * The location of every public document of a category, read the way the sitemap
+	 * reads it but before any document is held back (REQ-WNO-003).
+	 *
+	 * The searches are the sitemap's own, with RBAC on, so from a background job they
+	 * are the anonymous public read. Every page is read until the searches run dry.
+	 * A document the sitemap holds back for a missing field or for its XSD errors is
+	 * still listed here; that difference is what the reconciliation reports.
+	 *
+	 * @param string $catalogSlug The catalog slug.
+	 * @param string $categoryCode The sitemap file of the category.
+	 *
+	 * @return array{publications: int, locations: list<string>} The public publications counted and their document locations.
+	 *
+	 * @throws \RuntimeException When the catalogue or the category cannot be read.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SitemapDocumentRelations is a pure static helper.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 */
+	public function publicDocumentLocations(string $catalogSlug, string $categoryCode): array {
+		$objectService = $this->getObjectService();
+		if ($objectService === null) {
+			throw new RuntimeException('OpenRegister is not available');
+		}
+
+		$request = new SitemapRequest(catalogSlug: $catalogSlug, categoryCode: $categoryCode);
+		$error = $this->resolveSitemapRequest(request: $request, objectService: $objectService);
+		if ($error !== null) {
+			throw new RuntimeException('the category cannot be read: HTTP ' . $error->getStatus());
+		}
+
+		$builder = new SitemapIndexBuilder(objectService: $objectService, perPage: $this->getMaxPerPage());
+		$queries = $this->sitemapQueries(request: $request);
+		$apiBase = $this->instance->baseUrl() . '/apps/opencatalogi/api/' . rawurlencode($catalogSlug);
+		$count = 0;
+		$locations = [];
+		for ($page = 1; $queries !== []; $page++) {
+			$batch = $builder->page(queries: $queries, page: $page);
+			if ($batch['results'] === []) {
+				break;
+			}
+
+			foreach ($this->publicationsWithFiles(rows: $batch['results']) as $publication) {
+				$count++;
+				foreach (SitemapDocumentRelations::forPublication(publication: $publication, apiBase: $apiBase) as [$file]) {
+					$locations[] = (string)($file['downloadUrl'] ?? '');
+				}
+			}
+
+			$queries = $batch['continuing'];
+		}
+
+		$locations = array_filter($locations, static fn (string $loc): bool => $loc !== '');
+
+		return ['publications' => $count, 'locations' => array_values(array_unique($locations))];
+	}//end publicDocumentLocations()
+
+	/**
+	 * Whether a url entry's DiWoo document validates against the shipped XSD; a document
+	 * that does not is logged with the XSD errors and left out of the page (REQ-WNO-002).
+	 *
+	 * @param array<string, mixed> $entry The url entry.
+	 *
+	 * @return bool True when the document is valid.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 */
+	private function passesXsd(array $entry): bool {
+		$errors = $this->xsdValidator->entryErrors(entry: $entry);
+		if ($errors === []) {
+			return true;
+		}
+
+		$loc = (string)($entry['loc'] ?? '');
+		$this->logger->warning(
+			'DiWoo document left out of the sitemap: it does not validate against the DiWoo XSD',
+			['documentLoc' => $loc, 'errors' => $errors]
+		);
+		$message = 'Left out of the sitemap, invalid against the DiWoo XSD: ' . implode('; ', $errors);
+		$this->incidents?->raise(kind: self::XSD_INVALID, subject: $loc, message: $message);
+
+		return false;
+	}//end passesXsd()
+
+	/**
+	 * Raise a pipeline incident for a sitemap this instance cannot serve (REQ-WNO-004).
+	 *
+	 * A name nothing is served at (an unknown catalogue or category) is a reader's
+	 * mistake and raises nothing. A server error, or a category a Woo catalogue
+	 * names but cannot list, is the pipeline's.
+	 *
+	 * @param SitemapRequest $request The request, as far as it resolved.
+	 * @param XMLResponse    $error   The refusal.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 */
+	private function raiseWhenRefused(SitemapRequest $request, XMLResponse $error): void {
+		if ($error->getStatus() < 500 && empty($request->catalog) === true) {
+			return;
+		}
+
+		$body = $error->render();
+		$this->incidents?->raise(
+			kind: 'sitemap-refused',
+			subject: $request->catalogSlug . '/' . $request->categoryCode,
+			message: 'The sitemap answered HTTP ' . $error->getStatus() . ': ' . trim(strip_tags($body))
+		);
+	}//end raiseWhenRefused()
 
 	/**
 	 * The sitemap `urlset` around the mapped `url` entries.
@@ -629,8 +779,9 @@ class SitemapService implements SitemapServiceInterface {
 	/**
 	 * Dry-run the DIWOO mapping for a catalog and collect per-document violations.
 	 *
-	 * Runs the same {@see mapDiwooDocument()} path used to serve the sitemap, but
-	 * discards the XML and returns only the unresolved-axis report. Advisory: it
+	 * Runs the same {@see mapDiwooDocument()} path used to serve the sitemap, but discards the XML and returns only the unresolved-axis report, and
+	 * each complete document the shipped XSD refuses with reason `xsd-invalid` and the
+	 * XSD message (REQ-WNO-002). Advisory: it
 	 * never prevents the sitemap from being served (WOO-TOOI-004).
 	 *
 	 * @param array<int, array<string, mixed>> $publications The catalog's publications (with `@self.files`).
@@ -644,7 +795,22 @@ class SitemapService implements SitemapServiceInterface {
 	public function collectDiwooViolations(array $publications): array {
 		$violations = [];
 		foreach (self::downloadableFiles(publications: $publications) as [$publication, $file]) {
-			$this->mapDiwooDocument(publication: $publication, file: $file, violations: $violations);
+			// A complete document is also checked against the shipped XSD; an incomplete
+			// one is held back already and reported by its gaps (REQ-WNO-002).
+			$entry = $this->mapDiwooDocument(publication: $publication, file: $file, violations: $violations);
+			if ($this->documentMapper->mapComplete(publication: $publication, file: $file) === null) {
+				continue;
+			}
+
+			$errors = $this->xsdValidator->entryErrors(entry: $entry);
+			if ($errors !== []) {
+				$violations[] = [
+					'documentLoc' => (string)$entry['loc'],
+					'axis' => 'document',
+					'reason' => self::XSD_INVALID,
+					'message' => implode('; ', $errors),
+				];
+			}
 		}
 
 		foreach ($publications as $publication) {
@@ -669,7 +835,8 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param string $categoryCode The DIWOO category code (e.g. `infocat014`).
 	 * @param integer $page The 1-based page number.
 	 *
-	 * @return array{catalogSlug: string, categoryCode: string, valid: bool, violations: array<int, array<string, string>>, error?: string}
+	 * @return array<string, mixed> The report: catalogSlug, categoryCode, valid, violations, and
+	 *                              unreachableReferences when there are any (or error).
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
@@ -688,10 +855,48 @@ class SitemapService implements SitemapServiceInterface {
 		$scope = ['register' => $request->registerId, 'schema' => $request->schemaId];
 		$query = ['@self' => $scope, '_limit' => $this->getMaxPerPage(), '_page' => max(1, $page)];
 		$publicationResult = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
-		$violations = $this->collectDiwooViolations(publications: $this->publicationsWithFiles(rows: ($publicationResult['results'] ?? [])));
+		$publications = $this->publicationsWithFiles(rows: ($publicationResult['results'] ?? []));
+		$violations = $this->collectDiwooViolations(publications: $publications);
 
-		return ['catalogSlug' => $catalogSlug, 'categoryCode' => $categoryCode, 'valid' => ($violations === []), 'violations' => $violations];
+		$report = ['catalogSlug' => $catalogSlug, 'categoryCode' => $categoryCode, 'valid' => ($violations === []), 'violations' => $violations];
+		$unreachable = self::unreachableReferences(publications: $publications);
+		if ($unreachable !== []) {
+			$report['unreachableReferences'] = $unreachable;
+		}
+
+		return $report;
 	}//end validateDiwooOutput()
+
+	/**
+	 * The document references whose last check found no answer, per publication (REQ-PBR-003).
+	 *
+	 * Advisory, like the violations: an unreachable reference stays in the
+	 * sitemap, because the harvester decides what to do with it.
+	 *
+	 * @param array<int, array<string, mixed>> $publications The publications, with their files and references under `@self.files`.
+	 *
+	 * @return list<array{publication: string, title: string, url: string, lastStatus: int, lastCheckedAt: string}>
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-broken-references-are-shown-before-readers-find-them-req-pbr-003
+	 */
+	public static function unreachableReferences(array $publications): array {
+		$unreachable = [];
+		foreach (self::downloadableFiles(publications: $publications) as [$publication, $file]) {
+			if (($file['kind'] ?? null) !== DocumentReferenceMapper::KIND || ($file['reachable'] ?? null) !== false) {
+				continue;
+			}
+
+			$unreachable[] = [
+				'publication' => (string)($publication['id'] ?? ''),
+				'title' => (string)($file['title'] ?? ''),
+				'url' => (string)($file['downloadUrl'] ?? ''),
+				'lastStatus' => (int)($file['lastStatus'] ?? 0),
+				'lastCheckedAt' => (string)($file['lastCheckedAt'] ?? ''),
+			];
+		}
+
+		return $unreachable;
+	}//end unreachableReferences()
 
 	/**
 	 * The publications as arrays, each with its files under `@self.files`.
@@ -703,6 +908,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @return array<int, array<string, mixed>>
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) UnlistedPublications::isUnlisted() is a pure predicate.
 	 */
 	private function publicationsWithFiles(iterable $rows): array {
 		$fileService = $this->getFileService();
@@ -712,12 +918,46 @@ class SitemapService implements SitemapServiceInterface {
 				$publication = $publication->jsonSerialize();
 			}
 
-			$publication['@self']['files'] = ($fileService->formatFiles($fileService->getFiles(object: $publication['id']))['results'] ?? []);
+			// REQ-PLC-006: an unlisted publication is left out of the DiWoo sitemaps.
+			if (UnlistedPublications::isUnlisted(row: $publication) === true) {
+				continue;
+			}
+
+			$files = ($fileService->formatFiles($fileService->getFiles(object: $publication['id']))['results'] ?? []);
+			$publication['@self']['files'] = $this->withReferences(files: $files, publicationId: (string)$publication['id']);
 			$publications[] = $publication;
 		}
 
 		return $publications;
 	}//end publicationsWithFiles()
+
+	/**
+	 * A publication's files with its public document references after them (REQ-PBR-002).
+	 *
+	 * The references are resolved through the OpenRegister lookup, because they
+	 * live in OpenRegister; without it, or when they cannot be resolved, the
+	 * files are returned as they are.
+	 *
+	 * @param array<int, array<string, mixed>> $files The publication's file entries.
+	 * @param string $publicationId The publication's id.
+	 *
+	 * @return array<int, array<string, mixed>> The files, then the references.
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-a-reference-is-published-like-a-file-pointing-at-its-source-req-pbr-002
+	 */
+	private function withReferences(array $files, string $publicationId): array {
+		try {
+			$references = $this->openRegister->installedService(DocumentReferences::class, 'OpenRegister is not available.');
+		} catch (\Throwable $e) {
+			return $files;
+		}
+
+		if ($references instanceof DocumentReferences === false) {
+			return $files;
+		}
+
+		return $references->appendTo(files: $files, publicationId: $publicationId);
+	}//end withReferences()
 
 	/**
 	 * Build a DIWOO validator error report.

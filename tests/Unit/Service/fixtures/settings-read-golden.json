@@ -45,6 +45,7 @@
                 "auto_publish_attachments": "false",
                 "auto_publish_objects": "false",
                 "use_old_style_publishing_view": "false",
+                "publication_review_required": "true",
                 "dcat_instance_title": "OpenCatalogi",
                 "dcat_publisher_name": "",
                 "dcat_publisher_uri": "",
@@ -57,8 +58,9 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "60",
+                "publication_languages": "[\"nl\",\"en\"]",
                 "publication_url_template": "",
-                "publication_url_catalog": "publication",
+                "publication_url_catalog": "publications",
                 "cors_allowed_origins": "*",
                 "search_indexing": "allowed"
             }
@@ -118,6 +120,7 @@
                 "auto_publish_attachments": "false",
                 "auto_publish_objects": "false",
                 "use_old_style_publishing_view": "false",
+                "publication_review_required": "true",
                 "dcat_instance_title": "OpenCatalogi",
                 "dcat_publisher_name": "",
                 "dcat_publisher_uri": "",
@@ -130,8 +133,9 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "60",
+                "publication_languages": "[\"nl\",\"en\"]",
                 "publication_url_template": "",
-                "publication_url_catalog": "publication",
+                "publication_url_catalog": "publications",
                 "cors_allowed_origins": "*",
                 "search_indexing": "allowed"
             }
@@ -193,6 +197,7 @@
                 "auto_publish_attachments": "false",
                 "auto_publish_objects": "false",
                 "use_old_style_publishing_view": "false",
+                "publication_review_required": "true",
                 "dcat_instance_title": "Mijn catalogus",
                 "dcat_publisher_name": "",
                 "dcat_publisher_uri": "",
@@ -205,8 +210,9 @@
                 "woo_index_registration_answer": "",
                 "channel_sources": "{}",
                 "public_api_cache_seconds": "0",
+                "publication_languages": "[\"nl\",\"en\"]",
                 "publication_url_template": "",
-                "publication_url_catalog": "publication",
+                "publication_url_catalog": "publications",
                 "cors_allowed_origins": "*",
                 "search_indexing": "allowed"
             }
@@ -419,7 +425,8 @@
         "answer": {
             "auto_publish_attachments": false,
             "auto_publish_objects": false,
-            "use_old_style_publishing_view": false
+            "use_old_style_publishing_view": false,
+            "publication_review_required": true
         },
         "enabled": [],
         "written": []
@@ -428,7 +435,8 @@
         "answer": {
             "auto_publish_attachments": false,
             "auto_publish_objects": true,
-            "use_old_style_publishing_view": true
+            "use_old_style_publishing_view": true,
+            "publication_review_required": true
         },
         "enabled": [],
         "written": []

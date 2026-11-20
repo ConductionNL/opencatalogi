@@ -1473,4 +1473,70 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 		}
 	}//end testAFailingObjectIsReportedAndTheNextOneStillRuns()
 
+	/**
+	 * REQ-PLC-003: auto-publishing a publication runs its publish transition with the date, and saves nothing itself.
+	 *
+	 * @return void
+	 */
+	public function testPublishObjectRunsTheTransition(): void {
+		$objectData = ['title' => 'Besluit', 'status' => 'approved', '@self' => ['id' => 'pub-1', 'register' => '10', 'schema' => '20']];
+		$this->appManagerMock->method('getInstalledApps')->willReturn(['openregister']);
+		$this->settingsServiceMock->method('getSettings')->willReturn(['configuration' => ['publication_schema' => '20']]);
+
+		$objects = $this->createMock(ObjectService::class);
+		$objects->expects($this->never())->method('saveObject');
+		$publisher = $this->createMock(\OCA\OpenCatalogi\Service\Publication\PublishTransition::class);
+		$publisher->expects($this->once())->method('publish')
+			->with('pub-1', 'approved', $this->callback(static fn (string $date): bool => \DateTimeImmutable::createFromFormat(\DateTimeInterface::ATOM, $date) !== false))
+			->willReturn(new \stdClass());
+		$this->containerMock->method('get')->willReturnCallback(
+			static fn (string $id): object => $id === \OCA\OpenCatalogi\Service\Publication\PublishTransition::class ? $publisher : $objects
+		);
+
+		$result = $this->invokePrivateMethod($this->eventService, 'publishObject', [$objectData]);
+
+		$this->assertTrue($result['success']);
+		$this->assertSame('pub-1', $result['objectId']);
+	}//end testPublishObjectRunsTheTransition()
+
+	/**
+	 * REQ-PLC-003: a refused publish transition is reported as a failed publish and writes no date.
+	 *
+	 * @return void
+	 */
+	public function testARefusedPublishTransitionIsReported(): void {
+		$objectData = ['status' => 'draft', '@self' => ['id' => 'pub-2', 'register' => '10', 'schema' => '20']];
+		$this->appManagerMock->method('getInstalledApps')->willReturn(['openregister']);
+		$this->settingsServiceMock->method('getSettings')->willReturn(['configuration' => ['publication_schema' => '20']]);
+
+		$objects = $this->createMock(ObjectService::class);
+		$objects->expects($this->never())->method('saveObject');
+		$publisher = $this->createMock(\OCA\OpenCatalogi\Service\Publication\PublishTransition::class);
+		$publisher->method('publish')->willThrowException(new \OCA\OpenCatalogi\Service\Publication\PublishRefusedException(state: 'draft'));
+		$this->containerMock->method('get')->willReturnCallback(
+			static fn (string $id): object => $id === \OCA\OpenCatalogi\Service\Publication\PublishTransition::class ? $publisher : $objects
+		);
+
+		$result = $this->invokePrivateMethod($this->eventService, 'publishObject', [$objectData]);
+
+		$this->assertFalse($result['success']);
+		$this->assertSame('The transition publish is not allowed from the state draft.', $result['error']);
+	}//end testARefusedPublishTransitionIsReported()
+
+	/**
+	 * Auto-publishing an object of another schema still saves its publication date directly.
+	 *
+	 * @return void
+	 */
+	public function testAnotherSchemaIsStillSaved(): void {
+		$objectData = ['title' => 'Dienst', '@self' => ['id' => 'obj-3', 'register' => '10', 'schema' => '30']];
+		$this->appManagerMock->method('getInstalledApps')->willReturn(['openregister']);
+		$this->settingsServiceMock->method('getSettings')->willReturn(['configuration' => ['publication_schema' => '20']]);
+
+		$objects = $this->createMock(ObjectService::class);
+		$objects->expects($this->once())->method('saveObject');
+		$this->containerMock->method('get')->willReturn($objects);
+
+		$this->assertTrue($this->invokePrivateMethod($this->eventService, 'publishObject', [$objectData])['success']);
+	}//end testAnotherSchemaIsStillSaved()
 }//end class

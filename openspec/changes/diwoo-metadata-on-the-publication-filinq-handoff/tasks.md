@@ -4,7 +4,7 @@ Read `openspec/woo-build-rules.md` before the first command. Start once `diwoo-m
 
 ## 1. Cross-app contract with filinq (decision D8)
 
-- [ ] 1.1 On this side, save the exact payload filinq's `OCA\FilinQ\Service\Publication\OpenCatalogiPublicationMap::toPublication()` will produce after its paired change (`title`, `publicationDate`, `documentsoort` as label or URI, no `summary`) (REQ-DWP-006). Verify: `DiwooCompletenessListenerTest::testTheFilinqHandoffPayloadIsAccepted` and `::testAFilinqHandoffWithAnUnknownTypeIsRefused`.
+- [x] 1.1 On this side, save the exact payload filinq's `OCA\FilinQ\Service\Publication\OpenCatalogiPublicationMap::toPublication()` will produce after its paired change (`title`, `publicationDate`, `documentsoort` as label or URI, no `summary`) (REQ-DWP-006). Verify: `DiwooCompletenessListenerTest::testTheFilinqHandoffPayloadIsAccepted` and `::testAFilinqHandoffWithAnUnknownTypeIsRefused`.
 - [ ] 1.2 Open an issue on `ConductionNL/filinq` (or comment on the filinq lane's change) stating the contract of REQ-DWP-006 and that filinq needs its own test that `toPublication()` writes `documentsoort` and never `summary`. Link it in the PR body. With filinq absent nothing in this change depends on it. Verify: the issue link in the PR body.
 
 ## 2. Verification
