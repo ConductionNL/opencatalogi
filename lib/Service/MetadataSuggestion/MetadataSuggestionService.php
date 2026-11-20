@@ -40,6 +40,8 @@ use OCA\OpenCatalogi\Service\TooiVocabularyService;
  *
  * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
  * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) One rule per Woo field, each a short method; splitting them would scatter the rule set.
  */
 class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 

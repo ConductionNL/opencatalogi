@@ -72,6 +72,7 @@ class MetadataSuggestionController extends Controller {
 	 * @return JSONResponse `{suggestions, hermiq, canDecide}`, 401 without a session, 404 when the caller cannot read it.
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) answer() hands every step the user id; the overview does not need it.
 	 */
 	#[NoAdminRequired]
 	public function index(string $id): JSONResponse {

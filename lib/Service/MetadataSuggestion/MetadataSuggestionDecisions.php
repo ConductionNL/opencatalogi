@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\MetadataSuggestion;
 
+use DateTimeZone;
 use OCA\OpenCatalogi\Contract\MetadataSuggestionDecisionsInterface;
 use OCA\OpenCatalogi\Exception\MetadataSuggestionRefusedException;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
@@ -46,6 +47,9 @@ use Throwable;
  * before the suggestion is marked, so a refused write leaves both unchanged.
  *
  * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A decision reads the publication, checks the rights
+ *   and writes the record and the field through OpenRegister value objects, in one place.
  */
 class MetadataSuggestionDecisions implements MetadataSuggestionDecisionsInterface {
 	use ReadsObjectProperties;
@@ -356,6 +360,6 @@ class MetadataSuggestionDecisions implements MetadataSuggestionDecisionsInterfac
 	 * @return string The date-time.
 	 */
 	private function now(): string {
-		return $this->time->now()->setTimezone(new \DateTimeZone('UTC'))->format('c');
+		return $this->time->now()->setTimezone(new DateTimeZone('UTC'))->format('c');
 	}//end now()
 }//end class

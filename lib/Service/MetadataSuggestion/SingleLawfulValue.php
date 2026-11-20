@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\MetadataSuggestion;
 
+use DateTimeZone;
 use OCA\OpenCatalogi\Contract\SingleLawfulValueInterface;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
@@ -138,7 +139,7 @@ class SingleLawfulValue implements SingleLawfulValueInterface {
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-a-field-with-one-lawful-value-for-this-officer-fills-itself-req-wms-004
 	 */
 	private function withFills(array $publication, array $sets): array {
-		$at = $this->time->now()->setTimezone(new \DateTimeZone('UTC'))->format('c');
+		$filledAt = $this->time->now()->setTimezone(new DateTimeZone('UTC'))->format('c');
 		foreach ($sets as $field => [$values, $rule]) {
 			if ($values === null || count($values) !== 1) {
 				continue;
@@ -147,7 +148,7 @@ class SingleLawfulValue implements SingleLawfulValueInterface {
 			$publication[$field] = $values[0];
 			$publication['filledByRule'] = array_merge(
 				(array)($publication['filledByRule'] ?? []),
-				[['field' => $field, 'value' => $values[0], 'rule' => $rule, 'at' => $at]]
+				[['field' => $field, 'value' => $values[0], 'rule' => $rule, 'at' => $filledAt]]
 			);
 		}
 
