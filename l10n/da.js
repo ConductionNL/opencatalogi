@@ -738,7 +738,10 @@ OC.L10N.register(
         "Last used": "Sidst brugt",
         "This key is shown once. Copy it now: it cannot be shown again.": "Denne nøgle vises kun én gang. Kopiér den nu: den kan ikke vises igen.",
         "No feed consumers yet.": "Ingen feedmodtagere endnu.",
-        "Accounts that read every catalogue's feed": "Konti, der læser feedet for hvert katalog"
+        "Accounts that read every catalogue's feed": "Konti, der læser feedet for hvert katalog",
+        "Delete publication": "Slet publikation",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Vil du slette \"{name}\"? Denne handling kan ikke fortrydes.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikationen og dens vedhæftede filer forsvinder fra den offentlige side og fra Woo-sitemappet. Arkivering bevarer dem i stedet i opbevaringsperioden."
     },
     "nplurals=2; plural=(n != 1);"
 )

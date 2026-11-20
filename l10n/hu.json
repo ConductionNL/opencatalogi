@@ -737,7 +737,10 @@
         "Last used": "Utoljára használva",
         "This key is shown once. Copy it now: it cannot be shown again.": "Ez a kulcs csak egyszer jelenik meg. Másolja most: többé nem jeleníthető meg.",
         "No feed consumers yet.": "Még nincsenek hírfolyam-fogyasztók.",
-        "Accounts that read every catalogue's feed": "Fiókok, amelyek minden katalógus hírfolyamát olvassák"
+        "Accounts that read every catalogue's feed": "Fiókok, amelyek minden katalógus hírfolyamát olvassák",
+        "Delete publication": "Közzététel törlése",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Szeretné törölni a következőt: \"{name}\"? Ez a művelet nem vonható vissza.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "A közzététel és mellékletei eltűnnek a nyilvános oldalról és a Woo-oldaltérképről. Az archiválás ezzel szemben megőrzi őket a megőrzési időre."
     },
     "plurals": {}
 }

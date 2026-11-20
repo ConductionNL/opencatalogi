@@ -8,11 +8,13 @@ Read `openspec/woo-build-rules.md` first. Mock `OCP\TaskProcessing\IManager` aga
 - [x] 1.2 Refuse a summary without a level in a pre-save listener registered in `Application::register()` (REQ-PPL-001). Verify: `tests/Unit/Listener/PlainSummaryCheckTest.php::testASummaryWithoutALevelIsRefused` on the REAL event.
 - [x] 1.3 Emit `dct:abstract` in `DcatMappingService` and return both fields on the public response (REQ-PPL-001). Verify: `tests/Unit/Service/DcatMappingServiceTest.php::testThePlainSummaryIsEmittedAsAbstractWithItsLanguage` (fails today).
 - [ ] 1.4 Show and edit the field with its level on the publication page (REQ-PPL-001). Verify: `tests/e2e/plain-language.spec.ts` "an officer writes a B1 summary and the reader sees it", carrying `@e2e` REQ-PPL-001.
+  - Built on development: the data widget shows and edits `plainSummary` and `plainSummaryLevel`. `tests/e2e/plain-language.spec.ts` is written ("an officer writes a B1 summary and the reader sees it", plus the refusal without a level) but has not run against a live instance yet, so this stays unticked until it has.
 
 ## 2. Draft
 
 - [x] 2.1 Add `PlainLanguageDrafter`, the draft and poll routes and the accept route with the update-right check (REQ-PPL-002). Verify: `tests/Unit/Service/Publication/PlainLanguageDrafterTest.php::testWithoutAProviderTheDraftRouteAnswers409`, `::testADraftIsScheduledWithTheTextFields`, `::testAFailedTaskStoresNothing`, `::testAcceptStoresProvenanceAndTheAcceptingUser`; controller tests through each route (fail today: no routes).
 - [ ] 2.2 Add Draft plain summary to the page, shown only when a provider is available, with the suggestion and accept flow (REQ-PPL-002). Verify: `tests/e2e/plain-language.spec.ts` "a draft is a suggestion until accepted", run against a fake TaskProcessing provider registered by the e2e seed; if the seed cannot register one, mark the scenario `@e2e exclude` with that reason and rely on the unit tests.
+  - Built on development: `PlainSummaryDraftWidget` on the publication page. Round 2 added what the spec asks for without a provider: the widget now says no text assistant is installed instead of disappearing. The e2e test "a draft is a suggestion until accepted" walks the accept flow when the instance has a provider and asserts the no-provider page and the 409 `no-provider` answer when it has none; not yet run live.
 - [x] 2.3 If `instance-staging-mode` is merged, ask its `OutboundGate` before scheduling a task with a remote provider (REQ-PPL-002). Verify: `PlainLanguageDrafterTest::testStagingRecordsADryRunInsteadOfScheduling`, or a note in the PR body that the staging change is not merged yet.
 
 ## 3. Docs

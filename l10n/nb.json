@@ -737,7 +737,10 @@
         "Last used": "Sist brukt",
         "This key is shown once. Copy it now: it cannot be shown again.": "Denne nøkkelen vises bare én gang. Kopier den nå: den kan ikke vises igjen.",
         "No feed consumers yet.": "Ingen feedmottakere ennå.",
-        "Accounts that read every catalogue's feed": "Kontoer som leser feeden til hver katalog"
+        "Accounts that read every catalogue's feed": "Kontoer som leser feeden til hver katalog",
+        "Delete publication": "Slett publikasjon",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Vil du slette \"{name}\"? Denne handlingen kan ikke angres.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikasjonen og vedleggene forsvinner fra den offentlige siden og fra Woo-nettstedskartet. Arkivering tar i stedet vare på dem i oppbevaringstiden."
     },
     "plurals": {}
 }

@@ -737,7 +737,10 @@
         "Last used": "Ostatnio użyty",
         "This key is shown once. Copy it now: it cannot be shown again.": "Ten klucz jest wyświetlany tylko raz. Skopiuj go teraz: nie będzie można go ponownie wyświetlić.",
         "No feed consumers yet.": "Brak jeszcze odbiorców kanału.",
-        "Accounts that read every catalogue's feed": "Konta, które czytają kanał każdego katalogu"
+        "Accounts that read every catalogue's feed": "Konta, które czytają kanał każdego katalogu",
+        "Delete publication": "Usuń publikację",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Czy chcesz usunąć \"{name}\"? Tej operacji nie można cofnąć.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikacja i jej załączniki znikają ze strony publicznej i z mapy witryny Woo. Archiwizacja natomiast zachowuje je na okres przechowywania."
     },
     "plurals": {}
 }

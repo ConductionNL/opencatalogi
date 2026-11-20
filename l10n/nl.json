@@ -1690,6 +1690,7 @@
         "Accept": "Accepteren",
         "Discard": "Verwerpen",
         "Draft plain summary": "Eenvoudige samenvatting laten opstellen",
+        "No text assistant is installed, so a plain summary cannot be drafted here. You can still write one yourself.": "Er is geen tekstassistent geïnstalleerd, dus hier kan geen eenvoudige samenvatting worden opgesteld. U kunt er zelf een schrijven.",
         "Suggested plain language summary": "Voorgestelde samenvatting in eenvoudige taal",
         "The plain language summary is saved.": "De samenvatting in eenvoudige taal is opgeslagen.",
         "The text assistant could not write a suggestion.": "De tekstassistent kon geen voorstel schrijven.",
@@ -1840,7 +1841,10 @@
         "Groups": "Groepen",
         "Administrators only": "Alleen beheerders",
         "Rights per group": "Rechten per groep",
-        "Which groups may do each of these tasks. Administrators may always do all of them; a right without a group is for administrators only.": "Welke groepen elk van deze taken mogen doen. Beheerders mogen ze altijd allemaal; een recht zonder groep is alleen voor beheerders."
+        "Which groups may do each of these tasks. Administrators may always do all of them; a right without a group is for administrators only.": "Welke groepen elk van deze taken mogen doen. Beheerders mogen ze altijd allemaal; een recht zonder groep is alleen voor beheerders.",
+        "Delete publication": "Publicatie verwijderen",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Wilt u \"{name}\" verwijderen? Dit kan niet ongedaan worden gemaakt.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "De publicatie en haar bijlagen verdwijnen van de publieke pagina en uit de Woo-sitemap. Archiveren bewaart ze juist voor de bewaartermijn."
     },
     "plurals": {}
 }
