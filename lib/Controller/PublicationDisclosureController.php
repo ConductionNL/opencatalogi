@@ -42,14 +42,17 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedCollectionsServiceInterface;
+use OCA\OpenCatalogi\Service\CapabilityRights;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use OCP\IUserSession;
 
 /**
  * What is published outward, how it is announced, and how a reader checks it.
@@ -57,6 +60,9 @@ use OCP\IRequest;
  * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 class PublicationDisclosureController extends Controller {
+
+	use CapabilityGuard;
+
 	/**
 	 * Constructor.
 	 *
@@ -64,12 +70,16 @@ class PublicationDisclosureController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param NationalIndexServiceInterface $indexService The national channels.
 	 * @param PublishedCollectionsServiceInterface $collectionsService The configured published set.
+	 * @param IUserSession|null     $userSession  The session, for the capability guard.
+	 * @param CapabilityRights|null $capabilities The capability rights (REQ-WAB-004).
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly NationalIndexServiceInterface $indexService,
 		private readonly PublishedCollectionsServiceInterface $collectionsService,
+		private readonly ?IUserSession $userSession=null,
+		private readonly ?CapabilityRights $capabilities=null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -82,8 +92,13 @@ class PublicationDisclosureController extends Controller {
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
 	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	#[NoAdminRequired]
 	public function announce(): JSONResponse {
+		$refusal = $this->capabilityRefusal(verb: 'announceNationally');
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
 		$decision = $this->request->getParam('decision', []);
 		if (is_array($decision) === false || $decision === []) {
 			return new JSONResponse(data: ['error' => 'missing-decision'], statusCode: Http::STATUS_BAD_REQUEST);

@@ -659,4 +659,69 @@ describe('CatalogPublicationsIndex', () => {
 			expect(indexPage(wrapper).vm.$attrs.bulkActions).toEqual([])
 		})
 	})
+
+	describe('the single-delete dialog', () => {
+		const deleteDialog = {
+			title: 'Delete publication',
+			message: 'Do you want to delete "{name}"? This action cannot be undone.',
+			description: 'The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.',
+		}
+		const publication = { id: 'p1', '@self': { register: 19, schema: 173 } }
+		const publiccode = { id: 'c1', '@self': { register: 19, schema: 184 } }
+
+		it('words the dialog for a publication and keeps the generic dialog for another schema', async () => {
+			objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
+			const { wrapper } = mountPage({ publicationPairConfig: { deleteDialog } })
+			await flushPromises()
+			const page = indexPage(wrapper)
+
+			// Nothing is being deleted yet: the library's own words.
+			expect(page.vm.$attrs.deleteDialog).toBeNull()
+
+			page.vm.actionTargetItem = publication
+			await flushPromises()
+			expect(indexPage(wrapper).vm.$attrs.deleteDialog).toEqual(deleteDialog)
+
+			page.vm.actionTargetItem = publiccode
+			await flushPromises()
+			expect(indexPage(wrapper).vm.$attrs.deleteDialog).toBeNull()
+		})
+
+		it('follows the new index page after the catalog changes', async () => {
+			objectStore.menuCatalogs = [
+				catalog('woo', [19], [173, 184]),
+				catalog('other', [19], [173]),
+			]
+			const { wrapper } = mountPage({ publicationPairConfig: { deleteDialog } })
+			await flushPromises()
+			await wrapper.setProps({ catalogSlug: 'other' })
+			await flushPromises()
+
+			indexPage(wrapper).vm.actionTargetItem = publication
+			await flushPromises()
+			expect(indexPage(wrapper).vm.$attrs.deleteDialog).toEqual(deleteDialog)
+		})
+
+		it('gives a catalog without the publication pair no publication words', async () => {
+			objectStore.menuCatalogs = [catalog('code', [19], [184])]
+			const { wrapper } = mountPage({
+				slug: 'code',
+				publicationPairConfig: { deleteDialog },
+			})
+			await flushPromises()
+			const page = indexPage(wrapper)
+			page.vm.actionTargetItem = publiccode
+			await flushPromises()
+
+			expect(indexPage(wrapper).vm.$attrs.deleteDialog).toBeUndefined()
+		})
+
+		it('sets the publication words on the manifest publication pair only', () => {
+			const manifest = require('../../manifest.json')
+			const config = manifest.pages.find((p) => p.id === 'Publications').config
+			expect(config.publicationPairConfig.deleteDialog).toEqual(deleteDialog)
+			expect(config.otherPairConfig?.deleteDialog).toBeUndefined()
+			expect(config.deleteDialog).toBeUndefined()
+		})
+	})
 })

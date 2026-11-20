@@ -739,7 +739,10 @@
         "No feed consumers yet.": "Ingen feedmodtagere endnu.",
         "Accounts that read every catalogue's feed": "Konti, der læser feedet for hvert katalog",
         "Review publications before they are published": "Gennemgå publikationer, før de offentliggøres",
-        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Når det er slået til, skal en kladde indsendes og godkendes, før den kan offentliggøres. Når det er slået fra, kan en redaktør offentliggøre en kladde direkte."
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Når det er slået til, skal en kladde indsendes og godkendes, før den kan offentliggøres. Når det er slået fra, kan en redaktør offentliggøre en kladde direkte.",
+        "Delete publication": "Slet publikation",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Vil du slette \"{name}\"? Denne handling kan ikke fortrydes.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikationen og dens vedhæftede filer forsvinder fra den offentlige side og fra Woo-sitemappet. Arkivering bevarer dem i stedet i opbevaringsperioden."
     },
     "plurals": {}
 }

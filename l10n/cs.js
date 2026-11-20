@@ -740,7 +740,10 @@ OC.L10N.register(
         "No feed consumers yet.": "Zatím žádní odběratelé kanálu.",
         "Accounts that read every catalogue's feed": "Účty, které čtou kanál každého katalogu",
         "Review publications before they are published": "Kontrolovat publikace před zveřejněním",
-        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Je-li zapnuto, musí být koncept před zveřejněním odeslán ke kontrole a schválen. Je-li vypnuto, může redaktor koncept zveřejnit přímo."
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Je-li zapnuto, musí být koncept před zveřejněním odeslán ke kontrole a schválen. Je-li vypnuto, může redaktor koncept zveřejnit přímo.",
+        "Delete publication": "Odstranit publikaci",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Chcete odstranit \"{name}\"? Tuto akci nelze vrátit zpět.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikace a její přílohy zmizí z veřejné stránky a z mapy stránek Woo. Archivace je naopak uchová po dobu skartační lhůty."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -740,7 +740,10 @@ OC.L10N.register(
         "No feed consumers yet.": "Još nema korisnika feeda.",
         "Accounts that read every catalogue's feed": "Računi koji čitaju feed svakog kataloga",
         "Review publications before they are published": "Pregledaj objave prije objavljivanja",
-        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Kada je uključeno, nacrt mora biti podnesen i odobren prije nego što se može objaviti. Kada je isključeno, urednik može direktno objaviti nacrt."
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Kada je uključeno, nacrt mora biti podnesen i odobren prije nego što se može objaviti. Kada je isključeno, urednik može direktno objaviti nacrt.",
+        "Delete publication": "Izbriši objavu",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Želite li izbrisati \"{name}\"? Ova radnja se ne može poništiti.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Objava i njeni prilozi nestaju s javne stranice i iz Woo mape stranice. Arhiviranje ih, naprotiv, čuva tokom roka čuvanja."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -740,7 +740,10 @@ OC.L10N.register(
         "No feed consumers yet.": "Сè уште нема корисници на фидот.",
         "Accounts that read every catalogue's feed": "Сметки што го читаат фидот на секој каталог",
         "Review publications before they are published": "Прегледај ги објавите пред да бидат објавени",
-        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Кога е вклучено, нацртот мора да биде поднесен и одобрен пред да може да се објави. Кога е исклучено, уредникот може директно да објави нацрт."
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Кога е вклучено, нацртот мора да биде поднесен и одобрен пред да може да се објави. Кога е исклучено, уредникот може директно да објави нацрт.",
+        "Delete publication": "Избриши ја објавата",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Дали сакате да го избришете \"{name}\"? Ова дејство не може да се врати.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Објавата и нејзините прилози исчезнуваат од јавната страница и од мапата на сајтот Woo. Архивирањето, пак, ги чува за рокот на чување."
     },
     "nplurals=2; plural=(n != 1);"
 )

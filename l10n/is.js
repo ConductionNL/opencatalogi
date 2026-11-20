@@ -740,7 +740,10 @@ OC.L10N.register(
         "No feed consumers yet.": "Engir notendur straums enn.",
         "Accounts that read every catalogue's feed": "Aðgangar sem lesa straum hverrar skrár",
         "Review publications before they are published": "Yfirfara útgáfur áður en þær eru birtar",
-        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Þegar kveikt er á þessu þarf að senda inn drög og samþykkja þau áður en hægt er að birta þau. Þegar slökkt er á þessu getur ritstjóri birt drög beint."
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Þegar kveikt er á þessu þarf að senda inn drög og samþykkja þau áður en hægt er að birta þau. Þegar slökkt er á þessu getur ritstjóri birt drög beint.",
+        "Delete publication": "Eyða útgáfu",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Viltu eyða \"{name}\"? Þessa aðgerð er ekki hægt að afturkalla.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Útgáfan og viðhengi hennar hverfa af opinberu síðunni og úr Woo-veftrénu. Geymsla í safni varðveitir þau hins vegar út varðveislutímann."
     },
     "nplurals=2; plural=(n != 1);"
 )

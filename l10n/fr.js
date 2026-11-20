@@ -740,7 +740,10 @@ OC.L10N.register(
         "No feed consumers yet.": "Aucun consommateur du flux pour l'instant.",
         "Accounts that read every catalogue's feed": "Comptes qui lisent le flux de chaque catalogue",
         "Review publications before they are published": "Relire les publications avant leur publication",
-        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Lorsque cette option est activée, un brouillon doit être soumis et approuvé avant de pouvoir être publié. Lorsqu'elle est désactivée, un rédacteur peut publier un brouillon directement."
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Lorsque cette option est activée, un brouillon doit être soumis et approuvé avant de pouvoir être publié. Lorsqu'elle est désactivée, un rédacteur peut publier un brouillon directement.",
+        "Delete publication": "Supprimer la publication",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Voulez-vous supprimer \"{name}\" ? Cette action est irréversible.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publication et ses pièces jointes disparaissent de la page publique et du plan du site Woo. L’archivage, lui, les conserve pendant la durée de conservation."
     },
     "nplurals=2; plural=(n != 1);"
 )

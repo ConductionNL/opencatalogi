@@ -300,10 +300,11 @@
           },
           "plooiStatus": {
             "type": "string",
-            "description": "Whether this publication reached PLOOI, the delivery API of open.overheid.nl: delivered or failed. Empty until a catalogue with PLOOI delivery on delivers it.",
+            "description": "Whether this publication reached PLOOI, the delivery API of open.overheid.nl: delivered, failed, or withdrawn once it stopped being public. Empty until a catalogue with PLOOI delivery on delivers it.",
             "enum": [
               "delivered",
-              "failed"
+              "failed",
+              "withdrawn"
             ],
             "facetable": true,
             "title": "PLOOI status"
@@ -326,6 +327,15 @@
             "description": "Why the last PLOOI delivery failed, as the platform or the connection said it.",
             "facetable": false,
             "title": "PLOOI failure reason"
+          },
+          "plooiDocuments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The document links PLOOI received with the last delivery, so a document that is no longer public is withdrawn with the next one.",
+            "facetable": false,
+            "title": "PLOOI documents"
           }
         },
         "x-openregister-lifecycle": {

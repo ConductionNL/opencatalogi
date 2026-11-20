@@ -740,7 +740,10 @@ OC.L10N.register(
         "No feed consumers yet.": "Потребителей ленты пока нет.",
         "Accounts that read every catalogue's feed": "Учётные записи, читающие ленту каждого каталога",
         "Review publications before they are published": "Проверять публикации перед публикацией",
-        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Если включено, черновик должен быть отправлен на проверку и одобрен, прежде чем его можно будет опубликовать. Если выключено, редактор может опубликовать черновик сразу."
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Если включено, черновик должен быть отправлен на проверку и одобрен, прежде чем его можно будет опубликовать. Если выключено, редактор может опубликовать черновик сразу.",
+        "Delete publication": "Удалить публикацию",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "Хотите удалить \"{name}\"? Это действие нельзя отменить.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публикация и её вложения исчезают с публичной страницы и из карты сайта Woo. Архивирование, напротив, сохраняет их на срок хранения."
     },
     "nplurals=2; plural=(n != 1);"
 )

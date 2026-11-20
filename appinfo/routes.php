@@ -75,6 +75,8 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// WOO transparency (woo-transparency)
 		['name' => 'woo#weigeringsgronden', 'url' => '/api/woo/weigeringsgronden', 'verb' => 'GET'],
 		['name' => 'woo#categories', 'url' => '/api/woo/categories', 'verb' => 'GET'],
+		// Every controlled-list entry, public: declared before `/api/{catalogSlug}`, which would match it.
+		['name' => 'valueLists#index', 'url' => '/api/value-lists', 'verb' => 'GET'],
 		['name' => 'documentsoorten#index', 'url' => '/api/woo/documentsoorten', 'verb' => 'GET'],
 		['name' => 'woo#createBatch', 'url' => '/api/woo/batches', 'verb' => 'POST'],
 		['name' => 'woo#getBatch', 'url' => '/api/woo/batches/{batchId}', 'verb' => 'GET'],
@@ -103,6 +105,9 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// Woo-index harvester-readiness self-check (woo-index-harvester-readiness)
 		['name' => 'wooReadiness#report', 'url' => '/api/woo/readiness', 'verb' => 'GET'],
 		['name' => 'wooReadiness#run', 'url' => '/api/woo/readiness/run', 'verb' => 'POST'],
+		// Who receives the Woo pipeline incidents, and the open ones (woo-national-output-assurance REQ-WNO-004).
+		['name' => 'wooIncidents#index', 'url' => '/api/woo/incidents', 'verb' => 'GET'],
+		['name' => 'wooIncidents#setGroup', 'url' => '/api/woo/incidents/group', 'verb' => 'PUT'],
 		// GitHub publiccode harvest (publiccode-github-harvest). Admin only.
 		['name' => 'publiccodeHarvest#status', 'url' => '/api/settings/publiccode-harvest', 'verb' => 'GET'],
 		['name' => 'publiccodeHarvest#setup', 'url' => '/api/settings/publiccode-harvest/setup', 'verb' => 'POST'],
@@ -113,6 +118,12 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'wooRegistration#show', 'url' => '/api/woo/registration', 'verb' => 'GET'],
 		// The publishers group in the admin settings (operations-publish-rights, REQ-OPR-004).
 		['name' => 'publishRights#show', 'url' => '/api/settings/publish-rights', 'verb' => 'GET'],
+		// The rights table in the admin settings (woo-access-boundary-hardening, REQ-WAB-004); administrators only.
+		['name' => 'capabilityRights#index', 'url' => '/api/settings/capability-rights', 'verb' => 'GET'],
+		[
+			'name' => 'capabilityRights#update', 'url' => '/api/settings/capability-rights/{verb}', 'verb' => 'PUT',
+			'requirements' => ['verb' => '[A-Za-z]+'],
+		],
 		['name' => 'wooRegistration#request', 'url' => '/api/woo/registration', 'verb' => 'POST'],
 		['name' => 'wooRegistration#confirm', 'url' => '/api/woo/registration/confirm', 'verb' => 'POST'],
 		// The public and community surface: the admin surfaces.

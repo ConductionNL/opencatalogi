@@ -740,7 +740,10 @@ OC.L10N.register(
         "No feed consumers yet.": "Níl aon tomhaltóirí fotha fós.",
         "Accounts that read every catalogue's feed": "Cuntais a léann fotha gach catalóige",
         "Review publications before they are published": "Athbhreithnigh foilseacháin sula bhfoilsítear iad",
-        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Nuair atá sé ar siúl, ní mór dréacht a chur isteach agus a fhaomhadh sular féidir é a fhoilsiú. Nuair atá sé múchta, is féidir le heagarthóir dréacht a fhoilsiú go díreach."
+        "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Nuair atá sé ar siúl, ní mór dréacht a chur isteach agus a fhaomhadh sular féidir é a fhoilsiú. Nuair atá sé múchta, is féidir le heagarthóir dréacht a fhoilsiú go díreach.",
+        "Delete publication": "Scrios an foilseachán",
+        "Do you want to delete \"{name}\"? This action cannot be undone.": "An bhfuil fonn ort \"{name}\" a scriosadh? Ní féidir an gníomh seo a chealú.",
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Imíonn an foilseachán agus a cheangaltáin ón leathanach poiblí agus ó léarscáil láithreáin Woo. Coinníonn cartlannú iad ar feadh na tréimhse coinneála ina ionad sin."
     },
     "nplurals=2; plural=(n != 1);"
 )

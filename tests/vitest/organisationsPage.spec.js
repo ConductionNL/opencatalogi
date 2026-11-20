@@ -6,7 +6,8 @@
  * (organisations-page-edits-the-shared-organisation, REQ-SHO-103): both pages
  * resolve the organisation keys instead of the retired `organization` schema in
  * the listing register, delete stays off, and the detail page's identity block
- * shows the government identifiers in two columns.
+ * shows the government identifiers in two columns, with its edit controls
+ * following the record's update right.
  *
  * @spec openspec/changes/organisations-page-edits-the-shared-organisation/specs/shared-organisation/spec.md
  */
@@ -53,6 +54,12 @@ describe('the Organizations pages on the shared organisation', () => {
 			'rsin',
 			'pki',
 		])
+	})
+
+	it("withdraws the detail page's edit controls when the organisation refuses the reader's update", () => {
+		// CnDetailPage `permissions`: the read asks for `@self.can`, and while
+		// `can.update` is false Edit and the data widget's inline editors are off.
+		expect(page('OrganizationDetail').config.permissions).toBe(true)
 	})
 
 	it('keeps the publications and catalogs lists filtering on the organisation', () => {
