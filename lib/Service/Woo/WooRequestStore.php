@@ -199,6 +199,42 @@ class WooRequestStore implements InformationRequestStoreInterface {
 	}//end find()
 
 	/**
+	 * The Woo request with this reference, or null when there is none.
+	 *
+	 * @param string $reference The request's case reference, e.g. WOO-2026-031.
+	 *
+	 * @return array<string, mixed>|null The request, or null.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
+	 */
+	public function byReference(string $reference): ?array {
+		$reference = trim($reference);
+		if ($reference === '') {
+			return null;
+		}
+
+		$target = $this->target();
+		$result = $this->objects()->searchObjectsPaginated(
+			query: [
+				'@self' => ['register' => $target['register'], 'schema' => $target['schema']],
+				'reference' => $reference,
+				'_limit' => 2,
+			],
+			_rbac: false,
+			_multitenancy: false
+		);
+
+		foreach ((array)($result['results'] ?? []) as $row) {
+			$request = $this->asArray(object: $row);
+			if ((string)($request['reference'] ?? '') === $reference) {
+				return $request;
+			}
+		}
+
+		return null;
+	}//end byReference()
+
+	/**
 	 * Every stored request.
 	 *
 	 * @return array<int, array<string, mixed>> The requests.

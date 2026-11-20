@@ -26,6 +26,7 @@ No demand row. The row is `build` under the rule "in the core area" (publication
 ## What changes
 
 - "Not yet published" is defined on the current model: a publication with no publication date or one in the future, and a document (a file on a publication) with no published time or one in the future.
+  - Note (publication-lifecycle-on-or, 17 Nov 2026): once that change merges, a publication has a stored lifecycle state and a date alone no longer makes it public. The overview then reads `PublicationStateService::stateOf()`: not yet published means any state other than `public` and `withdrawn` (draft, in_review, approved, scheduled), not the date test above.
 - One server endpoint lists both, newest first, with counts, for the signed-in user's readable publications.
 - The two dashboard widgets read that endpoint, and a row opens the publication in the app.
 - The main dashboard spec's requirement DSH-011, blocked on an attachment schema that no longer exists, is rewritten around files.

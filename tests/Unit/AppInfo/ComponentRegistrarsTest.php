@@ -31,6 +31,8 @@ use OCA\OpenCatalogi\Dashboard\RetentionWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
 use OCA\OpenCatalogi\Listener\BatchReviewTaskListener;
+use OCA\OpenCatalogi\Listener\CapabilityDeclarationListener;
+use OCA\OpenCatalogi\Listener\CapabilityScopeListener;
 use OCA\OpenCatalogi\Listener\CatalogAccessListener;
 use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
@@ -42,10 +44,12 @@ use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
+use OCA\OpenCatalogi\Listener\PublicationAudienceCheck;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
 use OCA\OpenCatalogi\Listener\PublicationLinksListener;
+use OCA\OpenCatalogi\Listener\RuleCategoryListener;
 use OCA\OpenCatalogi\Listener\TermRollListener;
 use OCA\OpenCatalogi\Listener\HandedOverRecordsListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
@@ -135,6 +139,8 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectCreatedEvent', CatalogAccessListener::class],
 				[$e . 'ObjectUpdatedEvent', CatalogAccessListener::class],
 				[$e . 'ObjectDeletedEvent', CatalogAccessListener::class],
+				[$e . 'PermissionsDeclaringEvent', CapabilityDeclarationListener::class],
+				[$e . 'CustomScopeEvaluatingEvent', CapabilityScopeListener::class],
 				[$e . 'ObjectCreatingEvent', TermRollListener::class],
 				[$e . 'ObjectUpdatingEvent', TermRollListener::class],
 				[$e . 'ObjectCreatingEvent', HandedOverRecordsListener::class],
@@ -145,11 +151,15 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', DiwooCompletenessListener::class],
 				[$e . 'ObjectCreatingEvent', PlainSummaryCheck::class],
 				[$e . 'ObjectUpdatingEvent', PlainSummaryCheck::class],
+				[$e . 'ObjectCreatingEvent', PublicationAudienceCheck::class],
+				[$e . 'ObjectUpdatingEvent', PublicationAudienceCheck::class],
 				[$e . 'TaskTerminalEvent', BatchReviewTaskListener::class],
 				[$e . 'ObjectCreatingEvent', CompletenessListener::class],
 				[$e . 'ObjectUpdatingEvent', CompletenessListener::class],
 				[$e . 'ObjectCreatingEvent', PublicationLinksListener::class],
 				[$e . 'ObjectUpdatingEvent', PublicationLinksListener::class],
+				[$e . 'ObjectCreatingEvent', RuleCategoryListener::class],
+				[$e . 'ObjectUpdatingEvent', RuleCategoryListener::class],
 				[$e . 'RegisterCreatedEvent', CatalogScopePendingListener::class],
 				[$e . 'RegisterUpdatedEvent', CatalogScopePendingListener::class],
 				[$e . 'ToolRegistrationEvent', ToolRegistrationListener::class],

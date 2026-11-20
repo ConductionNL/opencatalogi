@@ -61,7 +61,7 @@ class RetentionControllerTest extends TestCase {
 			$this->request,
 			$this->retentionService,
 			$l10n,
-			$this->userSession
+			$this->userSession, capabilities: new \Unit\Support\AllowingCapabilityRights()
 		);
 
 	}//end setUp()

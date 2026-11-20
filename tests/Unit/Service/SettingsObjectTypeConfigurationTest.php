@@ -142,7 +142,7 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 			'serviceCatalogueEntry', 'caseTypeDefinition', 'knowledgeArticle', 'articleVerdict',
 			'publicationRule', 'inspection', 'publicationProcess', 'zienswijzeAsk', 'depublication', 'obligationSource',
 			'wooRequest', 'commentPeriod',
-			'serviceStatus', 'statusSubscription', 'instanceBanner', 'noticeBoard', 'notice', 'recordVote',
+			'serviceStatus', 'statusSubscription', 'instanceBanner', 'noticeBoard', 'notice', 'recordVote', 'errorReport',
 			'attachmentReading',
 		];
 		foreach ($slugs as $index => $slug) {
@@ -177,8 +177,8 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 				'zienswijze_ask_schema=114', 'depublication_schema=115', 'obligation_source_schema=116',
 				'woo_request_schema=117', 'comment_period_schema=118',
 				'service_status_schema=119', 'status_subscription_schema=120', 'instance_banner_schema=121',
-				'notice_board_schema=122', 'notice_schema=123', 'record_vote_schema=124',
-				'attachment_reading_schema=125',
+				'notice_board_schema=122', 'notice_schema=123', 'record_vote_schema=124', 'error_report_schema=125',
+				'attachment_reading_schema=126',
 			],
 			$this->writes
 		);
@@ -219,7 +219,8 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 
 		$this->update(['schemas' => [['slug' => 'catalog', 'id' => 3]]]);
 
-		$this->assertCount(31, $looked);
+		// One lookup per mapped schema slug without an id, tableView included.
+		$this->assertCount(34, $looked);
 		$this->assertSame('listing@opencatalogi', $looked[0]);
 		$this->assertSame(
 			[

@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Contract\PlainSummaryDrafterInterface;
 use OCA\OpenCatalogi\Contract\PlainSummaryProvenanceInterface;
 use OCA\OpenCatalogi\Contract\CatalogueFeedReaderInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
+use OCA\OpenCatalogi\Contract\DatasetViewServiceInterface;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use OCA\OpenCatalogi\BackgroundJob\AttachmentReadingQueue;
 use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
@@ -47,6 +48,7 @@ use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
 use OCA\OpenCatalogi\Contract\CmsMigrationServiceInterface;
 use OCA\OpenCatalogi\Contract\CollectionShareServiceInterface;
 use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
+use OCA\OpenCatalogi\Contract\CouncilHarvestServiceInterface;
 use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
@@ -104,6 +106,8 @@ use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Contract\LocalPublicationStateInterface;
 use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
+use OCA\OpenCatalogi\Contract\PublicDocumentsInterface;
+use OCA\OpenCatalogi\Contract\ErrorReportIntakeInterface;
 use OCA\OpenCatalogi\Contract\InstanceModeInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Contract\TermRollInterface;
@@ -113,9 +117,12 @@ use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
 use OCA\OpenCatalogi\Service\Publication\LocalPublicationState;
 use OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod;
+use OCA\OpenCatalogi\Service\Publication\PublicDocuments;
+use OCA\OpenCatalogi\Service\ErrorReport\ErrorReportIntake;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\CatalogueFeedReader;
 use OCA\OpenCatalogi\Service\Table\PublishedTableService;
+use OCA\OpenCatalogi\Service\Table\DatasetViewService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
@@ -187,6 +194,7 @@ final class ServiceBindings {
 		NationalIndexServiceInterface::class => NationalIndexService::class,
 		EventServiceInterface::class => EventService::class,
 		PubliccodeHarvestServiceInterface::class => PubliccodeHarvestService::class,
+		CouncilHarvestServiceInterface::class => CouncilHarvestService::class,
 		OoapiServiceInterface::class => OoapiService::class,
 		QualityServiceInterface::class => QualityService::class,
 		DcatSerializerInterface::class => DcatSerializer::class,
@@ -195,6 +203,7 @@ final class ServiceBindings {
 		PublicationRuleServiceInterface::class => PublicationRuleService::class,
 		CommentPeriodServiceInterface::class => CommentPeriodService::class,
 		PublishedTableServiceInterface::class => PublishedTableService::class,
+		DatasetViewServiceInterface::class => DatasetViewService::class,
 		CatalogAccessServiceInterface::class => CatalogAccessService::class,
 		ConnectionReporterInterface::class => ConnectionReporter::class,
 		CommentPeriodWithdrawalServiceInterface::class => CommentPeriodWithdrawalService::class,
@@ -216,6 +225,8 @@ final class ServiceBindings {
 		WithheldFromPublicationInterface::class => WithheldFromPublication::class,
 		LocalPublicationStateInterface::class => LocalPublicationState::class,
 		PublicationCommentPeriodInterface::class => PublicationCommentPeriod::class,
+		PublicDocumentsInterface::class => PublicDocuments::class,
+		ErrorReportIntakeInterface::class => ErrorReportIntake::class,
 		InformationRequestStoreInterface::class => WooRequestStore::class,
 		HandoverStateInterface::class => HandoverState::class,
 		IntakeForwardInterface::class => DossiqWooForward::class,

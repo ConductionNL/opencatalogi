@@ -85,10 +85,11 @@ describe('Publications page default sort', () => {
 })
 
 describe('Publications page columns', () => {
-	it('lists Name, Status, Files and Updated', () => {
+	it('lists Name, State, Files and Updated', () => {
+		// State is the server-computed `state` per row (publication-lifecycle-on-or REQ-PLC-002).
 		expect(columns.map(keyOf)).toEqual([
 			'@self.name',
-			'status',
+			'state',
 			'@self.files',
 			'@self.updated',
 		])

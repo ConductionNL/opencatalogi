@@ -126,6 +126,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\CouncilHarvestServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\CouncilHarvestService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\OoapiServiceInterface",
         "OCA\\OpenCatalogi\\Service\\OoapiService"
     ],
@@ -163,6 +168,11 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\PublishedTableServiceInterface",
         "OCA\\OpenCatalogi\\Service\\Table\\PublishedTableService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DatasetViewServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\Table\\DatasetViewService"
     ],
     [
         "alias",
@@ -268,6 +278,16 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\PublicationCommentPeriodInterface",
         "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublicDocumentsInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublicDocuments"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\ErrorReportIntakeInterface",
+        "OCA\\OpenCatalogi\\Service\\ErrorReport\\ErrorReportIntake"
     ],
     [
         "alias",

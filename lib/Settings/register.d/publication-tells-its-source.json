@@ -4,7 +4,7 @@
     "schemas": {
       "publication": {
         "slug": "publication",
-        "version": "0.0.8",
+        "version": "0.0.9",
         "properties": {
           "publicUrl": {
             "type": "string",

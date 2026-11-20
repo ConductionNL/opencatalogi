@@ -183,6 +183,34 @@ class FeedConsumerController extends Controller {
 	}//end revokeKey()
 
 	/**
+	 * Let one of the catalogue's consumers act for signed-in readers, or stop it (REQ-PSR-003).
+	 *
+	 * @param string $catalogSlug The catalogue slug.
+	 * @param string $id          The consumer id.
+	 *
+	 * @return JSONResponse The consumer.
+	 *
+	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-trusted-portal-reads-it-for-a-reader-at-the-required-level-req-psr-003
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) inCatalog() hands every action the catalogue; this one needs only its id.
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function signedInReaders(string $catalogSlug, string $id): JSONResponse {
+		return $this->inCatalog(
+			catalogSlug: $catalogSlug,
+			action: function (array $catalog, string $catalogId) use ($id): JSONResponse {
+				$this->consumers->consumerOf($catalogId, $id);
+				$allowed = $this->request->getParam('actForSignedInReaders');
+				if (is_bool($allowed) === false) {
+					throw new InvalidArgumentException($this->l10n->t('actForSignedInReaders must be true or false'));
+				}
+
+				return new JSONResponse($this->consumers->setActForSignedInReaders($id, $allowed));
+			}
+		);
+
+	}//end signedInReaders()
+
+	/**
 	 * Disable one of the catalogue's consumers and its account.
 	 *
 	 * @param string $catalogSlug The catalogue slug.

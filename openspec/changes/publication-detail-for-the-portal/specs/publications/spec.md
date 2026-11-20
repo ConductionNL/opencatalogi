@@ -76,7 +76,6 @@ The catalogue schema SHALL gain `showWithheld` (boolean, default `false`). `wooA
 The catalogue schema SHALL gain `acceptErrorReports` (boolean, default `false`) and `errorReportModerators` (Nextcloud group ids). A schema `errorReport` SHALL hold `publication`, `message` (at most 2,000 characters), `contact` (optional e-mail), `status` (`new`, `handled`, `dismissed`) and `createdAt`, with no public read rule. `POST /api/publications/{id}/error-reports` (public, `#[AnonRateLimit(limit: 5, period: 3600)]`) SHALL store a report and answer `{reference}` when the publication is publicly readable and its catalogue has `acceptErrorReports` true with at least one moderator group; otherwise it SHALL answer 404. It SHALL store no IP address. The `errorReport` schema SHALL declare an `x-openregister-notifications` rule on `created` to the moderator groups. The officer side SHALL list reports per catalogue with their status. This is the contract `portaliq/publication-error-reports-and-withheld-notices` posts to for 6.15.
 
 #### Scenario: A report reaches the moderators
-<!-- @e2e exclude Public write endpoint and a notification; proven by ErrorReportControllerTest::testAReportIsStoredAndTheModeratorsAreNotified, which fails on today's code because the route does not exist. -->
 
 - **GIVEN** a catalogue that accepts error reports with moderator group `woo-redactie`
 - **WHEN** an anonymous visitor posts "De bijlage hoort bij een ander besluit" on a public publication

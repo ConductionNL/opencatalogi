@@ -1,0 +1,55 @@
+{
+	"$comment": "One page of the Notubiz /documents endpoint (API version 1.21.1, format json) for a test organisation, recorded with the identifying values replaced. Used by tests/Unit/Flow/CouncilHarvestFlowTest.php.",
+	"pagination": {
+		"page": 1,
+		"per_page": 50,
+		"total": 3
+	},
+	"documents": [
+		{
+			"id": 4410021,
+			"title": "  Raadsvoorstel vaststellen bestemmingsplan Centrum  ",
+			"url": "https://api.notubiz.nl/document/4410021/1",
+			"confidential": false,
+			"publication_date": "2026-10-01 09:00:00",
+			"meeting": {
+				"id": 88231,
+				"date": "2026-10-08",
+				"gremium": {
+					"id": 12,
+					"title": "Gemeenteraad"
+				}
+			}
+		},
+		{
+			"id": 4410022,
+			"title": "Geheime bijlage grondexploitatie",
+			"url": "https://api.notubiz.nl/document/4410022/1",
+			"confidential": true,
+			"publication_date": "2026-10-01 09:00:00",
+			"meeting": {
+				"id": 88231,
+				"date": "2026-10-08",
+				"gremium": {
+					"id": 12,
+					"title": "Gemeenteraad"
+				}
+			}
+		},
+		{
+			"id": 4410023,
+			"title": "Agenda zonder bestand",
+			"url": "",
+			"confidential": false,
+			"publication_date": "2026-10-01 09:00:00",
+			"meeting": {
+				"id": 88232,
+				"date": "2026-10-09",
+				"gremium": {
+					"id": 14,
+					"title": "Commissie Ruimte"
+				}
+			}
+		}
+	]
+}

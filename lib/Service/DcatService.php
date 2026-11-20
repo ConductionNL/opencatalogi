@@ -28,6 +28,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use Psr\Log\LoggerInterface;
@@ -388,11 +389,14 @@ class DcatService implements DcatServiceInterface {
 		$languageService = $this->languageService();
 		$languageService?->setReturnAllTranslations(true);
 		try {
-			return $this->getObjectService()->searchObjectsPaginated(
-				query: $searchQuery,
-				_rbac: true,
-				_multitenancy: false,
-				deleted: false
+			// REQ-PLC-006: the DCAT feed never carries an unlisted publication.
+			return UnlistedPublications::withoutUnlisted(
+				page: $this->getObjectService()->searchObjectsPaginated(
+					query: $searchQuery,
+					_rbac: true,
+					_multitenancy: false,
+					deleted: false
+				)
 			);
 		} finally {
 			$languageService?->setReturnAllTranslations(false);
