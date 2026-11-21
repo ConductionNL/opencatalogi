@@ -131,7 +131,6 @@ class DraftPurgeControllerTest extends TestCase {
 		);
 
 		return new DraftPurgeController(
-			appName: 'opencatalogi',
 			request: $this->createMock(originalClassName: IRequest::class),
 			l10n: $l10n,
 			rights: $rights,

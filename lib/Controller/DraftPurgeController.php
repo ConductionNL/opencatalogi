@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\DraftPurgeServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Exception\DraftPurgeFailedException;
@@ -49,7 +50,6 @@ class DraftPurgeController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param PublicationRightsInterface $rights The update right on one publication.
@@ -58,13 +58,12 @@ class DraftPurgeController extends Controller {
 	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function __construct(
-		$appName,
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly PublicationRightsInterface $rights,
 		private readonly DraftPurgeServiceInterface $purger,
 	) {
-		parent::__construct(appName: $appName, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -135,10 +134,9 @@ class DraftPurgeController extends Controller {
 	 * @return JSONResponse 403.
 	 */
 	private function forbidden(): JSONResponse {
-		return new JSONResponse(
-			data: ['error' => 'forbidden', 'message' => $this->l10n->t('You may not change this publication.')],
-			statusCode: Http::STATUS_FORBIDDEN
-		);
+		$body = ['error' => 'forbidden', 'message' => $this->l10n->t('You may not change this publication.')];
+
+		return new JSONResponse(data: $body, statusCode: Http::STATUS_FORBIDDEN);
 	}//end forbidden()
 
 	/**
