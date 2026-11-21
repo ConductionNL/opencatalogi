@@ -58,7 +58,15 @@ final class ReadyPublicationsControllerTest extends TestCase {
 		$this->rows = [
 			['id' => 'p-draft', 'title' => 'Concept', 'status' => 'draft'],
 			['id' => 'p-review', 'title' => 'In beoordeling', 'status' => 'in_review'],
-			['id' => 'p-yesterday', 'title' => 'Besluit gisteren', 'status' => 'approved', 'approvedAt' => '2026-11-16T15:00:00+00:00', 'caseReference' => 'Z-2026-1', 'sourceIdentifiers' => [['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false]], '@self' => ['updated' => '2026-11-16T15:00:01+00:00']],
+			[
+				'id' => 'p-yesterday',
+				'title' => 'Besluit gisteren',
+				'status' => 'approved',
+				'approvedAt' => '2026-11-16T15:00:00+00:00',
+				'caseReference' => 'Z-2026-1',
+				'sourceIdentifiers' => [['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false]],
+				'@self' => ['updated' => '2026-11-16T15:00:01+00:00'],
+			],
 			['id' => 'p-today', 'title' => 'Besluit vandaag', 'status' => 'approved', 'approvedAt' => '2026-11-17T08:30:00+00:00', 'caseReference' => 'Z-2026-2', 'catalog' => 'woo', '@self' => ['updated' => '2026-11-17T08:30:01+00:00']],
 			['id' => 'p-published', 'title' => 'Gepubliceerd', 'status' => 'published'],
 		];
@@ -163,9 +171,12 @@ final class ReadyPublicationsControllerTest extends TestCase {
 	public function testASourceIdentifierFiltersTheReadyList(): void {
 		$body = $this->controller(params: ['sourceIdentifier' => 'decos:Z-2026-0412'])->index()->getData();
 
-		self::assertSame(['p-yesterday'], array_column($body['results'], 'id'));
-		self::assertSame(1, $body['total']);
-		self::assertSame(['contains' => ['system' => 'decos', 'identifier' => 'Z-2026-0412']], $this->queries[0]['query']['sourceIdentifiers']);
+		self::assertSame(expected: ['p-yesterday'], actual: array_column($body['results'], 'id'));
+		self::assertSame(expected: 1, actual: $body['total']);
+		self::assertSame(
+			expected: ['contains' => ['system' => 'decos', 'identifier' => 'Z-2026-0412']],
+			actual: $this->queries[0]['query']['sourceIdentifiers']
+		);
 	}//end testASourceIdentifierFiltersTheReadyList()
 
 	/**
@@ -178,8 +189,8 @@ final class ReadyPublicationsControllerTest extends TestCase {
 	public function testAMalformedSourceIdentifierIsRefused(): void {
 		$response = $this->controller(params: ['sourceIdentifier' => 'Z-2026-0412'])->index();
 
-		self::assertSame(400, $response->getStatus());
-		self::assertSame([], $this->queries);
+		self::assertSame(expected: 400, actual: $response->getStatus());
+		self::assertSame(expected: [], actual: $this->queries);
 	}//end testAMalformedSourceIdentifierIsRefused()
 
 	/**
@@ -192,7 +203,7 @@ final class ReadyPublicationsControllerTest extends TestCase {
 	public function testWithoutASourceIdentifierNothingIsFiltered(): void {
 		$this->controller(params: ['sourceIdentifier' => '  '])->index();
 
-		self::assertArrayNotHasKey('sourceIdentifiers', $this->queries[0]['query']);
+		self::assertArrayNotHasKey(key: 'sourceIdentifiers', array: $this->queries[0]['query']);
 	}//end testWithoutASourceIdentifierNothingIsFiltered()
 
 	/**

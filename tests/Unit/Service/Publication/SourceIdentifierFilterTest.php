@@ -106,19 +106,20 @@ class SourceIdentifierFilterTest extends TestCase {
 		$pair = ['system' => 'decos', 'identifier' => 'Z-2026-0412'];
 
 		$this->assertSame(
-			['status' => 'approved', 'sourceIdentifiers' => ['contains' => $pair]],
-			SourceIdentifierFilter::forInternalQuery(query: ['status' => 'approved'], pair: $pair)
+			expected: ['status' => 'approved', 'sourceIdentifiers' => ['contains' => $pair]],
+			actual: SourceIdentifierFilter::forInternalQuery(query: ['status' => 'approved'], pair: $pair)
 		);
 
-		$this->assertTrue(SourceIdentifierFilter::holds(publication: ['sourceIdentifiers' => [['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false]]], pair: $pair));
+		$private = ['sourceIdentifiers' => [['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false]]];
+		$this->assertTrue(condition: SourceIdentifierFilter::holds(publication: $private, pair: $pair));
 		$this->assertFalse(
-			SourceIdentifierFilter::holds(
+			condition: SourceIdentifierFilter::holds(
 				publication: ['sourceIdentifiers' => [['system' => 'decos', 'identifier' => 'other'], ['system' => 'raad', 'identifier' => 'Z-2026-0412']]],
 				pair: $pair
 			)
 		);
-		$this->assertFalse(SourceIdentifierFilter::holds(publication: ['sourceIdentifiers' => 'decos:Z-2026-0412'], pair: $pair));
-		$this->assertFalse(SourceIdentifierFilter::holds(publication: ['sourceIdentifiers' => ['decos:Z-2026-0412']], pair: $pair));
-		$this->assertFalse(SourceIdentifierFilter::holds(publication: [], pair: $pair));
+		$this->assertFalse(condition: SourceIdentifierFilter::holds(publication: ['sourceIdentifiers' => 'decos:Z-2026-0412'], pair: $pair));
+		$this->assertFalse(condition: SourceIdentifierFilter::holds(publication: ['sourceIdentifiers' => ['decos:Z-2026-0412']], pair: $pair));
+		$this->assertFalse(condition: SourceIdentifierFilter::holds(publication: [], pair: $pair));
 	}//end testTheInternalListFiltersOnSystemAndIdentifier()
 }//end class
