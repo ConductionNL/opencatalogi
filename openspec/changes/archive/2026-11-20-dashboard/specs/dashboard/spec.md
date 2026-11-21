@@ -213,15 +213,20 @@ The `DirectorySync` background job MUST be registered in `appinfo/info.xml` and 
 - THEN `DirectoryService::doCronSync()` MUST be called to sync all known directories
 - AND parallel runs MUST be prevented by the job's registration mechanism
 
-### Requirement: Add listing from external URL MUST work as a public endpoint (DIR-005)
-`POST /api/listings/add` MUST accept a URL and add or update the corresponding listing without requiring authentication.
+### Requirement: Add listing from external URL MUST be an administrator action (DIR-005)
+`POST /api/listings/add` MUST accept a URL from an administrator and add or update the corresponding listing; an anonymous or non-admin caller MUST be refused (superseded by LST-003 / harden-listings-admin-write-surface).
 
 #### Scenario: Add listing from external URL
 - GIVEN an external OpenCatalogi instance publishes a directory at a known URL
-- WHEN a POST request is made to `/api/listings/add` with `{"url": "https://external.example.nl/api/directory"}`
+- WHEN an administrator POSTs `{"url": "https://external.example.nl/api/directory"}` to `/api/listings/add`
 - THEN `DirectoryService::syncDirectory()` MUST process the URL
 - AND a new listing MUST be created or an existing one updated
-- AND the endpoint MUST be accessible without authentication
+
+#### Scenario: An anonymous caller is refused
+- GIVEN a caller without a session
+- WHEN it POSTs a URL to `/api/listings/add`
+- THEN the response MUST be 403
+- AND `DirectoryService::syncDirectory()` MUST NOT be called
 
 ### Requirement: Anti-loop protection MUST prevent infinite sync cycles (DIR-006)
 `DirectoryService` MUST track processed directory URLs to prevent infinite synchronisation loops between federated instances.
@@ -314,7 +319,7 @@ _None — this spec captures the current feature set with two known bug fixes._
 - **LST-001..006**: Implemented — full CRUD for listings via `ListingController`.
 - **DIR-001..003**: Implemented — directory data aggregation and sync endpoints work.
 - **DIR-004**: Implemented — `DirectorySync` cron registered and runs hourly.
-- **DIR-005**: Implemented — `POST /api/listings/add` public endpoint works.
+- **DIR-005**: Implemented — `POST /api/listings/add` works for administrators and refuses anonymous callers.
 - **DIR-006**: Implemented — anti-loop protection in `DirectoryService` with 5-minute TTL.
 - **DIR-007**: Bug — `Broadcast` cron class exists but not registered in `info.xml`. **Fix required.**
 - **DIR-008..011**: Implemented — CORS, publication endpoint auto-detection, staleness checking, catalog-to-listing conversion.
