@@ -401,7 +401,11 @@ describe('Settings embargo lift groups (REQ-PSG-002)', () => {
 			data: { publication_embargo_lift_groups: '["griffie","admin"]' },
 		})
 		const state = page({
-			liftGroups: { text: 'griffie, admin, griffie', saving: false, error: '' },
+			liftGroups: {
+				text: 'griffie, admin, griffie',
+				saving: false,
+				error: '',
+			},
 		})
 		await Settings.methods.saveLiftGroups.call(state)
 
