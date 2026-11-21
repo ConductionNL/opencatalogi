@@ -221,9 +221,10 @@ class SitemapDocumentFields {
 	}//end storedElements()
 
 	/**
-	 * The responsible organisation: the publisher, while it has a name and a TOOI URI, until it is stored apart.
+	 * The responsible organisation element, while it has a name and a TOOI URI: the
+	 * publisher, or the organisation the publication names as responsible (REQ-PRO-001).
 	 *
-	 * @param array $publisher The publisher element.
+	 * @param array $publisher The organisation element.
 	 *
 	 * @return array|null The verantwoordelijke element, or null.
 	 *

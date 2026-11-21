@@ -54,7 +54,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	/**
 	 * The reported axes whose absence does not hold a document back: the element is optional in the XSD.
 	 */
-	private const OPTIONAL_GAPS = ['documentsoort'];
+	private const OPTIONAL_GAPS = ['documentsoort', 'verantwoordelijke'];
 
 	/**
 	 * The app-config key holding the moment the DiWoo fields were introduced (written by the repair step).
@@ -215,7 +215,10 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 
 		// Each optional axis is its element, or null with the violation that omits it.
 		$elements = $this->optionalAxes(publication: $publication, file: $file, mapped: $mapped);
-		$gaps = $this->axisGaps(diwoo: $diwoo, elements: $elements);
+		$gaps = array_merge(
+			$this->axisGaps(diwoo: $diwoo, elements: $elements),
+			$this->responsibleGaps(publication: $publication, diwoo: $diwoo)
+		);
 		foreach ($gaps as $gap) {
 			$this->addViolation(violations: $violations, loc: $loc, axis: $gap[0], reason: $gap[1]);
 		}
@@ -370,7 +373,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 		$core = [
 			'diwoo:creatiedatum' => $stored['diwoo:creatiedatum'],
 			'diwoo:publisher' => $publisher,
-			'diwoo:verantwoordelijke' => $this->fields->responsible(publisher: $publisher),
+			'diwoo:verantwoordelijke' => $this->responsibleElement(publication: $publication, publisher: $publisher),
 			'diwoo:format' => $format,
 			'diwoo:language' => $stored['diwoo:language'],
 			'diwoo:geldigheid' => $stored['diwoo:geldigheid'],
@@ -481,6 +484,64 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 
 		return $publisher;
 	}//end publisherElement()
+
+	/**
+	 * The responsible organisation: the one `responsibleOrganization` names, or
+	 * the publisher when the publication names none (REQ-PRO-001).
+	 *
+	 * The element is omitted when the organisation has no TOOI identifier or no
+	 * name; {@see responsibleGaps()} reports why.
+	 *
+	 * @param array $publication The publication.
+	 * @param array $publisher   The publisher element.
+	 *
+	 * @return array|null The verantwoordelijke element, or null.
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-a-publication-names-its-responsible-organisation-apart-from-its-publisher-req-pro-001
+	 */
+	private function responsibleElement(array $publication, array $publisher): ?array {
+		$responsible = $this->stringOrNull(value: ($publication['responsibleOrganization'] ?? null));
+		if ($responsible === null) {
+			return $this->fields->responsible(publisher: $publisher);
+		}
+
+		$organisation = $this->organisationByUuid(uuid: $responsible);
+		$element = ['#text' => trim((string)$this->stringOrNull(value: ($organisation['name'] ?? null)))];
+		$orgUri = $this->tooiVocabulary->resolveOrganisatie($this->stringOrNull(value: ($organisation['tooiIdentifier'] ?? null)));
+		if ($orgUri !== null) {
+			$element['@resource'] = $orgUri;
+		}
+
+		return $this->fields->responsible(publisher: $element);
+	}//end responsibleElement()
+
+	/**
+	 * Why a responsible organisation the publication names apart from its
+	 * publisher is not in the document: no TOOI identifier, or no name.
+	 *
+	 * Without a separate one the publisher is responsible, and its own gaps
+	 * are reported as the publisher's.
+	 *
+	 * @param array                $publication The publication.
+	 * @param array<string, mixed> $diwoo       The core DiWoo element.
+	 *
+	 * @return array<int, array{0: string, 1: string}> The gap, or none.
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-a-publication-names-its-responsible-organisation-apart-from-its-publisher-req-pro-001
+	 */
+	private function responsibleGaps(array $publication, array $diwoo): array {
+		$responsible = $this->stringOrNull(value: ($publication['responsibleOrganization'] ?? null));
+		if ($responsible === null || isset($diwoo['diwoo:verantwoordelijke']) === true) {
+			return [];
+		}
+
+		$organisation = $this->organisationByUuid(uuid: $responsible);
+		if ($this->stringOrNull(value: ($organisation['tooiIdentifier'] ?? null)) === null) {
+			return [['verantwoordelijke', 'responsible organisation has no TOOI identifier']];
+		}
+
+		return [['verantwoordelijke', 'responsible organisation has no name']];
+	}//end responsibleGaps()
 
 	/**
 	 * The informatiecategorie element, bound to an official TOOI category URI,
@@ -821,12 +882,25 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 			return [];
 		}
 
-		if (array_key_exists($organisation, $this->organisationCache) === false) {
-			$this->organisationCache[$organisation] = $this->fetchOrganisation(organisation: $organisation);
+		return $this->organisationByUuid(uuid: $organisation);
+	}//end organisationRow()
+
+	/**
+	 * An organisation's name and TOOI identifier by its uuid, looked up once per request.
+	 *
+	 * @param string $uuid The organisation uuid.
+	 *
+	 * @return array<string, mixed> The organisation, or empty when it is not found.
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-a-publication-names-its-responsible-organisation-apart-from-its-publisher-req-pro-001
+	 */
+	private function organisationByUuid(string $uuid): array {
+		if (array_key_exists($uuid, $this->organisationCache) === false) {
+			$this->organisationCache[$uuid] = $this->fetchOrganisation(organisation: $uuid);
 		}
 
-		return $this->organisationCache[$organisation];
-	}//end organisationRow()
+		return $this->organisationCache[$uuid];
+	}//end organisationByUuid()
 
 	/**
 	 * Read an OpenRegister organisation's name and TOOI identifier by its UUID.
