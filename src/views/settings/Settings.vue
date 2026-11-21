@@ -488,9 +488,9 @@
 				<!-- The groups that may lift an embargo (publication-schedule-guards REQ-PSG-002) -->
 				<div class="option-section" data-testid="embargo-lift-groups">
 					<NcTextField
-						v-model="liftGroups"
+						v-model="liftGroups.text"
 						:label="t('opencatalogi', 'Groups that may lift an embargo')"
-						:disabled="savingLiftGroups" />
+						:disabled="liftGroups.saving" />
 					<p class="option-description">
 						{{
 							t(
@@ -499,16 +499,16 @@
 							)
 						}}
 					</p>
-					<NcNoteCard v-if="liftGroupsError" type="error">
-						{{ liftGroupsError }}
+					<NcNoteCard v-if="liftGroups.error" type="error">
+						{{ liftGroups.error }}
 					</NcNoteCard>
 					<div class="button-container">
 						<NcButton
 							variant="secondary"
-							:disabled="savingLiftGroups"
+							:disabled="liftGroups.saving"
 							@click="saveLiftGroups">
 							<template #icon>
-								<NcLoadingIcon v-if="savingLiftGroups" :size="20" />
+								<NcLoadingIcon v-if="liftGroups.saving" :size="20" />
 								<Save v-else :size="20" />
 							</template>
 							{{ t('opencatalogi', 'Save') }}
@@ -941,9 +941,7 @@ export default defineComponent({
 			publicCacheSeconds: '60',
 			savingPublicCache: false,
 			publicCacheError: '',
-			liftGroups: 'admin',
-			savingLiftGroups: false,
-			liftGroupsError: '',
+			liftGroups: { text: 'admin', saving: false, error: '' },
 			// Languages offered to editors (publication-translations D6).
 			publicationLanguages: ['nl', 'en'],
 			savingPublicationLanguages: false,
@@ -1152,9 +1150,12 @@ export default defineComponent({
 				configuration && configuration.publication_languages,
 			)
 
-			this.liftGroups = liftGroupsText(
-				configuration && configuration.publication_embargo_lift_groups,
-			)
+			this.liftGroups = {
+				...this.liftGroups,
+				text: liftGroupsText(
+					configuration && configuration.publication_embargo_lift_groups,
+				),
+			}
 
 			if (configuration && configuration.cors_allowed_origins !== undefined) {
 				this.corsOrigins = corsOriginLines(configuration.cors_allowed_origins)
@@ -1786,27 +1787,27 @@ export default defineComponent({
 		 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.1
 		 */
 		async saveLiftGroups() {
-			this.savingLiftGroups = true
-			this.liftGroupsError = ''
+			this.liftGroups.saving = true
+			this.liftGroups.error = ''
 
 			try {
 				const response = await putSettings({
 					publication_embargo_lift_groups: liftGroupsPayload(
-						this.liftGroups,
+						this.liftGroups.text,
 					),
 				})
 				const stored =
 					response.data && response.data.publication_embargo_lift_groups
 				if (stored !== undefined) {
-					this.liftGroups = liftGroupsText(stored)
+					this.liftGroups.text = liftGroupsText(stored)
 				}
 			} catch {
-				this.liftGroupsError = this.t(
+				this.liftGroups.error = this.t(
 					'opencatalogi',
 					'The groups could not be saved. Try again.',
 				)
 			} finally {
-				this.savingLiftGroups = false
+				this.liftGroups.saving = false
 			}
 		},
 

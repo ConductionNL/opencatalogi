@@ -381,43 +381,65 @@ describe('Settings embargo lift groups (REQ-PSG-002)', () => {
 		expect(liftGroupsPayload(text)).toEqual(ids)
 	})
 
+	it('takes the groups from the stored configuration', () => {
+		const state = page({
+			liftGroups: { text: 'admin', saving: false, error: '' },
+		})
+		Settings.methods.applyStoredConfiguration.call(state, {
+			publication_embargo_lift_groups: '["griffie"]',
+		})
+
+		expect(state.liftGroups).toEqual({
+			text: 'griffie',
+			saving: false,
+			error: '',
+		})
+	})
+
 	it('saves the groups and shows what the server stored', async () => {
 		axios.put.mockResolvedValue({
 			data: { publication_embargo_lift_groups: '["griffie","admin"]' },
 		})
-		const state = page({ liftGroups: 'griffie, admin, griffie' })
+		const state = page({
+			liftGroups: { text: 'griffie, admin, griffie', saving: false, error: '' },
+		})
 		await Settings.methods.saveLiftGroups.call(state)
 
 		expect(axios.put).toHaveBeenCalledWith('/apps/opencatalogi/api/settings', {
 			publication_embargo_lift_groups: ['griffie', 'admin'],
 		})
-		expect(state).toMatchObject({
-			liftGroups: 'griffie, admin',
-			liftGroupsError: '',
-			savingLiftGroups: false,
+		expect(state.liftGroups).toEqual({
+			text: 'griffie, admin',
+			saving: false,
+			error: '',
 		})
 	})
 
 	it('keeps the field when the server sends nothing back', async () => {
 		axios.put.mockResolvedValue({})
-		const state = page({ liftGroups: 'griffie' })
+		const state = page({
+			liftGroups: { text: 'griffie', saving: false, error: '' },
+		})
 		await Settings.methods.saveLiftGroups.call(state)
 
-		expect(state).toMatchObject({
-			liftGroups: 'griffie',
-			liftGroupsError: '',
-			savingLiftGroups: false,
+		expect(state.liftGroups).toEqual({
+			text: 'griffie',
+			saving: false,
+			error: '',
 		})
 	})
 
 	it('reports a failed save', async () => {
 		axios.put.mockRejectedValue(new Error('down'))
-		const state = page({ liftGroups: 'griffie' })
+		const state = page({
+			liftGroups: { text: 'griffie', saving: false, error: '' },
+		})
 		await Settings.methods.saveLiftGroups.call(state)
 
-		expect(state).toMatchObject({
-			liftGroupsError: 'The groups could not be saved. Try again.',
-			savingLiftGroups: false,
+		expect(state.liftGroups).toEqual({
+			text: 'griffie',
+			saving: false,
+			error: 'The groups could not be saved. Try again.',
 		})
 	})
 })
