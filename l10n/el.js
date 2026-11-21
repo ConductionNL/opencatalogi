@@ -781,7 +781,9 @@ OC.L10N.register(
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Όταν είναι ενεργό, ένα πρόχειρο πρέπει να υποβληθεί και να εγκριθεί πριν μπορέσει να δημοσιευτεί. Όταν είναι ανενεργό, ένας συντάκτης μπορεί να δημοσιεύσει ένα πρόχειρο απευθείας.",
         "Delete publication": "Διαγραφή δημοσίευσης",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Θέλετε να διαγράψετε το \"{name}\"; Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Η δημοσίευση και τα συνημμένα της εξαφανίζονται από τη δημόσια σελίδα και από τον χάρτη ιστότοπου Woo. Η αρχειοθέτηση, αντίθετα, τα διατηρεί για την περίοδο διατήρησης."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Η δημοσίευση και τα συνημμένα της εξαφανίζονται από τη δημόσια σελίδα και από τον χάρτη ιστότοπου Woo. Η αρχειοθέτηση, αντίθετα, τα διατηρεί για την περίοδο διατήρησης.",
+        "Responsible organisation": "Υπεύθυνος οργανισμός",
+        "The organisation responsible for this publication, when it is not the publisher.": "Ο οργανισμός που είναι υπεύθυνος για αυτή τη δημοσίευση, όταν δεν είναι ο εκδότης."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -780,7 +780,9 @@
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Когато е включено, черновата трябва да бъде изпратена и одобрена, преди да може да бъде публикувана. Когато е изключено, редакторът може да публикува черновата директно.",
         "Delete publication": "Изтриване на публикацията",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Искате ли да изтриете \"{name}\"? Това действие не може да бъде отменено.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публикацията и нейните прикачени файлове изчезват от публичната страница и от картата на сайта на Woo. Архивирането, напротив, ги запазва за срока на съхранение."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публикацията и нейните прикачени файлове изчезват от публичната страница и от картата на сайта на Woo. Архивирането, напротив, ги запазва за срока на съхранение.",
+        "Responsible organisation": "Отговорна организация",
+        "The organisation responsible for this publication, when it is not the publisher.": "Организацията, отговорна за тази публикация, когато тя не е издателят."
     },
     "plurals": {}
 }

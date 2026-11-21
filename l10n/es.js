@@ -781,7 +781,9 @@ OC.L10N.register(
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Si está activado, un borrador debe enviarse y aprobarse antes de poder publicarse. Si está desactivado, un editor puede publicar un borrador directamente.",
         "Delete publication": "Eliminar publicación",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "¿Desea eliminar \"{name}\"? Esta acción no se puede deshacer.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicación y sus adjuntos desaparecen de la página pública y del mapa del sitio Woo. Archivarla, en cambio, los conserva durante el plazo de conservación."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicación y sus adjuntos desaparecen de la página pública y del mapa del sitio Woo. Archivarla, en cambio, los conserva durante el plazo de conservación.",
+        "Responsible organisation": "Organización responsable",
+        "The organisation responsible for this publication, when it is not the publisher.": "La organización responsable de esta publicación, cuando no es el editor."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -781,7 +781,9 @@ OC.L10N.register(
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Ja ieslēgts, melnraksts pirms publicēšanas ir jāiesniedz un jāapstiprina. Ja izslēgts, redaktors var publicēt melnrakstu uzreiz.",
         "Delete publication": "Dzēst publikāciju",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Vai vēlaties dzēst \"{name}\"? Šo darbību nevar atsaukt.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikācija un tās pielikumi pazūd no publiskās lapas un no Woo vietnes kartes. Arhivēšana turpretī tos saglabā uz glabāšanas termiņu."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikācija un tās pielikumi pazūd no publiskās lapas un no Woo vietnes kartes. Arhivēšana turpretī tos saglabā uz glabāšanas termiņu.",
+        "Responsible organisation": "Atbildīgā organizācija",
+        "The organisation responsible for this publication, when it is not the publisher.": "Organizācija, kas atbild par šo publikāciju, ja tā nav izdevējs."
     },
     "nplurals=2; plural=(n != 1);"
 )

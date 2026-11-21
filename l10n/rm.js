@@ -781,7 +781,9 @@ OC.L10N.register(
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Sche activà, sto in sboz vegnir inoltrà ed approvà avant ch'el po vegnir publitgà. Sche deactivà, po in redactur publitgar in sboz directamain.",
         "Delete publication": "Stizzar la publicaziun",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Vulais Vus stizzar \"{name}\"? Questa acziun na po betg vegnir revocada.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicaziun e ses agiunts svaneschan da la pagina publica e da la mappa da la website Woo. L’archivaziun als conserva percunter per il termin da conservaziun."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicaziun e ses agiunts svaneschan da la pagina publica e da la mappa da la website Woo. L’archivaziun als conserva percunter per il termin da conservaziun.",
+        "Responsible organisation": "Organisaziun responsabla",
+        "The organisation responsible for this publication, when it is not the publisher.": "L'organisaziun responsabla per questa publicaziun, sch'i n'è betg l'editur."
     },
     "nplurals=2; plural=(n != 1);"
 )

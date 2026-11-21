@@ -780,7 +780,9 @@
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Gdy włączone, wersja robocza musi zostać przesłana i zatwierdzona, zanim będzie można ją opublikować. Gdy wyłączone, redaktor może opublikować wersję roboczą bezpośrednio.",
         "Delete publication": "Usuń publikację",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Czy chcesz usunąć \"{name}\"? Tej operacji nie można cofnąć.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikacja i jej załączniki znikają ze strony publicznej i z mapy witryny Woo. Archiwizacja natomiast zachowuje je na okres przechowywania."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikacja i jej załączniki znikają ze strony publicznej i z mapy witryny Woo. Archiwizacja natomiast zachowuje je na okres przechowywania.",
+        "Responsible organisation": "Odpowiedzialna organizacja",
+        "The organisation responsible for this publication, when it is not the publisher.": "Organizacja odpowiedzialna za tę publikację, jeśli nie jest nią wydawca."
     },
     "plurals": {}
 }

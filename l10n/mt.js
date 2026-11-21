@@ -781,7 +781,9 @@ OC.L10N.register(
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Meta jkun mixgħul, abbozz irid jiġi sottomess u approvat qabel ma jkun jista' jiġi ppubblikat. Meta jkun mitfi, editur jista' jippubblika abbozz direttament.",
         "Delete publication": "Ħassar il-pubblikazzjoni",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Trid tħassar \"{name}\"? Din l-azzjoni ma tistax titreġġa' lura.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Il-pubblikazzjoni u l-annessi tagħha jisparixxu mill-paġna pubblika u mill-mappa tas-sit Woo. L-arkivjar, minflok, iżommhom għall-perjodu taż-żamma."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Il-pubblikazzjoni u l-annessi tagħha jisparixxu mill-paġna pubblika u mill-mappa tas-sit Woo. L-arkivjar, minflok, iżommhom għall-perjodu taż-żamma.",
+        "Responsible organisation": "Organizzazzjoni responsabbli",
+        "The organisation responsible for this publication, when it is not the publisher.": "L-organizzazzjoni responsabbli għal din il-pubblikazzjoni, meta ma tkunx il-pubblikatur."
     },
     "nplurals=2; plural=(n != 1);"
 )

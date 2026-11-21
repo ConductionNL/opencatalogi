@@ -781,7 +781,9 @@ OC.L10N.register(
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Якщо ввімкнено, чернетку потрібно подати й затвердити, перш ніж її можна буде опублікувати. Якщо вимкнено, редактор може опублікувати чернетку одразу.",
         "Delete publication": "Видалити публікацію",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Ви хочете видалити \"{name}\"? Цю дію не можна скасувати.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публікація та її вкладення зникають з публічної сторінки та з карти сайту Woo. Архівування, навпаки, зберігає їх на строк зберігання."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публікація та її вкладення зникають з публічної сторінки та з карти сайту Woo. Архівування, навпаки, зберігає їх на строк зберігання.",
+        "Responsible organisation": "Відповідальна організація",
+        "The organisation responsible for this publication, when it is not the publisher.": "Організація, відповідальна за цю публікацію, якщо це не видавець."
     },
     "nplurals=2; plural=(n != 1);"
 )

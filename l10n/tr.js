@@ -781,7 +781,9 @@ OC.L10N.register(
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Açık olduğunda, bir taslağın yayımlanabilmesi için gönderilmesi ve onaylanması gerekir. Kapalı olduğunda, bir editör taslağı doğrudan yayımlayabilir.",
         "Delete publication": "Yayını sil",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "\"{name}\" ögesini silmek istiyor musunuz? Bu eylem geri alınamaz.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Yayın ve ekleri herkese açık sayfadan ve Woo site haritasından kaybolur. Arşivleme ise bunları saklama süresi boyunca korur."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Yayın ve ekleri herkese açık sayfadan ve Woo site haritasından kaybolur. Arşivleme ise bunları saklama süresi boyunca korur.",
+        "Responsible organisation": "Sorumlu kuruluş",
+        "The organisation responsible for this publication, when it is not the publisher.": "Yayıncı değilse, bu yayından sorumlu kuruluş."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1,0 +1,21 @@
+{
+	"_note": "Register fragment for publications-name-their-responsible-organisation (REQ-PRO-001). Adds to the publication the organisation responsible for it, apart from the publisher in `organization`: a shared service centre can publish for a municipality. Optional; when it is empty the publisher is the responsible organisation. The version is the publication schema's merged version, so the last fragment in name order (woo-x-access-boundary-hardening.json) carries the same bump.",
+	"components": {
+		"schemas": {
+			"publication": {
+				"slug": "publication",
+				"version": "0.0.12",
+				"properties": {
+					"responsibleOrganization": {
+						"type": "string",
+						"format": "uuid",
+						"$ref": "nc-organisation",
+						"facetable": true,
+						"title": "Responsible organisation",
+						"description": "The organisation responsible for this publication, when it is not the publisher."
+					}
+				}
+			}
+		}
+	}
+}
