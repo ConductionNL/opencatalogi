@@ -180,6 +180,10 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationAudienceCheck::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationAudienceCheck::class);
 
+		// A publication under embargo cannot have its publication date moved
+		// earlier by a caller who may not lift an embargo (publication-schedule-guards, REQ-PSG-001).
+		$context->registerEventListener(ObjectUpdatingEvent::class, EmbargoGuardListener::class);
+
 		// A Woo batch whose review task is rejected in OpenRegister goes back to its
 		// author with the task's comment (woo-review-surface, REQ-WRV-002).
 		$context->registerEventListener(TaskTerminalEvent::class, BatchReviewTaskListener::class);
