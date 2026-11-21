@@ -1,0 +1,40 @@
+{
+	"_note": "publication-schedule-guards REQ-PSG-003: remind the editors who may manage a publication once, a week before its automatic depublication. OpenRegister's ScheduledNotificationJob runs the rule daily over the publication schema; dedupeFields re-arms it only when the depublication date changes. The publication schema version that wins the scalar merge is raised in woo-x-access-boundary-hardening.json, which sorts last.",
+	"components": {
+		"schemas": {
+			"publication": {
+				"x-openregister-notifications": {
+					"depublication-due-soon": {
+						"trigger": {
+							"type": "scheduled",
+							"intervalSec": 86400,
+							"filter": {
+								"depublicationDate": {
+									"operator": "withinNext",
+									"value": "P7D"
+								}
+							},
+							"dedupeFields": [
+								"depublicationDate"
+							]
+						},
+						"enabled": true,
+						"channels": [
+							"nc-notification"
+						],
+						"recipients": [
+							{
+								"kind": "object-acl",
+								"permission": "manage"
+							}
+						],
+						"subject": {
+							"nl": "Publicatie {{title}} wordt op {{depublicationDate}} automatisch gedepubliceerd",
+							"en": "Publication {{title}} is depublished automatically on {{depublicationDate}}"
+						}
+					}
+				}
+			}
+		}
+	}
+}
