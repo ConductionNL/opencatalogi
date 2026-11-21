@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCP\AppFramework\Db\Entity;
 
@@ -59,34 +60,40 @@ class ReadyPublicationsService {
 	}//end __construct()
 
 	/**
-	 * The approved publications, optionally since a moment of approval and for one case reference.
+	 * The approved publications, optionally since a moment of approval, for one case reference and for one source identifier.
 	 *
-	 * @param DateTimeImmutable|null $since         Only publications approved at or after it.
-	 * @param string|null            $caseReference Only publications carrying exactly this case reference.
+	 * @param DateTimeImmutable|null $since            Only publications approved at or after it.
+	 * @param string|null            $caseReference    Only publications carrying exactly this case reference.
+	 * @param string|null            $sourceIdentifier `<system>:<identifier>`: only publications carrying that
+	 *                                                 entry in `sourceIdentifiers`, public or not.
 	 *
 	 * @return array{results: list<array<string, mixed>>, total: int, since: string|null}
 	 *
-	 * @throws \RuntimeException When the publication register is not configured or OpenRegister is unavailable.
+	 * @throws InvalidArgumentException When `sourceIdentifier` is given and is not `<system>:<identifier>`.
+	 * @throws \RuntimeException         When the publication register is not configured or OpenRegister is unavailable.
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-caller-lists-exactly-the-publications-ready-to-publish-req-plc-005
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SourceIdentifierFilter::parse() is a pure function over the parameter.
 	 */
-	public function ready(?DateTimeImmutable $since = null, ?string $caseReference = null): array {
-		$configuration = $this->openRegister->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
-		$query = [
-			'@self' => ['register' => $configuration['register'], 'schema' => $configuration['schema']],
-			'status' => 'approved',
-			'_limit' => self::LIMIT,
-		];
-		if ($caseReference !== null && $caseReference !== '') {
-			$query['caseReference'] = $caseReference;
+	public function ready(?DateTimeImmutable $since = null, ?string $caseReference = null, ?string $sourceIdentifier = null): array {
+		$pair = null;
+		if ($sourceIdentifier !== null && trim($sourceIdentifier) !== '') {
+			$pair = SourceIdentifierFilter::parse(value: $sourceIdentifier);
+			if ($pair === null) {
+				throw new InvalidArgumentException('sourceIdentifier is not <system>:<identifier>');
+			}
 		}
 
-		$page = $this->openRegister->objectService()->searchObjectsPaginated(query: $query, _rbac: true);
+		$page = $this->openRegister->objectService()->searchObjectsPaginated(query: $this->query(caseReference: $caseReference, pair: $pair), _rbac: true);
 
 		$results = [];
 		foreach ((array)($page['results'] ?? []) as $row) {
 			$publication = self::asArray(row: $row);
-			if (self::isReady(publication: $publication, since: $since, caseReference: $caseReference) === true) {
+			if (self::isReady(publication: $publication, since: $since, caseReference: $caseReference) === true
+				&& self::carries(publication: $publication, pair: $pair) === true
+			) {
 				$results[] = self::shown(publication: $publication);
 			}
 		}
@@ -97,6 +104,54 @@ class ReadyPublicationsService {
 			'since' => $since?->format(DATE_ATOM),
 		];
 	}//end ready()
+
+	/**
+	 * The query for the approved publications, with the case reference and the source identifier when asked.
+	 *
+	 * @param string|null                                    $caseReference The case reference, or none.
+	 * @param array{system: string, identifier: string}|null $pair          The parsed source identifier, or none.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @throws \RuntimeException When the publication register is not configured.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SourceIdentifierFilter::forInternalQuery() is a pure function over the query.
+	 */
+	private function query(?string $caseReference, ?array $pair): array {
+		$configuration = $this->openRegister->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
+		$query = [
+			'@self' => ['register' => $configuration['register'], 'schema' => $configuration['schema']],
+			'status' => 'approved',
+			'_limit' => self::LIMIT,
+		];
+		if ($caseReference !== null && $caseReference !== '') {
+			$query['caseReference'] = $caseReference;
+		}
+
+		if ($pair !== null) {
+			$query = SourceIdentifierFilter::forInternalQuery(query: $query, pair: $pair);
+		}
+
+		return $query;
+	}//end query()
+
+	/**
+	 * Whether a row carries the asked source identifier; true when none is asked.
+	 *
+	 * @param array<string, mixed>                           $publication The publication.
+	 * @param array{system: string, identifier: string}|null $pair        The parsed source identifier, or none.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SourceIdentifierFilter::holds() is a pure function over the row.
+	 */
+	private static function carries(array $publication, ?array $pair): bool {
+		return $pair === null || SourceIdentifierFilter::holds(publication: $publication, pair: $pair) === true;
+	}//end carries()
 
 	/**
 	 * Whether a row is approved, approved at or after `since`, and carries the asked case reference.

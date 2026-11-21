@@ -93,4 +93,33 @@ class SourceIdentifierFilterTest extends TestCase {
 			SourceIdentifierFilter::forPublicQuery(query: ['sourceIdentifier' => 'Z-1'], params: ['sourceIdentifier' => 'Z-1'])
 		);
 	}//end testAMalformedValueMatchesNothing()
+
+	/**
+	 * An internal list matches the pair on any entry, public or not, and a row
+	 * holds it only when both parts sit on one entry.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 */
+	public function testTheInternalListFiltersOnSystemAndIdentifier(): void {
+		$pair = ['system' => 'decos', 'identifier' => 'Z-2026-0412'];
+
+		$this->assertSame(
+			expected: ['status' => 'approved', 'sourceIdentifiers' => ['contains' => $pair]],
+			actual: SourceIdentifierFilter::forInternalQuery(query: ['status' => 'approved'], pair: $pair)
+		);
+
+		$private = ['sourceIdentifiers' => [['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false]]];
+		$this->assertTrue(condition: SourceIdentifierFilter::holds(publication: $private, pair: $pair));
+		$this->assertFalse(
+			condition: SourceIdentifierFilter::holds(
+				publication: ['sourceIdentifiers' => [['system' => 'decos', 'identifier' => 'other'], ['system' => 'raad', 'identifier' => 'Z-2026-0412']]],
+				pair: $pair
+			)
+		);
+		$this->assertFalse(condition: SourceIdentifierFilter::holds(publication: ['sourceIdentifiers' => 'decos:Z-2026-0412'], pair: $pair));
+		$this->assertFalse(condition: SourceIdentifierFilter::holds(publication: ['sourceIdentifiers' => ['decos:Z-2026-0412']], pair: $pair));
+		$this->assertFalse(condition: SourceIdentifierFilter::holds(publication: [], pair: $pair));
+	}//end testTheInternalListFiltersOnSystemAndIdentifier()
 }//end class

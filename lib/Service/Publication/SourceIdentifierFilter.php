@@ -102,4 +102,53 @@ final class SourceIdentifierFilter {
 		$query[self::PROPERTY] = [self::OPERATOR => array_merge($pair, ['public' => true])];
 		return $query;
 	}//end forPublicQuery()
+
+	/**
+	 * The query for an internal list: a match on any entry, public or not.
+	 *
+	 * An internal caller lists under its own read rights, so a private
+	 * identifier is a valid match there.
+	 *
+	 * @param array<string, mixed>                     $query The query built from the request.
+	 * @param array{system: string, identifier: string} $pair  The parsed parameter.
+	 *
+	 * @return array<string, mixed> The query to forward.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 */
+	public static function forInternalQuery(array $query, array $pair): array {
+		$query[self::PROPERTY] = [self::OPERATOR => ['system' => $pair['system'], 'identifier' => $pair['identifier']]];
+		return $query;
+	}//end forInternalQuery()
+
+	/**
+	 * Whether a publication carries an entry with exactly this system and identifier.
+	 *
+	 * Repeats the forwarded filter, so a backend that ignores the operator can
+	 * never widen an answer.
+	 *
+	 * @param array<string, mixed>                     $publication The publication as read.
+	 * @param array{system: string, identifier: string} $pair        The parsed parameter.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 */
+	public static function holds(array $publication, array $pair): bool {
+		$entries = ($publication[self::PROPERTY] ?? []);
+		if (is_array($entries) === false) {
+			return false;
+		}
+
+		foreach ($entries as $entry) {
+			if (is_array($entry) === true
+				&& ($entry['system'] ?? null) === $pair['system']
+				&& ($entry['identifier'] ?? null) === $pair['identifier']
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end holds()
 }//end class

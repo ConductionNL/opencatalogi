@@ -70,4 +70,12 @@ Internally, an authenticated caller lists through OpenRegister's object API with
 GET /index.php/apps/openregister/api/objects/{register}/{schema}?sourceIdentifiers[contains][system]=decos&sourceIdentifiers[contains][identifier]=Z-2026-0412
 ```
 
-That operator ships with OpenRegister (pull request 10588); until an OpenRegister with it is installed, the filter matches nothing useful. The ready list (`GET /api/publications/ready`) does not exist yet and gets the filter when it does.
+That operator ships with OpenRegister (pull request 10588); until an OpenRegister with it is installed, the filter matches nothing useful.
+
+The ready list takes the same parameter and, being authenticated, matches private entries too:
+
+```
+GET /index.php/apps/opencatalogi/api/publications/ready?sourceIdentifier=decos:Z-2026-0412
+```
+
+It lists the approved publications that carry an entry with exactly that system and identifier, under the caller's own read rights. A value without a colon is refused with 400.

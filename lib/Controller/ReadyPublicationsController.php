@@ -4,8 +4,9 @@
  * Ready publications controller
  *
  * `GET /api/publications/ready`: the publications in state `approved` that the
- * signed-in caller may read, filterable by `since` and `caseReference`
- * (publication-lifecycle-on-or REQ-PLC-005). Authenticated only.
+ * signed-in caller may read, filterable by `since`, `caseReference` and
+ * `sourceIdentifier` (publication-lifecycle-on-or REQ-PLC-005,
+ * publication-relations-place-and-source-ids REQ-PRS-003). Authenticated only.
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -29,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\Publication\ReadyPublicationsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -70,9 +72,17 @@ class ReadyPublicationsController extends Controller {
 	/**
 	 * `{results: [{id, title, catalog, caseReference, approvedAt, updated}], total, since}`; 401 without a session.
 	 *
+	 * `sourceIdentifier=<system>:<identifier>` matches an entry of
+	 * `sourceIdentifiers`, public or not; a value that is not of that form is a 400.
+	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-caller-lists-exactly-the-publications-ready-to-publish-req-plc-005
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 *
+	 * @no-admin-idor-exempt Takes no object id: the list is read through OpenRegister's object
+	 *   service with RBAC on (ReadyPublicationsService::ready()), so each caller sees only the
+	 *   publications its own read rights reach.
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -94,8 +104,15 @@ class ReadyPublicationsController extends Controller {
 
 		$caseReference = trim((string)$this->request->getParam('caseReference', ''));
 
+		$sourceIdentifier = trim((string)$this->request->getParam('sourceIdentifier', ''));
+
 		try {
-			return new JSONResponse(data: $this->ready->ready(since: $since, caseReference: $caseReference));
+			return new JSONResponse(data: $this->ready->ready(since: $since, caseReference: $caseReference, sourceIdentifier: $sourceIdentifier));
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(
+				data: ['error' => $this->l10n->t('Give sourceIdentifier as <system>:<identifier>.')],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
 		} catch (\Throwable $e) {
 			$this->logger->error('[ReadyPublicationsController] Listing the ready publications failed', ['exception' => $e]);
 			return new JSONResponse(
