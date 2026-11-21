@@ -125,8 +125,8 @@ class EmbargoLifts {
 	 *
 	 * @return object The publication as stored after the lift.
 	 *
-	 * @throws \OCA\OpenCatalogi\Service\Publication\PublishRefusedException When the lifecycle allows no publish from the stored state.
-	 * @throws \Throwable Whatever OpenRegister refuses.
+	 * @throws \Throwable A refused publish (PublishRefusedException when the lifecycle allows none from the
+	 *                    stored state), or whatever OpenRegister refuses.
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) PublishTransition::storedState() is a pure state helper.
 	 *
@@ -171,7 +171,7 @@ class EmbargoLifts {
 
 		try {
 			return (new DateTimeImmutable($value))->format(DATE_ATOM);
-		} catch (\Exception $e) {
+		} catch (\Throwable $e) {
 			return null;
 		}
 	}//end moment()
@@ -198,8 +198,7 @@ class EmbargoLifts {
 	 *
 	 * @return void
 	 *
-	 * @throws \RuntimeException When OpenRegister is not installed.
-	 * @throws \Throwable        When the entry cannot be written.
+	 * @throws \Throwable When OpenRegister is not installed or the entry cannot be written.
 	 *
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.1
 	 */
