@@ -1383,14 +1383,16 @@ class SitemapServiceTest extends TestCase {
 	 * @return \DOMXPath The rendered page.
 	 */
 	private function responsiblePage(array $fields): \DOMXPath {
-		return self::documentsOf($this->storedValuesPage(
-			[array_merge(['id' => 'besluit', 'title' => 'Besluit', 'wooCategory' => 'infocat012', 'creationDate' => '2026-09-30'], $fields)]
-		));
+		$publication = array_merge(['id' => 'besluit', 'title' => 'Besluit', 'wooCategory' => 'infocat012', 'creationDate' => '2026-09-30'], $fields);
+
+		return self::documentsOf(xml: $this->storedValuesPage(publications: [$publication]));
 	}
 
 	/**
 	 * REQ-PRO-001: a service centre publishes for a municipality; the publisher stays the
 	 * service centre and the responsible organisation is the municipality.
+	 *
+	 * @return void
 	 *
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-a-publication-names-its-responsible-organisation-apart-from-its-publisher-req-pro-001
 	 */
@@ -1412,6 +1414,8 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * REQ-PRO-001: without a separate responsible organisation the publisher is responsible.
 	 *
+	 * @return void
+	 *
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-a-publication-names-its-responsible-organisation-apart-from-its-publisher-req-pro-001
 	 */
 	public function testWithoutAResponsibleOrganisationThePublisherIsResponsible(): void {
@@ -1429,6 +1433,8 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * REQ-PRO-001: a responsible organisation without a TOOI identifier is left out of the
 	 * document, which is still served (the element is optional), and the validator names it.
+	 *
+	 * @return void
 	 *
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-a-publication-names-its-responsible-organisation-apart-from-its-publisher-req-pro-001
 	 */
@@ -1450,8 +1456,9 @@ class SitemapServiceTest extends TestCase {
 			'responsibleOrganization' => 'org-zonder-tooi',
 			'@self' => ['organisation' => 'org-uuid-1', 'files' => [$file]],
 		];
+		$noTooi = 'responsible organisation has no TOOI identifier';
 		$this->assertContains(
-			needle: ['documentLoc' => 'https://example.com/besluit.pdf', 'axis' => 'verantwoordelijke', 'reason' => 'responsible organisation has no TOOI identifier'],
+			needle: ['documentLoc' => 'https://example.com/besluit.pdf', 'axis' => 'verantwoordelijke', 'reason' => $noTooi],
 			haystack: $this->service->collectDiwooViolations([$publication])
 		);
 
@@ -2324,10 +2331,8 @@ class SitemapServiceTest extends TestCase {
 			fn (string $uuid): object => match ($uuid) {
 				'org-dordrecht' => $this->organisation(name: 'Gemeente Dordrecht', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0505'),
 				'org-zonder-naam' => $this->organisation(name: '', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0505'),
-				default => $this->organisation(
-					name: 'Gemeente Voorbeeld',
-					tooi: ($uuid === 'org-zonder-tooi' ? null : 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855')
-				),
+				'org-zonder-tooi' => $this->organisation(name: 'Gemeente Voorbeeld', tooi: null),
+				default => $this->organisation(name: 'Gemeente Voorbeeld', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855'),
 			}
 		);
 
