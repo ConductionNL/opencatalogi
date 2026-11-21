@@ -38,6 +38,7 @@ use Psr\Log\NullLogger;
  *
  * @covers \OCA\OpenCatalogi\Controller\ReadyPublicationsController
  * @covers \OCA\OpenCatalogi\Service\Publication\ReadyPublicationsService
+ * @covers \OCA\OpenCatalogi\Service\Publication\SourceIdentifierFilter
  */
 final class ReadyPublicationsControllerTest extends TestCase {
 
@@ -57,7 +58,7 @@ final class ReadyPublicationsControllerTest extends TestCase {
 		$this->rows = [
 			['id' => 'p-draft', 'title' => 'Concept', 'status' => 'draft'],
 			['id' => 'p-review', 'title' => 'In beoordeling', 'status' => 'in_review'],
-			['id' => 'p-yesterday', 'title' => 'Besluit gisteren', 'status' => 'approved', 'approvedAt' => '2026-11-16T15:00:00+00:00', 'caseReference' => 'Z-2026-1', '@self' => ['updated' => '2026-11-16T15:00:01+00:00']],
+			['id' => 'p-yesterday', 'title' => 'Besluit gisteren', 'status' => 'approved', 'approvedAt' => '2026-11-16T15:00:00+00:00', 'caseReference' => 'Z-2026-1', 'sourceIdentifiers' => [['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false]], '@self' => ['updated' => '2026-11-16T15:00:01+00:00']],
 			['id' => 'p-today', 'title' => 'Besluit vandaag', 'status' => 'approved', 'approvedAt' => '2026-11-17T08:30:00+00:00', 'caseReference' => 'Z-2026-2', 'catalog' => 'woo', '@self' => ['updated' => '2026-11-17T08:30:01+00:00']],
 			['id' => 'p-published', 'title' => 'Gepubliceerd', 'status' => 'published'],
 		];
@@ -149,6 +150,50 @@ final class ReadyPublicationsControllerTest extends TestCase {
 		self::assertSame(['p-yesterday'], array_column($body['results'], 'id'));
 		self::assertSame('Z-2026-1', $this->queries[0]['query']['caseReference']);
 	}//end testACaseReferenceIsMatchedExactly()
+
+	/**
+	 * `sourceIdentifier` is forwarded as a match on system and identifier, a
+	 * private entry included, and repeated on the rows, so a backend that
+	 * ignores the operator cannot widen the list.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 */
+	public function testASourceIdentifierFiltersTheReadyList(): void {
+		$body = $this->controller(params: ['sourceIdentifier' => 'decos:Z-2026-0412'])->index()->getData();
+
+		self::assertSame(['p-yesterday'], array_column($body['results'], 'id'));
+		self::assertSame(1, $body['total']);
+		self::assertSame(['contains' => ['system' => 'decos', 'identifier' => 'Z-2026-0412']], $this->queries[0]['query']['sourceIdentifiers']);
+	}//end testASourceIdentifierFiltersTheReadyList()
+
+	/**
+	 * A `sourceIdentifier` that is not `<system>:<identifier>` is a 400, and nothing is read.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 */
+	public function testAMalformedSourceIdentifierIsRefused(): void {
+		$response = $this->controller(params: ['sourceIdentifier' => 'Z-2026-0412'])->index();
+
+		self::assertSame(400, $response->getStatus());
+		self::assertSame([], $this->queries);
+	}//end testAMalformedSourceIdentifierIsRefused()
+
+	/**
+	 * Without `sourceIdentifier` the query carries no filter on the property.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 */
+	public function testWithoutASourceIdentifierNothingIsFiltered(): void {
+		$this->controller(params: ['sourceIdentifier' => '  '])->index();
+
+		self::assertArrayNotHasKey('sourceIdentifiers', $this->queries[0]['query']);
+	}//end testWithoutASourceIdentifierNothingIsFiltered()
 
 	/**
 	 * An unreadable `since` is a 400, and nothing is read.

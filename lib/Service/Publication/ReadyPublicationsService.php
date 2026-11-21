@@ -59,18 +59,22 @@ class ReadyPublicationsService {
 	}//end __construct()
 
 	/**
-	 * The approved publications, optionally since a moment of approval and for one case reference.
+	 * The approved publications, optionally since a moment of approval, for one case reference and for one source identifier.
 	 *
-	 * @param DateTimeImmutable|null $since         Only publications approved at or after it.
-	 * @param string|null            $caseReference Only publications carrying exactly this case reference.
+	 * @param DateTimeImmutable|null                         $since            Only publications approved at or after it.
+	 * @param string|null                                    $caseReference    Only publications carrying exactly this case reference.
+	 * @param array{system: string, identifier: string}|null $sourceIdentifier Only publications carrying this entry in `sourceIdentifiers`, public or not.
 	 *
 	 * @return array{results: list<array<string, mixed>>, total: int, since: string|null}
 	 *
 	 * @throws \RuntimeException When the publication register is not configured or OpenRegister is unavailable.
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-caller-lists-exactly-the-publications-ready-to-publish-req-plc-005
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SourceIdentifierFilter is a pure function over the query and the row.
 	 */
-	public function ready(?DateTimeImmutable $since = null, ?string $caseReference = null): array {
+	public function ready(?DateTimeImmutable $since = null, ?string $caseReference = null, ?array $sourceIdentifier = null): array {
 		$configuration = $this->openRegister->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
 		$query = [
 			'@self' => ['register' => $configuration['register'], 'schema' => $configuration['schema']],
@@ -81,12 +85,18 @@ class ReadyPublicationsService {
 			$query['caseReference'] = $caseReference;
 		}
 
+		if ($sourceIdentifier !== null) {
+			$query = SourceIdentifierFilter::forInternalQuery(query: $query, pair: $sourceIdentifier);
+		}
+
 		$page = $this->openRegister->objectService()->searchObjectsPaginated(query: $query, _rbac: true);
 
 		$results = [];
 		foreach ((array)($page['results'] ?? []) as $row) {
 			$publication = self::asArray(row: $row);
-			if (self::isReady(publication: $publication, since: $since, caseReference: $caseReference) === true) {
+			if (self::isReady(publication: $publication, since: $since, caseReference: $caseReference) === true
+				&& ($sourceIdentifier === null || SourceIdentifierFilter::holds(publication: $publication, pair: $sourceIdentifier) === true)
+			) {
 				$results[] = self::shown(publication: $publication);
 			}
 		}

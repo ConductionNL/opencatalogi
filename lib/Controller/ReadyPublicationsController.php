@@ -4,8 +4,9 @@
  * Ready publications controller
  *
  * `GET /api/publications/ready`: the publications in state `approved` that the
- * signed-in caller may read, filterable by `since` and `caseReference`
- * (publication-lifecycle-on-or REQ-PLC-005). Authenticated only.
+ * signed-in caller may read, filterable by `since`, `caseReference` and
+ * `sourceIdentifier` (publication-lifecycle-on-or REQ-PLC-005,
+ * publication-relations-place-and-source-ids REQ-PRS-003). Authenticated only.
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,6 +31,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Service\Publication\ReadyPublicationsService;
+use OCA\OpenCatalogi\Service\Publication\SourceIdentifierFilter;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -70,9 +72,15 @@ class ReadyPublicationsController extends Controller {
 	/**
 	 * `{results: [{id, title, catalog, caseReference, approvedAt, updated}], total, since}`; 401 without a session.
 	 *
+	 * `sourceIdentifier=<system>:<identifier>` matches an entry of
+	 * `sourceIdentifiers`, public or not; a value that is not of that form is a 400.
+	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-caller-lists-exactly-the-publications-ready-to-publish-req-plc-005
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SourceIdentifierFilter::parse() is a pure function over the parameter.
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -94,8 +102,14 @@ class ReadyPublicationsController extends Controller {
 
 		$caseReference = trim((string)$this->request->getParam('caseReference', ''));
 
+		$sourceParam = trim((string)$this->request->getParam(SourceIdentifierFilter::PARAM, ''));
+		$sourceIdentifier = SourceIdentifierFilter::parse(value: $sourceParam);
+		if ($sourceParam !== '' && $sourceIdentifier === null) {
+			return new JSONResponse(data: ['error' => $this->l10n->t('Give sourceIdentifier as <system>:<identifier>.')], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
 		try {
-			return new JSONResponse(data: $this->ready->ready(since: $since, caseReference: $caseReference));
+			return new JSONResponse(data: $this->ready->ready(since: $since, caseReference: $caseReference, sourceIdentifier: $sourceIdentifier));
 		} catch (\Throwable $e) {
 			$this->logger->error('[ReadyPublicationsController] Listing the ready publications failed', ['exception' => $e]);
 			return new JSONResponse(
