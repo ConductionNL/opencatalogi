@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Chcete odstrániť \"{name}\"? Túto akciu nie je možné vrátiť späť.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikácia a jej prílohy zmiznú z verejnej stránky a z mapy stránok Woo. Archivácia ich naopak uchová počas lehoty uchovávania.",
         "Responsible organisation": "Zodpovedná organizácia",
-        "The organisation responsible for this publication, when it is not the publisher.": "Organizácia zodpovedná za túto publikáciu, ak to nie je vydavateľ."
+        "The organisation responsible for this publication, when it is not the publisher.": "Organizácia zodpovedná za túto publikáciu, ak to nie je vydavateľ.",
+        "The import failed.": "Import zlyhal.",
+        "Failed on {date}": "Zlyhalo {date}",
+        "Only a table whose import failed can be retried.": "Znova je možné skúsiť iba tabuľku, ktorej import zlyhal."
     },
     "nplurals=2; plural=(n != 1);"
 )

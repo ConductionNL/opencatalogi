@@ -148,6 +148,25 @@ interface PublishedTableServiceInterface {
 	public function publishAttachment(object $publication, string $fileId, ?IUser $user = null): array;
 
 	/**
+	 * Import a stored table again from its publication's attachment.
+	 *
+	 * The table goes through importing to ready or failed like a first import;
+	 * a retry of a failed table uses it (REQ-DFA-004).
+	 *
+	 * @param array<string, mixed> $table      The stored table record.
+	 * @param string|null          $importedBy Who started it.
+	 *
+	 * @return array<string, mixed> The stored table record.
+	 *
+	 * @throws \InvalidArgumentException When the publication or its attachment is gone.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-the-publication-page-shows-a-failed-table-req-dfa-004
+	 *
+	 * @contract-shift internal-only — PublishedTableService, in this app, is its only implementer; no other fleet app references the interface.
+	 */
+	public function reimport(array $table, ?string $importedBy = null): array;
+
+	/**
 	 * Every table of a publication, whatever its status, for its editors.
 	 *
 	 * @param string $publicationId The publication.

@@ -137,6 +137,47 @@ class PublishedTableEditController extends Controller {
 	}//end updateDictionary()
 
 	/**
+	 * Import a failed table of the publication again, as the signed-in editor.
+	 *
+	 * The table goes through importing to ready or failed; a new failure
+	 * notifies again (REQ-DFA-001), because the retry first stores `importing`.
+	 *
+	 * @param string $id      The publication.
+	 * @param string $tableId The failed table.
+	 *
+	 * @return JSONResponse The table record after the retry, or the refusal.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-the-publication-page-shows-a-failed-table-req-dfa-004
+	 */
+	#[NoAdminRequired]
+	public function retry(string $id, string $tableId): JSONResponse {
+		$refusal = $this->guard->guard(id: $id)[1];
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$table = $this->tables->findTable(tableId: $tableId);
+		if ($table === null || (string)($table['publication'] ?? '') !== $id) {
+			return $this->unknownTable(tableId: $tableId);
+		}
+
+		if (($table['status'] ?? null) !== 'failed') {
+			return new JSONResponse(
+				data: ['error' => 'table-not-failed', 'message' => $this->l10n->t('Only a table whose import failed can be retried.')],
+				statusCode: Http::STATUS_CONFLICT
+			);
+		}
+
+		try {
+			return new JSONResponse(data: $this->tables->reimport(table: $table, importedBy: $this->guard->user()?->getUID()));
+		} catch (InvalidArgumentException $e) {
+			return $this->badRequest(message: $e->getMessage());
+		} catch (\Throwable $e) {
+			return $this->notPublished(id: $id, exception: $e);
+		}
+	}//end retry()
+
+	/**
 	 * Publish the requested attachment as a table and answer with the table record.
 	 *
 	 * @param string $id          The publication.

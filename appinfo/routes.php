@@ -171,6 +171,8 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publishedTableEdit#index', 'url' => '/api/publications/{id}/tables', 'verb' => 'GET'],
 		['name' => 'publishedTableEdit#create', 'url' => '/api/publications/{id}/tables', 'verb' => 'POST'],
 		['name' => 'publishedTableEdit#updateDictionary', 'url' => '/api/publications/{id}/tables/{tableId}/dictionary', 'verb' => 'PUT'],
+		// Retry a failed table import (data-file-import-failure-alert, REQ-DFA-004).
+		['name' => 'publishedTableEdit#retry', 'url' => '/api/publications/{id}/tables/{tableId}/retry', 'verb' => 'POST'],
 		// Dataset views, editor side: list, add or change, and remove the views of a published table (REQ-DSV-001).
 		['name' => 'datasetViewEdit#index', 'url' => '/api/publications/{id}/tables/{tableId}/views', 'verb' => 'GET'],
 		['name' => 'datasetViewEdit#save', 'url' => '/api/publications/{id}/tables/{tableId}/views', 'verb' => 'POST'],

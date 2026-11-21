@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Vulais Vus stizzar \"{name}\"? Questa acziun na po betg vegnir revocada.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicaziun e ses agiunts svaneschan da la pagina publica e da la mappa da la website Woo. L’archivaziun als conserva percunter per il termin da conservaziun.",
         "Responsible organisation": "Organisaziun responsabla",
-        "The organisation responsible for this publication, when it is not the publisher.": "L'organisaziun responsabla per questa publicaziun, sch'i n'è betg l'editur."
+        "The organisation responsible for this publication, when it is not the publisher.": "L'organisaziun responsabla per questa publicaziun, sch'i n'è betg l'editur.",
+        "The import failed.": "L'import n'è betg reussì.",
+        "Failed on {date}": "Betg reussì ils {date}",
+        "Only a table whose import failed can be retried.": "Mo ina tabella da la quala l'import n'è betg reussì po vegnir empruvada danovamain."
     },
     "nplurals=2; plural=(n != 1);"
 )

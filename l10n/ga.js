@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "An bhfuil fonn ort \"{name}\" a scriosadh? Ní féidir an gníomh seo a chealú.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Imíonn an foilseachán agus a cheangaltáin ón leathanach poiblí agus ó léarscáil láithreáin Woo. Coinníonn cartlannú iad ar feadh na tréimhse coinneála ina ionad sin.",
         "Responsible organisation": "Eagraíocht fhreagrach",
-        "The organisation responsible for this publication, when it is not the publisher.": "An eagraíocht atá freagrach as an bhfoilseachán seo, nuair nach é an foilsitheoir í."
+        "The organisation responsible for this publication, when it is not the publisher.": "An eagraíocht atá freagrach as an bhfoilseachán seo, nuair nach é an foilsitheoir í.",
+        "The import failed.": "Theip ar an iompórtáil.",
+        "Failed on {date}": "Theip ar {date}",
+        "Only a table whose import failed can be retried.": "Ní féidir triail eile a bhaint ach as tábla ar theip ar a iompórtáil."
     },
     "nplurals=2; plural=(n != 1);"
 )

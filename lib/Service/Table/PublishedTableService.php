@@ -277,22 +277,31 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	/**
 	 * Store the table importing, import, and store it ready or failed.
 	 *
+	 * A failed import records when it failed in `failedAt`, which the Tables
+	 * section shows next to the error (REQ-DFA-004).
+	 *
 	 * @param array<string, mixed> $table The table record.
 	 * @param TableImportRun       $run   The CSV, the editor, who started it when not the editor, and
 	 *                                    the row schema when just created (else looked up from the table).
 	 *
 	 * @return array<string, mixed> The stored table record.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-the-publication-page-shows-a-failed-table-req-dfa-004
 	 */
 	private function lifecycle(array $table, TableImportRun $run): array {
 		$table['status'] = self::STATUS_IMPORTING;
 		$table['importedBy'] = ($run->importedBy ?? ($run->user?->getUID() ?? (string)($table['importedBy'] ?? '')));
-		unset($table['lastError']);
+		unset($table['lastError'], $table['failedAt']);
 		$stored = (array)self::plain(value: $this->tables()->save(object: $table));
 
 		try {
 			$outcome = $this->import(table: $table, run: $run);
 		} catch (\Throwable $e) {
 			$outcome = ['status' => self::STATUS_FAILED, 'lastError' => self::errorText(message: $e->getMessage())];
+		}
+
+		if ($outcome['status'] === self::STATUS_FAILED) {
+			$outcome['failedAt'] = gmdate('c');
 		}
 
 		return (array)self::plain(value: $this->tables()->save(object: array_merge($stored, $outcome)));

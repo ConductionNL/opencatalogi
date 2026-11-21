@@ -711,6 +711,12 @@ class PublishedTableServiceTest extends TestCase {
 		$this->assertSame('failed', $second['status']);
 		$this->assertSame('Row 12408: bedrag is not a number', $second['lastError']);
 		$this->assertSame('anna', $second['importedBy']);
+		$this->assertMatchesRegularExpression(
+			pattern: '/^\d{4}-\d{2}-\d{2}T/',
+			string: $second['failedAt'],
+			message: 'the failure carries its time (REQ-DFA-004)'
+		);
+		$this->assertArrayNotHasKey(key: 'failedAt', array: $first);
 		$this->assertSame($editor, $this->openRegister->previews[0][1]);
 		$this->assertSame('failed', $table['status']);
 	}//end testAFailedPreviewGoesFromImportingToFailed()
@@ -746,7 +752,16 @@ class PublishedTableServiceTest extends TestCase {
 		$this->openRegister->schema = new TableFakeEntity(['id' => 42]);
 
 		$table = $this->service->importTable(
-			table: ['id' => 't9', 'publication' => 'p1', 'file' => '77', 'schema' => '42', 'status' => 'failed', 'lastError' => 'Row 3: old', 'importedBy' => 'anna'],
+			table: [
+				'id' => 't9',
+				'publication' => 'p1',
+				'file' => '77',
+				'schema' => '42',
+				'status' => 'failed',
+				'lastError' => 'Row 3: old',
+				'failedAt' => '2026-11-20T10:00:00+00:00',
+				'importedBy' => 'anna',
+			],
 			file: new TableFile(path: '/tmp/speeltuinen.csv', id: '77', name: 'speeltuinen.csv'),
 			importedBy: 'bram'
 		);
@@ -758,6 +773,8 @@ class PublishedTableServiceTest extends TestCase {
 		$this->assertSame('ready', $table['status']);
 		$this->assertSame('bram', $table['importedBy']);
 		$this->assertArrayNotHasKey('lastError', $table);
+		$this->assertArrayNotHasKey(key: 'failedAt', array: $first, message: 'a retry clears the old failure time');
+		$this->assertArrayNotHasKey(key: 'failedAt', array: $table);
 	}//end testAReimportOfAStoredTable()
 
 	/**

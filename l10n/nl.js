@@ -2087,7 +2087,10 @@ OC.L10N.register(
         "Members of these groups may publish a publication before its publication date. They give a reason, and every lift is logged. Separate group ids with commas.": "Leden van deze groepen mogen een publicatie publiceren vóór de publicatiedatum. Ze geven een reden op, en elke opheffing wordt vastgelegd. Scheid groeps-id’s met komma’s.",
         "The groups could not be saved. Try again.": "De groepen konden niet worden opgeslagen. Probeer het opnieuw.",
         "Responsible organisation": "Verantwoordelijke organisatie",
-        "The organisation responsible for this publication, when it is not the publisher.": "De organisatie die verantwoordelijk is voor deze publicatie, als dat niet de publicerende organisatie is."
+        "The organisation responsible for this publication, when it is not the publisher.": "De organisatie die verantwoordelijk is voor deze publicatie, als dat niet de publicerende organisatie is.",
+        "The import failed.": "Het inlezen is mislukt.",
+        "Failed on {date}": "Mislukt op {date}",
+        "Only a table whose import failed can be retried.": "Alleen een tabel waarvan het inlezen is mislukt, kan opnieuw worden geprobeerd."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Wëllt Dir \"{name}\" läschen? Dës Aktioun kann net réckgängeg gemaach ginn.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "D’Verëffentlechung an hir Unhäng verschwannen vun der ëffentlecher Säit an aus der Woo-Sitemap. Archivéieren behält se amplaz fir d’Openthalsfrist.",
         "Responsible organisation": "Verantwortlech Organisatioun",
-        "The organisation responsible for this publication, when it is not the publisher.": "D'Organisatioun, déi fir dës Publikatioun verantwortlech ass, wann et net den Editeur ass."
+        "The organisation responsible for this publication, when it is not the publisher.": "D'Organisatioun, déi fir dës Publikatioun verantwortlech ass, wann et net den Editeur ass.",
+        "The import failed.": "Den Import ass feelgeschloen.",
+        "Failed on {date}": "Feelgeschloen den {date}",
+        "Only a table whose import failed can be retried.": "Nëmmen eng Tabell, där hiren Import feelgeschloen ass, kann nach eng Kéier probéiert ginn."
     },
     "nplurals=2; plural=(n != 1);"
 )

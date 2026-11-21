@@ -256,12 +256,24 @@ function slotStub(name) {
 	}
 }
 
+/**
+ * A status badge stand-in that renders its label, so a spec can read it.
+ */
+const CnStatusBadge = {
+	name: 'CnStatusBadge',
+	props: { label: { type: String, default: '' }, variant: { type: String, default: 'default' } },
+	render() {
+		return h('span', { class: 'CnStatusBadge-stub', 'data-variant': this.variant }, this.label)
+	},
+}
+
 module.exports = {
 	// The real barrel ends in `export * from '@nextcloud/vue'`, so an Nc* component
 	// imported from '@conduction/nextcloud-vue' resolves to the same stub here.
 	...require('./nextcloud-vue.js'),
 	CnDetailCard: slotStub('CnDetailCard'),
 	CnDetailGrid: slotStub('CnDetailGrid'),
+	CnStatusBadge,
 	createObjectStore,
 	useObjectStore: createObjectStore('conduction-objects'),
 	CnAppNav,

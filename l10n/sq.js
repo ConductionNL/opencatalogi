@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Dëshironi të fshini \"{name}\"? Ky veprim nuk mund të zhbëhet.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Botimi dhe bashkëngjitjet e tij zhduken nga faqja publike dhe nga harta e sajtit Woo. Arkivimi, përkundrazi, i ruan ato për afatin e ruajtjes.",
         "Responsible organisation": "Organizata përgjegjëse",
-        "The organisation responsible for this publication, when it is not the publisher.": "Organizata përgjegjëse për këtë botim, kur nuk është botuesi."
+        "The organisation responsible for this publication, when it is not the publisher.": "Organizata përgjegjëse për këtë botim, kur nuk është botuesi.",
+        "The import failed.": "Importimi dështoi.",
+        "Failed on {date}": "Dështoi më {date}",
+        "Only a table whose import failed can be retried.": "Mund të riprovohet vetëm një tabelë, importimi i së cilës dështoi."
     },
     "nplurals=2; plural=(n != 1);"
 )

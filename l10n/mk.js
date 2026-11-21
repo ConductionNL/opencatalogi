@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Дали сакате да го избришете \"{name}\"? Ова дејство не може да се врати.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Објавата и нејзините прилози исчезнуваат од јавната страница и од мапата на сајтот Woo. Архивирањето, пак, ги чува за рокот на чување.",
         "Responsible organisation": "Одговорна организација",
-        "The organisation responsible for this publication, when it is not the publisher.": "Организацијата одговорна за оваа публикација, кога таа не е издавачот."
+        "The organisation responsible for this publication, when it is not the publisher.": "Организацијата одговорна за оваа публикација, кога таа не е издавачот.",
+        "The import failed.": "Увозот не успеа.",
+        "Failed on {date}": "Неуспешно на {date}",
+        "Only a table whose import failed can be retried.": "Повторно може да се обиде само табела чиј увоз не успеал."
     },
     "nplurals=2; plural=(n != 1);"
 )

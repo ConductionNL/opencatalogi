@@ -88,7 +88,12 @@ class PublishedTableNotificationSchemaTest extends TestCase {
 		$this->assertSame('string', $schema['properties']['importedBy']['type']);
 		$this->assertContains('failed', $schema['properties']['status']['enum']);
 		$this->assertContains('importing', $schema['properties']['status']['enum']);
-		$this->assertSame('0.2.0', $schema['version']);
+		$this->assertSame(
+			expected: 'date-time',
+			actual: $schema['properties']['failedAt']['format'],
+			message: 'the Tables section shows when an import failed (REQ-DFA-004)'
+		);
+		$this->assertSame(expected: '0.3.0', actual: $schema['version']);
 	}//end testTheRuleReadsDeclaredFields()
 
 	/**

@@ -782,7 +782,10 @@
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Voleu eliminar \"{name}\"? Aquesta acció no es pot desfer.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "La publicació i els seus adjunts desapareixen de la pàgina pública i del mapa del lloc Woo. En canvi, arxivar-la els conserva durant el termini de conservació.",
         "Responsible organisation": "Organització responsable",
-        "The organisation responsible for this publication, when it is not the publisher.": "L'organització responsable d'aquesta publicació, quan no és l'editor."
+        "The organisation responsible for this publication, when it is not the publisher.": "L'organització responsable d'aquesta publicació, quan no és l'editor.",
+        "The import failed.": "La importació ha fallat.",
+        "Failed on {date}": "Ha fallat el {date}",
+        "Only a table whose import failed can be retried.": "Només es pot tornar a provar una taula la importació de la qual ha fallat."
     },
     "plurals": {}
 }

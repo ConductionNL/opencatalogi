@@ -782,7 +782,10 @@
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Haluatko poistaa kohteen \"{name}\"? Tätä toimintoa ei voi kumota.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Julkaisu ja sen liitteet katoavat julkiselta sivulta ja Woo-sivukartasta. Arkistointi sen sijaan säilyttää ne säilytysajan.",
         "Responsible organisation": "Vastuuorganisaatio",
-        "The organisation responsible for this publication, when it is not the publisher.": "Tästä julkaisusta vastaava organisaatio, kun se ei ole julkaisija."
+        "The organisation responsible for this publication, when it is not the publisher.": "Tästä julkaisusta vastaava organisaatio, kun se ei ole julkaisija.",
+        "The import failed.": "Tuonti epäonnistui.",
+        "Failed on {date}": "Epäonnistui {date}",
+        "Only a table whose import failed can be retried.": "Uudelleen voi yrittää vain taulukkoa, jonka tuonti epäonnistui."
     },
     "plurals": {}
 }
