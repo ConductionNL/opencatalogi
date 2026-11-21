@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
@@ -149,6 +150,31 @@ class EmbargoLifts {
 			_rbac: true
 		);
 	}//end lift()
+
+	/**
+	 * The lifted moment: now when none is given, the given one as ATOM, or null when it does not read as a date.
+	 *
+	 * @param mixed $value The `publicationDate` parameter.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.1
+	 */
+	public function moment(mixed $value): ?string {
+		if ($value === null || (is_string($value) === true && trim($value) === '')) {
+			return (new DateTimeImmutable())->format(DATE_ATOM);
+		}
+
+		if (is_string($value) === false) {
+			return null;
+		}
+
+		try {
+			return (new DateTimeImmutable($value))->format(DATE_ATOM);
+		} catch (\Exception $e) {
+			return null;
+		}
+	}//end moment()
 
 	/**
 	 * The publication's properties.

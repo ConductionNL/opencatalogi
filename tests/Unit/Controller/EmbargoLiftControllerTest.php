@@ -194,9 +194,23 @@ final class EmbargoLiftControllerTest extends TestCase {
 		$groupManager->method('getUserGroupIds')->willReturnCallback(fn (): array => $this->groups);
 
 		$engine = new class ($this) {
+			/**
+			 * Constructor.
+			 *
+			 * @param EmbargoLiftControllerTest $test The test that records the transitions.
+			 */
 			public function __construct(private readonly EmbargoLiftControllerTest $test) {
 			}
 
+			/**
+			 * Record a transition.
+			 *
+			 * @param string               $objectId The object id.
+			 * @param string               $action   The transition.
+			 * @param array<string, mixed> $data     The inputs.
+			 *
+			 * @return object
+			 */
 			public function transition(string $objectId, string $action, array $data = []): object {
 				$this->test->transitions[] = [$objectId, $action, $data];
 				return (object)['id' => $objectId];
@@ -212,15 +226,32 @@ final class EmbargoLiftControllerTest extends TestCase {
 			->getMock();
 		$registers->method('registerConfiguration')->willReturn(['register' => '19', 'schema' => '173']);
 		$registers->method('getObjectService')->willReturn($this->objectService());
-		$registers->method('publishedRecord')->willReturnCallback(static fn (array $publication): array => $states->publishedRecord(publication: $publication));
+		$registers->method('publishedRecord')->willReturnCallback(
+			static fn (array $publication): array => $states->publishedRecord(publication: $publication)
+		);
 
 		$rights = $this->createMock(originalClassName: PublicationRightsInterface::class);
 		$rights->method('mayUpdate')->willReturnCallback(fn (): bool => $this->mayUpdate);
 
 		$audit = new class ($this) {
+			/**
+			 * Constructor.
+			 *
+			 * @param EmbargoLiftControllerTest $test The test that records the entries.
+			 */
 			public function __construct(private readonly EmbargoLiftControllerTest $test) {
 			}
 
+			/**
+			 * Record an audit entry, or throw when the test says the trail is unavailable.
+			 *
+			 * @param mixed                     $old            The old state.
+			 * @param mixed                     $new            The new state.
+			 * @param string|null               $action         The action.
+			 * @param array<string, mixed>|null $cascadeContext The context.
+			 *
+			 * @return object
+			 */
 			public function createAuditTrail(mixed $old = null, mixed $new = null, ?string $action = null, ?array $cascadeContext = null): object {
 				if ($this->test->auditFails === true) {
 					throw new RuntimeException('The audit trail is unavailable.');
@@ -236,7 +267,15 @@ final class EmbargoLiftControllerTest extends TestCase {
 		$user = $this->createMock(originalClassName: IUser::class);
 		$user->method('getUID')->willReturn('griffier');
 		$session = $this->createMock(originalClassName: IUserSession::class);
-		$session->method('getUser')->willReturnCallback(fn () => ($this->signedIn === true ? $user : null));
+		$session->method('getUser')->willReturnCallback(
+			function () use ($user): ?IUser {
+				if ($this->signedIn === false) {
+					return null;
+				}
+
+				return $user;
+			}
+		);
 
 		$request = $this->createMock(originalClassName: IRequest::class);
 		$request->method('getParam')->willReturnCallback(fn (string $key, $default = null) => ($this->params[$key] ?? $default));

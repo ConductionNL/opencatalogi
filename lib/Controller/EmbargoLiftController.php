@@ -27,7 +27,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
 use OCP\AppFramework\Controller;
@@ -116,7 +115,7 @@ class EmbargoLiftController extends Controller {
 			return self::error(error: 'reason-missing', status: Http::STATUS_UNPROCESSABLE_ENTITY);
 		}
 
-		$moment = self::moment(value: $this->request->getParam('publicationDate'));
+		$moment = $this->lifts->moment(value: $this->request->getParam('publicationDate'));
 		if ($moment === null) {
 			return self::error(error: 'invalid-date', status: Http::STATUS_UNPROCESSABLE_ENTITY);
 		}
@@ -143,29 +142,6 @@ class EmbargoLiftController extends Controller {
 
 		return new JSONResponse(data: $answer);
 	}//end liftWithReason()
-
-	/**
-	 * The lifted moment: now when none is given, the given one as ATOM, or null when it does not read as a date.
-	 *
-	 * @param mixed $value The `publicationDate` parameter.
-	 *
-	 * @return string|null
-	 */
-	private static function moment(mixed $value): ?string {
-		if ($value === null || (is_string($value) === true && trim($value) === '')) {
-			return (new DateTimeImmutable())->format(DATE_ATOM);
-		}
-
-		if (is_string($value) === false) {
-			return null;
-		}
-
-		try {
-			return (new DateTimeImmutable($value))->format(DATE_ATOM);
-		} catch (\Exception $e) {
-			return null;
-		}
-	}//end moment()
 
 	/**
 	 * An error answer carrying only its code.
