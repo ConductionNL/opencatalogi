@@ -2078,7 +2078,11 @@ OC.L10N.register(
         "Which groups may do each of these tasks. Administrators may always do all of them; a right without a group is for administrators only.": "Welke groepen elk van deze taken mogen doen. Beheerders mogen ze altijd allemaal; een recht zonder groep is alleen voor beheerders.",
         "Delete publication": "Publicatie verwijderen",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Wilt u \"{name}\" verwijderen? Dit kan niet ongedaan worden gemaakt.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "De publicatie en haar bijlagen verdwijnen van de publieke pagina en uit de Woo-sitemap. Archiveren bewaart ze juist voor de bewaartermijn."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "De publicatie en haar bijlagen verdwijnen van de publieke pagina en uit de Woo-sitemap. Archiveren bewaart ze juist voor de bewaartermijn.",
+        "Deleting stopped part way. What was removed is listed.": "Het verwijderen is halverwege gestopt. Wat al is verwijderd, staat in de lijst.",
+        "Only a draft or a publication in review can be deleted permanently.": "Alleen een concept of een publicatie in review kan definitief worden verwijderd.",
+        "It cannot be checked that this publication was never published, so nothing was deleted.": "Er kan niet worden nagegaan dat deze publicatie nooit is gepubliceerd, daarom is niets verwijderd.",
+        "This publication was published before, so it cannot be deleted permanently.": "Deze publicatie is eerder gepubliceerd en kan daarom niet definitief worden verwijderd."
     },
     "nplurals=2; plural=(n != 1);"
 )

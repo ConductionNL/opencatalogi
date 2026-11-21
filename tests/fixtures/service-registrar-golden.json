@@ -351,6 +351,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\DraftPurgeServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\DraftPurgeService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\CollectionShareServiceInterface",
         "OCA\\OpenCatalogi\\Service\\Portal\\CollectionShareService"
     ],

@@ -160,6 +160,8 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'errorReport#create', 'url' => '/api/publications/{id}/error-reports', 'verb' => 'POST'],
 		['name' => 'errorReport#preflightedCors', 'url' => '/api/publications/{id}/error-reports', 'verb' => 'OPTIONS'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
+		// Permanent delete of a draft that was never released (publication-lifecycle-on-or-draft-purge, REQ-PLC-004).
+		['name' => 'draftPurge#destroy', 'url' => '/api/publications/{id}/draft', 'verb' => 'DELETE'],
 		// Unlist and list again (publication-lifecycle-on-or REQ-PLC-006): readable by link, off search and feeds.
 		['name' => 'publicationState#unlist', 'url' => '/api/publications/{id}/unlist', 'verb' => 'POST'],
 		['name' => 'publicationState#relist', 'url' => '/api/publications/{id}/list', 'verb' => 'POST'],

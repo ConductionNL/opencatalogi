@@ -47,6 +47,8 @@ use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionService;
 use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionStore;
 use OCA\OpenCatalogi\Service\MetadataSuggestion\SingleLawfulValue;
 use OCA\OpenCatalogi\Contract\RedactedOriginalGuardInterface;
+use OCA\OpenCatalogi\Contract\DraftPurgeServiceInterface;
+use OCA\OpenCatalogi\Service\Publication\DraftPurgeService;
 use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingStore;
 use OCA\OpenCatalogi\Service\AttachmentReading\RedactedOriginalGuard;
 use OCA\OpenCatalogi\Contract\BannerServiceInterface;
@@ -250,6 +252,7 @@ final class ServiceBindings {
 		CatalogueFeedReaderInterface::class => CatalogueFeedReader::class,
 		InformationRequestIntakeInterface::class => WooRequestIntake::class,
 		PublicationStateServiceInterface::class => PublicationStateService::class,
+		DraftPurgeServiceInterface::class => DraftPurgeService::class,
 		CollectionShareServiceInterface::class => CollectionShareService::class,
 		NoticeBoardServiceInterface::class => NoticeBoardService::class,
 		DecisionPublicationValidatorInterface::class => DecisionPublicationValidator::class,
