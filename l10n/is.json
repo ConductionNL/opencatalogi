@@ -782,7 +782,10 @@
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Viltu eyða \"{name}\"? Þessa aðgerð er ekki hægt að afturkalla.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Útgáfan og viðhengi hennar hverfa af opinberu síðunni og úr Woo-veftrénu. Geymsla í safni varðveitir þau hins vegar út varðveislutímann.",
         "Responsible organisation": "Ábyrg stofnun",
-        "The organisation responsible for this publication, when it is not the publisher.": "Stofnunin sem ber ábyrgð á þessari útgáfu, þegar hún er ekki útgefandinn."
+        "The organisation responsible for this publication, when it is not the publisher.": "Stofnunin sem ber ábyrgð á þessari útgáfu, þegar hún er ekki útgefandinn.",
+        "The import failed.": "Innflutningur mistókst.",
+        "Failed on {date}": "Mistókst {date}",
+        "Only a table whose import failed can be retried.": "Aðeins er hægt að reyna aftur töflu þar sem innflutningur mistókst."
     },
     "plurals": {}
 }

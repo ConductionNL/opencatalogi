@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Вы хочаце выдаліць \"{name}\"? Гэта дзеянне нельга адмяніць.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Публікацыя і яе далучэнні знікаюць з публічнай старонкі і з карты сайта Woo. Архіваванне, наадварот, захоўвае іх на тэрмін захоўвання.",
         "Responsible organisation": "Адказная арганізацыя",
-        "The organisation responsible for this publication, when it is not the publisher.": "Арганізацыя, якая адказвае за гэтую публікацыю, калі гэта не выдавец."
+        "The organisation responsible for this publication, when it is not the publisher.": "Арганізацыя, якая адказвае за гэтую публікацыю, калі гэта не выдавец.",
+        "The import failed.": "Імпарт не ўдаўся.",
+        "Failed on {date}": "Не ўдалося {date}",
+        "Only a table whose import failed can be retried.": "Паўтарыць можна толькі табліцу, імпарт якой не ўдаўся."
     },
     "nplurals=2; plural=(n != 1);"
 )

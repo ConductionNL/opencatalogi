@@ -260,4 +260,71 @@ class PublishedTableEditControllerTest extends TestCase {
 		$this->assertSame(400, $unknown->getStatus());
 		$this->assertSame('This table has no column named kleur.', $unknown->getData()['message']);
 	}//end testDictionaryRefusals()
+	/**
+	 * An editor retries a failed table; the re-import records the editor as importer.
+	 *
+	 * @return void
+	 */
+	public function testAnEditorRetriesAFailedTable(): void {
+		$editor = $this->createMock(IUser::class);
+		$editor->method('getUID')->willReturn('anna');
+		$this->session = $this->createMock(IUserSession::class);
+		$this->session->method('getUser')->willReturn($editor);
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$failed = ['id' => 't1', 'publication' => 'p1', 'status' => 'failed', 'lastError' => 'Row 3: bedrag is not a number'];
+		$this->tables->method('findTable')->with('t1')->willReturn($failed);
+		$this->tables->expects($this->once())
+			->method('reimport')
+			->with($failed, 'anna')
+			->willReturn(['id' => 't1', 'status' => 'ready', 'rowCount' => 12]);
+
+		$response = $this->controller()->retry(id: 'p1', tableId: 't1');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['id' => 't1', 'status' => 'ready', 'rowCount' => 12], $response->getData());
+	}//end testAnEditorRetriesAFailedTable()
+
+	/**
+	 * A retry needs the update right, a table of this publication, and a failed one.
+	 *
+	 * @return void
+	 */
+	public function testRetryRefusals(): void {
+		$this->tables->expects($this->never())->method('reimport');
+
+		$this->rights->method('mayUpdate')->willReturnOnConsecutiveCalls(false, true, true, true);
+		$this->tables->method('findTable')->willReturnOnConsecutiveCalls(
+			null,
+			['id' => 't1', 'publication' => 'p2', 'status' => 'failed'],
+			['id' => 't1', 'publication' => 'p1', 'status' => 'ready']
+		);
+
+		$this->assertSame(403, $this->controller()->retry(id: 'p1', tableId: 't1')->getStatus());
+		$this->assertSame(404, $this->controller()->retry(id: 'p1', tableId: 't1')->getStatus());
+		$this->assertSame(404, $this->controller()->retry(id: 'p1', tableId: 't1')->getStatus(), 'another publication\'s table');
+
+		$ready = $this->controller()->retry(id: 'p1', tableId: 't1');
+		$this->assertSame(409, $ready->getStatus());
+		$this->assertSame('table-not-failed', $ready->getData()['error']);
+	}//end testRetryRefusals()
+
+	/**
+	 * A gone attachment answers 400 with the reason; another failure answers 500.
+	 *
+	 * @return void
+	 */
+	public function testRetryFailures(): void {
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->tables->method('findTable')->willReturn(['id' => 't1', 'publication' => 'p1', 'status' => 'failed']);
+		$this->tables->method('reimport')->willReturnOnConsecutiveCalls(
+			$this->throwException(new InvalidArgumentException('The publication has no attachment 77.')),
+			$this->throwException(new \RuntimeException('database down'))
+		);
+
+		$gone = $this->controller()->retry(id: 'p1', tableId: 't1');
+		$this->assertSame(400, $gone->getStatus());
+		$this->assertSame('The publication has no attachment 77.', $gone->getData()['message']);
+
+		$this->assertSame(500, $this->controller()->retry(id: 'p1', tableId: 't1')->getStatus());
+	}//end testRetryFailures()
 }//end class

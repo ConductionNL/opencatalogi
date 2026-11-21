@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Möchten Sie \"{name}\" löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Die Veröffentlichung und ihre Anhänge verschwinden von der öffentlichen Seite und aus der Woo-Sitemap. Archivieren bewahrt sie stattdessen für die Aufbewahrungsfrist auf.",
         "Responsible organisation": "Verantwortliche Organisation",
-        "The organisation responsible for this publication, when it is not the publisher.": "Die für diese Veröffentlichung verantwortliche Organisation, wenn es nicht der Herausgeber ist."
+        "The organisation responsible for this publication, when it is not the publisher.": "Die für diese Veröffentlichung verantwortliche Organisation, wenn es nicht der Herausgeber ist.",
+        "The import failed.": "Der Import ist fehlgeschlagen.",
+        "Failed on {date}": "Fehlgeschlagen am {date}",
+        "Only a table whose import failed can be retried.": "Nur eine Tabelle, deren Import fehlgeschlagen ist, kann erneut versucht werden."
     },
     "nplurals=2; plural=(n != 1);"
 )

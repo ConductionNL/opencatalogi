@@ -31,7 +31,25 @@
 			<h3 class="publication-tables__title">
 				{{ table.title }}
 			</h3>
-			<p class="publication-tables__status">
+			<div
+				v-if="table.status === 'failed'"
+				class="publication-tables__failure"
+				:data-testid="'publication-table-failure-' + table.id">
+				<CnStatusBadge :label="t('opencatalogi', 'Import failed')" variant="error" />
+				<p class="publication-tables__status">
+					{{ table.lastError || t('opencatalogi', 'The import failed.') }}
+				</p>
+				<p v-if="table.failedAt" class="publication-tables__status">
+					{{ t('opencatalogi', 'Failed on {date}', { date: failureTime(table.failedAt) }) }}
+				</p>
+				<NcButton
+					:disabled="busy"
+					:data-testid="'publication-table-retry-' + table.id"
+					@click="retry(table)">
+					{{ t('opencatalogi', 'Retry') }}
+				</NcButton>
+			</div>
+			<p v-else class="publication-tables__status">
 				{{ statusLabel(table) }}
 			</p>
 			<a
@@ -170,6 +188,7 @@
 </template>
 
 <script>
+import { CnStatusBadge } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard, NcTextField } from '@nextcloud/vue'
@@ -182,13 +201,15 @@ import { injectedObjectContext } from './objectContext.js'
 /**
  * The publication's published tables (REQ-ODT-001, REQ-ODT-003): Publish as
  * table on each CSV attachment that is not a table yet, and per table its row
- * count, a link to try the query, and the data dictionary to edit.
+ * count, a link to try the query, and the data dictionary to edit. A table
+ * whose import failed shows "Import failed", the refused row, when it failed
+ * and Retry (REQ-DFA-004).
  *
  * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-an-editor-publishes-a-csv-attachment-as-a-table-req-odt-001
  */
 export default {
 	name: 'PublicationTablesWidget',
-	components: { DatasetViewDialog, NcButton, NcNoteCard, NcTextField },
+	components: { CnStatusBadge, DatasetViewDialog, NcButton, NcNoteCard, NcTextField },
 	inject: {
 		cnObjectContext: { default: null },
 		cnDetailObjectContext: { default: null },
@@ -335,10 +356,53 @@ export default {
 			this.busy = true
 			try {
 				const { data } = await axios.post(this.url(), { fileId })
-				this.messageType = data.status === 'failed' ? 'error' : 'success'
-				this.message = data.status === 'failed'
-					? this.t('opencatalogi', 'Not published: {error}', { error: data.lastError || '' })
-					: this.t('opencatalogi', 'The table is published.')
+				this.reportImport(data)
+				await this.load()
+			} catch (error) {
+				this.showError(error)
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Put the outcome of an import into words.
+		 *
+		 * @param {{status: string, lastError?: string}} data The table record the import answered.
+		 * @return {void}
+		 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-the-publication-page-shows-a-failed-table-req-dfa-004
+		 */
+		reportImport(data) {
+			this.messageType = data.status === 'failed' ? 'error' : 'success'
+			this.message = data.status === 'failed'
+				? this.t('opencatalogi', 'Not published: {error}', { error: data.lastError || '' })
+				: this.t('opencatalogi', 'The table is published.')
+		},
+
+		/**
+		 * When an import failed, as the reader's locale writes a date and time.
+		 *
+		 * @param {string} value An ISO 8601 moment.
+		 * @return {string} The formatted moment, or the value itself when it is not a date.
+		 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-the-publication-page-shows-a-failed-table-req-dfa-004
+		 */
+		failureTime(value) {
+			const date = new Date(value)
+			return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString()
+		},
+
+		/**
+		 * Import a failed table again and read the tables again.
+		 *
+		 * @param {{id: string}} table The failed table.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-the-publication-page-shows-a-failed-table-req-dfa-004
+		 */
+		async retry(table) {
+			this.busy = true
+			try {
+				const { data } = await axios.post(this.url('/' + encodeURIComponent(table.id) + '/retry'))
+				this.reportImport(data)
 				await this.load()
 			} catch (error) {
 				this.showError(error)
@@ -533,6 +597,13 @@ export default {
 	gap: 8px;
 	padding-top: 8px;
 	border-top: 1px solid var(--color-border);
+}
+
+.publication-tables__failure {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	align-items: flex-start;
 }
 
 .publication-tables__views {

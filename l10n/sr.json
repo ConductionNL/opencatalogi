@@ -782,7 +782,10 @@
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Да ли желите да обришете \"{name}\"? Ова радња се не може опозвати.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Објава и њени прилози нестају са јавне странице и из Woo мапе сајта. Архивирање их, насупрот томе, чува током рока чувања.",
         "Responsible organisation": "Одговорна организација",
-        "The organisation responsible for this publication, when it is not the publisher.": "Организација одговорна за ову публикацију, када то није издавач."
+        "The organisation responsible for this publication, when it is not the publisher.": "Организација одговорна за ову публикацију, када то није издавач.",
+        "The import failed.": "Увоз није успео.",
+        "Failed on {date}": "Није успело {date}",
+        "Only a table whose import failed can be retried.": "Поново се може покушати само табела чији увоз није успео."
     },
     "plurals": {}
 }

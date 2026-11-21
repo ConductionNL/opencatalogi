@@ -782,7 +782,10 @@
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Chcete odstranit \"{name}\"? Tuto akci nelze vrátit zpět.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikace a její přílohy zmizí z veřejné stránky a z mapy stránek Woo. Archivace je naopak uchová po dobu skartační lhůty.",
         "Responsible organisation": "Odpovědná organizace",
-        "The organisation responsible for this publication, when it is not the publisher.": "Organizace odpovědná za tuto publikaci, pokud to není vydavatel."
+        "The organisation responsible for this publication, when it is not the publisher.": "Organizace odpovědná za tuto publikaci, pokud to není vydavatel.",
+        "The import failed.": "Import se nezdařil.",
+        "Failed on {date}": "Selhalo {date}",
+        "Only a table whose import failed can be retried.": "Znovu lze zkusit pouze tabulku, jejíž import se nezdařil."
     },
     "plurals": {}
 }

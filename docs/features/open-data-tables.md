@@ -30,6 +30,15 @@ dictionary. The editor endpoints are:
 | `GET /api/publications/{id}/tables` | The publication's tables, whatever their status, with each ready table's dictionary |
 | `POST /api/publications/{id}/tables` with `fileId` | Publish that CSV attachment as a table |
 | `PUT /api/publications/{id}/tables/{tableId}/dictionary` with `columns: [{name, title, description}]` | Write column titles and descriptions |
+| `POST /api/publications/{id}/tables/{tableId}/retry` | Import a failed table again; `409` when the table did not fail |
+
+### When an import fails
+
+A table whose import refuses a row shows **Import failed** in the Tables
+section, with the refused row, when the import failed and **Retry**. The editor
+who started the import, and everyone who may manage the publication, also get a
+Nextcloud notification that links to the publication. Retry imports the
+attachment again; a new failure notifies again.
 
 ## Querying a table (anyone)
 

@@ -2132,7 +2132,10 @@ OC.L10N.register(
         "Members of these groups may publish a publication before its publication date. They give a reason, and every lift is logged. Separate group ids with commas.": "Members of these groups may publish a publication before its publication date. They give a reason, and every lift is logged. Separate group ids with commas.",
         "The groups could not be saved. Try again.": "The groups could not be saved. Try again.",
         "Responsible organisation": "Responsible organisation",
-        "The organisation responsible for this publication, when it is not the publisher.": "The organisation responsible for this publication, when it is not the publisher."
+        "The organisation responsible for this publication, when it is not the publisher.": "The organisation responsible for this publication, when it is not the publisher.",
+        "The import failed.": "The import failed.",
+        "Failed on {date}": "Failed on {date}",
+        "Only a table whose import failed can be retried.": "Only a table whose import failed can be retried."
     },
     "nplurals=2; plural=(n != 1);"
 )

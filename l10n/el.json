@@ -782,7 +782,10 @@
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Θέλετε να διαγράψετε το \"{name}\"; Αυτή η ενέργεια δεν μπορεί να αναιρεθεί.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Η δημοσίευση και τα συνημμένα της εξαφανίζονται από τη δημόσια σελίδα και από τον χάρτη ιστότοπου Woo. Η αρχειοθέτηση, αντίθετα, τα διατηρεί για την περίοδο διατήρησης.",
         "Responsible organisation": "Υπεύθυνος οργανισμός",
-        "The organisation responsible for this publication, when it is not the publisher.": "Ο οργανισμός που είναι υπεύθυνος για αυτή τη δημοσίευση, όταν δεν είναι ο εκδότης."
+        "The organisation responsible for this publication, when it is not the publisher.": "Ο οργανισμός που είναι υπεύθυνος για αυτή τη δημοσίευση, όταν δεν είναι ο εκδότης.",
+        "The import failed.": "Η εισαγωγή απέτυχε.",
+        "Failed on {date}": "Απέτυχε στις {date}",
+        "Only a table whose import failed can be retried.": "Μόνο ένας πίνακας του οποίου η εισαγωγή απέτυχε μπορεί να δοκιμαστεί ξανά."
     },
     "plurals": {}
 }
