@@ -2123,7 +2123,11 @@ OC.L10N.register(
         "Which groups may do each of these tasks. Administrators may always do all of them; a right without a group is for administrators only.": "Which groups may do each of these tasks. Administrators may always do all of them; a right without a group is for administrators only.",
         "Delete publication": "Delete publication",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Do you want to delete \"{name}\"? This action cannot be undone.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.",
+        "Deleting stopped part way. What was removed is listed.": "Deleting stopped part way. What was removed is listed.",
+        "Only a draft or a publication in review can be deleted permanently.": "Only a draft or a publication in review can be deleted permanently.",
+        "It cannot be checked that this publication was never published, so nothing was deleted.": "It cannot be checked that this publication was never published, so nothing was deleted.",
+        "This publication was published before, so it cannot be deleted permanently.": "This publication was published before, so it cannot be deleted permanently."
     },
     "nplurals=2; plural=(n != 1);"
 )
