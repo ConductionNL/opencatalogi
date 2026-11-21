@@ -16,8 +16,10 @@ Read `openspec/woo-build-rules.md` first. Mirror the existing `CommentPeriodServ
 ## 3. Verification
 
 - [x] 3.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
-- [ ] 3.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
-- [ ] 3.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 3.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 3.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
+  - Done 21 Nov on development at b901a1140 (the build merged as #2646): 85 of 85 applicable gates ran; the red ones (5, 7, 12, 26, 46, 51, 55, 60, 66, 82, 119, 123) name no file of this change. The diff check of the closing PR ran the gates scoped to its diff.
+- [x] 3.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+- [x] 3.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - Done: built in #2646 (`--base development`, merged 14 Nov). `composer check:strict` on 21 Nov found one phpmd finding in this change's code, `ShortVariable` on `TermRoll::roll()`'s `$at`; the closing PR renames it `$date` (interface, class, listener, test) and drops the suppression. The other findings of `check:strict` and `npm run lint` are in files this change does not touch.
 
 Done when merged on `development` with CI green. This change closes no row itself; row 10.9 becomes `production` once a store release ships this and `dossiq/woo-term-is-computed-and-reported-right`.

@@ -51,7 +51,7 @@ class InspectionService implements InspectionServiceInterface {
 	 *
 	 * @param TermRoll $roll Rolls the end date off a non-working day, through OpenRegister.
 	 *
-	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
+	 * @spec openspec/changes/archive/2026-11-21-inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
 	 */
 	public function __construct(
 		private readonly TermRoll $roll,
@@ -78,7 +78,7 @@ class InspectionService implements InspectionServiceInterface {
 	 * @throws TermRollUnavailableException When the end date cannot be rolled off a non-working day.
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
-	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
+	 * @spec openspec/changes/archive/2026-11-21-inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
 	 */
 	public function open(
 		array $record,
@@ -115,7 +115,7 @@ class InspectionService implements InspectionServiceInterface {
 	 *
 	 * @return array<string, mixed> The inspection.
 	 *
-	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
+	 * @spec openspec/changes/archive/2026-11-21-inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
 	 */
 	private function withRoll(array $inspection, array $end): array {
 		if ($end['unrolledAt'] !== null) {
