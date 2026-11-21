@@ -233,18 +233,22 @@ class ListenerRegistrar {
 	 * (inspection-period-rolls-on-the-calendar, REQ-IPR-002). Once every stored
 	 * Woo request moved to dossiq, the request schema is read-only here except
 	 * for dossiq's stamp (woo-request-intake-hands-over-to-dossiq, REQ-WHD-004).
+	 * A publication under embargo cannot have its publication date moved earlier
+	 * by a caller who may not lift an embargo (publication-schedule-guards, REQ-PSG-001).
 	 *
 	 * @param IRegistrationContext $context The registration context.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-with-nothing-left-to-migrate-the-request-schema-is-read-only-req-whd-004
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.1
 	 */
 	private function registerWriteGuards(IRegistrationContext $context): void {
 		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
 		$context->registerEventListener(ObjectCreatingEvent::class, HandedOverRecordsListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, HandedOverRecordsListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, EmbargoGuardListener::class);
 	}//end registerWriteGuards()
 
 	/**
