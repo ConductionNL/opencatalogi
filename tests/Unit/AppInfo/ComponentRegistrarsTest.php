@@ -44,6 +44,7 @@ use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Listener\MetadataSuggestionListener;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
+use OCA\OpenCatalogi\Listener\EmbargoGuardListener;
 use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
 use OCA\OpenCatalogi\Listener\PublicationAudienceCheck;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
@@ -154,6 +155,7 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', TermRollListener::class],
 				[$e . 'ObjectCreatingEvent', HandedOverRecordsListener::class],
 				[$e . 'ObjectUpdatingEvent', HandedOverRecordsListener::class],
+				[$e . 'ObjectUpdatingEvent', EmbargoGuardListener::class],
 				[\OCP\Files\Events\Node\NodeWrittenEvent::class, PublishedTableReimportListener::class],
 				[$e . 'FileVersionRestoredEvent', PublishedTableReimportListener::class],
 				[$e . 'ObjectCreatingEvent', PublicationRelationsListener::class],
