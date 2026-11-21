@@ -68,7 +68,7 @@ final class DepublicationReminderDeclarationTest extends TestCase {
 	 */
 	private function requireOpenRegister(): void {
 		if (class_exists(ScheduledFilterEvaluator::class) === false || class_exists(NotificationTriggerValidator::class) === false) {
-			$this->markTestSkipped('OpenRegister\'s notification engine is not installed.');
+			$this->markTestSkipped(message: 'OpenRegister\'s notification engine is not installed.');
 		}
 	}//end requireOpenRegister()
 
@@ -118,10 +118,9 @@ final class DepublicationReminderDeclarationTest extends TestCase {
 		$this->requireOpenRegister();
 		$now = new DateTimeImmutable('2026-11-21T09:00:00+00:00');
 
-		self::assertSame(
-			expected: [],
-			actual: (new NotificationTriggerValidator(filterParser: new ScheduledFilterParser()))->validate(name: 'depublication-due-soon', trigger: self::rule()['trigger'])
-		);
+		$validator = new NotificationTriggerValidator(filterParser: new ScheduledFilterParser());
+
+		self::assertSame(expected: [], actual: $validator->validate(name: 'depublication-due-soon', trigger: self::rule()['trigger']));
 		self::assertTrue(condition: self::reminds(depublicationDate: '2026-11-26T09:00:00+00:00', now: $now));
 	}//end testTheRuleParsesAndMatchesAPublicationDueInFiveDays()
 
