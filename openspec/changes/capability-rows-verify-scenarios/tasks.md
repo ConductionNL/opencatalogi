@@ -2,7 +2,7 @@
 
 ## 1. Requirement that describes built behaviour
 
-- [ ] 1.1 Add an e2e test for REQ-CVS-001: add a property to the publication schema through OpenRegister's schema API, open Add on the Publications page, fill the property, save, and read it back from the public publication endpoint. Then sync the requirement into `openspec/specs/publications`.
+- [ ] 1.1 Add an e2e test for REQ-CVS-001: add a property to the publication schema through OpenRegister's schema API, open Add on the Publications page, fill the property, save, and read it back from the public publication endpoint. Then sync the requirement into `openspec/specs/publications`. Written: `tests/e2e/publication-schema-added-field.spec.ts` (adds `zaaknummer` through the schema API and restores the schema afterwards, fills it on Add, reads it from the public endpoint; marked required, the form names it); not run, needs a live instance.
 - [x] 1.2 Add a PHPUnit or e2e test for REQ-CVS-002 (adding and removing a schema on the catalogue form changes what `GET /api/{catalogSlug}` lists) and sync the requirement into `openspec/specs/catalogs`.
 - [x] 1.3 Add a PHPUnit test for REQ-CVS-005 (`GET /api/directory` carries this installation's public catalogues) and sync the requirement into `openspec/specs/federation`.
 - [x] 1.4 Add a PHPUnit test for REQ-CVS-006 (the public `id` and `dct:identifier` are the UUID, and the UUID address answers after a title and slug edit) and sync the requirement into `openspec/specs/publications`.
