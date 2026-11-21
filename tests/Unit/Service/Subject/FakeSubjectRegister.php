@@ -28,6 +28,7 @@ namespace Unit\Service\Subject;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Contract\ObjectFindOptions as PublishedObjectFindOptions;
 
 /**
  * An in-memory OpenRegister ObjectService for the subject tests.
@@ -69,7 +70,7 @@ class FakeSubjectRegister extends ObjectService {
 
 	public function find(
 		int|string $id,
-		?ObjectFindOptions $options = null,
+		ObjectFindOptions|PublishedObjectFindOptions|null $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): ?ObjectEntity {
