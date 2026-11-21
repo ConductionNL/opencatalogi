@@ -31,11 +31,15 @@ use OCA\OpenCatalogi\Controller\PublicationStateController;
 use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Service\Publication\EmbargoGuard;
+use OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
@@ -43,6 +47,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
@@ -186,12 +191,28 @@ class PublicationWithdrawGoldenTest extends TestCase {
 			$session,
 			$rights,
 			new PublicationTransitions($this->states(case: $case, calls: $calls), $this->depublisher(case: $case, calls: $calls), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $this->objects(case: $case, calls: $calls))),
-			new \OCA\OpenCatalogi\Service\Publication\PublishTransition($container, new \OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy($this->createMock(\OCP\IAppConfig::class))),
-			new \OCA\OpenCatalogi\Service\Publication\EmbargoGuard($this->createMock(\OCP\IAppConfig::class), $this->createMock(\OCP\IGroupManager::class), $this->createMock(\Psr\Log\LoggerInterface::class))
+			new PublishTransition(
+				container: $container,
+				review: new PublicationReviewPolicy(appConfig: $this->createMock(originalClassName: IAppConfig::class)),
+				embargo: $this->embargoGuard()
+			)
 		);
 
 		return $controller;
 	}//end controller()
+
+	/**
+	 * An embargo guard with no lift groups configured, so a publication dated ahead holds.
+	 *
+	 * @return EmbargoGuard The guard.
+	 */
+	private function embargoGuard(): EmbargoGuard {
+		return new EmbargoGuard(
+			config: $this->createMock(originalClassName: IAppConfig::class),
+			groups: $this->createMock(originalClassName: IGroupManager::class),
+			logger: $this->createMock(originalClassName: LoggerInterface::class)
+		);
+	}//end embargoGuard()
 
 	/**
 	 * A localisation double that marks translated text.

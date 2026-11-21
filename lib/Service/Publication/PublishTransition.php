@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
+use OCP\IUser;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -57,12 +58,29 @@ class PublishTransition {
 	 *
 	 * @param ContainerInterface      $container Reaches OpenRegister's lifecycle engine.
 	 * @param PublicationReviewPolicy $review    Whether review is required.
+	 * @param EmbargoGuard            $embargo   Refuses a publish that would release a publication under embargo early.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly PublicationReviewPolicy $review,
+		private readonly EmbargoGuard $embargo,
 	) {
 	}//end __construct()
+
+	/**
+	 * The embargo refusal for publishing $stored now as $record, or null when the caller may.
+	 *
+	 * @param array<string, mixed> $stored The publication as stored.
+	 * @param array<string, mixed> $record The publication as publish now would store it.
+	 * @param IUser|null           $caller The publishing user, or null outside a session.
+	 *
+	 * @return array{code: string, property: string, embargoUntil: string|null}|null
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
+	 */
+	public function embargoVeto(array $stored, array $record, ?IUser $caller): ?array {
+		return $this->embargo->check(old: $stored, new: $record, caller: $caller);
+	}//end embargoVeto()
 
 	/**
 	 * The stored state, with an empty one read as `draft`.

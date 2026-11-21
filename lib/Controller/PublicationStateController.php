@@ -35,7 +35,6 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
-use OCA\OpenCatalogi\Service\Publication\EmbargoGuard;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
@@ -72,8 +71,7 @@ class PublicationStateController extends Controller {
 	 * @param IUserSession $userSession The current session.
 	 * @param PublicationRightsInterface $rights The update right on one publication, and the publish right.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
- * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003).
-	 * @param EmbargoGuard $embargo Refuses a publish now that would release a publication under embargo early (REQ-PSG-001).
+ * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003), and says whether an embargo holds (REQ-PSG-001).
 	 */
 	public function __construct(
 		$appName,
@@ -83,7 +81,6 @@ class PublicationStateController extends Controller {
 		private readonly PublicationRightsInterface $rights,
 		private readonly PublicationTransitions $registers,
 		private readonly PublishTransition $publisher,
-		private readonly EmbargoGuard $embargo,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -294,9 +291,9 @@ class PublicationStateController extends Controller {
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
 	 */
 	private function embargoHolds(array $properties): ?JSONResponse {
-		$veto = $this->embargo->check(
-			old: $properties,
-			new: $this->registers->publishedRecord(publication: $properties),
+		$veto = $this->publisher->embargoVeto(
+			stored: $properties,
+			record: $this->registers->publishedRecord(publication: $properties),
 			caller: $this->userSession->getUser()
 		);
 		if ($veto === null) {

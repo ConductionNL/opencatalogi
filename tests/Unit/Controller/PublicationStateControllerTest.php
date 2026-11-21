@@ -273,7 +273,7 @@ class PublicationStateControllerTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
-		$groups = $this->createMock(IGroupManager::class);
+		$groups = $this->createMock(originalClassName: IGroupManager::class);
 		$groups->method('getUserGroupIds')->willReturnCallback(fn (): array => $this->userGroups);
 
 		$this->controller = new PublicationStateController(
@@ -283,8 +283,11 @@ class PublicationStateControllerTest extends TestCase {
 			$session,
 			$this->rights,
 			new PublicationTransitions(new PublicationStateService(), new DepublicationService($this->index, $this->createMock(LoggerInterface::class)), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects)),
-			new PublishTransition($container, new PublicationReviewPolicy($config)),
-			new EmbargoGuard($config, $groups, $this->createMock(LoggerInterface::class))
+			new PublishTransition(
+				container: $container,
+				review: new PublicationReviewPolicy(appConfig: $config),
+				embargo: new EmbargoGuard(config: $config, groups: $groups, logger: $this->createMock(originalClassName: LoggerInterface::class))
+			)
 		);
 	}
 
@@ -671,6 +674,8 @@ class PublicationStateControllerTest extends TestCase {
 	/**
 	 * REQ-PSG-001: publish now on a scheduled publication is refused with 423 while its date lies ahead.
 	 *
+	 * @return void
+	 *
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
 	 */
 	public function testPublishNowIsRefusedUnderEmbargo(): void {
@@ -680,14 +685,16 @@ class PublicationStateControllerTest extends TestCase {
 
 		$response = $this->controller->publish('p1');
 
-		$this->assertSame(Http::STATUS_LOCKED, $response->getStatus());
-		$this->assertSame(['error' => 'embargo-holds', 'property' => 'publicationDate', 'embargoUntil' => $until], $response->getData());
-		$this->assertSame([], $this->saves);
-		$this->assertSame([], $this->transitions);
+		$this->assertSame(expected: Http::STATUS_LOCKED, actual: $response->getStatus());
+		$this->assertSame(expected: ['error' => 'embargo-holds', 'property' => 'publicationDate', 'embargoUntil' => $until], actual: $response->getData());
+		$this->assertSame(expected: [], actual: $this->saves);
+		$this->assertSame(expected: [], actual: $this->transitions);
 	}
 
 	/**
 	 * REQ-PSG-001: a draft dated ahead does not run the publish transition either.
+	 *
+	 * @return void
 	 *
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
 	 */
@@ -695,13 +702,15 @@ class PublicationStateControllerTest extends TestCase {
 		$this->publication = ['id' => 'p1', 'status' => 'approved', 'publicationDate' => (new \DateTimeImmutable('+3 days'))->format(DATE_ATOM)];
 		$this->rights->method('mayUpdate')->willReturn(true);
 
-		$this->assertSame(Http::STATUS_LOCKED, $this->controller->publish('p1')->getStatus());
-		$this->assertSame([], $this->transitions);
-		$this->assertSame([], $this->saves);
+		$this->assertSame(expected: Http::STATUS_LOCKED, actual: $this->controller->publish('p1')->getStatus());
+		$this->assertSame(expected: [], actual: $this->transitions);
+		$this->assertSame(expected: [], actual: $this->saves);
 	}
 
 	/**
 	 * REQ-PSG-001: a caller in a lift group may still publish a scheduled publication now.
+	 *
+	 * @return void
 	 *
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
 	 */
@@ -712,8 +721,8 @@ class PublicationStateControllerTest extends TestCase {
 
 		$response = $this->controller->publish('p1');
 
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertCount(1, $this->saves);
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertCount(expectedCount: 1, haystack: $this->saves);
 	}
 
 	/** REQ-PPW-002: publish now on a public publication answers 409; without rights 403. */

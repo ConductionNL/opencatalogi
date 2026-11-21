@@ -23,12 +23,16 @@ declare(strict_types=1);
 
 namespace Unit\Service\Publication;
 
+use OCA\OpenCatalogi\Service\Publication\EmbargoGuard;
 use OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy;
 use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
+use OCP\IUser;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\Publication\PublishTransition
@@ -66,7 +70,15 @@ class PublishTransitionTest extends TestCase {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn($reviewRequired);
 
-		return new PublishTransition($container, new PublicationReviewPolicy($config));
+		return new PublishTransition(
+			container: $container,
+			review: new PublicationReviewPolicy(appConfig: $config),
+			embargo: new EmbargoGuard(
+				config: $config,
+				groups: $this->createMock(originalClassName: IGroupManager::class),
+				logger: $this->createMock(originalClassName: LoggerInterface::class)
+			)
+		);
 	}//end subject()
 
 	/**
@@ -117,4 +129,27 @@ class PublishTransitionTest extends TestCase {
 
 		$this->assertSame([], $this->runs);
 	}//end testARefusedPublishNeverReachesTheEngine()
+
+	/**
+	 * REQ-PSG-001: publishing now a publication dated ahead is vetoed with the embargo moment; one dated in the past is not.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
+	 */
+	public function testTheEmbargoVetoesPublishingAScheduledPublicationNow(): void {
+		$transition = $this->subject(reviewRequired: 'false');
+		$caller = $this->createMock(originalClassName: IUser::class);
+		$until = (new \DateTimeImmutable(datetime: 'tomorrow 09:00'))->format(format: DATE_ATOM);
+		$now = (new \DateTimeImmutable())->format(format: DATE_ATOM);
+
+		$this->assertSame(
+			expected: ['code' => 'embargo-holds', 'property' => 'publicationDate', 'embargoUntil' => $until],
+			actual: $transition->embargoVeto(stored: ['publicationDate' => $until], record: ['publicationDate' => $now], caller: $caller)
+		);
+		$this->assertNull(
+			actual: $transition->embargoVeto(stored: ['publicationDate' => '2026-09-01T09:00:00+00:00'], record: ['publicationDate' => $now], caller: $caller)
+		);
+		$this->assertSame(expected: [], actual: $this->runs);
+	}//end testTheEmbargoVetoesPublishingAScheduledPublicationNow()
 }//end class
