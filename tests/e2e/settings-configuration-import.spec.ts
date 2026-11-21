@@ -30,7 +30,9 @@ test.describe('Configuration import on the settings page', () => {
 	test('An administrator forces the import', async ({ page }) => {
 		await page.goto(SETTINGS)
 		await dismissOverlays(page)
-		const force = page.getByRole('button', { name: /Force import|Import forceren/i })
+		const force = page.getByRole('button', {
+			name: /Force import|Import forceren/i,
+		})
 		await expect(force).toBeVisible({ timeout: 30_000 })
 
 		const sent = page.waitForRequest(
@@ -72,7 +74,9 @@ test.describe('Configuration import on the settings page', () => {
 		// After `occ upgrade` the repair step has imported the shipped
 		// configuration, so the page offers Reimport rather than Update.
 		await expect(
-			page.getByRole('button', { name: /Reimport configuration|Configuratie opnieuw importeren/i }),
+			page.getByRole('button', {
+				name: /Reimport configuration|Configuratie opnieuw importeren/i,
+			}),
 		).toBeVisible({ timeout: 30_000 })
 	})
 })

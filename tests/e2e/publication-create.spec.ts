@@ -49,7 +49,9 @@ test.describe('Creating a publication', () => {
 	test.afterAll(async ({ request }) => {
 		if (publicationId) {
 			await request
-				.delete(`${OR_API}/objects/${scope.register}/${scope.schema}/${publicationId}`)
+				.delete(
+					`${OR_API}/objects/${scope.register}/${scope.schema}/${publicationId}`,
+				)
 				.catch(() => undefined)
 		}
 		if (themeId) {
@@ -68,11 +70,21 @@ test.describe('Creating a publication', () => {
 		const form = dialog(page)
 		await expect(form).toBeVisible({ timeout: 10_000 })
 		await fillField(form, 'Title', title)
-		await fillField(form, 'Summary', 'Subsidie voor het buurthuis in de Oostwijk')
+		await fillField(
+			form,
+			'Summary',
+			'Subsidie voor het buurthuis in de Oostwijk',
+		)
 		await fillField(form, 'Description', 'Het college kent een subsidie toe.')
-		await form.getByLabel(/themes|thema/i).first().click()
+		await form
+			.getByLabel(/themes|thema/i)
+			.first()
+			.click()
 		await page.getByRole('option', { name: themeTitle }).first().click()
-		await form.getByRole('button', { name: /^(create|save|opslaan|aanmaken)$/i }).first().click()
+		await form
+			.getByRole('button', { name: /^(create|save|opslaan|aanmaken)$/i })
+			.first()
+			.click()
 		await expect(form).toBeHidden({ timeout: 15_000 })
 
 		const listed = page.locator('main tbody tr').filter({ hasText: title })
@@ -83,7 +95,9 @@ test.describe('Creating a publication', () => {
 			`${OR_API}/objects/${scope.register}/${scope.schema}?_search=${encodeURIComponent(RUN_ID)}`,
 		)
 		expect(found.ok()).toBe(true)
-		const results = ((await found.json()).results ?? []) as Array<Record<string, unknown>>
+		const results = ((await found.json()).results ?? []) as Array<
+			Record<string, unknown>
+		>
 		const saved = results.find((r) => r.title === title)
 		expect(saved, 'the saved publication').toBeTruthy()
 		publicationId = String(saved?.id ?? '')
@@ -101,7 +115,9 @@ test.describe('Creating a publication', () => {
 		const form = dialog(page)
 		await expect(form).toBeVisible({ timeout: 10_000 })
 		await fillField(form, 'Summary', 'A summary without a title')
-		const save = form.getByRole('button', { name: /^(create|save|opslaan|aanmaken)$/i }).first()
+		const save = form
+			.getByRole('button', { name: /^(create|save|opslaan|aanmaken)$/i })
+			.first()
 		if (await save.isEnabled()) {
 			await save.click()
 		}

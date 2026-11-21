@@ -73,7 +73,10 @@ async function bulkAction(page: Page, id: string, label: RegExp): Promise<void> 
 		await button.click()
 		return
 	}
-	await page.getByRole('button', { name: /more|meer/i }).first().click()
+	await page
+		.getByRole('button', { name: /more|meer/i })
+		.first()
+		.click()
 	await page.getByRole('menuitem', { name: label }).first().click()
 }
 
@@ -109,7 +112,9 @@ test.describe('Publications merge and migrate', () => {
 			headers: { 'OCS-APIRequest': 'true' },
 			data: { userid: reader.uid, password: reader.password },
 		})
-		expect(made.ok(), `provisioning ${reader.uid}: ${await made.text()}`).toBe(true)
+		expect(made.ok(), `provisioning ${reader.uid}: ${await made.text()}`).toBe(
+			true,
+		)
 	})
 
 	test.afterAll(async ({ request }) => {
@@ -155,9 +160,13 @@ test.describe('Publications merge and migrate', () => {
 		await bulkAction(page, 'merge', /merge|samenvoegen/i)
 
 		const dialog = page.getByRole('dialog')
-		await expect(dialog).toContainText(/Configure Merge|Samenvoegen configureren/i)
+		await expect(dialog).toContainText(
+			/Configure Merge|Samenvoegen configureren/i,
+		)
 		await dialog
-			.getByRole('radio', { name: /Transfer to target object|Overzetten naar doelobject/i })
+			.getByRole('radio', {
+				name: /Transfer to target object|Overzetten naar doelobject/i,
+			})
 			.check({ force: true })
 
 		const sourceId = created.get(mergeTitles[0]) as string
@@ -165,17 +174,28 @@ test.describe('Publications merge and migrate', () => {
 		const merge = page.waitForRequest(
 			(req) =>
 				req.method() === 'POST'
-				&& req.url().endsWith(`/objects/${scope.register}/${scope.schema}/${sourceId}/merge`),
+				&& req
+					.url()
+					.endsWith(
+						`/objects/${scope.register}/${scope.schema}/${sourceId}/merge`,
+					),
 		)
-		await dialog.getByRole('button', { name: /Merge Objects|Objecten samenvoegen/i }).click()
+		await dialog
+			.getByRole('button', { name: /Merge Objects|Objecten samenvoegen/i })
+			.click()
 
 		const body = (await merge).postDataJSON()
 		expect(String(body.target)).toBe(targetId)
 		expect(body.fileAction).toBe('transfer')
-		await expect(dialog).toContainText(/Properties changed|Gewijzigde eigenschappen/i)
+		await expect(dialog).toContainText(
+			/Properties changed|Gewijzigde eigenschappen/i,
+		)
 		await expect(dialog).toContainText(/Files transferred|Bestanden overgezet/i)
 
-		await dialog.getByRole('button', { name: /close|sluiten/i }).first().click()
+		await dialog
+			.getByRole('button', { name: /close|sluiten/i })
+			.first()
+			.click()
 		await expect(row(page, mergeTitles[0])).toHaveCount(0)
 		created.delete(mergeTitles[0])
 	})
@@ -196,7 +216,9 @@ test.describe('Publications merge and migrate', () => {
 		await page.getByRole('option').first().click()
 
 		await expect(
-			dialog.getByRole('button', { name: /Migrate Objects|Objecten migreren/i }),
+			dialog.getByRole('button', {
+				name: /Migrate Objects|Objecten migreren/i,
+			}),
 		).toBeDisabled()
 	})
 
@@ -208,9 +230,15 @@ test.describe('Publications merge and migrate', () => {
 		const dialog = page.getByRole('dialog')
 		await dialog.getByRole('button', { name: /next|volgende/i }).click()
 		await dialog.getByLabel(/Target Register|Doelregister/i).click()
-		await page.getByRole('option', { name: /publication|publicatie/i }).first().click()
+		await page
+			.getByRole('option', { name: /publication|publicatie/i })
+			.first()
+			.click()
 		await dialog.getByLabel(/Target Schema|Doelschema/i).click()
-		await page.getByRole('option', { name: /publication|publicatie/i }).first().click()
+		await page
+			.getByRole('option', { name: /publication|publicatie/i })
+			.first()
+			.click()
 
 		for (const property of ['title', 'summary']) {
 			const mapping = dialog
@@ -218,19 +246,30 @@ test.describe('Publications merge and migrate', () => {
 				.filter({ hasText: new RegExp(`^\\s*${property}\\b`, 'i') })
 				.first()
 			await mapping.getByLabel(/Target property|Doeleigenschap/i).click()
-			await page.getByRole('option', { name: new RegExp(`^${property}$`, 'i') }).first().click()
+			await page
+				.getByRole('option', { name: new RegExp(`^${property}$`, 'i') })
+				.first()
+				.click()
 		}
 		await expect(dialog).toContainText(/discarded|verwijderd/i)
 
 		const migrate = page.waitForRequest(
 			(req) => req.method() === 'POST' && /\/api\/migrate$/.test(req.url()),
 		)
-		await dialog.getByRole('button', { name: /Migrate Objects|Objecten migreren/i }).click()
+		await dialog
+			.getByRole('button', { name: /Migrate Objects|Objecten migreren/i })
+			.click()
 
 		const body = (await migrate).postDataJSON()
-		const ids = (body.objects ?? body.selectedObjects ?? body.ids ?? []).map(String)
-		expect(ids.sort()).toEqual(migrateTitles.map((t) => created.get(t) as string).sort())
-		expect(Object.keys(body.mapping ?? {})).toEqual(expect.arrayContaining(['title', 'summary']))
+		const ids = (body.objects ?? body.selectedObjects ?? body.ids ?? []).map(
+			String,
+		)
+		expect(ids.sort()).toEqual(
+			migrateTitles.map((t) => created.get(t) as string).sort(),
+		)
+		expect(Object.keys(body.mapping ?? {})).toEqual(
+			expect.arrayContaining(['title', 'summary']),
+		)
 		await expect(dialog).toContainText(/Objects migrated|Objecten gemigreerd/i)
 		await expect(dialog).toContainText(/Objects failed|Objecten mislukt/i)
 	})
@@ -252,8 +291,12 @@ test.describe('Publications merge and migrate', () => {
 		await expect(row(page, migrateTitles[0])).toBeVisible({ timeout: 30_000 })
 		await select(page, migrateTitles.slice(0, 2))
 
-		await expect(page.locator('[data-testid="cn-bulk-action-merge"]')).toHaveCount(0)
-		await expect(page.locator('[data-testid="cn-bulk-action-migrate"]')).toHaveCount(0)
+		await expect(
+			page.locator('[data-testid="cn-bulk-action-merge"]'),
+		).toHaveCount(0)
+		await expect(
+			page.locator('[data-testid="cn-bulk-action-migrate"]'),
+		).toHaveCount(0)
 		await context.close()
 	})
 })

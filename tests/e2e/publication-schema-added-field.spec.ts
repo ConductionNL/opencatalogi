@@ -76,7 +76,9 @@ test.describe('A field added to the publication schema', () => {
 		const res = await request.get(`${OR_API}/schemas/${scope.schema}`)
 		expect(res.ok(), 'the publication schema reads').toBe(true)
 		original = await res.json()
-		originalProperties = { ...((original.properties as Record<string, unknown>) ?? {}) }
+		originalProperties = {
+			...((original.properties as Record<string, unknown>) ?? {}),
+		}
 		originalRequired = [...((original.required as string[]) ?? [])]
 		await writeSchema(
 			request,
@@ -88,15 +90,28 @@ test.describe('A field added to the publication schema', () => {
 	})
 
 	test.afterAll(async ({ request }) => {
-		await writeSchema(request, scope.schema, original, originalProperties, originalRequired)
+		await writeSchema(
+			request,
+			scope.schema,
+			original,
+			originalProperties,
+			originalRequired,
+		)
 		if (publicationId) {
 			await request
-				.delete(`${OR_API}/objects/${scope.register}/${scope.schema}/${publicationId}`)
+				.delete(
+					`${OR_API}/objects/${scope.register}/${scope.schema}/${publicationId}`,
+				)
 				.catch(() => undefined)
 		}
 	})
 
-	test('An administrator adds a case number', async ({ page, request, playwright, baseURL }) => {
+	test('An administrator adds a case number', async ({
+		page,
+		request,
+		playwright,
+		baseURL,
+	}) => {
 		await page.goto(`${APP}${path}`)
 		await dismissOverlays(page)
 		await waitIndexBody(page)
@@ -108,18 +123,24 @@ test.describe('A field added to the publication schema', () => {
 		await fillField(form, 'Title', title)
 		await fillField(form, 'Summary', 'A publication with a case number')
 		await fillField(form, FIELD, 'Z-2026-00871')
-		await form.getByRole('button', { name: /^(create|save|opslaan|aanmaken)$/i }).first().click()
+		await form
+			.getByRole('button', { name: /^(create|save|opslaan|aanmaken)$/i })
+			.first()
+			.click()
 		await expect(form).toBeHidden({ timeout: 15_000 })
 
 		const found = await request.get(
 			`${OR_API}/objects/${scope.register}/${scope.schema}?_search=${encodeURIComponent(RUN_ID)}`,
 		)
-		const saved = (((await found.json()).results ?? []) as Array<Record<string, unknown>>)
-			.find((r) => r.title === title)
+		const saved = (
+			((await found.json()).results ?? []) as Array<Record<string, unknown>>
+		).find((r) => r.title === title)
 		expect(saved?.[FIELD]).toBe('Z-2026-00871')
 		publicationId = String(saved?.id ?? '')
 
-		const published = await request.post(`${APP_API}/publications/${publicationId}/publish`)
+		const published = await request.post(
+			`${APP_API}/publications/${publicationId}/publish`,
+		)
 		expect(published.ok(), await published.text()).toBe(true)
 
 		const visitor = await playwright.request.newContext({
@@ -148,7 +169,9 @@ test.describe('A field added to the publication schema', () => {
 		const form = dialog(page)
 		await expect(form).toBeVisible({ timeout: 10_000 })
 		await fillField(form, 'Title', `${RUN_ID} without a case number`)
-		const save = form.getByRole('button', { name: /^(create|save|opslaan|aanmaken)$/i }).first()
+		const save = form
+			.getByRole('button', { name: /^(create|save|opslaan|aanmaken)$/i })
+			.first()
 		if (await save.isEnabled()) {
 			await save.click()
 		}
