@@ -781,7 +781,9 @@ OC.L10N.register(
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Þegar kveikt er á þessu þarf að senda inn drög og samþykkja þau áður en hægt er að birta þau. Þegar slökkt er á þessu getur ritstjóri birt drög beint.",
         "Delete publication": "Eyða útgáfu",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Viltu eyða \"{name}\"? Þessa aðgerð er ekki hægt að afturkalla.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Útgáfan og viðhengi hennar hverfa af opinberu síðunni og úr Woo-veftrénu. Geymsla í safni varðveitir þau hins vegar út varðveislutímann."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Útgáfan og viðhengi hennar hverfa af opinberu síðunni og úr Woo-veftrénu. Geymsla í safni varðveitir þau hins vegar út varðveislutímann.",
+        "Responsible organisation": "Ábyrg stofnun",
+        "The organisation responsible for this publication, when it is not the publisher.": "Stofnunin sem ber ábyrgð á þessari útgáfu, þegar hún er ekki útgefandinn."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -780,7 +780,9 @@
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Când este activat, o ciornă trebuie trimisă și aprobată înainte de a putea fi publicată. Când este dezactivat, un editor poate publica direct o ciornă.",
         "Delete publication": "Ștergeți publicația",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Doriți să ștergeți \"{name}\"? Această acțiune nu poate fi anulată.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publicația și atașamentele ei dispar de pe pagina publică și din harta site-ului Woo. Arhivarea, în schimb, le păstrează pe durata termenului de păstrare."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publicația și atașamentele ei dispar de pe pagina publică și din harta site-ului Woo. Arhivarea, în schimb, le păstrează pe durata termenului de păstrare.",
+        "Responsible organisation": "Organizație responsabilă",
+        "The organisation responsible for this publication, when it is not the publisher.": "Organizația responsabilă pentru această publicație, atunci când nu este editorul."
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

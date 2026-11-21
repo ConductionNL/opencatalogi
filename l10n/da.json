@@ -780,7 +780,9 @@
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Når det er slået til, skal en kladde indsendes og godkendes, før den kan offentliggøres. Når det er slået fra, kan en redaktør offentliggøre en kladde direkte.",
         "Delete publication": "Slet publikation",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Vil du slette \"{name}\"? Denne handling kan ikke fortrydes.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikationen og dens vedhæftede filer forsvinder fra den offentlige side og fra Woo-sitemappet. Arkivering bevarer dem i stedet i opbevaringsperioden."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikationen og dens vedhæftede filer forsvinder fra den offentlige side og fra Woo-sitemappet. Arkivering bevarer dem i stedet i opbevaringsperioden.",
+        "Responsible organisation": "Ansvarlig organisation",
+        "The organisation responsible for this publication, when it is not the publisher.": "Den organisation, der er ansvarlig for denne publikation, når det ikke er udgiveren."
     },
     "plurals": {}
 }

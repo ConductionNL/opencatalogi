@@ -780,7 +780,9 @@
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Ko je vklopljeno, je treba osnutek oddati in odobriti, preden ga je mogoče objaviti. Ko je izklopljeno, lahko urednik osnutek objavi neposredno.",
         "Delete publication": "Izbriši objavo",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Ali želite izbrisati \"{name}\"? Tega dejanja ni mogoče razveljaviti.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Objava in njene priloge izginejo z javne strani in iz zemljevida strani Woo. Arhiviranje pa jih ohrani za čas hrambe."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Objava in njene priloge izginejo z javne strani in iz zemljevida strani Woo. Arhiviranje pa jih ohrani za čas hrambe.",
+        "Responsible organisation": "Odgovorna organizacija",
+        "The organisation responsible for this publication, when it is not the publisher.": "Organizacija, odgovorna za to publikacijo, kadar to ni izdajatelj."
     },
     "plurals": {}
 }

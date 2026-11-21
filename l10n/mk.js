@@ -781,7 +781,9 @@ OC.L10N.register(
         "When on, a draft has to be submitted and approved before it can be published. When off, an editor can publish a draft directly.": "Кога е вклучено, нацртот мора да биде поднесен и одобрен пред да може да се објави. Кога е исклучено, уредникот може директно да објави нацрт.",
         "Delete publication": "Избриши ја објавата",
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Дали сакате да го избришете \"{name}\"? Ова дејство не може да се врати.",
-        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Објавата и нејзините прилози исчезнуваат од јавната страница и од мапата на сајтот Woo. Архивирањето, пак, ги чува за рокот на чување."
+        "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Објавата и нејзините прилози исчезнуваат од јавната страница и од мапата на сајтот Woo. Архивирањето, пак, ги чува за рокот на чување.",
+        "Responsible organisation": "Одговорна организација",
+        "The organisation responsible for this publication, when it is not the publisher.": "Организацијата одговорна за оваа публикација, кога таа не е издавачот."
     },
     "nplurals=2; plural=(n != 1);"
 )
