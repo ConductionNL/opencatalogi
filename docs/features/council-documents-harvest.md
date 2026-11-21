@@ -16,7 +16,7 @@ OpenCatalogi can read the public documents of the municipal council from the cou
 
 For every document the council system marks public, with a title and a file, a run:
 
-- writes a publication with the document title, the meeting body and date as its summary ("{body}, meeting of {date}"), Woo category `infocat008` and the source identifier `notubiz:{id}` or `ibabs:{id}`;
+- writes a publication with the document title, the meeting body and date as its summary (`{body}, meeting of {date}`), Woo category `infocat008` and the source identifier `notubiz:{id}` or `ibabs:{id}`;
 - attaches the document file through integriq.
 
 A confidential document is never written. A document that was seen before is updated, not added again: the write matches on the source identifier.
