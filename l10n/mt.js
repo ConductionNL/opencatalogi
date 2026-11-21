@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Trid tħassar \"{name}\"? Din l-azzjoni ma tistax titreġġa' lura.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Il-pubblikazzjoni u l-annessi tagħha jisparixxu mill-paġna pubblika u mill-mappa tas-sit Woo. L-arkivjar, minflok, iżommhom għall-perjodu taż-żamma.",
         "Responsible organisation": "Organizzazzjoni responsabbli",
-        "The organisation responsible for this publication, when it is not the publisher.": "L-organizzazzjoni responsabbli għal din il-pubblikazzjoni, meta ma tkunx il-pubblikatur."
+        "The organisation responsible for this publication, when it is not the publisher.": "L-organizzazzjoni responsabbli għal din il-pubblikazzjoni, meta ma tkunx il-pubblikatur.",
+        "The import failed.": "L-importazzjoni falliet.",
+        "Failed on {date}": "Falla fi {date}",
+        "Only a table whose import failed can be retried.": "Tista' terġa' tipprova biss tabella li l-importazzjoni tagħha falliet."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Vai vēlaties dzēst \"{name}\"? Šo darbību nevar atsaukt.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikācija un tās pielikumi pazūd no publiskās lapas un no Woo vietnes kartes. Arhivēšana turpretī tos saglabā uz glabāšanas termiņu.",
         "Responsible organisation": "Atbildīgā organizācija",
-        "The organisation responsible for this publication, when it is not the publisher.": "Organizācija, kas atbild par šo publikāciju, ja tā nav izdevējs."
+        "The organisation responsible for this publication, when it is not the publisher.": "Organizācija, kas atbild par šo publikāciju, ja tā nav izdevējs.",
+        "The import failed.": "Importēšana neizdevās.",
+        "Failed on {date}": "Neizdevās {date}",
+        "Only a table whose import failed can be retried.": "Atkārtot var tikai tabulu, kuras importēšana neizdevās."
     },
     "nplurals=2; plural=(n != 1);"
 )

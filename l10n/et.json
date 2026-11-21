@@ -782,7 +782,10 @@
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Kas soovite kustutada üksuse \"{name}\"? Seda toimingut ei saa tagasi võtta.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Väljaanne ja selle manused kaovad avalikult lehelt ja Woo saidikaardilt. Arhiveerimine säilitab need hoopis säilitustähtaja jooksul.",
         "Responsible organisation": "Vastutav organisatsioon",
-        "The organisation responsible for this publication, when it is not the publisher.": "Selle väljaande eest vastutav organisatsioon, kui see ei ole väljaandja."
+        "The organisation responsible for this publication, when it is not the publisher.": "Selle väljaande eest vastutav organisatsioon, kui see ei ole väljaandja.",
+        "The import failed.": "Importimine ebaõnnestus.",
+        "Failed on {date}": "Ebaõnnestus {date}",
+        "Only a table whose import failed can be retried.": "Uuesti saab proovida ainult tabelit, mille importimine ebaõnnestus."
     },
     "plurals": {}
 }

@@ -106,6 +106,69 @@ describe('PublicationTablesWidget', () => {
 		expect(wrapper.find('[data-testid="publication-tables-message"]').text()).toBe('Not published: Row 350: not a number')
 	})
 
+	describe('a failed table (REQ-DFA-004)', () => {
+		const FAILED = { id: 't2', title: 'parkeren.csv', file: '78', status: 'failed', lastError: 'Row 350: bedrag is not a number', failedAt: '2026-11-20T10:15:00+00:00' }
+
+		it('shows Import failed, the refused row, when it failed and Retry', async () => {
+			answerReads([FAILED], [{ id: 78, name: 'parkeren.csv' }])
+
+			const wrapper = await mountWidget()
+
+			const failure = wrapper.find('[data-testid="publication-table-failure-t2"]')
+			expect(failure.text()).toContain('Import failed')
+			expect(failure.text()).toContain('Row 350: bedrag is not a number')
+			expect(failure.text()).toContain('Failed on ' + new Date(FAILED.failedAt).toLocaleString())
+			expect(wrapper.find('[data-testid="publication-table-retry-t2"]').exists()).toBe(true)
+			expect(wrapper.find('[data-testid="publication-table-publish-78"]').exists()).toBe(false)
+		})
+
+		it('says the import failed without an error, and leaves out a time it does not have', async () => {
+			answerReads([{ ...FAILED, lastError: '', failedAt: undefined }], [])
+
+			const failure = (await mountWidget()).find('[data-testid="publication-table-failure-t2"]')
+
+			expect(failure.text()).toContain('The import failed.')
+			expect(failure.text()).not.toContain('Failed on')
+		})
+
+		it('keeps a time it cannot read as the server wrote it', async () => {
+			answerReads([{ ...FAILED, failedAt: 'yesterday' }], [])
+
+			const failure = (await mountWidget()).find('[data-testid="publication-table-failure-t2"]')
+
+			expect(failure.text()).toContain('Failed on yesterday')
+		})
+
+		it('retries the import and reads the tables again', async () => {
+			answerReads([FAILED], [])
+			axios.post.mockResolvedValue({ data: { ...FAILED, status: 'ready', rowCount: 12 } })
+			const wrapper = await mountWidget()
+
+			await wrapper.find('[data-testid="publication-table-retry-t2"]').trigger('click')
+			await flushPromises()
+
+			expect(axios.post).toHaveBeenCalledWith(TABLES_URL + '/t2/retry')
+			expect(axios.get).toHaveBeenCalledTimes(4)
+			expect(wrapper.find('[data-testid="publication-tables-message"]').text()).toBe('The table is published.')
+		})
+
+		it('names the refused row when the retry fails again, and words a refusal', async () => {
+			answerReads([FAILED], [])
+			axios.post
+				.mockResolvedValueOnce({ data: { ...FAILED, lastError: 'Row 351: datum is not a date' } })
+				.mockRejectedValueOnce({ response: { status: 403 } })
+			const wrapper = await mountWidget()
+
+			await wrapper.find('[data-testid="publication-table-retry-t2"]').trigger('click')
+			await flushPromises()
+			expect(wrapper.find('[data-testid="publication-tables-message"]').text()).toBe('Not published: Row 351: datum is not a date')
+
+			await wrapper.find('[data-testid="publication-table-retry-t2"]').trigger('click')
+			await flushPromises()
+			expect(wrapper.find('[data-testid="publication-tables-message"]').text()).toBe('You may not change this publication.')
+		})
+	})
+
 	it('saves only the changed columns of the dictionary', async () => {
 		answerReads([READY], [])
 		const saved = [{ name: 'toestellen', title: 'toestellen', description: 'Number of play devices on the site', type: 'integer' }]

@@ -782,7 +782,10 @@
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Szeretné törölni a következőt: \"{name}\"? Ez a művelet nem vonható vissza.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "A közzététel és mellékletei eltűnnek a nyilvános oldalról és a Woo-oldaltérképről. Az archiválás ezzel szemben megőrzi őket a megőrzési időre.",
         "Responsible organisation": "Felelős szervezet",
-        "The organisation responsible for this publication, when it is not the publisher.": "A kiadványért felelős szervezet, ha az nem a kiadó."
+        "The organisation responsible for this publication, when it is not the publisher.": "A kiadványért felelős szervezet, ha az nem a kiadó.",
+        "The import failed.": "Az importálás sikertelen.",
+        "Failed on {date}": "Sikertelen: {date}",
+        "Only a table whose import failed can be retried.": "Csak olyan táblázat próbálható újra, amelynek importálása sikertelen volt."
     },
     "plurals": {}
 }

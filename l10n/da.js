@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Vil du slette \"{name}\"? Denne handling kan ikke fortrydes.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikationen og dens vedhæftede filer forsvinder fra den offentlige side og fra Woo-sitemappet. Arkivering bevarer dem i stedet i opbevaringsperioden.",
         "Responsible organisation": "Ansvarlig organisation",
-        "The organisation responsible for this publication, when it is not the publisher.": "Den organisation, der er ansvarlig for denne publikation, når det ikke er udgiveren."
+        "The organisation responsible for this publication, when it is not the publisher.": "Den organisation, der er ansvarlig for denne publikation, når det ikke er udgiveren.",
+        "The import failed.": "Importen mislykkedes.",
+        "Failed on {date}": "Mislykkedes den {date}",
+        "Only a table whose import failed can be retried.": "Kun en tabel, hvis import mislykkedes, kan prøves igen."
     },
     "nplurals=2; plural=(n != 1);"
 )

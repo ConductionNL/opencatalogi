@@ -782,7 +782,10 @@
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Pretende eliminar \"{name}\"? Esta ação não pode ser anulada.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "A publicação e os seus anexos desaparecem da página pública e do mapa do site Woo. Arquivar, pelo contrário, conserva-os durante o prazo de conservação.",
         "Responsible organisation": "Organização responsável",
-        "The organisation responsible for this publication, when it is not the publisher.": "A organização responsável por esta publicação, quando não é o editor."
+        "The organisation responsible for this publication, when it is not the publisher.": "A organização responsável por esta publicação, quando não é o editor.",
+        "The import failed.": "A importação falhou.",
+        "Failed on {date}": "Falhou em {date}",
+        "Only a table whose import failed can be retried.": "Só é possível tentar de novo uma tabela cuja importação falhou."
     },
     "plurals": {}
 }

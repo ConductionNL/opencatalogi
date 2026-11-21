@@ -783,7 +783,10 @@ OC.L10N.register(
         "Do you want to delete \"{name}\"? This action cannot be undone.": "Ar norite ištrinti \"{name}\"? Šio veiksmo atšaukti negalima.",
         "The publication and its attachments disappear from the public page and from the Woo sitemap. Archiving keeps them for the retention term instead.": "Publikacija ir jos priedai dingsta iš viešojo puslapio ir iš Woo svetainės schemos. Archyvavimas, priešingai, juos išsaugo saugojimo terminui.",
         "Responsible organisation": "Atsakinga organizacija",
-        "The organisation responsible for this publication, when it is not the publisher.": "Už šį leidinį atsakinga organizacija, kai tai nėra leidėjas."
+        "The organisation responsible for this publication, when it is not the publisher.": "Už šį leidinį atsakinga organizacija, kai tai nėra leidėjas.",
+        "The import failed.": "Importuoti nepavyko.",
+        "Failed on {date}": "Nepavyko {date}",
+        "Only a table whose import failed can be retried.": "Iš naujo bandyti galima tik lentelę, kurios importuoti nepavyko."
     },
     "nplurals=2; plural=(n != 1);"
 )
