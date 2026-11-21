@@ -134,7 +134,10 @@ final class PublicationLifecycleTest extends TestCase {
 	private function embargoListener(): EmbargoGuardListener {
 		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
-			static fn (string $app, string $key, string $default = ''): string => ($key === 'publication_schema' ? '7' : $default)
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'publication_schema' => '7',
+				default => $default,
+			}
 		);
 		$groups = $this->createMock(originalClassName: IGroupManager::class);
 		$groups->method('getUserGroupIds')->willReturn(['editors']);
