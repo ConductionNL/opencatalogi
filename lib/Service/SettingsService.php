@@ -308,6 +308,8 @@ class SettingsService implements SettingsServiceInterface {
 		'publication_url_catalog' => 'publications',
 		'cors_allowed_origins' => '*',
 		'search_indexing' => 'allowed',
+		// The groups that may lift an embargo (publication-schedule-guards REQ-PSG-002): a JSON list of group ids.
+		'publication_embargo_lift_groups' => '["admin"]',
 	];
 
 	/**
@@ -337,6 +339,7 @@ class SettingsService implements SettingsServiceInterface {
 		'publication_url_catalog',
 		'cors_allowed_origins',
 		'search_indexing',
+		'publication_embargo_lift_groups',
 	];
 
 	/**
@@ -1019,7 +1022,7 @@ class SettingsService implements SettingsServiceInterface {
 	/**
 	 * Reject a payload that gives an accepted key a list or an object, which would be stored as the text "Array".
 	 *
-	 * The channel sources map and the publication languages list are the values a caller may send as such.
+	 * The channel sources map, the publication languages list and the embargo lift groups are the values a caller may send as such.
 	 *
 	 * @param array $data The settings data to update.
 	 * @param array<int,string> $keys The accepted keys.
@@ -1031,7 +1034,8 @@ class SettingsService implements SettingsServiceInterface {
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	private function assertSingleValues(array $data, array $keys): void {
-		foreach (array_intersect_key($data, array_flip(array_diff($keys, ['channel_sources', 'publication_languages']))) as $key => $value) {
+		$lists = ['channel_sources', 'publication_languages', 'publication_embargo_lift_groups'];
+		foreach (array_intersect_key($data, array_flip(array_diff($keys, $lists))) as $key => $value) {
 			if (is_array($value) === true || is_object($value) === true) {
 				throw new InvalidArgumentException('Setting ' . $key . ' takes a single value, not a list or an object');
 			}
@@ -1079,6 +1083,10 @@ class SettingsService implements SettingsServiceInterface {
 			return $this->normalisePublicationLanguages(value: $value);
 		}
 
+		if ($key === 'publication_embargo_lift_groups') {
+			return $this->normaliseLiftGroups(value: $value);
+		}
+
 		if ($key === 'search_indexing') {
 			// Only the two known values are stored; anything else keeps the default (REQ-WAB-003).
 			if ($value === 'blocked') {
@@ -1119,6 +1127,46 @@ class SettingsService implements SettingsServiceInterface {
 
 		return (string)json_encode($languages);
 	}//end normalisePublicationLanguages()
+
+	/**
+	 * The embargo lift groups to store: a JSON list of group ids, trimmed and each once.
+	 *
+	 * Accepts a list, its JSON text or comma separated text. An empty list keeps the
+	 * default `["admin"]`, so there is always a group that can lift an embargo.
+	 *
+	 * @param mixed $value The groups the caller sent.
+	 *
+	 * @return string The JSON list to store.
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.1
+	 */
+	private function normaliseLiftGroups(mixed $value): string {
+		if (is_string($value) === true) {
+			$decoded = json_decode($value, true);
+			if (is_array($decoded) === false) {
+				$decoded = explode(',', $value);
+			}
+
+			$value = $decoded;
+		}
+
+		if (is_array($value) === false) {
+			$value = [];
+		}
+
+		$groups = [];
+		foreach ($value as $group) {
+			if (is_string($group) === true && trim($group) !== '') {
+				$groups[trim($group)] = true;
+			}
+		}
+
+		if ($groups === []) {
+			return self::SETTING_DEFAULTS['publication_embargo_lift_groups'];
+		}
+
+		return json_encode(array_keys($groups));
+	}//end normaliseLiftGroups()
 
 	/**
 	 * One language tag trimmed with its primary subtag lower-cased, or null

@@ -74,6 +74,10 @@
                 <referencedClass name="OCP\Share\IManager"/>
                 <!-- OpenRegister cross-app classes (loaded dynamically) -->
                 <referencedClass name="OCA\OpenRegister\Kernel\Contracts\RenderSelection"/>
+                <!-- The value objects ObjectService's find and save take (openregister lib/Kernel/Contracts/Value). -->
+                <referencedClass name="OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions"/>
+                <referencedClass name="OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget"/>
+                <referencedClass name="OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions"/>
                 <referencedClass name="OCA\OpenRegister\Service\File\FileTransfer"/>
                 <referencedClass name="OCA\OpenRegister\Service\ConfigLookup"/>
                 <referencedClass name="OCA\OpenRegister\Service\RegisterResolverService"/>

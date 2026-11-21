@@ -83,6 +83,19 @@ class PublishTransition {
 	}//end embargoVeto()
 
 	/**
+	 * Whether the caller is in a group that may lift an embargo.
+	 *
+	 * @param IUser|null $caller The caller, or null outside a session.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.1
+	 */
+	public function mayLiftEmbargo(?IUser $caller): bool {
+		return $this->embargo->mayLift(caller: $caller);
+	}//end mayLiftEmbargo()
+
+	/**
 	 * The stored state, with an empty one read as `draft`.
 	 *
 	 * @param string $stored The stored `status`.

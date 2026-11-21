@@ -2126,7 +2126,10 @@
         "Deleting stopped part way. What was removed is listed.": "Deleting stopped part way. What was removed is listed.",
         "Only a draft or a publication in review can be deleted permanently.": "Only a draft or a publication in review can be deleted permanently.",
         "It cannot be checked that this publication was never published, so nothing was deleted.": "It cannot be checked that this publication was never published, so nothing was deleted.",
-        "This publication was published before, so it cannot be deleted permanently.": "This publication was published before, so it cannot be deleted permanently."
+        "This publication was published before, so it cannot be deleted permanently.": "This publication was published before, so it cannot be deleted permanently.",
+        "Groups that may lift an embargo": "Groups that may lift an embargo",
+        "Members of these groups may publish a publication before its publication date. They give a reason, and every lift is logged. Separate group ids with commas.": "Members of these groups may publish a publication before its publication date. They give a reason, and every lift is logged. Separate group ids with commas.",
+        "The groups could not be saved. Try again.": "The groups could not be saved. Try again."
     },
     "plurals": {}
 }
