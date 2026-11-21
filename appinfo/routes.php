@@ -156,6 +156,8 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'readyPublications#index', 'url' => '/api/publications/ready', 'verb' => 'GET'],
 		['name' => 'publicationState#visibility', 'url' => '/api/publications/{id}/visibility', 'verb' => 'GET'],
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
+		// Lift an embargo with a reason, logged (publication-schedule-guards REQ-PSG-002).
+		['name' => 'embargoLift#lift', 'url' => '/api/publications/{id}/lift-embargo', 'verb' => 'POST'],
 		// A visitor's error report on a publication (REQ-PDP-005).
 		['name' => 'errorReport#create', 'url' => '/api/publications/{id}/error-reports', 'verb' => 'POST'],
 		['name' => 'errorReport#preflightedCors', 'url' => '/api/publications/{id}/error-reports', 'verb' => 'OPTIONS'],
