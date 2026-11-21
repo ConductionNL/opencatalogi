@@ -33,6 +33,19 @@ namespace OCA\OpenCatalogi\Contract;
  */
 interface DraftPurgeServiceInterface {
 	/**
+	 * Find the publication with the caller's rights.
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return object|null The publication, or null when it is not there or the caller cannot read it.
+	 *
+	 * @throws \Throwable When the register cannot be reached.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 */
+	public function find(string $id): ?object;
+
+	/**
 	 * Delete a never released draft permanently with everything on it.
 	 *
 	 * The caller has already checked the update right on the publication.

@@ -29,13 +29,9 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Publication;
 
 use OCA\OpenCatalogi\Contract\DraftPurgeServiceInterface;
-use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
 use OCA\OpenCatalogi\Exception\DraftPurgeFailedException;
 use OCA\OpenCatalogi\Exception\DraftPurgeRefusedException;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
-use OCP\IAppConfig;
 use Throwable;
 
 /**
@@ -54,19 +50,6 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 	 * The audit action of the one summary entry.
 	 */
 	public const ACTION = 'publication.draft.purged';
-
-	/**
-	 * The states a permanent delete accepts.
-	 *
-	 * @var list<string>
-	 */
-	private const PURGEABLE_STATES = [PublicationStateService::STATE_DRAFT, PublicationStateService::STATE_IN_REVIEW];
-
-	/**
-	 * The most side records of one kind read for one publication. Reaching it
-	 * means the list may be incomplete, which refuses the delete.
-	 */
-	private const LIMIT = 500;
 
 	/**
 	 * The side records that name the publication in their `publication` property,
@@ -88,26 +71,34 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 	private const ASSESSMENTS = ['woo_register', 'woo_assessment_schema'];
 
 	/**
-	 * Where the depublications live; one naming the publication proves an earlier release.
-	 *
-	 * @var array{0: string, 1: string}
-	 */
-	private const DEPUBLICATIONS = ['publication_register', 'depublication_schema'];
-
-	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig $config Where the registers and schemas are configured.
-	 * @param OpenRegisterServicesInterface $openRegister OpenRegister's object, file and audit services.
+	 * @param DraftPurgeRecords $records The OpenRegister reads and writes.
+	 * @param DraftPurgeProof $proof The proof that the publication was never released.
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function __construct(
-		private readonly IAppConfig $config,
-		private readonly OpenRegisterServicesInterface $openRegister,
+		private readonly DraftPurgeRecords $records,
+		private readonly DraftPurgeProof $proof,
 	) {
 
 	}//end __construct()
+
+	/**
+	 * Find the publication with the caller's rights.
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return object|null The publication, or null when it is not there or the caller cannot read it.
+	 *
+	 * @throws Throwable When the register cannot be reached.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 */
+	public function find(string $id): ?object {
+		return $this->records->publication(id: $id);
+	}//end find()
 
 	/**
 	 * Delete a never released draft permanently with everything on it.
@@ -128,7 +119,7 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 			throw new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::UNVERIFIABLE, evidence: 'id');
 		}
 
-		$this->proveNeverReleased(record: $record, uuid: $uuid);
+		$this->proof->neverReleased(record: $record, uuid: $uuid);
 		$plan = $this->plan(publication: $publication, record: $record, uuid: $uuid);
 		$removed = $this->remove(publication: $publication, plan: $plan);
 		$this->log(publication: $publication, record: $record, removed: $removed);
@@ -136,147 +127,6 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 		return $removed;
 
 	}//end purge()
-
-	/**
-	 * Refuse unless the stored state, the stamp, the depublications and the audit trail all say never released.
-	 *
-	 * @param array<string, mixed> $record The publication's properties.
-	 * @param string $uuid The publication id.
-	 *
-	 * @return void
-	 *
-	 * @throws DraftPurgeRefusedException When one of them does not hold or cannot be read.
-	 */
-	private function proveNeverReleased(array $record, string $uuid): void {
-		$state = (string)($record['status'] ?? '');
-		if (in_array($state, self::PURGEABLE_STATES, true) === false) {
-			throw new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::NOT_A_DRAFT, evidence: $state);
-		}
-
-		$released = trim((string)($record['firstReleasedAt'] ?? ''));
-		if ($released !== '') {
-			throw new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::RELEASED, evidence: $released);
-		}
-
-		$depublications = $this->recordsNaming(keys: self::DEPUBLICATIONS, property: 'publication', value: $uuid);
-		if ($depublications === null) {
-			throw new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::UNVERIFIABLE, evidence: 'depublication');
-		}
-
-		if ($depublications !== []) {
-			throw new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::WITHDRAWN, evidence: $depublications[0]['id']);
-		}
-
-		$this->proveTrailNeverPublished(uuid: $uuid);
-
-	}//end proveNeverReleased()
-
-	/**
-	 * Refuse when the audit trail holds an entry in which the status was published, or cannot be read.
-	 *
-	 * @param string $uuid The publication id.
-	 *
-	 * @return void
-	 *
-	 * @throws DraftPurgeRefusedException When it holds one or cannot be read.
-	 */
-	private function proveTrailNeverPublished(string $uuid): void {
-		try {
-			$entries = $this->openRegister->installedService(
-				'OCA\OpenRegister\Db\AuditTrailMapper',
-				'OpenRegister audit trail is not available.'
-			)->findByObjectUntil(objectUuid: $uuid);
-		} catch (Throwable $e) {
-			throw new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::UNVERIFIABLE, evidence: 'audit-trail');
-		}
-
-		foreach ((array)$entries as $entry) {
-			$changed = $this->changedOf(entry: $entry);
-			if ($changed === null) {
-				throw new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::UNVERIFIABLE, evidence: 'audit-trail');
-			}
-
-			if ($this->mentionsPublished(changed: $changed) === true) {
-				throw new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::PUBLISHED_IN_TRAIL, evidence: $this->createdOf(entry: $entry));
-			}
-		}
-
-	}//end proveTrailNeverPublished()
-
-	/**
-	 * The `changed` payload of an audit entry, or null when it cannot be read.
-	 *
-	 * @param mixed $entry An AuditTrail entity or its serialised form.
-	 *
-	 * @return array<mixed>|null
-	 */
-	private function changedOf(mixed $entry): ?array {
-		if (is_array($entry) === true) {
-			return (array)($entry['changed'] ?? []);
-		}
-
-		if (is_object($entry) === true && is_callable([$entry, 'getChanged']) === true) {
-			return (array)($entry->getChanged() ?? []);
-		}
-
-		return null;
-
-	}//end changedOf()
-
-	/**
-	 * When an audit entry was written, for the refusal.
-	 *
-	 * @param mixed $entry An AuditTrail entity or its serialised form.
-	 *
-	 * @return string The moment, empty when unknown.
-	 */
-	private function createdOf(mixed $entry): string {
-		$created = $this->plainArray(object: $entry)['created'] ?? '';
-		if ($created instanceof \DateTimeInterface) {
-			return $created->format(\DateTimeInterface::ATOM);
-		}
-
-		return is_string($created) === true ? $created : '';
-
-	}//end createdOf()
-
-	/**
-	 * Whether a `changed` payload records the status `published`, on either side of a change.
-	 *
-	 * @param array<mixed> $changed The payload.
-	 *
-	 * @return bool
-	 */
-	private function mentionsPublished(array $changed): bool {
-		foreach ($changed as $key => $value) {
-			if ($key === 'status' && $this->isPublishedValue(value: $value) === true) {
-				return true;
-			}
-
-			if (is_array($value) === true && $this->mentionsPublished(changed: $value) === true) {
-				return true;
-			}
-		}
-
-		return false;
-
-	}//end mentionsPublished()
-
-	/**
-	 * Whether a status value, or an old/new pair, holds `published`.
-	 *
-	 * @param mixed $value The value.
-	 *
-	 * @return bool
-	 */
-	private function isPublishedValue(mixed $value): bool {
-		if (is_array($value) === true) {
-			return ($value['old'] ?? null) === 'published' || ($value['new'] ?? null) === 'published';
-		}
-
-		return $value === 'published';
-
-	}//end isPublishedValue()
 
 	/**
 	 * Everything that will be removed, the publication last.
@@ -290,20 +140,22 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 	 * @throws DraftPurgeRefusedException When any of it cannot be listed.
 	 */
 	private function plan(object $publication, array $record, string $uuid): array {
-		$files = $this->filesOf(publication: $publication);
+		$files = $this->records->files(publication: $publication);
+		if ($files === null) {
+			throw new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::UNVERIFIABLE, evidence: 'files');
+		}
+
 		$plan = [];
 		foreach (self::SIDE_RECORDS as $kind => $keys) {
-			$plan = array_merge($plan, $this->listed(kind: $kind, rows: $this->recordsNaming(keys: $keys, property: 'publication', value: $uuid)));
+			$plan = array_merge($plan, $this->listed(kind: $kind, rows: $this->records->naming(keys: $keys, property: 'publication', value: $uuid)));
 		}
 
 		foreach ($files as $file) {
-			$plan = array_merge(
-				$plan,
-				$this->listed(kind: 'wooAssessment', rows: $this->recordsNaming(keys: self::ASSESSMENTS, property: 'documentReference', value: $file['id']))
-			);
+			$assessments = $this->records->naming(keys: self::ASSESSMENTS, property: 'documentReference', value: $file['id']);
+			$plan = array_merge($plan, $this->listed(kind: 'wooAssessment', rows: $assessments));
 		}
 
-		$target = $this->target(keys: ['publication_register', 'publication_schema']) ?? ['register' => '', 'schema' => ''];
+		$target = ($this->records->target(keys: ['publication_register', 'publication_schema']) ?? ['register' => '', 'schema' => '']);
 		$plan = array_merge($plan, $files);
 		$plan[] = ['kind' => 'publication', 'id' => $uuid, 'name' => (string)($record['title'] ?? ''), 'target' => $target];
 
@@ -331,90 +183,6 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 	}//end listed()
 
 	/**
-	 * The files attached to the publication.
-	 *
-	 * @param object $publication The publication.
-	 *
-	 * @return array<int, array{kind: string, id: string, name: string}>
-	 *
-	 * @throws DraftPurgeRefusedException When they cannot be listed.
-	 */
-	private function filesOf(object $publication): array {
-		try {
-			$nodes = $this->fileService()->getFiles(object: $publication);
-		} catch (Throwable $e) {
-			throw new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::UNVERIFIABLE, evidence: 'files');
-		}
-
-		$files = [];
-		foreach ((array)$nodes as $node) {
-			$files[] = ['kind' => 'file', 'id' => (string)$node->getId(), 'name' => (string)$node->getName()];
-		}
-
-		return $files;
-
-	}//end filesOf()
-
-	/**
-	 * The records of a configured schema whose property holds the value.
-	 *
-	 * @param array{0: string, 1: string} $keys The register and schema config keys.
-	 * @param string $property The property that points.
-	 * @param string $value What it points at.
-	 *
-	 * @return array<int, array{id: string, name: string, target: array{register: string, schema: string}}>|null
-	 *         The records, an empty list when the schema is not configured, null when they could not all be read.
-	 */
-	private function recordsNaming(array $keys, string $property, string $value): ?array {
-		$target = $this->target(keys: $keys);
-		if ($target === null) {
-			return [];
-		}
-
-		try {
-			$result = $this->openRegister->installedObjectService()->searchObjectsPaginated(
-				query: ['@self' => $target, $property => $value, '_limit' => self::LIMIT],
-				_rbac: false,
-				_multitenancy: false
-			);
-		} catch (Throwable $e) {
-			return null;
-		}
-
-		$rows = array_values((array)($result['results'] ?? []));
-		if (count($rows) >= self::LIMIT) {
-			return null;
-		}
-
-		$records = [];
-		foreach ($rows as $row) {
-			$properties = $this->asRecord(object: $row);
-			$records[] = ['id' => (string)($properties['id'] ?? ''), 'name' => (string)($properties['title'] ?? ''), 'target' => $target];
-		}
-
-		return $records;
-
-	}//end recordsNaming()
-
-	/**
-	 * The configured register and schema, or null when either is not configured.
-	 *
-	 * @param array{0: string, 1: string} $keys The register and schema config keys.
-	 *
-	 * @return array{register: string, schema: string}|null
-	 */
-	private function target(array $keys): ?array {
-		$register = trim($this->config->getValueString('opencatalogi', $keys[0], ''));
-		$schema = trim($this->config->getValueString('opencatalogi', $keys[1], ''));
-		if ($register === '' || $schema === '') {
-			return null;
-		}
-
-		return ['register' => $register, 'schema' => $schema];
-
-	}//end target()
-
-	/**
 	 * Remove each planned item in order, stopping at the first that fails.
 	 *
 	 * @param object $publication The publication.
@@ -428,7 +196,7 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 		$removed = [];
 		foreach ($plan as $item) {
 			$summary = ['kind' => $item['kind'], 'id' => $item['id'], 'name' => $item['name']];
-			if ($this->removeOne(publication: $publication, item: $item) === false) {
+			if ($this->records->remove(publication: $publication, item: $item) === false) {
 				throw new DraftPurgeFailedException(removed: $removed, failedOn: $summary);
 			}
 
@@ -438,37 +206,6 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 		return $removed;
 
 	}//end remove()
-
-	/**
-	 * Remove one file or one object permanently.
-	 *
-	 * @param object $publication The publication the file hangs on.
-	 * @param array{kind: string, id: string, name: string, target?: array{register: string, schema: string}} $item The item.
-	 *
-	 * @return bool Whether it is gone.
-	 */
-	private function removeOne(object $publication, array $item): bool {
-		try {
-			if ($item['kind'] === 'file') {
-				return (bool)$this->fileService()->deleteFile(file: (int)$item['id'], object: $publication);
-			}
-
-			$target = ($item['target'] ?? ['register' => '', 'schema' => '']);
-
-			return (bool)$this->openRegister->installedObjectService()->deleteObject(
-				deletion: new ObjectDeletion(
-					uuid: $item['id'],
-					target: new ObjectFindTarget(register: $target['register'], schema: $target['schema']),
-					permanent: true
-				),
-				_rbac: false,
-				_multitenancy: false
-			);
-		} catch (Throwable $e) {
-			return false;
-		}
-
-	}//end removeOne()
 
 	/**
 	 * Write the one summary audit entry.
@@ -483,14 +220,10 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 	 */
 	private function log(object $publication, array $record, array $removed): void {
 		try {
-			$this->openRegister->installedService(
-				'OCA\OpenRegister\Db\AuditTrailMapper',
-				'OpenRegister audit trail is not available.'
-			)->createAuditTrail(
-				old: $publication,
-				new: null,
+			$this->records->log(
+				publication: $publication,
 				action: self::ACTION,
-				cascadeContext: [
+				context: [
 					'publication' => ['id' => (string)($record['id'] ?? ''), 'title' => (string)($record['title'] ?? '')],
 					'removed' => $removed,
 				]
@@ -498,21 +231,9 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 		} catch (Throwable $e) {
 			throw new DraftPurgeFailedException(
 				removed: $removed,
-				failedOn: ['kind' => 'audit', 'id' => self::ACTION, 'name' => ''],
-				publicationKept: false
+				failedOn: ['kind' => DraftPurgeFailedException::AUDIT, 'id' => self::ACTION, 'name' => '']
 			);
 		}
 
 	}//end log()
-
-	/**
-	 * OpenRegister's FileService.
-	 *
-	 * @return mixed The service.
-	 *
-	 * @throws \RuntimeException When OpenRegister is not installed.
-	 */
-	private function fileService(): mixed {
-		return $this->openRegister->installedService('OCA\OpenRegister\Service\FileService', 'OpenRegister FileService is not available.');
-	}//end fileService()
 }//end class

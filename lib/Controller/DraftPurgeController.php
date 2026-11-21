@@ -28,18 +28,15 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DraftPurgeServiceInterface;
-use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Exception\DraftPurgeFailedException;
 use OCA\OpenCatalogi\Exception\DraftPurgeRefusedException;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
-use OCP\IUserSession;
 use Throwable;
 
 /**
@@ -55,10 +52,8 @@ class DraftPurgeController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
-	 * @param IUserSession $userSession The current session.
 	 * @param PublicationRightsInterface $rights The update right on one publication.
-	 * @param DraftPurgeServiceInterface $purger Proves, lists, removes and logs.
-	 * @param OpenRegisterServicesInterface $openRegister Finds the publication with the caller's rights.
+	 * @param DraftPurgeServiceInterface $purger Finds the publication, then proves, lists, removes and logs.
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
@@ -66,10 +61,8 @@ class DraftPurgeController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IL10N $l10n,
-		private readonly IUserSession $userSession,
 		private readonly PublicationRightsInterface $rights,
 		private readonly DraftPurgeServiceInterface $purger,
-		private readonly OpenRegisterServicesInterface $openRegister,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -80,7 +73,7 @@ class DraftPurgeController extends Controller {
 	 *
 	 * @param string $id The publication id.
 	 *
-	 * @return JSONResponse `{removed}`; 401 without a session, 404 when the caller cannot read it,
+	 * @return JSONResponse `{removed}`; 404 when the caller cannot read it,
 	 *                      403 without the update right, 409 naming why it was refused, 500 naming
 	 *                      what went before a removal failed.
 	 *
@@ -88,12 +81,8 @@ class DraftPurgeController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function destroy(string $id): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(data: ['error' => 'not-logged-in'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
 		try {
-			$publication = $this->load(id: $id);
+			$publication = $this->purger->find(id: $id);
 		} catch (Throwable $e) {
 			return new JSONResponse(data: ['error' => 'register-unavailable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
 		}
@@ -103,10 +92,7 @@ class DraftPurgeController extends Controller {
 		}
 
 		if ($this->rights->mayUpdate(publication: $publication) === false) {
-			return new JSONResponse(
-				data: ['error' => 'forbidden', 'message' => $this->l10n->t('You may not change this publication.')],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
+			return $this->forbidden();
 		}
 
 		return $this->purge(publication: $publication);
@@ -144,6 +130,18 @@ class DraftPurgeController extends Controller {
 	}//end purge()
 
 	/**
+	 * The answer for a caller who may not change the publication.
+	 *
+	 * @return JSONResponse 403.
+	 */
+	private function forbidden(): JSONResponse {
+		return new JSONResponse(
+			data: ['error' => 'forbidden', 'message' => $this->l10n->t('You may not change this publication.')],
+			statusCode: Http::STATUS_FORBIDDEN
+		);
+	}//end forbidden()
+
+	/**
 	 * The sentence for a refusal.
 	 *
 	 * @param string $reason The refusal reason.
@@ -153,38 +151,11 @@ class DraftPurgeController extends Controller {
 	private function refusalMessage(string $reason): string {
 		return match ($reason) {
 			DraftPurgeRefusedException::NOT_A_DRAFT => $this->l10n->t('Only a draft or a publication in review can be deleted permanently.'),
-			DraftPurgeRefusedException::UNVERIFIABLE => $this->l10n->t('It cannot be checked that this publication was never published, so nothing was deleted.'),
+			DraftPurgeRefusedException::UNVERIFIABLE => $this->l10n->t(
+				'It cannot be checked that this publication was never published, so nothing was deleted.'
+			),
 			default => $this->l10n->t('This publication was published before, so it cannot be deleted permanently.'),
 		};
 
 	}//end refusalMessage()
-
-	/**
-	 * Find the publication with the caller's rights.
-	 *
-	 * @param string $id The publication id.
-	 *
-	 * @return object|null The publication, or null when the caller cannot read it.
-	 *
-	 * @throws Throwable When the register cannot be reached.
-	 */
-	private function load(string $id): ?object {
-		$configuration = $this->openRegister->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
-
-		try {
-			return $this->openRegister->installedObjectService()->find(
-				id: $id,
-				options: new ObjectFindOptions(register: $configuration['register'], schema: $configuration['schema']),
-				_rbac: true
-			);
-		} catch (Throwable $e) {
-			// Not there, or not readable by this caller: both answer 404.
-			if (str_ends_with(get_class($e), 'DoesNotExistException') === true || str_ends_with(get_class($e), 'NotAuthorizedException') === true) {
-				return null;
-			}
-
-			throw $e;
-		}
-
-	}//end load()
 }//end class

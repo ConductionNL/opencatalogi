@@ -25,17 +25,13 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Contract\DraftPurgeServiceInterface;
-use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Controller\DraftPurgeController;
 use OCA\OpenCatalogi\Exception\DraftPurgeFailedException;
 use OCA\OpenCatalogi\Exception\DraftPurgeRefusedException;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IL10N;
 use OCP\IRequest;
-use OCP\IUser;
-use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -48,24 +44,46 @@ use RuntimeException;
  */
 class DraftPurgeControllerTest extends TestCase {
 
-	/** Whether a user is logged in. */
-	private bool $loggedIn = true;
-
-	/** What find() does: an object, null, or a Throwable to throw. */
+	/**
+	 * What find() does: an object, null, or a Throwable to throw.
+	 *
+	 * @var mixed
+	 */
 	private mixed $found;
 
-	/** Whether the caller may update the publication. */
+	/**
+	 * Whether the caller may update the publication.
+	 *
+	 * @var bool
+	 */
 	private bool $mayUpdate = true;
 
-	/** What purge() does: a removed list, or a Throwable to throw. */
+	/**
+	 * What purge() does: a removed list, or a Throwable to throw.
+	 *
+	 * @var mixed
+	 */
 	private mixed $outcome = [];
 
-	/** How many times purge() ran. */
+	/**
+	 * How many times purge() ran.
+	 *
+	 * @var int
+	 */
 	private int $purges = 0;
 
-	/** @var array<string, mixed> The arguments of the last find(). */
+	/**
+	 * mixed> The arguments of the last find().
+	 *
+	 * @var array<string,
+	 */
 	public array $findCall = [];
 
+	/**
+	 * Set up the doubles.
+	 *
+	 * @return void
+	 */
 	protected function setUp(): void {
 		parent::setUp();
 		$this->found = new \stdClass();
@@ -74,9 +92,12 @@ class DraftPurgeControllerTest extends TestCase {
 	/**
 	 * What the find double answers.
 	 *
+	 * @param string $id The publication id.
+	 *
 	 * @return object|null
 	 */
-	public function found(): ?object {
+	public function found(string $id): ?object {
+		$this->findCall = ['id' => $id];
 		if ($this->found instanceof \Throwable) {
 			throw $this->found;
 		}
@@ -90,16 +111,14 @@ class DraftPurgeControllerTest extends TestCase {
 	 * @return DraftPurgeController
 	 */
 	private function controller(): DraftPurgeController {
-		$l10n = $this->createMock(IL10N::class);
+		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
-		$session = $this->createMock(IUserSession::class);
-		$session->method('getUser')->willReturn($this->loggedIn === true ? $this->createMock(IUser::class) : null);
-
-		$rights = $this->createMock(PublicationRightsInterface::class);
+		$rights = $this->createMock(originalClassName: PublicationRightsInterface::class);
 		$rights->method('mayUpdate')->willReturnCallback(fn (): bool => $this->mayUpdate);
 
-		$purger = $this->createMock(DraftPurgeServiceInterface::class);
+		$purger = $this->createMock(originalClassName: DraftPurgeServiceInterface::class);
+		$purger->method('find')->willReturnCallback(fn (string $id): ?object => $this->found(id: $id));
 		$purger->method('purge')->willReturnCallback(
 			function (): array {
 				$this->purges++;
@@ -111,32 +130,20 @@ class DraftPurgeControllerTest extends TestCase {
 			}
 		);
 
-		$test = $this;
-		$objects = new class ($test) {
-			public function __construct(private readonly DraftPurgeControllerTest $test) {
-			}
-
-			public function find(string $id, ?object $options = null, bool $_rbac = true): ?object {
-				$this->test->findCall = ['id' => $id, 'rbac' => $_rbac, 'register' => $options?->register, 'schema' => $options?->schema];
-				return $this->test->found();
-			}
-		};
-
-		$openRegister = $this->createMock(OpenRegisterServicesInterface::class);
-		$openRegister->method('registerConfiguration')->willReturn(['register' => 'reg', 'schema' => 'pub']);
-		$openRegister->method('installedObjectService')->willReturn($objects);
-
 		return new DraftPurgeController(
 			appName: 'opencatalogi',
-			request: $this->createMock(IRequest::class),
+			request: $this->createMock(originalClassName: IRequest::class),
 			l10n: $l10n,
-			userSession: $session,
 			rights: $rights,
-			purger: $purger,
-			openRegister: $openRegister
+			purger: $purger
 		);
 	}//end controller()
 
+	/**
+	 * The route reaches destroy.
+	 *
+	 * @return void
+	 */
 	public function testTheRouteReachesDestroy(): void {
 		$routes = require __DIR__ . '/../../../appinfo/routes.php';
 		$matches = array_values(
@@ -146,99 +153,115 @@ class DraftPurgeControllerTest extends TestCase {
 			)
 		);
 
-		$this->assertCount(1, $matches);
-		$this->assertSame('draftPurge#destroy', $matches[0]['name']);
-		$this->assertTrue(method_exists(DraftPurgeController::class, 'destroy'));
+		$this->assertCount(expectedCount: 1, haystack: $matches);
+		$this->assertSame(expected: 'draftPurge#destroy', actual: $matches[0]['name']);
+		$this->assertTrue(condition: method_exists(DraftPurgeController::class, 'destroy'));
 	}//end testTheRouteReachesDestroy()
 
+	/**
+	 * Adraft is purged and the removed list answered.
+	 *
+	 * @return void
+	 */
 	public function testADraftIsPurgedAndTheRemovedListAnswered(): void {
 		$this->outcome = [['kind' => 'publication', 'id' => 'pub-1', 'name' => 'Draft']];
 
 		$response = $this->controller()->destroy(id: 'pub-1');
 
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(['removed' => $this->outcome], $response->getData());
-		$this->assertSame(['id' => 'pub-1', 'rbac' => true, 'register' => 'reg', 'schema' => 'pub'], $this->findCall, 'Found with the caller\'s rights.');
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertSame(expected: ['removed' => $this->outcome], actual: $response->getData());
+		$this->assertSame(expected: ['id' => 'pub-1'], actual: $this->findCall);
 	}//end testADraftIsPurgedAndTheRemovedListAnswered()
 
-	public function testWithoutASessionNothingIsRead(): void {
-		$this->loggedIn = false;
-
-		$response = $this->controller()->destroy(id: 'pub-1');
-
-		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-		$this->assertSame([], $this->findCall);
-		$this->assertSame(0, $this->purges);
-	}//end testWithoutASessionNothingIsRead()
-
-	public function testAPublicationTheCallerCannotReadAnswers404(): void {
-		$this->found = new DoesNotExistException('not there or not readable');
-
-		$response = $this->controller()->destroy(id: 'pub-1');
-
-		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
-		$this->assertSame(0, $this->purges);
-	}//end testAPublicationTheCallerCannotReadAnswers404()
-
+	/**
+	 * Amissing publication answers404.
+	 *
+	 * @return void
+	 */
 	public function testAMissingPublicationAnswers404(): void {
 		$this->found = null;
 
-		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller()->destroy(id: 'pub-1')->getStatus());
+		$this->assertSame(expected: Http::STATUS_NOT_FOUND, actual: $this->controller()->destroy(id: 'pub-1')->getStatus());
 	}//end testAMissingPublicationAnswers404()
 
+	/**
+	 * An unreachable register answers503.
+	 *
+	 * @return void
+	 */
 	public function testAnUnreachableRegisterAnswers503(): void {
 		$this->found = new RuntimeException('database down');
 
 		$response = $this->controller()->destroy(id: 'pub-1');
 
-		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
-		$this->assertSame(0, $this->purges);
+		$this->assertSame(expected: Http::STATUS_SERVICE_UNAVAILABLE, actual: $response->getStatus());
+		$this->assertSame(expected: 0, actual: $this->purges);
 	}//end testAnUnreachableRegisterAnswers503()
 
+	/**
+	 * Without the update right nothing is purged.
+	 *
+	 * @return void
+	 */
 	public function testWithoutTheUpdateRightNothingIsPurged(): void {
 		$this->mayUpdate = false;
 
 		$response = $this->controller()->destroy(id: 'pub-1');
 
-		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
-		$this->assertSame(0, $this->purges);
+		$this->assertSame(expected: Http::STATUS_FORBIDDEN, actual: $response->getStatus());
+		$this->assertSame(expected: 0, actual: $this->purges);
 	}//end testWithoutTheUpdateRightNothingIsPurged()
 
+	/**
+	 * An earlier release answers409 naming it.
+	 *
+	 * @return void
+	 */
 	public function testAnEarlierReleaseAnswers409NamingIt(): void {
 		$this->outcome = new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::RELEASED, evidence: '2026-10-01T09:00:00+00:00');
 
 		$response = $this->controller()->destroy(id: 'pub-1');
 
-		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
-		$this->assertSame('released', $response->getData()['error']);
-		$this->assertSame('2026-10-01T09:00:00+00:00', $response->getData()['evidence']);
-		$this->assertSame('This publication was published before, so it cannot be deleted permanently.', $response->getData()['message']);
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: 'released', actual: $response->getData()['error']);
+		$this->assertSame(expected: '2026-10-01T09:00:00+00:00', actual: $response->getData()['evidence']);
+		$this->assertSame(expected: 'This publication was published before, so it cannot be deleted permanently.', actual: $response->getData()['message']);
 	}//end testAnEarlierReleaseAnswers409NamingIt()
 
+	/**
+	 * Each refusal has its sentence.
+	 *
+	 * @return void
+	 */
 	public function testEachRefusalHasItsSentence(): void {
 		$this->outcome = new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::NOT_A_DRAFT, evidence: 'published');
 		$this->assertSame(
-			'Only a draft or a publication in review can be deleted permanently.',
-			$this->controller()->destroy(id: 'pub-1')->getData()['message']
+			expected: 'Only a draft or a publication in review can be deleted permanently.',
+			actual: $this->controller()->destroy(id: 'pub-1')->getData()['message']
 		);
 
 		$this->outcome = new DraftPurgeRefusedException(reason: DraftPurgeRefusedException::UNVERIFIABLE, evidence: 'audit-trail');
 		$this->assertSame(
-			'It cannot be checked that this publication was never published, so nothing was deleted.',
-			$this->controller()->destroy(id: 'pub-1')->getData()['message']
+			expected: 'It cannot be checked that this publication was never published, so nothing was deleted.',
+			actual: $this->controller()->destroy(id: 'pub-1')->getData()['message']
 		);
 	}//end testEachRefusalHasItsSentence()
 
+	/**
+	 * Afailure part way answers500 naming what went.
+	 *
+	 * @return void
+	 */
 	public function testAFailurePartWayAnswers500NamingWhatWent(): void {
 		$went = [['kind' => 'file', 'id' => '11', 'name' => 'decision.pdf']];
 		$this->outcome = new DraftPurgeFailedException(removed: $went, failedOn: ['kind' => 'file', 'id' => '12', 'name' => 'annex.pdf']);
 
 		$response = $this->controller()->destroy(id: 'pub-1');
 
-		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
-		$this->assertSame('purge-incomplete', $response->getData()['error']);
-		$this->assertSame($went, $response->getData()['removed']);
-		$this->assertSame('12', $response->getData()['failedOn']['id']);
-		$this->assertTrue($response->getData()['publicationKept']);
+		$this->assertSame(expected: Http::STATUS_INTERNAL_SERVER_ERROR, actual: $response->getStatus());
+		$this->assertSame(expected: 'purge-incomplete', actual: $response->getData()['error']);
+		$this->assertSame(expected: $went, actual: $response->getData()['removed']);
+		$this->assertSame(expected: '12', actual: $response->getData()['failedOn']['id']);
+		$this->assertTrue(condition: $response->getData()['publicationKept']);
 	}//end testAFailurePartWayAnswers500NamingWhatWent()
 }//end class

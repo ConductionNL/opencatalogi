@@ -67,6 +67,6 @@ class DraftPurgeRefusedException extends RuntimeException {
 	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function __construct(public readonly string $reason, public readonly string $evidence = '') {
-		parent::__construct(message: 'The permanent delete was refused: ' . $reason . ($evidence !== '' ? ' (' . $evidence . ')' : ''));
+		parent::__construct(message: trim('The permanent delete was refused: ' . $reason . ' ' . $evidence));
 	}//end __construct()
 }//end class
