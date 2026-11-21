@@ -13,6 +13,8 @@ import {
 	corsOriginLines,
 	corsSaveRefusal,
 	languageName,
+	liftGroupsPayload,
+	liftGroupsText,
 	publicationLanguageOptions,
 	publicationLanguagesFrom,
 	publicationLanguagesPayload,
@@ -356,5 +358,92 @@ describe('Settings saveCorsOrigins (REQ-SCO-003)', () => {
 		Settings.methods.applyStoredConfiguration.call(state, { cors_allowed_origins: 'https://a.example,https://b.example' })
 
 		expect(state.corsOrigins).toBe('https://a.example\nhttps://b.example')
+	})
+})
+
+describe('Settings embargo lift groups (REQ-PSG-002)', () => {
+	it.each([
+		['["admin","griffie"]', 'admin, griffie'],
+		['[" griffie ", 7, ""]', 'griffie'],
+		['[]', 'admin'],
+		['not json', 'admin'],
+		[undefined, 'admin'],
+		['{"a":"b"}', 'admin'],
+	])('shows the stored groups %j as %j', (stored, shown) => {
+		expect(liftGroupsText(stored)).toBe(shown)
+	})
+
+	it.each([
+		['admin, griffie ,admin,, ', ['admin', 'griffie']],
+		['', []],
+		[undefined, []],
+	])('saves the text %j as the group ids %j', (text, ids) => {
+		expect(liftGroupsPayload(text)).toEqual(ids)
+	})
+
+	it('takes the groups from the stored configuration', () => {
+		const state = page({
+			liftGroups: { text: 'admin', saving: false, error: '' },
+		})
+		Settings.methods.applyStoredConfiguration.call(state, {
+			publication_embargo_lift_groups: '["griffie"]',
+		})
+
+		expect(state.liftGroups).toEqual({
+			text: 'griffie',
+			saving: false,
+			error: '',
+		})
+	})
+
+	it('saves the groups and shows what the server stored', async () => {
+		axios.put.mockResolvedValue({
+			data: { publication_embargo_lift_groups: '["griffie","admin"]' },
+		})
+		const state = page({
+			liftGroups: {
+				text: 'griffie, admin, griffie',
+				saving: false,
+				error: '',
+			},
+		})
+		await Settings.methods.saveLiftGroups.call(state)
+
+		expect(axios.put).toHaveBeenCalledWith('/apps/opencatalogi/api/settings', {
+			publication_embargo_lift_groups: ['griffie', 'admin'],
+		})
+		expect(state.liftGroups).toEqual({
+			text: 'griffie, admin',
+			saving: false,
+			error: '',
+		})
+	})
+
+	it('keeps the field when the server sends nothing back', async () => {
+		axios.put.mockResolvedValue({})
+		const state = page({
+			liftGroups: { text: 'griffie', saving: false, error: '' },
+		})
+		await Settings.methods.saveLiftGroups.call(state)
+
+		expect(state.liftGroups).toEqual({
+			text: 'griffie',
+			saving: false,
+			error: '',
+		})
+	})
+
+	it('reports a failed save', async () => {
+		axios.put.mockRejectedValue(new Error('down'))
+		const state = page({
+			liftGroups: { text: 'griffie', saving: false, error: '' },
+		})
+		await Settings.methods.saveLiftGroups.call(state)
+
+		expect(state.liftGroups).toEqual({
+			text: 'griffie',
+			saving: false,
+			error: 'The groups could not be saved. Try again.',
+		})
 	})
 })

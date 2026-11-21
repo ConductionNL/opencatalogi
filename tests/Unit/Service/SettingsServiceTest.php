@@ -675,6 +675,40 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testPublicationLanguagesAreStoredAsTagsWithDutchFirst()
 
 	/**
+	 * The embargo lift groups are stored as a JSON list of group ids, trimmed and once each,
+	 * whether sent as a list, as its JSON text or as comma separated text; an empty list keeps
+	 * the default `["admin"]` (publication-schedule-guards REQ-PSG-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.1
+	 */
+	public function testEmbargoLiftGroupsAreStoredAsAListOfGroupIds(): void {
+		$stored = [];
+		$this->config->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored[] = [$key, $value];
+				return true;
+			}
+		);
+
+		$this->service->updateSettings(['publication_embargo_lift_groups' => [' admin ', 'publicatie-beheer', 'admin', 42, '']]);
+		$this->service->updateSettings(['publication_embargo_lift_groups' => '["griffie"]']);
+		$this->service->updateSettings(['publication_embargo_lift_groups' => 'griffie, admin ,']);
+		$this->service->updateSettings(['publication_embargo_lift_groups' => []]);
+
+		$this->assertSame(
+			expected: [
+				['publication_embargo_lift_groups', '["admin","publicatie-beheer"]'],
+				['publication_embargo_lift_groups', '["griffie"]'],
+				['publication_embargo_lift_groups', '["griffie","admin"]'],
+				['publication_embargo_lift_groups', '["admin"]'],
+			],
+			actual: $stored
+		);
+	}//end testEmbargoLiftGroupsAreStoredAsAListOfGroupIds()
+
+	/**
 	 * Without a stored value the settings report Dutch and English.
 	 *
 	 * @return void

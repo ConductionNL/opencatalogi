@@ -127,6 +127,7 @@ class SettingsWriteValuesTest extends TestCase {
 				'publication_url_catalog',
 				'cors_allowed_origins',
 				'search_indexing',
+				'publication_embargo_lift_groups',
 			],
 			$writable
 		);

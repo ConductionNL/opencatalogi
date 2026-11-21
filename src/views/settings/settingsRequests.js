@@ -207,3 +207,43 @@ export function corsSaveRefusal(error) {
 
 	return answer.data.error
 }
+
+/**
+ * The stored embargo lift groups as the text the settings field shows: group ids separated by commas.
+ *
+ * @param {string|undefined} stored - The `publication_embargo_lift_groups` value, a JSON list
+ * @return {string} The group ids; `admin`, the server's default, when nothing readable is stored
+ * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.1
+ */
+export function liftGroupsText(stored) {
+	let groups
+	try {
+		groups = JSON.parse(stored)
+	} catch {
+		groups = []
+	}
+
+	const ids = (Array.isArray(groups) ? groups : [])
+		.filter((group) => typeof group === 'string' && group.trim() !== '')
+		.map((group) => group.trim())
+
+	return ids.length > 0 ? ids.join(', ') : 'admin'
+}
+
+/**
+ * The embargo lift groups to save from the field's text: each group id trimmed and once.
+ *
+ * @param {string} text - The field's text, group ids separated by commas
+ * @return {Array<string>} The group ids
+ * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.1
+ */
+export function liftGroupsPayload(text) {
+	return [
+		...new Set(
+			String(text || '')
+				.split(',')
+				.map((group) => group.trim())
+				.filter((group) => group !== ''),
+		),
+	]
+}
