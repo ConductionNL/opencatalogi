@@ -49,18 +49,21 @@ final class EmbargoGuardTest extends TestCase {
 	 * @return EmbargoGuard
 	 */
 	private function guard(?array $groups = ['editors'], string $setting = ''): EmbargoGuard {
-		$config = $this->createMock(IAppConfig::class);
+		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
-			static fn (string $app, string $key, string $default = ''): string => ($key === EmbargoGuard::LIFT_GROUPS_KEY ? $setting : $default)
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				EmbargoGuard::LIFT_GROUPS_KEY => $setting,
+				default => $default,
+			}
 		);
-		$manager = $this->createMock(IGroupManager::class);
+		$manager = $this->createMock(originalClassName: IGroupManager::class);
 		if ($groups === null) {
 			$manager->method('getUserGroupIds')->willThrowException(new RuntimeException('LDAP is down'));
 		} else {
 			$manager->method('getUserGroupIds')->willReturn($groups);
 		}
 
-		return new EmbargoGuard($config, $manager, new NullLogger());
+		return new EmbargoGuard(config: $config, groups: $manager, logger: new NullLogger());
 	}//end guard()
 
 	/**
@@ -76,7 +79,7 @@ final class EmbargoGuardTest extends TestCase {
 		return $guard->check(
 			old: ['title' => 'Besluit', 'publicationDate' => $old],
 			new: ['title' => 'Besluit', 'publicationDate' => $new],
-			caller: $this->createMock(IUser::class),
+			caller: $this->createMock(originalClassName: IUser::class),
 			now: new DateTimeImmutable(self::NOW)
 		);
 	}//end check()

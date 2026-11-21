@@ -93,36 +93,44 @@ class EmbargoGuard {
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.1
 	 */
 	public function check(array $old, array $new, ?IUser $caller, ?DateTimeImmutable $now = null): ?array {
-		$stored = ($old[self::PROPERTY] ?? null);
-		if (self::isEmpty(value: $stored) === true) {
-			return null;
-		}
-
-		$until = self::moment(value: $stored);
-		if ($until !== null && $until <= ($now ?? new DateTimeImmutable())) {
-			return null;
-		}
-
-		$next = ($new[self::PROPERTY] ?? null);
-		if (self::isEmpty(value: $next) === true || $next === $stored) {
-			return null;
-		}
-
-		$nextMoment = self::moment(value: $next);
-		if ($until !== null && $nextMoment !== null && $nextMoment >= $until) {
-			return null;
-		}
-
-		if ($this->mayLift(caller: $caller) === true) {
+		if (self::releasesEarly(old: $old, new: $new, now: ($now ?? new DateTimeImmutable())) === false
+			|| $this->mayLift(caller: $caller) === true
+		) {
 			return null;
 		}
 
 		return [
 			'code' => self::CODE,
 			'property' => self::PROPERTY,
-			'embargoUntil' => $until?->format(DATE_ATOM),
+			'embargoUntil' => self::moment(value: ($old[self::PROPERTY] ?? null))?->format(DATE_ATOM),
 		];
 	}//end check()
+
+	/**
+	 * Whether the write changes the date of a publication under embargo to an earlier or unreadable one.
+	 *
+	 * @param array<string, mixed> $old The publication as stored.
+	 * @param array<string, mixed> $new The publication as it would be stored.
+	 * @param DateTimeImmutable    $now The moment to judge at.
+	 *
+	 * @return bool
+	 */
+	private static function releasesEarly(array $old, array $new, DateTimeImmutable $now): bool {
+		$stored = ($old[self::PROPERTY] ?? null);
+		$next = ($new[self::PROPERTY] ?? null);
+		if (self::isEmpty(value: $stored) === true || self::isEmpty(value: $next) === true || $next === $stored) {
+			return false;
+		}
+
+		$until = self::moment(value: $stored);
+		if ($until === null) {
+			return true;
+		}
+
+		$nextMoment = self::moment(value: $next);
+
+		return $until > $now && ($nextMoment === null || $nextMoment < $until);
+	}//end releasesEarly()
 
 	/**
 	 * Whether the caller is in one of the groups that may lift an embargo.

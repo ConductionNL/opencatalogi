@@ -50,6 +50,11 @@ final class EmbargoGuardListenerTest extends TestCase {
 	 */
 	private string $embargo;
 
+	/**
+	 * Set the embargo a week ahead.
+	 *
+	 * @return void
+	 */
 	protected function setUp(): void {
 		$this->embargo = (new DateTimeImmutable('+7 days'))->format(DATE_ATOM);
 	}//end setUp()
@@ -60,18 +65,26 @@ final class EmbargoGuardListenerTest extends TestCase {
 	 * @return EmbargoGuardListener
 	 */
 	private function listener(): EmbargoGuardListener {
-		$config = $this->createMock(IAppConfig::class);
+		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
-			static fn (string $app, string $key, string $default = ''): string => ($key === 'publication_schema' ? '7' : $default)
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'publication_schema' => '7',
+				default => $default,
+			}
 		);
-		$groups = $this->createMock(IGroupManager::class);
+		$groups = $this->createMock(originalClassName: IGroupManager::class);
 		$groups->method('getUserGroupIds')->willReturn(['editors']);
-		$session = $this->createMock(IUserSession::class);
-		$session->method('getUser')->willReturn($this->createMock(IUser::class));
-		$l10n = $this->createMock(IL10N::class);
+		$session = $this->createMock(originalClassName: IUserSession::class);
+		$session->method('getUser')->willReturn($this->createMock(originalClassName: IUser::class));
+		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text, array $parameters = []): string => vsprintf($text, $parameters));
 
-		return new EmbargoGuardListener(new EmbargoGuard($config, $groups, new NullLogger()), $session, $config, $l10n);
+		return new EmbargoGuardListener(
+			guard: new EmbargoGuard(config: $config, groups: $groups, logger: new NullLogger()),
+			userSession: $session,
+			config: $config,
+			l10n: $l10n
+		);
 	}//end listener()
 
 	/**
