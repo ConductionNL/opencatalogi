@@ -17,7 +17,7 @@ publication** in the Mail sidebar, and gets a new publication filled in from the
 |---|---|
 | `title` | the subject |
 | `summary` | the start of the message |
-| `description` | "Received by email from *name* <*address*> on *date*." followed by the start of the message |
+| `description` | "Received by email from *name* &lt;*address*&gt; on *date*." followed by the start of the message |
 
 Nothing else is set. In particular the email never sets `publicationDate`,
 `depublicationDate`, `status`, the organization, the themes or any retention field.
