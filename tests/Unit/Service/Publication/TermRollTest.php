@@ -39,7 +39,7 @@ class TermRollTest extends TestCase {
 	 * @return void
 	 */
 	public function testAGivenDateOnASaturdayRollsToMonday(): void {
-		$end = $this->termRoll()->roll(at: new DateTimeImmutable('2026-12-12T17:00:00+01:00'));
+		$end = $this->termRoll()->roll(date: new DateTimeImmutable('2026-12-12T17:00:00+01:00'));
 
 		$this->assertSame('2026-12-14T17:00:00+01:00', $end['at']->format(DATE_ATOM));
 		$this->assertSame('2026-12-12T17:00:00+01:00', $end['unrolledAt']->format(DATE_ATOM));
@@ -53,7 +53,7 @@ class TermRollTest extends TestCase {
 	 * @return void
 	 */
 	public function testAWorkingDayIsUnchanged(): void {
-		$end = $this->termRoll()->roll(at: new DateTimeImmutable('2026-12-15T09:30:00+00:00'));
+		$end = $this->termRoll()->roll(date: new DateTimeImmutable('2026-12-15T09:30:00+00:00'));
 
 		$this->assertSame('2026-12-15T09:30:00+00:00', $end['at']->format(DATE_ATOM));
 		$this->assertNull($end['unrolledAt']);
@@ -67,7 +67,7 @@ class TermRollTest extends TestCase {
 	 * @return void
 	 */
 	public function testAGivenHolidayRollsPastIt(): void {
-		$end = $this->termRoll()->roll(at: new DateTimeImmutable('2026-12-25T00:00:00+00:00'));
+		$end = $this->termRoll()->roll(date: new DateTimeImmutable('2026-12-25T00:00:00+00:00'));
 
 		$this->assertSame('2026-12-28T00:00:00+00:00', $end['at']->format(DATE_ATOM));
 		$this->assertSame('Kerstmis', $end['rolledBy']);
@@ -82,7 +82,7 @@ class TermRollTest extends TestCase {
 	public function testAnUnreachableEngineRefusesTheRoll(): void {
 		$this->expectException(TermRollUnavailableException::class);
 
-		$this->termRoll(engineAvailable: false)->roll(at: new DateTimeImmutable('2026-12-12T00:00:00+00:00'));
+		$this->termRoll(engineAvailable: false)->roll(date: new DateTimeImmutable('2026-12-12T00:00:00+00:00'));
 
 	}//end testAnUnreachableEngineRefusesTheRoll()
 }//end class

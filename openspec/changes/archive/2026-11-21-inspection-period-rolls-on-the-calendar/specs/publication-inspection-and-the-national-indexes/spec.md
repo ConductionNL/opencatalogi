@@ -36,7 +36,7 @@ This extends REQ-PIN-103 of the open change `publication-inspection-and-the-nati
 
 ### Requirement: An end date written through the API is rolled (REQ-IPR-002)
 
-`TermRoll` SHALL offer `roll(DateTimeInterface $at, ?string $calendarSlug = null, ?string $organisation = null): array` returning `{at, unrolledAt, rolledBy}`. A listener on OpenRegister's `ObjectCreatingEvent` and `ObjectUpdatingEvent` for the `inspection` and `commentPeriod` schemas SHALL, when `endDate` is set or changed by the save, roll it through `roll()` and write the rolled `endDate`, `unrolledEndDate` and `rolledBy` through `setModifiedData()`. When the engine cannot be reached it SHALL stop the event with the reason, so the save is refused.
+`TermRoll` SHALL offer `roll(DateTimeInterface $date, ?string $calendarSlug = null, ?string $organisation = null): array` returning `{at, unrolledAt, rolledBy}`. A listener on OpenRegister's `ObjectCreatingEvent` and `ObjectUpdatingEvent` for the `inspection` and `commentPeriod` schemas SHALL, when `endDate` is set or changed by the save, roll it through `roll()` and write the rolled `endDate`, `unrolledEndDate` and `rolledBy` through `setModifiedData()`. When the engine cannot be reached it SHALL stop the event with the reason, so the save is refused.
 
 #### Scenario: An end date written through the API is rolled
 <!-- @e2e exclude API save contract; proven by TermRollListenerTest::testAnApiEndDateOnASaturdayIsRolledToMonday, built on the real ObjectUpdatingEvent, which fails on today's code because nothing rolls an API date. -->

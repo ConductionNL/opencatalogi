@@ -24,7 +24,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-end-date-written-through-the-api-is-rolled-req-ipr-002
+ * @spec openspec/changes/archive/2026-11-21-inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-end-date-written-through-the-api-is-rolled-req-ipr-002
  */
 
 declare(strict_types=1);
@@ -46,7 +46,7 @@ use OCP\IAppConfig;
 /**
  * Rolls an end date written to an inspection or a comment period off a non-working day.
  *
- * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-end-date-written-through-the-api-is-rolled-req-ipr-002
+ * @spec openspec/changes/archive/2026-11-21-inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-end-date-written-through-the-api-is-rolled-req-ipr-002
  *
  * @template-implements IEventListener<Event>
  */
@@ -79,7 +79,7 @@ class TermRollListener implements IEventListener {
 	 *
 	 * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
 	 *
-	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-end-date-written-through-the-api-is-rolled-req-ipr-002
+	 * @spec openspec/changes/archive/2026-11-21-inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-end-date-written-through-the-api-is-rolled-req-ipr-002
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatingEvent === true) {
@@ -102,7 +102,7 @@ class TermRollListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-end-date-written-through-the-api-is-rolled-req-ipr-002
+	 * @spec openspec/changes/archive/2026-11-21-inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-end-date-written-through-the-api-is-rolled-req-ipr-002
 	 */
 	private function rollEndDate(ObjectCreatingEvent|ObjectUpdatingEvent $event, ObjectEntity $new, ?ObjectEntity $old): void {
 		if ($this->isTermSchema(object: $new) === false) {
@@ -115,7 +115,7 @@ class TermRollListener implements IEventListener {
 		}
 
 		try {
-			$end = $this->roll->roll(at: $endDate);
+			$end = $this->roll->roll(date: $endDate);
 		} catch (TermRollUnavailableException $e) {
 			$event->setErrors(['message' => $e->getMessage()]);
 			$event->stopPropagation();
