@@ -93,29 +93,40 @@ class EmbargoGuard {
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.1
 	 */
 	public function check(array $old, array $new, ?IUser $caller, ?DateTimeImmutable $now = null): ?array {
-		if (self::releasesEarly(old: $old, new: $new, now: ($now ?? new DateTimeImmutable())) === false
-			|| $this->mayLift(caller: $caller) === true
-		) {
+		if (self::releasesEarly(old: $old, new: $new, now: $now) === false || $this->mayLift(caller: $caller) === true) {
 			return null;
 		}
+
+		return self::refusal(stored: ($old[self::PROPERTY] ?? null));
+	}//end check()
+
+	/**
+	 * The refusal, naming the embargo moment when the stored date reads as one.
+	 *
+	 * @param mixed $stored The stored publication date.
+	 *
+	 * @return array{code: string, property: string, embargoUntil: string|null}
+	 */
+	private static function refusal(mixed $stored): array {
+		$until = self::moment(value: $stored);
 
 		return [
 			'code' => self::CODE,
 			'property' => self::PROPERTY,
-			'embargoUntil' => self::moment(value: ($old[self::PROPERTY] ?? null))?->format(DATE_ATOM),
+			'embargoUntil' => $until?->format(DATE_ATOM),
 		];
-	}//end check()
+	}//end refusal()
 
 	/**
 	 * Whether the write changes the date of a publication under embargo to an earlier or unreadable one.
 	 *
-	 * @param array<string, mixed> $old The publication as stored.
-	 * @param array<string, mixed> $new The publication as it would be stored.
-	 * @param DateTimeImmutable    $now The moment to judge at.
+	 * @param array<string, mixed>   $old The publication as stored.
+	 * @param array<string, mixed>   $new The publication as it would be stored.
+	 * @param DateTimeImmutable|null $now The moment to judge at; now when omitted.
 	 *
 	 * @return bool
 	 */
-	private static function releasesEarly(array $old, array $new, DateTimeImmutable $now): bool {
+	private static function releasesEarly(array $old, array $new, ?DateTimeImmutable $now): bool {
 		$stored = ($old[self::PROPERTY] ?? null);
 		$next = ($new[self::PROPERTY] ?? null);
 		if (self::isEmpty(value: $stored) === true || self::isEmpty(value: $next) === true || $next === $stored) {
@@ -129,7 +140,7 @@ class EmbargoGuard {
 
 		$nextMoment = self::moment(value: $next);
 
-		return $until > $now && ($nextMoment === null || $nextMoment < $until);
+		return $until > ($now ?? new DateTimeImmutable()) && ($nextMoment === null || $nextMoment < $until);
 	}//end releasesEarly()
 
 	/**
