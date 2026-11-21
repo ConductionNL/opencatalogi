@@ -711,7 +711,11 @@ class PublishedTableServiceTest extends TestCase {
 		$this->assertSame('failed', $second['status']);
 		$this->assertSame('Row 12408: bedrag is not a number', $second['lastError']);
 		$this->assertSame('anna', $second['importedBy']);
-		$this->assertMatchesRegularExpression(pattern: '/^\d{4}-\d{2}-\d{2}T/', string: $second['failedAt'], message: 'the failure carries its time (REQ-DFA-004)');
+		$this->assertMatchesRegularExpression(
+			pattern: '/^\d{4}-\d{2}-\d{2}T/',
+			string: $second['failedAt'],
+			message: 'the failure carries its time (REQ-DFA-004)'
+		);
 		$this->assertArrayNotHasKey(key: 'failedAt', array: $first);
 		$this->assertSame($editor, $this->openRegister->previews[0][1]);
 		$this->assertSame('failed', $table['status']);

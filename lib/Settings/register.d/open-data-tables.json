@@ -34,6 +34,7 @@
 				"summary": "A CSV attachment whose rows can be queried",
 				"description": "A CSV attachment of a publication whose rows were imported into the open-data-tables register, so anyone who may read the publication can query them and read their data dictionary.",
 				"icon": "Table",
+				"x-openregister-demo-data": "A published table points at a CSV attachment of a publication and at the rows schema the app makes when an editor publishes that file; a sample table would point at a file and a schema that do not exist and answer no rows.",
 				"type": "object",
 				"required": [
 					"publication",
