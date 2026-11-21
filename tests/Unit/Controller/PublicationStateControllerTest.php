@@ -26,6 +26,7 @@ use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\CompletenessSweepService;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
+use OCA\OpenCatalogi\Service\Publication\EmbargoGuard;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
@@ -38,6 +39,7 @@ use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
+use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
@@ -96,6 +98,9 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** A TransitionEngine double recording each transition. */
 	private object $engine;
+
+	/** @var list<string> The caller's groups, as the group manager answers them. */
+	private array $userGroups = [];
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -268,6 +273,9 @@ class PublicationStateControllerTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
+		$groups = $this->createMock(IGroupManager::class);
+		$groups->method('getUserGroupIds')->willReturnCallback(fn (): array => $this->userGroups);
+
 		$this->controller = new PublicationStateController(
 			'opencatalogi',
 			$this->request,
@@ -275,7 +283,8 @@ class PublicationStateControllerTest extends TestCase {
 			$session,
 			$this->rights,
 			new PublicationTransitions(new PublicationStateService(), new DepublicationService($this->index, $this->createMock(LoggerInterface::class)), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects)),
-			new PublishTransition($container, new PublicationReviewPolicy($config))
+			new PublishTransition($container, new PublicationReviewPolicy($config)),
+			new EmbargoGuard($config, $groups, $this->createMock(LoggerInterface::class))
 		);
 	}
 
@@ -657,6 +666,54 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertCount(1, $this->saves);
 		$this->assertArrayNotHasKey('depublicationDate', $this->saves[0]['object']);
 		$this->assertTrue($this->saves[0]['rbac']);
+	}
+
+	/**
+	 * REQ-PSG-001: publish now on a scheduled publication is refused with 423 while its date lies ahead.
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
+	 */
+	public function testPublishNowIsRefusedUnderEmbargo(): void {
+		$until = (new \DateTimeImmutable('tomorrow 09:00'))->format(DATE_ATOM);
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => $until];
+		$this->rights->method('mayUpdate')->willReturn(true);
+
+		$response = $this->controller->publish('p1');
+
+		$this->assertSame(Http::STATUS_LOCKED, $response->getStatus());
+		$this->assertSame(['error' => 'embargo-holds', 'property' => 'publicationDate', 'embargoUntil' => $until], $response->getData());
+		$this->assertSame([], $this->saves);
+		$this->assertSame([], $this->transitions);
+	}
+
+	/**
+	 * REQ-PSG-001: a draft dated ahead does not run the publish transition either.
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
+	 */
+	public function testTheEmbargoIsCheckedBeforeThePublishTransition(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'approved', 'publicationDate' => (new \DateTimeImmutable('+3 days'))->format(DATE_ATOM)];
+		$this->rights->method('mayUpdate')->willReturn(true);
+
+		$this->assertSame(Http::STATUS_LOCKED, $this->controller->publish('p1')->getStatus());
+		$this->assertSame([], $this->transitions);
+		$this->assertSame([], $this->saves);
+	}
+
+	/**
+	 * REQ-PSG-001: a caller in a lift group may still publish a scheduled publication now.
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
+	 */
+	public function testALiftGroupMemberPublishesUnderEmbargo(): void {
+		$this->userGroups = ['admin'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => (new \DateTimeImmutable('tomorrow 09:00'))->format(DATE_ATOM)];
+		$this->rights->method('mayUpdate')->willReturn(true);
+
+		$response = $this->controller->publish('p1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertCount(1, $this->saves);
 	}
 
 	/** REQ-PPW-002: publish now on a public publication answers 409; without rights 403. */

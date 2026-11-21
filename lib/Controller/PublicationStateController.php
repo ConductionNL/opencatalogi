@@ -35,6 +35,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
+use OCA\OpenCatalogi\Service\Publication\EmbargoGuard;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
@@ -72,6 +73,7 @@ class PublicationStateController extends Controller {
 	 * @param PublicationRightsInterface $rights The update right on one publication, and the publish right.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
  * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003).
+	 * @param EmbargoGuard $embargo Refuses a publish now that would release a publication under embargo early (REQ-PSG-001).
 	 */
 	public function __construct(
 		$appName,
@@ -81,6 +83,7 @@ class PublicationStateController extends Controller {
 		private readonly PublicationRightsInterface $rights,
 		private readonly PublicationTransitions $registers,
 		private readonly PublishTransition $publisher,
+		private readonly EmbargoGuard $embargo,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -217,10 +220,12 @@ class PublicationStateController extends Controller {
 	 *
 	 * @param string $id The publication id.
 	 *
-	 * @return JSONResponse `{state: public}`, 403 without the update right or the publish right, 409 when it is already public or archived.
+	 * @return JSONResponse `{state: public}`, 403 without the update right or the publish right, 409 when it is already public or archived,
+	 *                      423 `embargo-holds` while its publication date lies ahead and the caller may not lift the embargo.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
 	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
 	 */
 	#[NoAdminRequired]
 	public function publish(string $id): JSONResponse {
@@ -233,6 +238,11 @@ class PublicationStateController extends Controller {
 		$state = $this->registers->stateOf(publication: $properties);
 		if ($state === PublicationStateServiceInterface::STATE_PUBLIC || $state === PublicationStateServiceInterface::STATE_ARCHIVED) {
 			return $this->conflict(state: $state);
+		}
+
+		$embargo = $this->embargoHolds(properties: $properties);
+		if ($embargo !== null) {
+			return $embargo;
 		}
 
 		try {
@@ -270,6 +280,34 @@ class PublicationStateController extends Controller {
 
 		$this->publisher->publish(id: $id, stored: $stored, publicationDate: (string)$record['publicationDate']);
 	}//end publishNow()
+
+	/**
+	 * The 423 for a publish now that would release a publication under embargo early, or null when it may go ahead.
+	 *
+	 * Publish now stores today's date; the guard judges that write against the stored date
+	 * with the caller's lift right, so the answer names the embargo before anything is saved.
+	 *
+	 * @param array<string, mixed> $properties The publication's stored properties.
+	 *
+	 * @return JSONResponse|null 423 with `error: embargo-holds`, the property and `embargoUntil`; null when allowed.
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
+	 */
+	private function embargoHolds(array $properties): ?JSONResponse {
+		$veto = $this->embargo->check(
+			old: $properties,
+			new: $this->registers->publishedRecord(publication: $properties),
+			caller: $this->userSession->getUser()
+		);
+		if ($veto === null) {
+			return null;
+		}
+
+		return new JSONResponse(
+			data: ['error' => $veto['code'], 'property' => $veto['property'], 'embargoUntil' => $veto['embargoUntil']],
+			statusCode: Http::STATUS_LOCKED
+		);
+	}//end embargoHolds()
 
 	/**
 	 * The 422 for a publish the lifecycle does not allow, naming the transition and the state.

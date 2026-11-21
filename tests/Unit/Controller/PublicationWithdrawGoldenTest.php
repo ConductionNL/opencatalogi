@@ -186,7 +186,8 @@ class PublicationWithdrawGoldenTest extends TestCase {
 			$session,
 			$rights,
 			new PublicationTransitions($this->states(case: $case, calls: $calls), $this->depublisher(case: $case, calls: $calls), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $this->objects(case: $case, calls: $calls))),
-			new \OCA\OpenCatalogi\Service\Publication\PublishTransition($container, new \OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy($this->createMock(\OCP\IAppConfig::class)))
+			new \OCA\OpenCatalogi\Service\Publication\PublishTransition($container, new \OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy($this->createMock(\OCP\IAppConfig::class))),
+			new \OCA\OpenCatalogi\Service\Publication\EmbargoGuard($this->createMock(\OCP\IAppConfig::class), $this->createMock(\OCP\IGroupManager::class), $this->createMock(\Psr\Log\LoggerInterface::class))
 		);
 
 		return $controller;
