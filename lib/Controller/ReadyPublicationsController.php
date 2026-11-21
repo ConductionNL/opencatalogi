@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\Publication\ReadyPublicationsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -79,7 +80,9 @@ class ReadyPublicationsController extends Controller {
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-caller-lists-exactly-the-publications-ready-to-publish-req-plc-005
 	 * @spec openspec/changes/publication-relations-place-and-source-ids/tasks.md#task-2.3
 	 *
-	 * @no-admin-idor-exempt Takes no object id: the list is read through OpenRegister's object service with RBAC on (ReadyPublicationsService::ready()), so each caller sees only the publications its own read rights reach.
+	 * @no-admin-idor-exempt Takes no object id: the list is read through OpenRegister's object
+	 *   service with RBAC on (ReadyPublicationsService::ready()), so each caller sees only the
+	 *   publications its own read rights reach.
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -105,7 +108,7 @@ class ReadyPublicationsController extends Controller {
 
 		try {
 			return new JSONResponse(data: $this->ready->ready(since: $since, caseReference: $caseReference, sourceIdentifier: $sourceIdentifier));
-		} catch (\InvalidArgumentException $e) {
+		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(
 				data: ['error' => $this->l10n->t('Give sourceIdentifier as <system>:<identifier>.')],
 				statusCode: Http::STATUS_BAD_REQUEST

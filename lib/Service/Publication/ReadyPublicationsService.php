@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCP\AppFramework\Db\Entity;
 
@@ -63,11 +64,12 @@ class ReadyPublicationsService {
 	 *
 	 * @param DateTimeImmutable|null $since            Only publications approved at or after it.
 	 * @param string|null            $caseReference    Only publications carrying exactly this case reference.
-	 * @param string|null            $sourceIdentifier `<system>:<identifier>`: only publications carrying that entry in `sourceIdentifiers`, public or not.
+	 * @param string|null            $sourceIdentifier `<system>:<identifier>`: only publications carrying that
+	 *                                                 entry in `sourceIdentifiers`, public or not.
 	 *
 	 * @return array{results: list<array<string, mixed>>, total: int, since: string|null}
 	 *
-	 * @throws \InvalidArgumentException When `sourceIdentifier` is given and is not `<system>:<identifier>`.
+	 * @throws InvalidArgumentException When `sourceIdentifier` is given and is not `<system>:<identifier>`.
 	 * @throws \RuntimeException         When the publication register is not configured or OpenRegister is unavailable.
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-caller-lists-exactly-the-publications-ready-to-publish-req-plc-005
@@ -80,7 +82,7 @@ class ReadyPublicationsService {
 		if ($sourceIdentifier !== null && trim($sourceIdentifier) !== '') {
 			$pair = SourceIdentifierFilter::parse(value: $sourceIdentifier);
 			if ($pair === null) {
-				throw new \InvalidArgumentException('sourceIdentifier is not <system>:<identifier>');
+				throw new InvalidArgumentException('sourceIdentifier is not <system>:<identifier>');
 			}
 		}
 
