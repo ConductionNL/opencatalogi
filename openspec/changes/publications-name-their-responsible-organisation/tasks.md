@@ -10,7 +10,8 @@ Read `openspec/woo-build-rules.md` first. Start once `diwoo-metadata-on-the-publ
 
 ## 2. RSIN travels
 
-- [ ] 2.1 Add `PublisherIdentity::of()` with the 11-proef (REQ-PRO-002). Verify: `tests/Unit/Service/Publication/PublisherIdentityTest.php::testAValidRsinIsResolved`, `::testAnInvalidRsinIsNotStamped`, `::testAMissingOrganisationGivesNoRsin`.
+- [x] 2.1 Add `PublisherIdentity::of()` with the 11-proef (REQ-PRO-002). Verify: `tests/Unit/Service/Publication/PublisherIdentityTest.php::testAValidRsinIsResolved`, `::testAnInvalidRsinIsNotStamped`, `::testAMissingOrganisationGivesNoRsin`.
+  - Built 21 Nov: `lib/Service/Publication/PublisherIdentity.php` reads `name`, `tooi` and `rsin` from the `nc-organisation` object `organization` refers to (`organization_register` / `organization_schema`, read past RBAC) and answers `rsin` only when it passes the 11-proef; otherwise `rsinStatus: missing` with the reason, for task 2.2 to store on the file. The three named tests plus a failing-lookup test and the 11-proef itself are in `tests/Unit/Service/Publication/PublisherIdentityTest.php`. No caller yet: task 2.2 wires it into `BatchPublicationWriter::attach()`.
 - [ ] 2.2 Write the file metadata on attach from `BatchPublicationWriter::attach()` and the upload path, store `publisherRsin`, and, when `EmbeddedTitleWriter` exists, write the RSIN into the embedded metadata (REQ-PRO-002). Verify: `PublisherIdentityTest::testTheRsinIsWrittenToTheFileMetadataOnAttach` (fails today) driven through `BatchPublicationWriter::attach()`, so the call has its caller; and `tests/Unit/Service/Publication/EmbeddedTitleWriterTest.php::testTheRsinIsEmbeddedBesideTheTitle` when that class exists.
 - [ ] 2.3 Live: attach a document on the dev instance and paste the file's metadata read back from OpenRegister in the PR body (REQ-PRO-002). Verify: the pasted read-back.
 
