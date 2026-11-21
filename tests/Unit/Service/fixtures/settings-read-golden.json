@@ -62,7 +62,8 @@
                 "publication_url_template": "",
                 "publication_url_catalog": "publications",
                 "cors_allowed_origins": "*",
-                "search_indexing": "allowed"
+                "search_indexing": "allowed",
+                "publication_embargo_lift_groups": "[\"admin\"]"
             }
         },
         "enabled": [],
@@ -137,7 +138,8 @@
                 "publication_url_template": "",
                 "publication_url_catalog": "publications",
                 "cors_allowed_origins": "*",
-                "search_indexing": "allowed"
+                "search_indexing": "allowed",
+                "publication_embargo_lift_groups": "[\"admin\"]"
             }
         },
         "enabled": [],
@@ -214,7 +216,8 @@
                 "publication_url_template": "",
                 "publication_url_catalog": "publications",
                 "cors_allowed_origins": "*",
-                "search_indexing": "allowed"
+                "search_indexing": "allowed",
+                "publication_embargo_lift_groups": "[\"admin\"]"
             }
         },
         "enabled": [],

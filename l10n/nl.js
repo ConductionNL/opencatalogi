@@ -2082,7 +2082,10 @@ OC.L10N.register(
         "Deleting stopped part way. What was removed is listed.": "Het verwijderen is halverwege gestopt. Wat al is verwijderd, staat in de lijst.",
         "Only a draft or a publication in review can be deleted permanently.": "Alleen een concept of een publicatie in review kan definitief worden verwijderd.",
         "It cannot be checked that this publication was never published, so nothing was deleted.": "Er kan niet worden nagegaan dat deze publicatie nooit is gepubliceerd, daarom is niets verwijderd.",
-        "This publication was published before, so it cannot be deleted permanently.": "Deze publicatie is eerder gepubliceerd en kan daarom niet definitief worden verwijderd."
+        "This publication was published before, so it cannot be deleted permanently.": "Deze publicatie is eerder gepubliceerd en kan daarom niet definitief worden verwijderd.",
+        "Groups that may lift an embargo": "Groepen die een embargo mogen opheffen",
+        "Members of these groups may publish a publication before its publication date. They give a reason, and every lift is logged. Separate group ids with commas.": "Leden van deze groepen mogen een publicatie publiceren vóór de publicatiedatum. Ze geven een reden op, en elke opheffing wordt vastgelegd. Scheid groeps-id’s met komma’s.",
+        "The groups could not be saved. Try again.": "De groepen konden niet worden opgeslagen. Probeer het opnieuw."
     },
     "nplurals=2; plural=(n != 1);"
 )

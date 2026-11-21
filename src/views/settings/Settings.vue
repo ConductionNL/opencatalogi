@@ -485,6 +485,37 @@
 					</div>
 				</div>
 
+				<!-- The groups that may lift an embargo (publication-schedule-guards REQ-PSG-002) -->
+				<div class="option-section" data-testid="embargo-lift-groups">
+					<NcTextField
+						v-model="liftGroups"
+						:label="t('opencatalogi', 'Groups that may lift an embargo')"
+						:disabled="savingLiftGroups" />
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'Members of these groups may publish a publication before its publication date. They give a reason, and every lift is logged. Separate group ids with commas.',
+							)
+						}}
+					</p>
+					<NcNoteCard v-if="liftGroupsError" type="error">
+						{{ liftGroupsError }}
+					</NcNoteCard>
+					<div class="button-container">
+						<NcButton
+							variant="secondary"
+							:disabled="savingLiftGroups"
+							@click="saveLiftGroups">
+							<template #icon>
+								<NcLoadingIcon v-if="savingLiftGroups" :size="20" />
+								<Save v-else :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Save') }}
+						</NcButton>
+					</div>
+				</div>
+
 				<!-- Public API cache time (REQ-PAC-003) -->
 				<div class="option-section" data-testid="public-api-cache">
 					<NcTextField
@@ -729,6 +760,8 @@ import {
 	directorySyncCounts,
 	directorySyncFailed,
 	directorySyncFailure,
+	liftGroupsPayload,
+	liftGroupsText,
 	postSyncInterval,
 	publicationLanguageOptions,
 	publicationLanguagesFrom,
@@ -908,6 +941,9 @@ export default defineComponent({
 			publicCacheSeconds: '60',
 			savingPublicCache: false,
 			publicCacheError: '',
+			liftGroups: 'admin',
+			savingLiftGroups: false,
+			liftGroupsError: '',
 			// Languages offered to editors (publication-translations D6).
 			publicationLanguages: ['nl', 'en'],
 			savingPublicationLanguages: false,
@@ -1114,6 +1150,10 @@ export default defineComponent({
 
 			this.publicationLanguages = publicationLanguagesFrom(
 				configuration && configuration.publication_languages,
+			)
+
+			this.liftGroups = liftGroupsText(
+				configuration && configuration.publication_embargo_lift_groups,
 			)
 
 			if (configuration && configuration.cors_allowed_origins !== undefined) {
@@ -1734,6 +1774,39 @@ export default defineComponent({
 				)
 			} finally {
 				this.savingPublicationLanguages = false
+			}
+		},
+
+		/**
+		 * Saves the groups that may lift an embargo. The server stores each
+		 * group id once and keeps `admin` when the list is empty; what it stored
+		 * is shown back.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.1
+		 */
+		async saveLiftGroups() {
+			this.savingLiftGroups = true
+			this.liftGroupsError = ''
+
+			try {
+				const response = await putSettings({
+					publication_embargo_lift_groups: liftGroupsPayload(
+						this.liftGroups,
+					),
+				})
+				const stored =
+					response.data && response.data.publication_embargo_lift_groups
+				if (stored !== undefined) {
+					this.liftGroups = liftGroupsText(stored)
+				}
+			} catch {
+				this.liftGroupsError = this.t(
+					'opencatalogi',
+					'The groups could not be saved. Try again.',
+				)
+			} finally {
+				this.savingLiftGroups = false
 			}
 		},
 
