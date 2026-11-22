@@ -44,6 +44,9 @@ trait AnswersRefusals {
 	 * @param string $error The refusal's error.
 	 *
 	 * @return string The message.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
 	 */
 	abstract protected function refusalMessage(string $error): string;
 
