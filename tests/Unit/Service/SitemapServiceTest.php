@@ -1376,6 +1376,106 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	/**
+	 * One stored Woo publication of organisation org-uuid-1 (Gemeente Voorbeeld, gm0855) as its DiWoo document.
+	 *
+	 * @param array<string, mixed> $fields The publication's own fields.
+	 *
+	 * @return \DOMXPath The rendered page.
+	 */
+	private function responsiblePage(array $fields): \DOMXPath {
+		$publication = array_merge(['id' => 'besluit', 'title' => 'Besluit', 'wooCategory' => 'infocat012', 'creationDate' => '2026-09-30'], $fields);
+
+		return self::documentsOf(xml: $this->storedValuesPage(publications: [$publication]));
+	}
+
+	/**
+	 * REQ-PRO-001: a service centre publishes for a municipality; the publisher stays the
+	 * service centre and the responsible organisation is the municipality.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-a-publication-names-its-responsible-organisation-apart-from-its-publisher-req-pro-001
+	 */
+	public function testVerantwoordelijkeComesFromTheResponsibleOrganisation(): void {
+		$xpath = $this->responsiblePage(fields: ['responsibleOrganization' => 'org-dordrecht']);
+		$doc = '//d:Document/d:DiWoo';
+
+		$this->assertSame(
+			expected: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855',
+			actual: $xpath->evaluate('string(' . $doc . '/d:publisher/@resource)')
+		);
+		$this->assertSame(
+			expected: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0505',
+			actual: $xpath->evaluate('string(' . $doc . '/d:verantwoordelijke/@resource)')
+		);
+		$this->assertSame(expected: 'Gemeente Dordrecht', actual: $xpath->evaluate('string(' . $doc . '/d:verantwoordelijke)'));
+	}
+
+	/**
+	 * REQ-PRO-001: without a separate responsible organisation the publisher is responsible.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-a-publication-names-its-responsible-organisation-apart-from-its-publisher-req-pro-001
+	 */
+	public function testWithoutAResponsibleOrganisationThePublisherIsResponsible(): void {
+		foreach (['absent' => [], 'blank' => ['responsibleOrganization' => '  ']] as $case => $fields) {
+			$xpath = $this->responsiblePage(fields: $fields);
+
+			$this->assertSame(
+				expected: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855',
+				actual: $xpath->evaluate('string(//d:Document/d:DiWoo/d:verantwoordelijke/@resource)'),
+				message: $case
+			);
+		}
+	}
+
+	/**
+	 * REQ-PRO-001: a responsible organisation without a TOOI identifier is left out of the
+	 * document, which is still served (the element is optional), and the validator names it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-a-publication-names-its-responsible-organisation-apart-from-its-publisher-req-pro-001
+	 */
+	public function testAResponsibleOrganisationWithoutTooiIsOmittedAndReported(): void {
+		$xpath = $this->responsiblePage(fields: ['responsibleOrganization' => 'org-zonder-tooi']);
+
+		$this->assertSame(expected: 1.0, actual: $xpath->evaluate('count(//d:Document)'), message: 'the document is still served');
+		$this->assertSame(expected: 0.0, actual: $xpath->evaluate('count(//d:Document/d:DiWoo/d:verantwoordelijke)'));
+		$this->assertSame(
+			expected: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855',
+			actual: $xpath->evaluate('string(//d:Document/d:DiWoo/d:publisher/@resource)')
+		);
+
+		$file = ['downloadUrl' => 'https://example.com/besluit.pdf', 'extension' => 'pdf'];
+		$publication = [
+			'id' => 'besluit',
+			'title' => 'Besluit',
+			'category' => 'infocat014',
+			'responsibleOrganization' => 'org-zonder-tooi',
+			'@self' => ['organisation' => 'org-uuid-1', 'files' => [$file]],
+		];
+		$noTooi = 'responsible organisation has no TOOI identifier';
+		$this->assertContains(
+			needle: ['documentLoc' => 'https://example.com/besluit.pdf', 'axis' => 'verantwoordelijke', 'reason' => $noTooi],
+			haystack: $this->service->collectDiwooViolations([$publication])
+		);
+
+		$publication['responsibleOrganization'] = 'org-zonder-naam';
+		$this->assertContains(
+			needle: ['documentLoc' => 'https://example.com/besluit.pdf', 'axis' => 'verantwoordelijke', 'reason' => 'responsible organisation has no name'],
+			haystack: $this->service->collectDiwooViolations([$publication])
+		);
+
+		$publication['responsibleOrganization'] = 'org-dordrecht';
+		$this->assertNotContains(
+			needle: 'verantwoordelijke',
+			haystack: array_column($this->service->collectDiwooViolations([$publication]), 'axis')
+		);
+	}
+
+	/**
 	 * REQ-DWP-004: a record created before the DiWoo fields gets the creation day it was saved and nl.
 	 *
 	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
@@ -2228,10 +2328,12 @@ class SitemapServiceTest extends TestCase {
 
 		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuidFollowingMerge']);
 		$organisations->method('findByUuidFollowingMerge')->willReturnCallback(
-			fn (string $uuid): object => $this->organisation(
-				name: 'Gemeente Voorbeeld',
-				tooi: ($uuid === 'org-zonder-tooi' ? null : 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855')
-			)
+			fn (string $uuid): object => match ($uuid) {
+				'org-dordrecht' => $this->organisation(name: 'Gemeente Dordrecht', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0505'),
+				'org-zonder-naam' => $this->organisation(name: '', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0505'),
+				'org-zonder-tooi' => $this->organisation(name: 'Gemeente Voorbeeld', tooi: null),
+				default => $this->organisation(name: 'Gemeente Voorbeeld', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855'),
+			}
 		);
 
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
