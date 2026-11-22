@@ -411,77 +411,20 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testCreatePublicationZipMethodDoesNotExist()
 
 	/**
-	 * Returns all resolved attachment entities.
+	 * The publication-attachments lookup is gone: nothing called it, and the
+	 * download takes its files from OpenRegister.
 	 *
 	 * @return void
-	 */
-	public function testPublicationAttachmentsSuccess(): void {
-		$objectService = $this->createObjectServiceMock();
-		$pubEntity = $this->createObjectEntityFromData(['id' => '1', 'attachments' => ['a1', 'a2']]);
-		$att1Entity = $this->createObjectEntityFromData(['id' => 'a1', 'title' => 'Att1']);
-		$att2Entity = $this->createObjectEntityFromData(['id' => 'a2', 'title' => 'Att2']);
-
-		$objectService->method('find')
-			->willReturnCallback(
-				function ($id) use ($pubEntity, $att1Entity, $att2Entity) {
-					if ($id === '1') {
-						return $pubEntity;
-					}
-
-					if ($id === 'a1') {
-						return $att1Entity;
-					}
-
-					if ($id === 'a2') {
-						return $att2Entity;
-					}
-
-					return null;
-				}
-			);
-
-		$result = $this->downloadService->publicationAttachments('1', $objectService);
-
-		$this->assertIsArray($result);
-		$this->assertCount(2, $result);
-
-	}//end testPublicationAttachmentsSuccess()
-
-	/**
-	 * Returns 500 when the publication lookup throws an exception.
 	 *
-	 * @return void
+	 * @spec openspec/changes/download-service/tasks.md#2.1
 	 */
-	public function testPublicationAttachmentsException(): void {
-		$objectService = $this->createObjectServiceMock();
-		$objectService->method('find')
-			->willThrowException(new DoesNotExistException('Publication not found'));
+	public function testPublicationAttachmentsMethodDoesNotExist(): void {
+		$this->assertFalse(
+			method_exists($this->downloadService, 'publicationAttachments'),
+			'publicationAttachments had no caller and was removed; attachments come from OpenRegister.'
+		);
 
-		$result = $this->downloadService->publicationAttachments('1', $objectService);
-
-		$this->assertInstanceOf(JSONResponse::class, $result);
-		$this->assertSame(500, $result->getStatus());
-
-	}//end testPublicationAttachmentsException()
-
-	/**
-	 * Accepts integer IDs as publication identifier.
-	 *
-	 * @return void
-	 */
-	public function testPublicationAttachmentsIntegerId(): void {
-		$objectService = $this->createObjectServiceMock();
-		$pubEntity = $this->createObjectEntityFromData(['id' => '42', 'attachments' => []]);
-
-		$objectService->method('find')
-			->willReturn($pubEntity);
-
-		$result = $this->downloadService->publicationAttachments(42, $objectService);
-
-		$this->assertIsArray($result);
-		$this->assertCount(0, $result);
-
-	}//end testPublicationAttachmentsIntegerId()
+	}//end testPublicationAttachmentsMethodDoesNotExist()
 
 	/**
 	 * Returns 500 error response when entity lookup throws exception.
@@ -501,69 +444,6 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame(500, $result->getStatus());
 
 	}//end testGetPublicationDataReturnsErrorOnException()
-
-	/**
-	 * Returns 500 when the publication entity is null.
-	 *
-	 * @return void
-	 */
-	public function testPublicationAttachmentsReturnsErrorWhenEntityIsNull(): void {
-		$objectService = $this->createObjectServiceMock();
-		$objectService->method('find')
-			->willReturn(null);
-
-		$result = $this->downloadService->publicationAttachments('null-pub', $objectService);
-
-		$this->assertInstanceOf(JSONResponse::class, $result);
-		$this->assertSame(500, $result->getStatus());
-
-	}//end testPublicationAttachmentsReturnsErrorWhenEntityIsNull()
-
-	/**
-	 * Skips attachments whose entities cannot be resolved.
-	 *
-	 * @return void
-	 */
-	public function testPublicationAttachmentsSkipsNullAttachments(): void {
-		$objectService = $this->createObjectServiceMock();
-		$pubEntity = $this->createObjectEntityFromData(['id' => '1', 'attachments' => ['a1', 'a2']]);
-
-		$objectService->method('find')
-			->willReturnCallback(
-				function ($id) use ($pubEntity) {
-					if ($id === '1') {
-						return $pubEntity;
-					}
-
-					return null;
-				}
-			);
-
-		$result = $this->downloadService->publicationAttachments('1', $objectService);
-
-		$this->assertIsArray($result);
-		$this->assertCount(0, $result);
-
-	}//end testPublicationAttachmentsSkipsNullAttachments()
-
-	/**
-	 * Returns empty array when publication has no attachments key.
-	 *
-	 * @return void
-	 */
-	public function testPublicationAttachmentsNoAttachmentsKey(): void {
-		$objectService = $this->createObjectServiceMock();
-		$pubEntity = $this->createObjectEntityFromData(['id' => '1']);
-
-		$objectService->method('find')
-			->willReturn($pubEntity);
-
-		$result = $this->downloadService->publicationAttachments('1', $objectService);
-
-		$this->assertIsArray($result);
-		$this->assertCount(0, $result);
-
-	}//end testPublicationAttachmentsNoAttachmentsKey()
 
 	/**
 	 * Falls back to a usable entry name when the publication carries no title.

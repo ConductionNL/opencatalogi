@@ -3,8 +3,8 @@
 /**
  * Service for managing download-related operations.
  *
- * Renders the publication metadata PDF that is piped into the download ZIP and
- * enumerates a publication's attachments. Per DWN-OR-003 the rendered PDF is an
+ * Renders the publication metadata PDF that is piped into the download ZIP; the
+ * attachments themselves come from OpenRegister. Per DWN-OR-003 the rendered PDF is an
  * on-demand artefact — it is never saved to Nextcloud user storage by this service.
  *
  * @category Service
@@ -48,11 +48,12 @@ use Twig\Error\SyntaxError;
 /**
  * Service for managing download-related operations.
  *
- * Renders the publication metadata PDF that is piped into the download ZIP and
- * enumerates a publication's attachments. Per DWN-OR-003 the rendered PDF is an
+ * Renders the publication metadata PDF that is piped into the download ZIP; the
+ * attachments themselves come from OpenRegister. Per DWN-OR-003 the rendered PDF is an
  * on-demand artefact — it is never saved to Nextcloud user storage by this service.
  *
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
+ * @spec openspec/changes/download-service/tasks.md#2.1
  */
 class DownloadService {
 	/**
@@ -205,66 +206,4 @@ class DownloadService {
 		}//end try
 
 	}//end getPublicationData()
-
-	/**
-	 * Gets all attachments for a publication.
-	 *
-	 * @param string|integer $id The id of a publication.
-	 * @param ObjectService $objectService The objectService.
-	 *
-	 * @return array|JSONResponse All attachments for the publication or an error JSONResponse.
-	 *
-	 * @spec openspec/specs/download-service/spec.md
-	 */
-	public function publicationAttachments(string|int $id, ObjectService $objectService): array|JSONResponse {
-		try {
-			// Fetch the publication object by its ID.
-			$object = $this->serialised(entity: $objectService->find($id));
-			if ($object === null) {
-				return new JSONResponse(data: ['error' => $this->l10n->t('Publication not found')], statusCode: 500);
-			}
-
-			return $this->attachmentsOf(object: $object, objectService: $objectService);
-		} catch (ContainerExceptionInterface|MultipleObjectsReturnedException|DoesNotExistException $e) {
-			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
-		}
-
-	}//end publicationAttachments()
-
-	/**
-	 * A found entity serialised, or null when nothing was found.
-	 *
-	 * @param mixed $entity What find() answered.
-	 *
-	 * @return mixed The serialised entity, or null.
-	 */
-	private function serialised(mixed $entity): mixed {
-		if ($entity === null) {
-			return null;
-		}
-
-		return $entity->jsonSerialize();
-	}//end serialised()
-
-	/**
-	 * The attachment objects a publication lists, read by their ids; one that is not found is skipped.
-	 *
-	 * @param mixed $object The serialised publication.
-	 * @param ObjectService $objectService The objectService.
-	 *
-	 * @return array<int, mixed> The attachments.
-	 *
-	 * @throws ContainerExceptionInterface|MultipleObjectsReturnedException|DoesNotExistException When a lookup fails.
-	 */
-	private function attachmentsOf(mixed $object, ObjectService $objectService): array {
-		$attachments = [];
-		foreach (($object['attachments'] ?? []) as $attId) {
-			$attEntity = $objectService->find($attId);
-			if ($attEntity !== null) {
-				$attachments[] = $attEntity->jsonSerialize();
-			}
-		}
-
-		return $attachments;
-	}//end attachmentsOf()
 }//end class
