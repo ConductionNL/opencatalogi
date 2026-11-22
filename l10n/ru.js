@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "Организация, ответственная за эту публикацию, если это не издатель.",
         "The import failed.": "Импорт не удался.",
         "Failed on {date}": "Не удалось {date}",
-        "Only a table whose import failed can be retried.": "Повторить можно только таблицу, импорт которой не удался."
+        "Only a table whose import failed can be retried.": "Повторить можно только таблицу, импорт которой не удался.",
+        "Read again": "Прочитать снова",
+        "The attachment will be read again.": "Вложение будет прочитано снова.",
+        "The attachment could not be queued for reading.": "Не удалось поставить вложение в очередь на чтение.",
+        "Typed text": "Набранный текст",
+        "Read by OCR": "Прочитано с помощью OCR",
+        "Reading": "Читается",
+        "No text found": "Текст не найден",
+        "No text: OCR is not installed": "Нет текста: OCR не установлен",
+        "This attachment or publication was not found.": "Это вложение или публикация не найдены.",
+        "The file id is not valid.": "Идентификатор файла недействителен.",
+        "Attachment reading is not set up on this instance.": "Чтение вложений не настроено на этом экземпляре."
     },
     "nplurals=2; plural=(n != 1);"
 )

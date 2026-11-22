@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "Stofnunin sem ber ábyrgð á þessari útgáfu, þegar hún er ekki útgefandinn.",
         "The import failed.": "Innflutningur mistókst.",
         "Failed on {date}": "Mistókst {date}",
-        "Only a table whose import failed can be retried.": "Aðeins er hægt að reyna aftur töflu þar sem innflutningur mistókst."
+        "Only a table whose import failed can be retried.": "Aðeins er hægt að reyna aftur töflu þar sem innflutningur mistókst.",
+        "Read again": "Lesa aftur",
+        "The attachment will be read again.": "Viðhengið verður lesið aftur.",
+        "The attachment could not be queued for reading.": "Ekki tókst að setja viðhengið í lestrarröð.",
+        "Typed text": "Vélritaður texti",
+        "Read by OCR": "Lesið með OCR",
+        "Reading": "Í lestri",
+        "No text found": "Enginn texti fannst",
+        "No text: OCR is not installed": "Enginn texti: OCR er ekki uppsett",
+        "This attachment or publication was not found.": "Þetta viðhengi eða þessi útgáfa fannst ekki.",
+        "The file id is not valid.": "Auðkenni skrárinnar er ekki gilt.",
+        "Attachment reading is not set up on this instance.": "Lestur viðhengja er ekki uppsettur á þessu tilviki."
     },
     "nplurals=2; plural=(n != 1);"
 )

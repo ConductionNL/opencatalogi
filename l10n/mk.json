@@ -785,7 +785,18 @@
         "The organisation responsible for this publication, when it is not the publisher.": "Организацијата одговорна за оваа публикација, кога таа не е издавачот.",
         "The import failed.": "Увозот не успеа.",
         "Failed on {date}": "Неуспешно на {date}",
-        "Only a table whose import failed can be retried.": "Повторно може да се обиде само табела чиј увоз не успеал."
+        "Only a table whose import failed can be retried.": "Повторно може да се обиде само табела чиј увоз не успеал.",
+        "Read again": "Прочитај повторно",
+        "The attachment will be read again.": "Прилогот ќе биде повторно прочитан.",
+        "The attachment could not be queued for reading.": "Прилогот не можеше да се стави во редот за читање.",
+        "Typed text": "Отчукан текст",
+        "Read by OCR": "Прочитано со OCR",
+        "Reading": "Се чита",
+        "No text found": "Не е пронајден текст",
+        "No text: OCR is not installed": "Нема текст: OCR не е инсталиран",
+        "This attachment or publication was not found.": "Овој прилог или публикација не е пронајден.",
+        "The file id is not valid.": "ID-то на датотеката не е валидно.",
+        "Attachment reading is not set up on this instance.": "Читањето прилози не е поставено на оваа инстанца."
     },
     "plurals": {}
 }

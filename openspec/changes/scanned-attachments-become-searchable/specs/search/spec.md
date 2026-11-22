@@ -52,7 +52,6 @@ The job MUST read only the file that is published. It MUST NOT send the original
 The file list of a publication SHALL show a Text column after Status with "Typed text", "Read by OCR", "Reading", "No text found", "No text: OCR is not installed" or "Failed", and SHALL offer "Read again" as a row action.
 
 #### Scenario: An editor sees which scan search cannot read
-<!-- @e2e exclude Board column not yet built; proven by tests/e2e/attachment-reading.spec.ts once task 3.1 lands. -->
 
 - **GIVEN** a publication with one typed PDF and one scan on an instance without filinq
 - **WHEN** an editor opens its file list

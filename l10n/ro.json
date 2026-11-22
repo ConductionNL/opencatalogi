@@ -785,7 +785,18 @@
         "The organisation responsible for this publication, when it is not the publisher.": "Organizația responsabilă pentru această publicație, atunci când nu este editorul.",
         "The import failed.": "Importul a eșuat.",
         "Failed on {date}": "A eșuat la {date}",
-        "Only a table whose import failed can be retried.": "Doar un tabel al cărui import a eșuat poate fi reîncercat."
+        "Only a table whose import failed can be retried.": "Doar un tabel al cărui import a eșuat poate fi reîncercat.",
+        "Read again": "Citește din nou",
+        "The attachment will be read again.": "Atașamentul va fi citit din nou.",
+        "The attachment could not be queued for reading.": "Atașamentul nu a putut fi pus în coada de citire.",
+        "Typed text": "Text tastat",
+        "Read by OCR": "Citit prin OCR",
+        "Reading": "Se citește",
+        "No text found": "Nu s-a găsit text",
+        "No text: OCR is not installed": "Fără text: OCR nu este instalat",
+        "This attachment or publication was not found.": "Acest atașament sau această publicație nu a fost găsită.",
+        "The file id is not valid.": "ID-ul fișierului nu este valid.",
+        "Attachment reading is not set up on this instance.": "Citirea atașamentelor nu este configurată pe această instanță."
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

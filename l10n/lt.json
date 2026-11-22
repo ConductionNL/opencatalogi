@@ -785,7 +785,18 @@
         "The organisation responsible for this publication, when it is not the publisher.": "Už šį leidinį atsakinga organizacija, kai tai nėra leidėjas.",
         "The import failed.": "Importuoti nepavyko.",
         "Failed on {date}": "Nepavyko {date}",
-        "Only a table whose import failed can be retried.": "Iš naujo bandyti galima tik lentelę, kurios importuoti nepavyko."
+        "Only a table whose import failed can be retried.": "Iš naujo bandyti galima tik lentelę, kurios importuoti nepavyko.",
+        "Read again": "Skaityti dar kartą",
+        "The attachment will be read again.": "Priedas bus perskaitytas dar kartą.",
+        "The attachment could not be queued for reading.": "Nepavyko įtraukti priedo į skaitymo eilę.",
+        "Typed text": "Įvestas tekstas",
+        "Read by OCR": "Perskaityta OCR",
+        "Reading": "Skaitoma",
+        "No text found": "Tekstas nerastas",
+        "No text: OCR is not installed": "Nėra teksto: OCR neįdiegtas",
+        "This attachment or publication was not found.": "Šis priedas arba leidinys nerastas.",
+        "The file id is not valid.": "Failo ID netinkamas.",
+        "Attachment reading is not set up on this instance.": "Priedų skaitymas šiame egzemplioriuje nesukonfigūruotas."
     },
     "plurals": {}
 }

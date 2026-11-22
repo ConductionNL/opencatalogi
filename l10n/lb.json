@@ -785,7 +785,18 @@
         "The organisation responsible for this publication, when it is not the publisher.": "D'Organisatioun, déi fir dës Publikatioun verantwortlech ass, wann et net den Editeur ass.",
         "The import failed.": "Den Import ass feelgeschloen.",
         "Failed on {date}": "Feelgeschloen den {date}",
-        "Only a table whose import failed can be retried.": "Nëmmen eng Tabell, där hiren Import feelgeschloen ass, kann nach eng Kéier probéiert ginn."
+        "Only a table whose import failed can be retried.": "Nëmmen eng Tabell, där hiren Import feelgeschloen ass, kann nach eng Kéier probéiert ginn.",
+        "Read again": "Nach eng Kéier liesen",
+        "The attachment will be read again.": "Den Unhang gëtt nach eng Kéier gelies.",
+        "The attachment could not be queued for reading.": "Den Unhang konnt net fir d'Liesen an d'Schlaang gesat ginn.",
+        "Typed text": "Getippten Text",
+        "Read by OCR": "Mat OCR gelies",
+        "Reading": "Gëtt gelies",
+        "No text found": "Keen Text fonnt",
+        "No text: OCR is not installed": "Keen Text: OCR ass net installéiert",
+        "This attachment or publication was not found.": "Dësen Unhang oder dës Verëffentlechung gouf net fonnt.",
+        "The file id is not valid.": "D'Fichier-ID ass net valabel.",
+        "Attachment reading is not set up on this instance.": "D'Liese vun Unhäng ass op dëser Instanz net agestallt."
     },
     "plurals": {}
 }

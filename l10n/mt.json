@@ -785,7 +785,18 @@
         "The organisation responsible for this publication, when it is not the publisher.": "L-organizzazzjoni responsabbli għal din il-pubblikazzjoni, meta ma tkunx il-pubblikatur.",
         "The import failed.": "L-importazzjoni falliet.",
         "Failed on {date}": "Falla fi {date}",
-        "Only a table whose import failed can be retried.": "Tista' terġa' tipprova biss tabella li l-importazzjoni tagħha falliet."
+        "Only a table whose import failed can be retried.": "Tista' terġa' tipprova biss tabella li l-importazzjoni tagħha falliet.",
+        "Read again": "Erġa' aqra",
+        "The attachment will be read again.": "L-anness se jerġa' jinqara.",
+        "The attachment could not be queued for reading.": "L-anness ma setax jitqiegħed fil-kju għall-qari.",
+        "Typed text": "Test ittajpjat",
+        "Read by OCR": "Moqri bl-OCR",
+        "Reading": "Qed jinqara",
+        "No text found": "Ma nstab l-ebda test",
+        "No text: OCR is not installed": "L-ebda test: l-OCR mhuwiex installat",
+        "This attachment or publication was not found.": "Dan l-anness jew il-pubblikazzjoni ma nstabux.",
+        "The file id is not valid.": "L-id tal-fajl mhuwiex validu.",
+        "Attachment reading is not set up on this instance.": "Il-qari tal-annessi mhuwiex issettjat f'din l-istanza."
     },
     "plurals": {}
 }

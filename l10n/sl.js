@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "Organizacija, odgovorna za to publikacijo, kadar to ni izdajatelj.",
         "The import failed.": "Uvoz ni uspel.",
         "Failed on {date}": "Ni uspelo {date}",
-        "Only a table whose import failed can be retried.": "Ponovno je mogoče poskusiti samo tabelo, katere uvoz ni uspel."
+        "Only a table whose import failed can be retried.": "Ponovno je mogoče poskusiti samo tabelo, katere uvoz ni uspel.",
+        "Read again": "Preberi znova",
+        "The attachment will be read again.": "Priloga bo prebrana znova.",
+        "The attachment could not be queued for reading.": "Priloge ni bilo mogoče uvrstiti v čakalno vrsto za branje.",
+        "Typed text": "Tipkano besedilo",
+        "Read by OCR": "Prebrano z OCR",
+        "Reading": "Branje poteka",
+        "No text found": "Besedilo ni bilo najdeno",
+        "No text: OCR is not installed": "Ni besedila: OCR ni nameščen",
+        "This attachment or publication was not found.": "Te priloge ali objave ni bilo mogoče najti.",
+        "The file id is not valid.": "ID datoteke ni veljaven.",
+        "Attachment reading is not set up on this instance.": "Branje prilog na tej instanci ni nastavljeno."
     },
     "nplurals=2; plural=(n != 1);"
 )

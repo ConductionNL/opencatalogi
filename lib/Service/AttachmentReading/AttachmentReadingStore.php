@@ -94,6 +94,99 @@ class AttachmentReadingStore implements AttachmentReadingStoreInterface {
 	}//end record()
 
 	/**
+	 * The reading states recorded for one publication's attachments.
+	 *
+	 * Read as the system: the caller has already checked that the user may read
+	 * the publication, and the reading-state objects carry no text of the file.
+	 *
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<int, array{fileId: int, state: string, reason: string, updatedAt: string}> One entry per file, the newest per file.
+	 *
+	 * @throws RuntimeException When OpenRegister or the register configuration is not there.
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+	 */
+	public function forPublication(string $publicationId): array {
+		if ($this->openRegister->isInstalled() === false) {
+			throw new RuntimeException('OpenRegister is not available, so the reading states cannot be read.');
+		}
+
+		$target = $this->target();
+		$result = $this->openRegister->objectService()->searchObjectsPaginated(
+			query: ['@self' => ['register' => $target[0], 'schema' => $target[1]], 'publication' => $publicationId, '_limit' => 500],
+			_rbac: false,
+			_multitenancy: false
+		);
+
+		$readings = [];
+		foreach ((array)($result['results'] ?? []) as $row) {
+			$reading = $this->readingOf(stored: $this->asRecord(object: $row), publicationId: $publicationId);
+			if ($reading !== null && $this->isNewer(reading: $reading, known: $readings[$reading['fileId']] ?? null) === true) {
+				$readings[$reading['fileId']] = $reading;
+			}
+		}
+
+		return array_values($readings);
+
+	}//end forPublication()
+
+	/**
+	 * Whether the register and the attachmentReading schema are configured.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+	 */
+	public function isConfigured(): bool {
+		try {
+			$this->target();
+		} catch (RuntimeException $e) {
+			return false;
+		}
+
+		return true;
+
+	}//end isConfigured()
+
+	/**
+	 * The reading state a stored object holds, or null when it is not one of the publication.
+	 *
+	 * @param array<string, mixed> $stored        The stored object.
+	 * @param string               $publicationId The publication.
+	 *
+	 * @return array{fileId: int, state: string, reason: string, updatedAt: string}|null
+	 */
+	private function readingOf(array $stored, string $publicationId): ?array {
+		$fileId = (int)($stored['fileId'] ?? 0);
+		$state = (string)($stored['state'] ?? '');
+		if ($fileId <= 0 || $state === '' || (string)($stored['publication'] ?? '') !== $publicationId) {
+			return null;
+		}
+
+		return [
+			'fileId' => $fileId,
+			'state' => $state,
+			'reason' => (string)($stored['reason'] ?? ''),
+			'updatedAt' => (string)($stored['updatedAt'] ?? ''),
+		];
+
+	}//end readingOf()
+
+	/**
+	 * Whether a reading is newer than the one already kept for its file.
+	 *
+	 * @param array{updatedAt: string}      $reading The reading.
+	 * @param array{updatedAt: string}|null $known   The one kept, if any.
+	 *
+	 * @return bool
+	 */
+	private function isNewer(array $reading, ?array $known): bool {
+		return $known === null || strcmp($reading['updatedAt'], $known['updatedAt']) > 0;
+
+	}//end isNewer()
+
+	/**
 	 * Save the reading state over the object already recorded for its file, if any.
 	 *
 	 * @param object               $objects OpenRegister's ObjectService.

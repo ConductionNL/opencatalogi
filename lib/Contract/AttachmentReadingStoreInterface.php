@@ -47,4 +47,32 @@ interface AttachmentReadingStoreInterface {
 	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
 	 */
 	public function record(int $fileId, string $publicationId, string $state, string $reason): void;
+
+	/**
+	 * The reading states recorded for one publication's attachments.
+	 *
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<int, array{fileId: int, state: string, reason: string, updatedAt: string}> One entry per file.
+	 *
+	 * @throws \RuntimeException When OpenRegister or the register configuration is not there.
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+	 *
+	 * @contract-shift internal-only — implemented only by this app; a GitHub code search of
+	 *                  org:ConductionNL on 2026-11-22 finds no other implementation or double.
+	 */
+	public function forPublication(string $publicationId): array;
+
+	/**
+	 * Whether the register and the attachmentReading schema are configured.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+	 *
+	 * @contract-shift internal-only — implemented only by this app; a GitHub code search of
+	 *                  org:ConductionNL on 2026-11-22 finds no other implementation or double.
+	 */
+	public function isConfigured(): bool;
 }//end interface

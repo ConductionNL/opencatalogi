@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "Den organisation, der er ansvarlig for denne publikation, når det ikke er udgiveren.",
         "The import failed.": "Importen mislykkedes.",
         "Failed on {date}": "Mislykkedes den {date}",
-        "Only a table whose import failed can be retried.": "Kun en tabel, hvis import mislykkedes, kan prøves igen."
+        "Only a table whose import failed can be retried.": "Kun en tabel, hvis import mislykkedes, kan prøves igen.",
+        "Read again": "Læs igen",
+        "The attachment will be read again.": "Vedhæftningen bliver læst igen.",
+        "The attachment could not be queued for reading.": "Vedhæftningen kunne ikke sættes i kø til læsning.",
+        "Typed text": "Skrevet tekst",
+        "Read by OCR": "Læst med OCR",
+        "Reading": "Læser",
+        "No text found": "Ingen tekst fundet",
+        "No text: OCR is not installed": "Ingen tekst: OCR er ikke installeret",
+        "This attachment or publication was not found.": "Denne vedhæftning eller publikation blev ikke fundet.",
+        "The file id is not valid.": "Fil-id'et er ikke gyldigt.",
+        "Attachment reading is not set up on this instance.": "Læsning af vedhæftninger er ikke sat op på denne instans."
     },
     "nplurals=2; plural=(n != 1);"
 )

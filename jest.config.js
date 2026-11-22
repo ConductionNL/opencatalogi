@@ -56,6 +56,9 @@ module.exports = {
 		// widget specs so Jest never has to parse @nextcloud/vue's CSS-bearing
 		// dist bundle.
 		'^@nextcloud/vue$': '<rootDir>/tests/mocks/nextcloud-vue.js',
+		// @nextcloud/dialogs ships ESM only; stub the toasts so a component
+		// that shows one can still be imported by its specs.
+		'^@nextcloud/dialogs$': '<rootDir>/tests/mocks/nextcloud-dialogs.js',
 		// Untranspiled .vue SFCs inside node_modules — see the mock's docblock.
 		'^vue-material-design-icons/(.*)\\.vue$':
 			'<rootDir>/tests/mocks/vue-material-design-icon.js',

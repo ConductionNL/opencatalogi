@@ -27,7 +27,6 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\MetadataSuggestionDecisionsInterface;
-use OCA\OpenCatalogi\Exception\MetadataSuggestionRefusedException;
 use OCA\OpenCatalogi\Contract\MetadataRuleSuggesterInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -43,6 +42,7 @@ use OCP\IUserSession;
  * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
  */
 class MetadataSuggestionController extends Controller {
+	use AnswersRefusals;
 
 	/**
 	 * Constructor.
@@ -137,6 +137,9 @@ class MetadataSuggestionController extends Controller {
 	 * @param callable(string): array<string, mixed> $step The step, given the user id.
 	 *
 	 * @return JSONResponse The step's answer, 401 without a session, or the refusal's status.
+
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
 	 */
 	private function answer(callable $step): JSONResponse {
 		$user = $this->userSession->getUser();
@@ -144,14 +147,8 @@ class MetadataSuggestionController extends Controller {
 			return new JSONResponse(data: ['error' => 'not-logged-in'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		try {
-			return new JSONResponse($step($user->getUID()));
-		} catch (MetadataSuggestionRefusedException $e) {
-			return new JSONResponse(
-				data: ['error' => $e->error(), 'message' => $this->message(error: $e->error())],
-				statusCode: $e->status()
-			);
-		}
+		$userId = $user->getUID();
+		return $this->answerOrRefuse(step: static fn (): array => $step($userId));
 	}//end answer()
 
 	/**
@@ -160,8 +157,10 @@ class MetadataSuggestionController extends Controller {
 	 * @param string $error The refusal's error.
 	 *
 	 * @return string The message.
+	 *
+	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
 	 */
-	private function message(string $error): string {
+	protected function refusalMessage(string $error): string {
 		return match ($error) {
 			'forbidden' => $this->l10n->t('You may not change this publication.'),
 			'not-found' => $this->l10n->t('This suggestion or publication was not found.'),
@@ -170,5 +169,5 @@ class MetadataSuggestionController extends Controller {
 			'not-configured' => $this->l10n->t('Metadata suggestions are not set up on this instance.'),
 			default => $this->l10n->t('The suggestion could not be saved.'),
 		};
-	}//end message()
+	}//end refusalMessage()
 }//end class

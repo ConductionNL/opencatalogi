@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "Арганізацыя, якая адказвае за гэтую публікацыю, калі гэта не выдавец.",
         "The import failed.": "Імпарт не ўдаўся.",
         "Failed on {date}": "Не ўдалося {date}",
-        "Only a table whose import failed can be retried.": "Паўтарыць можна толькі табліцу, імпарт якой не ўдаўся."
+        "Only a table whose import failed can be retried.": "Паўтарыць можна толькі табліцу, імпарт якой не ўдаўся.",
+        "Read again": "Прачытаць зноў",
+        "The attachment will be read again.": "Укладанне будзе прачытана зноў.",
+        "The attachment could not be queued for reading.": "Не ўдалося паставіць укладанне ў чаргу на чытанне.",
+        "Typed text": "Набраны тэкст",
+        "Read by OCR": "Прачытана з дапамогай OCR",
+        "Reading": "Чытаецца",
+        "No text found": "Тэкст не знойдзены",
+        "No text: OCR is not installed": "Няма тэксту: OCR не ўсталяваны",
+        "This attachment or publication was not found.": "Гэта ўкладанне або публікацыя не знойдзены.",
+        "The file id is not valid.": "Ідэнтыфікатар файла несапраўдны.",
+        "Attachment reading is not set up on this instance.": "Чытанне ўкладанняў не наладжана на гэтым экзэмпляры."
     },
     "nplurals=2; plural=(n != 1);"
 )
