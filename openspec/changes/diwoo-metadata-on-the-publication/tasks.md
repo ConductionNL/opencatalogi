@@ -29,6 +29,7 @@ Read `openspec/woo-build-rules.md` before the first command. For every OpenRegis
 - [x] 4.3 `WooService::publishBatch()` catches the `HookStoppedException` from the publish save, reports the named fields per publication and leaves the batch unpublished (REQ-DWP-003). Verify: `tests/Unit/Service/WooServiceTest.php::testABatchWithAnIncompleteWooPublicationIsNotMarkedPublished`.
   - Done: the refusal becomes a `RuntimeException` naming the fields (the controller answers 400 with it), the batch keeps `ready_for_review` and nothing is attached. A `HookStoppedException` stub mirrors OpenRegister's for the unit suite and psalm.
 - [ ] 4.4 The editor shows the refusal's field names instead of a generic error (REQ-DWP-003). Verify: `tests/e2e/diwoo-metadata.spec.ts` saves a Woo publication without a category with a publication date and sees `wooCategory` named; the spec carries `@e2e` references to REQ-DWP-003.
+  - 22 Nov: `tests/e2e/diwoo-metadata.spec.ts` written from the REQ-DWP-003 scenarios (a draft in a schema a Woo category declares is stored; giving it a publication date without `wooCategory` is refused naming the field through the API; the edit form shows `wooCategory` and stays open). Listed by Playwright, not run: needs a live instance. Left unticked until it runs green.
 
 ## 5. Sitemap reads the record
 
