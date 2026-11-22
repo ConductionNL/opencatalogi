@@ -47,6 +47,8 @@ interface AttachmentReadingQueueInterface {
 	/**
 	 * Queue a fresh reading of an attachment that was read before ("Read again").
 	 *
+	 * @contract-shift internal-only — implemented only by this app; a GitHub code search of org:ConductionNL on 2026-11-22 finds no other implementation or test double of this interface.
+	 *
 	 * @param int    $fileId        The Nextcloud file id that is published.
 	 * @param string $publicationId The publication.
 	 *

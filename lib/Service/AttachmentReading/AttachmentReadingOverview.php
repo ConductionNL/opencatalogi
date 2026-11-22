@@ -59,26 +59,62 @@ class AttachmentReadingOverview implements AttachmentReadingOverviewInterface {
 	}//end __construct()
 
 	/**
+	 * The publication, read with the caller's rights; refuses one the caller cannot read.
+	 *
+	 * @param string $publicationId The publication's uuid.
+	 *
+	 * @return object The publication.
+	 *
+	 * @throws AttachmentReadingRefusedException 404 when the caller cannot read it, 503 when reading states are not set up.
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+	 */
+	public function requireReadable(string $publicationId): object {
+		$this->requireConfigured();
+		return $this->readablePublication(id: $publicationId);
+
+	}//end requireReadable()
+
+	/**
+	 * The publication, when the caller may also update it; refuses otherwise.
+	 *
+	 * @param string $publicationId The publication's uuid.
+	 *
+	 * @return object The publication.
+	 *
+	 * @throws AttachmentReadingRefusedException 404, 403 without the update right, or 503.
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+	 */
+	public function requireUpdatable(string $publicationId): object {
+		$publication = $this->requireReadable(publicationId: $publicationId);
+		if ($this->rights->mayUpdate(publication: $publication) === false) {
+			throw new AttachmentReadingRefusedException(error: 'forbidden', status: 403);
+		}
+
+		return $publication;
+
+	}//end requireUpdatable()
+
+	/**
 	 * Whether search can read each attachment of a publication, and whether the caller may ask for a new reading.
 	 *
+	 * @param object $publication   The publication requireReadable() returned.
 	 * @param string $publicationId The publication's uuid.
 	 *
 	 * @return array{readings: array<int, array{fileId: int, state: string, reason: string, updatedAt: string}>, canReadAgain: bool}
 	 *
-	 * @throws AttachmentReadingRefusedException 404 when the caller cannot read the publication, 503 when reading states are not set up.
+	 * @throws AttachmentReadingRefusedException 503 when the states cannot be read.
 	 *
 	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
 	 */
-	public function forPublication(string $publicationId): array {
-		$this->requireConfigured();
-		$publication = $this->readablePublication(id: $publicationId);
-
+	public function readings(object $publication, string $publicationId): array {
 		return [
-			'readings' => $this->readings(publicationId: $publicationId),
+			'readings' => $this->storedReadings(publicationId: $publicationId),
 			'canReadAgain' => $this->rights->mayUpdate(publication: $publication),
 		];
 
-	}//end forPublication()
+	}//end readings()
 
 	/**
 	 * Queue a new reading of one attachment that was read before ("Read again").
@@ -86,25 +122,19 @@ class AttachmentReadingOverview implements AttachmentReadingOverviewInterface {
 	 * Only a file with a recorded reading for this publication can be read again,
 	 * so the route cannot be used to read files that were never published with it.
 	 *
+	 * @param object $publication   The publication requireUpdatable() returned.
 	 * @param string $publicationId The publication's uuid.
 	 * @param int    $fileId        The Nextcloud file id of the attachment.
 	 *
 	 * @return array{fileId: int, queued: bool}
 	 *
-	 * @throws AttachmentReadingRefusedException 404 when the publication or the reading is not there, 403 without the
-	 *                                           update right, 503 when not set up or not queued.
+	 * @throws AttachmentReadingRefusedException 404 without a reading of that file, 503 when not queued.
 	 *
 	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
 	 */
-	public function readAgain(string $publicationId, int $fileId): array {
-		$this->requireConfigured();
-		$publication = $this->readablePublication(id: $publicationId);
-		if ($this->rights->mayUpdate(publication: $publication) === false) {
-			throw new AttachmentReadingRefusedException(error: 'forbidden', status: 403);
-		}
-
+	public function readAgain(object $publication, string $publicationId, int $fileId): array {
 		$known = array_filter(
-			$this->readings(publicationId: $publicationId),
+			$this->storedReadings(publicationId: $publicationId),
 			static fn (array $reading): bool => $reading['fileId'] === $fileId
 		);
 		if ($known === []) {
@@ -128,14 +158,14 @@ class AttachmentReadingOverview implements AttachmentReadingOverviewInterface {
 	 *
 	 * @throws AttachmentReadingRefusedException 503 when they cannot be read.
 	 */
-	private function readings(string $publicationId): array {
+	private function storedReadings(string $publicationId): array {
 		try {
 			return $this->store->forPublication(publicationId: $publicationId);
 		} catch (Throwable $e) {
 			throw new AttachmentReadingRefusedException(error: 'not-configured', status: 503);
 		}
 
-	}//end readings()
+	}//end storedReadings()
 
 	/**
 	 * The publication read with RBAC on.

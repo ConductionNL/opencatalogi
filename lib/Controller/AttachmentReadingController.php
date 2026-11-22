@@ -72,7 +72,12 @@ class AttachmentReadingController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function index(string $id): JSONResponse {
-		return $this->answerOrRefuse(step: fn (): array => $this->overview->forPublication(publicationId: $id));
+		return $this->answerOrRefuse(
+			step: function () use ($id): array {
+				$publication = $this->overview->requireReadable(publicationId: $id);
+				return $this->overview->readings(publication: $publication, publicationId: $id);
+			}
+		);
 
 	}//end index()
 
@@ -96,7 +101,10 @@ class AttachmentReadingController extends Controller {
 		}
 
 		return $this->answerOrRefuse(
-			step: fn (): array => $this->overview->readAgain(publicationId: $id, fileId: (int)$fileId)
+			step: function () use ($id, $fileId): array {
+				$publication = $this->overview->requireUpdatable(publicationId: $id);
+				return $this->overview->readAgain(publication: $publication, publicationId: $id, fileId: (int)$fileId);
+			}
 		);
 
 	}//end readAgain()
@@ -110,7 +118,7 @@ class AttachmentReadingController extends Controller {
 	 *
 	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
 	 */
-	private function refusalMessage(string $error): string {
+	protected function refusalMessage(string $error): string {
 		return match ($error) {
 			'forbidden' => $this->l10n->t('You may not change this publication.'),
 			'not-found' => $this->l10n->t('This attachment or publication was not found.'),

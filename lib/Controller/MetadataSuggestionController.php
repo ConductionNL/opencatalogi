@@ -160,7 +160,7 @@ class MetadataSuggestionController extends Controller {
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
 	 */
-	private function refusalMessage(string $error): string {
+	protected function refusalMessage(string $error): string {
 		return match ($error) {
 			'forbidden' => $this->l10n->t('You may not change this publication.'),
 			'not-found' => $this->l10n->t('This suggestion or publication was not found.'),

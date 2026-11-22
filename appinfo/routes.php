@@ -193,7 +193,12 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'metadataSuggestion#reject', 'url' => '/api/metadata-suggestions/{id}/reject', 'verb' => 'POST'],
 		// Whether search can read each attachment, and a new reading on request (scanned-attachments-become-searchable D4).
 		['name' => 'attachmentReading#index', 'url' => '/api/publications/{id}/attachment-readings', 'verb' => 'GET'],
-		['name' => 'attachmentReading#readAgain', 'url' => '/api/publications/{id}/attachment-readings/{fileId}/read-again', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
+		[
+			'name' => 'attachmentReading#readAgain',
+			'url' => '/api/publications/{id}/attachment-readings/{fileId}/read-again',
+			'verb' => 'POST',
+			'requirements' => ['fileId' => '\d+'],
+		],
 		['name' => 'publicationDisclosure#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
 		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
 		['name' => 'inspection#open', 'url' => '/api/inspections', 'verb' => 'POST'],

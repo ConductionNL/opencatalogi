@@ -45,7 +45,7 @@ trait AnswersRefusals {
 	 *
 	 * @return string The message.
 	 */
-	abstract private function refusalMessage(string $error): string;
+	abstract protected function refusalMessage(string $error): string;
 
 	/**
 	 * Run the step and answer its result, or the refusal it threw.
