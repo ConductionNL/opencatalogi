@@ -16,10 +16,11 @@
 
 ## 2. Modernise Attachment Retrieval (Tech Debt)
 
-- [ ] 2.1 Replace the legacy `getObject()` / `getMultipleObjects()` calls in `DownloadService.publicationAttachments()` with `ObjectService.searchObjectsPaginated()` to align with the current OpenRegister API
+- [x] 2.1 Replace the legacy `getObject()` / `getMultipleObjects()` calls in `DownloadService.publicationAttachments()` with `ObjectService.searchObjectsPaginated()` to align with the current OpenRegister API
   - Left open (17 Nov, round 2): `DownloadService::publicationAttachments()` has no caller left (the download takes files from OpenRegister, and `FederationController::publicationAttachments()` is its own route), so migrating it changes nothing a reader sees. Removing the dead method is the better follow-up.
-- [ ] 2.2 Verify that paginated attachment retrieval handles publications with more than one page of attachments
-  - Left open with 2.1.
+  - Built 22 Nov: the dead method is removed with its two private helpers, so no legacy lookup is left in `DownloadService` (`DownloadServiceTest::testPublicationAttachmentsMethodDoesNotExist`; the lookup-failure golden test now pins `getPublicationData()` alone).
+- [x] 2.2 Verify that paginated attachment retrieval handles publications with more than one page of attachments
+  - Closed with 2.1 (22 Nov): no attachment retrieval is left in `DownloadService`; the download's files come from OpenRegister's `createObjectFilesZip()`, which pages on its own side.
 
 ## 3. Controller Wiring (REQ-DWN-001 – REQ-DWN-008)
 
@@ -40,7 +41,7 @@
   - Obsolete (17 Nov, round 2): `createPublicationZip()` no longer exists; `DownloadServiceTest::testCreatePublicationZipMethodDoesNotExist` asserts that.
   - Happy path: publication with 2 attachments produces correct ZIP structure
   - Publication not found
-- [x] 4.3 Write `DownloadServiceTest` covering `publicationAttachments()`: (verified: tests/Unit/Service/DownloadServiceTest.php::testPublicationAttachmentsSuccess)
+- [x] 4.3 Write `DownloadServiceTest` covering `publicationAttachments()`: (verified at the time: tests/Unit/Service/DownloadServiceTest.php::testPublicationAttachmentsSuccess; those tests went with the method in 2.1)
   - Returns attachment list for a publication with 3 attachments
   - Returns empty array when publication has no attachments
 - [ ] 4.4 Mock `FileService` and `ObjectService` in all tests — no real file system or database calls

@@ -3,9 +3,9 @@
 /**
  * Golden test for how `DownloadService` answers a failed publication lookup.
  *
- * getPublicationData() and publicationAttachments() turn four kinds of lookup
- * failure into a 500 that carries the exception message, and let any other
- * exception through. Pinned for both methods and every kind.
+ * The method getPublicationData() turns four kinds of lookup failure into a
+ * 500 that carries the exception message, and lets any other exception through.
+ * Pinned for every kind.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests
@@ -64,7 +64,6 @@ class DownloadLookupFailureGoldenTest extends TestCase {
 		$data = new ReflectionMethod($service, 'getPublicationData');
 		$calls = [
 			'getPublicationData' => static fn (ObjectService $objects): mixed => $data->invoke($service, 'p-1', $objects),
-			'publicationAttachments' => static fn (ObjectService $objects): mixed => $service->publicationAttachments('p-1', $objects),
 		];
 
 		foreach ($calls as $method => $call) {
