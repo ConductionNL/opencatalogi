@@ -5692,15 +5692,15 @@
 			"area": "integration",
 			"name": "Take council documents from a council information system such as Notubiz or iBabs.",
 			"source": "competitor-derived",
-			"opencatalogi": "no",
+			"opencatalogi": "yes",
 			"built": {
-				"state": "specified",
-				"owner": "ConductionNL/integriq",
-				"evidence": "integriq lib/BackgroundJob/RISPollJob.php polls iBabs/NotuBiz for updates on ris_sync_record objects this side already synced (outbound besluit sync); grep of opencatalogi lib/ for notubiz|ibabs finds nothing",
+				"state": "built",
+				"owner": "ConductionNL/opencatalogi",
+				"evidence": "lib/Settings/register.d/council-documents-harvest.json ships the harvest flow (disabled), the mapping council-document-to-publication and the catalogue raadsinformatie:384; lib/Service/CouncilHarvestService.php:92 status, :122 setUp (Notubiz or iBabs source), :198 runNow behind the admin routes appinfo/routes.php:121-122; src/views/settings/Settings.vue:360 renders the Council documents section (CouncilHarvest.vue); upsert on the source identifier pinned by tests/Unit/Flow/CouncilHarvestFlowTest.php over a recorded Notubiz page",
 				"change": "council-documents-from-notubiz-and-ibabs",
 				"requirement": "openspec/changes/council-documents-from-notubiz-and-ibabs/specs/council-documents-harvest :: Each public council document becomes a publication with its file (REQ-CDH-002)"
 			},
-			"reachedOn": "nothing: no intake from a council information system into a publication",
+			"reachedOn": "Admin settings, Council documents section: set up from a Notubiz or iBabs source, switch on, Run now; each public document becomes a concept publication in the catalogue raadsinformatie",
 			"provider": "integriq",
 			"providerHow": "read-from-code",
 			"feature": "api-management-government-koppelingen",
@@ -7645,9 +7645,9 @@
 			"source": "spec-round-2026-10-08",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "building",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:586 builtin:delete and 593 showDeleteAction on the Publications page: CnIndexPage opens nextcloud-vue CnDeleteDialog (CnIndexPage.vue:307-314) with the generic \"Delete item\" and \"Are you sure you want to permanently delete \"{name}\"? This action cannot be undone.\"; CnIndexPage forwards no title or message, so the board's consequence line (public page, Woo sitemap, archiving keeps them) cannot be set.",
+				"evidence": "src/manifest.json:541 publicationPairConfig.deleteDialog words the single-delete dialog (title, question, and what disappears from the public page and the Woo sitemap); CatalogPublicationsIndex.vue applies it only while the row being deleted is a publication, a row of another pair keeps the generic dialog (CatalogPublicationsIndex.spec.js). tests/e2e/publication-delete.spec.ts is written and not yet run, so the row stays building.",
 				"change": [
 					"publication-delete-says-what-it-removes",
 					"publication-lifecycle-on-or-draft-purge"
