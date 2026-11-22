@@ -44,10 +44,10 @@ class AttachmentReadingOverview implements AttachmentReadingOverviewInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param AttachmentReadingStoreInterface         The recorded reading states.
-	 * @param AttachmentReadingQueueInterface         Queues the reading job.
-	 * @param PublicationRightsInterface             The update right on one publication.
-	 * @param OpenRegisterLookupInterface      OpenRegister's ObjectService and the publication register.
+	 * @param AttachmentReadingStoreInterface $store        The recorded reading states.
+	 * @param AttachmentReadingQueueInterface $queue        Queues the reading job.
+	 * @param PublicationRightsInterface      $rights       The update right on one publication.
+	 * @param OpenRegisterLookupInterface     $openRegister OpenRegister's ObjectService and the publication register.
 	 */
 	public function __construct(
 		private readonly AttachmentReadingStoreInterface $store,
@@ -91,7 +91,8 @@ class AttachmentReadingOverview implements AttachmentReadingOverviewInterface {
 	 *
 	 * @return array{fileId: int, queued: bool}
 	 *
-	 * @throws AttachmentReadingRefusedException 404 when the publication or the reading is not there, 403 without the update right, 503 when not set up or not queued.
+	 * @throws AttachmentReadingRefusedException 404 when the publication or the reading is not there, 403 without the
+	 *                                           update right, 503 when not set up or not queued.
 	 *
 	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
 	 */

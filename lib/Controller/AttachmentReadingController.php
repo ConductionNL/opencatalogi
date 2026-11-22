@@ -25,14 +25,12 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AttachmentReadingOverviewInterface;
-use OCA\OpenCatalogi\Exception\AttachmentReadingRefusedException;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
-use OCP\IUserSession;
 
 /**
  * Answers the Text column and the "Read again" action of a publication's file list.
@@ -40,21 +38,23 @@ use OCP\IUserSession;
  * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
  */
 class AttachmentReadingController extends Controller {
+	use AnswersRefusals;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param string                             $appName     The app name.
-	 * @param IRequest                           $request     The request.
-	 * @param IL10N                              $l10n        Localisation.
-	 * @param IUserSession                       $userSession The signed-in user.
-	 * @param AttachmentReadingOverviewInterface $overview    The reading states and the new reading.
+	 * Nextcloud answers a caller without a session before these routes run:
+	 * they are NoAdminRequired, not PublicPage.
+	 *
+	 * @param string                             $appName  The app name.
+	 * @param IRequest                           $request  The request.
+	 * @param IL10N                              $l10n     Localisation.
+	 * @param AttachmentReadingOverviewInterface $overview The reading states and the new reading.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IL10N $l10n,
-		private readonly IUserSession $userSession,
 		private readonly AttachmentReadingOverviewInterface $overview,
 	) {
 		parent::__construct(appName: $appName, request: $request);
@@ -72,7 +72,7 @@ class AttachmentReadingController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function index(string $id): JSONResponse {
-		return $this->answer(step: fn (): array => $this->overview->forPublication(publicationId: $id));
+		return $this->answerOrRefuse(step: fn (): array => $this->overview->forPublication(publicationId: $id));
 
 	}//end index()
 
@@ -90,39 +90,16 @@ class AttachmentReadingController extends Controller {
 	public function readAgain(string $id, int|string $fileId): JSONResponse {
 		if (ctype_digit((string)$fileId) === false || (int)$fileId <= 0) {
 			return new JSONResponse(
-				data: ['error' => 'invalid-file', 'message' => $this->message(error: 'invalid-file')],
+				data: ['error' => 'invalid-file', 'message' => $this->refusalMessage(error: 'invalid-file')],
 				statusCode: Http::STATUS_BAD_REQUEST
 			);
 		}
 
-		return $this->answer(
+		return $this->answerOrRefuse(
 			step: fn (): array => $this->overview->readAgain(publicationId: $id, fileId: (int)$fileId)
 		);
 
 	}//end readAgain()
-
-	/**
-	 * Run a step for a signed-in user and answer its refusal with its status.
-	 *
-	 * @param callable(): array<string, mixed> $step The step.
-	 *
-	 * @return JSONResponse
-	 */
-	private function answer(callable $step): JSONResponse {
-		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(data: ['error' => 'not-logged-in'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		try {
-			return new JSONResponse($step());
-		} catch (AttachmentReadingRefusedException $e) {
-			return new JSONResponse(
-				data: ['error' => $e->error(), 'message' => $this->message(error: $e->error())],
-				statusCode: $e->status()
-			);
-		}
-
-	}//end answer()
 
 	/**
 	 * The message for an error.
@@ -130,8 +107,10 @@ class AttachmentReadingController extends Controller {
 	 * @param string $error The machine-readable error.
 	 *
 	 * @return string The translated message.
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
 	 */
-	private function message(string $error): string {
+	private function refusalMessage(string $error): string {
 		return match ($error) {
 			'forbidden' => $this->l10n->t('You may not change this publication.'),
 			'not-found' => $this->l10n->t('This attachment or publication was not found.'),
@@ -140,5 +119,5 @@ class AttachmentReadingController extends Controller {
 			default => $this->l10n->t('Attachment reading is not set up on this instance.'),
 		};
 
-	}//end message()
+	}//end refusalMessage()
 }//end class

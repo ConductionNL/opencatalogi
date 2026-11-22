@@ -144,7 +144,13 @@ class AttachmentReadingStoreTest extends TestCase {
 	 */
 	public function testThePublicationsReadingsAreReadNewestPerFile(): void {
 		$this->objects->rows = [
-			['fileId' => 41, 'publication' => 'pub-1', 'state' => 'unavailable', 'reason' => 'OCR is not installed', 'updatedAt' => '2026-11-01T10:00:00+00:00'],
+			[
+				'fileId' => 41,
+				'publication' => 'pub-1',
+				'state' => 'unavailable',
+				'reason' => 'OCR is not installed',
+				'updatedAt' => '2026-11-01T10:00:00+00:00',
+			],
 			['fileId' => 41, 'publication' => 'pub-1', 'state' => 'ocr', 'updatedAt' => '2026-11-02T10:00:00+00:00'],
 			['fileId' => 41, 'publication' => 'pub-1', 'state' => 'failed', 'updatedAt' => '2026-10-01T10:00:00+00:00'],
 			['fileId' => 42, 'publication' => 'pub-2', 'state' => 'typed', 'updatedAt' => '2026-11-02T10:00:00+00:00'],
@@ -156,14 +162,17 @@ class AttachmentReadingStoreTest extends TestCase {
 		$readings = $this->store()->forPublication(publicationId: 'pub-1');
 
 		$this->assertSame(
-			[
+			expected: [
 				['fileId' => 41, 'state' => 'ocr', 'reason' => '', 'updatedAt' => '2026-11-02T10:00:00+00:00'],
 				['fileId' => 43, 'state' => 'typed', 'reason' => '', 'updatedAt' => ''],
 			],
-			$readings
+			actual: $readings
 		);
-		$this->assertSame(['@self' => ['register' => '3', 'schema' => '31'], 'publication' => 'pub-1', '_limit' => 500], $this->objects->queries[0]['query']);
-		$this->assertFalse($this->objects->queries[0]['rbac']);
+		$this->assertSame(
+			expected: ['@self' => ['register' => '3', 'schema' => '31'], 'publication' => 'pub-1', '_limit' => 500],
+			actual: $this->objects->queries[0]['query']
+		);
+		$this->assertFalse(condition: $this->objects->queries[0]['rbac']);
 	}//end testThePublicationsReadingsAreReadNewestPerFile()
 
 	/**
@@ -172,8 +181,8 @@ class AttachmentReadingStoreTest extends TestCase {
 	 * @return void
 	 */
 	public function testWithoutOpenRegisterTheReadIsRefused(): void {
-		$this->expectException(RuntimeException::class);
-		$this->expectExceptionMessage('OpenRegister is not available');
+		$this->expectException(exception: RuntimeException::class);
+		$this->expectExceptionMessage(message: 'OpenRegister is not available');
 
 		$this->store(installed: false)->forPublication(publicationId: 'pub-1');
 	}//end testWithoutOpenRegisterTheReadIsRefused()
@@ -184,7 +193,7 @@ class AttachmentReadingStoreTest extends TestCase {
 	 * @return void
 	 */
 	public function testItSaysWhetherTheSchemaIsConfigured(): void {
-		$this->assertTrue($this->store()->isConfigured());
-		$this->assertFalse($this->store(schema: '')->isConfigured());
+		$this->assertTrue(condition: $this->store()->isConfigured());
+		$this->assertFalse(condition: $this->store(schema: '')->isConfigured());
 	}//end testItSaysWhetherTheSchemaIsConfigured()
 }//end class

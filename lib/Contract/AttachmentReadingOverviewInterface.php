@@ -39,7 +39,8 @@ interface AttachmentReadingOverviewInterface {
 	 *
 	 * @return array{readings: array<int, array{fileId: int, state: string, reason: string, updatedAt: string}>, canReadAgain: bool}
 	 *
-	 * @throws \OCA\OpenCatalogi\Exception\AttachmentReadingRefusedException 404 when the caller cannot read the publication, 503 when reading states are not set up.
+	 * @throws \OCA\OpenCatalogi\Exception\AttachmentReadingRefusedException 404 when the caller cannot read the
+	 *                                                                     publication, 503 when reading states are not set up.
 	 *
 	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
 	 */

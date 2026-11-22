@@ -20,6 +20,7 @@ use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Controller\AttachmentReadingController;
 use OCA\OpenCatalogi\Exception\AttachmentReadingRefusedException;
+use OCA\OpenCatalogi\Exception\RequestRefusedException;
 use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingOverview;
 use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingStore;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
@@ -28,8 +29,6 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
-use OCP\IUser;
-use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -71,40 +70,42 @@ class ReadingFakeObjectService {
 	/**
 	 * Find one object.
 	 *
-	 * @param string $id The uuid.
+	 * @param string            $id      The uuid.
 	 * @param ObjectFindOptions $options The register and schema.
-	 * @param bool $_rbac Whether RBAC applies.
+	 * @param bool              $_rbac   Whether RBAC applies.
 	 *
 	 * @return object
 	 */
-	public function find(string $id, ObjectFindOptions $options = new ObjectFindOptions(), bool $_rbac = true): object {
+	public function find(string $id, ObjectFindOptions $options=new ObjectFindOptions(), bool $_rbac=true): object {
 		$this->finds[] = ['id' => $id, 'rbac' => $_rbac];
 		if ($this->publication instanceof \Throwable) {
 			throw $this->publication;
 		}
 
 		if ($this->publication === null) {
-			throw new DoesNotExistException('not there');
+			throw new DoesNotExistException(msg: 'not there');
 		}
 
 		return $this->publication;
+
 	}//end find()
 
 	/**
 	 * Search objects.
 	 *
-	 * @param array<string, mixed> $query The query.
-	 * @param bool $_rbac Whether RBAC applies.
-	 * @param bool $_multitenancy Whether multitenancy applies.
+	 * @param array<string, mixed> $query         The query.
+	 * @param bool                 $_rbac         Whether RBAC applies.
+	 * @param bool                 $_multitenancy Whether multitenancy applies.
 	 *
 	 * @return array{results: array<int, array<string, mixed>>}
 	 */
-	public function searchObjectsPaginated(array $query, bool $_rbac = true, bool $_multitenancy = true): array {
+	public function searchObjectsPaginated(array $query, bool $_rbac=true, bool $_multitenancy=true): array {
 		if ($this->searchError !== null) {
 			throw $this->searchError;
 		}
 
 		return ['results' => $this->rows];
+
 	}//end searchObjectsPaginated()
 }//end class
 
@@ -115,9 +116,12 @@ class ReadingFakeObjectService {
 #[UsesClass(AttachmentReadingOverview::class)]
 #[UsesClass(AttachmentReadingStore::class)]
 #[UsesClass(AttachmentReadingRefusedException::class)]
+#[UsesClass(RequestRefusedException::class)]
 final class AttachmentReadingControllerTest extends TestCase {
 
 	private const PUBLICATION = 'pub-1';
+
+	private const UPDATED = '2026-11-20T10:00:00+00:00';
 
 	/**
 	 * The OpenRegister double.
@@ -149,49 +153,59 @@ final class AttachmentReadingControllerTest extends TestCase {
 		$this->objects = new ReadingFakeObjectService();
 		$this->objects->publication = (object)['id' => self::PUBLICATION];
 		$this->objects->rows = [
-			['fileId' => 11, 'publication' => self::PUBLICATION, 'state' => 'typed', 'updatedAt' => '2026-11-20T10:00:00+00:00'],
-			['fileId' => 12, 'publication' => self::PUBLICATION, 'state' => 'unavailable', 'reason' => 'OCR is not installed', 'updatedAt' => '2026-11-20T10:00:00+00:00'],
+			['fileId' => 11, 'publication' => self::PUBLICATION, 'state' => 'typed', 'updatedAt' => self::UPDATED],
+			[
+				'fileId' => 12,
+				'publication' => self::PUBLICATION,
+				'state' => 'unavailable',
+				'reason' => 'OCR is not installed',
+				'updatedAt' => self::UPDATED,
+			],
 		];
-		$this->rights = $this->createMock(PublicationRightsInterface::class);
-		$this->queue = $this->createMock(AttachmentReadingQueueInterface::class);
+		$this->rights = $this->createMock(originalClassName: PublicationRightsInterface::class);
+		$this->queue = $this->createMock(originalClassName: AttachmentReadingQueueInterface::class);
+
 	}//end setUp()
 
 	/**
 	 * The controller over the real overview and store.
 	 *
-	 * @param bool $signedIn Whether a user is signed in.
-	 * @param bool $installed Whether OpenRegister is installed.
-	 * @param string $schema The configured attachmentReading schema.
+	 * @param bool   $installed Whether OpenRegister is installed.
+	 * @param string $schema    The configured attachmentReading schema.
 	 *
 	 * @return AttachmentReadingController
 	 */
-	private function controller(bool $signedIn = true, bool $installed = true, string $schema = '31'): AttachmentReadingController {
-		$config = $this->createMock(IAppConfig::class);
+	private function controller(bool $installed=true, string $schema='31'): AttachmentReadingController {
+		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
-			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+			static fn (string $app, string $key, string $default=''): string => match ($key) {
 				'publication_register' => '3',
 				'attachment_reading_schema' => $schema,
 				default => $default,
 			}
 		);
-		$lookup = $this->createMock(OpenRegisterLookup::class);
+		$lookup = $this->createMock(originalClassName: OpenRegisterLookup::class);
 		$lookup->method('isInstalled')->willReturn($installed);
 		$lookup->method('objectService')->willReturn($this->objects);
 		$lookup->method('registerConfiguration')->willReturn(['register' => '3', 'schema' => '7']);
 
 		$overview = new AttachmentReadingOverview(
-			new AttachmentReadingStore($config, $lookup),
-			$this->queue,
-			$this->rights,
-			$lookup
+			store: new AttachmentReadingStore(config: $config, openRegister: $lookup),
+			queue: $this->queue,
+			rights: $this->rights,
+			openRegister: $lookup
 		);
 
-		$l10n = $this->createMock(IL10N::class);
+		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
-		$session = $this->createMock(IUserSession::class);
-		$session->method('getUser')->willReturn($signedIn === true ? $this->createMock(IUser::class) : null);
 
-		return new AttachmentReadingController('opencatalogi', $this->createMock(IRequest::class), $l10n, $session, $overview);
+		return new AttachmentReadingController(
+			appName: 'opencatalogi',
+			request: $this->createMock(originalClassName: IRequest::class),
+			l10n: $l10n,
+			overview: $overview
+		);
+
 	}//end controller()
 
 	/**
@@ -204,18 +218,19 @@ final class AttachmentReadingControllerTest extends TestCase {
 
 		$response = $this->controller()->index(id: self::PUBLICATION);
 
-		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(expected: 200, actual: $response->getStatus());
 		$this->assertSame(
-			[
+			expected: [
 				'readings' => [
-					['fileId' => 11, 'state' => 'typed', 'reason' => '', 'updatedAt' => '2026-11-20T10:00:00+00:00'],
-					['fileId' => 12, 'state' => 'unavailable', 'reason' => 'OCR is not installed', 'updatedAt' => '2026-11-20T10:00:00+00:00'],
+					['fileId' => 11, 'state' => 'typed', 'reason' => '', 'updatedAt' => self::UPDATED],
+					['fileId' => 12, 'state' => 'unavailable', 'reason' => 'OCR is not installed', 'updatedAt' => self::UPDATED],
 				],
 				'canReadAgain' => true,
 			],
-			$response->getData()
+			actual: $response->getData()
 		);
-		$this->assertSame([['id' => self::PUBLICATION, 'rbac' => true]], $this->objects->finds);
+		$this->assertSame(expected: [['id' => self::PUBLICATION, 'rbac' => true]], actual: $this->objects->finds);
+
 	}//end testAnEditorSeesWhichScanSearchCannotRead()
 
 	/**
@@ -228,8 +243,9 @@ final class AttachmentReadingControllerTest extends TestCase {
 
 		$data = $this->controller()->index(id: self::PUBLICATION)->getData();
 
-		$this->assertFalse($data['canReadAgain']);
-		$this->assertCount(2, $data['readings']);
+		$this->assertFalse(condition: $data['canReadAgain']);
+		$this->assertCount(expectedCount: 2, haystack: $data['readings']);
+
 	}//end testAReaderSeesTheStatesWithoutReadAgain()
 
 	/**
@@ -242,8 +258,9 @@ final class AttachmentReadingControllerTest extends TestCase {
 
 		$response = $this->controller()->index(id: self::PUBLICATION);
 
-		$this->assertSame(404, $response->getStatus());
-		$this->assertSame('not-found', $response->getData()['error']);
+		$this->assertSame(expected: 404, actual: $response->getStatus());
+		$this->assertSame(expected: 'not-found', actual: $response->getData()['error']);
+
 	}//end testAPublicationTheCallerCannotReadIsNotFound()
 
 	/**
@@ -252,12 +269,13 @@ final class AttachmentReadingControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnUnreachableRegisterIsNotConfigured(): void {
-		$this->objects->publication = new \RuntimeException('database gone');
+		$this->objects->publication = new \RuntimeException(message: 'database gone');
 
 		$response = $this->controller()->index(id: self::PUBLICATION);
 
-		$this->assertSame(503, $response->getStatus());
-		$this->assertSame('not-configured', $response->getData()['error']);
+		$this->assertSame(expected: 503, actual: $response->getStatus());
+		$this->assertSame(expected: 'not-configured', actual: $response->getData()['error']);
+
 	}//end testAnUnreachableRegisterIsNotConfigured()
 
 	/**
@@ -266,9 +284,10 @@ final class AttachmentReadingControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testWithoutTheSchemaReadingIsNotSetUp(): void {
-		$this->assertSame(503, $this->controller(schema: '')->index(id: self::PUBLICATION)->getStatus());
-		$this->assertSame(503, $this->controller(installed: false)->index(id: self::PUBLICATION)->getStatus());
-		$this->assertSame([], $this->objects->finds);
+		$this->assertSame(expected: 503, actual: $this->controller(schema: '')->index(id: self::PUBLICATION)->getStatus());
+		$this->assertSame(expected: 503, actual: $this->controller(installed: false)->index(id: self::PUBLICATION)->getStatus());
+		$this->assertSame(expected: [], actual: $this->objects->finds);
+
 	}//end testWithoutTheSchemaReadingIsNotSetUp()
 
 	/**
@@ -277,20 +296,11 @@ final class AttachmentReadingControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testUnreadableStatesAreNotAnEmptyList(): void {
-		$this->objects->searchError = new \RuntimeException('search failed');
+		$this->objects->searchError = new \RuntimeException(message: 'search failed');
 
-		$this->assertSame(503, $this->controller()->index(id: self::PUBLICATION)->getStatus());
+		$this->assertSame(expected: 503, actual: $this->controller()->index(id: self::PUBLICATION)->getStatus());
+
 	}//end testUnreadableStatesAreNotAnEmptyList()
-
-	/**
-	 * A visitor who is not signed in is refused.
-	 *
-	 * @return void
-	 */
-	public function testAVisitorIsRefused(): void {
-		$this->assertSame(401, $this->controller(signedIn: false)->index(id: self::PUBLICATION)->getStatus());
-		$this->assertSame(401, $this->controller(signedIn: false)->readAgain(id: self::PUBLICATION, fileId: 12)->getStatus());
-	}//end testAVisitorIsRefused()
 
 	/**
 	 * Read again queues the job with force for an editor.
@@ -304,8 +314,9 @@ final class AttachmentReadingControllerTest extends TestCase {
 
 		$response = $this->controller()->readAgain(id: self::PUBLICATION, fileId: '12');
 
-		$this->assertSame(200, $response->getStatus());
-		$this->assertSame(['fileId' => 12, 'queued' => true], $response->getData());
+		$this->assertSame(expected: 200, actual: $response->getStatus());
+		$this->assertSame(expected: ['fileId' => 12, 'queued' => true], actual: $response->getData());
+
 	}//end testReadAgainQueuesTheFileForAnEditor()
 
 	/**
@@ -319,8 +330,9 @@ final class AttachmentReadingControllerTest extends TestCase {
 
 		$response = $this->controller()->readAgain(id: self::PUBLICATION, fileId: 12);
 
-		$this->assertSame(403, $response->getStatus());
-		$this->assertSame('forbidden', $response->getData()['error']);
+		$this->assertSame(expected: 403, actual: $response->getStatus());
+		$this->assertSame(expected: 'forbidden', actual: $response->getData()['error']);
+
 	}//end testReadAgainIsRefusedWithoutTheUpdateRight()
 
 	/**
@@ -332,7 +344,8 @@ final class AttachmentReadingControllerTest extends TestCase {
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$this->queue->expects($this->never())->method('queueAgain');
 
-		$this->assertSame(404, $this->controller()->readAgain(id: self::PUBLICATION, fileId: 99)->getStatus());
+		$this->assertSame(expected: 404, actual: $this->controller()->readAgain(id: self::PUBLICATION, fileId: 99)->getStatus());
+
 	}//end testReadAgainRefusesAFileWithoutAReading()
 
 	/**
@@ -346,8 +359,9 @@ final class AttachmentReadingControllerTest extends TestCase {
 
 		$response = $this->controller()->readAgain(id: self::PUBLICATION, fileId: 12);
 
-		$this->assertSame(503, $response->getStatus());
-		$this->assertSame('not-queued', $response->getData()['error']);
+		$this->assertSame(expected: 503, actual: $response->getStatus());
+		$this->assertSame(expected: 'not-queued', actual: $response->getData()['error']);
+
 	}//end testAJobThatCouldNotBeQueuedIsSaid()
 
 	/**
@@ -356,8 +370,9 @@ final class AttachmentReadingControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnInvalidFileIdIsRefused(): void {
-		$this->assertSame(400, $this->controller()->readAgain(id: self::PUBLICATION, fileId: 'abc')->getStatus());
-		$this->assertSame(400, $this->controller()->readAgain(id: self::PUBLICATION, fileId: 0)->getStatus());
-		$this->assertSame([], $this->objects->finds);
+		$this->assertSame(expected: 400, actual: $this->controller()->readAgain(id: self::PUBLICATION, fileId: 'abc')->getStatus());
+		$this->assertSame(expected: 400, actual: $this->controller()->readAgain(id: self::PUBLICATION, fileId: 0)->getStatus());
+		$this->assertSame(expected: [], actual: $this->objects->finds);
+
 	}//end testAnInvalidFileIdIsRefused()
 }//end class
