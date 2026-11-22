@@ -3,9 +3,9 @@
 /**
  * Golden test for how `DownloadService` answers a failed publication lookup.
  *
- * getPublicationData() turns four kinds of lookup failure into a 500 that
- * carries the exception message, and lets any other exception through. Pinned
- * for every kind.
+ * The method getPublicationData() turns four kinds of lookup failure into a
+ * 500 that carries the exception message, and lets any other exception through.
+ * Pinned for every kind.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests
