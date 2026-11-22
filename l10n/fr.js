@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "L'organisation responsable de cette publication, lorsqu'il ne s'agit pas de l'éditeur.",
         "The import failed.": "L'importation a échoué.",
         "Failed on {date}": "Échec le {date}",
-        "Only a table whose import failed can be retried.": "Seul un tableau dont l'importation a échoué peut être relancé."
+        "Only a table whose import failed can be retried.": "Seul un tableau dont l'importation a échoué peut être relancé.",
+        "Read again": "Relire",
+        "The attachment will be read again.": "La pièce jointe sera relue.",
+        "The attachment could not be queued for reading.": "La pièce jointe n'a pas pu être mise en file d'attente pour la lecture.",
+        "Typed text": "Texte saisi",
+        "Read by OCR": "Lu par OCR",
+        "Reading": "Lecture en cours",
+        "No text found": "Aucun texte trouvé",
+        "No text: OCR is not installed": "Aucun texte : l'OCR n'est pas installé",
+        "This attachment or publication was not found.": "Cette pièce jointe ou publication est introuvable.",
+        "The file id is not valid.": "L'identifiant du fichier n'est pas valide.",
+        "Attachment reading is not set up on this instance.": "La lecture des pièces jointes n'est pas configurée sur cette instance."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "Yayıncı değilse, bu yayından sorumlu kuruluş.",
         "The import failed.": "İçe aktarma başarısız oldu.",
         "Failed on {date}": "{date} tarihinde başarısız oldu",
-        "Only a table whose import failed can be retried.": "Yalnızca içe aktarması başarısız olan bir tablo yeniden denenebilir."
+        "Only a table whose import failed can be retried.": "Yalnızca içe aktarması başarısız olan bir tablo yeniden denenebilir.",
+        "Read again": "Yeniden oku",
+        "The attachment will be read again.": "Ek yeniden okunacak.",
+        "The attachment could not be queued for reading.": "Ek okuma kuyruğuna eklenemedi.",
+        "Typed text": "Yazılmış metin",
+        "Read by OCR": "OCR ile okundu",
+        "Reading": "Okunuyor",
+        "No text found": "Metin bulunamadı",
+        "No text: OCR is not installed": "Metin yok: OCR yüklü değil",
+        "This attachment or publication was not found.": "Bu ek veya yayın bulunamadı.",
+        "The file id is not valid.": "Dosya kimliği geçerli değil.",
+        "Attachment reading is not set up on this instance.": "Eklerin okunması bu kurulumda yapılandırılmamış."
     },
     "nplurals=2; plural=(n != 1);"
 )

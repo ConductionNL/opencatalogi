@@ -785,7 +785,18 @@
         "The organisation responsible for this publication, when it is not the publisher.": "Ο οργανισμός που είναι υπεύθυνος για αυτή τη δημοσίευση, όταν δεν είναι ο εκδότης.",
         "The import failed.": "Η εισαγωγή απέτυχε.",
         "Failed on {date}": "Απέτυχε στις {date}",
-        "Only a table whose import failed can be retried.": "Μόνο ένας πίνακας του οποίου η εισαγωγή απέτυχε μπορεί να δοκιμαστεί ξανά."
+        "Only a table whose import failed can be retried.": "Μόνο ένας πίνακας του οποίου η εισαγωγή απέτυχε μπορεί να δοκιμαστεί ξανά.",
+        "Read again": "Ανάγνωση ξανά",
+        "The attachment will be read again.": "Το συνημμένο θα διαβαστεί ξανά.",
+        "The attachment could not be queued for reading.": "Δεν ήταν δυνατή η προσθήκη του συνημμένου στην ουρά ανάγνωσης.",
+        "Typed text": "Πληκτρολογημένο κείμενο",
+        "Read by OCR": "Αναγνώστηκε με OCR",
+        "Reading": "Ανάγνωση σε εξέλιξη",
+        "No text found": "Δεν βρέθηκε κείμενο",
+        "No text: OCR is not installed": "Χωρίς κείμενο: το OCR δεν είναι εγκατεστημένο",
+        "This attachment or publication was not found.": "Αυτό το συνημμένο ή η δημοσίευση δεν βρέθηκε.",
+        "The file id is not valid.": "Το αναγνωριστικό του αρχείου δεν είναι έγκυρο.",
+        "Attachment reading is not set up on this instance.": "Η ανάγνωση συνημμένων δεν έχει ρυθμιστεί σε αυτή την εγκατάσταση."
     },
     "plurals": {}
 }

@@ -136,4 +136,55 @@ class AttachmentReadingStoreTest extends TestCase {
 
 		$this->assertSame([], $this->objects->saves);
 	}//end testAnUnconfiguredSchemaIsRefusedAndNothingIsWritten()
+
+	/**
+	 * The file list reads one publication's states: other publications' rows are dropped and the newest per file wins.
+	 *
+	 * @return void
+	 */
+	public function testThePublicationsReadingsAreReadNewestPerFile(): void {
+		$this->objects->rows = [
+			['fileId' => 41, 'publication' => 'pub-1', 'state' => 'unavailable', 'reason' => 'OCR is not installed', 'updatedAt' => '2026-11-01T10:00:00+00:00'],
+			['fileId' => 41, 'publication' => 'pub-1', 'state' => 'ocr', 'updatedAt' => '2026-11-02T10:00:00+00:00'],
+			['fileId' => 41, 'publication' => 'pub-1', 'state' => 'failed', 'updatedAt' => '2026-10-01T10:00:00+00:00'],
+			['fileId' => 42, 'publication' => 'pub-2', 'state' => 'typed', 'updatedAt' => '2026-11-02T10:00:00+00:00'],
+			['fileId' => 43, 'publication' => 'pub-1', 'state' => 'typed'],
+			['fileId' => 0, 'publication' => 'pub-1', 'state' => 'typed'],
+			['fileId' => 44, 'publication' => 'pub-1', 'state' => ''],
+		];
+
+		$readings = $this->store()->forPublication(publicationId: 'pub-1');
+
+		$this->assertSame(
+			[
+				['fileId' => 41, 'state' => 'ocr', 'reason' => '', 'updatedAt' => '2026-11-02T10:00:00+00:00'],
+				['fileId' => 43, 'state' => 'typed', 'reason' => '', 'updatedAt' => ''],
+			],
+			$readings
+		);
+		$this->assertSame(['@self' => ['register' => '3', 'schema' => '31'], 'publication' => 'pub-1', '_limit' => 500], $this->objects->queries[0]['query']);
+		$this->assertFalse($this->objects->queries[0]['rbac']);
+	}//end testThePublicationsReadingsAreReadNewestPerFile()
+
+	/**
+	 * Without OpenRegister the file list cannot read the states.
+	 *
+	 * @return void
+	 */
+	public function testWithoutOpenRegisterTheReadIsRefused(): void {
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('OpenRegister is not available');
+
+		$this->store(installed: false)->forPublication(publicationId: 'pub-1');
+	}//end testWithoutOpenRegisterTheReadIsRefused()
+
+	/**
+	 * The store says whether its schema is configured.
+	 *
+	 * @return void
+	 */
+	public function testItSaysWhetherTheSchemaIsConfigured(): void {
+		$this->assertTrue($this->store()->isConfigured());
+		$this->assertFalse($this->store(schema: '')->isConfigured());
+	}//end testItSaysWhetherTheSchemaIsConfigured()
 }//end class

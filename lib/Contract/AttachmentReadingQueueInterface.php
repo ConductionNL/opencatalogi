@@ -43,4 +43,16 @@ interface AttachmentReadingQueueInterface {
 	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
 	 */
 	public function queue(int $fileId, string $publicationId): bool;
+
+	/**
+	 * Queue a fresh reading of an attachment that was read before ("Read again").
+	 *
+	 * @param int    $fileId        The Nextcloud file id that is published.
+	 * @param string $publicationId The publication.
+	 *
+	 * @return bool Whether the job was queued.
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+	 */
+	public function queueAgain(int $fileId, string $publicationId): bool;
 }//end interface

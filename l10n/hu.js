@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "A kiadványért felelős szervezet, ha az nem a kiadó.",
         "The import failed.": "Az importálás sikertelen.",
         "Failed on {date}": "Sikertelen: {date}",
-        "Only a table whose import failed can be retried.": "Csak olyan táblázat próbálható újra, amelynek importálása sikertelen volt."
+        "Only a table whose import failed can be retried.": "Csak olyan táblázat próbálható újra, amelynek importálása sikertelen volt.",
+        "Read again": "Újraolvasás",
+        "The attachment will be read again.": "A melléklet újra be lesz olvasva.",
+        "The attachment could not be queued for reading.": "A mellékletet nem sikerült beolvasási sorba állítani.",
+        "Typed text": "Gépelt szöveg",
+        "Read by OCR": "OCR-rel beolvasva",
+        "Reading": "Beolvasás folyamatban",
+        "No text found": "Nem található szöveg",
+        "No text: OCR is not installed": "Nincs szöveg: az OCR nincs telepítve",
+        "This attachment or publication was not found.": "Ez a melléklet vagy kiadvány nem található.",
+        "The file id is not valid.": "A fájlazonosító érvénytelen.",
+        "Attachment reading is not set up on this instance.": "A mellékletek beolvasása nincs beállítva ezen a példányon."
     },
     "nplurals=2; plural=(n != 1);"
 )

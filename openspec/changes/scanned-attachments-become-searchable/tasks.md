@@ -16,11 +16,14 @@ Search only finds OCR text once `add-document-content-search` is merged; tasks 1
 
 ## 3. The file list
 
-- [ ] 3.1 Add the Text column and the "Read again" row action to the publication's file list (board `OcPublicatieBestanden`), reading `attachmentReading` objects (REQ-SOCR-004). Verify: `tests/e2e/attachment-reading.spec.ts` "an editor sees which scan search cannot read", carrying `@e2e` REQ-SOCR-004.
-- [ ] 3.2 Add the strings to `l10n/` (en, nl). Verify: `npm run check:l10n`.
+- [x] 3.1 Add the Text column and the "Read again" row action to the publication's file list (board `OcPublicatieBestanden`), reading `attachmentReading` objects (REQ-SOCR-004). Verify: `tests/e2e/attachment-reading.spec.ts` "an editor sees which scan search cannot read", carrying `@e2e` REQ-SOCR-004.
+  - Built: the file list of `src/modals/object/ViewObject.vue` (the Files tab the row action "File list" opens) has a Text column after Labels, as this table has no Status column, and a "Read again" row action for an editor with the update right on an attachment that was read before. It reads `GET /api/publications/{id}/attachment-readings` and queues with `POST /api/publications/{id}/attachment-readings/{fileId}/read-again` (`AttachmentReadingController` over `AttachmentReadingOverview`, RBAC read of the publication, 404 for one the caller cannot read, 403 without the update right). Tests: `tests/Unit/Controller/AttachmentReadingControllerTest.php`, `AttachmentReadingStoreTest::testThePublicationsReadingsAreReadNewestPerFile`, `src/services/attachmentReading.spec.js`, `src/modals/object/ViewObjectAttachmentReading.spec.js`. `tests/e2e/attachment-reading.spec.ts` is written and not run here (no live instance).
+- [x] 3.2 Add the strings to `l10n/` (en, nl). Verify: `npm run check:l10n`.
+  - Done for all 37 locales in `l10n/*.json`, `.js` rebuilt with `npm run l10n:build`; `check:l10n` reports no MISSING (its two UNUSED keys are inherited from development).
 
 ## 4. Verification
 
 - [ ] 4.1 `openspec validate scanned-attachments-become-searchable --strict`, `composer check:strict`, `npm run lint`.
 - [ ] 4.2 Live, on an instance with filinq and Tesseract: publish a scan, wait for the job, and paste the `_content` search answer that finds it in the PR body. (live pass, decision 139)
 - [ ] 4.3 Set `srch-ocr` in `openspec/parity/capabilities.json` to `built` with this change, and correct its evidence (filinq's fallback and OpenRegister's seam exist).
+  - 22 Nov: row set to `building` with owner `ConductionNL/opencatalogi` and the evidence corrected (the job, filinq's fallback, OpenRegister's seam, the Text column). Left unticked: `built` waits for `tests/e2e/attachment-reading.spec.ts` and the live pass of 4.2.

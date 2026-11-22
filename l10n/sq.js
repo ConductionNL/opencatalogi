@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "Organizata përgjegjëse për këtë botim, kur nuk është botuesi.",
         "The import failed.": "Importimi dështoi.",
         "Failed on {date}": "Dështoi më {date}",
-        "Only a table whose import failed can be retried.": "Mund të riprovohet vetëm një tabelë, importimi i së cilës dështoi."
+        "Only a table whose import failed can be retried.": "Mund të riprovohet vetëm një tabelë, importimi i së cilës dështoi.",
+        "Read again": "Lexo përsëri",
+        "The attachment will be read again.": "Bashkëngjitja do të lexohet përsëri.",
+        "The attachment could not be queued for reading.": "Bashkëngjitja nuk mund të vendosej në radhën e leximit.",
+        "Typed text": "Tekst i shtypur",
+        "Read by OCR": "Lexuar me OCR",
+        "Reading": "Po lexohet",
+        "No text found": "Nuk u gjet tekst",
+        "No text: OCR is not installed": "Pa tekst: OCR nuk është i instaluar",
+        "This attachment or publication was not found.": "Kjo bashkëngjitje ose publikim nuk u gjet.",
+        "The file id is not valid.": "ID-ja e skedarit nuk është e vlefshme.",
+        "Attachment reading is not set up on this instance.": "Leximi i bashkëngjitjeve nuk është konfiguruar në këtë instancë."
     },
     "nplurals=2; plural=(n != 1);"
 )

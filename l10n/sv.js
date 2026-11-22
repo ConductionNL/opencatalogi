@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "Den organisation som ansvarar för denna publikation, när det inte är utgivaren.",
         "The import failed.": "Importen misslyckades.",
         "Failed on {date}": "Misslyckades {date}",
-        "Only a table whose import failed can be retried.": "Endast en tabell vars import misslyckades kan försökas igen."
+        "Only a table whose import failed can be retried.": "Endast en tabell vars import misslyckades kan försökas igen.",
+        "Read again": "Läs igen",
+        "The attachment will be read again.": "Bilagan kommer att läsas igen.",
+        "The attachment could not be queued for reading.": "Bilagan kunde inte köas för läsning.",
+        "Typed text": "Skriven text",
+        "Read by OCR": "Läst med OCR",
+        "Reading": "Läser",
+        "No text found": "Ingen text hittades",
+        "No text: OCR is not installed": "Ingen text: OCR är inte installerat",
+        "This attachment or publication was not found.": "Den här bilagan eller publikationen hittades inte.",
+        "The file id is not valid.": "Fil-id:t är ogiltigt.",
+        "Attachment reading is not set up on this instance.": "Läsning av bilagor är inte konfigurerad på den här instansen."
     },
     "nplurals=2; plural=(n != 1);"
 )

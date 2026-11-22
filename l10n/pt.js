@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "A organização responsável por esta publicação, quando não é o editor.",
         "The import failed.": "A importação falhou.",
         "Failed on {date}": "Falhou em {date}",
-        "Only a table whose import failed can be retried.": "Só é possível tentar de novo uma tabela cuja importação falhou."
+        "Only a table whose import failed can be retried.": "Só é possível tentar de novo uma tabela cuja importação falhou.",
+        "Read again": "Ler novamente",
+        "The attachment will be read again.": "O anexo será lido novamente.",
+        "The attachment could not be queued for reading.": "Não foi possível colocar o anexo na fila de leitura.",
+        "Typed text": "Texto digitado",
+        "Read by OCR": "Lido por OCR",
+        "Reading": "A ler",
+        "No text found": "Nenhum texto encontrado",
+        "No text: OCR is not installed": "Sem texto: o OCR não está instalado",
+        "This attachment or publication was not found.": "Este anexo ou publicação não foi encontrado.",
+        "The file id is not valid.": "O ID do ficheiro não é válido.",
+        "Attachment reading is not set up on this instance.": "A leitura de anexos não está configurada nesta instância."
     },
     "nplurals=2; plural=(n != 1);"
 )

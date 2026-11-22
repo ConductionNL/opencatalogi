@@ -427,6 +427,11 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 												</th>
 												<th
 													scope="col"
+													class="tableColumnConstrained table-row-text">
+													{{ t('opencatalogi', 'Text') }}
+												</th>
+												<th
+													scope="col"
 													class="table-row-actions">
 													<span class="hidden-visually">{{
 														t('opencatalogi', 'Actions')
@@ -668,6 +673,11 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 														</div>
 													</div>
 												</td>
+												<td
+													class="tableColumnConstrained table-row-text"
+													:title="attachmentTextReason(attachment)">
+													{{ attachmentText(attachment) }}
+												</td>
 												<td class="table-row-actions">
 													<NcActions
 														v-if="
@@ -698,6 +708,22 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 																t(
 																	'opencatalogi',
 																	'View',
+																)
+															}}
+														</NcActionButton>
+														<NcActionButton
+															v-if="canReadAttachmentAgain(attachment)"
+															@click="
+																readAttachmentAgain(attachment)
+															">
+															<template #icon>
+																<TextRecognition
+																	:size="20" />
+															</template>
+															{{
+																t(
+																	'opencatalogi',
+																	'Read again',
 																)
 															}}
 														</NcActionButton>
@@ -927,6 +953,7 @@ import {
 	validateValue,
 } from '@conduction/nextcloud-vue'
 import { getRequestToken } from '@nextcloud/auth'
+import { showError, showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
@@ -956,6 +983,7 @@ import Pencil from 'vue-material-design-icons/Pencil.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import Tag from 'vue-material-design-icons/Tag.vue'
+import TextRecognition from 'vue-material-design-icons/TextRecognition.vue'
 import Upload from 'vue-material-design-icons/Upload.vue'
 import PaginationComponent from '../../components/PaginationComponent.vue'
 import PropertiesPanel from '../../components/PropertiesPanel.vue'
@@ -963,6 +991,12 @@ import PublishedIcon from '../../components/PublishedIcon.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
 import TranslationLanguageSwitch from '../../components/TranslationLanguageSwitch.vue'
+import {
+	fetchAttachmentReadings,
+	readingLabel,
+	readingReason,
+	requestReadAgain,
+} from '../../services/attachmentReading.js'
 import { fileSizeLabel } from '../../services/fileSizeLabel.js'
 import { formValue } from '../../services/formValue.js'
 import {
@@ -1216,6 +1250,7 @@ export default {
 		ContentSaveOutline,
 		LockOutline,
 		Tag,
+		TextRecognition,
 		FormatListChecks,
 		Publish,
 		PublishOff,
@@ -1249,6 +1284,11 @@ export default {
 			publishLoading: [],
 			depublishLoading: [],
 			fileIdsLoading: [],
+			// scanned-attachments-become-searchable REQ-SOCR-004: whether search
+			// can read each attachment, by file id, and whether the editor may
+			// ask for a new reading.
+			attachmentReadings: {},
+			canReadAgain: false,
 			filesCurrentPage: 1,
 			filesPerPage: 500,
 			// Page size options matching PaginationComponent
@@ -2046,7 +2086,10 @@ export default {
 			this.formData = editableFormData(this.currentObject)
 			this.editLanguage = SOURCE_LANGUAGE
 			this.allTranslations = null
-			await this.loadTranslationContext(takeRequestedEditorLanguage())
+			await Promise.all([
+				this.loadTranslationContext(takeRequestedEditorLanguage()),
+				this.loadAttachmentReadings(),
+			])
 		},
 
 		/**
@@ -2461,24 +2504,106 @@ export default {
 		},
 
 		/**
-		 * @param params
+		 * Reload the file list, and whether search can read each file.
+		 *
+		 * @param {object} [params] The page and limit
+		 * @return {Promise<void>}
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
 		 */
 		async refreshFiles(params = {}) {
 			const { registerId, schemaId } = this.getRegisterSchemaIds(
 				this.currentObject,
 			)
-			await objectStore.fetchRelatedData({
-				type: 'publication',
-				id: this.currentObject.id,
-				dataType: 'files',
-				params,
-				publicationData: {
-					source: 'openregister',
-					schema: schemaId,
-					register: registerId,
-				},
-			})
+			await Promise.all([
+				objectStore.fetchRelatedData({
+					type: 'publication',
+					id: this.currentObject.id,
+					dataType: 'files',
+					params,
+					publicationData: {
+						source: 'openregister',
+						schema: schemaId,
+						register: registerId,
+					},
+				}),
+				this.loadAttachmentReadings(),
+			])
+		},
+
+		/**
+		 * Read whether search can read each attachment of the publication. A
+		 * new object has no attachments, so nothing is read.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+		 */
+		async loadAttachmentReadings() {
+			const id = this.isNewObject ? '' : this.currentObject?.id
+			const { readings, canReadAgain } = await fetchAttachmentReadings(id)
+			this.attachmentReadings = readings
+			this.canReadAgain = canReadAgain
+		},
+
+		/**
+		 * The Text column of one attachment.
+		 *
+		 * @param {object} attachment - The attachment
+		 * @return {string} The label
+		 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+		 */
+		attachmentText(attachment) {
+			return readingLabel(this.attachmentReadings[String(attachment?.id)])
+		},
+
+		/**
+		 * The tooltip of the Text column: why, when the label alone does not say it.
+		 *
+		 * @param {object} attachment - The attachment
+		 * @return {string} The reason
+		 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+		 */
+		attachmentTextReason(attachment) {
+			return readingReason(this.attachmentReadings[String(attachment?.id)])
+		},
+
+		/**
+		 * Whether "Read again" is offered: the editor may update the
+		 * publication and the attachment was read before.
+		 *
+		 * @param {object} attachment - The attachment
+		 * @return {boolean} Whether it is offered
+		 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+		 */
+		canReadAttachmentAgain(attachment) {
+			return this.canReadAgain === true
+				&& this.attachmentReadings[String(attachment?.id)] !== undefined
+		},
+
+		/**
+		 * Queue a new reading of one attachment; the column reads "Reading"
+		 * until the job has written its answer.
+		 *
+		 * @param {object} attachment - The attachment
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-the-file-list-shows-whether-search-can-read-each-attachment-req-socr-004
+		 */
+		async readAttachmentAgain(attachment) {
+			const key = String(attachment?.id)
+			const { ok, message } = await requestReadAgain(
+				this.currentObject.id,
+				attachment.id,
+				getRequestToken(),
+			)
+			if (!ok) {
+				showError(message)
+				return
+			}
+			this.attachmentReadings = {
+				...this.attachmentReadings,
+				[key]: { ...this.attachmentReadings[key], state: 'waiting', reason: '' },
+			}
+			showSuccess(t('opencatalogi', 'The attachment will be read again.'))
 		},
 
 		/**
@@ -3731,6 +3856,10 @@ function findCatalog(catalogId) {
 .table-row-actions {
 	width: 35px;
 	text-align: center;
+}
+
+.table-row-text {
+	white-space: nowrap;
 }
 
 .table-row-labels {

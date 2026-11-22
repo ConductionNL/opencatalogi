@@ -2134,7 +2134,18 @@
         "The organisation responsible for this publication, when it is not the publisher.": "The organisation responsible for this publication, when it is not the publisher.",
         "The import failed.": "The import failed.",
         "Failed on {date}": "Failed on {date}",
-        "Only a table whose import failed can be retried.": "Only a table whose import failed can be retried."
+        "Only a table whose import failed can be retried.": "Only a table whose import failed can be retried.",
+        "Read again": "Read again",
+        "The attachment will be read again.": "The attachment will be read again.",
+        "The attachment could not be queued for reading.": "The attachment could not be queued for reading.",
+        "Typed text": "Typed text",
+        "Read by OCR": "Read by OCR",
+        "Reading": "Reading",
+        "No text found": "No text found",
+        "No text: OCR is not installed": "No text: OCR is not installed",
+        "This attachment or publication was not found.": "This attachment or publication was not found.",
+        "The file id is not valid.": "The file id is not valid.",
+        "Attachment reading is not set up on this instance.": "Attachment reading is not set up on this instance."
     },
     "plurals": {}
 }

@@ -416,6 +416,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\AttachmentReadingOverviewInterface",
+        "OCA\\OpenCatalogi\\Service\\AttachmentReading\\AttachmentReadingOverview"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\MetadataRuleSuggesterInterface",
         "OCA\\OpenCatalogi\\Service\\MetadataSuggestion\\MetadataSuggestionService"
     ],

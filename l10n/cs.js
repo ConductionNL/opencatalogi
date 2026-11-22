@@ -786,7 +786,18 @@ OC.L10N.register(
         "The organisation responsible for this publication, when it is not the publisher.": "Organizace odpovědná za tuto publikaci, pokud to není vydavatel.",
         "The import failed.": "Import se nezdařil.",
         "Failed on {date}": "Selhalo {date}",
-        "Only a table whose import failed can be retried.": "Znovu lze zkusit pouze tabulku, jejíž import se nezdařil."
+        "Only a table whose import failed can be retried.": "Znovu lze zkusit pouze tabulku, jejíž import se nezdařil.",
+        "Read again": "Přečíst znovu",
+        "The attachment will be read again.": "Příloha bude přečtena znovu.",
+        "The attachment could not be queued for reading.": "Přílohu se nepodařilo zařadit do fronty ke čtení.",
+        "Typed text": "Psaný text",
+        "Read by OCR": "Přečteno pomocí OCR",
+        "Reading": "Probíhá čtení",
+        "No text found": "Nebyl nalezen žádný text",
+        "No text: OCR is not installed": "Žádný text: OCR není nainstalováno",
+        "This attachment or publication was not found.": "Tato příloha nebo publikace nebyla nalezena.",
+        "The file id is not valid.": "ID souboru není platné.",
+        "Attachment reading is not set up on this instance.": "Čtení příloh není na této instanci nastaveno."
     },
     "nplurals=2; plural=(n != 1);"
 )

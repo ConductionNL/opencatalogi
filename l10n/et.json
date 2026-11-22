@@ -785,7 +785,18 @@
         "The organisation responsible for this publication, when it is not the publisher.": "Selle väljaande eest vastutav organisatsioon, kui see ei ole väljaandja.",
         "The import failed.": "Importimine ebaõnnestus.",
         "Failed on {date}": "Ebaõnnestus {date}",
-        "Only a table whose import failed can be retried.": "Uuesti saab proovida ainult tabelit, mille importimine ebaõnnestus."
+        "Only a table whose import failed can be retried.": "Uuesti saab proovida ainult tabelit, mille importimine ebaõnnestus.",
+        "Read again": "Loe uuesti",
+        "The attachment will be read again.": "Manus loetakse uuesti.",
+        "The attachment could not be queued for reading.": "Manust ei saanud lugemiseks järjekorda panna.",
+        "Typed text": "Trükitud tekst",
+        "Read by OCR": "Loetud OCR-iga",
+        "Reading": "Loetakse",
+        "No text found": "Teksti ei leitud",
+        "No text: OCR is not installed": "Teksti pole: OCR pole paigaldatud",
+        "This attachment or publication was not found.": "Seda manust või väljaannet ei leitud.",
+        "The file id is not valid.": "Faili ID ei ole kehtiv.",
+        "Attachment reading is not set up on this instance.": "Manuste lugemine pole selles eksemplaris seadistatud."
     },
     "plurals": {}
 }
