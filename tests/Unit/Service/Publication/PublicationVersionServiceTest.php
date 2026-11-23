@@ -469,8 +469,11 @@ final class PublicationVersionServiceTest extends TestCase {
 		$service = $this->service();
 
 		$this->assertSame(expected: self::PUBLICATION, actual: $service->publicUuidOf(record: self::public(extra: ['id' => self::PUBLICATION])));
-		$this->assertSame(expected: self::PUBLICATION, actual: $service->publicUuidOf(record: ['@self' => ['id' => self::PUBLICATION], 'title' => 'Anoniem']));
-		$this->assertNull(actual: $service->publicUuidOf(record: self::public(extra: ['id' => self::PUBLICATION, 'depublicationDate' => '2026-02-01T00:00:00+00:00'])));
+		$anonymousView = ['@self' => ['id' => self::PUBLICATION], 'title' => 'Anoniem'];
+		$withdrawn = self::public(extra: ['id' => self::PUBLICATION, 'depublicationDate' => '2026-02-01T00:00:00+00:00']);
+
+		$this->assertSame(expected: self::PUBLICATION, actual: $service->publicUuidOf(record: $anonymousView));
+		$this->assertNull(actual: $service->publicUuidOf(record: $withdrawn));
 		$this->assertNull(actual: $service->publicUuidOf(record: ['title' => 'Zonder id']));
 	}//end testOnlyAPublicRecordGivesItsUuid()
 

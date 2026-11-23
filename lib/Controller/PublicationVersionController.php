@@ -48,6 +48,13 @@ class PublicationVersionController extends Controller {
 	use AnswersCrossOriginReadRequests;
 
 	/**
+	 * The CORS origin setting.
+	 *
+	 * @var IAppConfig|null
+	 */
+	private readonly ?IAppConfig $appConfig;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $appName The app name.
@@ -61,11 +68,24 @@ class PublicationVersionController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly PublicationVersions $answers,
-		private readonly ?IAppConfig $appConfig = null,
+		?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
+		$this->appConfig = $appConfig;
 
 	}//end __construct()
+
+	/**
+	 * The `cors_allowed_origins` setting the CORS headers answer with; '*' without an app config.
+	 *
+	 * @return string The setting.
+	 *
+	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 */
+	protected function allowedOriginsSetting(): string {
+		return ($this->appConfig?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
+
+	}//end allowedOriginsSetting()
 
 	/**
 	 * `GET /api/{catalogSlug}/{id}/versions`: the earlier public versions of a publication.

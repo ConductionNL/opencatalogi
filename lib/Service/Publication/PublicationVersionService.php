@@ -29,7 +29,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
-use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationVersionServiceInterface;
@@ -128,7 +127,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 		$version = [
 			'publication' => $publication,
 			'version' => ((int)(end($stored)['version'] ?? 0) + 1),
-			'supersededAt' => ($now ?? new DateTimeImmutable())->format(DateTimeInterface::ATOM),
+			'supersededAt' => ($now?->format(DateTimeInterface::ATOM) ?? date(DateTimeInterface::ATOM)),
 			'fields' => $fields,
 			'documents' => [],
 		];
