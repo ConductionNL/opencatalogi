@@ -696,7 +696,9 @@ class PublicationStateControllerTest extends TestCase {
 	public function testTheTombstoneChoiceIsStoredOnTheDepublication(): void {
 		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$this->rights->method('mayUpdate')->willReturn(true);
-		$this->withParams(params: ['reason' => 'AVG-melding 12', 'publicReason' => '  Gepubliceerd in strijd met de AVG ', 'tombstoneShowsTitle' => 'true']);
+		$this->withParams(
+			params: ['reason' => 'AVG-melding 12', 'publicReason' => '  Gepubliceerd in strijd met de AVG ', 'tombstoneShowsTitle' => 'true']
+		);
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $this->controller->withdraw(id: 'p1')->getStatus());
 		$depublication = $this->saves[1]['object'];
