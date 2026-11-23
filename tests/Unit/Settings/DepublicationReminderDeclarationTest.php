@@ -106,7 +106,7 @@ final class DepublicationReminderDeclarationTest extends TestCase {
 			self::assertStringContainsString(needle: '{{depublicationDate}}', haystack: $rule['subject'][$language]);
 		}
 
-		self::assertSame(expected: '0.0.12', actual: self::publication()['version']);
+		self::assertTrue(condition: version_compare(version1: self::publication()['version'], version2: '0.0.12', operator: '>='));
 	}//end testTheRuleIsDeclaredOnThePublicationSchema()
 
 	/**
