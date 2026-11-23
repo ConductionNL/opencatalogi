@@ -809,7 +809,11 @@
         "Archive hotspot since": "Hotspot tal-arkivju minn",
         "When the subject was marked as an archive hotspot.": "Meta s-suġġett ġie mmarkat bħala hotspot tal-arkivju.",
         "Only an administrator can mark or unmark an archive hotspot.": "Amministratur biss jista' jimmarka jew ineħħi hotspot tal-arkivju.",
-        "Give the reason for the archive hotspot.": "Agħti r-raġuni għall-hotspot tal-arkivju."
+        "Give the reason for the archive hotspot.": "Agħti r-raġuni għall-hotspot tal-arkivju.",
+        "Frozen": "Iffriżata",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Jekk il-pubblikazzjoni rtirata ġietx iffriżata, biex tirrifjuta kull bidla.",
+        "Why it was not frozen": "Għaliex ma ġietx iffriżata",
+        "What went wrong when the withdrawn publication could not be frozen.": "X'mar ħażin meta l-pubblikazzjoni rtirata ma setgħetx tiġi ffriżata."
     },
     "plurals": {}
 }

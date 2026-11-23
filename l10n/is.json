@@ -809,7 +809,11 @@
         "Archive hotspot since": "Skjalasafnsáhersla frá",
         "When the subject was marked as an archive hotspot.": "Hvenær efnið var merkt sem skjalasafnsáhersla.",
         "Only an administrator can mark or unmark an archive hotspot.": "Aðeins kerfisstjóri getur merkt eða afmerkt skjalasafnsáherslu.",
-        "Give the reason for the archive hotspot.": "Gefðu upp ástæðu skjalasafnsáherslunnar."
+        "Give the reason for the archive hotspot.": "Gefðu upp ástæðu skjalasafnsáherslunnar.",
+        "Frozen": "Fryst",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Hvort afturkallaða birtingin var fryst, svo hún hafnar öllum breytingum.",
+        "Why it was not frozen": "Hvers vegna hún var ekki fryst",
+        "What went wrong when the withdrawn publication could not be frozen.": "Hvað fór úrskeiðis þegar ekki var hægt að frysta afturkölluðu birtinguna."
     },
     "plurals": {}
 }

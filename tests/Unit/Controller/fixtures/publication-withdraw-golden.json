@@ -2225,14 +2225,12 @@
                 17
             ],
             [
-                "depublish",
+                "depublishDocument",
                 {
                     "id": "pub-1"
                 },
                 "x",
-                "editor",
-                [],
-                null
+                "editor"
             ],
             [
                 "storable",
@@ -2349,14 +2347,12 @@
                 17
             ],
             [
-                "depublish",
+                "depublishDocument",
                 {
                     "id": "pub-1"
                 },
                 "x",
-                "editor",
-                [],
-                null
+                "editor"
             ],
             [
                 "storable",

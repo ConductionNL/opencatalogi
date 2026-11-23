@@ -810,7 +810,11 @@ OC.L10N.register(
         "Archive hotspot since": "Archívny hotspot od",
         "When the subject was marked as an archive hotspot.": "Kedy bola téma označená ako archívny hotspot.",
         "Only an administrator can mark or unmark an archive hotspot.": "Archívny hotspot môže označiť alebo zrušiť len správca.",
-        "Give the reason for the archive hotspot.": "Uveďte dôvod archívneho hotspotu."
+        "Give the reason for the archive hotspot.": "Uveďte dôvod archívneho hotspotu.",
+        "Frozen": "Zmrazené",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Či bola stiahnutá publikácia zmrazená, takže odmieta každú úpravu.",
+        "Why it was not frozen": "Prečo nebola zmrazená",
+        "What went wrong when the withdrawn publication could not be frozen.": "Čo sa pokazilo, keď stiahnutú publikáciu nebolo možné zmraziť."
     },
     "nplurals=2; plural=(n != 1);"
 )

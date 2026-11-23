@@ -45,6 +45,7 @@ interface DepublicationServiceInterface {
 	 * @throws DomainException When no reason is given.
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
 	public function depublish(
 		array $publication,
@@ -53,6 +54,24 @@ interface DepublicationServiceInterface {
 		array $channels,
 		?DateTimeInterface $now = null,
 	): array;
+
+	/**
+	 * Record one document of a publication coming down, without telling a channel or freezing the publication.
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param string $reason Why the document is coming down.
+	 * @param string $depublishedBy Who is taking it down.
+	 *
+	 * @return array<string, mixed> The depublication to save.
+	 *
+	 * @throws DomainException When no reason is given.
+	 *
+	 * @contract-shift internal-only — DepublicationService, in this app, is the only implementer;
+	 *                 every double of the interface in this app is a createMock() that picks the method up.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 */
+	public function depublishDocument(array $publication, string $reason, string $depublishedBy): array;
 
 	/**
 	 * The channels whose withdrawal is still outstanding.

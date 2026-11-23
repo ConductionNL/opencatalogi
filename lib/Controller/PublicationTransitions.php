@@ -143,6 +143,23 @@ class PublicationTransitions {
 	}//end depublish()
 
 	/**
+	 * Record one document of a publication coming down; the publication is not frozen.
+	 *
+	 * @param array{publication: array, reason: string, depublishedBy: string} $withdrawal The withdrawal.
+	 *
+	 * @return array The depublication.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 */
+	public function depublishDocument(array $withdrawal): array {
+		return $this->depublisher->depublishDocument(
+			publication: $withdrawal['publication'],
+			reason: $withdrawal['reason'],
+			depublishedBy: $withdrawal['depublishedBy']
+		);
+	}//end depublishDocument()
+
+	/**
 	 * The channels a depublication has not reached yet.
 	 *
 	 * @param array $depublication The depublication.

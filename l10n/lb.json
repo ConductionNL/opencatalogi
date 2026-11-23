@@ -809,7 +809,11 @@
         "Archive hotspot since": "Archiv-Hotspot zënter",
         "When the subject was marked as an archive hotspot.": "Wéini d'Thema als Archiv-Hotspot markéiert gouf.",
         "Only an administrator can mark or unmark an archive hotspot.": "Nëmmen en Administrateur kann en Archiv-Hotspot markéieren oder ophiewen.",
-        "Give the reason for the archive hotspot.": "Gitt de Grond fir den Archiv-Hotspot un."
+        "Give the reason for the archive hotspot.": "Gitt de Grond fir den Archiv-Hotspot un.",
+        "Frozen": "Ageforen",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Ob déi zréckgezunn Publikatioun ageforen gouf, sou datt se all Ännerung refuséiert.",
+        "Why it was not frozen": "Firwat se net ageforen gouf",
+        "What went wrong when the withdrawn publication could not be frozen.": "Wat schifgaangen ass, wéi déi zréckgezunn Publikatioun net konnt ageforen ginn."
     },
     "plurals": {}
 }

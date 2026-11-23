@@ -809,7 +809,11 @@
         "Archive hotspot since": "Arhivska žarišna točka od",
         "When the subject was marked as an archive hotspot.": "Kada je tema označena kao arhivska žarišna točka.",
         "Only an administrator can mark or unmark an archive hotspot.": "Samo administrator može označiti ili ukloniti arhivsku žarišnu točku.",
-        "Give the reason for the archive hotspot.": "Navedite razlog arhivske žarišne točke."
+        "Give the reason for the archive hotspot.": "Navedite razlog arhivske žarišne točke.",
+        "Frozen": "Zamrznuto",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Je li povučena objava zamrznuta, tako da odbija svaku izmjenu.",
+        "Why it was not frozen": "Zašto nije zamrznuta",
+        "What went wrong when the withdrawn publication could not be frozen.": "Što je pošlo po zlu kad povučenu objavu nije bilo moguće zamrznuti."
     },
     "plurals": {}
 }

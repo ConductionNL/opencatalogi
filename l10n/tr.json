@@ -809,7 +809,11 @@
         "Archive hotspot since": "Arşiv odak noktası başlangıcı",
         "When the subject was marked as an archive hotspot.": "Konunun arşiv odak noktası olarak işaretlendiği zaman.",
         "Only an administrator can mark or unmark an archive hotspot.": "Arşiv odak noktasını yalnızca bir yönetici işaretleyebilir veya kaldırabilir.",
-        "Give the reason for the archive hotspot.": "Arşiv odak noktasının gerekçesini belirtin."
+        "Give the reason for the archive hotspot.": "Arşiv odak noktasının gerekçesini belirtin.",
+        "Frozen": "Donduruldu",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Geri çekilen yayının dondurulup dondurulmadığı; dondurulduysa her düzenlemeyi reddeder.",
+        "Why it was not frozen": "Neden dondurulmadı",
+        "What went wrong when the withdrawn publication could not be frozen.": "Geri çekilen yayın dondurulamadığında ne ters gitti."
     },
     "plurals": {}
 }

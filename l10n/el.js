@@ -810,7 +810,11 @@ OC.L10N.register(
         "Archive hotspot since": "Αρχειακό σημείο ενδιαφέροντος από",
         "When the subject was marked as an archive hotspot.": "Πότε το θέμα επισημάνθηκε ως αρχειακό σημείο ενδιαφέροντος.",
         "Only an administrator can mark or unmark an archive hotspot.": "Μόνο ένας διαχειριστής μπορεί να επισημάνει ή να αφαιρέσει ένα αρχειακό σημείο ενδιαφέροντος.",
-        "Give the reason for the archive hotspot.": "Δώστε τον λόγο του αρχειακού σημείου ενδιαφέροντος."
+        "Give the reason for the archive hotspot.": "Δώστε τον λόγο του αρχειακού σημείου ενδιαφέροντος.",
+        "Frozen": "Παγωμένη",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Αν η αποσυρμένη δημοσίευση παγώθηκε, ώστε να απορρίπτει κάθε επεξεργασία.",
+        "Why it was not frozen": "Γιατί δεν παγώθηκε",
+        "What went wrong when the withdrawn publication could not be frozen.": "Τι πήγε στραβά όταν η αποσυρμένη δημοσίευση δεν μπόρεσε να παγώσει."
     },
     "nplurals=2; plural=(n != 1);"
 )

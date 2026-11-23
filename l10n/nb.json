@@ -809,7 +809,11 @@
         "Archive hotspot since": "Arkivhotspot siden",
         "When the subject was marked as an archive hotspot.": "Når emnet ble merket som arkivhotspot.",
         "Only an administrator can mark or unmark an archive hotspot.": "Bare en administrator kan merke eller fjerne en arkivhotspot.",
-        "Give the reason for the archive hotspot.": "Oppgi begrunnelsen for arkivhotspoten."
+        "Give the reason for the archive hotspot.": "Oppgi begrunnelsen for arkivhotspoten.",
+        "Frozen": "Fryst",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Om den tilbaketrukne publikasjonen ble fryst, slik at den avviser enhver endring.",
+        "Why it was not frozen": "Hvorfor den ikke ble fryst",
+        "What went wrong when the withdrawn publication could not be frozen.": "Hva som gikk galt da den tilbaketrukne publikasjonen ikke kunne fryses."
     },
     "plurals": {}
 }

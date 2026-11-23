@@ -810,7 +810,11 @@ OC.L10N.register(
         "Archive hotspot since": "Levéltári kiemelt téma ekkortól",
         "When the subject was marked as an archive hotspot.": "Mikor jelölték meg a témát levéltári kiemelt témaként.",
         "Only an administrator can mark or unmark an archive hotspot.": "Levéltári kiemelt témát csak rendszergazda jelölhet meg vagy vonhat vissza.",
-        "Give the reason for the archive hotspot.": "Adja meg a levéltári kiemelt téma okát."
+        "Give the reason for the archive hotspot.": "Adja meg a levéltári kiemelt téma okát.",
+        "Frozen": "Befagyasztva",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "A visszavont közzététel be lett-e fagyasztva, így minden módosítást elutasít.",
+        "Why it was not frozen": "Miért nem lett befagyasztva",
+        "What went wrong when the withdrawn publication could not be frozen.": "Mi romlott el, amikor a visszavont közzétételt nem lehetett befagyasztani."
     },
     "nplurals=2; plural=(n != 1);"
 )

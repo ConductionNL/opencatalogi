@@ -810,7 +810,11 @@ OC.L10N.register(
         "Archive hotspot since": "Ceantar te cartlainne ó",
         "When the subject was marked as an archive hotspot.": "Cathain a marcáladh an t-ábhar mar cheantar te cartlainne.",
         "Only an administrator can mark or unmark an archive hotspot.": "Ní féidir ach le riarthóir ceantar te cartlainne a mharcáil nó a dhímharcáil.",
-        "Give the reason for the archive hotspot.": "Tabhair cúis an cheantair te cartlainne."
+        "Give the reason for the archive hotspot.": "Tabhair cúis an cheantair te cartlainne.",
+        "Frozen": "Reoite",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Cibé ar reodh an foilseachán a tarraingíodh siar, ionas go ndiúltaíonn sé do gach eagarthóireacht.",
+        "Why it was not frozen": "Cén fáth nár reodh é",
+        "What went wrong when the withdrawn publication could not be frozen.": "Cad a chuaigh mícheart nuair nárbh fhéidir an foilseachán a tarraingíodh siar a reo."
     },
     "nplurals=2; plural=(n != 1);"
 )

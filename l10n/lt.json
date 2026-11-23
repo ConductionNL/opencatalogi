@@ -809,7 +809,11 @@
         "Archive hotspot since": "Archyvo karštasis taškas nuo",
         "When the subject was marked as an archive hotspot.": "Kada tema buvo pažymėta kaip archyvo karštasis taškas.",
         "Only an administrator can mark or unmark an archive hotspot.": "Archyvo karštąjį tašką pažymėti arba panaikinti gali tik administratorius.",
-        "Give the reason for the archive hotspot.": "Nurodykite archyvo karštojo taško priežastį."
+        "Give the reason for the archive hotspot.": "Nurodykite archyvo karštojo taško priežastį.",
+        "Frozen": "Užšaldyta",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Ar atšauktas leidinys buvo užšaldytas, kad atmestų bet kokį pakeitimą.",
+        "Why it was not frozen": "Kodėl jis nebuvo užšaldytas",
+        "What went wrong when the withdrawn publication could not be frozen.": "Kas nepavyko, kai atšaukto leidinio nepavyko užšaldyti."
     },
     "plurals": {}
 }

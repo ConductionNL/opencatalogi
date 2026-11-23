@@ -810,7 +810,11 @@ OC.L10N.register(
         "Archive hotspot since": "Архивска жаришна тачка од",
         "When the subject was marked as an archive hotspot.": "Када је тема означена као архивска жаришна тачка.",
         "Only an administrator can mark or unmark an archive hotspot.": "Само администратор може да означи или уклони архивску жаришну тачку.",
-        "Give the reason for the archive hotspot.": "Наведите разлог архивске жаришне тачке."
+        "Give the reason for the archive hotspot.": "Наведите разлог архивске жаришне тачке.",
+        "Frozen": "Замрзнуто",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Да ли је повучена објава замрзнута, тако да одбија сваку измену.",
+        "Why it was not frozen": "Зашто није замрзнута",
+        "What went wrong when the withdrawn publication could not be frozen.": "Шта је пошло наопако када повучену објаву није било могуће замрзнути."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -809,7 +809,11 @@
         "Archive hotspot since": "Архивна гореща точка от",
         "When the subject was marked as an archive hotspot.": "Кога темата е отбелязана като архивна гореща точка.",
         "Only an administrator can mark or unmark an archive hotspot.": "Само администратор може да отбележи или премахне архивна гореща точка.",
-        "Give the reason for the archive hotspot.": "Посочете причината за архивната гореща точка."
+        "Give the reason for the archive hotspot.": "Посочете причината за архивната гореща точка.",
+        "Frozen": "Замразена",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Дали оттеглената публикация е замразена, така че да отказва всяка промяна.",
+        "Why it was not frozen": "Защо не е замразена",
+        "What went wrong when the withdrawn publication could not be frozen.": "Какво се обърка, когато оттеглената публикация не можа да бъде замразена."
     },
     "plurals": {}
 }
