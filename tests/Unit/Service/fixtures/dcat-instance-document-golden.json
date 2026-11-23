@@ -22,7 +22,7 @@
                     },
                     "dcat:catalog": [],
                     "dct:license": {
-                        "@id": "http://creativecommons.org/publicdomain/zero/1.0/"
+                        "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
                     }
                 }
             ],
@@ -58,7 +58,7 @@
                     },
                     "dcat:catalog": [],
                     "dct:license": {
-                        "@id": "http://creativecommons.org/publicdomain/zero/1.0/"
+                        "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
                     }
                 }
             ],
@@ -121,7 +121,7 @@
                         }
                     ],
                     "dct:license": {
-                        "@id": "http://creativecommons.org/publicdomain/zero/1.0/"
+                        "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
                     }
                 },
                 {
@@ -209,7 +209,7 @@
                         "foaf:name": "Gemeente Zuiddrecht"
                     },
                     "dct:license": {
-                        "@id": "http://creativecommons.org/publicdomain/zero/1.0/"
+                        "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
                     }
                 },
                 {
@@ -286,7 +286,7 @@
                         "foaf:name": "Gemeente Zuiddrecht"
                     },
                     "dct:license": {
-                        "@id": "http://creativecommons.org/publicdomain/zero/1.0/"
+                        "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
                     }
                 },
                 {
@@ -351,7 +351,7 @@
                         }
                     ],
                     "dct:license": {
-                        "@id": "http://creativecommons.org/publicdomain/zero/1.0/"
+                        "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
                     }
                 },
                 {
@@ -420,7 +420,7 @@
                         "foaf:name": "Gemeente Zuiddrecht"
                     },
                     "dct:license": {
-                        "@id": "http://creativecommons.org/publicdomain/zero/1.0/"
+                        "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
                     }
                 },
                 {
@@ -558,9 +558,6 @@
                     "dct:publisher": {
                         "@type": "foaf:Agent",
                         "foaf:name": "Alleen naam"
-                    },
-                    "dct:license": {
-                        "@id": "https://lic"
                     }
                 },
                 {
@@ -625,7 +622,7 @@
                         }
                     ],
                     "dct:license": {
-                        "@id": "http://creativecommons.org/publicdomain/zero/1.0/"
+                        "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
                     }
                 },
                 {
@@ -690,7 +687,7 @@
                         }
                     ],
                     "dct:license": {
-                        "@id": "http://creativecommons.org/publicdomain/zero/1.0/"
+                        "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
                     }
                 },
                 {

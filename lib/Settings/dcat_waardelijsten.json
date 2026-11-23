@@ -16,5 +16,72 @@
     "dataThemes": {
         "base": "http://publications.europa.eu/resource/authority/data-theme/",
         "members": ["AGRI", "ECON", "EDUC", "ENER", "ENVI", "GOVE", "HEAL", "INTR", "JUST", "REGI", "SOCI", "TECH", "TRAN", "OP_DATPRO"]
+    },
+    "licences": {
+        "$comment": "The members of the EU licences authority list that data.overheid.nl accepts (its CKAN license_list, fetched 2026-11-23). The three OWMS licences on that list (geslotenlicentie, geogedeeld, licentieonbekend) have no EU authority IRI and are left out. matches holds the exactMatch IRIs of the authority and the IRI data.overheid.nl uses.",
+        "source": "http://publications.europa.eu/resource/authority/licence",
+        "version": "20260617-0",
+        "crossCheck": "https://data.overheid.nl/data/api/3/action/license_list",
+        "base": "http://publications.europa.eu/resource/authority/licence/",
+        "members": {
+            "CC0": {
+                "iri": "http://publications.europa.eu/resource/authority/licence/CC0",
+                "label": "Creative Commons CC0 1.0 Universal",
+                "labelNl": "Creative Commons CC0 1.0 Universeel",
+                "spdx": "CC0-1.0",
+                "donlLabel": "CC-0 (1.0)",
+                "matches": [
+                    "https://creativecommons.org/publicdomain/zero/1.0/",
+                    "http://spdx.org/licenses/CC0-1.0",
+                    "http://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+                ]
+            },
+            "CC_BY_4_0": {
+                "iri": "http://publications.europa.eu/resource/authority/licence/CC_BY_4_0",
+                "label": "Creative Commons Attribution 4.0 International",
+                "labelNl": "Creative Commons Naamsvermelding 4.0 Internationaal",
+                "spdx": "CC-BY-4.0",
+                "donlLabel": "CC-BY (4.0)",
+                "matches": [
+                    "http://creativecommons.org/licenses/by/4.0/",
+                    "http://spdx.org/licenses/CC-BY-4.0",
+                    "http://creativecommons.org/licenses/by/4.0/deed.nl"
+                ]
+            },
+            "CC_BYNC_4_0": {
+                "iri": "http://publications.europa.eu/resource/authority/licence/CC_BYNC_4_0",
+                "label": "Creative Commons Attribution–NonCommercial 4.0 International",
+                "labelNl": "Creative Commons Naamsvermelding–NietCommercieel 4.0 Internationaal",
+                "spdx": "CC-BY-NC-4.0",
+                "donlLabel": "CC-BY-NC (4.0)",
+                "matches": [
+                    "http://creativecommons.org/licenses/by-nc/4.0/",
+                    "http://spdx.org/licenses/CC-BY-NC-4.0",
+                    "https://creativecommons.org/licenses/by-nc/4.0/deed.nl"
+                ]
+            },
+            "CC_BYSA_4_0": {
+                "iri": "http://publications.europa.eu/resource/authority/licence/CC_BYSA_4_0",
+                "label": "Creative Commons Attribution–ShareAlike 4.0 International",
+                "labelNl": "Creative Commons Naamsvermelding–GelijkDelen 4.0 Internationaal",
+                "spdx": "CC-BY-SA-4.0",
+                "donlLabel": "CC-BY-SA (4.0)",
+                "matches": [
+                    "http://creativecommons.org/licenses/by-sa/4.0/",
+                    "http://spdx.org/licenses/CC-BY-SA-4.0",
+                    "http://creativecommons.org/licenses/by-sa/4.0/deed.nl"
+                ]
+            },
+            "CC_PDM_1_0": {
+                "iri": "http://publications.europa.eu/resource/authority/licence/CC_PDM_1_0",
+                "label": "Creative Commons Public Domain Mark 1.0 Universal",
+                "labelNl": "Creative Commons Public Domain Mark 1.0 Universeel",
+                "donlLabel": "Publiek domein",
+                "matches": [
+                    "http://creativecommons.org/publicdomain/mark/1.0/",
+                    "http://creativecommons.org/publicdomain/mark/1.0/deed.nl"
+                ]
+            }
+        }
     }
 }

@@ -216,6 +216,7 @@ class DcatMappingService {
 	 * @return array<string, mixed> The mapped properties, in mapping order.
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
 	 */
 	private function mapProperties(DcatDatasetSource $source, array $mapping): array {
 		$values = $this->mappedValues(publication: $source->publication, mapping: $mapping);
@@ -223,6 +224,10 @@ class DcatMappingService {
 		$properties = array_replace($values, $lists);
 		if (isset($values['dcat:theme']) === true && isset($lists['dcat:theme']) === false) {
 			$properties['dcat:theme'] = $this->themeNode(source: $source, value: $values['dcat:theme']);
+		}
+
+		if (isset($values['dct:license']) === true) {
+			$properties['dct:license'] = $this->datasetLicenceNode(source: $source, value: $values['dct:license']);
 		}
 
 		foreach (self::LANGUAGE_TAGGED as $dcatProperty) {
@@ -394,6 +399,78 @@ class DcatMappingService {
 	}//end themeNode()
 
 	/**
+	 * The `dct:license` node of a resolved licence, or null when it is not on the
+	 * EU licences authority list.
+	 *
+	 * @param mixed $value The declared licence: an IRI, code or label.
+	 *
+	 * @return array{'@id': string}|null
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	public function licenceNode(mixed $value): ?array {
+		if (is_string($value) === false) {
+			return null;
+		}
+
+		$iri = $this->vocabulary->resolveLicence(value: $value);
+		if ($iri === null) {
+			return null;
+		}
+
+		return ['@id' => $iri];
+	}//end licenceNode()
+
+	/**
+	 * The dataset's `dct:license` node, or null after reporting the unresolved value on the source.
+	 *
+	 * @param DcatDatasetSource $source The publication being mapped.
+	 * @param mixed $value The mapped licence value.
+	 *
+	 * @return array{'@id': string}|null
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	private function datasetLicenceNode(DcatDatasetSource $source, mixed $value): ?array {
+		$node = $this->licenceNode(value: $value);
+		if ($node === null) {
+			$this->reportUnresolvedLicence(source: $source, value: $value);
+		}
+
+		return $node;
+	}//end datasetLicenceNode()
+
+	/**
+	 * Report a licence that is not on the list, once per dataset.
+	 *
+	 * @param DcatDatasetSource $source The publication being mapped.
+	 * @param mixed $value The unresolved licence value.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	private function reportUnresolvedLicence(DcatDatasetSource $source, mixed $value): void {
+		foreach ($source->violations as $violation) {
+			if (($violation['axis'] ?? '') === 'dct:license') {
+				return;
+			}
+		}
+
+		$shown = '';
+		if (is_scalar($value) === true) {
+			$shown = (string)$value;
+		}
+
+		$source->violations[] = [
+			'iri' => $source->datasetIri,
+			'axis' => 'dct:license',
+			'value' => $shown,
+			'reason' => 'licence is not on the EU licences authority list',
+		];
+	}//end reportUnresolvedLicence()
+
+	/**
 	 * The two HVD triples (DCAT-NPF-002), or none when no HVD category resolves.
 	 *
 	 * @param array<string, mixed> $publication The publication object.
@@ -500,9 +577,15 @@ class DcatMappingService {
 	 * @return array<int, array<string, mixed>> The distribution nodes.
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
 	 */
 	private function mapDistributions(DcatDatasetSource $source, array $defaults): array {
-		$defaultLicense = ($source->publication['license'] ?? $defaults['license'] ?? null);
+		$declaredLicence = ($source->publication['license'] ?? $defaults['license'] ?? null);
+		$defaultLicense = ($this->licenceNode(value: $declaredLicence)['@id'] ?? null);
+		if ($defaultLicense === null && in_array($declaredLicence, [null, ''], true) === false && $source->files !== []) {
+			$this->reportUnresolvedLicence(source: $source, value: $declaredLicence);
+		}
+
 		$distributions = [];
 		foreach ($source->files as $file) {
 			// REQ-ATT-103: a file whose own publication window has ended is withdrawn.

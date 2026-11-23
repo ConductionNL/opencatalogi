@@ -624,12 +624,14 @@ class DcatService implements DcatServiceInterface {
 	 * @return array
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
 	 */
 	private function buildCatalogNode(array $catalog, array $scope): array {
 		$defaults = $scope['defaults'];
 		$optional = [
 			'dct:description' => ($catalog['description'] ?? ''),
 			'dct:publisher' => $this->mappingService->buildPublisher(organisation: ($defaults['organisation'] ?? null), defaults: $defaults),
+			'dct:license' => $this->mappingService->licenceNode(value: ($defaults['license'] ?? null)),
 		];
 
 		return [
@@ -837,16 +839,18 @@ class DcatService implements DcatServiceInterface {
 	 *
 	 * @return array<string, mixed> The root node with its terms.
 	 *
-	 * @spec exclude Internal harvest-source step of buildInstanceDocument().
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
 	 */
 	private function withInstanceTerms(array $rootNode, ?array $publisher): array {
 		if ($publisher !== null) {
 			$rootNode['dct:publisher'] = $publisher;
 		}
 
-		$license = $this->instance->stringValue('dcat_default_license', 'http://creativecommons.org/publicdomain/zero/1.0/');
-		if ($license !== '') {
-			$rootNode['dct:license'] = ['@id' => $license];
+		$license = $this->mappingService->licenceNode(
+			value: $this->instance->stringValue('dcat_default_license', 'http://creativecommons.org/publicdomain/zero/1.0/')
+		);
+		if ($license !== null) {
+			$rootNode['dct:license'] = $license;
 		}
 
 		$contactPoint = $this->instance->stringValue('dcat_contact_point', '');
@@ -869,12 +873,15 @@ class DcatService implements DcatServiceInterface {
 	 * @return array<int, array<string, mixed>> One entry per violating dataset.
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
 	 */
 	public function validateCatalog(array $catalog, string $catalogSlug): array {
-		$document = $this->buildCatalogDocument(catalog: $catalog, catalogSlug: $catalogSlug, page: 1);
+		$collected = [];
+		$document = $this->buildCatalogDocument(catalog: $catalog, catalogSlug: $catalogSlug, page: 1, violations: $collected);
 		$violations = $this->assurance->profileVersionViolations();
+		$licences = array_values(array_filter($collected, static fn (array $violation): bool => ($violation['axis'] ?? '') === 'dct:license'));
 
-		return array_merge($violations, $this->datasetViolations(document: $document, tag: []));
+		return array_merge($violations, $licences, $this->datasetViolations(document: $document, tag: []));
 	}//end validateCatalog()
 
 	/**
