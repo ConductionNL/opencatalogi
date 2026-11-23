@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Gan téacs: níl OCR suiteáilte",
         "This attachment or publication was not found.": "Níor aimsíodh an ceangaltán ná an foilseachán seo.",
         "The file id is not valid.": "Níl aitheantas an chomhaid bailí.",
-        "Attachment reading is not set up on this instance.": "Níl léamh ceangaltán socraithe ar an gcás seo."
+        "Attachment reading is not set up on this instance.": "Níl léamh ceangaltán socraithe ar an gcás seo.",
+        "Choose a licence from the EU licences authority list.": "Roghnaigh ceadúnas ó liosta ceadúnas an AE."
     },
     "nplurals=2; plural=(n != 1);"
 )

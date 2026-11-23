@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Metin yok: OCR yüklü değil",
         "This attachment or publication was not found.": "Bu ek veya yayın bulunamadı.",
         "The file id is not valid.": "Dosya kimliği geçerli değil.",
-        "Attachment reading is not set up on this instance.": "Eklerin okunması bu kurulumda yapılandırılmamış."
+        "Attachment reading is not set up on this instance.": "Eklerin okunması bu kurulumda yapılandırılmamış.",
+        "Choose a licence from the EU licences authority list.": "AB lisans listesinden bir lisans seçin."
     },
     "nplurals=2; plural=(n != 1);"
 )

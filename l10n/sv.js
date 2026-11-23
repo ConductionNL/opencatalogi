@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Ingen text: OCR är inte installerat",
         "This attachment or publication was not found.": "Den här bilagan eller publikationen hittades inte.",
         "The file id is not valid.": "Fil-id:t är ogiltigt.",
-        "Attachment reading is not set up on this instance.": "Läsning av bilagor är inte konfigurerad på den här instansen."
+        "Attachment reading is not set up on this instance.": "Läsning av bilagor är inte konfigurerad på den här instansen.",
+        "Choose a licence from the EU licences authority list.": "Välj en licens från EU:s licenslista."
     },
     "nplurals=2; plural=(n != 1);"
 )

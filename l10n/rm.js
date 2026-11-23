@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Nagin text: OCR n'è betg installà",
         "This attachment or publication was not found.": "Questa agiunta u publicaziun n'è betg vegnida chattada.",
         "The file id is not valid.": "L'ID da la datoteca n'è betg valaivla.",
-        "Attachment reading is not set up on this instance.": "La lectura d'agiuntas n'è betg configurada sin questa instanza."
+        "Attachment reading is not set up on this instance.": "La lectura d'agiuntas n'è betg configurada sin questa instanza.",
+        "Choose a licence from the EU licences authority list.": "Tschernai ina licenza da la glista da licenzas da l'UE."
     },
     "nplurals=2; plural=(n != 1);"
 )

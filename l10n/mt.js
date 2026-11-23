@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "L-ebda test: l-OCR mhuwiex installat",
         "This attachment or publication was not found.": "Dan l-anness jew il-pubblikazzjoni ma nstabux.",
         "The file id is not valid.": "L-id tal-fajl mhuwiex validu.",
-        "Attachment reading is not set up on this instance.": "Il-qari tal-annessi mhuwiex issettjat f'din l-istanza."
+        "Attachment reading is not set up on this instance.": "Il-qari tal-annessi mhuwiex issettjat f'din l-istanza.",
+        "Choose a licence from the EU licences authority list.": "Agħżel liċenzja mil-lista tal-liċenzji tal-UE."
     },
     "nplurals=2; plural=(n != 1);"
 )

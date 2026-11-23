@@ -180,6 +180,11 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationAudienceCheck::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationAudienceCheck::class);
 
+		// A new licence on a catalogue or publication comes from the EU licences
+		// authority list, the only values the DCAT feed emits (dcat-catalogue-completion, REQ-DCC-001).
+		$context->registerEventListener(ObjectCreatingEvent::class, LicenceCheck::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, LicenceCheck::class);
+
 		// A Woo batch whose review task is rejected in OpenRegister goes back to its
 		// author with the task's comment (woo-review-surface, REQ-WRV-002).
 		$context->registerEventListener(TaskTerminalEvent::class, BatchReviewTaskListener::class);

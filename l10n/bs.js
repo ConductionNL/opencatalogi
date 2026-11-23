@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Nema teksta: OCR nije instaliran",
         "This attachment or publication was not found.": "Ovaj prilog ili publikacija nije pronađen.",
         "The file id is not valid.": "ID datoteke nije važeći.",
-        "Attachment reading is not set up on this instance.": "Čitanje priloga nije postavljeno na ovoj instanci."
+        "Attachment reading is not set up on this instance.": "Čitanje priloga nije postavljeno na ovoj instanci.",
+        "Choose a licence from the EU licences authority list.": "Odaberite licencu sa liste licenci EU."
     },
     "nplurals=2; plural=(n != 1);"
 )

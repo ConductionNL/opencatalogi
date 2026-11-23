@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Χωρίς κείμενο: το OCR δεν είναι εγκατεστημένο",
         "This attachment or publication was not found.": "Αυτό το συνημμένο ή η δημοσίευση δεν βρέθηκε.",
         "The file id is not valid.": "Το αναγνωριστικό του αρχείου δεν είναι έγκυρο.",
-        "Attachment reading is not set up on this instance.": "Η ανάγνωση συνημμένων δεν έχει ρυθμιστεί σε αυτή την εγκατάσταση."
+        "Attachment reading is not set up on this instance.": "Η ανάγνωση συνημμένων δεν έχει ρυθμιστεί σε αυτή την εγκατάσταση.",
+        "Choose a licence from the EU licences authority list.": "Επιλέξτε άδεια από τον κατάλογο αδειών της ΕΕ."
     },
     "nplurals=2; plural=(n != 1);"
 )
