@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for DcatLicenceSetting: the default DCAT licence is a member of
+ * Unit tests for DcatLicenceRule: the default DCAT licence is a member of
  * the EU licences authority list, stored as its authority IRI.
  *
  * @category Test
@@ -24,23 +24,23 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
 
 use InvalidArgumentException;
-use OCA\OpenCatalogi\Service\DcatLicenceSetting;
+use OCA\OpenCatalogi\Service\DcatLicenceRule;
 use OCA\OpenCatalogi\Service\DcatVocabularyService;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \OCA\OpenCatalogi\Service\DcatLicenceSetting
+ * @covers \OCA\OpenCatalogi\Service\DcatLicenceRule
  * @uses \OCA\OpenCatalogi\Service\DcatVocabularyService
  */
-final class DcatLicenceSettingTest extends TestCase {
+final class DcatLicenceRuleTest extends TestCase {
 
 	/**
-	 * The setting on the real bundled list.
+	 * The rule on the real bundled list.
 	 *
-	 * @return DcatLicenceSetting
+	 * @return DcatLicenceRule
 	 */
-	private function setting(): DcatLicenceSetting {
-		return new DcatLicenceSetting(vocabulary: new DcatVocabularyService());
+	private function rule(): DcatLicenceRule {
+		return new DcatLicenceRule(vocabulary: new DcatVocabularyService());
 	}//end setting()
 
 	/**
@@ -51,7 +51,7 @@ final class DcatLicenceSettingTest extends TestCase {
 	public function testTheShippedDefaultResolves(): void {
 		$this->assertSame(
 			expected: 'http://publications.europa.eu/resource/authority/licence/CC0',
-			actual: $this->setting()->storable(value: 'http://creativecommons.org/publicdomain/zero/1.0/')
+			actual: $this->rule()->storable(value: 'http://creativecommons.org/publicdomain/zero/1.0/')
 		);
 	}//end testTheShippedDefaultResolves()
 
@@ -61,8 +61,8 @@ final class DcatLicenceSettingTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnEmptyChoiceStoresNothing(): void {
-		$this->assertSame(expected: '', actual: $this->setting()->storable(value: '  '));
-		$this->assertSame(expected: '', actual: $this->setting()->storable(value: null));
+		$this->assertSame(expected: '', actual: $this->rule()->storable(value: '  '));
+		$this->assertSame(expected: '', actual: $this->rule()->storable(value: null));
 	}//end testAnEmptyChoiceStoresNothing()
 
 	/**
@@ -73,11 +73,23 @@ final class DcatLicenceSettingTest extends TestCase {
 	public function testAnUnlistedValueIsRefused(): void {
 		foreach (['vrij te gebruiken', 42] as $value) {
 			try {
-				$this->setting()->storable(value: $value);
+				$this->rule()->storable(value: $value);
 				$this->fail(message: 'Refusal expected for ' . var_export(value: $value, return: true));
 			} catch (InvalidArgumentException $e) {
 				$this->assertStringContainsString(needle: 'dcat_default_license', haystack: $e->getMessage());
 			}
 		}
 	}//end testAnUnlistedValueIsRefused()
+
+	/**
+	 * A code, an IRI or a matching Creative Commons URI is listed; free text and a list are not.
+	 *
+	 * @return void
+	 */
+	public function testIsListedFollowsTheBundledList(): void {
+		$this->assertTrue(condition: $this->rule()->isListed(value: 'CC0'));
+		$this->assertTrue(condition: $this->rule()->isListed(value: 'http://publications.europa.eu/resource/authority/licence/CC_BY_4_0'));
+		$this->assertFalse(condition: $this->rule()->isListed(value: 'vrij te gebruiken'));
+		$this->assertFalse(condition: $this->rule()->isListed(value: ['CC0']));
+	}//end testIsListedFollowsTheBundledList()
 }//end class

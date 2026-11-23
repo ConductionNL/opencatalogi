@@ -1,7 +1,7 @@
 <?php
 
 /**
- * OpenCatalogi default DCAT licence setting as the administrator enters it.
+ * OpenCatalogi DCAT licence rule: a licence comes from the EU licences authority list.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service
@@ -27,15 +27,14 @@ namespace OCA\OpenCatalogi\Service;
 use InvalidArgumentException;
 
 /**
- * Turns the licence an administrator chose into the stored `dcat_default_license`.
- *
- * The value must name a member of the EU licences authority list (by IRI, code
- * or label); it is stored as that member's authority IRI. An empty value stores
- * an empty setting, so the feed carries no default licence.
+ * Says whether a licence names a member of the EU licences authority list (by
+ * IRI, code or label), and turns the licence an administrator chose into the
+ * stored `dcat_default_license`: that member's authority IRI, or an empty
+ * setting, so the feed carries no default licence.
  *
  * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
  */
-final class DcatLicenceSetting {
+final class DcatLicenceRule {
 
 	/**
 	 * The config key this setting is stored under.
@@ -54,6 +53,20 @@ final class DcatLicenceSetting {
 	) {
 
 	}//end __construct()
+
+	/**
+	 * Whether a licence is a member of the list.
+	 *
+	 * @param mixed $value The licence.
+	 *
+	 * @return bool True when it resolves to an authority IRI.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	public function isListed(mixed $value): bool {
+		return is_string($value) === true && $this->vocabulary->resolveLicence(value: $value) !== null;
+
+	}//end isListed()
 
 	/**
 	 * The value to store for what the administrator chose.

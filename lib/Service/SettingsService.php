@@ -969,8 +969,9 @@ class SettingsService implements SettingsServiceInterface {
 			$data['cors_allowed_origins'] = CorsOriginSetting::storable(value: $data['cors_allowed_origins']);
 		}
 
-		if (array_key_exists(DcatLicenceSetting::KEY, $data) === true) {
-			$data[DcatLicenceSetting::KEY] = (new DcatLicenceSetting(vocabulary: new DcatVocabularyService()))->storable(value: $data[DcatLicenceSetting::KEY]);
+		if (array_key_exists(DcatLicenceRule::KEY, $data) === true) {
+			$licence = new DcatLicenceRule(vocabulary: new DcatVocabularyService());
+			$data[DcatLicenceRule::KEY] = $licence->storable(value: $data[DcatLicenceRule::KEY]);
 		}
 
 		try {

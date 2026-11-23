@@ -35,7 +35,7 @@ use OCP\IL10N;
 use OCP\IAppConfig;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use OCA\OpenCatalogi\Service\DcatVocabularyService;
+use OCA\OpenCatalogi\Service\DcatLicenceRule;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 
@@ -60,14 +60,14 @@ class LicenceCheck implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config Names the catalogue and publication schemas.
-	 * @param DcatVocabularyService $vocabulary Resolves a licence against the bundled list.
+	 * @param DcatLicenceRule $licences Says whether a licence is on the bundled list.
 	 * @param IL10N $l10n Localisation.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly DcatVocabularyService $vocabulary,
+		private readonly DcatLicenceRule $licences,
 		private readonly IL10N $l10n,
 	) {
 
@@ -85,33 +85,42 @@ class LicenceCheck implements IEventListener {
 	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
 	 */
 	public function handle(Event $event): void {
-		$written = null;
-		$stored  = [];
 		if ($event instanceof ObjectUpdatingEvent === true) {
 			$written = $event->getNewObject();
 			$stored  = ($event->getOldObject()?->getObject() ?? []);
-		} else if ($event instanceof ObjectCreatingEvent === true) {
+			$this->check(event: $event, schema: (string)$written->getSchema(), data: ($written->getObject() ?? []), stored: $stored);
+			return;
+		}
+
+		if ($event instanceof ObjectCreatingEvent === true) {
 			$written = $event->getObject();
+			$this->check(event: $event, schema: (string)$written->getSchema(), data: ($written->getObject() ?? []), stored: []);
 		}
 
-		if ($written === null) {
-			return;
-		}
+	}//end handle()
 
-		$field = $this->fieldOf(schema: (string)$written->getSchema());
-		if ($field === null) {
-			return;
-		}
-
-		$value = (($written->getObject() ?? [])[$field] ?? null);
-		if ($this->isAcceptable(value: $value, stored: ($stored[$field] ?? null)) === true) {
+	/**
+	 * Refuse the save, naming the property, when its licence may not be saved.
+	 *
+	 * @param ObjectCreatingEvent|ObjectUpdatingEvent $event The pre-save event.
+	 * @param string $schema The schema id of the written object.
+	 * @param array<string, mixed> $data The object as it would be written.
+	 * @param array<string, mixed> $stored The object as stored, empty on create.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	private function check(ObjectCreatingEvent|ObjectUpdatingEvent $event, string $schema, array $data, array $stored): void {
+		$field = $this->fieldOf(schema: $schema);
+		if ($field === null || $this->isAcceptable(value: ($data[$field] ?? null), stored: ($stored[$field] ?? null)) === true) {
 			return;
 		}
 
 		$event->setErrors(['message' => $this->l10n->t('Choose a licence from the EU licences authority list.'), 'property' => $field]);
 		$event->stopPropagation();
 
-	}//end handle()
+	}//end check()
 
 	/**
 	 * Whether a written licence may be saved: none, unchanged, or a member of the list.
@@ -128,7 +137,7 @@ class LicenceCheck implements IEventListener {
 			return true;
 		}
 
-		return is_string($value) === true && $this->vocabulary->resolveLicence(value: $value) !== null;
+		return $this->licences->isListed(value: $value);
 
 	}//end isAcceptable()
 
