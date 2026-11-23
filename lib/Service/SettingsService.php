@@ -176,6 +176,7 @@ class SettingsService implements SettingsServiceInterface {
 				'publication_process_schema' => 'publicationProcess',
 				'zienswijze_ask_schema' => 'zienswijzeAsk',
 				'depublication_schema' => 'depublication',
+				'publication_version_schema' => 'publicationVersion',
 				'obligation_source_schema' => 'obligationSource',
 			],
 		],

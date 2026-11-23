@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "De offentlige dokumenter i denne version, kopieret til versionen.",
         "The document's title.": "Dokumentets titel.",
         "The document's file format.": "Dokumentets filformat.",
-        "The copy of the document kept on this version.": "Kopien af dokumentet, der gemmes med denne version."
+        "The copy of the document kept on this version.": "Kopien af dokumentet, der gemmes med denne version.",
+        "The earlier public version could not be kept, so the change was not saved.": "Den tidligere offentlige version kunne ikke bevares, så ændringen blev ikke gemt."
     },
     "nplurals=2; plural=(n != 1);"
 )

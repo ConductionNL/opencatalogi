@@ -825,7 +825,8 @@
         "The public documents of this version, copied onto the version.": "Šios versijos vieši dokumentai, nukopijuoti į versiją.",
         "The document's title.": "Dokumento pavadinimas.",
         "The document's file format.": "Dokumento failo formatas.",
-        "The copy of the document kept on this version.": "Dokumento kopija, saugoma su šia versija."
+        "The copy of the document kept on this version.": "Dokumento kopija, saugoma su šia versija.",
+        "The earlier public version could not be kept, so the change was not saved.": "Ankstesnės viešos versijos išsaugoti nepavyko, todėl pakeitimas neišsaugotas."
     },
     "plurals": {}
 }

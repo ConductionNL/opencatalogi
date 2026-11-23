@@ -825,7 +825,8 @@
         "The public documents of this version, copied onto the version.": "Opinber skjöl þessarar útgáfu, afrituð á útgáfuna.",
         "The document's title.": "Titill skjalsins.",
         "The document's file format.": "Skráarsnið skjalsins.",
-        "The copy of the document kept on this version.": "Afrit skjalsins sem geymt er með þessari útgáfu."
+        "The copy of the document kept on this version.": "Afrit skjalsins sem geymt er með þessari útgáfu.",
+        "The earlier public version could not be kept, so the change was not saved.": "Ekki tókst að varðveita fyrri opinberu útgáfuna, svo breytingin var ekki vistuð."
     },
     "plurals": {}
 }

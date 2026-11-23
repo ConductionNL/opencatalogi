@@ -237,6 +237,8 @@ class ListenerRegistrar {
 	 * by a caller who may not lift an embargo (publication-schedule-guards, REQ-PSG-001).
 	 * A new licence on a catalogue or publication comes from the EU licences
 	 * authority list (dcat-catalogue-completion, REQ-DCC-001).
+	 * A correction to a public publication keeps the earlier public version,
+	 * or is refused (publication-withdrawal-aftercare, REQ-PWA-001).
 	 * Only an administrator marks a subject as an archive hotspot, with a
 	 * reason; the marking sets the subject's appraisal and is audited after the
 	 * save (theme-archive-hotspot, REQ-THA-001).
@@ -249,6 +251,7 @@ class ListenerRegistrar {
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.1
 	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
 	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-1.2
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-1.2
 	 */
 	private function registerWriteGuards(IRegistrationContext $context): void {
 		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
@@ -258,6 +261,7 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectUpdatingEvent::class, EmbargoGuardListener::class);
 		$context->registerEventListener(ObjectCreatingEvent::class, LicenceCheck::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, LicenceCheck::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationVersionListener::class);
 		$context->registerEventListener(ObjectCreatingEvent::class, ThemeHotspotGuard::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, ThemeHotspotGuard::class);
 		$context->registerEventListener(ObjectCreatedEvent::class, ThemeHotspotAudit::class);

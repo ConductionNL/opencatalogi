@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Doiciméid phoiblí an leagain seo, cóipeáilte ar an leagan.",
         "The document's title.": "Teideal an doiciméid.",
         "The document's file format.": "Formáid comhaid an doiciméid.",
-        "The copy of the document kept on this version.": "Cóip an doiciméid a choinnítear leis an leagan seo."
+        "The copy of the document kept on this version.": "Cóip an doiciméid a choinnítear leis an leagan seo.",
+        "The earlier public version could not be kept, so the change was not saved.": "Níorbh fhéidir an leagan poiblí roimhe seo a choinneáil, mar sin níor sábháladh an t-athrú."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Documentele publice ale acestei versiuni, copiate pe versiune.",
         "The document's title.": "Titlul documentului.",
         "The document's file format.": "Formatul de fișier al documentului.",
-        "The copy of the document kept on this version.": "Copia documentului păstrată cu această versiune."
+        "The copy of the document kept on this version.": "Copia documentului păstrată cu această versiune.",
+        "The earlier public version could not be kept, so the change was not saved.": "Versiunea publică anterioară nu a putut fi păstrată, așa că modificarea nu a fost salvată."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

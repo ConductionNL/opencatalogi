@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Déi ëffentlech Dokumenter vun dëser Versioun, op d'Versioun kopéiert.",
         "The document's title.": "Den Titel vum Dokument.",
         "The document's file format.": "De Fichiersformat vum Dokument.",
-        "The copy of the document kept on this version.": "D'Kopie vum Dokument, déi mat dëser Versioun gehale gëtt."
+        "The copy of the document kept on this version.": "D'Kopie vum Dokument, déi mat dëser Versioun gehale gëtt.",
+        "The earlier public version could not be kept, so the change was not saved.": "Déi fréier ëffentlech Versioun konnt net gehale ginn, dofir gouf d'Ännerung net gespäichert."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Los documentos públicos de esta versión, copiados en la versión.",
         "The document's title.": "El título del documento.",
         "The document's file format.": "El formato de archivo del documento.",
-        "The copy of the document kept on this version.": "La copia del documento que se conserva con esta versión."
+        "The copy of the document kept on this version.": "La copia del documento que se conserva con esta versión.",
+        "The earlier public version could not be kept, so the change was not saved.": "No se pudo conservar la versión pública anterior, por lo que el cambio no se ha guardado."
     },
     "nplurals=2; plural=(n != 1);"
 )

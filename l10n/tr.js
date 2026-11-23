@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Bu sürümün herkese açık belgeleri, sürüme kopyalanmış olarak.",
         "The document's title.": "Belgenin başlığı.",
         "The document's file format.": "Belgenin dosya biçimi.",
-        "The copy of the document kept on this version.": "Belgenin bu sürümle saklanan kopyası."
+        "The copy of the document kept on this version.": "Belgenin bu sürümle saklanan kopyası.",
+        "The earlier public version could not be kept, so the change was not saved.": "Önceki herkese açık sürüm korunamadı, bu nedenle değişiklik kaydedilmedi."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -46,6 +46,7 @@ use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\EmbargoGuardListener;
 use OCA\OpenCatalogi\Listener\LicenceCheck;
+use OCA\OpenCatalogi\Listener\PublicationVersionListener;
 use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
 use OCA\OpenCatalogi\Listener\ThemeHotspotAudit;
 use OCA\OpenCatalogi\Listener\ThemeHotspotGuard;
@@ -161,6 +162,7 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', EmbargoGuardListener::class],
 				[$e . 'ObjectCreatingEvent', LicenceCheck::class],
 				[$e . 'ObjectUpdatingEvent', LicenceCheck::class],
+				[$e . 'ObjectUpdatingEvent', PublicationVersionListener::class],
 				[$e . 'ObjectCreatingEvent', ThemeHotspotGuard::class],
 				[$e . 'ObjectUpdatingEvent', ThemeHotspotGuard::class],
 				[$e . 'ObjectCreatedEvent', ThemeHotspotAudit::class],

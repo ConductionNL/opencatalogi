@@ -2130,7 +2130,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "De openbare documenten van deze versie, gekopieerd naar de versie.",
         "The document's title.": "De titel van het document.",
         "The document's file format.": "Het bestandsformaat van het document.",
-        "The copy of the document kept on this version.": "De kopie van het document die bij deze versie wordt bewaard."
+        "The copy of the document kept on this version.": "De kopie van het document die bij deze versie wordt bewaard.",
+        "The earlier public version could not be kept, so the change was not saved.": "De eerdere openbare versie kon niet worden bewaard, dus de wijziging is niet opgeslagen."
     },
     "nplurals=2; plural=(n != 1);"
 )

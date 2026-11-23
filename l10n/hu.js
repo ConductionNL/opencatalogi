@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "E verzió nyilvános dokumentumai, a verzióra másolva.",
         "The document's title.": "A dokumentum címe.",
         "The document's file format.": "A dokumentum fájlformátuma.",
-        "The copy of the document kept on this version.": "A dokumentum e verzióval megőrzött másolata."
+        "The copy of the document kept on this version.": "A dokumentum e verzióval megőrzött másolata.",
+        "The earlier public version could not be kept, so the change was not saved.": "A korábbi nyilvános változatot nem sikerült megőrizni, ezért a módosítás nem lett mentve."
     },
     "nplurals=2; plural=(n != 1);"
 )

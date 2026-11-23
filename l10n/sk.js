@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Verejné dokumenty tejto verzie, skopírované do verzie.",
         "The document's title.": "Názov dokumentu.",
         "The document's file format.": "Formát súboru dokumentu.",
-        "The copy of the document kept on this version.": "Kópia dokumentu uchovaná s touto verziou."
+        "The copy of the document kept on this version.": "Kópia dokumentu uchovaná s touto verziou.",
+        "The earlier public version could not be kept, so the change was not saved.": "Predchádzajúcu verejnú verziu nebolo možné uchovať, preto zmena nebola uložená."
     },
     "nplurals=2; plural=(n != 1);"
 )

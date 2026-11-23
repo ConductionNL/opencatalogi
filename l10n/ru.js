@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Публичные документы этой версии, скопированные в версию.",
         "The document's title.": "Заголовок документа.",
         "The document's file format.": "Формат файла документа.",
-        "The copy of the document kept on this version.": "Копия документа, хранящаяся с этой версией."
+        "The copy of the document kept on this version.": "Копия документа, хранящаяся с этой версией.",
+        "The earlier public version could not be kept, so the change was not saved.": "Не удалось сохранить предыдущую публичную версию, поэтому изменение не сохранено."
     },
     "nplurals=2; plural=(n != 1);"
 )

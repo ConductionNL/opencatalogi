@@ -825,7 +825,8 @@
         "The public documents of this version, copied onto the version.": "I documenti pubblici di questa versione, copiati sulla versione.",
         "The document's title.": "Il titolo del documento.",
         "The document's file format.": "Il formato del file del documento.",
-        "The copy of the document kept on this version.": "La copia del documento conservata con questa versione."
+        "The copy of the document kept on this version.": "La copia del documento conservata con questa versione.",
+        "The earlier public version could not be kept, so the change was not saved.": "Non è stato possibile conservare la versione pubblica precedente, quindi la modifica non è stata salvata."
     },
     "plurals": {}
 }

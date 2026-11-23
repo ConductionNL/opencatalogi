@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Selle versiooni avalikud dokumendid, versioonile kopeeritud.",
         "The document's title.": "Dokumendi pealkiri.",
         "The document's file format.": "Dokumendi failivorming.",
-        "The copy of the document kept on this version.": "Dokumendi koopia, mida selle versiooniga hoitakse."
+        "The copy of the document kept on this version.": "Dokumendi koopia, mida selle versiooniga hoitakse.",
+        "The earlier public version could not be kept, so the change was not saved.": "Varasemat avalikku versiooni ei õnnestunud säilitada, seega muudatust ei salvestatud."
     },
     "nplurals=2; plural=(n != 1);"
 )
