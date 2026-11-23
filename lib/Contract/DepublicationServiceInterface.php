@@ -66,7 +66,8 @@ interface DepublicationServiceInterface {
 	 *
 	 * @throws DomainException When no reason is given.
 	 *
-	 * @contract-shift internal-only — DepublicationService, in this app, is the only implementer; every double of the interface in this app is a createMock() that picks the method up.
+	 * @contract-shift internal-only — DepublicationService, in this app, is the only implementer;
+	 *                 every double of the interface in this app is a createMock() that picks the method up.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
