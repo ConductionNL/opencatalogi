@@ -282,6 +282,12 @@ class PublicationWithdrawGoldenTest extends TestCase {
 				return ['publication' => ($publication['id'] ?? null), 'reason' => $reason, 'by' => $depublishedBy, 'channels' => $channels];
 			}
 		);
+		$depublisher->method('depublishDocument')->willReturnCallback(
+			static function (array $publication, string $reason, string $depublishedBy) use (&$calls): array {
+				$calls[] = ['depublishDocument', $publication, $reason, $depublishedBy];
+				return ['publication' => ($publication['id'] ?? null), 'reason' => $reason, 'by' => $depublishedBy, 'channels' => []];
+			}
+		);
 		$depublisher->method('outstandingChannels')->willReturnCallback(
 			static function (array $depublication) use (&$calls, $case): array {
 				$calls[] = ['outstandingChannels', $depublication];

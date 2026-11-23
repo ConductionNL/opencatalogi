@@ -350,7 +350,7 @@ class PublicationStateControllerTest extends TestCase {
 					freezer: $freezer
 				),
 				$container,
-				new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects)
+				new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(originalClassName: IAppManager::class)), $objects)
 			),
 			new PublishTransition(
 				container: $container,
