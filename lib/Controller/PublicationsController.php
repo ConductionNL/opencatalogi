@@ -48,7 +48,6 @@ use OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface;
 use OCA\OpenCatalogi\Contract\PublicDocumentsInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Http\DcatNegotiation;
-use OCA\OpenCatalogi\Service\Publication\PublicationTombstone;
 use OCA\OpenCatalogi\Service\Publication\SignedInReadService;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
@@ -1171,7 +1170,7 @@ class PublicationsController extends Controller {
 			$tombstones = $this->container->get(PublicationTombstone::class);
 			$tombstone  = null;
 			if ($tombstones instanceof PublicationTombstone === true) {
-				$tombstone = $tombstones->tombstone(registers: $read->query->registers, schemas: $read->query->schemas, id: $read->query->slug);
+				$tombstone = $tombstones->tombstone(query: $read->query);
 			}
 		} catch (\Throwable $e) {
 			$this->logger->warning('[PublicationsController::show] The tombstone lookup failed: ' . $e->getMessage());

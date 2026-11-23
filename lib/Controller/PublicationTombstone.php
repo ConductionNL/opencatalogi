@@ -8,8 +8,8 @@
  * and the title only when the officer chose to show it) instead of the 404 of a
  * link that never existed. A draft that was never public stays a 404.
  *
- * @category Service
- * @package  OCA\OpenCatalogi\Service\Publication
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -27,7 +27,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Publication;
+namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
@@ -66,34 +66,32 @@ class PublicationTombstone {
 	 * The answer carries the id, the moment, the public reason, and the title
 	 * only when the depublication says to show it; nothing else of the record.
 	 *
-	 * @param array<int|string> $registers The catalogue's registers.
-	 * @param array<int|string> $schemas The catalogue's schemas.
-	 * @param string $id The publication id from the URL.
+	 * @param CatalogSlugQuery $query The catalogue's registers and schemas and the id from the URL.
 	 *
 	 * @return array{id: string, withdrawnAt: string|null, publicReason: string|null, title?: string}|null The tombstone.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
 	 */
-	public function tombstone(array $registers, array $schemas, string $id): ?array {
+	public function tombstone(CatalogSlugQuery $query): ?array {
 		$objectService = $this->openRegister->installedObjectService();
-		if (is_object($objectService) === false || trim($id) === '') {
+		if (is_object($objectService) === false || trim($query->slug) === '') {
 			return null;
 		}
 
-		$publication = $this->findAsSystem(objectService: $objectService, registers: $registers, schemas: $schemas, id: $id);
+		$publication = $this->findAsSystem(objectService: $objectService, query: $query);
 		if ($publication === null) {
 			return null;
 		}
 
 		$data = (array)($publication->getObject() ?? []);
-		$uuid = (string)($publication->getUuid() ?? $id);
-		$depublication = $this->latestDepublication(objectService: $objectService, publicationId: $uuid);
+		$identity = ['id' => (string)($publication->getUuid() ?? $query->slug), 'title' => (string)($data['title'] ?? '')];
+		$depublication = $this->latestDepublication(objectService: $objectService, publicationId: $identity['id']);
 		if ($depublication !== null) {
-			return self::fromDepublication(id: $uuid, depublication: $depublication, title: (string)($data['title'] ?? ''));
+			return self::fromDepublication(depublication: $depublication, identity: $identity);
 		}
 
 		if (($data['status'] ?? null) === 'archived' && trim((string)($data['firstReleasedAt'] ?? '')) !== '') {
-			return ['id' => $uuid, 'withdrawnAt' => self::textOrNull(value: ($data['depublicationDate'] ?? null)), 'publicReason' => null];
+			return ['id' => $identity['id'], 'withdrawnAt' => self::textOrNull(value: ($data['depublicationDate'] ?? null)), 'publicReason' => null];
 		}
 
 		return null;
@@ -103,22 +101,21 @@ class PublicationTombstone {
 	/**
 	 * The tombstone a depublication gives: its moment and public reason, the title only when chosen.
 	 *
-	 * @param string $id The publication id.
 	 * @param array<string, mixed> $depublication The depublication.
-	 * @param string $title The publication's title.
+	 * @param array{id: string, title: string} $identity The publication's id and title.
 	 *
 	 * @return array{id: string, withdrawnAt: string|null, publicReason: string|null, title?: string} The tombstone.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
 	 */
-	private static function fromDepublication(string $id, array $depublication, string $title): array {
+	private static function fromDepublication(array $depublication, array $identity): array {
 		$tombstone = [
-			'id' => $id,
+			'id' => $identity['id'],
 			'withdrawnAt' => self::textOrNull(value: ($depublication['depublishedAt'] ?? null)),
 			'publicReason' => self::textOrNull(value: ($depublication['publicReason'] ?? null)),
 		];
-		if (($depublication['tombstoneShowsTitle'] ?? false) === true && $title !== '') {
-			$tombstone['title'] = $title;
+		if (($depublication['tombstoneShowsTitle'] ?? false) === true && $identity['title'] !== '') {
+			$tombstone['title'] = $identity['title'];
 		}
 
 		return $tombstone;
@@ -129,37 +126,58 @@ class PublicationTombstone {
 	 * The publication in one of the catalogue's register and schema pairs, read with RBAC off, or null.
 	 *
 	 * @param object $objectService OpenRegister's ObjectService.
-	 * @param array<int|string> $registers The catalogue's registers.
-	 * @param array<int|string> $schemas The catalogue's schemas.
-	 * @param string $id The publication id.
+	 * @param CatalogSlugQuery $query The catalogue's registers and schemas and the id.
 	 *
 	 * @return object|null The stored publication.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
 	 */
-	private function findAsSystem(object $objectService, array $registers, array $schemas, string $id): ?object {
-		foreach (array_filter($registers, 'is_numeric') as $register) {
-			foreach (array_filter($schemas, 'is_numeric') as $schema) {
-				try {
-					$found = $objectService->find(
-						id: $id,
-						options: new ObjectFindOptions(register: (int)$register, schema: (int)$schema),
-						_rbac: false,
-						_multitenancy: false
-					);
-				} catch (Throwable $e) {
-					$found = null;
-				}
-
-				if (is_object($found) === true) {
-					return $found;
-				}
+	private function findAsSystem(object $objectService, CatalogSlugQuery $query): ?object {
+		foreach (self::pairsOf(query: $query) as $options) {
+			$found = self::attempt(read: static fn (): mixed => $objectService->find(id: $query->slug, options: $options, _rbac: false, _multitenancy: false));
+			if (is_object($found) === true) {
+				return $found;
 			}
 		}
 
 		return null;
 
 	}//end findAsSystem()
+
+	/**
+	 * The find options of every numeric register and schema pair of the catalogue.
+	 *
+	 * @param CatalogSlugQuery $query The catalogue's registers and schemas.
+	 *
+	 * @return array<int, ObjectFindOptions> The options, one per pair.
+	 */
+	private static function pairsOf(CatalogSlugQuery $query): array {
+		$pairs = [];
+		foreach (array_filter($query->registers, 'is_numeric') as $register) {
+			foreach (array_filter($query->schemas, 'is_numeric') as $schema) {
+				$pairs[] = new ObjectFindOptions(register: (int)$register, schema: (int)$schema);
+			}
+		}
+
+		return $pairs;
+
+	}//end pairsOf()
+
+	/**
+	 * Run one OpenRegister read; a read that throws answers null, so the caller keeps the 404.
+	 *
+	 * @param callable $read The read.
+	 *
+	 * @return mixed What the read answered, or null.
+	 */
+	private static function attempt(callable $read): mixed {
+		try {
+			return $read();
+		} catch (Throwable $e) {
+			return null;
+		}
+
+	}//end attempt()
 
 	/**
 	 * The latest depublication of the whole publication, or null.
@@ -175,19 +193,19 @@ class PublicationTombstone {
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
 	 */
 	private function latestDepublication(object $objectService, string $publicationId): ?array {
-		try {
-			$config = $this->openRegister->registerConfiguration(registerKey: 'publication_register', schemaKey: 'depublication_schema');
-			$result = $objectService->searchObjectsPaginated(
+		$result = self::attempt(
+			read: fn (): mixed => $objectService->searchObjectsPaginated(
 				query: [
 					'_limit' => self::DEPUBLICATION_LIMIT,
-					'@self' => ['register' => $config['register'], 'schema' => $config['schema']],
+					'@self' => $this->openRegister->registerConfiguration(registerKey: 'publication_register', schemaKey: 'depublication_schema'),
 					'publication' => $publicationId,
 				],
 				_rbac: false,
 				_multitenancy: false,
 				deleted: false
-			);
-		} catch (Throwable $e) {
+			)
+		);
+		if (is_array($result) === false) {
 			return null;
 		}
 

@@ -29,7 +29,7 @@ namespace OCA\OpenCatalogi\Tests\Unit\Controller;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCA\OpenCatalogi\Service\CatalogiService;
-use OCA\OpenCatalogi\Service\Publication\PublicationTombstone;
+use OCA\OpenCatalogi\Controller\PublicationTombstone;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\UsageCounterService;
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
 
 /**
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
- * @covers \OCA\OpenCatalogi\Service\Publication\PublicationTombstone
+ * @covers \OCA\OpenCatalogi\Controller\PublicationTombstone
  */
 final class PublicationTombstoneTest extends TestCase {
 
@@ -77,14 +77,16 @@ final class PublicationTombstoneTest extends TestCase {
 		// The anonymous read finds nothing.
 		$objects->method('searchObjects')->willReturn([]);
 		$objects->method('find')->willReturnCallback(
-			fn (int|string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): ?ObjectEntity => $this->systemRead(
+			fn (int|string $id, ?ObjectFindOptions $options = null, bool $_rbac = true): ?ObjectEntity => $this->systemRead(
 				id: (string)$id,
 				options: $options,
 				rbac: $_rbac
 			)
 		);
 		$objects->method('searchObjectsPaginated')->willReturnCallback(
-			fn (array $query = []): array => ['results' => array_values(array_filter($this->depublications, static fn (array $row): bool => ($query['@self']['schema'] ?? null) === 9))]
+			fn (array $query = []): array => [
+				'results' => (($query['@self']['schema'] ?? null) === 9) ? $this->depublications : [],
+			]
 		);
 
 		$lookup = $this->createMock(originalClassName: OpenRegisterLookupInterface::class);
@@ -158,7 +160,12 @@ final class PublicationTombstoneTest extends TestCase {
 	public function testAWithdrawnPublicationAnswers410WithItsTombstone(): void {
 		$this->stored = ['title' => 'Besluit parkeren 2026', 'summary' => 'Over parkeren', 'status' => 'published'];
 		$this->depublications = [
-			['publication' => self::UUID, 'reason' => 'Intern: AVG-melding 12', 'depublishedAt' => '2026-11-22T09:00:00+00:00', 'publicReason' => 'Gepubliceerd in strijd met de AVG'],
+			[
+				'publication' => self::UUID,
+				'reason' => 'Intern: AVG-melding 12',
+				'depublishedAt' => '2026-11-22T09:00:00+00:00',
+				'publicReason' => 'Gepubliceerd in strijd met de AVG',
+			],
 		];
 
 		$response = $this->show();
@@ -194,7 +201,12 @@ final class PublicationTombstoneTest extends TestCase {
 		];
 		$this->assertArrayNotHasKey(key: 'title', array: $this->show()->getData());
 
-		$this->depublications[] = ['publication' => self::UUID, 'reason' => 'intern', 'depublishedAt' => '2026-11-21T09:00:00+00:00', 'tombstoneShowsTitle' => true];
+		$this->depublications[] = [
+			'publication' => self::UUID,
+			'reason' => 'intern',
+			'depublishedAt' => '2026-11-21T09:00:00+00:00',
+			'tombstoneShowsTitle' => true,
+		];
 		$data = $this->show()->getData();
 		$this->assertSame(expected: 'Besluit parkeren 2026', actual: $data['title']);
 		$this->assertSame(expected: '2026-11-21T09:00:00+00:00', actual: $data['withdrawnAt']);
@@ -221,7 +233,12 @@ final class PublicationTombstoneTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnArchivedOnceReleasedPublicationAnswers410(): void {
-		$this->stored = ['title' => 'Oud besluit', 'status' => 'archived', 'firstReleasedAt' => '2025-03-01T10:00:00+00:00', 'depublicationDate' => '2026-01-01T00:00:00+00:00'];
+		$this->stored = [
+			'title' => 'Oud besluit',
+			'status' => 'archived',
+			'firstReleasedAt' => '2025-03-01T10:00:00+00:00',
+			'depublicationDate' => '2026-01-01T00:00:00+00:00',
+		];
 
 		$response = $this->show();
 
