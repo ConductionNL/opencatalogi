@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Listener;
 
 use OCA\OpenCatalogi\Listener\LicenceCheck;
-use OCA\OpenCatalogi\Service\DcatLicenceRule;
+use OCA\OpenCatalogi\Service\DcatMappingService;
 use OCA\OpenCatalogi\Service\DcatVocabularyService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
@@ -35,7 +35,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \OCA\OpenCatalogi\Listener\LicenceCheck
- * @uses \OCA\OpenCatalogi\Service\DcatLicenceRule
+ * @uses \OCA\OpenCatalogi\Service\DcatMappingService
  * @uses \OCA\OpenCatalogi\Service\DcatVocabularyService
  */
 final class LicenceCheckTest extends TestCase {
@@ -61,7 +61,7 @@ final class LicenceCheckTest extends TestCase {
 		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
-		return new LicenceCheck(config: $config, licences: new DcatLicenceRule(vocabulary: new DcatVocabularyService()), l10n: $l10n);
+		return new LicenceCheck(config: $config, mapping: new DcatMappingService(vocabulary: new DcatVocabularyService()), l10n: $l10n);
 	}//end listener()
 
 	/**

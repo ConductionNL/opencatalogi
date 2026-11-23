@@ -27,10 +27,10 @@ namespace OCA\OpenCatalogi\Service;
 use InvalidArgumentException;
 
 /**
- * Says whether a licence names a member of the EU licences authority list (by
- * IRI, code or label), and turns the licence an administrator chose into the
- * stored `dcat_default_license`: that member's authority IRI, or an empty
- * setting, so the feed carries no default licence.
+ * Turns the licence an administrator chose into the stored `dcat_default_license`.
+ * It must name a member of the EU licences authority list (by IRI, code or
+ * label) and is stored as that member's authority IRI; an empty choice stores
+ * an empty setting, so the feed carries no default licence.
  *
  * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
  */
@@ -53,20 +53,6 @@ final class DcatLicenceRule {
 	) {
 
 	}//end __construct()
-
-	/**
-	 * Whether a licence is a member of the list.
-	 *
-	 * @param mixed $value The licence.
-	 *
-	 * @return bool True when it resolves to an authority IRI.
-	 *
-	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
-	 */
-	public function isListed(mixed $value): bool {
-		return is_string($value) === true && $this->vocabulary->resolveLicence(value: $value) !== null;
-
-	}//end isListed()
 
 	/**
 	 * The value to store for what the administrator chose.
