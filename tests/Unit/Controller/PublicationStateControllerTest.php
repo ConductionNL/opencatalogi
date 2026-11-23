@@ -688,6 +688,41 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
 	}
 
+	/**
+	 * The officer's public reason and title choice are stored on the depublication (REQ-PWA-002).
+	 *
+	 * @return void
+	 */
+	public function testTheTombstoneChoiceIsStoredOnTheDepublication(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(
+			params: ['reason' => 'AVG-melding 12', 'publicReason' => '  Gepubliceerd in strijd met de AVG ', 'tombstoneShowsTitle' => 'true']
+		);
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $this->controller->withdraw(id: 'p1')->getStatus());
+		$depublication = $this->saves[1]['object'];
+		$this->assertSame(expected: 'AVG-melding 12', actual: $depublication['reason']);
+		$this->assertSame(expected: 'Gepubliceerd in strijd met de AVG', actual: $depublication['publicReason']);
+		$this->assertTrue(condition: $depublication['tombstoneShowsTitle']);
+	}//end testTheTombstoneChoiceIsStoredOnTheDepublication()
+
+	/**
+	 * An empty public reason and an unticked title choice are not stored; the schema's default says no title.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyPublicReasonIsNotStored(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(params: ['reason' => 'AVG-melding 12', 'publicReason' => ' ', 'tombstoneShowsTitle' => false]);
+
+		$this->controller->withdraw(id: 'p1');
+		$depublication = $this->saves[1]['object'];
+		$this->assertArrayNotHasKey(key: 'publicReason', array: $depublication);
+		$this->assertArrayNotHasKey(key: 'tombstoneShowsTitle', array: $depublication);
+	}//end testAnEmptyPublicReasonIsNotStored()
+
 	/** A caller the guard refuses stores no depublication, for either withdrawal. */
 	public function testARefusedCallerStoresNoDepublication(): void {
 		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];

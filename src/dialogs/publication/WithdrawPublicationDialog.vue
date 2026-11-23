@@ -44,6 +44,25 @@
 			:disabled="busy"
 			data-testid="withdraw-reason"
 			required />
+		<template v-if="!document">
+			<NcTextArea
+				v-model="publicReason"
+				:label="t('opencatalogi', 'Public reason')"
+				:helperText="
+					t(
+						'opencatalogi',
+						'Why the publication was withdrawn, as the public link tells a reader.',
+					)
+				"
+				:disabled="busy"
+				data-testid="withdraw-public-reason" />
+			<NcCheckboxRadioSwitch
+				v-model="tombstoneShowsTitle"
+				:disabled="busy"
+				data-testid="withdraw-shows-title">
+				{{ t('opencatalogi', 'Show the title after withdrawal') }}
+			</NcCheckboxRadioSwitch>
+		</template>
 		<template #actions>
 			<NcButton :disabled="busy" @click="$emit('close')">
 				{{ t('opencatalogi', 'Cancel') }}
@@ -65,6 +84,7 @@
 <script>
 import {
 	NcButton,
+	NcCheckboxRadioSwitch,
 	NcDialog,
 	NcLoadingIcon,
 	NcSelect,
@@ -72,14 +92,22 @@ import {
 } from '@nextcloud/vue'
 
 /**
- * Asks for the reason a publication, or one of its documents, is withdrawn.
+ * Asks for the reason a publication, or one of its documents, is withdrawn,
+ * and for a whole publication what its public tombstone says.
  *
  * The dialog only collects the answer; the widget that opened it calls the
  * server, so the dialog stays the same for both moves.
  */
 export default {
 	name: 'WithdrawPublicationDialog',
-	components: { NcButton, NcDialog, NcLoadingIcon, NcSelect, NcTextArea },
+	components: {
+		NcButton,
+		NcCheckboxRadioSwitch,
+		NcDialog,
+		NcLoadingIcon,
+		NcSelect,
+		NcTextArea,
+	},
 
 	props: {
 		open: { type: Boolean, default: false },
@@ -94,6 +122,8 @@ export default {
 		return {
 			reason: '',
 			document: null,
+			publicReason: '',
+			tombstoneShowsTitle: false,
 		}
 	},
 
@@ -108,6 +138,8 @@ export default {
 			if (value) {
 				this.reason = ''
 				this.document = null
+				this.publicReason = ''
+				this.tombstoneShowsTitle = false
 			}
 		},
 	},
@@ -115,14 +147,22 @@ export default {
 	methods: {
 		/**
 		 * Hand the reason, and the document when one was chosen, to the widget.
+		 * For the whole publication it also hands what the public tombstone says:
+		 * the public reason and whether it shows the title (REQ-PWA-002).
 		 *
 		 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
+		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
 		 */
 		confirm() {
-			this.$emit('confirm', {
+			const answer = {
 				reason: this.reason.trim(),
 				fileId: this.document ? String(this.document.id) : '',
-			})
+			}
+			if (!this.document) {
+				answer.publicReason = this.publicReason.trim()
+				answer.tombstoneShowsTitle = this.tombstoneShowsTitle
+			}
+			this.$emit('confirm', answer)
 		},
 	},
 }

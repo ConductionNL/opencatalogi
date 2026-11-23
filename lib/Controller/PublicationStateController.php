@@ -376,6 +376,8 @@ class PublicationStateController extends Controller {
 	 * @param array<string, mixed> $properties The publication's properties.
 	 *
 	 * @return JSONResponse The stored depublication, or the refusal.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
 	 */
 	private function withdrawWithReason(string $id, array $properties): JSONResponse {
 		$state = $this->takeDown(id: $id, properties: $properties);
@@ -383,16 +385,24 @@ class PublicationStateController extends Controller {
 			return $state;
 		}
 
-		return $this->record(
-			depublication: $this->registers->depublish(
-				withdrawal: [
-					'publication' => array_replace($properties, ['id' => $id]),
-					'reason' => $this->reason(),
-					'depublishedBy' => $this->actor(),
-					'channels' => $this->channelsFor(state: $state, properties: $properties),
-				]
-			)
+		$depublication = $this->registers->depublish(
+			withdrawal: [
+				'publication' => array_replace($properties, ['id' => $id]),
+				'reason' => $this->reason(),
+				'depublishedBy' => $this->actor(),
+				'channels' => $this->channelsFor(state: $state, properties: $properties),
+			]
 		);
+
+		// What the public tombstone says, as the officer chose it (REQ-PWA-002): a
+		// public reason that is not empty, and Show the title when it is a yes. A
+		// no, or a choice the request does not send, keeps the schema's default.
+		$tombstone = [
+			'publicReason' => trim((string)$this->request->getParam('publicReason', '')),
+			'tombstoneShowsTitle' => filter_var($this->request->getParam('tombstoneShowsTitle', false), FILTER_VALIDATE_BOOLEAN),
+		];
+
+		return $this->record(depublication: $depublication + array_filter($tombstone));
 
 	}//end withdrawWithReason()
 
