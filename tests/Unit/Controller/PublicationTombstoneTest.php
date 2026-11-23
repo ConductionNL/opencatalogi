@@ -84,9 +84,7 @@ final class PublicationTombstoneTest extends TestCase {
 			)
 		);
 		$objects->method('searchObjectsPaginated')->willReturnCallback(
-			fn (array $query = []): array => [
-				'results' => (($query['@self']['schema'] ?? null) === 9) ? $this->depublications : [],
-			]
+			fn (array $query = []): array => ['results' => $this->depublicationsIn(query: $query)]
 		);
 
 		$lookup = $this->createMock(originalClassName: OpenRegisterLookupInterface::class);
@@ -131,6 +129,21 @@ final class PublicationTombstoneTest extends TestCase {
 
 		return $controller->show(catalogSlug: 'woo', id: self::UUID);
 	}//end show()
+
+	/**
+	 * The stored depublications when the search names the depublication schema (9).
+	 *
+	 * @param array<string, mixed> $query The search query.
+	 *
+	 * @return array<int, array<string, mixed>> The rows.
+	 */
+	private function depublicationsIn(array $query): array {
+		if (($query['@self']['schema'] ?? null) !== 9) {
+			return [];
+		}
+
+		return $this->depublications;
+	}//end depublicationsIn()
 
 	/**
 	 * The stored publication when the system reads it in the catalogue's pair (register 5, schema 7).
