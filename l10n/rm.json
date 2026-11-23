@@ -826,7 +826,9 @@
         "The document's title.": "Il titel dal document.",
         "The document's file format.": "Il format da datoteca dal document.",
         "The copy of the document kept on this version.": "La copia dal document che vegn tegnida cun questa versiun.",
-        "The earlier public version could not be kept, so the change was not saved.": "La versiun publica precedenta n'ha betg pudì vegnir conservada, perquai n'è la midada betg vegnida memorisada."
+        "The earlier public version could not be kept, so the change was not saved.": "La versiun publica precedenta n'ha betg pudì vegnir conservada, perquai n'è la midada betg vegnida memorisada.",
+        "This version does not exist or is not public.": "Questa versiun n'exista betg u n'è betg publica.",
+        "The earlier versions cannot be shown right now.": "Las versiuns precedentas na pon betg vegnir mussadas ussa."
     },
     "plurals": {}
 }

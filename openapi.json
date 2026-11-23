@@ -638,6 +638,82 @@
             "description": "The next page, or null on the last."
           }
         }
+      },
+      "PublicationVersionList": {
+        "type": "object",
+        "description": "The earlier public versions of a publication, oldest first.",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "supersededAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "PublicationVersion": {
+        "type": "object",
+        "description": "One earlier public version: the fields the public read returned before the correction, and its documents.",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "supersededAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "superseded": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "format": {
+                  "type": "string"
+                },
+                "downloadUrl": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "current": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL of the current version of the publication."
+          }
+        }
       }
     },
     "parameters": {
@@ -4087,6 +4163,244 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{id}/versions": {
+      "get": {
+        "operationId": "publications-versions",
+        "summary": "Earlier versions",
+        "description": "The earlier public versions of a corrected publication. 404 unless the publication itself is public now.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicationVersionList"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-versions-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{id}/versions/{version}": {
+      "get": {
+        "operationId": "publications-version",
+        "summary": "One earlier version",
+        "description": "One earlier public version with its documents and the URL of the current version. 404 unless the publication itself is public now.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The version number, from 1."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicationVersion"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-version-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The version number, from 1."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{id}/versions/{version}/documents/{fileId}": {
+      "get": {
+        "operationId": "publications-version-document",
+        "summary": "A document of an earlier version",
+        "description": "Downloads a document as it was in an earlier public version. 404 unless the publication itself is public now and the version lists the document.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The version number, from 1."
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The id of a document kept on the version."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The file.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "publications-version-document-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The version number, from 1."
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+$"
+            },
+            "description": "The id of a document kept on the version."
           }
         ],
         "responses": {

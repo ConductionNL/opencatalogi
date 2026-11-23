@@ -827,7 +827,9 @@ OC.L10N.register(
         "The document's title.": "Belgenin başlığı.",
         "The document's file format.": "Belgenin dosya biçimi.",
         "The copy of the document kept on this version.": "Belgenin bu sürümle saklanan kopyası.",
-        "The earlier public version could not be kept, so the change was not saved.": "Önceki herkese açık sürüm korunamadı, bu nedenle değişiklik kaydedilmedi."
+        "The earlier public version could not be kept, so the change was not saved.": "Önceki herkese açık sürüm korunamadı, bu nedenle değişiklik kaydedilmedi.",
+        "This version does not exist or is not public.": "Bu sürüm mevcut değil veya herkese açık değil.",
+        "The earlier versions cannot be shown right now.": "Önceki sürümler şu anda gösterilemiyor."
     },
     "nplurals=2; plural=(n != 1);"
 )

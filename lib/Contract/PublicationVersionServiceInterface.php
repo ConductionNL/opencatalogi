@@ -56,4 +56,44 @@ interface PublicationVersionServiceInterface {
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function snapshot(ObjectEntity $old, ?DateTimeInterface $now = null): ?array;
+
+	/**
+	 * The stored versions of a publication, oldest first.
+	 *
+	 * @param string $publication The publication uuid.
+	 *
+	 * @return list<array<string, mixed>> The versions, each with its `id`.
+	 *
+	 * @throws \RuntimeException When the version schema is not configured.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @contract-shift internal-only - added for the version routes; only this app implements and calls it.
+	 */
+	public function versionsOf(string $publication): array;
+
+	/**
+	 * One stored document of a version, or null when the version does not list it.
+	 *
+	 * @param array<string, mixed> $version A version from versionsOf().
+	 * @param int $fileId The id of the copy kept on the version.
+	 *
+	 * @return object|null The file node.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @contract-shift internal-only - added for the version routes; only this app implements and calls it.
+	 */
+	public function documentOf(array $version, int $fileId): ?object;
+
+	/**
+	 * The uuid of a record the public read answered, when it is public now; otherwise null.
+	 *
+	 * @param array<string, mixed> $record The record the public read answered.
+	 *
+	 * @return string|null The uuid.
+	 *
+	 * @contract-shift internal-only - added for the version routes; only this app implements and calls it.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	public function publicUuidOf(array $record): ?string;
 }//end interface

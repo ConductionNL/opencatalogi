@@ -827,7 +827,9 @@ OC.L10N.register(
         "The document's title.": "Titulli i dokumentit.",
         "The document's file format.": "Formati i skedarit të dokumentit.",
         "The copy of the document kept on this version.": "Kopja e dokumentit që ruhet me këtë version.",
-        "The earlier public version could not be kept, so the change was not saved.": "Versioni i mëparshëm publik nuk mund të ruhej, prandaj ndryshimi nuk u ruajt."
+        "The earlier public version could not be kept, so the change was not saved.": "Versioni i mëparshëm publik nuk mund të ruhej, prandaj ndryshimi nuk u ruajt.",
+        "This version does not exist or is not public.": "Ky version nuk ekziston ose nuk është publik.",
+        "The earlier versions cannot be shown right now.": "Versionet e mëparshme nuk mund të shfaqen tani."
     },
     "nplurals=2; plural=(n != 1);"
 )

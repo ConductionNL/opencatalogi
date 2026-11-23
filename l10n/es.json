@@ -826,7 +826,9 @@
         "The document's title.": "El título del documento.",
         "The document's file format.": "El formato de archivo del documento.",
         "The copy of the document kept on this version.": "La copia del documento que se conserva con esta versión.",
-        "The earlier public version could not be kept, so the change was not saved.": "No se pudo conservar la versión pública anterior, por lo que el cambio no se ha guardado."
+        "The earlier public version could not be kept, so the change was not saved.": "No se pudo conservar la versión pública anterior, por lo que el cambio no se ha guardado.",
+        "This version does not exist or is not public.": "Esta versión no existe o no es pública.",
+        "The earlier versions cannot be shown right now.": "Las versiones anteriores no se pueden mostrar en este momento."
     },
     "plurals": {}
 }

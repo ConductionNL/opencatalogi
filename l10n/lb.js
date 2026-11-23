@@ -827,7 +827,9 @@ OC.L10N.register(
         "The document's title.": "Den Titel vum Dokument.",
         "The document's file format.": "De Fichiersformat vum Dokument.",
         "The copy of the document kept on this version.": "D'Kopie vum Dokument, déi mat dëser Versioun gehale gëtt.",
-        "The earlier public version could not be kept, so the change was not saved.": "Déi fréier ëffentlech Versioun konnt net gehale ginn, dofir gouf d'Ännerung net gespäichert."
+        "The earlier public version could not be kept, so the change was not saved.": "Déi fréier ëffentlech Versioun konnt net gehale ginn, dofir gouf d'Ännerung net gespäichert.",
+        "This version does not exist or is not public.": "Dës Versioun gëtt et net oder se ass net ëffentlech.",
+        "The earlier versions cannot be shown right now.": "Déi fréier Versioune kënnen elo net gewise ginn."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -827,7 +827,9 @@ OC.L10N.register(
         "The document's title.": "It-titlu tad-dokument.",
         "The document's file format.": "Il-format tal-fajl tad-dokument.",
         "The copy of the document kept on this version.": "Il-kopja tad-dokument miżmuma ma' din il-verżjoni.",
-        "The earlier public version could not be kept, so the change was not saved.": "Il-verżjoni pubblika ta' qabel ma setgħetx tinżamm, għalhekk il-bidla ma ġietx salvata."
+        "The earlier public version could not be kept, so the change was not saved.": "Il-verżjoni pubblika ta' qabel ma setgħetx tinżamm, għalhekk il-bidla ma ġietx salvata.",
+        "This version does not exist or is not public.": "Din il-verżjoni ma teżistix jew mhijiex pubblika.",
+        "The earlier versions cannot be shown right now.": "Il-verżjonijiet ta' qabel ma jistgħux jintwerew bħalissa."
     },
     "nplurals=2; plural=(n != 1);"
 )

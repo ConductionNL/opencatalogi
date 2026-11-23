@@ -826,7 +826,9 @@
         "The document's title.": "Titill skjalsins.",
         "The document's file format.": "Skráarsnið skjalsins.",
         "The copy of the document kept on this version.": "Afrit skjalsins sem geymt er með þessari útgáfu.",
-        "The earlier public version could not be kept, so the change was not saved.": "Ekki tókst að varðveita fyrri opinberu útgáfuna, svo breytingin var ekki vistuð."
+        "The earlier public version could not be kept, so the change was not saved.": "Ekki tókst að varðveita fyrri opinberu útgáfuna, svo breytingin var ekki vistuð.",
+        "This version does not exist or is not public.": "Þessi útgáfa er ekki til eða er ekki opinber.",
+        "The earlier versions cannot be shown right now.": "Ekki er hægt að sýna fyrri útgáfur núna."
     },
     "plurals": {}
 }

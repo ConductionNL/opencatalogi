@@ -827,7 +827,9 @@ OC.L10N.register(
         "The document's title.": "Der Titel des Dokuments.",
         "The document's file format.": "Das Dateiformat des Dokuments.",
         "The copy of the document kept on this version.": "Die Kopie des Dokuments, die bei dieser Version aufbewahrt wird.",
-        "The earlier public version could not be kept, so the change was not saved.": "Die frühere öffentliche Version konnte nicht aufbewahrt werden, daher wurde die Änderung nicht gespeichert."
+        "The earlier public version could not be kept, so the change was not saved.": "Die frühere öffentliche Version konnte nicht aufbewahrt werden, daher wurde die Änderung nicht gespeichert.",
+        "This version does not exist or is not public.": "Diese Version existiert nicht oder ist nicht öffentlich.",
+        "The earlier versions cannot be shown right now.": "Die früheren Versionen können gerade nicht angezeigt werden."
     },
     "nplurals=2; plural=(n != 1);"
 )
