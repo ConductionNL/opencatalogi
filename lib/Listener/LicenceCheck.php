@@ -35,7 +35,7 @@ use OCP\IL10N;
 use OCP\IAppConfig;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
-use OCA\OpenCatalogi\Service\DcatMappingService;
+use OCA\OpenCatalogi\Service\DcatLicenceRule;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 
@@ -60,14 +60,14 @@ class LicenceCheck implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config Names the catalogue and publication schemas.
-	 * @param DcatMappingService $mapping Binds a licence to its authority IRI, as the feed does.
+	 * @param DcatLicenceRule $licences Says whether a licence is on the bundled list.
 	 * @param IL10N $l10n Localisation.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly DcatMappingService $mapping,
+		private readonly DcatLicenceRule $licences,
 		private readonly IL10N $l10n,
 	) {
 
@@ -137,7 +137,7 @@ class LicenceCheck implements IEventListener {
 			return true;
 		}
 
-		return $this->mapping->licenceNode(value: $value) !== null;
+		return $this->licences->isListed(value: $value);
 
 	}//end isAcceptable()
 

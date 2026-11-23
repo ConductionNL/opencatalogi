@@ -80,4 +80,16 @@ final class DcatLicenceRuleTest extends TestCase {
 			}
 		}
 	}//end testAnUnlistedValueIsRefused()
+
+	/**
+	 * A code, an IRI or a matching Creative Commons URI is listed; free text and a list are not.
+	 *
+	 * @return void
+	 */
+	public function testIsListedFollowsTheBundledList(): void {
+		$this->assertTrue(condition: $this->rule()->isListed(value: 'CC0'));
+		$this->assertTrue(condition: $this->rule()->isListed(value: 'http://publications.europa.eu/resource/authority/licence/CC_BY_4_0'));
+		$this->assertFalse(condition: $this->rule()->isListed(value: 'vrij te gebruiken'));
+		$this->assertFalse(condition: $this->rule()->isListed(value: ['CC0']));
+	}//end testIsListedFollowsTheBundledList()
 }//end class
