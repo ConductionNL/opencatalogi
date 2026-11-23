@@ -99,7 +99,9 @@ class PublicationDocumentCountTest extends TestCase {
 		$lookup->method('objectService')->willReturn($this->objectServiceDouble());
 
 		$config = $this->createMock(originalClassName: IAppConfig::class);
-		$config->method('getValueString')->willReturnCallback(fn (string $app, string $key, string $default=''): string => $this->configValue(key: $key, default: $default));
+		$config->method('getValueString')->willReturnCallback(
+			fn (string $app, string $key, string $default=''): string => $this->configValue(key: $key, default: $default)
+		);
 
 		return new PublicationDocumentCount(
 			container: $container,
