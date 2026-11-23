@@ -1981,6 +1981,43 @@ class PublicationServiceTest extends TestCase {
 		$this->assertSame(200, $result['status']);
 	}
 
+	/**
+	 * A withdrawn publication is not served to a federated peer: the local read runs under RBAC (RET-006).
+	 *
+	 * The double answers like OpenRegister's public read rules: under RBAC the withdrawn publication does not
+	 * exist, without RBAC it is found. So the test fails when the federated read turns RBAC off.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.3
+	 */
+	public function testAWithdrawnPublicationIsNotServedToTheFederation(): void {
+		$this->mockConfiguredCatalogScope();
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+		$objectService->method('searchObjects')->willReturn([$catalog]);
+
+		$reads = [];
+		$objectService->method('find')->willReturnCallback(
+			function (int|string $id, mixed $options = null, bool $_rbac = true) use (&$reads): object {
+				$reads[] = $_rbac;
+				if ($_rbac === true) {
+					throw new DoesNotExistException('Not found');
+				}
+
+				return $this->createSerializableObject(['id' => (string)$id, 'title' => 'Besluit ingetrokken', 'depublicationDate' => '2026-11-22T09:00:00+00:00']);
+			}
+		);
+		$this->request->method('getParams')->willReturn([]);
+
+		$result = $this->service->getFederatedPublication(id: 'pub-withdrawn', queryParams: ['_aggregate' => 'false']);
+
+		$this->assertSame(expected: 404, actual: $result['status']);
+		$this->assertStringNotContainsString(needle: 'Besluit ingetrokken', haystack: (string)json_encode($result));
+		$this->assertSame(expected: [true], actual: $reads);
+	}//end testAWithdrawnPublicationIsNotServedToTheFederation()
+
 	public function testGetFederatedPublicationNotFoundLocallyNoAggregation(): void {
 		$objectService = $this->createObjectServiceMock();
 		$this->mockObjectServiceAvailable($objectService);
