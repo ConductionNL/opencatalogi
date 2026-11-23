@@ -796,7 +796,8 @@
         "No text: OCR is not installed": "Няма текст: OCR не е инсталиран",
         "This attachment or publication was not found.": "Този прикачен файл или публикация не е намерен.",
         "The file id is not valid.": "Идентификаторът на файла не е валиден.",
-        "Attachment reading is not set up on this instance.": "Четенето на прикачени файлове не е настроено в тази инстанция."
+        "Attachment reading is not set up on this instance.": "Четенето на прикачени файлове не е настроено в тази инстанция.",
+        "Choose a licence from the EU licences authority list.": "Изберете лиценз от списъка с лицензи на ЕС."
     },
     "plurals": {}
 }

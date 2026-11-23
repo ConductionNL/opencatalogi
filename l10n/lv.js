@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Nav teksta: OCR nav instalēts",
         "This attachment or publication was not found.": "Šis pielikums vai publikācija netika atrasta.",
         "The file id is not valid.": "Faila ID nav derīgs.",
-        "Attachment reading is not set up on this instance.": "Pielikumu lasīšana šajā instancē nav iestatīta."
+        "Attachment reading is not set up on this instance.": "Pielikumu lasīšana šajā instancē nav iestatīta.",
+        "Choose a licence from the EU licences authority list.": "Izvēlieties licenci no ES licenču saraksta."
     },
     "nplurals=2; plural=(n != 1);"
 )

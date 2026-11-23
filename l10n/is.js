@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Enginn texti: OCR er ekki uppsett",
         "This attachment or publication was not found.": "Þetta viðhengi eða þessi útgáfa fannst ekki.",
         "The file id is not valid.": "Auðkenni skrárinnar er ekki gilt.",
-        "Attachment reading is not set up on this instance.": "Lestur viðhengja er ekki uppsettur á þessu tilviki."
+        "Attachment reading is not set up on this instance.": "Lestur viðhengja er ekki uppsettur á þessu tilviki.",
+        "Choose a licence from the EU licences authority list.": "Veldu leyfi af leyfalista ESB."
     },
     "nplurals=2; plural=(n != 1);"
 )

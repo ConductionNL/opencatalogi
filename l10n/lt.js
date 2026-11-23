@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Nėra teksto: OCR neįdiegtas",
         "This attachment or publication was not found.": "Šis priedas arba leidinys nerastas.",
         "The file id is not valid.": "Failo ID netinkamas.",
-        "Attachment reading is not set up on this instance.": "Priedų skaitymas šiame egzemplioriuje nesukonfigūruotas."
+        "Attachment reading is not set up on this instance.": "Priedų skaitymas šiame egzemplioriuje nesukonfigūruotas.",
+        "Choose a licence from the EU licences authority list.": "Pasirinkite licenciją iš ES licencijų sąrašo."
     },
     "nplurals=2; plural=(n != 1);"
 )

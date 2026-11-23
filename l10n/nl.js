@@ -2101,7 +2101,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Geen tekst: OCR is niet geïnstalleerd",
         "This attachment or publication was not found.": "Deze bijlage of publicatie is niet gevonden.",
         "The file id is not valid.": "Het bestands-id is niet geldig.",
-        "Attachment reading is not set up on this instance.": "Het lezen van bijlagen is op deze installatie niet ingericht."
+        "Attachment reading is not set up on this instance.": "Het lezen van bijlagen is op deze installatie niet ingericht.",
+        "Choose a licence from the EU licences authority list.": "Kies een licentie uit de EU-lijst van licenties."
     },
     "nplurals=2; plural=(n != 1);"
 )

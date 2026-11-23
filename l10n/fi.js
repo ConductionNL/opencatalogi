@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Ei tekstiä: OCR:ää ei ole asennettu",
         "This attachment or publication was not found.": "Tätä liitettä tai julkaisua ei löytynyt.",
         "The file id is not valid.": "Tiedoston tunniste ei kelpaa.",
-        "Attachment reading is not set up on this instance.": "Liitteiden lukemista ei ole määritetty tässä instanssissa."
+        "Attachment reading is not set up on this instance.": "Liitteiden lukemista ei ole määritetty tässä instanssissa.",
+        "Choose a licence from the EU licences authority list.": "Valitse lisenssi EU:n lisenssiluettelosta."
     },
     "nplurals=2; plural=(n != 1);"
 )

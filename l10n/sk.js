@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Žiadny text: OCR nie je nainštalované",
         "This attachment or publication was not found.": "Táto príloha alebo publikácia sa nenašla.",
         "The file id is not valid.": "ID súboru nie je platné.",
-        "Attachment reading is not set up on this instance.": "Čítanie príloh nie je na tejto inštancii nastavené."
+        "Attachment reading is not set up on this instance.": "Čítanie príloh nie je na tejto inštancii nastavené.",
+        "Choose a licence from the EU licences authority list.": "Vyberte licenciu zo zoznamu licencií EÚ."
     },
     "nplurals=2; plural=(n != 1);"
 )

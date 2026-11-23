@@ -949,21 +949,29 @@ class SettingsService implements SettingsServiceInterface {
 	 * $data is silently ignored, preventing arbitrary app-config key injection.
 	 * A list or object value for an accepted key (except the channel sources map)
 	 * rejects the whole payload before anything is written, and so does a CORS
-	 * allowlist line that is not a bare origin (REQ-SCO-003).
+	 * allowlist line that is not a bare origin (REQ-SCO-003), and a default
+	 * licence outside the EU licences authority list (REQ-DCC-001).
 	 *
 	 * @param array $data The settings data to update.
 	 *
 	 * @return array The updated settings configuration.
-	 * @throws InvalidArgumentException If an accepted key carries a list or an object, or an allowlist line is not an origin.
+	 * @throws InvalidArgumentException If an accepted key carries a list or an object, an allowlist line is not an origin,
+	 *                                  or the default licence is not listed.
 	 * @throws \RuntimeException If settings update fails.
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md
 	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
 	 */
 	public function updateSettings(array $data): array {
 		$this->assertSingleValues(data: $data, keys: $this->writableSettingKeys());
 		if (array_key_exists('cors_allowed_origins', $data) === true) {
 			$data['cors_allowed_origins'] = CorsOriginSetting::storable(value: $data['cors_allowed_origins']);
+		}
+
+		if (array_key_exists(DcatLicenceRule::KEY, $data) === true) {
+			$licence = new DcatLicenceRule(vocabulary: new DcatVocabularyService());
+			$data[DcatLicenceRule::KEY] = $licence->storable(value: $data[DcatLicenceRule::KEY]);
 		}
 
 		try {

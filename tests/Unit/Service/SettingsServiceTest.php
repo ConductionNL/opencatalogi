@@ -2695,4 +2695,50 @@ https://andere.example"]);
 		$this->assertSame('allowed', $this->service->updateSettings(['search_indexing' => 'BLOCK'])['search_indexing']);
 
 	}//end testTheAdministratorSwitchesSearchIndexing()
+	/**
+	 * A default licence named by its code is stored as its EU authority IRI (REQ-DCC-001).
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
+	 *
+	 * @return void
+	 */
+	public function testTheDefaultLicenceIsStoredAsItsAuthorityIri(): void {
+		$stored = [];
+		$this->config->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key) use (&$stored): string {
+				return ($stored[$key] ?? '');
+			}
+		);
+
+		$result = $this->service->updateSettings(data: ['dcat_default_license' => 'CC_BY_4_0']);
+
+		$this->assertSame(
+			expected: ['dcat_default_license' => 'http://publications.europa.eu/resource/authority/licence/CC_BY_4_0'],
+			actual: $result
+		);
+
+	}//end testTheDefaultLicenceIsStoredAsItsAuthorityIri()
+
+	/**
+	 * A default licence outside the list refuses the whole save before anything is written (REQ-DCC-001).
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
+	 *
+	 * @return void
+	 */
+	public function testAnUnlistedDefaultLicenceIsRefused(): void {
+		$this->config->expects($this->never())->method('setValueString');
+
+		$this->expectException(exception: \InvalidArgumentException::class);
+		$this->expectExceptionMessage(message: 'dcat_default_license');
+
+		$this->service->updateSettings(data: ['public_api_cache_seconds' => 30, 'dcat_default_license' => 'vrij te gebruiken']);
+
+	}//end testAnUnlistedDefaultLicenceIsRefused()
 }//end class

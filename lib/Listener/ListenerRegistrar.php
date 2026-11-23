@@ -235,6 +235,8 @@ class ListenerRegistrar {
 	 * for dossiq's stamp (woo-request-intake-hands-over-to-dossiq, REQ-WHD-004).
 	 * A publication under embargo cannot have its publication date moved earlier
 	 * by a caller who may not lift an embargo (publication-schedule-guards, REQ-PSG-001).
+	 * A new licence on a catalogue or publication comes from the EU licences
+	 * authority list (dcat-catalogue-completion, REQ-DCC-001).
 	 *
 	 * @param IRegistrationContext $context The registration context.
 	 *
@@ -242,6 +244,7 @@ class ListenerRegistrar {
 	 *
 	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-with-nothing-left-to-migrate-the-request-schema-is-read-only-req-whd-004
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.1
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
 	 */
 	private function registerWriteGuards(IRegistrationContext $context): void {
 		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
@@ -249,6 +252,8 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectCreatingEvent::class, HandedOverRecordsListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, HandedOverRecordsListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, EmbargoGuardListener::class);
+		$context->registerEventListener(ObjectCreatingEvent::class, LicenceCheck::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, LicenceCheck::class);
 	}//end registerWriteGuards()
 
 	/**

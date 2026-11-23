@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Sense text: l'OCR no està instal·lat",
         "This attachment or publication was not found.": "No s'ha trobat aquest adjunt o publicació.",
         "The file id is not valid.": "L'identificador del fitxer no és vàlid.",
-        "Attachment reading is not set up on this instance.": "La lectura d'adjunts no està configurada en aquesta instància."
+        "Attachment reading is not set up on this instance.": "La lectura d'adjunts no està configurada en aquesta instància.",
+        "Choose a licence from the EU licences authority list.": "Trieu una llicència de la llista de llicències de la UE."
     },
     "nplurals=2; plural=(n != 1);"
 )

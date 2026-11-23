@@ -797,7 +797,8 @@ OC.L10N.register(
         "No text: OCR is not installed": "Keen Text: OCR ass net installéiert",
         "This attachment or publication was not found.": "Dësen Unhang oder dës Verëffentlechung gouf net fonnt.",
         "The file id is not valid.": "D'Fichier-ID ass net valabel.",
-        "Attachment reading is not set up on this instance.": "D'Liese vun Unhäng ass op dëser Instanz net agestallt."
+        "Attachment reading is not set up on this instance.": "D'Liese vun Unhäng ass op dëser Instanz net agestallt.",
+        "Choose a licence from the EU licences authority list.": "Wielt eng Lizenz aus der EU-Lëscht vun de Lizenzen."
     },
     "nplurals=2; plural=(n != 1);"
 )
