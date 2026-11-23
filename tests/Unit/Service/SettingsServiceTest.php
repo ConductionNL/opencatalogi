@@ -2716,9 +2716,12 @@ https://andere.example"]);
 			}
 		);
 
-		$result = $this->service->updateSettings(['dcat_default_license' => 'CC_BY_4_0']);
+		$result = $this->service->updateSettings(data: ['dcat_default_license' => 'CC_BY_4_0']);
 
-		$this->assertSame(['dcat_default_license' => 'http://publications.europa.eu/resource/authority/licence/CC_BY_4_0'], $result);
+		$this->assertSame(
+			expected: ['dcat_default_license' => 'http://publications.europa.eu/resource/authority/licence/CC_BY_4_0'],
+			actual: $result
+		);
 
 	}//end testTheDefaultLicenceIsStoredAsItsAuthorityIri()
 
@@ -2732,10 +2735,10 @@ https://andere.example"]);
 	public function testAnUnlistedDefaultLicenceIsRefused(): void {
 		$this->config->expects($this->never())->method('setValueString');
 
-		$this->expectException(\InvalidArgumentException::class);
-		$this->expectExceptionMessage('dcat_default_license');
+		$this->expectException(exception: \InvalidArgumentException::class);
+		$this->expectExceptionMessage(message: 'dcat_default_license');
 
-		$this->service->updateSettings(['public_api_cache_seconds' => 30, 'dcat_default_license' => 'vrij te gebruiken']);
+		$this->service->updateSettings(data: ['public_api_cache_seconds' => 30, 'dcat_default_license' => 'vrij te gebruiken']);
 
 	}//end testAnUnlistedDefaultLicenceIsRefused()
 }//end class

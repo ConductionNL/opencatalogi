@@ -35,14 +35,23 @@ use PHPUnit\Framework\TestCase;
 final class DcatLicenceSettingTest extends TestCase {
 
 	/**
+	 * The setting on the real bundled list.
+	 *
+	 * @return DcatLicenceSetting
+	 */
+	private function setting(): DcatLicenceSetting {
+		return new DcatLicenceSetting(vocabulary: new DcatVocabularyService());
+	}//end setting()
+
+	/**
 	 * The shipped default, a Creative Commons URI, is stored as the authority IRI.
 	 *
 	 * @return void
 	 */
 	public function testTheShippedDefaultResolves(): void {
 		$this->assertSame(
-			'http://publications.europa.eu/resource/authority/licence/CC0',
-			DcatLicenceSetting::storable(value: 'http://creativecommons.org/publicdomain/zero/1.0/', vocabulary: new DcatVocabularyService())
+			expected: 'http://publications.europa.eu/resource/authority/licence/CC0',
+			actual: $this->setting()->storable(value: 'http://creativecommons.org/publicdomain/zero/1.0/')
 		);
 	}//end testTheShippedDefaultResolves()
 
@@ -52,10 +61,8 @@ final class DcatLicenceSettingTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnEmptyChoiceStoresNothing(): void {
-		$vocabulary = new DcatVocabularyService();
-
-		$this->assertSame('', DcatLicenceSetting::storable(value: '  ', vocabulary: $vocabulary));
-		$this->assertSame('', DcatLicenceSetting::storable(value: null, vocabulary: $vocabulary));
+		$this->assertSame(expected: '', actual: $this->setting()->storable(value: '  '));
+		$this->assertSame(expected: '', actual: $this->setting()->storable(value: null));
 	}//end testAnEmptyChoiceStoresNothing()
 
 	/**
@@ -66,10 +73,10 @@ final class DcatLicenceSettingTest extends TestCase {
 	public function testAnUnlistedValueIsRefused(): void {
 		foreach (['vrij te gebruiken', 42] as $value) {
 			try {
-				DcatLicenceSetting::storable(value: $value, vocabulary: new DcatVocabularyService());
-				$this->fail('Refusal expected for ' . var_export($value, true));
+				$this->setting()->storable(value: $value);
+				$this->fail(message: 'Refusal expected for ' . var_export(value: $value, return: true));
 			} catch (InvalidArgumentException $e) {
-				$this->assertStringContainsString('dcat_default_license', $e->getMessage());
+				$this->assertStringContainsString(needle: 'dcat_default_license', haystack: $e->getMessage());
 			}
 		}
 	}//end testAnUnlistedValueIsRefused()

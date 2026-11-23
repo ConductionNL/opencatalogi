@@ -970,7 +970,7 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		if (array_key_exists(DcatLicenceSetting::KEY, $data) === true) {
-			$data[DcatLicenceSetting::KEY] = DcatLicenceSetting::storable(value: $data[DcatLicenceSetting::KEY], vocabulary: new DcatVocabularyService());
+			$data[DcatLicenceSetting::KEY] = (new DcatLicenceSetting(vocabulary: new DcatVocabularyService()))->storable(value: $data[DcatLicenceSetting::KEY]);
 		}
 
 		try {

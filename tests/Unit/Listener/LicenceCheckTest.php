@@ -48,7 +48,7 @@ final class LicenceCheckTest extends TestCase {
 	 * @return LicenceCheck
 	 */
 	private function listener(): LicenceCheck {
-		$config = $this->createMock(IAppConfig::class);
+		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
 			static fn (string $app, string $key): string => match ($key) {
 				'catalog_schema' => self::CATALOG_SCHEMA,
@@ -56,10 +56,10 @@ final class LicenceCheckTest extends TestCase {
 				default => '',
 			}
 		);
-		$l10n = $this->createMock(IL10N::class);
+		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
-		return new LicenceCheck($config, new DcatVocabularyService(), $l10n);
+		return new LicenceCheck(config: $config, vocabulary: new DcatVocabularyService(), l10n: $l10n);
 	}//end listener()
 
 	/**
@@ -84,13 +84,13 @@ final class LicenceCheckTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnUnlistedLicenceIsRefused(): void {
-		$event = new ObjectCreatingEvent($this->entity(self::PUBLICATION_SCHEMA, ['title' => 'Besluit', 'license' => 'vrij te gebruiken']));
+		$event = new ObjectCreatingEvent($this->entity(schema: self::PUBLICATION_SCHEMA, data: ['title' => 'Besluit', 'license' => 'vrij te gebruiken']));
 
-		$this->listener()->handle($event);
+		$this->listener()->handle(event: $event);
 
-		$this->assertTrue($event->isPropagationStopped());
-		$this->assertSame('license', $event->getErrors()['property']);
-		$this->assertStringContainsString('EU licences authority list', $event->getErrors()['message']);
+		$this->assertTrue(condition: $event->isPropagationStopped());
+		$this->assertSame(expected: 'license', actual: $event->getErrors()['property']);
+		$this->assertStringContainsString(needle: 'EU licences authority list', haystack: $event->getErrors()['message']);
 	}//end testAnUnlistedLicenceIsRefused()
 
 	/**
@@ -99,16 +99,21 @@ final class LicenceCheckTest extends TestCase {
 	 * @return void
 	 */
 	public function testAListedLicenceIsSaved(): void {
-		foreach (['CC0', 'http://publications.europa.eu/resource/authority/licence/CC_BY_4_0', 'https://creativecommons.org/publicdomain/zero/1.0/'] as $licence) {
+		$licences = [
+			'CC0',
+			'http://publications.europa.eu/resource/authority/licence/CC_BY_4_0',
+			'https://creativecommons.org/publicdomain/zero/1.0/',
+		];
+		foreach ($licences as $licence) {
 			$event = new ObjectUpdatingEvent(
-				$this->entity(self::CATALOG_SCHEMA, ['title' => 'Open data', 'dcatLicense' => $licence]),
-				$this->entity(self::CATALOG_SCHEMA, ['title' => 'Open data'])
+				$this->entity(schema: self::CATALOG_SCHEMA, data: ['title' => 'Open data', 'dcatLicense' => $licence]),
+				$this->entity(schema: self::CATALOG_SCHEMA, data: ['title' => 'Open data'])
 			);
 
-			$this->listener()->handle($event);
+			$this->listener()->handle(event: $event);
 
-			$this->assertFalse($event->isPropagationStopped(), $licence);
-			$this->assertSame([], $event->getErrors(), $licence);
+			$this->assertFalse(condition: $event->isPropagationStopped(), message: $licence);
+			$this->assertSame(expected: [], actual: $event->getErrors(), message: $licence);
 		}
 	}//end testAListedLicenceIsSaved()
 
@@ -119,14 +124,14 @@ final class LicenceCheckTest extends TestCase {
 	 */
 	public function testAChangedUnlistedCatalogueLicenceIsRefused(): void {
 		$event = new ObjectUpdatingEvent(
-			$this->entity(self::CATALOG_SCHEMA, ['dcatLicense' => 'open']),
-			$this->entity(self::CATALOG_SCHEMA, ['dcatLicense' => 'vrij'])
+			$this->entity(schema: self::CATALOG_SCHEMA, data: ['dcatLicense' => 'open']),
+			$this->entity(schema: self::CATALOG_SCHEMA, data: ['dcatLicense' => 'vrij'])
 		);
 
-		$this->listener()->handle($event);
+		$this->listener()->handle(event: $event);
 
-		$this->assertTrue($event->isPropagationStopped());
-		$this->assertSame('dcatLicense', $event->getErrors()['property']);
+		$this->assertTrue(condition: $event->isPropagationStopped());
+		$this->assertSame(expected: 'dcatLicense', actual: $event->getErrors()['property']);
 	}//end testAChangedUnlistedCatalogueLicenceIsRefused()
 
 	/**
@@ -136,13 +141,13 @@ final class LicenceCheckTest extends TestCase {
 	 */
 	public function testAnUnchangedLegacyLicencePasses(): void {
 		$event = new ObjectUpdatingEvent(
-			$this->entity(self::PUBLICATION_SCHEMA, ['title' => 'Nieuwe titel', 'license' => 'vrij te gebruiken']),
-			$this->entity(self::PUBLICATION_SCHEMA, ['title' => 'Oude titel', 'license' => 'vrij te gebruiken'])
+			$this->entity(schema: self::PUBLICATION_SCHEMA, data: ['title' => 'Nieuwe titel', 'license' => 'vrij te gebruiken']),
+			$this->entity(schema: self::PUBLICATION_SCHEMA, data: ['title' => 'Oude titel', 'license' => 'vrij te gebruiken'])
 		);
 
-		$this->listener()->handle($event);
+		$this->listener()->handle(event: $event);
 
-		$this->assertFalse($event->isPropagationStopped());
+		$this->assertFalse(condition: $event->isPropagationStopped());
 	}//end testAnUnchangedLegacyLicencePasses()
 
 	/**
@@ -151,12 +156,12 @@ final class LicenceCheckTest extends TestCase {
 	 * @return void
 	 */
 	public function testALicenceThatIsNotTextIsRefused(): void {
-		$event = new ObjectCreatingEvent($this->entity(self::PUBLICATION_SCHEMA, ['license' => ['CC0']]));
+		$event = new ObjectCreatingEvent($this->entity(schema: self::PUBLICATION_SCHEMA, data: ['license' => ['CC0']]));
 
-		$this->listener()->handle($event);
+		$this->listener()->handle(event: $event);
 
-		$this->assertTrue($event->isPropagationStopped());
-		$this->assertSame('license', $event->getErrors()['property']);
+		$this->assertTrue(condition: $event->isPropagationStopped());
+		$this->assertSame(expected: 'license', actual: $event->getErrors()['property']);
 	}//end testALicenceThatIsNotTextIsRefused()
 
 	/**
@@ -166,15 +171,15 @@ final class LicenceCheckTest extends TestCase {
 	 */
 	public function testNoLicenceOrAnotherSchemaIsLeftAlone(): void {
 		$events = [
-			new ObjectCreatingEvent($this->entity(self::PUBLICATION_SCHEMA, ['title' => 'Besluit'])),
-			new ObjectCreatingEvent($this->entity(self::PUBLICATION_SCHEMA, ['license' => ''])),
-			new ObjectCreatingEvent($this->entity('12', ['license' => 'EUPL-1.2 or anything else'])),
-			new ObjectCreatingEvent($this->entity('', ['license' => 'vrij'])),
+			new ObjectCreatingEvent($this->entity(schema: self::PUBLICATION_SCHEMA, data: ['title' => 'Besluit'])),
+			new ObjectCreatingEvent($this->entity(schema: self::PUBLICATION_SCHEMA, data: ['license' => ''])),
+			new ObjectCreatingEvent($this->entity(schema: '12', data: ['license' => 'EUPL-1.2 or anything else'])),
+			new ObjectCreatingEvent($this->entity(schema: '', data: ['license' => 'vrij'])),
 		];
 
 		foreach ($events as $index => $event) {
-			$this->listener()->handle($event);
-			$this->assertFalse($event->isPropagationStopped(), (string)$index);
+			$this->listener()->handle(event: $event);
+			$this->assertFalse(condition: $event->isPropagationStopped(), message: (string)$index);
 		}
 	}//end testNoLicenceOrAnotherSchemaIsLeftAlone()
 }//end class
