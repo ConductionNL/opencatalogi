@@ -32,7 +32,8 @@ Read `openspec/woo-build-rules.md` first. Start only once `publication-lifecycle
 
 ## 5. Docs
 
-- [ ] 5.1 Document the embargo, the lift right and the reminder in `docs/`, and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+- [x] 5.1 Document the embargo, the lift right and the reminder in `docs/`, and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+  - Built 23 Nov: `docs/features/embargo-and-depublication-reminder.md` (the embargo rule and its refusals, `POST /api/publications/{id}/lift-embargo` with every answer, the lift groups under Publishing Options and their default, the weekly-before reminder), linked from `docs/features/README.md`. The strings this change shows today (the lift groups field and its description) were already in all catalogues; `check:l10n` reports no MISSING. No U+2014 in the changed docs.
 
 ## 6. Verification
 
