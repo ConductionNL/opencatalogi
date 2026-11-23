@@ -708,7 +708,7 @@ class PublicationStateControllerTest extends TestCase {
 	}//end testTheTombstoneChoiceIsStoredOnTheDepublication()
 
 	/**
-	 * An empty public reason is not stored; an unticked title choice is stored as false.
+	 * An empty public reason and an unticked title choice are not stored; the schema's default says no title.
 	 *
 	 * @return void
 	 */
@@ -720,7 +720,7 @@ class PublicationStateControllerTest extends TestCase {
 		$this->controller->withdraw(id: 'p1');
 		$depublication = $this->saves[1]['object'];
 		$this->assertArrayNotHasKey(key: 'publicReason', array: $depublication);
-		$this->assertFalse(condition: $depublication['tombstoneShowsTitle']);
+		$this->assertArrayNotHasKey(key: 'tombstoneShowsTitle', array: $depublication);
 	}//end testAnEmptyPublicReasonIsNotStored()
 
 	/** A caller the guard refuses stores no depublication, for either withdrawal. */

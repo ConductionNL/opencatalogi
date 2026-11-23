@@ -394,7 +394,15 @@ class PublicationStateController extends Controller {
 			]
 		);
 
-		return $this->record(depublication: $depublication + $this->tombstoneChoice());
+		// What the public tombstone says, as the officer chose it (REQ-PWA-002): a
+		// public reason that is not empty, and Show the title when it is a yes. A
+		// no, or a choice the request does not send, keeps the schema's default.
+		$tombstone = [
+			'publicReason' => trim((string)$this->request->getParam('publicReason', '')),
+			'tombstoneShowsTitle' => filter_var($this->request->getParam('tombstoneShowsTitle', false), FILTER_VALIDATE_BOOLEAN),
+		];
+
+		return $this->record(depublication: $depublication + array_filter($tombstone));
 
 	}//end withdrawWithReason()
 
@@ -448,31 +456,6 @@ class PublicationStateController extends Controller {
 	private function reason(): string {
 		return trim((string)$this->request->getParam('reason', ''));
 	}//end reason()
-
-	/**
-	 * What the public tombstone of the withdrawn publication says, as the officer chose it (REQ-PWA-002).
-	 *
-	 * Only what the request sends is stored: a public reason that is not empty,
-	 * and whether the tombstone shows the title.
-	 *
-	 * @return array{publicReason?: string, tombstoneShowsTitle?: bool} The choice.
-	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
-	 */
-	private function tombstoneChoice(): array {
-		$choice = [];
-		$publicReason = trim((string)$this->request->getParam('publicReason', ''));
-		if ($publicReason !== '') {
-			$choice['publicReason'] = $publicReason;
-		}
-
-		$showsTitle = $this->request->getParam('tombstoneShowsTitle', null);
-		if ($showsTitle !== null) {
-			$choice['tombstoneShowsTitle'] = filter_var($showsTitle, FILTER_VALIDATE_BOOLEAN);
-		}
-
-		return $choice;
-	}//end tombstoneChoice()
 
 	/**
 	 * Withdraw one document of a publication with a reason.
