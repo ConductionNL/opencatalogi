@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationVersionServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenRegister\Db\ObjectEntity;
@@ -44,7 +45,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
  */
-class PublicationVersionService {
+class PublicationVersionService implements PublicationVersionServiceInterface {
 
 	/**
 	 * The OpenRegister file service that lists and copies a publication's files.
@@ -90,7 +91,7 @@ class PublicationVersionService {
 			return false;
 		}
 
-		if (self::canonical(value: $before) !== self::canonical(value: $after)) {
+		if (self::sameContent(left: $before, right: $after) === false) {
 			return true;
 		}
 
@@ -269,26 +270,34 @@ class PublicationVersionService {
 	}//end latestVersion()
 
 	/**
-	 * A value with every map's keys sorted, so a reordered save compares equal.
+	 * Whether two values hold the same content, the key order of maps aside.
 	 *
-	 * @param mixed $value The value.
+	 * @param mixed $left One value.
+	 * @param mixed $right The other value.
 	 *
-	 * @return mixed The value in canonical key order.
+	 * @return bool True when they are equal.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
-	private static function canonical(mixed $value): mixed {
-		if (is_array($value) === false) {
-			return $value;
+	private static function sameContent(mixed $left, mixed $right): bool {
+		if (is_array($left) === false || is_array($right) === false) {
+			return $left === $right;
 		}
 
-		if (array_is_list($value) === false) {
-			ksort($value);
+		$keys = array_keys($left);
+		if (array_is_list($left) !== array_is_list($right) || count($keys) !== count($right)) {
+			return false;
 		}
 
-		return array_map(static fn (mixed $item): mixed => self::canonical(value: $item), $value);
+		foreach ($keys as $key) {
+			if (array_key_exists($key, $right) === false || self::sameContent(left: $left[$key], right: $right[$key]) === false) {
+				return false;
+			}
+		}
 
-	}//end canonical()
+		return true;
+
+	}//end sameContent()
 
 	/**
 	 * The register and schema the versions are stored in.

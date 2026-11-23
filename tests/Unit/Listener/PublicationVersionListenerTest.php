@@ -27,7 +27,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Listener;
 
 use OCA\OpenCatalogi\Listener\PublicationVersionListener;
-use OCA\OpenCatalogi\Service\Publication\PublicationVersionService;
+use OCA\OpenCatalogi\Contract\PublicationVersionServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
@@ -48,14 +48,17 @@ final class PublicationVersionListenerTest extends TestCase {
 	/**
 	 * The listener over the given version service, with schema 7 as the publication schema.
 	 *
-	 * @param PublicationVersionService $versions The version service double.
+	 * @param PublicationVersionServiceInterface $versions The version service double.
 	 *
 	 * @return PublicationVersionListener
 	 */
-	private function listener(PublicationVersionService $versions): PublicationVersionListener {
+	private function listener(PublicationVersionServiceInterface $versions): PublicationVersionListener {
 		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
-			static fn (string $app, string $key): string => ($key === 'publication_schema') ? self::PUBLICATION_SCHEMA : ''
+			static fn (string $app, string $key): string => match ($key) {
+				'publication_schema' => self::PUBLICATION_SCHEMA,
+				default => '',
+			}
 		);
 		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
@@ -73,10 +76,10 @@ final class PublicationVersionListenerTest extends TestCase {
 	 *
 	 * @param bool $replaces What replacesPublicVersion() answers.
 	 *
-	 * @return PublicationVersionService&MockObject
+	 * @return PublicationVersionServiceInterface&MockObject
 	 */
-	private function versions(bool $replaces): PublicationVersionService {
-		$versions = $this->createMock(originalClassName: PublicationVersionService::class);
+	private function versions(bool $replaces): PublicationVersionServiceInterface {
+		$versions = $this->createMock(originalClassName: PublicationVersionServiceInterface::class);
 		$versions->method('replacesPublicVersion')->willReturn($replaces);
 		return $versions;
 	}//end versions()
@@ -158,7 +161,7 @@ final class PublicationVersionListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testOtherObjectsAndCreatesAreLeftAlone(): void {
-		$versions = $this->createMock(originalClassName: PublicationVersionService::class);
+		$versions = $this->createMock(originalClassName: PublicationVersionServiceInterface::class);
 		$versions->expects($this->never())->method('replacesPublicVersion');
 		$versions->expects($this->never())->method('snapshot');
 		$listener = $this->listener(versions: $versions);

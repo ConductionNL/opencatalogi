@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\Publication\PublicationVersionService;
+use OCA\OpenCatalogi\Contract\PublicationVersionServiceInterface;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -50,7 +50,7 @@ class PublicationVersionListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config Names the publication schema.
-	 * @param PublicationVersionService $versions Keeps the old version.
+	 * @param PublicationVersionServiceInterface $versions Keeps the old version.
 	 * @param IL10N $l10n Localisation.
 	 * @param LoggerInterface $logger Logs why a correction was refused.
 	 *
@@ -58,7 +58,7 @@ class PublicationVersionListener implements IEventListener {
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly PublicationVersionService $versions,
+		private readonly PublicationVersionServiceInterface $versions,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {

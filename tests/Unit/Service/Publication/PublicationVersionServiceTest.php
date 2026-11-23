@@ -37,6 +37,7 @@ use RuntimeException;
 /**
  * @covers \OCA\OpenCatalogi\Service\Publication\PublicationVersionService
  * @uses \OCA\OpenCatalogi\Service\Publication\PublicationStateService
+ * @uses \OCA\OpenCatalogi\Service\CanonicalOrder
  */
 final class PublicationVersionServiceTest extends TestCase {
 
@@ -290,7 +291,7 @@ final class PublicationVersionServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheSnapshotHoldsOnlyTheFieldsThePublicReadReturned(): void {
-		$old = $this->publication(data: self::public(['internalNote' => 'not for readers']));
+		$old = $this->publication(data: self::public(extra: ['internalNote' => 'not for readers']));
 
 		$version = $this->service()->snapshot(old: $old, now: new DateTimeImmutable('2026-11-23T10:00:00+00:00'));
 
@@ -313,8 +314,8 @@ final class PublicationVersionServiceTest extends TestCase {
 	public function testANonPublicPublicationIsNotSnapshotted(): void {
 		$cases = [
 			['title' => 'Concept', 'status' => 'draft'],
-			self::public(['publicationDate' => '2999-01-01T00:00:00+00:00']),
-			self::public(['depublicationDate' => '2026-02-01T00:00:00+00:00']),
+			self::public(extra: ['publicationDate' => '2999-01-01T00:00:00+00:00']),
+			self::public(extra: ['depublicationDate' => '2026-02-01T00:00:00+00:00']),
 		];
 		foreach ($cases as $data) {
 			$this->assertNull(actual: $this->service()->snapshot(old: $this->publication(data: $data)));
@@ -379,8 +380,11 @@ final class PublicationVersionServiceTest extends TestCase {
 		$service = $this->service();
 		$old = $this->publication(data: self::public());
 
-		$this->assertTrue(condition: $service->replacesPublicVersion(old: $old, new: $this->publication(data: self::public(['title' => 'Besluit parkeren binnenstad 2026']))));
-		$this->assertFalse(condition: $service->replacesPublicVersion(old: $old, new: $this->publication(data: self::public(['internalNote' => 'edited']))));
+		$corrected = $this->publication(data: self::public(extra: ['title' => 'Besluit parkeren binnenstad 2026']));
+		$hiddenEdit = $this->publication(data: self::public(extra: ['internalNote' => 'edited']));
+
+		$this->assertTrue(condition: $service->replacesPublicVersion(old: $old, new: $corrected));
+		$this->assertFalse(condition: $service->replacesPublicVersion(old: $old, new: $hiddenEdit));
 		$this->assertFalse(
 			condition: $service->replacesPublicVersion(old: $old, new: $this->publication(data: array_reverse(self::public(), true))),
 			message: 'The same fields saved in another order are the same version.'
@@ -399,7 +403,7 @@ final class PublicationVersionServiceTest extends TestCase {
 
 		$this->assertFalse(condition: $service->replacesPublicVersion(
 			old: $this->publication(data: self::public()),
-			new: $this->publication(data: self::public(['title' => 'Ingetrokken', 'depublicationDate' => '2026-02-01T00:00:00+00:00']))
+			new: $this->publication(data: self::public(extra: ['title' => 'Ingetrokken', 'depublicationDate' => '2026-02-01T00:00:00+00:00']))
 		));
 		$this->assertFalse(condition: $service->replacesPublicVersion(
 			old: $this->publication(data: ['title' => 'Concept', 'status' => 'draft']),
