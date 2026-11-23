@@ -29,7 +29,10 @@
                         "@id": "https://host/apps/opencatalogi/api/woo/u4"
                     }
                 ],
-                "dct:description": "Besluiten"
+                "dct:description": "Besluiten",
+                "dct:license": {
+                    "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
+                }
             },
             {
                 "@id": "https://host/apps/opencatalogi/api/woo/u1",
@@ -59,7 +62,7 @@
                         "dct:title": "f-u1.pdf",
                         "dcat:byteSize": 42,
                         "dct:license": {
-                            "@id": "http://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+                            "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
                         }
                     }
                 ],
@@ -117,7 +120,7 @@
                         "dct:title": "f-u4.pdf",
                         "dcat:byteSize": 42,
                         "dct:license": {
-                            "@id": "http://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+                            "@id": "http://publications.europa.eu/resource/authority/licence/CC0"
                         }
                     }
                 ],

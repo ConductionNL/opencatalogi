@@ -175,7 +175,6 @@
         "dataset": {
             "@id": "https://host/api/cat/dataset",
             "@type": "dcat:Dataset",
-            "dct:license": "https://lic/pub",
             "dcat:landingPage": {
                 "@id": "https://host/api/cat/dataset"
             },
@@ -206,10 +205,7 @@
                     "dct:format": {
                         "@id": "http://publications.europa.eu/resource/authority/file-type/PDF"
                     },
-                    "dcat:byteSize": 1234,
-                    "dct:license": {
-                        "@id": "https://lic/pub"
-                    }
+                    "dcat:byteSize": 1234
                 },
                 {
                     "@id": "https://host/d/2",
@@ -224,9 +220,6 @@
                     "dcat:mediaType": "text/csv",
                     "dct:format": {
                         "@id": "http://publications.europa.eu/resource/authority/file-type/CSV"
-                    },
-                    "dct:license": {
-                        "@id": "https://lic/pub"
                     }
                 },
                 {
@@ -237,9 +230,6 @@
                     },
                     "dcat:accessURL": {
                         "@id": "https://host/d/3/download"
-                    },
-                    "dct:license": {
-                        "@id": "https://lic/pub"
                     }
                 }
             ]
@@ -249,6 +239,12 @@
                 "iri": "earlier",
                 "axis": "kept",
                 "reason": "collected before this dataset"
+            },
+            {
+                "iri": "https://host/api/cat/dataset",
+                "axis": "dct:license",
+                "value": "https://lic/pub",
+                "reason": "licence is not on the EU licences authority list"
             }
         ]
     },
@@ -307,10 +303,7 @@
                     "dct:format": {
                         "@id": "http://publications.europa.eu/resource/authority/file-type/PDF"
                     },
-                    "dcat:byteSize": 1234,
-                    "dct:license": {
-                        "@id": "https://lic/default"
-                    }
+                    "dcat:byteSize": 1234
                 },
                 {
                     "@id": "https://host/d/2",
@@ -325,9 +318,6 @@
                     "dcat:mediaType": "text/csv",
                     "dct:format": {
                         "@id": "http://publications.europa.eu/resource/authority/file-type/CSV"
-                    },
-                    "dct:license": {
-                        "@id": "https://lic/default"
                     }
                 },
                 {
@@ -338,9 +328,6 @@
                     },
                     "dcat:accessURL": {
                         "@id": "https://host/d/3/download"
-                    },
-                    "dct:license": {
-                        "@id": "https://lic/default"
                     }
                 }
             ]
@@ -350,6 +337,12 @@
                 "iri": "earlier",
                 "axis": "kept",
                 "reason": "collected before this dataset"
+            },
+            {
+                "iri": "https://host/api/cat/dataset",
+                "axis": "dct:license",
+                "value": "https://lic/default",
+                "reason": "licence is not on the EU licences authority list"
             }
         ]
     },

@@ -303,7 +303,7 @@ class DcatMappingServiceTest extends TestCase {
 			mapping: DcatMappingService::DEFAULT_MAPPING,
 			files: $files,
 			datasetIri: 'https://host/api/cat/u',
-			defaults: ['license' => 'https://lic']
+			defaults: ['license' => 'http://creativecommons.org/licenses/by/4.0/']
 		);
 
 		$this->assertCount(2, $dataset['dcat:distribution']);
@@ -314,7 +314,84 @@ class DcatMappingServiceTest extends TestCase {
 		$this->assertSame('application/pdf', $pdf['dcat:mediaType']);
 		$this->assertSame('text/csv', $csv['dcat:mediaType']);
 		$this->assertSame(1234, $pdf['dcat:byteSize']);
-		$this->assertSame(['@id' => 'https://lic'], $pdf['dct:license']);
+		$this->assertSame(expected: ['@id' => 'http://publications.europa.eu/resource/authority/licence/CC_BY_4_0'], actual: $pdf['dct:license']);
+	}
+
+	/**
+	 * A licence code on the publication, and as the catalogue default for its
+	 * distributions, is emitted as its authority IRI (REQ-DCC-001).
+
+	 *
+	 * @return void
+	 */
+	public function testALicenceCodeIsEmittedAsItsAuthorityIri(): void {
+		$cc0 = ['@id' => 'http://publications.europa.eu/resource/authority/licence/CC0'];
+		$files = [['downloadUrl' => 'https://host/d/1/download', 'extension' => 'pdf', 'title' => 'doc.pdf']];
+
+		$dataset = $this->mapDataset(
+			publication: ['id' => 'u', '@self' => ['uuid' => 'u'], 'title' => 'T', 'license' => 'CC0'],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: $files,
+			datasetIri: 'https://host/api/cat/u',
+			defaults: []
+		);
+		$this->assertSame(expected: $cc0, actual: $dataset['dct:license']);
+		$this->assertSame(expected: $cc0, actual: $dataset['dcat:distribution'][0]['dct:license']);
+
+		$fromCatalogue = $this->mapDataset(
+			publication: ['id' => 'u', '@self' => ['uuid' => 'u'], 'title' => 'T'],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: $files,
+			datasetIri: 'https://host/api/cat/u',
+			defaults: ['license' => 'CC0']
+		);
+		$this->assertArrayNotHasKey(key: 'dct:license', array: $fromCatalogue);
+		$this->assertSame(expected: $cc0, actual: $fromCatalogue['dcat:distribution'][0]['dct:license']);
+		$this->assertSame(expected: $cc0, actual: $this->service->licenceNode(value: 'CC0'));
+	}
+
+	/**
+	 * A free-text licence is left out of the dataset and its distributions, and
+	 * reported once on the source (REQ-DCC-001).
+
+	 *
+	 * @return void
+	 */
+	public function testAnUnresolvedLicenceIsOmittedAndReported(): void {
+		$source = new DcatDatasetSource(
+			publication: ['id' => 'u', '@self' => ['uuid' => 'u'], 'title' => 'T', 'license' => 'vrij te gebruiken'],
+			datasetIri: 'https://host/api/cat/u',
+			files: [['downloadUrl' => 'https://host/d/1/download', 'extension' => 'pdf', 'title' => 'doc.pdf']]
+		);
+		$dataset = $this->service->mapDataset(
+			source: $source,
+			profile: new DcatMappingProfile(mapping: DcatMappingService::DEFAULT_MAPPING, defaults: ['license' => 'CC0'])
+		);
+
+		$this->assertArrayNotHasKey(key: 'dct:license', array: $dataset);
+		$this->assertArrayNotHasKey(key: 'dct:license', array: $dataset['dcat:distribution'][0]);
+		$this->assertSame(
+			expected: [[
+				'iri' => 'https://host/api/cat/u',
+				'axis' => 'dct:license',
+				'value' => 'vrij te gebruiken',
+				'reason' => 'licence is not on the EU licences authority list',
+			]],
+			actual: $source->violations
+		);
+
+		$fromDefault = new DcatDatasetSource(
+			publication: ['id' => 'v', '@self' => ['uuid' => 'v'], 'title' => 'T'],
+			datasetIri: 'https://host/api/cat/v',
+			files: [['downloadUrl' => 'https://host/d/2/download', 'extension' => 'pdf', 'title' => 'doc.pdf']]
+		);
+		$this->service->mapDataset(
+			source: $fromDefault,
+			profile: new DcatMappingProfile(mapping: DcatMappingService::DEFAULT_MAPPING, defaults: ['license' => ['not' => 'text']])
+		);
+		$this->assertSame(expected: 'dct:license', actual: $fromDefault->violations[0]['axis']);
+		$this->assertSame(expected: '', actual: $fromDefault->violations[0]['value']);
+		$this->assertNull(actual: $this->service->licenceNode(value: ['CC0']));
 	}
 
 	public function testATableDistributionConformsToItsDictionary(): void {

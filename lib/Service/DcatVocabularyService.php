@@ -226,4 +226,137 @@ class DcatVocabularyService {
 
 		return $out;
 	}//end dataThemeList()
+
+	/**
+	 * Resolve a licence to its EU licences authority IRI.
+	 *
+	 * Accepts the authority IRI, the authority code (`CC0`), the SPDX id, an
+	 * IRI the authority lists as an exact match (the Creative Commons deed,
+	 * with or without `deed.nl`), or the exact English, Dutch or
+	 * data.overheid.nl label, all case-insensitive. Anything else answers null,
+	 * so the caller omits `dct:license` rather than emitting free text.
+	 *
+	 * @param string|null $value The declared licence.
+	 *
+	 * @return string|null The authority IRI, or null when the value is not on the list.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	public function resolveLicence(?string $value): ?string {
+		$needle = self::needleOf(value: $value);
+		if ($needle === null) {
+			return null;
+		}
+
+		$needle = self::withoutIriNoise(value: $needle);
+		foreach (self::licenceMembers() as $code => $member) {
+			if (in_array($needle, self::licenceCandidates(code: (string)$code, member: $member), true) === true) {
+				return (string)$member['iri'];
+			}
+		}
+
+		return null;
+	}//end resolveLicence()
+
+	/**
+	 * The bundled licence list: code → IRI, English and Dutch label.
+	 *
+	 * @return array<string, array{iri: string, label: string, labelNl: string}> The value list.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	public function licenceList(): array {
+		$out = [];
+		foreach (self::licenceMembers() as $code => $member) {
+			$out[(string)$code] = [
+				'iri' => (string)$member['iri'],
+				'label' => (string)$member['label'],
+				'labelNl' => (string)$member['labelNl'],
+			];
+		}
+
+		return $out;
+	}//end licenceList()
+
+	/**
+	 * Where the bundled licence list comes from: the authority and its version.
+	 *
+	 * @return array{source: string, version: string} The provenance.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	public function licenceListSource(): array {
+		$list = self::bundledLists()['licences'];
+
+		return ['source' => (string)$list['source'], 'version' => (string)$list['version']];
+	}//end licenceListSource()
+
+	/**
+	 * The comparable values that name one licence.
+	 *
+	 * @param string $code The authority code.
+	 * @param array<string, mixed> $member The bundled member.
+	 *
+	 * @return array<int, string>
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	private static function licenceCandidates(string $code, array $member): array {
+		$names = [$code, $member['iri'], $member['label'], $member['labelNl'], ($member['spdx'] ?? ''), ($member['donlLabel'] ?? '')];
+		$names = array_merge($names, ($member['matches'] ?? []));
+
+		$out = [];
+		foreach ($names as $name) {
+			if (is_string($name) === true && $name !== '') {
+				$out[] = self::withoutIriNoise(value: strtolower($name));
+			}
+		}
+
+		return $out;
+	}//end licenceCandidates()
+
+	/**
+	 * A lowercased value without the parts that do not tell licences apart:
+	 * the scheme, a trailing `deed.<lang>` and a trailing slash.
+	 *
+	 * @param string $value The lowercased value.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	private static function withoutIriNoise(string $value): string {
+		$value = (string)preg_replace('#^https?://#', '', $value);
+		$value = (string)preg_replace('#/deed\.[a-z-]+$#', '/', $value);
+
+		return rtrim($value, '/');
+	}//end withoutIriNoise()
+
+	/**
+	 * The bundled licence members, keyed by authority code.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	private static function licenceMembers(): array {
+		return self::bundledLists()['licences']['members'];
+	}//end licenceMembers()
+
+	/**
+	 * The bundled value lists in `lib/Settings/dcat_waardelijsten.json`, read once.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 */
+	private static function bundledLists(): array {
+		static $lists = null;
+		if ($lists === null) {
+			$raw = file_get_contents(__DIR__ . '/../Settings/dcat_waardelijsten.json');
+			$lists = json_decode((string)$raw, true, 512, JSON_THROW_ON_ERROR);
+		}
+
+		return $lists;
+	}//end bundledLists()
 }//end class
