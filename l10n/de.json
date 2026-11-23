@@ -801,7 +801,15 @@
         "Public reason": "Öffentlicher Grund",
         "Why the publication was withdrawn, as the public link tells a reader.": "Warum die Veröffentlichung zurückgezogen wurde, wie der öffentliche Link es Lesenden mitteilt.",
         "Show the title after withdrawal": "Titel nach Rückzug anzeigen",
-        "Whether the public link of the withdrawn publication still shows its title.": "Ob der öffentliche Link der zurückgezogenen Veröffentlichung noch ihren Titel zeigt."
+        "Whether the public link of the withdrawn publication still shows its title.": "Ob der öffentliche Link der zurückgezogenen Veröffentlichung noch ihren Titel zeigt.",
+        "Archive hotspot": "Archiv-Hotspot",
+        "Every publication filed under this subject is kept permanently.": "Jede Veröffentlichung zu diesem Thema wird dauerhaft aufbewahrt.",
+        "Reason for the archive hotspot": "Grund für den Archiv-Hotspot",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Warum dieses Thema ein Archiv-Hotspot ist, zum Beispiel die Liste, die es nennt.",
+        "Archive hotspot since": "Archiv-Hotspot seit",
+        "When the subject was marked as an archive hotspot.": "Wann das Thema als Archiv-Hotspot markiert wurde.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Nur ein Administrator kann einen Archiv-Hotspot markieren oder aufheben.",
+        "Give the reason for the archive hotspot.": "Geben Sie den Grund für den Archiv-Hotspot an."
     },
     "plurals": {}
 }

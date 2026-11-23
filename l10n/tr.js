@@ -802,7 +802,15 @@ OC.L10N.register(
         "Public reason": "Kamuya açık gerekçe",
         "Why the publication was withdrawn, as the public link tells a reader.": "Yayının neden geri çekildiği, herkese açık bağlantının okuyucuya söylediği şekliyle.",
         "Show the title after withdrawal": "Geri çekildikten sonra başlığı göster",
-        "Whether the public link of the withdrawn publication still shows its title.": "Geri çekilen yayının herkese açık bağlantısının başlığını hâlâ gösterip göstermediği."
+        "Whether the public link of the withdrawn publication still shows its title.": "Geri çekilen yayının herkese açık bağlantısının başlığını hâlâ gösterip göstermediği.",
+        "Archive hotspot": "Arşiv odak noktası",
+        "Every publication filed under this subject is kept permanently.": "Bu konu altındaki her yayın kalıcı olarak saklanır.",
+        "Reason for the archive hotspot": "Arşiv odak noktasının gerekçesi",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Bu konunun neden bir arşiv odak noktası olduğu, örneğin onu adlandıran liste.",
+        "Archive hotspot since": "Arşiv odak noktası başlangıcı",
+        "When the subject was marked as an archive hotspot.": "Konunun arşiv odak noktası olarak işaretlendiği zaman.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Arşiv odak noktasını yalnızca bir yönetici işaretleyebilir veya kaldırabilir.",
+        "Give the reason for the archive hotspot.": "Arşiv odak noktasının gerekçesini belirtin."
     },
     "nplurals=2; plural=(n != 1);"
 )

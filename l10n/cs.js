@@ -802,7 +802,15 @@ OC.L10N.register(
         "Public reason": "Veřejný důvod",
         "Why the publication was withdrawn, as the public link tells a reader.": "Proč byla publikace stažena, jak to veřejný odkaz sděluje čtenáři.",
         "Show the title after withdrawal": "Zobrazit název po stažení",
-        "Whether the public link of the withdrawn publication still shows its title.": "Zda veřejný odkaz stažené publikace stále zobrazuje její název."
+        "Whether the public link of the withdrawn publication still shows its title.": "Zda veřejný odkaz stažené publikace stále zobrazuje její název.",
+        "Archive hotspot": "Archivní hotspot",
+        "Every publication filed under this subject is kept permanently.": "Každá publikace zařazená pod toto téma se uchovává trvale.",
+        "Reason for the archive hotspot": "Důvod archivního hotspotu",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Proč je toto téma archivním hotspotem, například seznam, který jej uvádí.",
+        "Archive hotspot since": "Archivní hotspot od",
+        "When the subject was marked as an archive hotspot.": "Kdy bylo téma označeno jako archivní hotspot.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Archivní hotspot může označit nebo zrušit jen správce.",
+        "Give the reason for the archive hotspot.": "Uveďte důvod archivního hotspotu."
     },
     "nplurals=2; plural=(n != 1);"
 )

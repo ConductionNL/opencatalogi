@@ -801,7 +801,15 @@
         "Public reason": "Motiu públic",
         "Why the publication was withdrawn, as the public link tells a reader.": "Per què s'ha retirat la publicació, tal com l'enllaç públic ho diu al lector.",
         "Show the title after withdrawal": "Mostra el títol després de la retirada",
-        "Whether the public link of the withdrawn publication still shows its title.": "Si l'enllaç públic de la publicació retirada encara mostra el títol."
+        "Whether the public link of the withdrawn publication still shows its title.": "Si l'enllaç públic de la publicació retirada encara mostra el títol.",
+        "Archive hotspot": "Punt calent d'arxiu",
+        "Every publication filed under this subject is kept permanently.": "Cada publicació classificada en aquest tema es conserva permanentment.",
+        "Reason for the archive hotspot": "Motiu del punt calent d'arxiu",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Per què aquest tema és un punt calent d'arxiu, per exemple la llista que l'esmenta.",
+        "Archive hotspot since": "Punt calent d'arxiu des de",
+        "When the subject was marked as an archive hotspot.": "Quan el tema es va marcar com a punt calent d'arxiu.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Només un administrador pot marcar o desmarcar un punt calent d'arxiu.",
+        "Give the reason for the archive hotspot.": "Indiqueu el motiu del punt calent d'arxiu."
     },
     "plurals": {}
 }

@@ -801,7 +801,15 @@
         "Public reason": "Публічна причина",
         "Why the publication was withdrawn, as the public link tells a reader.": "Чому публікацію відкликано — так, як публічне посилання повідомляє це читачеві.",
         "Show the title after withdrawal": "Показувати заголовок після відкликання",
-        "Whether the public link of the withdrawn publication still shows its title.": "Чи показує публічне посилання відкликаної публікації її заголовок."
+        "Whether the public link of the withdrawn publication still shows its title.": "Чи показує публічне посилання відкликаної публікації її заголовок.",
+        "Archive hotspot": "Архівна гаряча точка",
+        "Every publication filed under this subject is kept permanently.": "Кожна публікація за цією темою зберігається постійно.",
+        "Reason for the archive hotspot": "Причина архівної гарячої точки",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Чому ця тема є архівною гарячою точкою, наприклад список, у якому її названо.",
+        "Archive hotspot since": "Архівна гаряча точка з",
+        "When the subject was marked as an archive hotspot.": "Коли тему позначено як архівну гарячу точку.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Позначити або зняти архівну гарячу точку може лише адміністратор.",
+        "Give the reason for the archive hotspot.": "Вкажіть причину архівної гарячої точки."
     },
     "plurals": {}
 }

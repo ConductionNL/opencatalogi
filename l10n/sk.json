@@ -801,7 +801,15 @@
         "Public reason": "Verejný dôvod",
         "Why the publication was withdrawn, as the public link tells a reader.": "Prečo bola publikácia stiahnutá, ako to verejný odkaz oznamuje čitateľovi.",
         "Show the title after withdrawal": "Zobraziť názov po stiahnutí",
-        "Whether the public link of the withdrawn publication still shows its title.": "Či verejný odkaz stiahnutej publikácie stále zobrazuje jej názov."
+        "Whether the public link of the withdrawn publication still shows its title.": "Či verejný odkaz stiahnutej publikácie stále zobrazuje jej názov.",
+        "Archive hotspot": "Archívny hotspot",
+        "Every publication filed under this subject is kept permanently.": "Každá publikácia zaradená pod túto tému sa uchováva natrvalo.",
+        "Reason for the archive hotspot": "Dôvod archívneho hotspotu",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Prečo je táto téma archívnym hotspotom, napríklad zoznam, ktorý ju uvádza.",
+        "Archive hotspot since": "Archívny hotspot od",
+        "When the subject was marked as an archive hotspot.": "Kedy bola téma označená ako archívny hotspot.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Archívny hotspot môže označiť alebo zrušiť len správca.",
+        "Give the reason for the archive hotspot.": "Uveďte dôvod archívneho hotspotu."
     },
     "plurals": {}
 }

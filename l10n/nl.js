@@ -2106,7 +2106,15 @@ OC.L10N.register(
         "Public reason": "Openbare reden",
         "Why the publication was withdrawn, as the public link tells a reader.": "Waarom de publicatie is ingetrokken, zoals de openbare link het een lezer vertelt.",
         "Show the title after withdrawal": "Titel tonen na intrekking",
-        "Whether the public link of the withdrawn publication still shows its title.": "Of de openbare link van de ingetrokken publicatie de titel nog toont."
+        "Whether the public link of the withdrawn publication still shows its title.": "Of de openbare link van de ingetrokken publicatie de titel nog toont.",
+        "Archive hotspot": "Archiefhotspot",
+        "Every publication filed under this subject is kept permanently.": "Elke publicatie onder dit onderwerp wordt blijvend bewaard.",
+        "Reason for the archive hotspot": "Reden voor de archiefhotspot",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Waarom dit onderwerp een archiefhotspot is, bijvoorbeeld de lijst die het noemt.",
+        "Archive hotspot since": "Archiefhotspot sinds",
+        "When the subject was marked as an archive hotspot.": "Wanneer het onderwerp als archiefhotspot is aangewezen.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Alleen een beheerder kan een archiefhotspot aanwijzen of intrekken.",
+        "Give the reason for the archive hotspot.": "Geef de reden voor de archiefhotspot."
     },
     "nplurals=2; plural=(n != 1);"
 )

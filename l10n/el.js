@@ -802,7 +802,15 @@ OC.L10N.register(
         "Public reason": "Δημόσιος λόγος",
         "Why the publication was withdrawn, as the public link tells a reader.": "Γιατί αποσύρθηκε η δημοσίευση, όπως το λέει ο δημόσιος σύνδεσμος στον αναγνώστη.",
         "Show the title after withdrawal": "Εμφάνιση του τίτλου μετά την απόσυρση",
-        "Whether the public link of the withdrawn publication still shows its title.": "Αν ο δημόσιος σύνδεσμος της αποσυρμένης δημοσίευσης εμφανίζει ακόμη τον τίτλο της."
+        "Whether the public link of the withdrawn publication still shows its title.": "Αν ο δημόσιος σύνδεσμος της αποσυρμένης δημοσίευσης εμφανίζει ακόμη τον τίτλο της.",
+        "Archive hotspot": "Αρχειακό σημείο ενδιαφέροντος",
+        "Every publication filed under this subject is kept permanently.": "Κάθε δημοσίευση που ανήκει σε αυτό το θέμα διατηρείται μόνιμα.",
+        "Reason for the archive hotspot": "Λόγος του αρχειακού σημείου ενδιαφέροντος",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Γιατί αυτό το θέμα είναι αρχειακό σημείο ενδιαφέροντος, για παράδειγμα ο κατάλογος που το αναφέρει.",
+        "Archive hotspot since": "Αρχειακό σημείο ενδιαφέροντος από",
+        "When the subject was marked as an archive hotspot.": "Πότε το θέμα επισημάνθηκε ως αρχειακό σημείο ενδιαφέροντος.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Μόνο ένας διαχειριστής μπορεί να επισημάνει ή να αφαιρέσει ένα αρχειακό σημείο ενδιαφέροντος.",
+        "Give the reason for the archive hotspot.": "Δώστε τον λόγο του αρχειακού σημείου ενδιαφέροντος."
     },
     "nplurals=2; plural=(n != 1);"
 )

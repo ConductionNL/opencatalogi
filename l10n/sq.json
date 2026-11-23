@@ -801,7 +801,15 @@
         "Public reason": "Arsyeja publike",
         "Why the publication was withdrawn, as the public link tells a reader.": "Pse u tërhoq publikimi, siç ia thotë lidhja publike lexuesit.",
         "Show the title after withdrawal": "Shfaq titullin pas tërheqjes",
-        "Whether the public link of the withdrawn publication still shows its title.": "Nëse lidhja publike e publikimit të tërhequr ende shfaq titullin e tij."
+        "Whether the public link of the withdrawn publication still shows its title.": "Nëse lidhja publike e publikimit të tërhequr ende shfaq titullin e tij.",
+        "Archive hotspot": "Pikë e nxehtë arkivore",
+        "Every publication filed under this subject is kept permanently.": "Çdo publikim nën këtë temë ruhet përgjithmonë.",
+        "Reason for the archive hotspot": "Arsyeja e pikës së nxehtë arkivore",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Pse kjo temë është pikë e nxehtë arkivore, për shembull lista që e përmend.",
+        "Archive hotspot since": "Pikë e nxehtë arkivore që nga",
+        "When the subject was marked as an archive hotspot.": "Kur tema u shënua si pikë e nxehtë arkivore.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Vetëm një administrator mund të shënojë ose heqë një pikë të nxehtë arkivore.",
+        "Give the reason for the archive hotspot.": "Jepni arsyen e pikës së nxehtë arkivore."
     },
     "plurals": {}
 }

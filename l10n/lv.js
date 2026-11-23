@@ -802,7 +802,15 @@ OC.L10N.register(
         "Public reason": "Publiskais iemesls",
         "Why the publication was withdrawn, as the public link tells a reader.": "Kāpēc publikācija tika atsaukta, kā publiskā saite to pasaka lasītājam.",
         "Show the title after withdrawal": "Rādīt nosaukumu pēc atsaukšanas",
-        "Whether the public link of the withdrawn publication still shows its title.": "Vai atsauktās publikācijas publiskā saite joprojām rāda tās nosaukumu."
+        "Whether the public link of the withdrawn publication still shows its title.": "Vai atsauktās publikācijas publiskā saite joprojām rāda tās nosaukumu.",
+        "Archive hotspot": "Arhīva karstais punkts",
+        "Every publication filed under this subject is kept permanently.": "Katra publikācija šajā tēmā tiek glabāta pastāvīgi.",
+        "Reason for the archive hotspot": "Arhīva karstā punkta iemesls",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Kāpēc šī tēma ir arhīva karstais punkts, piemēram, saraksts, kurā tā minēta.",
+        "Archive hotspot since": "Arhīva karstais punkts kopš",
+        "When the subject was marked as an archive hotspot.": "Kad tēma tika atzīmēta kā arhīva karstais punkts.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Arhīva karsto punktu var atzīmēt vai noņemt tikai administrators.",
+        "Give the reason for the archive hotspot.": "Norādiet arhīva karstā punkta iemeslu."
     },
     "nplurals=2; plural=(n != 1);"
 )

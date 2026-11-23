@@ -415,6 +415,33 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	}//end testTheDiwooCompletenessListenerIsRegisteredOnBothPreSaveEvents()
 
 	/**
+	 * register() subscribes the archive hotspot listener before and after a save (REQ-THA-001).
+	 *
+	 * @return void
+	 */
+	public function testTheThemeHotspotListenerIsRegisteredBeforeAndAfterTheSave(): void {
+		$listeners = [];
+		$context = $this->createMock(originalClassName: \OCP\AppFramework\Bootstrap\IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$listeners): void {
+				$listeners[$listener][] = $event;
+			}
+		);
+
+		$application = (new \ReflectionClass(objectOrClass: \OCA\OpenCatalogi\AppInfo\Application::class))->newInstanceWithoutConstructor();
+		$application->register(context: $context);
+
+		$this->assertSame(
+			expected: ['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'],
+			actual: ($listeners[\OCA\OpenCatalogi\Listener\ThemeHotspotGuard::class] ?? [])
+		);
+		$this->assertSame(
+			expected: ['OCA\\OpenRegister\\Event\\ObjectCreatedEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatedEvent'],
+			actual: ($listeners[\OCA\OpenCatalogi\Listener\ThemeHotspotAudit::class] ?? [])
+		);
+	}//end testTheThemeHotspotListenerIsRegisteredBeforeAndAfterTheSave()
+
+	/**
 	 * The no-index middleware is registered, so officer responses carry noindex (REQ-WAB-003).
 	 *
 	 * @return void

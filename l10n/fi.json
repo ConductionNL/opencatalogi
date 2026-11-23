@@ -801,7 +801,15 @@
         "Public reason": "Julkinen syy",
         "Why the publication was withdrawn, as the public link tells a reader.": "Miksi julkaisu vedettiin pois, niin kuin julkinen linkki sen lukijalle kertoo.",
         "Show the title after withdrawal": "Näytä otsikko poisvedon jälkeen",
-        "Whether the public link of the withdrawn publication still shows its title.": "Näyttääkö poisvedetyn julkaisun julkinen linkki yhä sen otsikon."
+        "Whether the public link of the withdrawn publication still shows its title.": "Näyttääkö poisvedetyn julkaisun julkinen linkki yhä sen otsikon.",
+        "Archive hotspot": "Arkiston kuuma kohta",
+        "Every publication filed under this subject is kept permanently.": "Jokainen tämän aiheen alle luokiteltu julkaisu säilytetään pysyvästi.",
+        "Reason for the archive hotspot": "Arkiston kuuman kohdan syy",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Miksi tämä aihe on arkiston kuuma kohta, esimerkiksi luettelo, joka sen mainitsee.",
+        "Archive hotspot since": "Arkiston kuuma kohta alkaen",
+        "When the subject was marked as an archive hotspot.": "Milloin aihe merkittiin arkiston kuumaksi kohdaksi.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Vain ylläpitäjä voi merkitä tai poistaa arkiston kuuman kohdan.",
+        "Give the reason for the archive hotspot.": "Anna syy arkiston kuumalle kohdalle."
     },
     "plurals": {}
 }

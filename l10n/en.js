@@ -2151,7 +2151,15 @@ OC.L10N.register(
         "Public reason": "Public reason",
         "Why the publication was withdrawn, as the public link tells a reader.": "Why the publication was withdrawn, as the public link tells a reader.",
         "Show the title after withdrawal": "Show the title after withdrawal",
-        "Whether the public link of the withdrawn publication still shows its title.": "Whether the public link of the withdrawn publication still shows its title."
+        "Whether the public link of the withdrawn publication still shows its title.": "Whether the public link of the withdrawn publication still shows its title.",
+        "Archive hotspot": "Archive hotspot",
+        "Every publication filed under this subject is kept permanently.": "Every publication filed under this subject is kept permanently.",
+        "Reason for the archive hotspot": "Reason for the archive hotspot",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Why this subject is an archive hotspot, for example the list that names it.",
+        "Archive hotspot since": "Archive hotspot since",
+        "When the subject was marked as an archive hotspot.": "When the subject was marked as an archive hotspot.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Only an administrator can mark or unmark an archive hotspot.",
+        "Give the reason for the archive hotspot.": "Give the reason for the archive hotspot."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -801,7 +801,15 @@
         "Public reason": "Offentlig begrundelse",
         "Why the publication was withdrawn, as the public link tells a reader.": "Hvorfor publikationen blev trukket tilbage, som det offentlige link fortæller læseren.",
         "Show the title after withdrawal": "Vis titlen efter tilbagetrækning",
-        "Whether the public link of the withdrawn publication still shows its title.": "Om det offentlige link til den tilbagetrukne publikation stadig viser dens titel."
+        "Whether the public link of the withdrawn publication still shows its title.": "Om det offentlige link til den tilbagetrukne publikation stadig viser dens titel.",
+        "Archive hotspot": "Arkivhotspot",
+        "Every publication filed under this subject is kept permanently.": "Hver publikation under dette emne bevares permanent.",
+        "Reason for the archive hotspot": "Begrundelse for arkivhotspottet",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Hvorfor dette emne er et arkivhotspot, for eksempel listen der nævner det.",
+        "Archive hotspot since": "Arkivhotspot siden",
+        "When the subject was marked as an archive hotspot.": "Hvornår emnet blev markeret som arkivhotspot.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Kun en administrator kan markere eller fjerne et arkivhotspot.",
+        "Give the reason for the archive hotspot.": "Angiv begrundelsen for arkivhotspottet."
     },
     "plurals": {}
 }

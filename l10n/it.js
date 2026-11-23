@@ -802,7 +802,15 @@ OC.L10N.register(
         "Public reason": "Motivo pubblico",
         "Why the publication was withdrawn, as the public link tells a reader.": "Perché la pubblicazione è stata ritirata, come il link pubblico lo comunica al lettore.",
         "Show the title after withdrawal": "Mostra il titolo dopo il ritiro",
-        "Whether the public link of the withdrawn publication still shows its title.": "Se il link pubblico della pubblicazione ritirata mostra ancora il titolo."
+        "Whether the public link of the withdrawn publication still shows its title.": "Se il link pubblico della pubblicazione ritirata mostra ancora il titolo.",
+        "Archive hotspot": "Hotspot d'archivio",
+        "Every publication filed under this subject is kept permanently.": "Ogni pubblicazione archiviata sotto questo tema viene conservata in modo permanente.",
+        "Reason for the archive hotspot": "Motivo dell'hotspot d'archivio",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Perché questo tema è un hotspot d'archivio, ad esempio l'elenco che lo cita.",
+        "Archive hotspot since": "Hotspot d'archivio dal",
+        "When the subject was marked as an archive hotspot.": "Quando il tema è stato contrassegnato come hotspot d'archivio.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Solo un amministratore può contrassegnare o rimuovere un hotspot d'archivio.",
+        "Give the reason for the archive hotspot.": "Indica il motivo dell'hotspot d'archivio."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -801,7 +801,15 @@
         "Public reason": "Viešoji priežastis",
         "Why the publication was withdrawn, as the public link tells a reader.": "Kodėl leidinys buvo atšauktas, kaip viešoji nuoroda tai praneša skaitytojui.",
         "Show the title after withdrawal": "Rodyti pavadinimą po atšaukimo",
-        "Whether the public link of the withdrawn publication still shows its title.": "Ar atšaukto leidinio viešoji nuoroda vis dar rodo jo pavadinimą."
+        "Whether the public link of the withdrawn publication still shows its title.": "Ar atšaukto leidinio viešoji nuoroda vis dar rodo jo pavadinimą.",
+        "Archive hotspot": "Archyvo karštasis taškas",
+        "Every publication filed under this subject is kept permanently.": "Kiekvienas šiai temai priskirtas leidinys saugomas nuolat.",
+        "Reason for the archive hotspot": "Archyvo karštojo taško priežastis",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Kodėl ši tema yra archyvo karštasis taškas, pavyzdžiui, sąrašas, kuriame ji nurodyta.",
+        "Archive hotspot since": "Archyvo karštasis taškas nuo",
+        "When the subject was marked as an archive hotspot.": "Kada tema buvo pažymėta kaip archyvo karštasis taškas.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Archyvo karštąjį tašką pažymėti arba panaikinti gali tik administratorius.",
+        "Give the reason for the archive hotspot.": "Nurodykite archyvo karštojo taško priežastį."
     },
     "plurals": {}
 }

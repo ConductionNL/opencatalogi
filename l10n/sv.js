@@ -802,7 +802,15 @@ OC.L10N.register(
         "Public reason": "Offentligt skäl",
         "Why the publication was withdrawn, as the public link tells a reader.": "Varför publikationen drogs tillbaka, så som den offentliga länken berättar det för läsaren.",
         "Show the title after withdrawal": "Visa titeln efter tillbakadragandet",
-        "Whether the public link of the withdrawn publication still shows its title.": "Om den tillbakadragna publikationens offentliga länk fortfarande visar dess titel."
+        "Whether the public link of the withdrawn publication still shows its title.": "Om den tillbakadragna publikationens offentliga länk fortfarande visar dess titel.",
+        "Archive hotspot": "Arkivhotspot",
+        "Every publication filed under this subject is kept permanently.": "Varje publikation under detta ämne bevaras permanent.",
+        "Reason for the archive hotspot": "Skäl för arkivhotspoten",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Varför detta ämne är en arkivhotspot, till exempel listan som nämner det.",
+        "Archive hotspot since": "Arkivhotspot sedan",
+        "When the subject was marked as an archive hotspot.": "När ämnet markerades som arkivhotspot.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Endast en administratör kan markera eller avmarkera en arkivhotspot.",
+        "Give the reason for the archive hotspot.": "Ange skälet för arkivhotspoten."
     },
     "nplurals=2; plural=(n != 1);"
 )
