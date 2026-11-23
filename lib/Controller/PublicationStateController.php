@@ -71,7 +71,8 @@ class PublicationStateController extends Controller {
 	 * @param IUserSession $userSession The current session.
 	 * @param PublicationRightsInterface $rights The update right on one publication, and the publish right.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
- * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003), says whether an embargo holds (REQ-PSG-001) and counts the documents (REQ-PSG-004).
+	 * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003), says whether an embargo
+	 *                                     holds (REQ-PSG-001) and counts the documents (REQ-PSG-004).
 	 */
 	public function __construct(
 		$appName,

@@ -42,7 +42,11 @@ use Psr\Log\LoggerInterface;
  */
 class PublishTransitionTest extends TestCase {
 
-	/** The document counter the subject gets, or null for a plain double. */
+	/**
+	 * The document counter the subject gets, or null for a plain double.
+	 *
+	 * @var PublicationDocumentCount|null
+	 */
 	private ?PublicationDocumentCount $documents = null;
 
 	/**

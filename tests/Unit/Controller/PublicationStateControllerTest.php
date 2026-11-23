@@ -104,10 +104,18 @@ class PublicationStateControllerTest extends TestCase {
 	/** @var list<string> The caller's groups, as the group manager answers them. */
 	private array $userGroups = [];
 
-	/** @var list<array<string, mixed>> The files OpenRegister holds for the publication (REQ-PSG-004). */
+	/**
+	 * The files OpenRegister holds for the publication (REQ-PSG-004).
+	 *
+	 * @var list<array<string, mixed>>
+	 */
 	private array $attachedFiles = [['id' => 1, 'name' => 'besluit.pdf']];
 
-	/** A failure the file mapper throws when the documents are counted, or null. */
+	/**
+	 * A failure the file mapper throws when the documents are counted, or null.
+	 *
+	 * @var \Throwable|null
+	 */
 	private ?\Throwable $filesFailure = null;
 
 	protected function setUp(): void {
@@ -312,14 +320,26 @@ class PublicationStateControllerTest extends TestCase {
 	 */
 	private function documentContainer(): ContainerInterface {
 		$mapper = new class ($this) {
+			/**
+			 * Constructor.
+			 *
+			 * @param PublicationStateControllerTest $test The test that holds the files.
+			 */
 			public function __construct(private readonly PublicationStateControllerTest $test) {
-			}
+			}//end __construct()
 
+			/**
+			 * The files of the object.
+			 *
+			 * @param object $object The object.
+			 *
+			 * @return array<int, mixed> The files.
+			 */
 			public function getFilesForObject(object $object): array {
 				return $this->test->filesFor();
-			}
+			}//end getFilesForObject()
 		};
-		$container = $this->createMock(ContainerInterface::class);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->method('has')->willReturnCallback(static fn (string $id): bool => $id === PublicationDocumentCount::FILE_MAPPER);
 		$container->method('get')->willReturn($mapper);
 
@@ -802,7 +822,7 @@ class PublicationStateControllerTest extends TestCase {
 	 */
 	public function testAConfirmedPublishWithNoDocumentsGoesAhead(): void {
 		$this->attachedFiles = [];
-		$this->withParams(['confirmNoDocuments' => true]);
+		$this->withParams(params: ['confirmNoDocuments' => true]);
 		$this->publication = ['id' => 'p1', 'status' => 'approved', 'title' => 'Besluit'];
 		$this->rights->method('mayUpdate')->willReturn(true);
 
