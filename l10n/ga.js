@@ -802,7 +802,15 @@ OC.L10N.register(
         "Public reason": "Cúis phoiblí",
         "Why the publication was withdrawn, as the public link tells a reader.": "Cén fáth ar tarraingíodh siar an foilseachán, mar a insíonn an nasc poiblí don léitheoir é.",
         "Show the title after withdrawal": "Taispeáin an teideal tar éis tarraingt siar",
-        "Whether the public link of the withdrawn publication still shows its title.": "Cé acu a thaispeánann nasc poiblí an fhoilseacháin a tarraingíodh siar a theideal fós nó nach dtaispeánann."
+        "Whether the public link of the withdrawn publication still shows its title.": "Cé acu a thaispeánann nasc poiblí an fhoilseacháin a tarraingíodh siar a theideal fós nó nach dtaispeánann.",
+        "Archive hotspot": "Ceantar te cartlainne",
+        "Every publication filed under this subject is kept permanently.": "Coimeádtar go buan gach foilseachán a chomhdaítear faoin ábhar seo.",
+        "Reason for the archive hotspot": "Cúis an cheantair te cartlainne",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Cén fáth ar ceantar te cartlainne é an t-ábhar seo, mar shampla an liosta a ainmníonn é.",
+        "Archive hotspot since": "Ceantar te cartlainne ó",
+        "When the subject was marked as an archive hotspot.": "Cathain a marcáladh an t-ábhar mar cheantar te cartlainne.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Ní féidir ach le riarthóir ceantar te cartlainne a mharcáil nó a dhímharcáil.",
+        "Give the reason for the archive hotspot.": "Tabhair cúis an cheantair te cartlainne."
     },
     "nplurals=2; plural=(n != 1);"
 )

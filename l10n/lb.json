@@ -801,7 +801,15 @@
         "Public reason": "Ëffentleche Grond",
         "Why the publication was withdrawn, as the public link tells a reader.": "Firwat d'Publikatioun zréckgezu gouf, sou wéi den ëffentleche Link et dem Lieser seet.",
         "Show the title after withdrawal": "Titel nom Zréckzéien uweisen",
-        "Whether the public link of the withdrawn publication still shows its title.": "Ob den ëffentleche Link vun der zréckgezunner Publikatioun nach hiren Titel weist."
+        "Whether the public link of the withdrawn publication still shows its title.": "Ob den ëffentleche Link vun der zréckgezunner Publikatioun nach hiren Titel weist.",
+        "Archive hotspot": "Archiv-Hotspot",
+        "Every publication filed under this subject is kept permanently.": "All Publikatioun ënner dësem Thema gëtt dauerhaft opgehalen.",
+        "Reason for the archive hotspot": "Grond fir den Archiv-Hotspot",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Firwat dëst Thema en Archiv-Hotspot ass, zum Beispill d'Lëscht, déi et nennt.",
+        "Archive hotspot since": "Archiv-Hotspot zënter",
+        "When the subject was marked as an archive hotspot.": "Wéini d'Thema als Archiv-Hotspot markéiert gouf.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Nëmmen en Administrateur kann en Archiv-Hotspot markéieren oder ophiewen.",
+        "Give the reason for the archive hotspot.": "Gitt de Grond fir den Archiv-Hotspot un."
     },
     "plurals": {}
 }

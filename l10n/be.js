@@ -802,7 +802,15 @@ OC.L10N.register(
         "Public reason": "Публічная прычына",
         "Why the publication was withdrawn, as the public link tells a reader.": "Чаму публікацыя адкліканая — так, як публічная спасылка паведамляе гэта чытачу.",
         "Show the title after withdrawal": "Паказваць загаловак пасля адклікання",
-        "Whether the public link of the withdrawn publication still shows its title.": "Ці паказвае публічная спасылка адкліканай публікацыі яе загаловак."
+        "Whether the public link of the withdrawn publication still shows its title.": "Ці паказвае публічная спасылка адкліканай публікацыі яе загаловак.",
+        "Archive hotspot": "Архіўная гарачая кропка",
+        "Every publication filed under this subject is kept permanently.": "Кожная публікацыя па гэтай тэме захоўваецца назаўсёды.",
+        "Reason for the archive hotspot": "Прычына архіўнай гарачай кропкі",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Чаму гэтая тэма з'яўляецца архіўнай гарачай кропкай, напрыклад спіс, у якім яна названа.",
+        "Archive hotspot since": "Архіўная гарачая кропка з",
+        "When the subject was marked as an archive hotspot.": "Калі тэму пазначылі як архіўную гарачую кропку.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Пазначыць або зняць архіўную гарачую кропку можа толькі адміністратар.",
+        "Give the reason for the archive hotspot.": "Пакажыце прычыну архіўнай гарачай кропкі."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -802,7 +802,15 @@ OC.L10N.register(
         "Public reason": "Motiv public",
         "Why the publication was withdrawn, as the public link tells a reader.": "De ce a fost retrasă publicația, așa cum linkul public îi spune cititorului.",
         "Show the title after withdrawal": "Afișează titlul după retragere",
-        "Whether the public link of the withdrawn publication still shows its title.": "Dacă linkul public al publicației retrase mai afișează titlul acesteia."
+        "Whether the public link of the withdrawn publication still shows its title.": "Dacă linkul public al publicației retrase mai afișează titlul acesteia.",
+        "Archive hotspot": "Punct fierbinte de arhivă",
+        "Every publication filed under this subject is kept permanently.": "Fiecare publicație încadrată la acest subiect este păstrată permanent.",
+        "Reason for the archive hotspot": "Motivul punctului fierbinte de arhivă",
+        "Why this subject is an archive hotspot, for example the list that names it.": "De ce acest subiect este un punct fierbinte de arhivă, de exemplu lista care îl numește.",
+        "Archive hotspot since": "Punct fierbinte de arhivă din",
+        "When the subject was marked as an archive hotspot.": "Când subiectul a fost marcat ca punct fierbinte de arhivă.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Doar un administrator poate marca sau anula un punct fierbinte de arhivă.",
+        "Give the reason for the archive hotspot.": "Indicați motivul punctului fierbinte de arhivă."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

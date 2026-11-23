@@ -801,7 +801,15 @@
         "Public reason": "Motiv public",
         "Why the publication was withdrawn, as the public link tells a reader.": "Pertge che la publicaziun è vegnida retratga, sco che la colliaziun publica di quai al lectur.",
         "Show the title after withdrawal": "Mussar il titel suenter la retratga",
-        "Whether the public link of the withdrawn publication still shows its title.": "Sche la colliaziun publica da la publicaziun retratga mussa anc ses titel."
+        "Whether the public link of the withdrawn publication still shows its title.": "Sche la colliaziun publica da la publicaziun retratga mussa anc ses titel.",
+        "Archive hotspot": "Hotspot d'archiv",
+        "Every publication filed under this subject is kept permanently.": "Mintga publicaziun sut quest tema vegn conservada permanentamain.",
+        "Reason for the archive hotspot": "Motiv dal hotspot d'archiv",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Pertge che quest tema è in hotspot d'archiv, per exempel la glista che al numna.",
+        "Archive hotspot since": "Hotspot d'archiv dapi",
+        "When the subject was marked as an archive hotspot.": "Cura ch'il tema è vegnì marcà sco hotspot d'archiv.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Mo in administratur po marcar u allontanar in hotspot d'archiv.",
+        "Give the reason for the archive hotspot.": "Inditgai il motiv dal hotspot d'archiv."
     },
     "plurals": {}
 }

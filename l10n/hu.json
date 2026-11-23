@@ -801,7 +801,15 @@
         "Public reason": "Nyilvános indok",
         "Why the publication was withdrawn, as the public link tells a reader.": "Miért vonták vissza a közzétételt, ahogyan a nyilvános hivatkozás az olvasónak elmondja.",
         "Show the title after withdrawal": "Cím megjelenítése visszavonás után",
-        "Whether the public link of the withdrawn publication still shows its title.": "A visszavont közzététel nyilvános hivatkozása mutatja-e még a címét."
+        "Whether the public link of the withdrawn publication still shows its title.": "A visszavont közzététel nyilvános hivatkozása mutatja-e még a címét.",
+        "Archive hotspot": "Levéltári kiemelt téma",
+        "Every publication filed under this subject is kept permanently.": "Az e téma alá sorolt minden közzététel véglegesen megőrzésre kerül.",
+        "Reason for the archive hotspot": "A levéltári kiemelt téma oka",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Miért levéltári kiemelt téma ez, például a lista, amely megnevezi.",
+        "Archive hotspot since": "Levéltári kiemelt téma ekkortól",
+        "When the subject was marked as an archive hotspot.": "Mikor jelölték meg a témát levéltári kiemelt témaként.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Levéltári kiemelt témát csak rendszergazda jelölhet meg vagy vonhat vissza.",
+        "Give the reason for the archive hotspot.": "Adja meg a levéltári kiemelt téma okát."
     },
     "plurals": {}
 }

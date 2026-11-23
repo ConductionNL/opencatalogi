@@ -801,7 +801,15 @@
         "Public reason": "Avalik põhjus",
         "Why the publication was withdrawn, as the public link tells a reader.": "Miks väljaanne tagasi võeti, nagu avalik link seda lugejale ütleb.",
         "Show the title after withdrawal": "Näita pealkirja pärast tagasivõtmist",
-        "Whether the public link of the withdrawn publication still shows its title.": "Kas tagasivõetud väljaande avalik link näitab endiselt selle pealkirja."
+        "Whether the public link of the withdrawn publication still shows its title.": "Kas tagasivõetud väljaande avalik link näitab endiselt selle pealkirja.",
+        "Archive hotspot": "Arhiivi kuum koht",
+        "Every publication filed under this subject is kept permanently.": "Iga selle teema alla kuuluv väljaanne säilitatakse alaliselt.",
+        "Reason for the archive hotspot": "Arhiivi kuuma koha põhjus",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Miks see teema on arhiivi kuum koht, näiteks loend, mis seda nimetab.",
+        "Archive hotspot since": "Arhiivi kuum koht alates",
+        "When the subject was marked as an archive hotspot.": "Millal teema märgiti arhiivi kuumaks kohaks.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Arhiivi kuuma koha saab märkida või eemaldada ainult administraator.",
+        "Give the reason for the archive hotspot.": "Andke arhiivi kuuma koha põhjus."
     },
     "plurals": {}
 }

@@ -801,7 +801,15 @@
         "Public reason": "Opinber ástæða",
         "Why the publication was withdrawn, as the public link tells a reader.": "Hvers vegna útgáfan var dregin til baka, eins og opinberi tengillinn segir lesandanum.",
         "Show the title after withdrawal": "Sýna titilinn eftir afturköllun",
-        "Whether the public link of the withdrawn publication still shows its title.": "Hvort opinberi tengill afturkölluðu útgáfunnar sýnir enn titil hennar."
+        "Whether the public link of the withdrawn publication still shows its title.": "Hvort opinberi tengill afturkölluðu útgáfunnar sýnir enn titil hennar.",
+        "Archive hotspot": "Skjalasafnsáhersla",
+        "Every publication filed under this subject is kept permanently.": "Öll útgáfa undir þessu efni er varðveitt varanlega.",
+        "Reason for the archive hotspot": "Ástæða skjalasafnsáherslu",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Hvers vegna þetta efni er skjalasafnsáhersla, til dæmis listinn sem nefnir það.",
+        "Archive hotspot since": "Skjalasafnsáhersla frá",
+        "When the subject was marked as an archive hotspot.": "Hvenær efnið var merkt sem skjalasafnsáhersla.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Aðeins kerfisstjóri getur merkt eða afmerkt skjalasafnsáherslu.",
+        "Give the reason for the archive hotspot.": "Gefðu upp ástæðu skjalasafnsáherslunnar."
     },
     "plurals": {}
 }

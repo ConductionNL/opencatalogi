@@ -802,7 +802,15 @@ OC.L10N.register(
         "Public reason": "Raġuni pubblika",
         "Why the publication was withdrawn, as the public link tells a reader.": "Għaliex il-pubblikazzjoni ġiet irtirata, kif il-link pubbliku jgħidu lill-qarrej.",
         "Show the title after withdrawal": "Uri t-titlu wara l-irtirar",
-        "Whether the public link of the withdrawn publication still shows its title.": "Jekk il-link pubbliku tal-pubblikazzjoni rtirata għadux juri t-titlu tagħha."
+        "Whether the public link of the withdrawn publication still shows its title.": "Jekk il-link pubbliku tal-pubblikazzjoni rtirata għadux juri t-titlu tagħha.",
+        "Archive hotspot": "Hotspot tal-arkivju",
+        "Every publication filed under this subject is kept permanently.": "Kull pubblikazzjoni taħt dan is-suġġett tinżamm b'mod permanenti.",
+        "Reason for the archive hotspot": "Raġuni għall-hotspot tal-arkivju",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Għaliex dan is-suġġett huwa hotspot tal-arkivju, pereżempju l-lista li ssemmih.",
+        "Archive hotspot since": "Hotspot tal-arkivju minn",
+        "When the subject was marked as an archive hotspot.": "Meta s-suġġett ġie mmarkat bħala hotspot tal-arkivju.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Amministratur biss jista' jimmarka jew ineħħi hotspot tal-arkivju.",
+        "Give the reason for the archive hotspot.": "Agħti r-raġuni għall-hotspot tal-arkivju."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1,0 +1,31 @@
+{
+	"_note": "Register fragment for theme-archive-hotspot (REQ-THA-001). An administrator marks a subject as an archive hotspot, with the reason; ThemeHotspotListener stamps archiveHotspotSince and sets the subject's OpenRegister appraisal to permanent. No later fragment in name order declares the theme schema, so this one carries the version bump.",
+	"components": {
+		"schemas": {
+			"theme": {
+				"slug": "theme",
+				"version": "0.0.6",
+				"properties": {
+					"archiveHotspot": {
+						"type": "boolean",
+						"default": false,
+						"title": "Archive hotspot",
+						"description": "Every publication filed under this subject is kept permanently."
+					},
+					"archiveHotspotReason": {
+						"type": "string",
+						"title": "Reason for the archive hotspot",
+						"description": "Why this subject is an archive hotspot, for example the list that names it."
+					},
+					"archiveHotspotSince": {
+						"type": "string",
+						"format": "date-time",
+						"readOnly": true,
+						"title": "Archive hotspot since",
+						"description": "When the subject was marked as an archive hotspot."
+					}
+				}
+			}
+		}
+	}
+}

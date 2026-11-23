@@ -802,7 +802,15 @@ OC.L10N.register(
         "Public reason": "Javni razlog",
         "Why the publication was withdrawn, as the public link tells a reader.": "Zašto je objava povučena, kako to javna poveznica kaže čitatelju.",
         "Show the title after withdrawal": "Prikaži naslov nakon povlačenja",
-        "Whether the public link of the withdrawn publication still shows its title.": "Prikazuje li javna poveznica povučene objave još uvijek njezin naslov."
+        "Whether the public link of the withdrawn publication still shows its title.": "Prikazuje li javna poveznica povučene objave još uvijek njezin naslov.",
+        "Archive hotspot": "Arhivska žarišna točka",
+        "Every publication filed under this subject is kept permanently.": "Svaka objava pod ovom temom čuva se trajno.",
+        "Reason for the archive hotspot": "Razlog arhivske žarišne točke",
+        "Why this subject is an archive hotspot, for example the list that names it.": "Zašto je ova tema arhivska žarišna točka, na primjer popis koji je navodi.",
+        "Archive hotspot since": "Arhivska žarišna točka od",
+        "When the subject was marked as an archive hotspot.": "Kada je tema označena kao arhivska žarišna točka.",
+        "Only an administrator can mark or unmark an archive hotspot.": "Samo administrator može označiti ili ukloniti arhivsku žarišnu točku.",
+        "Give the reason for the archive hotspot.": "Navedite razlog arhivske žarišne točke."
     },
     "nplurals=2; plural=(n != 1);"
 )
