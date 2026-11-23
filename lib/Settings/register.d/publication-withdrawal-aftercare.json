@@ -1,0 +1,24 @@
+{
+	"_note": "Register fragment for publication-withdrawal-aftercare (REQ-PWA-002). The depublication says what the public tombstone of a withdrawn publication tells a reader: a public reason beside the internal one, and whether it names the title. The version is the depublication schema's merged version, so the last fragment in name order (woo-x-access-boundary-hardening.json) carries the same bump.",
+	"components": {
+		"schemas": {
+			"depublication": {
+				"slug": "depublication",
+				"version": "0.2.4",
+				"properties": {
+					"publicReason": {
+						"type": "string",
+						"title": "Public reason",
+						"description": "Why the publication was withdrawn, as the public link tells a reader."
+					},
+					"tombstoneShowsTitle": {
+						"type": "boolean",
+						"default": false,
+						"title": "Show the title after withdrawal",
+						"description": "Whether the public link of the withdrawn publication still shows its title."
+					}
+				}
+			}
+		}
+	}
+}

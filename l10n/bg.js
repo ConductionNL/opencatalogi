@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Този прикачен файл или публикация не е намерен.",
         "The file id is not valid.": "Идентификаторът на файла не е валиден.",
         "Attachment reading is not set up on this instance.": "Четенето на прикачени файлове не е настроено в тази инстанция.",
-        "Choose a licence from the EU licences authority list.": "Изберете лиценз от списъка с лицензи на ЕС."
+        "Choose a licence from the EU licences authority list.": "Изберете лиценз от списъка с лицензи на ЕС.",
+        "Public reason": "Публична причина",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Защо публикацията е оттеглена, както публичната връзка го съобщава на читателя.",
+        "Show the title after withdrawal": "Показване на заглавието след оттеглянето",
+        "Whether the public link of the withdrawn publication still shows its title.": "Дали публичната връзка на оттеглената публикация все още показва заглавието ѝ."
     },
     "nplurals=2; plural=(n != 1);"
 )

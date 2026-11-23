@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Táto príloha alebo publikácia sa nenašla.",
         "The file id is not valid.": "ID súboru nie je platné.",
         "Attachment reading is not set up on this instance.": "Čítanie príloh nie je na tejto inštancii nastavené.",
-        "Choose a licence from the EU licences authority list.": "Vyberte licenciu zo zoznamu licencií EÚ."
+        "Choose a licence from the EU licences authority list.": "Vyberte licenciu zo zoznamu licencií EÚ.",
+        "Public reason": "Verejný dôvod",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Prečo bola publikácia stiahnutá, ako to verejný odkaz oznamuje čitateľovi.",
+        "Show the title after withdrawal": "Zobraziť názov po stiahnutí",
+        "Whether the public link of the withdrawn publication still shows its title.": "Či verejný odkaz stiahnutej publikácie stále zobrazuje jej názov."
     },
     "nplurals=2; plural=(n != 1);"
 )

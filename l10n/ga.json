@@ -797,7 +797,11 @@
         "This attachment or publication was not found.": "Níor aimsíodh an ceangaltán ná an foilseachán seo.",
         "The file id is not valid.": "Níl aitheantas an chomhaid bailí.",
         "Attachment reading is not set up on this instance.": "Níl léamh ceangaltán socraithe ar an gcás seo.",
-        "Choose a licence from the EU licences authority list.": "Roghnaigh ceadúnas ó liosta ceadúnas an AE."
+        "Choose a licence from the EU licences authority list.": "Roghnaigh ceadúnas ó liosta ceadúnas an AE.",
+        "Public reason": "Cúis phoiblí",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Cén fáth ar tarraingíodh siar an foilseachán, mar a insíonn an nasc poiblí don léitheoir é.",
+        "Show the title after withdrawal": "Taispeáin an teideal tar éis tarraingt siar",
+        "Whether the public link of the withdrawn publication still shows its title.": "Cé acu a thaispeánann nasc poiblí an fhoilseacháin a tarraingíodh siar a theideal fós nó nach dtaispeánann."
     },
     "plurals": {}
 }

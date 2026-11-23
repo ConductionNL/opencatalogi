@@ -797,7 +797,11 @@
         "This attachment or publication was not found.": "Bu ek veya yayın bulunamadı.",
         "The file id is not valid.": "Dosya kimliği geçerli değil.",
         "Attachment reading is not set up on this instance.": "Eklerin okunması bu kurulumda yapılandırılmamış.",
-        "Choose a licence from the EU licences authority list.": "AB lisans listesinden bir lisans seçin."
+        "Choose a licence from the EU licences authority list.": "AB lisans listesinden bir lisans seçin.",
+        "Public reason": "Kamuya açık gerekçe",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Yayının neden geri çekildiği, herkese açık bağlantının okuyucuya söylediği şekliyle.",
+        "Show the title after withdrawal": "Geri çekildikten sonra başlığı göster",
+        "Whether the public link of the withdrawn publication still shows its title.": "Geri çekilen yayının herkese açık bağlantısının başlığını hâlâ gösterip göstermediği."
     },
     "plurals": {}
 }

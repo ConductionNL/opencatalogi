@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Dieser Anhang oder diese Veröffentlichung wurde nicht gefunden.",
         "The file id is not valid.": "Die Datei-ID ist ungültig.",
         "Attachment reading is not set up on this instance.": "Das Lesen von Anhängen ist auf dieser Instanz nicht eingerichtet.",
-        "Choose a licence from the EU licences authority list.": "Wählen Sie eine Lizenz aus der EU-Normdatenliste für Lizenzen."
+        "Choose a licence from the EU licences authority list.": "Wählen Sie eine Lizenz aus der EU-Normdatenliste für Lizenzen.",
+        "Public reason": "Öffentlicher Grund",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Warum die Veröffentlichung zurückgezogen wurde, wie der öffentliche Link es Lesenden mitteilt.",
+        "Show the title after withdrawal": "Titel nach Rückzug anzeigen",
+        "Whether the public link of the withdrawn publication still shows its title.": "Ob der öffentliche Link der zurückgezogenen Veröffentlichung noch ihren Titel zeigt."
     },
     "nplurals=2; plural=(n != 1);"
 )

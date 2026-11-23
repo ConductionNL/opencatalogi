@@ -797,7 +797,11 @@
         "This attachment or publication was not found.": "Šis pielikums vai publikācija netika atrasta.",
         "The file id is not valid.": "Faila ID nav derīgs.",
         "Attachment reading is not set up on this instance.": "Pielikumu lasīšana šajā instancē nav iestatīta.",
-        "Choose a licence from the EU licences authority list.": "Izvēlieties licenci no ES licenču saraksta."
+        "Choose a licence from the EU licences authority list.": "Izvēlieties licenci no ES licenču saraksta.",
+        "Public reason": "Publiskais iemesls",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Kāpēc publikācija tika atsaukta, kā publiskā saite to pasaka lasītājam.",
+        "Show the title after withdrawal": "Rādīt nosaukumu pēc atsaukšanas",
+        "Whether the public link of the withdrawn publication still shows its title.": "Vai atsauktās publikācijas publiskā saite joprojām rāda tās nosaukumu."
     },
     "plurals": {}
 }

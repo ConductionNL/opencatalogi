@@ -797,7 +797,11 @@
         "This attachment or publication was not found.": "Þetta viðhengi eða þessi útgáfa fannst ekki.",
         "The file id is not valid.": "Auðkenni skrárinnar er ekki gilt.",
         "Attachment reading is not set up on this instance.": "Lestur viðhengja er ekki uppsettur á þessu tilviki.",
-        "Choose a licence from the EU licences authority list.": "Veldu leyfi af leyfalista ESB."
+        "Choose a licence from the EU licences authority list.": "Veldu leyfi af leyfalista ESB.",
+        "Public reason": "Opinber ástæða",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Hvers vegna útgáfan var dregin til baka, eins og opinberi tengillinn segir lesandanum.",
+        "Show the title after withdrawal": "Sýna titilinn eftir afturköllun",
+        "Whether the public link of the withdrawn publication still shows its title.": "Hvort opinberi tengill afturkölluðu útgáfunnar sýnir enn titil hennar."
     },
     "plurals": {}
 }

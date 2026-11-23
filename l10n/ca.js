@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "No s'ha trobat aquest adjunt o publicació.",
         "The file id is not valid.": "L'identificador del fitxer no és vàlid.",
         "Attachment reading is not set up on this instance.": "La lectura d'adjunts no està configurada en aquesta instància.",
-        "Choose a licence from the EU licences authority list.": "Trieu una llicència de la llista de llicències de la UE."
+        "Choose a licence from the EU licences authority list.": "Trieu una llicència de la llista de llicències de la UE.",
+        "Public reason": "Motiu públic",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Per què s'ha retirat la publicació, tal com l'enllaç públic ho diu al lector.",
+        "Show the title after withdrawal": "Mostra el títol després de la retirada",
+        "Whether the public link of the withdrawn publication still shows its title.": "Si l'enllaç públic de la publicació retirada encara mostra el títol."
     },
     "nplurals=2; plural=(n != 1);"
 )

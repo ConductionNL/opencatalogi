@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Dan l-anness jew il-pubblikazzjoni ma nstabux.",
         "The file id is not valid.": "L-id tal-fajl mhuwiex validu.",
         "Attachment reading is not set up on this instance.": "Il-qari tal-annessi mhuwiex issettjat f'din l-istanza.",
-        "Choose a licence from the EU licences authority list.": "Agħżel liċenzja mil-lista tal-liċenzji tal-UE."
+        "Choose a licence from the EU licences authority list.": "Agħżel liċenzja mil-lista tal-liċenzji tal-UE.",
+        "Public reason": "Raġuni pubblika",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Għaliex il-pubblikazzjoni ġiet irtirata, kif il-link pubbliku jgħidu lill-qarrej.",
+        "Show the title after withdrawal": "Uri t-titlu wara l-irtirar",
+        "Whether the public link of the withdrawn publication still shows its title.": "Jekk il-link pubbliku tal-pubblikazzjoni rtirata għadux juri t-titlu tagħha."
     },
     "nplurals=2; plural=(n != 1);"
 )

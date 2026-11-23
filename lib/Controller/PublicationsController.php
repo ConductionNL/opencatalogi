@@ -1107,13 +1107,14 @@ class PublicationsController extends Controller {
 	}//end publicExtendFromRequest()
 
 	/**
-	 * Find the publication of a detail read and answer with it, or with the 404.
+	 * Find the publication of a detail read and answer with it, with the tombstone of a withdrawn one (410), or with the 404.
 	 *
 	 * @param PublicationRead $read The detail read.
 	 *
-	 * @return JSONResponse The publication, or the 404.
+	 * @return JSONResponse The publication, the tombstone, or the 404.
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.2
 	 */
 	private function showPublication(PublicationRead $read): JSONResponse {
 		$this->logger->debug(
@@ -1135,6 +1136,11 @@ class PublicationsController extends Controller {
 				return $trusted;
 			}
 
+			$tombstone = $this->tombstoneRead(read: $read);
+			if ($tombstone !== null) {
+				return $tombstone;
+			}
+
 			$this->logger->warning(
 				'[PublicationsController::show] Object not found in any register/schema',
 				['id' => $read->query->slug, 'catalogSlug' => $read->query->catalogSlug]
@@ -1144,6 +1150,39 @@ class PublicationsController extends Controller {
 
 		return $this->answerFound(read: $read, found: $found);
 	}//end showPublication()
+
+	/**
+	 * The tombstone of a withdrawn publication, answered 410, or null for the 404 (REQ-PWA-002).
+	 *
+	 * Asked only on a miss. {@see PublicationTombstone::tombstone()} reads as the
+	 * system whether the publication was withdrawn and answers only the
+	 * withdrawal; anything that fails keeps the 404, so a lookup error never
+	 * reveals more than the plain miss.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 *
+	 * @return JSONResponse|null The 410 answer, or null.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.2
+	 */
+	private function tombstoneRead(PublicationRead $read): ?JSONResponse {
+		try {
+			$tombstones = $this->container->get(PublicationTombstone::class);
+			$tombstone  = null;
+			if ($tombstones instanceof PublicationTombstone === true) {
+				$tombstone = $tombstones->tombstone(query: $read->query);
+			}
+		} catch (\Throwable $e) {
+			$this->logger->warning('[PublicationsController::show] The tombstone lookup failed: ' . $e->getMessage());
+			return null;
+		}
+
+		if ($tombstone === null) {
+			return null;
+		}
+
+		return new JSONResponse(data: $tombstone, statusCode: Http::STATUS_GONE);
+	}//end tombstoneRead()
 
 	/**
 	 * The trusted read of a publication for signed-in readers (REQ-PSR-003).

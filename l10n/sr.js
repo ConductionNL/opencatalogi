@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Овај прилог или публикација није пронађен.",
         "The file id is not valid.": "ID датотеке није важећи.",
         "Attachment reading is not set up on this instance.": "Читање прилога није подешено на овој инстанци.",
-        "Choose a licence from the EU licences authority list.": "Изаберите лиценцу са листе лиценци ЕУ."
+        "Choose a licence from the EU licences authority list.": "Изаберите лиценцу са листе лиценци ЕУ.",
+        "Public reason": "Јавни разлог",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Зашто је објава повучена, како то јавни линк каже читаоцу.",
+        "Show the title after withdrawal": "Прикажи наслов након повлачења",
+        "Whether the public link of the withdrawn publication still shows its title.": "Да ли јавни линк повучене објаве и даље приказује њен наслов."
     },
     "nplurals=2; plural=(n != 1);"
 )

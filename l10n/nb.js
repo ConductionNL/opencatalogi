@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Dette vedlegget eller denne publikasjonen ble ikke funnet.",
         "The file id is not valid.": "Fil-ID-en er ugyldig.",
         "Attachment reading is not set up on this instance.": "Lesing av vedlegg er ikke satt opp på denne instansen.",
-        "Choose a licence from the EU licences authority list.": "Velg en lisens fra EUs lisensliste."
+        "Choose a licence from the EU licences authority list.": "Velg en lisens fra EUs lisensliste.",
+        "Public reason": "Offentlig begrunnelse",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Hvorfor publikasjonen ble trukket tilbake, slik den offentlige lenken forteller leseren.",
+        "Show the title after withdrawal": "Vis tittelen etter tilbaketrekking",
+        "Whether the public link of the withdrawn publication still shows its title.": "Om den offentlige lenken til den tilbaketrukne publikasjonen fortsatt viser tittelen."
     },
     "nplurals=2; plural=(n != 1);"
 )

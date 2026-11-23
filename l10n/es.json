@@ -797,7 +797,11 @@
         "This attachment or publication was not found.": "No se encontró este adjunto o publicación.",
         "The file id is not valid.": "El identificador del archivo no es válido.",
         "Attachment reading is not set up on this instance.": "La lectura de adjuntos no está configurada en esta instancia.",
-        "Choose a licence from the EU licences authority list.": "Elija una licencia de la lista de autoridad de licencias de la UE."
+        "Choose a licence from the EU licences authority list.": "Elija una licencia de la lista de autoridad de licencias de la UE.",
+        "Public reason": "Motivo público",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Por qué se retiró la publicación, tal como el enlace público se lo indica al lector.",
+        "Show the title after withdrawal": "Mostrar el título tras la retirada",
+        "Whether the public link of the withdrawn publication still shows its title.": "Si el enlace público de la publicación retirada sigue mostrando su título."
     },
     "plurals": {}
 }

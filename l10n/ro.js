@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Acest atașament sau această publicație nu a fost găsită.",
         "The file id is not valid.": "ID-ul fișierului nu este valid.",
         "Attachment reading is not set up on this instance.": "Citirea atașamentelor nu este configurată pe această instanță.",
-        "Choose a licence from the EU licences authority list.": "Alegeți o licență din lista de licențe a UE."
+        "Choose a licence from the EU licences authority list.": "Alegeți o licență din lista de licențe a UE.",
+        "Public reason": "Motiv public",
+        "Why the publication was withdrawn, as the public link tells a reader.": "De ce a fost retrasă publicația, așa cum linkul public îi spune cititorului.",
+        "Show the title after withdrawal": "Afișează titlul după retragere",
+        "Whether the public link of the withdrawn publication still shows its title.": "Dacă linkul public al publicației retrase mai afișează titlul acesteia."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

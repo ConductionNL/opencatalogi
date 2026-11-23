@@ -797,7 +797,11 @@
         "This attachment or publication was not found.": "Овој прилог или публикација не е пронајден.",
         "The file id is not valid.": "ID-то на датотеката не е валидно.",
         "Attachment reading is not set up on this instance.": "Читањето прилози не е поставено на оваа инстанца.",
-        "Choose a licence from the EU licences authority list.": "Изберете лиценца од листата на лиценци на ЕУ."
+        "Choose a licence from the EU licences authority list.": "Изберете лиценца од листата на лиценци на ЕУ.",
+        "Public reason": "Јавна причина",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Зошто објавата е повлечена, како што јавната врска му кажува на читателот.",
+        "Show the title after withdrawal": "Прикажи го насловот по повлекувањето",
+        "Whether the public link of the withdrawn publication still shows its title.": "Дали јавната врска на повлечената објава сè уште го прикажува нејзиниот наслов."
     },
     "plurals": {}
 }
