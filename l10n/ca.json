@@ -825,7 +825,8 @@
         "The public documents of this version, copied onto the version.": "Els documents públics d'aquesta versió, copiats a la versió.",
         "The document's title.": "El títol del document.",
         "The document's file format.": "El format de fitxer del document.",
-        "The copy of the document kept on this version.": "La còpia del document que es conserva amb aquesta versió."
+        "The copy of the document kept on this version.": "La còpia del document que es conserva amb aquesta versió.",
+        "The earlier public version could not be kept, so the change was not saved.": "No s'ha pogut conservar la versió pública anterior, per tant el canvi no s'ha desat."
     },
     "plurals": {}
 }

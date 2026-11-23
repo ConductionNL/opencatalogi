@@ -825,7 +825,8 @@
         "The public documents of this version, copied onto the version.": "Dokumentet publike të këtij versioni, të kopjuara në version.",
         "The document's title.": "Titulli i dokumentit.",
         "The document's file format.": "Formati i skedarit të dokumentit.",
-        "The copy of the document kept on this version.": "Kopja e dokumentit që ruhet me këtë version."
+        "The copy of the document kept on this version.": "Kopja e dokumentit që ruhet me këtë version.",
+        "The earlier public version could not be kept, so the change was not saved.": "Versioni i mëparshëm publik nuk mund të ruhej, prandaj ndryshimi nuk u ruajt."
     },
     "plurals": {}
 }

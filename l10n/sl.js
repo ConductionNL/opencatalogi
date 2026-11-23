@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Javni dokumenti te različice, kopirani v različico.",
         "The document's title.": "Naslov dokumenta.",
         "The document's file format.": "Oblika datoteke dokumenta.",
-        "The copy of the document kept on this version.": "Kopija dokumenta, shranjena s to različico."
+        "The copy of the document kept on this version.": "Kopija dokumenta, shranjena s to različico.",
+        "The earlier public version could not be kept, so the change was not saved.": "Prejšnje javne različice ni bilo mogoče ohraniti, zato sprememba ni bila shranjena."
     },
     "nplurals=2; plural=(n != 1);"
 )

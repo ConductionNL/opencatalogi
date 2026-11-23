@@ -825,7 +825,8 @@
         "The public documents of this version, copied onto the version.": "Tämän version julkiset asiakirjat versioon kopioituina.",
         "The document's title.": "Asiakirjan otsikko.",
         "The document's file format.": "Asiakirjan tiedostomuoto.",
-        "The copy of the document kept on this version.": "Asiakirjan kopio, joka säilytetään tämän version mukana."
+        "The copy of the document kept on this version.": "Asiakirjan kopio, joka säilytetään tämän version mukana.",
+        "The earlier public version could not be kept, so the change was not saved.": "Aiempaa julkista versiota ei voitu säilyttää, joten muutosta ei tallennettu."
     },
     "plurals": {}
 }

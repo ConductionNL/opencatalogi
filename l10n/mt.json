@@ -825,7 +825,8 @@
         "The public documents of this version, copied onto the version.": "Id-dokumenti pubbliċi ta' din il-verżjoni, ikkupjati fuq il-verżjoni.",
         "The document's title.": "It-titlu tad-dokument.",
         "The document's file format.": "Il-format tal-fajl tad-dokument.",
-        "The copy of the document kept on this version.": "Il-kopja tad-dokument miżmuma ma' din il-verżjoni."
+        "The copy of the document kept on this version.": "Il-kopja tad-dokument miżmuma ma' din il-verżjoni.",
+        "The earlier public version could not be kept, so the change was not saved.": "Il-verżjoni pubblika ta' qabel ma setgħetx tinżamm, għalhekk il-bidla ma ġietx salvata."
     },
     "plurals": {}
 }

@@ -2175,7 +2175,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "The public documents of this version, copied onto the version.",
         "The document's title.": "The document's title.",
         "The document's file format.": "The document's file format.",
-        "The copy of the document kept on this version.": "The copy of the document kept on this version."
+        "The copy of the document kept on this version.": "The copy of the document kept on this version.",
+        "The earlier public version could not be kept, so the change was not saved.": "The earlier public version could not be kept, so the change was not saved."
     },
     "nplurals=2; plural=(n != 1);"
 )

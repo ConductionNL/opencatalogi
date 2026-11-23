@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Јавни документи ове верзије, копирани на верзију.",
         "The document's title.": "Наслов документа.",
         "The document's file format.": "Формат датотеке документа.",
-        "The copy of the document kept on this version.": "Копија документа која се чува уз ову верзију."
+        "The copy of the document kept on this version.": "Копија документа која се чува уз ову верзију.",
+        "The earlier public version could not be kept, so the change was not saved.": "Ранија јавна верзија није могла бити сачувана, па промена није сачувана."
     },
     "nplurals=2; plural=(n != 1);"
 )

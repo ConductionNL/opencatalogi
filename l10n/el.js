@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Τα δημόσια έγγραφα αυτής της έκδοσης, αντιγραμμένα στην έκδοση.",
         "The document's title.": "Ο τίτλος του εγγράφου.",
         "The document's file format.": "Η μορφή αρχείου του εγγράφου.",
-        "The copy of the document kept on this version.": "Το αντίγραφο του εγγράφου που φυλάσσεται με αυτή την έκδοση."
+        "The copy of the document kept on this version.": "Το αντίγραφο του εγγράφου που φυλάσσεται με αυτή την έκδοση.",
+        "The earlier public version could not be kept, so the change was not saved.": "Η προηγούμενη δημόσια έκδοση δεν μπόρεσε να διατηρηθεί, οπότε η αλλαγή δεν αποθηκεύτηκε."
     },
     "nplurals=2; plural=(n != 1);"
 )

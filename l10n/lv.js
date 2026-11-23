@@ -826,7 +826,8 @@ OC.L10N.register(
         "The public documents of this version, copied onto the version.": "Šīs versijas publiskie dokumenti, nokopēti uz versiju.",
         "The document's title.": "Dokumenta nosaukums.",
         "The document's file format.": "Dokumenta faila formāts.",
-        "The copy of the document kept on this version.": "Dokumenta kopija, kas tiek glabāta ar šo versiju."
+        "The copy of the document kept on this version.": "Dokumenta kopija, kas tiek glabāta ar šo versiju.",
+        "The earlier public version could not be kept, so the change was not saved.": "Iepriekšējo publisko versiju neizdevās saglabāt, tāpēc izmaiņas netika saglabātas."
     },
     "nplurals=2; plural=(n != 1);"
 )

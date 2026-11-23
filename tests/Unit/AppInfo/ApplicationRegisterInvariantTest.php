@@ -442,6 +442,31 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	}//end testTheThemeHotspotListenerIsRegisteredBeforeAndAfterTheSave()
 
 	/**
+	 * register() subscribes the publication version listener before an update is written (REQ-PWA-001).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-1.2
+	 */
+	public function testThePublicationVersionListenerIsRegisteredBeforeAnUpdate(): void {
+		$listeners = [];
+		$context = $this->createMock(originalClassName: \OCP\AppFramework\Bootstrap\IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$listeners): void {
+				$listeners[$listener][] = $event;
+			}
+		);
+
+		$application = (new \ReflectionClass(objectOrClass: \OCA\OpenCatalogi\AppInfo\Application::class))->newInstanceWithoutConstructor();
+		$application->register(context: $context);
+
+		$this->assertSame(
+			expected: ['OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'],
+			actual: ($listeners[\OCA\OpenCatalogi\Listener\PublicationVersionListener::class] ?? [])
+		);
+	}//end testThePublicationVersionListenerIsRegisteredBeforeAnUpdate()
+
+	/**
 	 * The no-index middleware is registered, so officer responses carry noindex (REQ-WAB-003).
 	 *
 	 * @return void
