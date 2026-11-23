@@ -20,6 +20,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 ## 4. Officer UI
 
 - [ ] 4.1 Add the featured toggle and order to the theme form, and the list of publications with their state to the theme page in `src/manifest.json` (REQ-SUB-001, REQ-SUB-003). Verify: `tests/e2e/subjects.spec.ts` "an administrator features a subject" and "a subject lists what is filed under it", carrying `@e2e` references; `npm run check:manifest`.
+  - 23 Nov: `tests/e2e/subjects.spec.ts` is written for the object API the form saves through and the public routes: "an administrator features a subject" (order 1 before order 2 in `GET /api/themes?featured=true`) and "a subject lists what is filed under it" (three public publications newest first, not the draft, read anonymously). Listed by Playwright, not run (no live instance). Left unchecked: the Featured toggle and the officer's list are not built, and `check:manifest` has nothing new to check yet.
 
 ## 5. Cross-app contract
 
