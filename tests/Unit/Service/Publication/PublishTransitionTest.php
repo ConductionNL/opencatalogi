@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace Unit\Service\Publication;
 
 use OCA\OpenCatalogi\Service\Publication\EmbargoGuard;
+use OCA\OpenCatalogi\Service\Publication\PublicationDocumentCount;
 use OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy;
 use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
@@ -40,6 +41,13 @@ use Psr\Log\LoggerInterface;
  * @uses \OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy
  */
 class PublishTransitionTest extends TestCase {
+
+	/**
+	 * The document counter the subject gets, or null for a plain double.
+	 *
+	 * @var PublicationDocumentCount|null
+	 */
+	private ?PublicationDocumentCount $documents = null;
 
 	/**
 	 * The transitions the engine double ran.
@@ -77,7 +85,8 @@ class PublishTransitionTest extends TestCase {
 				config: $config,
 				groups: $this->createMock(originalClassName: IGroupManager::class),
 				logger: $this->createMock(originalClassName: LoggerInterface::class)
-			)
+			),
+			documents: $this->documents ?? $this->createMock(originalClassName: PublicationDocumentCount::class)
 		);
 	}//end subject()
 
@@ -152,4 +161,19 @@ class PublishTransitionTest extends TestCase {
 		);
 		$this->assertSame(expected: [], actual: $this->runs);
 	}//end testTheEmbargoVetoesPublishingAScheduledPublicationNow()
+	/**
+	 * REQ-PSG-004: the document count is the counter's, for the publication it is given.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.1
+	 */
+	public function testTheDocumentCountIsAskedOfTheCounter(): void {
+		$publication = new \stdClass();
+		$this->documents = $this->createMock(originalClassName: PublicationDocumentCount::class);
+		$this->documents->expects($this->once())->method('count')->with('p1', $publication)->willReturn(2);
+
+		$this->assertSame(expected: 2, actual: $this->subject(reviewRequired: 'true')->documentCount(id: 'p1', publication: $publication));
+	}//end testTheDocumentCountIsAskedOfTheCounter()
+
 }//end class

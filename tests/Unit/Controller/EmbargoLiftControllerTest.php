@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Controller\EmbargoLiftController;
 use OCA\OpenCatalogi\Controller\EmbargoLifts;
 use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Service\Publication\EmbargoGuard;
+use OCA\OpenCatalogi\Service\Publication\PublicationDocumentCount;
 use OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
@@ -283,7 +284,8 @@ final class EmbargoLiftControllerTest extends TestCase {
 		$publisher = new PublishTransition(
 			container: $container,
 			review: new PublicationReviewPolicy(appConfig: $config),
-			embargo: new EmbargoGuard(config: $config, groups: $groupManager, logger: new NullLogger())
+			embargo: new EmbargoGuard(config: $config, groups: $groupManager, logger: new NullLogger()),
+			documents: $this->createMock(originalClassName: PublicationDocumentCount::class)
 		);
 
 		return new EmbargoLiftController(
