@@ -70,9 +70,8 @@ class DepublicationService implements DepublicationServiceInterface {
 	 * @param string $depublishedBy Who is taking it down.
 	 * @param array<int, string> $channels The channels the publication reached.
 	 * @param DateTimeInterface|null $now The moment; defaults to now.
-	 * @param bool $freeze Whether the publication itself is frozen; false when one document comes down.
 	 *
-	 * @return array<string, mixed> The depublication to save, with `frozen` when a freeze was asked.
+	 * @return array<string, mixed> The depublication to save, with `frozen` when a freezer is wired.
 	 *
 	 * @throws DomainException When no reason is given.
 	 *
@@ -85,18 +84,11 @@ class DepublicationService implements DepublicationServiceInterface {
 		string $depublishedBy,
 		array $channels,
 		?DateTimeInterface $now = null,
-		bool $freeze = true,
 	): array {
-		$this->requireReason(reason: $reason);
-
-		$run = new DepublicationRun();
-		$run->publicationId = (string)($publication['id'] ?? '');
-		$run->reason = $reason;
-		$run->depublishedBy = $depublishedBy;
-		$run->takenDownAt = $this->takenDownAt(now: $now);
+		$run = $this->run(publication: $publication, reason: $reason, depublishedBy: $depublishedBy, now: $now);
 
 		$depublication = $this->depublication(run: $run, withdrawals: $this->withdrawals(run: $run, channels: $channels));
-		if ($freeze === true && $this->freezer !== null) {
+		if ($this->freezer !== null) {
 			// After the withdrawals: a failed freeze never holds the withdrawal
 			// back, it is reported beside it (REQ-PWA-003).
 			$depublication += $this->freezer->freeze(publicationId: $run->publicationId, reason: $run->reason);
@@ -105,6 +97,51 @@ class DepublicationService implements DepublicationServiceInterface {
 		return $depublication;
 
 	}//end depublish()
+
+	/**
+	 * Record one document of a publication coming down. Nothing is sent to a
+	 * channel and the publication itself is not frozen: the rest of it stays
+	 * public and editable.
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param string $reason Why the document is coming down.
+	 * @param string $depublishedBy Who is taking it down.
+	 *
+	 * @return array<string, mixed> The depublication to save.
+	 *
+	 * @throws DomainException When no reason is given.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 */
+	public function depublishDocument(array $publication, string $reason, string $depublishedBy): array {
+		$run = $this->run(publication: $publication, reason: $reason, depublishedBy: $depublishedBy, now: null);
+
+		return $this->depublication(run: $run, withdrawals: []);
+	}//end depublishDocument()
+
+	/**
+	 * The depublication run, after refusing one without a reason.
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param string $reason Why it is coming down.
+	 * @param string $depublishedBy Who is taking it down.
+	 * @param DateTimeInterface|null $now The moment; defaults to now.
+	 *
+	 * @return DepublicationRun The run.
+	 *
+	 * @throws DomainException When no reason is given.
+	 */
+	private function run(array $publication, string $reason, string $depublishedBy, ?DateTimeInterface $now): DepublicationRun {
+		$this->requireReason(reason: $reason);
+
+		$run = new DepublicationRun();
+		$run->publicationId = (string)($publication['id'] ?? '');
+		$run->reason = $reason;
+		$run->depublishedBy = $depublishedBy;
+		$run->takenDownAt = $this->takenDownAt(now: $now);
+
+		return $run;
+	}//end run()
 
 	/**
 	 * Refuse a depublication without a reason.

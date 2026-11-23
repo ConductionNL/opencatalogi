@@ -44,17 +44,19 @@ final class PublicationFreezerTest extends TestCase {
 	 * @return PublicationFreezer The freezer.
 	 */
 	private function freezer(?object $handler): PublicationFreezer {
-		$container = $this->createMock(ContainerInterface::class);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		if ($handler === null) {
-			$container->method('get')->willThrowException(new RuntimeException('ArchiveHandler is not registered'));
-		} else {
-			$container->method('get')->with(PublicationFreezer::ARCHIVE_HANDLER)->willReturn($handler);
+			$container->method('get')->willThrowException(new RuntimeException(message: 'ArchiveHandler is not registered'));
+			$logger->expects($this->once())->method('warning');
+
+			return new PublicationFreezer(container: $container, logger: $logger);
 		}
 
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects($handler === null ? $this->once() : $this->never())->method('warning');
+		$container->method('get')->with(PublicationFreezer::ARCHIVE_HANDLER)->willReturn($handler);
+		$logger->expects($this->never())->method('warning');
 
-		return new PublicationFreezer($container, $logger);
+		return new PublicationFreezer(container: $container, logger: $logger);
 	}//end freezer()
 
 	/**
@@ -128,10 +130,11 @@ final class PublicationFreezerTest extends TestCase {
 	 * @return void
 	 */
 	public function testNoPublicationIdFreezesNothing(): void {
-		$container = $this->createMock(ContainerInterface::class);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->expects($this->never())->method('get');
 
-		$answer = (new PublicationFreezer($container, $this->createMock(LoggerInterface::class)))->freeze(publicationId: '', reason: 'x');
+		$freezer = new PublicationFreezer(container: $container, logger: $this->createMock(originalClassName: LoggerInterface::class));
+		$answer = $freezer->freeze(publicationId: '', reason: 'x');
 
 		self::assertSame(expected: ['frozen' => false, 'frozenError' => 'The withdrawal names no publication to freeze.'], actual: $answer);
 	}//end testNoPublicationIdFreezesNothing()

@@ -499,14 +499,12 @@ class PublicationStateController extends Controller {
 			return $notKept;
 		}
 
-		$depublication = $this->registers->depublish(
+		// One document comes down; the publication stays open (REQ-PWA-003).
+		$depublication = $this->registers->depublishDocument(
 			withdrawal: [
 				'publication' => ['id' => $id],
 				'reason' => $reason,
 				'depublishedBy' => $this->actor(),
-				'channels' => [],
-				// One document comes down; the publication stays open (REQ-PWA-003).
-				'freeze' => false,
 			]
 		);
 		$depublication['file'] = $fileId;

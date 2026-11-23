@@ -92,18 +92,22 @@ final class DepublicationServiceTest extends TestCase {
 			}
 		};
 
-		$container = $this->createMock(ContainerInterface::class);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->method('get')->with(PublicationFreezer::ARCHIVE_HANDLER)->willReturn($handler);
 
-		$index = $this->getMockBuilder(NationalIndexService::class)
+		$index = $this->getMockBuilder(className: NationalIndexService::class)
 			->disableOriginalConstructor()
 			->onlyMethods(['withdraw'])
 			->getMock();
 		$index->method('withdraw')->willReturn(['acknowledgedAt' => '2026-11-23T10:00:00+00:00', 'answer' => 'ok']);
 
-		$logger = $this->createMock(LoggerInterface::class);
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 
-		return new DepublicationService($index, $logger, new PublicationFreezer($container, $logger));
+		return new DepublicationService(
+			indexService: $index,
+			logger: $logger,
+			freezer: new PublicationFreezer(container: $container, logger: $logger)
+		);
 	}//end service()
 
 	/**
@@ -132,7 +136,7 @@ final class DepublicationServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAFailedFreezeKeepsTheWithdrawalAndSaysSo(): void {
-		$depublication = $this->service(failure: new RuntimeException('No user logged in'))->depublish(
+		$depublication = $this->service(failure: new RuntimeException(message: 'No user logged in'))->depublish(
 			publication: ['id' => 'pub-1'],
 			reason: 'Verkeerde bijlage',
 			depublishedBy: 'editor',
@@ -151,17 +155,34 @@ final class DepublicationServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testADocumentWithdrawalDoesNotFreezeThePublication(): void {
-		$depublication = $this->service()->depublish(
+		$depublication = $this->service()->depublishDocument(
 			publication: ['id' => 'pub-1'],
 			reason: 'Naam niet weggelakt',
-			depublishedBy: 'editor',
-			channels: [],
-			freeze: false
+			depublishedBy: 'editor'
 		);
 
 		self::assertSame(expected: [], actual: $this->freezes);
 		self::assertArrayNotHasKey(key: 'frozen', array: $depublication);
+		self::assertSame(expected: [], actual: $depublication['withdrawals']);
+		self::assertSame(expected: 'Naam niet weggelakt', actual: $depublication['reason']);
 	}//end testADocumentWithdrawalDoesNotFreezeThePublication()
+
+	/**
+	 * Without a freezer, as on an instance whose container does not wire one, nothing is frozen and the key is absent.
+	 *
+	 * @return void
+	 */
+	public function testWithoutAFreezerNothingIsFrozen(): void {
+		$index = $this->getMockBuilder(className: NationalIndexService::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['withdraw'])
+			->getMock();
+
+		$depublication = (new DepublicationService(indexService: $index, logger: $this->createMock(originalClassName: LoggerInterface::class)))
+			->depublish(publication: ['id' => 'pub-1'], reason: 'Verkeerde bijlage', depublishedBy: 'editor', channels: []);
+
+		self::assertArrayNotHasKey(key: 'frozen', array: $depublication);
+	}//end testWithoutAFreezerNothingIsFrozen()
 
 	/**
 	 * Without a reason nothing is frozen: the refusal comes first.

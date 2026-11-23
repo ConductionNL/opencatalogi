@@ -39,7 +39,6 @@ interface DepublicationServiceInterface {
 	 * @param string $depublishedBy Who is taking it down.
 	 * @param array<int, string> $channels The channels the publication reached.
 	 * @param DateTimeInterface|null $now The moment; defaults to now.
-	 * @param bool $freeze Whether the publication itself is frozen; false when one document comes down.
 	 *
 	 * @return array<string, mixed> The depublication to save.
 	 *
@@ -54,8 +53,22 @@ interface DepublicationServiceInterface {
 		string $depublishedBy,
 		array $channels,
 		?DateTimeInterface $now = null,
-		bool $freeze = true,
 	): array;
+
+	/**
+	 * Record one document of a publication coming down, without telling a channel or freezing the publication.
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param string $reason Why the document is coming down.
+	 * @param string $depublishedBy Who is taking it down.
+	 *
+	 * @return array<string, mixed> The depublication to save.
+	 *
+	 * @throws DomainException When no reason is given.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 */
+	public function depublishDocument(array $publication, string $reason, string $depublishedBy): array;
 
 	/**
 	 * The channels whose withdrawal is still outstanding.
