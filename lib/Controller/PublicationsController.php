@@ -968,6 +968,110 @@ class PublicationsController extends Controller {
 	}//end show()
 
 	/**
+	 * The earlier public versions of a publication (REQ-PWA-001).
+	 *
+	 * @param string $catalogSlug The catalogue slug.
+	 * @param string $id The publication id.
+	 *
+	 * @return Response The list, or 404 unless the publication is public now.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 120, period: 60)]
+	public function versions(string $catalogSlug, string $id): Response {
+		return $this->versionAnswer(catalogSlug: $catalogSlug, id: $id, asked: []);
+
+	}//end versions()
+
+	/**
+	 * One earlier public version of a publication (REQ-PWA-001).
+	 *
+	 * @param string $catalogSlug The catalogue slug.
+	 * @param string $id The publication id.
+	 * @param string $version The version number.
+	 *
+	 * @return Response The version, or 404.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 120, period: 60)]
+	public function version(string $catalogSlug, string $id, string $version): Response {
+		return $this->versionAnswer(catalogSlug: $catalogSlug, id: $id, asked: ['version' => (int)$version]);
+
+	}//end version()
+
+	/**
+	 * One document of an earlier public version, as a download (REQ-PWA-001).
+	 *
+	 * @param string $catalogSlug The catalogue slug.
+	 * @param string $id The publication id.
+	 * @param string $version The version number.
+	 * @param string $fileId The id of the copy kept on the version.
+	 *
+	 * @return Response The file, or 404.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 60, period: 60)]
+	public function versionDocument(string $catalogSlug, string $id, string $version, string $fileId): Response {
+		return $this->versionAnswer(catalogSlug: $catalogSlug, id: $id, asked: ['version' => (int)$version, 'fileId' => (int)$fileId]);
+
+	}//end versionDocument()
+
+	/**
+	 * Answer a version route once this controller's own public read answers the publication as public.
+	 *
+	 * The read is {@see self::show()} itself, so a version is never more
+	 * reachable than the publication it belongs to.
+	 *
+	 * @param string $catalogSlug The catalogue slug.
+	 * @param string $id The publication id.
+	 * @param array{version?: int, fileId?: int} $asked The version and document asked for.
+	 *
+	 * @return Response The answer, 404, or 500.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	private function versionAnswer(string $catalogSlug, string $id, array $asked): Response {
+		try {
+			$versions = $this->container->get(PublicationVersions::class);
+			$uuid = $versions->publicUuid(read: $this->show(catalogSlug: $catalogSlug, id: $id));
+			$answer = null;
+			if ($uuid !== null) {
+				$answer = $versions->answer(
+					target: ['catalogSlug' => $catalogSlug, 'id' => $id, 'uuid' => $uuid],
+					version: ($asked['version'] ?? null),
+					fileId: ($asked['fileId'] ?? null)
+				);
+			}
+		} catch (\Throwable $e) {
+			$this->logger->error('[PublicationsController::versionAnswer] A version could not be read: ' . $e->getMessage());
+			$answer = new JSONResponse(
+				['error' => 'version-unavailable', 'message' => $this->l10n->t('The earlier versions cannot be shown right now.')],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}
+
+		if ($answer === null) {
+			$answer = new JSONResponse(
+				['error' => 'unknown-version', 'message' => $this->l10n->t('This version does not exist or is not public.')],
+				Http::STATUS_NOT_FOUND
+			);
+		}
+
+		$this->addCorsHeaders(response: $answer);
+
+		return $answer;
+
+	}//end versionAnswer()
+
+	/**
 	 * The dataset IRI's own answer when the Accept header asks for RDF or HTML (REQ-DCC-003).
 	 *
 	 * The dataset IRI of the DCAT feed is this route. Turtle and RDF/XML answer the

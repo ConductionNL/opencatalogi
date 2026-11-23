@@ -67,6 +67,7 @@ interface PublicationVersionServiceInterface {
 	 * @throws \RuntimeException When the version schema is not configured.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @contract-shift internal-only - added for the version routes; only this app implements and calls it.
 	 */
 	public function versionsOf(string $publication): array;
 
@@ -79,6 +80,7 @@ interface PublicationVersionServiceInterface {
 	 * @return object|null The file node.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @contract-shift internal-only - added for the version routes; only this app implements and calls it.
 	 */
 	public function documentOf(array $version, int $fileId): ?object;
 }//end interface

@@ -168,6 +168,16 @@ final class PublicationVersionServiceTest extends TestCase {
 			public function copyFile(ObjectEntity $sourceObject, int $fileId, ObjectEntity $targetObject): object {
 				return $this->test->recordCopy(fileId: $fileId, target: (string)$targetObject->getUuid());
 			}
+
+			/**
+			 * @param string $object The object uuid.
+			 * @param int $file The file id.
+			 *
+			 * @return object The node.
+			 */
+			public function getFile(string $object, int $file): object {
+				return $this->test->recordCopy(fileId: $file, target: $object);
+			}
 		};
 	}//end fileService()
 
@@ -410,4 +420,37 @@ final class PublicationVersionServiceTest extends TestCase {
 			new: $this->publication(data: self::public())
 		));
 	}//end testAWithdrawalOrADraftDoesNotReplaceAPublicVersion()
+
+	/**
+	 * The versions of one publication are listed oldest first, with their ids.
+	 *
+	 * @return void
+	 */
+	public function testVersionsAreListedOldestFirst(): void {
+		$this->stored = [
+			['publication' => self::PUBLICATION, 'version' => 2, 'id' => 'v2'],
+			['publication' => 'someone-else', 'version' => 1, 'id' => 'x1'],
+			$this->publication(data: ['publication' => self::PUBLICATION, 'version' => 1]),
+		];
+
+		$versions = $this->service()->versionsOf(publication: self::PUBLICATION);
+
+		$this->assertSame(expected: [1, 2], actual: array_column($versions, 'version'));
+		$this->assertSame(expected: [self::PUBLICATION, 'v2'], actual: array_column($versions, 'id'));
+	}//end testVersionsAreListedOldestFirst()
+
+	/**
+	 * Only a document the version lists is served, from the version itself.
+	 *
+	 * @return void
+	 */
+	public function testOnlyADocumentTheVersionListsIsServed(): void {
+		$version = ['id' => 'v1', 'documents' => [['title' => 'besluit.pdf', 'format' => 'application/pdf', 'fileId' => 1005]]];
+		$service = $this->service();
+
+		$this->assertNull(actual: $service->documentOf(version: $version, fileId: 77));
+		$this->assertNull(actual: $service->documentOf(version: ['documents' => $version['documents']], fileId: 1005));
+		$this->assertNotNull(actual: $service->documentOf(version: $version, fileId: 1005));
+		$this->assertSame(expected: [[1005, 'v1']], actual: $this->copies);
+	}//end testOnlyADocumentTheVersionListsIsServed()
 }//end class
