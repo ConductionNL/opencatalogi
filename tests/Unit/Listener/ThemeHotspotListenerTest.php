@@ -254,7 +254,7 @@ final class ThemeHotspotListenerTest extends TestCase {
 			actual: $written->getRetention()
 		);
 		$since = (string)$event->getModifiedData()['archiveHotspotSince'];
-		$this->assertLessThan(maximum: 60, actual: abs(time() - (int)strtotime($since)), message: $since);
+		$this->assertLessThan(expected: 60, actual: abs(time() - (int)strtotime($since)), message: $since);
 	}//end testMarkingSetsTheThemesAppraisalToRetainPermanently()
 
 	/**
