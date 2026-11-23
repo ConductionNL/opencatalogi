@@ -25,7 +25,8 @@ Read `openspec/woo-build-rules.md` first. Start once `openregister/appraisal-inh
 
 ## 4. Docs
 
-- [ ] 4.1 Document archive hotspots for archivists in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+- [x] 4.1 Document archive hotspots for archivists in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+  - Built 23 Nov: `docs/Administrator/archiefhotspots.md` (Dutch, like the other administrator pages): who may mark, the reason, what marking and unmarking change, the hold in OpenRegister's destruction check, in OpenCatalogi's own retention run and in the report, and what it does not change. The strings (schema labels and the two refusals) are in all 37 catalogues since #2872; `check:l10n` reports nothing missing; no U+2014 in the page. The page describes the toggle on the subject, which the form shows once 1.4 is built.
 
 ## 5. Verification
 
