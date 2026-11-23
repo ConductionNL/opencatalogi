@@ -813,7 +813,19 @@
         "Frozen": "Congelada",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Si la publicació retirada s'ha congelat, de manera que rebutja qualsevol edició.",
         "Why it was not frozen": "Per què no s'ha congelat",
-        "What went wrong when the withdrawn publication could not be frozen.": "Què ha fallat quan no s'ha pogut congelar la publicació retirada."
+        "What went wrong when the withdrawn publication could not be frozen.": "Què ha fallat quan no s'ha pogut congelar la publicació retirada.",
+        "Publication version": "Versió de la publicació",
+        "Version number": "Número de versió",
+        "Superseded at": "Substituïda el",
+        "Public fields": "Camps públics",
+        "The publication this is an earlier version of.": "La publicació de la qual aquesta és una versió anterior.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "El número d'aquesta versió, des de 1 per a la primera substituïda.",
+        "When a correction replaced this version.": "Quan una correcció va substituir aquesta versió.",
+        "The fields the public read returned for this version.": "Els camps que la lectura pública retornava per a aquesta versió.",
+        "The public documents of this version, copied onto the version.": "Els documents públics d'aquesta versió, copiats a la versió.",
+        "The document's title.": "El títol del document.",
+        "The document's file format.": "El format de fitxer del document.",
+        "The copy of the document kept on this version.": "La còpia del document que es conserva amb aquesta versió."
     },
     "plurals": {}
 }

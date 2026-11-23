@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "Befagyasztva",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "A visszavont közzététel be lett-e fagyasztva, így minden módosítást elutasít.",
         "Why it was not frozen": "Miért nem lett befagyasztva",
-        "What went wrong when the withdrawn publication could not be frozen.": "Mi romlott el, amikor a visszavont közzétételt nem lehetett befagyasztani."
+        "What went wrong when the withdrawn publication could not be frozen.": "Mi romlott el, amikor a visszavont közzétételt nem lehetett befagyasztani.",
+        "Publication version": "Közzététel verziója",
+        "Version number": "Verziószám",
+        "Superseded at": "Lecserélve",
+        "Public fields": "Nyilvános mezők",
+        "The publication this is an earlier version of.": "A közzététel, amelynek ez egy korábbi verziója.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "E verzió száma, 1-től az elsőként lecseréltnél.",
+        "When a correction replaced this version.": "Mikor cserélte le egy javítás ezt a verziót.",
+        "The fields the public read returned for this version.": "A mezők, amelyeket a nyilvános olvasás erre a verzióra visszaadott.",
+        "The public documents of this version, copied onto the version.": "E verzió nyilvános dokumentumai, a verzióra másolva.",
+        "The document's title.": "A dokumentum címe.",
+        "The document's file format.": "A dokumentum fájlformátuma.",
+        "The copy of the document kept on this version.": "A dokumentum e verzióval megőrzött másolata."
     },
     "nplurals=2; plural=(n != 1);"
 )

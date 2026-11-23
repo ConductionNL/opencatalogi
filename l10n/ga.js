@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "Reoite",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Cibé ar reodh an foilseachán a tarraingíodh siar, ionas go ndiúltaíonn sé do gach eagarthóireacht.",
         "Why it was not frozen": "Cén fáth nár reodh é",
-        "What went wrong when the withdrawn publication could not be frozen.": "Cad a chuaigh mícheart nuair nárbh fhéidir an foilseachán a tarraingíodh siar a reo."
+        "What went wrong when the withdrawn publication could not be frozen.": "Cad a chuaigh mícheart nuair nárbh fhéidir an foilseachán a tarraingíodh siar a reo.",
+        "Publication version": "Leagan foilseacháin",
+        "Version number": "Uimhir an leagain",
+        "Superseded at": "Curtha in ionad ar",
+        "Public fields": "Réimsí poiblí",
+        "The publication this is an earlier version of.": "An foilseachán ar leagan níos luaithe de é seo.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Uimhir an leagain seo, ó 1 don chéad cheann a cuireadh in ionad.",
+        "When a correction replaced this version.": "Cathain a chuir ceartúchán an leagan seo in ionad.",
+        "The fields the public read returned for this version.": "Na réimsí a thug an léamh poiblí ar ais don leagan seo.",
+        "The public documents of this version, copied onto the version.": "Doiciméid phoiblí an leagain seo, cóipeáilte ar an leagan.",
+        "The document's title.": "Teideal an doiciméid.",
+        "The document's file format.": "Formáid comhaid an doiciméid.",
+        "The copy of the document kept on this version.": "Cóip an doiciméid a choinnítear leis an leagan seo."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "Înghețată",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Dacă publicația retrasă a fost înghețată, astfel încât refuză orice modificare.",
         "Why it was not frozen": "De ce nu a fost înghețată",
-        "What went wrong when the withdrawn publication could not be frozen.": "Ce nu a mers când publicația retrasă nu a putut fi înghețată."
+        "What went wrong when the withdrawn publication could not be frozen.": "Ce nu a mers când publicația retrasă nu a putut fi înghețată.",
+        "Publication version": "Versiunea publicației",
+        "Version number": "Numărul versiunii",
+        "Superseded at": "Înlocuită la",
+        "Public fields": "Câmpuri publice",
+        "The publication this is an earlier version of.": "Publicația a cărei versiune anterioară este aceasta.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Numărul acestei versiuni, de la 1 pentru prima înlocuită.",
+        "When a correction replaced this version.": "Când o corectură a înlocuit această versiune.",
+        "The fields the public read returned for this version.": "Câmpurile pe care citirea publică le returna pentru această versiune.",
+        "The public documents of this version, copied onto the version.": "Documentele publice ale acestei versiuni, copiate pe versiune.",
+        "The document's title.": "Titlul documentului.",
+        "The document's file format.": "Formatul de fișier al documentului.",
+        "The copy of the document kept on this version.": "Copia documentului păstrată cu această versiune."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

@@ -813,7 +813,19 @@
         "Frozen": "Iesaldēta",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Vai atsauktā publikācija tika iesaldēta, lai tā noraidītu jebkuru labojumu.",
         "Why it was not frozen": "Kāpēc tā netika iesaldēta",
-        "What went wrong when the withdrawn publication could not be frozen.": "Kas nogāja greizi, kad atsaukto publikāciju nevarēja iesaldēt."
+        "What went wrong when the withdrawn publication could not be frozen.": "Kas nogāja greizi, kad atsaukto publikāciju nevarēja iesaldēt.",
+        "Publication version": "Publikācijas versija",
+        "Version number": "Versijas numurs",
+        "Superseded at": "Aizstāta",
+        "Public fields": "Publiskie lauki",
+        "The publication this is an earlier version of.": "Publikācija, kuras agrāka versija šī ir.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Šīs versijas numurs, sākot no 1 pirmajai aizstātajai.",
+        "When a correction replaced this version.": "Kad labojums aizstāja šo versiju.",
+        "The fields the public read returned for this version.": "Lauki, ko publiskā lasīšana atgrieza šai versijai.",
+        "The public documents of this version, copied onto the version.": "Šīs versijas publiskie dokumenti, nokopēti uz versiju.",
+        "The document's title.": "Dokumenta nosaukums.",
+        "The document's file format.": "Dokumenta faila formāts.",
+        "The copy of the document kept on this version.": "Dokumenta kopija, kas tiek glabāta ar šo versiju."
     },
     "plurals": {}
 }

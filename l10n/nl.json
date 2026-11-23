@@ -2117,7 +2117,19 @@
         "Frozen": "Bevroren",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Of de ingetrokken publicatie is bevroren, zodat zij elke wijziging weigert.",
         "Why it was not frozen": "Waarom zij niet is bevroren",
-        "What went wrong when the withdrawn publication could not be frozen.": "Wat er misging toen de ingetrokken publicatie niet kon worden bevroren."
+        "What went wrong when the withdrawn publication could not be frozen.": "Wat er misging toen de ingetrokken publicatie niet kon worden bevroren.",
+        "Publication version": "Publicatieversie",
+        "Version number": "Versienummer",
+        "Superseded at": "Vervangen op",
+        "Public fields": "Openbare velden",
+        "The publication this is an earlier version of.": "De publicatie waarvan dit een eerdere versie is.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Het nummer van deze versie, vanaf 1 voor de eerste die werd vervangen.",
+        "When a correction replaced this version.": "Wanneer een correctie deze versie verving.",
+        "The fields the public read returned for this version.": "De velden die de openbare weergave voor deze versie teruggaf.",
+        "The public documents of this version, copied onto the version.": "De openbare documenten van deze versie, gekopieerd naar de versie.",
+        "The document's title.": "De titel van het document.",
+        "The document's file format.": "Het bestandsformaat van het document.",
+        "The copy of the document kept on this version.": "De kopie van het document die bij deze versie wordt bewaard."
     },
     "plurals": {}
 }

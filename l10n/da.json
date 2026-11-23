@@ -813,7 +813,19 @@
         "Frozen": "Frosset",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Om den tilbagetrukne publikation blev frosset, så den afviser enhver ændring.",
         "Why it was not frozen": "Hvorfor den ikke blev frosset",
-        "What went wrong when the withdrawn publication could not be frozen.": "Hvad der gik galt, da den tilbagetrukne publikation ikke kunne fryses."
+        "What went wrong when the withdrawn publication could not be frozen.": "Hvad der gik galt, da den tilbagetrukne publikation ikke kunne fryses.",
+        "Publication version": "Publikationsversion",
+        "Version number": "Versionsnummer",
+        "Superseded at": "Erstattet den",
+        "Public fields": "Offentlige felter",
+        "The publication this is an earlier version of.": "Den publikation, som dette er en tidligere version af.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Nummeret på denne version, fra 1 for den første, der blev erstattet.",
+        "When a correction replaced this version.": "Hvornår en rettelse erstattede denne version.",
+        "The fields the public read returned for this version.": "De felter, som den offentlige læsning returnerede for denne version.",
+        "The public documents of this version, copied onto the version.": "De offentlige dokumenter i denne version, kopieret til versionen.",
+        "The document's title.": "Dokumentets titel.",
+        "The document's file format.": "Dokumentets filformat.",
+        "The copy of the document kept on this version.": "Kopien af dokumentet, der gemmes med denne version."
     },
     "plurals": {}
 }

@@ -1,5 +1,5 @@
 {
-	"_note": "Register fragment for publication-withdrawal-aftercare. REQ-PWA-002: the depublication says what the public tombstone of a withdrawn publication tells a reader: a public reason beside the internal one, and whether it names the title. REQ-PWA-003: the publication schema offers OpenRegister's archive and freeze, so a withdrawn publication is frozen with its reason, and the depublication records whether that freeze worked. The versions are the merged ones, so the last fragment in name order (woo-x-access-boundary-hardening.json) carries the same bumps.",
+	"_note": "Register fragment for publication-withdrawal-aftercare. REQ-PWA-002: the depublication says what the public tombstone of a withdrawn publication tells a reader: a public reason beside the internal one, and whether it names the title. REQ-PWA-001: a publicationVersion keeps the public projection and the public files of a publication as they were before a correction, so a cited version stays reachable; it carries no public read rule, the version routes check the publication first. REQ-PWA-003: the publication schema offers OpenRegister's archive and freeze, so a withdrawn publication is frozen with its reason, and the depublication records whether that freeze worked. The versions are the merged ones, so the last fragment in name order (woo-x-access-boundary-hardening.json) carries the same bumps.",
 	"components": {
 		"schemas": {
 			"depublication": {
@@ -35,6 +35,97 @@
 				"configuration": {
 					"x-openregister-archive": {
 						"enabled": true
+					}
+				}
+			},
+			"publicationVersion": {
+				"slug": "publicationVersion",
+				"title": "Publication version",
+				"description": "An earlier public version of a publication, kept when an editor corrected it.",
+				"version": "0.1.0",
+				"type": "object",
+				"required": [
+					"publication",
+					"version",
+					"supersededAt"
+				],
+				"x-openregister-demo-data": "A version is the snapshot a correction of a public publication makes, with copies of its public files; a sample version would point at a publication and files that do not exist.",
+				"authorization": {
+					"read": [
+						"admin"
+					],
+					"create": [
+						"admin"
+					],
+					"update": [],
+					"delete": [
+						"admin"
+					]
+				},
+				"properties": {
+					"publication": {
+						"type": "string",
+						"format": "uuid",
+						"title": "Publication",
+						"description": "The publication this is an earlier version of."
+					},
+					"version": {
+						"type": "integer",
+						"minimum": 1,
+						"title": "Version number",
+						"description": "The number of this version, counting from 1 for the first one that was superseded."
+					},
+					"supersededAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Superseded at",
+						"description": "When a correction replaced this version."
+					},
+					"fields": {
+						"type": "object",
+						"title": "Public fields",
+						"description": "The fields the public read returned for this version."
+					},
+					"documents": {
+						"type": "array",
+						"title": "Documents",
+						"description": "The public documents of this version, copied onto the version.",
+						"items": {
+							"type": "object",
+							"properties": {
+								"title": {
+									"type": "string",
+									"title": "Title",
+									"description": "The document's title."
+								},
+								"format": {
+									"type": "string",
+									"title": "Format",
+									"description": "The document's file format."
+								},
+								"fileId": {
+									"type": "integer",
+									"title": "File",
+									"description": "The copy of the document kept on this version."
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"registers": {
+			"publication": {
+				"schemas": [
+					"publicationVersion"
+				],
+				"configuration": {
+					"schemas": {
+						"publicationVersion": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "An earlier public version of a corrected publication"
+						}
 					}
 				}
 			}

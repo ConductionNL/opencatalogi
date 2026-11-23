@@ -813,7 +813,19 @@
         "Frozen": "Külmutatud",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Kas tagasivõetud väljaanne külmutati, nii et see keeldub igast muudatusest.",
         "Why it was not frozen": "Miks seda ei külmutatud",
-        "What went wrong when the withdrawn publication could not be frozen.": "Mis läks valesti, kui tagasivõetud väljaannet ei õnnestunud külmutada."
+        "What went wrong when the withdrawn publication could not be frozen.": "Mis läks valesti, kui tagasivõetud väljaannet ei õnnestunud külmutada.",
+        "Publication version": "Väljaande versioon",
+        "Version number": "Versiooni number",
+        "Superseded at": "Asendatud",
+        "Public fields": "Avalikud väljad",
+        "The publication this is an earlier version of.": "Väljaanne, mille varasem versioon see on.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Selle versiooni number, alates 1-st esimesele asendatule.",
+        "When a correction replaced this version.": "Millal parandus selle versiooni asendas.",
+        "The fields the public read returned for this version.": "Väljad, mille avalik lugemine selle versiooni kohta tagastas.",
+        "The public documents of this version, copied onto the version.": "Selle versiooni avalikud dokumendid, versioonile kopeeritud.",
+        "The document's title.": "Dokumendi pealkiri.",
+        "The document's file format.": "Dokumendi failivorming.",
+        "The copy of the document kept on this version.": "Dokumendi koopia, mida selle versiooniga hoitakse."
     },
     "plurals": {}
 }

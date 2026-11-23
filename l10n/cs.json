@@ -813,7 +813,19 @@
         "Frozen": "Zmrazeno",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Zda byla stažená publikace zmrazena, takže odmítá každou úpravu.",
         "Why it was not frozen": "Proč nebyla zmrazena",
-        "What went wrong when the withdrawn publication could not be frozen.": "Co se pokazilo, když stažená publikace nemohla být zmrazena."
+        "What went wrong when the withdrawn publication could not be frozen.": "Co se pokazilo, když stažená publikace nemohla být zmrazena.",
+        "Publication version": "Verze publikace",
+        "Version number": "Číslo verze",
+        "Superseded at": "Nahrazeno",
+        "Public fields": "Veřejná pole",
+        "The publication this is an earlier version of.": "Publikace, jejíž starší verzí toto je.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Číslo této verze, od 1 pro první nahrazenou.",
+        "When a correction replaced this version.": "Kdy oprava nahradila tuto verzi.",
+        "The fields the public read returned for this version.": "Pole, která veřejné čtení vracelo pro tuto verzi.",
+        "The public documents of this version, copied onto the version.": "Veřejné dokumenty této verze, zkopírované do verze.",
+        "The document's title.": "Název dokumentu.",
+        "The document's file format.": "Formát souboru dokumentu.",
+        "The copy of the document kept on this version.": "Kopie dokumentu uchovaná s touto verzí."
     },
     "plurals": {}
 }

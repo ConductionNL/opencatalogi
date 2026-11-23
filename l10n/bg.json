@@ -813,7 +813,19 @@
         "Frozen": "Замразена",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Дали оттеглената публикация е замразена, така че да отказва всяка промяна.",
         "Why it was not frozen": "Защо не е замразена",
-        "What went wrong when the withdrawn publication could not be frozen.": "Какво се обърка, когато оттеглената публикация не можа да бъде замразена."
+        "What went wrong when the withdrawn publication could not be frozen.": "Какво се обърка, когато оттеглената публикация не можа да бъде замразена.",
+        "Publication version": "Версия на публикацията",
+        "Version number": "Номер на версия",
+        "Superseded at": "Заменена на",
+        "Public fields": "Публични полета",
+        "The publication this is an earlier version of.": "Публикацията, чиято по-ранна версия е това.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Номерът на тази версия, от 1 за първата заменена.",
+        "When a correction replaced this version.": "Кога корекция замени тази версия.",
+        "The fields the public read returned for this version.": "Полетата, които публичното четене връщаше за тази версия.",
+        "The public documents of this version, copied onto the version.": "Публичните документи на тази версия, копирани към версията.",
+        "The document's title.": "Заглавието на документа.",
+        "The document's file format.": "Файловият формат на документа.",
+        "The copy of the document kept on this version.": "Копието на документа, пазено с тази версия."
     },
     "plurals": {}
 }

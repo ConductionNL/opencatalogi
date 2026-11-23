@@ -813,7 +813,19 @@
         "Frozen": "Fryst",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Hvort afturkallaða birtingin var fryst, svo hún hafnar öllum breytingum.",
         "Why it was not frozen": "Hvers vegna hún var ekki fryst",
-        "What went wrong when the withdrawn publication could not be frozen.": "Hvað fór úrskeiðis þegar ekki var hægt að frysta afturkölluðu birtinguna."
+        "What went wrong when the withdrawn publication could not be frozen.": "Hvað fór úrskeiðis þegar ekki var hægt að frysta afturkölluðu birtinguna.",
+        "Publication version": "Útgáfa birtingar",
+        "Version number": "Útgáfunúmer",
+        "Superseded at": "Leyst af hólmi",
+        "Public fields": "Opinber reitir",
+        "The publication this is an earlier version of.": "Birtingin sem þetta er eldri útgáfa af.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Númer þessarar útgáfu, frá 1 fyrir þá fyrstu sem var leyst af hólmi.",
+        "When a correction replaced this version.": "Hvenær leiðrétting leysti þessa útgáfu af hólmi.",
+        "The fields the public read returned for this version.": "Reitirnir sem opinber lestur skilaði fyrir þessa útgáfu.",
+        "The public documents of this version, copied onto the version.": "Opinber skjöl þessarar útgáfu, afrituð á útgáfuna.",
+        "The document's title.": "Titill skjalsins.",
+        "The document's file format.": "Skráarsnið skjalsins.",
+        "The copy of the document kept on this version.": "Afrit skjalsins sem geymt er með þessari útgáfu."
     },
     "plurals": {}
 }

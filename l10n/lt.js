@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "Užšaldyta",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Ar atšauktas leidinys buvo užšaldytas, kad atmestų bet kokį pakeitimą.",
         "Why it was not frozen": "Kodėl jis nebuvo užšaldytas",
-        "What went wrong when the withdrawn publication could not be frozen.": "Kas nepavyko, kai atšaukto leidinio nepavyko užšaldyti."
+        "What went wrong when the withdrawn publication could not be frozen.": "Kas nepavyko, kai atšaukto leidinio nepavyko užšaldyti.",
+        "Publication version": "Leidinio versija",
+        "Version number": "Versijos numeris",
+        "Superseded at": "Pakeista",
+        "Public fields": "Vieši laukai",
+        "The publication this is an earlier version of.": "Leidinys, kurio ankstesnė versija tai yra.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Šios versijos numeris, nuo 1 pirmajai pakeistai.",
+        "When a correction replaced this version.": "Kada pataisymas pakeitė šią versiją.",
+        "The fields the public read returned for this version.": "Laukai, kuriuos viešas skaitymas grąžino šiai versijai.",
+        "The public documents of this version, copied onto the version.": "Šios versijos vieši dokumentai, nukopijuoti į versiją.",
+        "The document's title.": "Dokumento pavadinimas.",
+        "The document's file format.": "Dokumento failo formatas.",
+        "The copy of the document kept on this version.": "Dokumento kopija, saugoma su šia versija."
     },
     "nplurals=2; plural=(n != 1);"
 )
