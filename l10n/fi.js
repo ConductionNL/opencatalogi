@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "Jäädytetty",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Onko poisvedetty julkaisu jäädytetty, jolloin se hylkää kaikki muutokset.",
         "Why it was not frozen": "Miksi sitä ei jäädytetty",
-        "What went wrong when the withdrawn publication could not be frozen.": "Mikä meni vikaan, kun poisvedettyä julkaisua ei voitu jäädyttää."
+        "What went wrong when the withdrawn publication could not be frozen.": "Mikä meni vikaan, kun poisvedettyä julkaisua ei voitu jäädyttää.",
+        "Publication version": "Julkaisun versio",
+        "Version number": "Versionumero",
+        "Superseded at": "Korvattu",
+        "Public fields": "Julkiset kentät",
+        "The publication this is an earlier version of.": "Julkaisu, jonka aiempi versio tämä on.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Tämän version numero, alkaen 1:stä ensimmäiselle korvatulle.",
+        "When a correction replaced this version.": "Milloin korjaus korvasi tämän version.",
+        "The fields the public read returned for this version.": "Kentät, jotka julkinen luku palautti tälle versiolle.",
+        "The public documents of this version, copied onto the version.": "Tämän version julkiset asiakirjat versioon kopioituina.",
+        "The document's title.": "Asiakirjan otsikko.",
+        "The document's file format.": "Asiakirjan tiedostomuoto.",
+        "The copy of the document kept on this version.": "Asiakirjan kopio, joka säilytetään tämän version mukana."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -813,7 +813,19 @@
         "Frozen": "Congelada",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Sche la publicaziun retratga è vegnida congelada, uschia ch'ella refusa mintga midada.",
         "Why it was not frozen": "Pertge ch'ella n'è betg vegnida congelada",
-        "What went wrong when the withdrawn publication could not be frozen.": "Tge ch'è ì mal cura che la publicaziun retratga n'ha betg pudì vegnir congelada."
+        "What went wrong when the withdrawn publication could not be frozen.": "Tge ch'è ì mal cura che la publicaziun retratga n'ha betg pudì vegnir congelada.",
+        "Publication version": "Versiun da la publicaziun",
+        "Version number": "Numer da versiun",
+        "Superseded at": "Remplazzada ils",
+        "Public fields": "Champs publics",
+        "The publication this is an earlier version of.": "La publicaziun da la quala quai è ina versiun pli veglia.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Il numer da questa versiun, a partir dad 1 per l'emprima remplazzada.",
+        "When a correction replaced this version.": "Cura ch'ina correctura ha remplazzà questa versiun.",
+        "The fields the public read returned for this version.": "Ils champs che la lectura publica ha returnà per questa versiun.",
+        "The public documents of this version, copied onto the version.": "Ils documents publics da questa versiun, copiads sin la versiun.",
+        "The document's title.": "Il titel dal document.",
+        "The document's file format.": "Il format da datoteca dal document.",
+        "The copy of the document kept on this version.": "La copia dal document che vegn tegnida cun questa versiun."
     },
     "plurals": {}
 }

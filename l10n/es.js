@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "Congelada",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Si la publicación retirada se congeló, de modo que rechaza cualquier edición.",
         "Why it was not frozen": "Por qué no se congeló",
-        "What went wrong when the withdrawn publication could not be frozen.": "Qué falló cuando no se pudo congelar la publicación retirada."
+        "What went wrong when the withdrawn publication could not be frozen.": "Qué falló cuando no se pudo congelar la publicación retirada.",
+        "Publication version": "Versión de la publicación",
+        "Version number": "Número de versión",
+        "Superseded at": "Sustituida el",
+        "Public fields": "Campos públicos",
+        "The publication this is an earlier version of.": "La publicación de la que esta es una versión anterior.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "El número de esta versión, desde 1 para la primera que fue sustituida.",
+        "When a correction replaced this version.": "Cuándo una corrección sustituyó esta versión.",
+        "The fields the public read returned for this version.": "Los campos que la lectura pública devolvía para esta versión.",
+        "The public documents of this version, copied onto the version.": "Los documentos públicos de esta versión, copiados en la versión.",
+        "The document's title.": "El título del documento.",
+        "The document's file format.": "El formato de archivo del documento.",
+        "The copy of the document kept on this version.": "La copia del documento que se conserva con esta versión."
     },
     "nplurals=2; plural=(n != 1);"
 )

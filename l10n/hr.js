@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "Zamrznuto",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Je li povučena objava zamrznuta, tako da odbija svaku izmjenu.",
         "Why it was not frozen": "Zašto nije zamrznuta",
-        "What went wrong when the withdrawn publication could not be frozen.": "Što je pošlo po zlu kad povučenu objavu nije bilo moguće zamrznuti."
+        "What went wrong when the withdrawn publication could not be frozen.": "Što je pošlo po zlu kad povučenu objavu nije bilo moguće zamrznuti.",
+        "Publication version": "Verzija objave",
+        "Version number": "Broj verzije",
+        "Superseded at": "Zamijenjeno",
+        "Public fields": "Javna polja",
+        "The publication this is an earlier version of.": "Objava čija je ovo ranija verzija.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Broj ove verzije, od 1 za prvu zamijenjenu.",
+        "When a correction replaced this version.": "Kada je ispravak zamijenio ovu verziju.",
+        "The fields the public read returned for this version.": "Polja koja je javno čitanje vraćalo za ovu verziju.",
+        "The public documents of this version, copied onto the version.": "Javni dokumenti ove verzije, kopirani na verziju.",
+        "The document's title.": "Naslov dokumenta.",
+        "The document's file format.": "Format datoteke dokumenta.",
+        "The copy of the document kept on this version.": "Kopija dokumenta koja se čuva uz ovu verziju."
     },
     "nplurals=2; plural=(n != 1);"
 )

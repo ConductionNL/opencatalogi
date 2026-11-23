@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "Παγωμένη",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Αν η αποσυρμένη δημοσίευση παγώθηκε, ώστε να απορρίπτει κάθε επεξεργασία.",
         "Why it was not frozen": "Γιατί δεν παγώθηκε",
-        "What went wrong when the withdrawn publication could not be frozen.": "Τι πήγε στραβά όταν η αποσυρμένη δημοσίευση δεν μπόρεσε να παγώσει."
+        "What went wrong when the withdrawn publication could not be frozen.": "Τι πήγε στραβά όταν η αποσυρμένη δημοσίευση δεν μπόρεσε να παγώσει.",
+        "Publication version": "Έκδοση δημοσίευσης",
+        "Version number": "Αριθμός έκδοσης",
+        "Superseded at": "Αντικαταστάθηκε στις",
+        "Public fields": "Δημόσια πεδία",
+        "The publication this is an earlier version of.": "Η δημοσίευση της οποίας αυτή είναι προηγούμενη έκδοση.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Ο αριθμός αυτής της έκδοσης, από 1 για την πρώτη που αντικαταστάθηκε.",
+        "When a correction replaced this version.": "Πότε μια διόρθωση αντικατέστησε αυτή την έκδοση.",
+        "The fields the public read returned for this version.": "Τα πεδία που επέστρεφε η δημόσια ανάγνωση για αυτή την έκδοση.",
+        "The public documents of this version, copied onto the version.": "Τα δημόσια έγγραφα αυτής της έκδοσης, αντιγραμμένα στην έκδοση.",
+        "The document's title.": "Ο τίτλος του εγγράφου.",
+        "The document's file format.": "Η μορφή αρχείου του εγγράφου.",
+        "The copy of the document kept on this version.": "Το αντίγραφο του εγγράφου που φυλάσσεται με αυτή την έκδοση."
     },
     "nplurals=2; plural=(n != 1);"
 )

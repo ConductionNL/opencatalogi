@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "E ngrirë",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Nëse publikimi i tërhequr u ngri, kështu që refuzon çdo ndryshim.",
         "Why it was not frozen": "Pse nuk u ngri",
-        "What went wrong when the withdrawn publication could not be frozen.": "Çfarë shkoi keq kur publikimi i tërhequr nuk mund të ngrihej."
+        "What went wrong when the withdrawn publication could not be frozen.": "Çfarë shkoi keq kur publikimi i tërhequr nuk mund të ngrihej.",
+        "Publication version": "Versioni i publikimit",
+        "Version number": "Numri i versionit",
+        "Superseded at": "Zëvendësuar më",
+        "Public fields": "Fusha publike",
+        "The publication this is an earlier version of.": "Publikimi i të cilit ky është një version i mëparshëm.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Numri i këtij versioni, nga 1 për të parin që u zëvendësua.",
+        "When a correction replaced this version.": "Kur një korrigjim e zëvendësoi këtë version.",
+        "The fields the public read returned for this version.": "Fushat që leximi publik ktheu për këtë version.",
+        "The public documents of this version, copied onto the version.": "Dokumentet publike të këtij versioni, të kopjuara në version.",
+        "The document's title.": "Titulli i dokumentit.",
+        "The document's file format.": "Formati i skedarit të dokumentit.",
+        "The copy of the document kept on this version.": "Kopja e dokumentit që ruhet me këtë version."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -813,7 +813,19 @@
         "Frozen": "Donduruldu",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Geri çekilen yayının dondurulup dondurulmadığı; dondurulduysa her düzenlemeyi reddeder.",
         "Why it was not frozen": "Neden dondurulmadı",
-        "What went wrong when the withdrawn publication could not be frozen.": "Geri çekilen yayın dondurulamadığında ne ters gitti."
+        "What went wrong when the withdrawn publication could not be frozen.": "Geri çekilen yayın dondurulamadığında ne ters gitti.",
+        "Publication version": "Yayın sürümü",
+        "Version number": "Sürüm numarası",
+        "Superseded at": "Değiştirilme tarihi",
+        "Public fields": "Herkese açık alanlar",
+        "The publication this is an earlier version of.": "Bunun daha eski bir sürümü olduğu yayın.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Bu sürümün numarası; değiştirilen ilk sürüm için 1'den başlar.",
+        "When a correction replaced this version.": "Bir düzeltmenin bu sürümü ne zaman değiştirdiği.",
+        "The fields the public read returned for this version.": "Herkese açık okumanın bu sürüm için döndürdüğü alanlar.",
+        "The public documents of this version, copied onto the version.": "Bu sürümün herkese açık belgeleri, sürüme kopyalanmış olarak.",
+        "The document's title.": "Belgenin başlığı.",
+        "The document's file format.": "Belgenin dosya biçimi.",
+        "The copy of the document kept on this version.": "Belgenin bu sürümle saklanan kopyası."
     },
     "plurals": {}
 }

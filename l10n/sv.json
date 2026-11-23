@@ -813,7 +813,19 @@
         "Frozen": "Fryst",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Om den tillbakadragna publikationen frystes, så att den avvisar varje ändring.",
         "Why it was not frozen": "Varför den inte frystes",
-        "What went wrong when the withdrawn publication could not be frozen.": "Vad som gick fel när den tillbakadragna publikationen inte kunde frysas."
+        "What went wrong when the withdrawn publication could not be frozen.": "Vad som gick fel när den tillbakadragna publikationen inte kunde frysas.",
+        "Publication version": "Publikationsversion",
+        "Version number": "Versionsnummer",
+        "Superseded at": "Ersatt",
+        "Public fields": "Offentliga fält",
+        "The publication this is an earlier version of.": "Publikationen som detta är en tidigare version av.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Numret på denna version, från 1 för den första som ersattes.",
+        "When a correction replaced this version.": "När en rättelse ersatte denna version.",
+        "The fields the public read returned for this version.": "Fälten som den offentliga läsningen returnerade för denna version.",
+        "The public documents of this version, copied onto the version.": "De offentliga dokumenten i denna version, kopierade till versionen.",
+        "The document's title.": "Dokumentets titel.",
+        "The document's file format.": "Dokumentets filformat.",
+        "The copy of the document kept on this version.": "Kopian av dokumentet som sparas med denna version."
     },
     "plurals": {}
 }

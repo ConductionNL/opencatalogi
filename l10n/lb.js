@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "Ageforen",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Ob déi zréckgezunn Publikatioun ageforen gouf, sou datt se all Ännerung refuséiert.",
         "Why it was not frozen": "Firwat se net ageforen gouf",
-        "What went wrong when the withdrawn publication could not be frozen.": "Wat schifgaangen ass, wéi déi zréckgezunn Publikatioun net konnt ageforen ginn."
+        "What went wrong when the withdrawn publication could not be frozen.": "Wat schifgaangen ass, wéi déi zréckgezunn Publikatioun net konnt ageforen ginn.",
+        "Publication version": "Versioun vun der Publikatioun",
+        "Version number": "Versiounsnummer",
+        "Superseded at": "Ersat den",
+        "Public fields": "Ëffentlech Felder",
+        "The publication this is an earlier version of.": "D'Publikatioun, vun där dëst eng fréier Versioun ass.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "D'Nummer vun dëser Versioun, vun 1 un fir déi éischt ersat.",
+        "When a correction replaced this version.": "Wéini eng Korrektur dës Versioun ersat huet.",
+        "The fields the public read returned for this version.": "D'Felder, déi d'ëffentlech Liesen fir dës Versioun zréckginn huet.",
+        "The public documents of this version, copied onto the version.": "Déi ëffentlech Dokumenter vun dëser Versioun, op d'Versioun kopéiert.",
+        "The document's title.": "Den Titel vum Dokument.",
+        "The document's file format.": "De Fichiersformat vum Dokument.",
+        "The copy of the document kept on this version.": "D'Kopie vum Dokument, déi mat dëser Versioun gehale gëtt."
     },
     "nplurals=2; plural=(n != 1);"
 )

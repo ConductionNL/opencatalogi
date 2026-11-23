@@ -813,7 +813,19 @@
         "Frozen": "Zamrożona",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Czy wycofana publikacja została zamrożona, tak że odrzuca każdą zmianę.",
         "Why it was not frozen": "Dlaczego nie została zamrożona",
-        "What went wrong when the withdrawn publication could not be frozen.": "Co poszło nie tak, gdy nie udało się zamrozić wycofanej publikacji."
+        "What went wrong when the withdrawn publication could not be frozen.": "Co poszło nie tak, gdy nie udało się zamrozić wycofanej publikacji.",
+        "Publication version": "Wersja publikacji",
+        "Version number": "Numer wersji",
+        "Superseded at": "Zastąpiona",
+        "Public fields": "Pola publiczne",
+        "The publication this is an earlier version of.": "Publikacja, której wcześniejszą wersją jest ta.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Numer tej wersji, od 1 dla pierwszej zastąpionej.",
+        "When a correction replaced this version.": "Kiedy korekta zastąpiła tę wersję.",
+        "The fields the public read returned for this version.": "Pola, które publiczny odczyt zwracał dla tej wersji.",
+        "The public documents of this version, copied onto the version.": "Publiczne dokumenty tej wersji, skopiowane do wersji.",
+        "The document's title.": "Tytuł dokumentu.",
+        "The document's file format.": "Format pliku dokumentu.",
+        "The copy of the document kept on this version.": "Kopia dokumentu przechowywana z tą wersją."
     },
     "plurals": {}
 }

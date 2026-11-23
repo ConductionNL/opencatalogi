@@ -813,7 +813,19 @@
         "Frozen": "Заморожена",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Была ли отозванная публикация заморожена, чтобы она отклоняла любые изменения.",
         "Why it was not frozen": "Почему она не заморожена",
-        "What went wrong when the withdrawn publication could not be frozen.": "Что пошло не так, когда отозванную публикацию не удалось заморозить."
+        "What went wrong when the withdrawn publication could not be frozen.": "Что пошло не так, когда отозванную публикацию не удалось заморозить.",
+        "Publication version": "Версия публикации",
+        "Version number": "Номер версии",
+        "Superseded at": "Заменена",
+        "Public fields": "Публичные поля",
+        "The publication this is an earlier version of.": "Публикация, более ранней версией которой это является.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Номер этой версии, начиная с 1 для первой заменённой.",
+        "When a correction replaced this version.": "Когда исправление заменило эту версию.",
+        "The fields the public read returned for this version.": "Поля, которые публичное чтение возвращало для этой версии.",
+        "The public documents of this version, copied onto the version.": "Публичные документы этой версии, скопированные в версию.",
+        "The document's title.": "Заголовок документа.",
+        "The document's file format.": "Формат файла документа.",
+        "The copy of the document kept on this version.": "Копия документа, хранящаяся с этой версией."
     },
     "plurals": {}
 }

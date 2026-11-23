@@ -2162,7 +2162,19 @@
         "Frozen": "Frozen",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Whether the withdrawn publication was frozen, so it refuses every edit.",
         "Why it was not frozen": "Why it was not frozen",
-        "What went wrong when the withdrawn publication could not be frozen.": "What went wrong when the withdrawn publication could not be frozen."
+        "What went wrong when the withdrawn publication could not be frozen.": "What went wrong when the withdrawn publication could not be frozen.",
+        "Publication version": "Publication version",
+        "Version number": "Version number",
+        "Superseded at": "Superseded at",
+        "Public fields": "Public fields",
+        "The publication this is an earlier version of.": "The publication this is an earlier version of.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "The number of this version, counting from 1 for the first one that was superseded.",
+        "When a correction replaced this version.": "When a correction replaced this version.",
+        "The fields the public read returned for this version.": "The fields the public read returned for this version.",
+        "The public documents of this version, copied onto the version.": "The public documents of this version, copied onto the version.",
+        "The document's title.": "The document's title.",
+        "The document's file format.": "The document's file format.",
+        "The copy of the document kept on this version.": "The copy of the document kept on this version."
     },
     "plurals": {}
 }

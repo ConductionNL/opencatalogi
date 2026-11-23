@@ -813,7 +813,19 @@
         "Frozen": "Замрзнуто",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Да ли је повучена објава замрзнута, тако да одбија сваку измену.",
         "Why it was not frozen": "Зашто није замрзнута",
-        "What went wrong when the withdrawn publication could not be frozen.": "Шта је пошло наопако када повучену објаву није било могуће замрзнути."
+        "What went wrong when the withdrawn publication could not be frozen.": "Шта је пошло наопако када повучену објаву није било могуће замрзнути.",
+        "Publication version": "Верзија објаве",
+        "Version number": "Број верзије",
+        "Superseded at": "Замењено",
+        "Public fields": "Јавна поља",
+        "The publication this is an earlier version of.": "Објава чија је ово ранија верзија.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Број ове верзије, од 1 за прву замењену.",
+        "When a correction replaced this version.": "Када је исправка заменила ову верзију.",
+        "The fields the public read returned for this version.": "Поља која је јавно читање враћало за ову верзију.",
+        "The public documents of this version, copied onto the version.": "Јавни документи ове верзије, копирани на верзију.",
+        "The document's title.": "Наслов документа.",
+        "The document's file format.": "Формат датотеке документа.",
+        "The copy of the document kept on this version.": "Копија документа која се чува уз ову верзију."
     },
     "plurals": {}
 }

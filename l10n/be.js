@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "Замарожана",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Ці была адкліканая публікацыя замарожана, каб яна адхіляла любыя змены.",
         "Why it was not frozen": "Чаму яна не замарожана",
-        "What went wrong when the withdrawn publication could not be frozen.": "Што пайшло не так, калі адкліканую публікацыю не ўдалося замарозіць."
+        "What went wrong when the withdrawn publication could not be frozen.": "Што пайшло не так, калі адкліканую публікацыю не ўдалося замарозіць.",
+        "Publication version": "Версія публікацыі",
+        "Version number": "Нумар версіі",
+        "Superseded at": "Заменена",
+        "Public fields": "Публічныя палі",
+        "The publication this is an earlier version of.": "Публікацыя, ранейшай версіяй якой гэта з'яўляецца.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "Нумар гэтай версіі, пачынаючы з 1 для першай замененай.",
+        "When a correction replaced this version.": "Калі выпраўленне замяніла гэтую версію.",
+        "The fields the public read returned for this version.": "Палі, якія публічнае чытанне вяртала для гэтай версіі.",
+        "The public documents of this version, copied onto the version.": "Публічныя дакументы гэтай версіі, скапіяваныя ў версію.",
+        "The document's title.": "Загаловак дакумента.",
+        "The document's file format.": "Фармат файла дакумента.",
+        "The copy of the document kept on this version.": "Копія дакумента, якая захоўваецца з гэтай версіяй."
     },
     "nplurals=2; plural=(n != 1);"
 )

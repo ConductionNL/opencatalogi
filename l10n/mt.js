@@ -814,7 +814,19 @@ OC.L10N.register(
         "Frozen": "Iffriżata",
         "Whether the withdrawn publication was frozen, so it refuses every edit.": "Jekk il-pubblikazzjoni rtirata ġietx iffriżata, biex tirrifjuta kull bidla.",
         "Why it was not frozen": "Għaliex ma ġietx iffriżata",
-        "What went wrong when the withdrawn publication could not be frozen.": "X'mar ħażin meta l-pubblikazzjoni rtirata ma setgħetx tiġi ffriżata."
+        "What went wrong when the withdrawn publication could not be frozen.": "X'mar ħażin meta l-pubblikazzjoni rtirata ma setgħetx tiġi ffriżata.",
+        "Publication version": "Verżjoni tal-pubblikazzjoni",
+        "Version number": "Numru tal-verżjoni",
+        "Superseded at": "Mibdula fi",
+        "Public fields": "Oqsma pubbliċi",
+        "The publication this is an earlier version of.": "Il-pubblikazzjoni li din hija verżjoni preċedenti tagħha.",
+        "The number of this version, counting from 1 for the first one that was superseded.": "In-numru ta' din il-verżjoni, minn 1 għall-ewwel waħda li nbidlet.",
+        "When a correction replaced this version.": "Meta korrezzjoni biddlet din il-verżjoni.",
+        "The fields the public read returned for this version.": "L-oqsma li l-qari pubbliku ta għal din il-verżjoni.",
+        "The public documents of this version, copied onto the version.": "Id-dokumenti pubbliċi ta' din il-verżjoni, ikkupjati fuq il-verżjoni.",
+        "The document's title.": "It-titlu tad-dokument.",
+        "The document's file format.": "Il-format tal-fajl tad-dokument.",
+        "The copy of the document kept on this version.": "Il-kopja tad-dokument miżmuma ma' din il-verżjoni."
     },
     "nplurals=2; plural=(n != 1);"
 )
