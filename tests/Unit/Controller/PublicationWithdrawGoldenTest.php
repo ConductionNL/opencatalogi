@@ -34,6 +34,7 @@ use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\EmbargoGuard;
 use OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Service\Publication\PublicationDocumentCount;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
@@ -195,7 +196,8 @@ class PublicationWithdrawGoldenTest extends TestCase {
 				container: $container,
 				review: new PublicationReviewPolicy(appConfig: $this->createMock(originalClassName: IAppConfig::class)),
 				embargo: $this->embargoGuard()
-			)
+			),
+			$this->createMock(originalClassName: PublicationDocumentCount::class)
 		);
 
 		return $controller;

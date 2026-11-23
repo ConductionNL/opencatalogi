@@ -32,6 +32,8 @@ use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Service\Publication\PublicationDocumentCount;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenRegister\Db\ObjectEntity;
@@ -101,6 +103,12 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** @var list<string> The caller's groups, as the group manager answers them. */
 	private array $userGroups = [];
+
+	/** @var list<array<string, mixed>> The files OpenRegister holds for the publication (REQ-PSG-004). */
+	private array $attachedFiles = [['id' => 1, 'name' => 'besluit.pdf']];
+
+	/** A failure the file mapper throws when the documents are counted, or null. */
+	private ?\Throwable $filesFailure = null;
 
 	protected function setUp(): void {
 		parent::setUp();
@@ -287,8 +295,48 @@ class PublicationStateControllerTest extends TestCase {
 				container: $container,
 				review: new PublicationReviewPolicy(appConfig: $config),
 				embargo: new EmbargoGuard(config: $config, groups: $groups, logger: $this->createMock(originalClassName: LoggerInterface::class))
+			),
+			new PublicationDocumentCount(
+				container: $this->documentContainer(),
+				openRegister: $this->createMock(originalClassName: OpenRegisterLookupInterface::class),
+				config: $config,
+				logger: $this->createMock(originalClassName: LoggerInterface::class)
 			)
 		);
+	}
+
+	/**
+	 * A container whose OpenRegister file mapper answers the attached files, or throws the files failure.
+	 *
+	 * @return ContainerInterface The container.
+	 */
+	private function documentContainer(): ContainerInterface {
+		$mapper = new class ($this) {
+			public function __construct(private readonly PublicationStateControllerTest $test) {
+			}
+
+			public function getFilesForObject(object $object): array {
+				return $this->test->filesFor();
+			}
+		};
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('has')->willReturnCallback(static fn (string $id): bool => $id === PublicationDocumentCount::FILE_MAPPER);
+		$container->method('get')->willReturn($mapper);
+
+		return $container;
+	}
+
+	/**
+	 * The files the file mapper double answers.
+	 *
+	 * @return list<array<string, mixed>> The files.
+	 */
+	public function filesFor(): array {
+		if ($this->filesFailure !== null) {
+			throw $this->filesFailure;
+		}
+
+		return $this->attachedFiles;
 	}
 
 	private PublicationStateController $controller;
@@ -723,6 +771,64 @@ class PublicationStateControllerTest extends TestCase {
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
 		$this->assertCount(expectedCount: 1, haystack: $this->saves);
+	}
+
+	/**
+	 * REQ-PSG-004: an approved publication with no files and no references is not published without the confirmation.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.1
+	 */
+	public function testPublishWithNoDocumentsIsRefusedWithoutConfirmation(): void {
+		$this->attachedFiles = [];
+		$this->publication = ['id' => 'p1', 'status' => 'approved', 'title' => 'Besluit'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+
+		$response = $this->controller->publish('p1');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: ['error' => 'no-documents', 'documents' => 0], actual: $response->getData());
+		$this->assertSame(expected: [], actual: $this->transitions);
+		$this->assertSame(expected: [], actual: $this->saves);
+	}
+
+	/**
+	 * REQ-PSG-004: with `confirmNoDocuments: true` the same publication is published.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.1
+	 */
+	public function testAConfirmedPublishWithNoDocumentsGoesAhead(): void {
+		$this->attachedFiles = [];
+		$this->withParams(['confirmNoDocuments' => true]);
+		$this->publication = ['id' => 'p1', 'status' => 'approved', 'title' => 'Besluit'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+
+		$response = $this->controller->publish('p1');
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertCount(expectedCount: 1, haystack: $this->transitions);
+	}
+
+	/**
+	 * REQ-PSG-004: a document count that cannot be read counts as zero, so the publish asks for the confirmation.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.1
+	 */
+	public function testAnUnreadableDocumentCountCountsAsZero(): void {
+		$this->filesFailure = new \RuntimeException('The file table could not be read.');
+		$this->publication = ['id' => 'p1', 'status' => 'approved', 'title' => 'Besluit'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+
+		$response = $this->controller->publish('p1');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: 'no-documents', actual: $response->getData()['error']);
+		$this->assertSame(expected: [], actual: $this->transitions);
 	}
 
 	/** REQ-PPW-002: publish now on a public publication answers 409; without rights 403. */

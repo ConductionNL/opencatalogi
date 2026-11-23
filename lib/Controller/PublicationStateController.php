@@ -35,6 +35,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
+use OCA\OpenCatalogi\Service\Publication\PublicationDocumentCount;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
@@ -72,6 +73,7 @@ class PublicationStateController extends Controller {
 	 * @param PublicationRightsInterface $rights The update right on one publication, and the publish right.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
  * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003), and says whether an embargo holds (REQ-PSG-001).
+	 * @param PublicationDocumentCount $documents Counts the files and document references a publication carries (REQ-PSG-004).
 	 */
 	public function __construct(
 		$appName,
@@ -81,6 +83,7 @@ class PublicationStateController extends Controller {
 		private readonly PublicationRightsInterface $rights,
 		private readonly PublicationTransitions $registers,
 		private readonly PublishTransition $publisher,
+		private readonly PublicationDocumentCount $documents,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -218,11 +221,13 @@ class PublicationStateController extends Controller {
 	 * @param string $id The publication id.
 	 *
 	 * @return JSONResponse `{state: public}`, 403 without the update right or the publish right, 409 when it is already public or archived,
-	 *                      423 `embargo-holds` while its publication date lies ahead and the caller may not lift the embargo.
+	 *                      423 `embargo-holds` while its publication date lies ahead and the caller may not lift the embargo,
+	 *                      409 `no-documents` when it carries no file or reference and the call does not carry `confirmNoDocuments: true`.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
 	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.1
 	 */
 	#[NoAdminRequired]
 	public function publish(string $id): JSONResponse {
@@ -237,9 +242,9 @@ class PublicationStateController extends Controller {
 			return $this->conflict(state: $state);
 		}
 
-		$embargo = $this->embargoHolds(properties: $properties);
-		if ($embargo !== null) {
-			return $embargo;
+		$guard = ($this->embargoHolds(properties: $properties) ?? $this->noDocuments(id: $id, publication: $publication));
+		if ($guard !== null) {
+			return $guard;
 		}
 
 		try {
@@ -305,6 +310,28 @@ class PublicationStateController extends Controller {
 			statusCode: Http::STATUS_LOCKED
 		);
 	}//end embargoHolds()
+
+	/**
+	 * The 409 for a publish now of a publication with no documents, unless the caller confirmed it.
+	 *
+	 * The count is the publication's files plus the document references pointing at it; a count
+	 * that cannot be read is zero, so an unreadable record asks for the confirmation too.
+	 *
+	 * @param string $id          The publication id.
+	 * @param object $publication The publication as loaded.
+	 *
+	 * @return JSONResponse|null 409 with `error: no-documents` and `documents: 0`; null when it may go ahead.
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.1
+	 */
+	private function noDocuments(string $id, object $publication): ?JSONResponse {
+		$confirmed = filter_var($this->request->getParam('confirmNoDocuments', false), FILTER_VALIDATE_BOOLEAN);
+		if ($confirmed === true || $this->documents->count(id: $id, publication: $publication) > 0) {
+			return null;
+		}
+
+		return new JSONResponse(data: ['error' => 'no-documents', 'documents' => 0], statusCode: Http::STATUS_CONFLICT);
+	}//end noDocuments()
 
 	/**
 	 * The 422 for a publish the lifecycle does not allow, naming the transition and the state.
