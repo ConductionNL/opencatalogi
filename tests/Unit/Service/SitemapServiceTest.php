@@ -934,6 +934,83 @@ class SitemapServiceTest extends TestCase {
 		$this->assertSame(expected: 3, actual: $dom->getElementsByTagName('DiWoo')->length);
 	}
 
+	/**
+	 * A withdrawn publication stays out of the sitemap: every publication read runs under RBAC (RET-006).
+	 *
+	 * The double answers like OpenRegister's public read rules: under RBAC it drops the publication whose
+	 * depublication date has passed, without RBAC it would hand both over. So the test fails when the
+	 * sitemap reads publications with RBAC off.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.3
+	 */
+	public function testAWithdrawnPublicationIsNotInTheSitemap(): void {
+		$this->setupValidSitemapContext(registerId: 'reg-woo', schemaId: 'sch-1');
+		$catalogObj = $this->createCatalogObj(schemas: ['sch-1']);
+		$public = $this->createSerializableObject(data: [
+			'id' => 'pub-public',
+			'title' => 'Besluit parkeren',
+			'wooCategory' => 'infocat001',
+			'@self' => ['created' => '2026-01-01', 'updated' => '2026-06-01', 'organisation' => 'org-uuid-1'],
+		]);
+		$withdrawn = $this->createSerializableObject(data: [
+			'id' => 'pub-withdrawn',
+			'title' => 'Besluit ingetrokken',
+			'wooCategory' => 'infocat001',
+			'depublicationDate' => '2026-11-22T09:00:00+00:00',
+			'@self' => ['created' => '2026-01-01', 'updated' => '2026-11-22', 'organisation' => 'org-uuid-1'],
+		]);
+
+		$fileService = $this->createMock(originalClassName: \OCA\OpenRegister\Service\FileService::class);
+		$fileService->method('getFiles')->willReturnCallback(static fn (string $object): array => [$object]);
+		$fileService->method('formatFiles')->willReturnCallback(
+			static fn (array $files): array => [
+				'results' => [['downloadUrl' => 'https://example.com/files/' . $files[0] . '.pdf', 'extension' => 'pdf', 'published' => '2026-03-01']],
+			]
+		);
+
+		$reads = [];
+		$objectService = $this->createMock(originalClassName: \OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')
+			->willReturnCallback(static function (array $query = [], bool $_rbac = true) use ($public, $withdrawn, $catalogObj, &$reads): array {
+				if (isset($query['slug']) === true) {
+					return ['results' => [$catalogObj]];
+				}
+
+				$reads[] = $_rbac;
+				if ($_rbac === true) {
+					return ['results' => [$public]];
+				}
+
+				return ['results' => [$public, $withdrawn]];
+			});
+
+		$organisations = $this->environmentAwareDouble(class: \OCA\OpenRegister\Db\OrganisationMapper::class, methods: ['findByUuidFollowingMerge']);
+		$organisations->method('findByUuidFollowingMerge')->willReturn(
+			$this->organisation(name: 'Gemeente Voorbeeld', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855')
+		);
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')
+			->willReturnCallback(static function ($id) use ($objectService, $fileService, $organisations) {
+				return match ($id) {
+					'OCA\OpenRegister\Service\ObjectService' => $objectService,
+					'OCA\OpenRegister\Service\FileService' => $fileService,
+					'OCA\OpenRegister\Db\OrganisationMapper' => $organisations,
+					default => null,
+				};
+			});
+
+		$xml = $this->service->buildSitemap('my-catalog', 'sitemapindex-diwoo-infocat001.xml', 1)->render();
+
+		$this->assertStringContainsString(needle: 'https://example.com/files/pub-public.pdf', haystack: $xml);
+		$this->assertStringNotContainsString(needle: 'pub-withdrawn', haystack: $xml);
+		$this->assertStringNotContainsString(needle: 'Besluit ingetrokken', haystack: $xml);
+		$this->assertNotEmpty(actual: $reads);
+		$this->assertSame(expected: array_fill(0, count($reads), true), actual: $reads);
+	}//end testAWithdrawnPublicationIsNotInTheSitemap()
+
 	// ──────────────────────────────────────────────────────────
 	// buildSitemapIndex
 	// ──────────────────────────────────────────────────────────
