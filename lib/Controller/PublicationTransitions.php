@@ -160,6 +160,19 @@ class PublicationTransitions {
 	}//end depublishDocument()
 
 	/**
+	 * Why no document of this publication may be withdrawn now, or null when it may.
+	 *
+	 * @param mixed $publication The publication object.
+	 *
+	 * @return string|null The frozen refusal, or null.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 */
+	public function documentWriteRefusal(mixed $publication): ?string {
+		return $this->depublisher->documentWriteRefusal(publication: $publication);
+	}//end documentWriteRefusal()
+
+	/**
 	 * The channels a depublication has not reached yet.
 	 *
 	 * @param array $depublication The depublication.

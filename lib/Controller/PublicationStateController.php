@@ -35,7 +35,6 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
-use OCA\OpenCatalogi\Service\Publication\FrozenRecord;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
@@ -481,7 +480,7 @@ class PublicationStateController extends Controller {
 			return $refusal;
 		}
 
-		$frozen = (new FrozenRecord())->refusal(record: $publication);
+		$frozen = $this->registers->documentWriteRefusal(publication: $publication);
 		if ($frozen !== null) {
 			return new JSONResponse(data: ['error' => 'frozen', 'message' => $frozen], statusCode: Http::STATUS_CONFLICT);
 		}

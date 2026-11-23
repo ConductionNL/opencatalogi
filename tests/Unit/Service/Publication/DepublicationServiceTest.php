@@ -185,6 +185,23 @@ final class DepublicationServiceTest extends TestCase {
 	}//end testWithoutAFreezerNothingIsFrozen()
 
 	/**
+	 * A frozen publication refuses a document write in the frozen words; one that is not frozen does not.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 */
+	public function testADocumentWriteOnAFrozenPublicationIsRefused(): void {
+		$service = $this->service();
+
+		self::assertSame(
+			expected: 'Cannot write to this object: it was frozen by editor on 2026-11-20T10:00:00+00:00. Unfreeze it before changing it.',
+			actual: $service->documentWriteRefusal(publication: ['@self' => ['frozen' => ['by' => 'editor', 'at' => '2026-11-20T10:00:00+00:00']]])
+		);
+		self::assertNull(actual: $service->documentWriteRefusal(publication: ['id' => 'pub-1']));
+	}//end testADocumentWriteOnAFrozenPublicationIsRefused()
+
+	/**
 	 * Without a reason nothing is frozen: the refusal comes first.
 	 *
 	 * @return void
