@@ -54,7 +54,19 @@ class FakeObjectService {
 		return ['results' => $this->objects, 'facets' => []];
 	}//end searchObjectsPaginated()
 
-	public function find(string $id) {
+	public array $themes = [];
+
+	public array $unreadable = [];
+
+	public function find(string $id, mixed $options = null, bool $_rbac = true, bool $_multitenancy = true) {
+		if (in_array($id, $this->unreadable, true) === true) {
+			throw new \RuntimeException('theme store down');
+		}
+
+		if (isset($this->themes[$id]) === true) {
+			return $this->themes[$id];
+		}
+
 		foreach ($this->objects as $object) {
 			if ((string)($object['id'] ?? '') === $id) {
 				return $object;
@@ -564,6 +576,80 @@ class RetentionServiceTest extends TestCase {
 		$this->assertCount(0, $this->fake->saved);
 
 	}//end testEvaluateIsIdempotentForToday()
+
+	/**
+	 * A publication under an archive hotspot is not depublished, and nothing is written to it (REQ-THA-003).
+	 *
+	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 *
+	 * @return void
+	 */
+	public function testAPublicationUnderAHotspotIsNotDepublished(): void {
+		$this->fake->themes = [
+			'theme-gewoon' => ['id' => 'theme-gewoon', 'title' => 'Parkeren'],
+			'theme-hot' => ['id' => 'theme-hot', 'title' => 'Herindeling gemeente', 'archiveHotspot' => true],
+		];
+		$this->fake->objects = [
+			[
+				'id' => 'p9',
+				'title' => 'Besluit herindeling',
+				'retentionExpiresAt' => '2025-06-01T00:00:00+00:00',
+				'retentionAction' => 'depublish',
+				'themes' => ['theme-gewoon', 'theme-hot'],
+			],
+		];
+
+		$planned = $this->service->evaluate(dryRun: true);
+		$this->assertSame(
+			expected: [['id' => 'p9', 'title' => 'Besluit herindeling', 'action' => 'heldByHotspot', 'subject' => 'Herindeling gemeente']],
+			actual: $planned['planned']
+		);
+
+		$counts = $this->service->evaluate();
+		$this->assertSame(expected: 1, actual: $counts['heldByHotspot']);
+		$this->assertSame(expected: 0, actual: $counts['depublished']);
+		$this->assertSame(expected: [], actual: $this->fake->saved);
+	}//end testAPublicationUnderAHotspotIsNotDepublished()
+
+	/**
+	 * A publication whose subject cannot be read is held, not archived (REQ-THA-003).
+	 *
+	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 *
+	 * @return void
+	 */
+	public function testUnresolvableThemesHoldThePublication(): void {
+		$this->fake->unreadable = ['theme-weg'];
+		$this->fake->objects = [
+			['id' => 'p10', 'retentionExpiresAt' => '2025-01-01T00:00:00+00:00', 'retentionAction' => 'archive', 'themes' => [['id' => 'theme-weg']]],
+		];
+
+		$counts = $this->service->evaluate();
+
+		$this->assertSame(expected: 1, actual: $counts['heldUnresolved']);
+		$this->assertSame(expected: 0, actual: $counts['archived']);
+		$this->assertSame(expected: [], actual: $this->fake->saved);
+	}//end testUnresolvableThemesHoldThePublication()
+
+	/**
+	 * The report says a publication under a hotspot is kept permanently, naming the subject (REQ-THA-003).
+	 *
+	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 *
+	 * @return void
+	 */
+	public function testTheReportNamesTheHotspot(): void {
+		$this->fake->themes = ['theme-hot' => ['id' => 'theme-hot', 'title' => 'Herindeling gemeente', 'archiveHotspot' => true]];
+		$this->fake->objects = [
+			['id' => 'p11', 'title' => 'Besluit herindeling', 'themes' => ['theme-hot']],
+			['id' => 'p12', 'title' => 'Besluit parkeren'],
+		];
+
+		$rows = $this->service->buildReport();
+
+		$this->assertSame(expected: 'Kept permanently: archive hotspot Herindeling gemeente', actual: $rows[0]['actionTaken']);
+		$this->assertSame(expected: 'pending', actual: $rows[1]['actionTaken']);
+	}//end testTheReportNamesTheHotspot()
 
 	public function testRecordHumanDecisionRequiresRationale(): void {
 		$this->expectException(\RuntimeException::class);

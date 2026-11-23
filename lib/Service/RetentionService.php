@@ -110,6 +110,13 @@ class RetentionService implements RetentionServiceInterface {
 	private ?object $objectService = null;
 
 	/**
+	 * Holds a publication under an archive hotspot back from its retention action (REQ-THA-003).
+	 *
+	 * @var RetentionHotspotHold
+	 */
+	private RetentionHotspotHold $hotspots;
+
+	/**
 	 * Hands archived publications to the e-depot and reads back how it went.
 	 *
 	 * @var EdepotHandover
@@ -142,6 +149,7 @@ class RetentionService implements RetentionServiceInterface {
 		?EdepotHandover $edepot = null,
 	) {
 		$this->edepot = ($edepot ?? new EdepotHandover(container: $container, logger: $logger));
+		$this->hotspots = new RetentionHotspotHold(config: $config);
 
 	}//end __construct()
 
@@ -678,6 +686,7 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The dry run is the command's safe default; the job keeps the plain call.
+	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
 	 */
 	public function evaluate(bool $dryRun = false): array {
 		$counts = ['expiringSoon' => 0, 'reviewRequired' => 0, 'depublished' => 0, 'archived' => 0];
@@ -696,6 +705,13 @@ class RetentionService implements RetentionServiceInterface {
 				continue;
 			}
 
+			$hold = $this->hotspotHold(run: $run, data: $data, outcome: $outcome);
+			if ($hold !== null) {
+				$counts[$hold['outcome']] = (($counts[$hold['outcome']] ?? 0) + 1);
+				$planned[] = self::plannedEntry(data: $data, outcome: $hold['outcome']) + array_intersect_key($hold, ['subject' => true]);
+				continue;
+			}
+
 			$counts[$outcome]++;
 			if ($dryRun === true) {
 				$planned[] = self::plannedEntry(data: $data, outcome: $outcome);
@@ -707,6 +723,27 @@ class RetentionService implements RetentionServiceInterface {
 
 		return $this->evaluationResult(counts: $counts, planned: $planned, dryRun: $dryRun);
 	}//end evaluate()
+
+	/**
+	 * The hold of an archive hotspot on a publication about to be depublished or archived, or null (REQ-THA-003).
+	 *
+	 * A held publication gets no action and no evaluation stamp: nothing is written to it.
+	 *
+	 * @param RetentionRun $run The run.
+	 * @param array<string, mixed> $data The publication.
+	 * @param string $outcome The outcome the run planned.
+	 *
+	 * @return array{outcome: string, subject?: string}|null The hold.
+	 *
+	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 */
+	private function hotspotHold(RetentionRun $run, array $data, string $outcome): ?array {
+		if ($outcome !== 'depublished' && $outcome !== 'archived') {
+			return null;
+		}
+
+		return $this->hotspots->holdOf(objectService: $run->objectService, publication: $data);
+	}//end hotspotHold()
 
 	/**
 	 * A dry run's planned action for one publication.
@@ -1043,6 +1080,7 @@ class RetentionService implements RetentionServiceInterface {
 	 * @return array<int, array<string, mixed>> Report rows.
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
+	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
 	 */
 	public function buildReport(?string $catalogSlug = null, ?string $from = null, ?string $to = null): array {
 		$report = new RetentionReport(filter: ['catalog' => $catalogSlug, 'from' => $from, 'to' => $to]);
@@ -1050,12 +1088,36 @@ class RetentionService implements RetentionServiceInterface {
 		foreach ($this->reportPublications() as $object) {
 			$data = $this->plainArray(object: $object);
 			if ($report->includes(data: $data) === true) {
-				$rows[] = $report->row(data: $data);
+				$rows[] = $this->withHotspot(row: $report->row(data: $data), data: $data);
 			}
 		}
 
 		return $rows;
 	}//end buildReport()
+
+	/**
+	 * A report row that names the archive hotspot keeping the publication, when one does (REQ-THA-003).
+	 *
+	 * @param array<string, string> $row The report row.
+	 * @param array<string, mixed> $data The publication.
+	 *
+	 * @return array<string, string> The row.
+	 *
+	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 */
+	private function withHotspot(array $row, array $data): array {
+		$objectService = $this->getObjectService();
+		if ($objectService === null) {
+			return $row;
+		}
+
+		$hold = $this->hotspots->holdOf(objectService: $objectService, publication: $data);
+		if (($hold['outcome'] ?? null) === RetentionHotspotHold::BY_HOTSPOT) {
+			$row['actionTaken'] = RetentionHotspotHold::KEPT . $hold['subject'];
+		}
+
+		return $row;
+	}//end withHotspot()
 
 	/**
 	 * Every publication the report reads, or none when OpenRegister or its config is missing.
