@@ -2114,7 +2114,11 @@ OC.L10N.register(
         "Archive hotspot since": "Archiefhotspot sinds",
         "When the subject was marked as an archive hotspot.": "Wanneer het onderwerp als archiefhotspot is aangewezen.",
         "Only an administrator can mark or unmark an archive hotspot.": "Alleen een beheerder kan een archiefhotspot aanwijzen of intrekken.",
-        "Give the reason for the archive hotspot.": "Geef de reden voor de archiefhotspot."
+        "Give the reason for the archive hotspot.": "Geef de reden voor de archiefhotspot.",
+        "Frozen": "Bevroren",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Of de ingetrokken publicatie is bevroren, zodat zij elke wijziging weigert.",
+        "Why it was not frozen": "Waarom zij niet is bevroren",
+        "What went wrong when the withdrawn publication could not be frozen.": "Wat er misging toen de ingetrokken publicatie niet kon worden bevroren."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -810,7 +810,11 @@ OC.L10N.register(
         "Archive hotspot since": "Pikë e nxehtë arkivore që nga",
         "When the subject was marked as an archive hotspot.": "Kur tema u shënua si pikë e nxehtë arkivore.",
         "Only an administrator can mark or unmark an archive hotspot.": "Vetëm një administrator mund të shënojë ose heqë një pikë të nxehtë arkivore.",
-        "Give the reason for the archive hotspot.": "Jepni arsyen e pikës së nxehtë arkivore."
+        "Give the reason for the archive hotspot.": "Jepni arsyen e pikës së nxehtë arkivore.",
+        "Frozen": "E ngrirë",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Nëse publikimi i tërhequr u ngri, kështu që refuzon çdo ndryshim.",
+        "Why it was not frozen": "Pse nuk u ngri",
+        "What went wrong when the withdrawn publication could not be frozen.": "Çfarë shkoi keq kur publikimi i tërhequr nuk mund të ngrihej."
     },
     "nplurals=2; plural=(n != 1);"
 )

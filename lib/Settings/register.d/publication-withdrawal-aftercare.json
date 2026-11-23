@@ -1,10 +1,10 @@
 {
-	"_note": "Register fragment for publication-withdrawal-aftercare (REQ-PWA-002). The depublication says what the public tombstone of a withdrawn publication tells a reader: a public reason beside the internal one, and whether it names the title. The version is the depublication schema's merged version, so the last fragment in name order (woo-x-access-boundary-hardening.json) carries the same bump.",
+	"_note": "Register fragment for publication-withdrawal-aftercare. REQ-PWA-002: the depublication says what the public tombstone of a withdrawn publication tells a reader: a public reason beside the internal one, and whether it names the title. REQ-PWA-003: the publication schema offers OpenRegister's archive and freeze, so a withdrawn publication is frozen with its reason, and the depublication records whether that freeze worked. The versions are the merged ones, so the last fragment in name order (woo-x-access-boundary-hardening.json) carries the same bumps.",
 	"components": {
 		"schemas": {
 			"depublication": {
 				"slug": "depublication",
-				"version": "0.2.4",
+				"version": "0.2.5",
 				"properties": {
 					"publicReason": {
 						"type": "string",
@@ -16,6 +16,25 @@
 						"default": false,
 						"title": "Show the title after withdrawal",
 						"description": "Whether the public link of the withdrawn publication still shows its title."
+					},
+					"frozen": {
+						"type": "boolean",
+						"title": "Frozen",
+						"description": "Whether the withdrawn publication was frozen, so it refuses every edit."
+					},
+					"frozenError": {
+						"type": "string",
+						"title": "Why it was not frozen",
+						"description": "What went wrong when the withdrawn publication could not be frozen."
+					}
+				}
+			},
+			"publication": {
+				"slug": "publication",
+				"version": "0.0.14",
+				"configuration": {
+					"x-openregister-archive": {
+						"enabled": true
 					}
 				}
 			}

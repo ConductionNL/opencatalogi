@@ -810,7 +810,11 @@ OC.L10N.register(
         "Archive hotspot since": "Punt calent d'arxiu des de",
         "When the subject was marked as an archive hotspot.": "Quan el tema es va marcar com a punt calent d'arxiu.",
         "Only an administrator can mark or unmark an archive hotspot.": "Només un administrador pot marcar o desmarcar un punt calent d'arxiu.",
-        "Give the reason for the archive hotspot.": "Indiqueu el motiu del punt calent d'arxiu."
+        "Give the reason for the archive hotspot.": "Indiqueu el motiu del punt calent d'arxiu.",
+        "Frozen": "Congelada",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Si la publicació retirada s'ha congelat, de manera que rebutja qualsevol edició.",
+        "Why it was not frozen": "Per què no s'ha congelat",
+        "What went wrong when the withdrawn publication could not be frozen.": "Què ha fallat quan no s'ha pogut congelar la publicació retirada."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -809,7 +809,11 @@
         "Archive hotspot since": "Arhīva karstais punkts kopš",
         "When the subject was marked as an archive hotspot.": "Kad tēma tika atzīmēta kā arhīva karstais punkts.",
         "Only an administrator can mark or unmark an archive hotspot.": "Arhīva karsto punktu var atzīmēt vai noņemt tikai administrators.",
-        "Give the reason for the archive hotspot.": "Norādiet arhīva karstā punkta iemeslu."
+        "Give the reason for the archive hotspot.": "Norādiet arhīva karstā punkta iemeslu.",
+        "Frozen": "Iesaldēta",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Vai atsauktā publikācija tika iesaldēta, lai tā noraidītu jebkuru labojumu.",
+        "Why it was not frozen": "Kāpēc tā netika iesaldēta",
+        "What went wrong when the withdrawn publication could not be frozen.": "Kas nogāja greizi, kad atsaukto publikāciju nevarēja iesaldēt."
     },
     "plurals": {}
 }

@@ -809,7 +809,11 @@
         "Archive hotspot since": "Punct fierbinte de arhivă din",
         "When the subject was marked as an archive hotspot.": "Când subiectul a fost marcat ca punct fierbinte de arhivă.",
         "Only an administrator can mark or unmark an archive hotspot.": "Doar un administrator poate marca sau anula un punct fierbinte de arhivă.",
-        "Give the reason for the archive hotspot.": "Indicați motivul punctului fierbinte de arhivă."
+        "Give the reason for the archive hotspot.": "Indicați motivul punctului fierbinte de arhivă.",
+        "Frozen": "Înghețată",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Dacă publicația retrasă a fost înghețată, astfel încât refuză orice modificare.",
+        "Why it was not frozen": "De ce nu a fost înghețată",
+        "What went wrong when the withdrawn publication could not be frozen.": "Ce nu a mers când publicația retrasă nu a putut fi înghețată."
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

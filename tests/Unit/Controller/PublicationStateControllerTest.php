@@ -29,6 +29,7 @@ use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\EmbargoGuard;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
+use OCA\OpenCatalogi\Service\Publication\PublicationFreezer;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\Publication\PublicationReviewPolicy;
@@ -58,6 +59,14 @@ use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 class PublicationStateControllerTest extends TestCase {
 
 	private IRequest&MockObject $request;
+
+	/** Builds the controller with a freezer, or with none. */
+	private \Closure $build;
+
+	private ContainerInterface $container;
+
+	/** @var array<int, array{identifier: string, reason: ?string}> The freezes OpenRegister's archive handler received. */
+	private array $freezes = [];
 
 	private ObjectService&MockObject $objectService;
 
@@ -222,6 +231,18 @@ class PublicationStateControllerTest extends TestCase {
 					return $this->fileMapper;
 				}
 
+				if ($id === PublicationFreezer::ARCHIVE_HANDLER) {
+					return new class($this->freezes) {
+						public function __construct(private array &$freezes) {
+						}
+
+						public function freeze(string $identifier, ?string $reason = null): array {
+							$this->freezes[] = ['identifier' => $identifier, 'reason' => $reason];
+							return ['uuid' => $identifier, 'frozen' => ['by' => 'redacteur', 'reason' => $reason]];
+						}
+					};
+				}
+
 				throw new \RuntimeException('not available: ' . $id);
 			}
 		);
@@ -292,13 +313,14 @@ class PublicationStateControllerTest extends TestCase {
 		$groups = $this->createMock(originalClassName: IGroupManager::class);
 		$groups->method('getUserGroupIds')->willReturnCallback(fn (): array => $this->userGroups);
 
-		$this->controller = new PublicationStateController(
+		// The controller with a freezer, or none as the recordings were made (REQ-PWA-003).
+		$this->build = fn (?PublicationFreezer $freezer): PublicationStateController => new PublicationStateController(
 			'opencatalogi',
 			$this->request,
 			$l10n,
 			$session,
 			$this->rights,
-			new PublicationTransitions(new PublicationStateService(), new DepublicationService($this->index, $this->createMock(LoggerInterface::class)), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects)),
+			new PublicationTransitions(new PublicationStateService(), new DepublicationService($this->index, $this->createMock(LoggerInterface::class), $freezer), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects)),
 			new PublishTransition(
 				container: $container,
 				review: new PublicationReviewPolicy(appConfig: $config),
@@ -311,6 +333,8 @@ class PublicationStateControllerTest extends TestCase {
 				)
 			)
 		);
+		$this->controller = ($this->build)(null);
+		$this->container = $container;
 	}
 
 	/**
@@ -546,6 +570,44 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertSame('Wrong annex attached', $depublication['reason']);
 		$this->assertSame(['national-woo-index', 'plooi'], array_column($depublication['withdrawals'], 'channel'));
 		$this->assertArrayNotHasKey('acknowledgedAt', $depublication['withdrawals'][1]);
+	}
+
+	/**
+	 * REQ-PWA-003: POST /api/publications/{id}/withdraw freezes the publication with the internal reason, after it is saved withdrawn.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 */
+	public function testTheWithdrawRouteFreezesThePublication(): void {
+		$controller = ($this->build)(new PublicationFreezer($this->container, $this->createMock(LoggerInterface::class)));
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'title' => 'Besluit', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Verkeerde bijlage']);
+
+		$response = $controller->withdraw('p1');
+		$data = $response->getData();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus(), json_encode($data));
+		$this->assertSame([['identifier' => 'p1', 'reason' => 'Verkeerde bijlage']], $this->freezes);
+		$this->assertTrue($this->saves[1]['object']['frozen']);
+		$this->assertTrue($data['depublication']['frozen']);
+	}
+
+	/**
+	 * REQ-PWA-003: one document coming down does not freeze the publication.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 */
+	public function testAFileWithdrawalDoesNotFreezeThePublication(): void {
+		$controller = ($this->build)(new PublicationFreezer($this->container, $this->createMock(LoggerInterface::class)));
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Contains a home address']);
+
+		$response = $controller->withdrawFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus(), json_encode($response->getData()));
+		$this->assertSame([], $this->freezes);
+		$this->assertArrayNotHasKey('frozen', $this->saves[0]['object']);
 	}
 
 	/** REQ-PPW-002: a reader without update rights is refused and nothing is sent or saved. */

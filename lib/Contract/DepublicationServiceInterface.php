@@ -39,12 +39,14 @@ interface DepublicationServiceInterface {
 	 * @param string $depublishedBy Who is taking it down.
 	 * @param array<int, string> $channels The channels the publication reached.
 	 * @param DateTimeInterface|null $now The moment; defaults to now.
+	 * @param bool $freeze Whether the publication itself is frozen; false when one document comes down.
 	 *
 	 * @return array<string, mixed> The depublication to save.
 	 *
 	 * @throws DomainException When no reason is given.
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
 	public function depublish(
 		array $publication,
@@ -52,6 +54,7 @@ interface DepublicationServiceInterface {
 		string $depublishedBy,
 		array $channels,
 		?DateTimeInterface $now = null,
+		bool $freeze = true,
 	): array;
 
 	/**

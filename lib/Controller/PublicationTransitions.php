@@ -126,18 +126,20 @@ class PublicationTransitions {
 	/**
 	 * Send the withdrawals of a publication.
 	 *
-	 * @param array{publication: array, reason: string, depublishedBy: string, channels: array} $withdrawal The withdrawal.
+	 * @param array{publication: array, reason: string, depublishedBy: string, channels: array, freeze?: bool} $withdrawal The withdrawal; `freeze` false when one document comes down.
 	 *
 	 * @return array The depublication.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
 	public function depublish(array $withdrawal): array {
 		return $this->depublisher->depublish(
 			publication: $withdrawal['publication'],
 			reason: $withdrawal['reason'],
 			depublishedBy: $withdrawal['depublishedBy'],
-			channels: $withdrawal['channels']
+			channels: $withdrawal['channels'],
+			freeze: ($withdrawal['freeze'] ?? true)
 		);
 
 	}//end depublish()

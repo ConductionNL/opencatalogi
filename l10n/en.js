@@ -2159,7 +2159,11 @@ OC.L10N.register(
         "Archive hotspot since": "Archive hotspot since",
         "When the subject was marked as an archive hotspot.": "When the subject was marked as an archive hotspot.",
         "Only an administrator can mark or unmark an archive hotspot.": "Only an administrator can mark or unmark an archive hotspot.",
-        "Give the reason for the archive hotspot.": "Give the reason for the archive hotspot."
+        "Give the reason for the archive hotspot.": "Give the reason for the archive hotspot.",
+        "Frozen": "Frozen",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Whether the withdrawn publication was frozen, so it refuses every edit.",
+        "Why it was not frozen": "Why it was not frozen",
+        "What went wrong when the withdrawn publication could not be frozen.": "What went wrong when the withdrawn publication could not be frozen."
     },
     "nplurals=2; plural=(n != 1);"
 )

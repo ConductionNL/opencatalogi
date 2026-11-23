@@ -810,7 +810,11 @@ OC.L10N.register(
         "Archive hotspot since": "Архивная горячая точка с",
         "When the subject was marked as an archive hotspot.": "Когда тема была отмечена как архивная горячая точка.",
         "Only an administrator can mark or unmark an archive hotspot.": "Отметить или снять архивную горячую точку может только администратор.",
-        "Give the reason for the archive hotspot.": "Укажите причину архивной горячей точки."
+        "Give the reason for the archive hotspot.": "Укажите причину архивной горячей точки.",
+        "Frozen": "Заморожена",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Была ли отозванная публикация заморожена, чтобы она отклоняла любые изменения.",
+        "Why it was not frozen": "Почему она не заморожена",
+        "What went wrong when the withdrawn publication could not be frozen.": "Что пошло не так, когда отозванную публикацию не удалось заморозить."
     },
     "nplurals=2; plural=(n != 1);"
 )

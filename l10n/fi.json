@@ -809,7 +809,11 @@
         "Archive hotspot since": "Arkiston kuuma kohta alkaen",
         "When the subject was marked as an archive hotspot.": "Milloin aihe merkittiin arkiston kuumaksi kohdaksi.",
         "Only an administrator can mark or unmark an archive hotspot.": "Vain ylläpitäjä voi merkitä tai poistaa arkiston kuuman kohdan.",
-        "Give the reason for the archive hotspot.": "Anna syy arkiston kuumalle kohdalle."
+        "Give the reason for the archive hotspot.": "Anna syy arkiston kuumalle kohdalle.",
+        "Frozen": "Jäädytetty",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Onko poisvedetty julkaisu jäädytetty, jolloin se hylkää kaikki muutokset.",
+        "Why it was not frozen": "Miksi sitä ei jäädytetty",
+        "What went wrong when the withdrawn publication could not be frozen.": "Mikä meni vikaan, kun poisvedettyä julkaisua ei voitu jäädyttää."
     },
     "plurals": {}
 }

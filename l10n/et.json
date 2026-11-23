@@ -809,7 +809,11 @@
         "Archive hotspot since": "Arhiivi kuum koht alates",
         "When the subject was marked as an archive hotspot.": "Millal teema märgiti arhiivi kuumaks kohaks.",
         "Only an administrator can mark or unmark an archive hotspot.": "Arhiivi kuuma koha saab märkida või eemaldada ainult administraator.",
-        "Give the reason for the archive hotspot.": "Andke arhiivi kuuma koha põhjus."
+        "Give the reason for the archive hotspot.": "Andke arhiivi kuuma koha põhjus.",
+        "Frozen": "Külmutatud",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Kas tagasivõetud väljaanne külmutati, nii et see keeldub igast muudatusest.",
+        "Why it was not frozen": "Miks seda ei külmutatud",
+        "What went wrong when the withdrawn publication could not be frozen.": "Mis läks valesti, kui tagasivõetud väljaannet ei õnnestunud külmutada."
     },
     "plurals": {}
 }

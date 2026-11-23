@@ -810,7 +810,11 @@ OC.L10N.register(
         "Archive hotspot since": "Archiv-Hotspot seit",
         "When the subject was marked as an archive hotspot.": "Wann das Thema als Archiv-Hotspot markiert wurde.",
         "Only an administrator can mark or unmark an archive hotspot.": "Nur ein Administrator kann einen Archiv-Hotspot markieren oder aufheben.",
-        "Give the reason for the archive hotspot.": "Geben Sie den Grund für den Archiv-Hotspot an."
+        "Give the reason for the archive hotspot.": "Geben Sie den Grund für den Archiv-Hotspot an.",
+        "Frozen": "Eingefroren",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Ob die zurückgezogene Veröffentlichung eingefroren wurde, sodass sie jede Änderung ablehnt.",
+        "Why it was not frozen": "Warum sie nicht eingefroren wurde",
+        "What went wrong when the withdrawn publication could not be frozen.": "Was schiefging, als die zurückgezogene Veröffentlichung nicht eingefroren werden konnte."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -52,10 +52,12 @@ class DepublicationService implements DepublicationServiceInterface {
 	 *
 	 * @param NationalIndexService $indexService The gateway-backed channel deliverer.
 	 * @param LoggerInterface $logger Logger.
+	 * @param PublicationFreezer|null $freezer Freezes a withdrawn publication; without one nothing is frozen.
 	 */
 	public function __construct(
 		private readonly NationalIndexService $indexService,
 		private readonly LoggerInterface $logger,
+		private readonly ?PublicationFreezer $freezer = null,
 	) {
 
 	}//end __construct()
@@ -68,12 +70,14 @@ class DepublicationService implements DepublicationServiceInterface {
 	 * @param string $depublishedBy Who is taking it down.
 	 * @param array<int, string> $channels The channels the publication reached.
 	 * @param DateTimeInterface|null $now The moment; defaults to now.
+	 * @param bool $freeze Whether the publication itself is frozen; false when one document comes down.
 	 *
-	 * @return array<string, mixed> The depublication to save.
+	 * @return array<string, mixed> The depublication to save, with `frozen` when a freeze was asked.
 	 *
 	 * @throws DomainException When no reason is given.
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
 	public function depublish(
 		array $publication,
@@ -81,6 +85,7 @@ class DepublicationService implements DepublicationServiceInterface {
 		string $depublishedBy,
 		array $channels,
 		?DateTimeInterface $now = null,
+		bool $freeze = true,
 	): array {
 		$this->requireReason(reason: $reason);
 
@@ -90,7 +95,14 @@ class DepublicationService implements DepublicationServiceInterface {
 		$run->depublishedBy = $depublishedBy;
 		$run->takenDownAt = $this->takenDownAt(now: $now);
 
-		return $this->depublication(run: $run, withdrawals: $this->withdrawals(run: $run, channels: $channels));
+		$depublication = $this->depublication(run: $run, withdrawals: $this->withdrawals(run: $run, channels: $channels));
+		if ($freeze === true && $this->freezer !== null) {
+			// After the withdrawals: a failed freeze never holds the withdrawal
+			// back, it is reported beside it (REQ-PWA-003).
+			$depublication += $this->freezer->freeze(publicationId: $run->publicationId, reason: $run->reason);
+		}
+
+		return $depublication;
 
 	}//end depublish()
 

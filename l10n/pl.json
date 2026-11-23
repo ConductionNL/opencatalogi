@@ -809,7 +809,11 @@
         "Archive hotspot since": "Hotspot archiwalny od",
         "When the subject was marked as an archive hotspot.": "Kiedy temat oznaczono jako hotspot archiwalny.",
         "Only an administrator can mark or unmark an archive hotspot.": "Tylko administrator może oznaczyć lub odznaczyć hotspot archiwalny.",
-        "Give the reason for the archive hotspot.": "Podaj powód hotspotu archiwalnego."
+        "Give the reason for the archive hotspot.": "Podaj powód hotspotu archiwalnego.",
+        "Frozen": "Zamrożona",
+        "Whether the withdrawn publication was frozen, so it refuses every edit.": "Czy wycofana publikacja została zamrożona, tak że odrzuca każdą zmianę.",
+        "Why it was not frozen": "Dlaczego nie została zamrożona",
+        "What went wrong when the withdrawn publication could not be frozen.": "Co poszło nie tak, gdy nie udało się zamrozić wycofanej publikacji."
     },
     "plurals": {}
 }

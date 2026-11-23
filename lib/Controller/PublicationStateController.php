@@ -470,6 +470,7 @@ class PublicationStateController extends Controller {
 	 * @return JSONResponse The stored depublication naming the document.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-one-document-comes-down-without-its-publication-req-ppw-004
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
 	#[NoAdminRequired]
 	public function withdrawFile(string $id, string $fileId): JSONResponse {
@@ -504,6 +505,8 @@ class PublicationStateController extends Controller {
 				'reason' => $reason,
 				'depublishedBy' => $this->actor(),
 				'channels' => [],
+				// One document comes down; the publication stays open (REQ-PWA-003).
+				'freeze' => false,
 			]
 		);
 		$depublication['file'] = $fileId;
