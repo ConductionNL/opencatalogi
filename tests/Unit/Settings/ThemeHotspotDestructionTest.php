@@ -69,7 +69,10 @@ final class ThemeHotspotDestructionTest extends TestCase {
 		$annotation  = $publication['configuration']['x-openregister-retention'];
 
 		self::assertSame(expected: ['themes'], actual: $annotation['inheritAppraisalFrom']);
-		self::assertTrue(condition: version_compare(version1: $publication['version'], version2: '0.0.12', operator: '>'), message: $publication['version']);
+		self::assertTrue(
+			condition: version_compare(version1: $publication['version'], version2: '0.0.12', operator: '>'),
+			message: $publication['version']
+		);
 		self::assertSame(expected: 'theme', actual: $publication['properties']['themes']['items']['$ref']);
 
 		if (class_exists(self::VALIDATOR) === false) {
