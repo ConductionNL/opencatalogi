@@ -2147,7 +2147,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "This attachment or publication was not found.",
         "The file id is not valid.": "The file id is not valid.",
         "Attachment reading is not set up on this instance.": "Attachment reading is not set up on this instance.",
-        "Choose a licence from the EU licences authority list.": "Choose a licence from the EU licences authority list."
+        "Choose a licence from the EU licences authority list.": "Choose a licence from the EU licences authority list.",
+        "Public reason": "Public reason",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Why the publication was withdrawn, as the public link tells a reader.",
+        "Show the title after withdrawal": "Show the title after withdrawal",
+        "Whether the public link of the withdrawn publication still shows its title.": "Whether the public link of the withdrawn publication still shows its title."
     },
     "nplurals=2; plural=(n != 1);"
 )

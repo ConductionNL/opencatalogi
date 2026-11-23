@@ -2102,7 +2102,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Deze bijlage of publicatie is niet gevonden.",
         "The file id is not valid.": "Het bestands-id is niet geldig.",
         "Attachment reading is not set up on this instance.": "Het lezen van bijlagen is op deze installatie niet ingericht.",
-        "Choose a licence from the EU licences authority list.": "Kies een licentie uit de EU-lijst van licenties."
+        "Choose a licence from the EU licences authority list.": "Kies een licentie uit de EU-lijst van licenties.",
+        "Public reason": "Openbare reden",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Waarom de publicatie is ingetrokken, zoals de openbare link het een lezer vertelt.",
+        "Show the title after withdrawal": "Titel tonen na intrekking",
+        "Whether the public link of the withdrawn publication still shows its title.": "Of de openbare link van de ingetrokken publicatie de titel nog toont."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Nie znaleziono tego załącznika lub publikacji.",
         "The file id is not valid.": "Identyfikator pliku jest nieprawidłowy.",
         "Attachment reading is not set up on this instance.": "Odczytywanie załączników nie jest skonfigurowane w tej instancji.",
-        "Choose a licence from the EU licences authority list.": "Wybierz licencję z unijnej listy wzorcowej licencji."
+        "Choose a licence from the EU licences authority list.": "Wybierz licencję z unijnej listy wzorcowej licencji.",
+        "Public reason": "Powód publiczny",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Dlaczego publikacja została wycofana, tak jak publiczny link przekazuje to czytelnikowi.",
+        "Show the title after withdrawal": "Pokaż tytuł po wycofaniu",
+        "Whether the public link of the withdrawn publication still shows its title.": "Czy publiczny link wycofanej publikacji nadal pokazuje jej tytuł."
     },
     "nplurals=2; plural=(n != 1);"
 )

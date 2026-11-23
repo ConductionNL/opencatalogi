@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Te priloge ali objave ni bilo mogoče najti.",
         "The file id is not valid.": "ID datoteke ni veljaven.",
         "Attachment reading is not set up on this instance.": "Branje prilog na tej instanci ni nastavljeno.",
-        "Choose a licence from the EU licences authority list.": "Izberite licenco s seznama licenc EU."
+        "Choose a licence from the EU licences authority list.": "Izberite licenco s seznama licenc EU.",
+        "Public reason": "Javni razlog",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Zakaj je bila objava umaknjena, kot to javna povezava pove bralcu.",
+        "Show the title after withdrawal": "Prikaži naslov po umiku",
+        "Whether the public link of the withdrawn publication still shows its title.": "Ali javna povezava umaknjene objave še vedno prikazuje njen naslov."
     },
     "nplurals=2; plural=(n != 1);"
 )

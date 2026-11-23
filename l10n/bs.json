@@ -797,7 +797,11 @@
         "This attachment or publication was not found.": "Ovaj prilog ili publikacija nije pronađen.",
         "The file id is not valid.": "ID datoteke nije važeći.",
         "Attachment reading is not set up on this instance.": "Čitanje priloga nije postavljeno na ovoj instanci.",
-        "Choose a licence from the EU licences authority list.": "Odaberite licencu sa liste licenci EU."
+        "Choose a licence from the EU licences authority list.": "Odaberite licencu sa liste licenci EU.",
+        "Public reason": "Javni razlog",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Zašto je objava povučena, kako to javni link kaže čitaocu.",
+        "Show the title after withdrawal": "Prikaži naslov nakon povlačenja",
+        "Whether the public link of the withdrawn publication still shows its title.": "Da li javni link povučene objave i dalje prikazuje njen naslov."
     },
     "plurals": {}
 }

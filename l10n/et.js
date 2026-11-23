@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Seda manust või väljaannet ei leitud.",
         "The file id is not valid.": "Faili ID ei ole kehtiv.",
         "Attachment reading is not set up on this instance.": "Manuste lugemine pole selles eksemplaris seadistatud.",
-        "Choose a licence from the EU licences authority list.": "Valige litsents ELi litsentside loendist."
+        "Choose a licence from the EU licences authority list.": "Valige litsents ELi litsentside loendist.",
+        "Public reason": "Avalik põhjus",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Miks väljaanne tagasi võeti, nagu avalik link seda lugejale ütleb.",
+        "Show the title after withdrawal": "Näita pealkirja pärast tagasivõtmist",
+        "Whether the public link of the withdrawn publication still shows its title.": "Kas tagasivõetud väljaande avalik link näitab endiselt selle pealkirja."
     },
     "nplurals=2; plural=(n != 1);"
 )

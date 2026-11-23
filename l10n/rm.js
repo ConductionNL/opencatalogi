@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Questa agiunta u publicaziun n'è betg vegnida chattada.",
         "The file id is not valid.": "L'ID da la datoteca n'è betg valaivla.",
         "Attachment reading is not set up on this instance.": "La lectura d'agiuntas n'è betg configurada sin questa instanza.",
-        "Choose a licence from the EU licences authority list.": "Tschernai ina licenza da la glista da licenzas da l'UE."
+        "Choose a licence from the EU licences authority list.": "Tschernai ina licenza da la glista da licenzas da l'UE.",
+        "Public reason": "Motiv public",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Pertge che la publicaziun è vegnida retratga, sco che la colliaziun publica di quai al lectur.",
+        "Show the title after withdrawal": "Mussar il titel suenter la retratga",
+        "Whether the public link of the withdrawn publication still shows its title.": "Sche la colliaziun publica da la publicaziun retratga mussa anc ses titel."
     },
     "nplurals=2; plural=(n != 1);"
 )

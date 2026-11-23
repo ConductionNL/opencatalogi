@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Это вложение или публикация не найдены.",
         "The file id is not valid.": "Идентификатор файла недействителен.",
         "Attachment reading is not set up on this instance.": "Чтение вложений не настроено на этом экземпляре.",
-        "Choose a licence from the EU licences authority list.": "Выберите лицензию из списка лицензий ЕС."
+        "Choose a licence from the EU licences authority list.": "Выберите лицензию из списка лицензий ЕС.",
+        "Public reason": "Публичная причина",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Почему публикация отозвана — так, как публичная ссылка сообщает это читателю.",
+        "Show the title after withdrawal": "Показывать заголовок после отзыва",
+        "Whether the public link of the withdrawn publication still shows its title.": "Показывает ли публичная ссылка отозванной публикации её заголовок."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -798,7 +798,11 @@ OC.L10N.register(
         "This attachment or publication was not found.": "Den här bilagan eller publikationen hittades inte.",
         "The file id is not valid.": "Fil-id:t är ogiltigt.",
         "Attachment reading is not set up on this instance.": "Läsning av bilagor är inte konfigurerad på den här instansen.",
-        "Choose a licence from the EU licences authority list.": "Välj en licens från EU:s licenslista."
+        "Choose a licence from the EU licences authority list.": "Välj en licens från EU:s licenslista.",
+        "Public reason": "Offentligt skäl",
+        "Why the publication was withdrawn, as the public link tells a reader.": "Varför publikationen drogs tillbaka, så som den offentliga länken berättar det för läsaren.",
+        "Show the title after withdrawal": "Visa titeln efter tillbakadragandet",
+        "Whether the public link of the withdrawn publication still shows its title.": "Om den tillbakadragna publikationens offentliga länk fortfarande visar dess titel."
     },
     "nplurals=2; plural=(n != 1);"
 )
