@@ -416,21 +416,21 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publicDocument#preflightedCors', 'postfix' => '-document-diwoo', 'url' => '/api/{catalogSlug}/{id}/documents/{documentId}/diwoo', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+', 'documentId' => '[0-9]+']],
 		// Earlier public versions of a corrected publication (publication-withdrawal-aftercare, REQ-PWA-001).
 		[
-			'name' => 'publications#preflightedCors',
+			'name' => 'publicationVersion#preflightedCors',
 			'postfix' => '-catalogslug-id-versions',
 			'url' => '/api/{catalogSlug}/{id}/versions',
 			'verb' => 'OPTIONS',
 			'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+'],
 		],
 		[
-			'name' => 'publications#preflightedCors',
+			'name' => 'publicationVersion#preflightedCors',
 			'postfix' => '-catalogslug-id-version',
 			'url' => '/api/{catalogSlug}/{id}/versions/{version}',
 			'verb' => 'OPTIONS',
 			'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+', 'version' => '[0-9]+'],
 		],
 		[
-			'name' => 'publications#preflightedCors',
+			'name' => 'publicationVersion#preflightedCors',
 			'postfix' => '-catalogslug-id-version-document',
 			'url' => '/api/{catalogSlug}/{id}/versions/{version}/documents/{fileId}',
 			'verb' => 'OPTIONS',
@@ -452,19 +452,19 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publicDocument#show', 'url' => '/api/{catalogSlug}/{id}/documents/{documentId}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+', 'documentId' => '[0-9]+']],
 		['name' => 'publicDocument#diwoo', 'url' => '/api/{catalogSlug}/{id}/documents/{documentId}/diwoo', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+', 'documentId' => '[0-9]+']],
 		[
-			'name' => 'publications#versions',
+			'name' => 'publicationVersion#index',
 			'url' => '/api/{catalogSlug}/{id}/versions',
 			'verb' => 'GET',
 			'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+'],
 		],
 		[
-			'name' => 'publications#version',
+			'name' => 'publicationVersion#show',
 			'url' => '/api/{catalogSlug}/{id}/versions/{version}',
 			'verb' => 'GET',
 			'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+', 'version' => '[0-9]+'],
 		],
 		[
-			'name' => 'publications#versionDocument',
+			'name' => 'publicationVersion#document',
 			'url' => '/api/{catalogSlug}/{id}/versions/{version}/documents/{fileId}',
 			'verb' => 'GET',
 			'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+', 'version' => '[0-9]+', 'fileId' => '[0-9]+'],

@@ -83,4 +83,17 @@ interface PublicationVersionServiceInterface {
 	 * @contract-shift internal-only - added for the version routes; only this app implements and calls it.
 	 */
 	public function documentOf(array $version, int $fileId): ?object;
+
+	/**
+	 * The uuid of a record the public read answered, when it is public now; otherwise null.
+	 *
+	 * @param array<string, mixed> $record The record the public read answered.
+	 *
+	 * @return string|null The uuid.
+	 *
+	 * @contract-shift internal-only - added for the version routes; only this app implements and calls it.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	public function publicUuidOf(array $record): ?string;
 }//end interface

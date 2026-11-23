@@ -28,13 +28,9 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationVersionServiceInterface;
 use OCA\OpenCatalogi\Controller\PublicationsController;
+use OCA\OpenCatalogi\Controller\PublicationVersionController;
 use OCA\OpenCatalogi\Controller\PublicationVersions;
-use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCA\OpenCatalogi\Service\PublicationService;
-use OCA\OpenCatalogi\Service\UsageCounterService;
-use OCP\App\IAppManager;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
@@ -42,12 +38,10 @@ use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
- * @covers \OCA\OpenCatalogi\Controller\PublicationsController
+ * @covers \OCA\OpenCatalogi\Controller\PublicationVersionController
  * @covers \OCA\OpenCatalogi\Controller\PublicationVersions
  * @uses \OCA\OpenCatalogi\Service\Publication\PublicationStateService
  */
@@ -70,53 +64,33 @@ final class PublicationVersionControllerTest extends TestCase {
 	];
 
 	/**
-	 * The controller with its own public read answering `$current` with `$status`.
+	 * The controller over a public read that answers `$current` with `$status`.
 	 *
 	 * @param array<string, mixed> $current What the public read answers.
-	 * @param int $status The status of the public read.
-	 * @param PublicationVersionServiceInterface|null $versions The version service, a double holding version 1 when null.
+	 * @param array<string, string> $route The version and document numbers of the route.
+	 * @param array{status?: int, versions?: PublicationVersionServiceInterface} $with The read's status and a version service.
 	 *
-	 * @return PublicationsController
+	 * @return PublicationVersionController
 	 */
-	private function controller(array $current, int $status = 200, ?PublicationVersionServiceInterface $versions = null): PublicationsController {
+	private function controller(array $current, array $route = [], array $with = []): PublicationVersionController {
 		$urls = $this->createMock(originalClassName: IURLGenerator::class);
 		$urls->method('linkToRouteAbsolute')->willReturnCallback(
-			static fn (string $route, array $parameters): string => 'https://example.org/' . $route . '?' . http_build_query($parameters)
+			static fn (string $name, array $parameters): string => 'https://example.org/' . $name . '?' . http_build_query($parameters)
 		);
-		$helper = new PublicationVersions(versions: ($versions ?? $this->versions()), states: new PublicationStateService(), urls: $urls);
-		$container = $this->createMock(originalClassName: ContainerInterface::class);
-		$container->method('get')->willReturnCallback(
-			static fn (string $id): mixed => match ($id) {
-				PublicationVersions::class => $helper,
-				default => null,
-			}
-		);
+		$publications = $this->createMock(originalClassName: PublicationsController::class);
+		$publications->method('show')->willReturn(new JSONResponse($current, ($with['status'] ?? 200)));
 		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
+		$answers = new PublicationVersions(publications: $publications, versions: ($with['versions'] ?? $this->versions()), urls: $urls, l10n: $l10n);
+
+		$request = $this->createMock(originalClassName: IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			static fn (string $key, mixed $default = null): mixed => ($route[$key] ?? $default)
+		);
 		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnArgument(2);
 
-		$controller = $this->getMockBuilder(className: PublicationsController::class)
-			->setConstructorArgs(
-				[
-					'opencatalogi',
-					$this->createMock(originalClassName: IRequest::class),
-					$this->createMock(originalClassName: PublicationService::class),
-					$this->createMock(originalClassName: CatalogiService::class),
-					$this->createMock(originalClassName: PublicationQueryService::class),
-					$container,
-					$this->createMock(originalClassName: IAppManager::class),
-					$this->createMock(originalClassName: LoggerInterface::class),
-					$l10n,
-					$this->createMock(originalClassName: UsageCounterService::class),
-					$config,
-				]
-			)
-			->onlyMethods(['show'])
-			->getMock();
-		$controller->method('show')->willReturn(new JSONResponse($current, $status));
-
-		return $controller;
+		return new PublicationVersionController(appName: 'opencatalogi', request: $request, answers: $answers, appConfig: $config);
 	}//end controller()
 
 	/**
@@ -130,6 +104,15 @@ final class PublicationVersionControllerTest extends TestCase {
 			static fn (string $publication): array => match ($publication) {
 				self::UUID => [self::VERSION_ONE],
 				default => [],
+			}
+		);
+		$versions->method('publicUuidOf')->willReturnCallback(
+			static function (array $record): ?string {
+				if ((new PublicationStateService())->stateOf(publication: $record) !== 'public') {
+					return null;
+				}
+
+				return (string)$record['id'];
 			}
 		);
 		$versions->method('documentOf')->willReturnCallback(
@@ -163,24 +146,22 @@ final class PublicationVersionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testACorrectionKeepsTheEarlierVersionAtItsOwnUrl(): void {
-		$controller = $this->controller(current: self::corrected());
-
-		$response = $controller->version(catalogSlug: 'woo', id: self::UUID, version: '1');
+		$response = $this->controller(current: self::corrected(), route: ['version' => '1'])->show(catalogSlug: 'woo', id: self::UUID);
 		$data = $response->getData();
 
 		$this->assertSame(expected: 200, actual: $response->getStatus());
 		$this->assertSame(expected: 'Besluit parkeren 2026', actual: $data['fields']['title']);
 		$this->assertTrue(condition: $data['superseded']);
 		$this->assertSame(expected: 'besluit.pdf', actual: $data['documents'][0]['title']);
-		$this->assertStringContainsString(needle: 'opencatalogi.publications.versionDocument', haystack: $data['documents'][0]['downloadUrl']);
+		$this->assertStringContainsString(needle: 'opencatalogi.publicationVersion.document', haystack: $data['documents'][0]['downloadUrl']);
 		$this->assertStringContainsString(needle: 'fileId=1005', haystack: $data['documents'][0]['downloadUrl']);
 		$this->assertStringContainsString(needle: 'opencatalogi.publications.show', haystack: $data['current']);
 		$this->assertSame(expected: '*', actual: $response->getHeaders()['Access-Control-Allow-Origin']);
 
-		$list = $controller->versions(catalogSlug: 'woo', id: self::UUID)->getData();
+		$list = $this->controller(current: self::corrected())->index(catalogSlug: 'woo', id: self::UUID)->getData();
 		$this->assertSame(expected: 1, actual: $list['total']);
 		$this->assertSame(expected: 1, actual: $list['results'][0]['version']);
-		$this->assertStringContainsString(needle: 'opencatalogi.publications.version?', haystack: $list['results'][0]['url']);
+		$this->assertStringContainsString(needle: 'opencatalogi.publicationVersion.show?', haystack: $list['results'][0]['url']);
 	}//end testACorrectionKeepsTheEarlierVersionAtItsOwnUrl()
 
 	/**
@@ -189,12 +170,11 @@ final class PublicationVersionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAVersionOfAPublicationThatIsNoLongerPublicIs404(): void {
-		$controller = $this->controller(current: ['error' => 'not found'], status: 404);
+		$controller = $this->controller(current: ['error' => 'not found'], route: ['version' => '1', 'fileId' => '1005'], with: ['status' => 404]);
 
-		$this->assertSame(expected: 404, actual: $controller->versions(catalogSlug: 'woo', id: self::UUID)->getStatus());
-		$this->assertSame(expected: 404, actual: $controller->version(catalogSlug: 'woo', id: self::UUID, version: '1')->getStatus());
-		$document = $controller->versionDocument(catalogSlug: 'woo', id: self::UUID, version: '1', fileId: '1005');
-		$this->assertSame(expected: 404, actual: $document->getStatus());
+		$this->assertSame(expected: 404, actual: $controller->index(catalogSlug: 'woo', id: self::UUID)->getStatus());
+		$this->assertSame(expected: 404, actual: $controller->show(catalogSlug: 'woo', id: self::UUID)->getStatus());
+		$this->assertSame(expected: 404, actual: $controller->document(catalogSlug: 'woo', id: self::UUID)->getStatus());
 	}//end testAVersionOfAPublicationThatIsNoLongerPublicIs404()
 
 	/**
@@ -203,9 +183,10 @@ final class PublicationVersionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAWithdrawnPublicationReadBySignedInCallerIs404(): void {
-		$controller = $this->controller(current: self::corrected(extra: ['depublicationDate' => '2026-02-01T00:00:00+00:00']));
+		$withdrawn = self::corrected(extra: ['depublicationDate' => '2026-02-01T00:00:00+00:00']);
+		$controller = $this->controller(current: $withdrawn, route: ['version' => '1']);
 
-		$this->assertSame(expected: 404, actual: $controller->version(catalogSlug: 'woo', id: self::UUID, version: '1')->getStatus());
+		$this->assertSame(expected: 404, actual: $controller->show(catalogSlug: 'woo', id: self::UUID)->getStatus());
 	}//end testAWithdrawnPublicationReadBySignedInCallerIs404()
 
 	/**
@@ -214,11 +195,11 @@ final class PublicationVersionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnUnknownVersionOrDocumentIs404(): void {
-		$controller = $this->controller(current: self::corrected());
+		$unknownVersion = $this->controller(current: self::corrected(), route: ['version' => '2']);
+		$unknownDocument = $this->controller(current: self::corrected(), route: ['version' => '1', 'fileId' => '77']);
 
-		$this->assertSame(expected: 404, actual: $controller->version(catalogSlug: 'woo', id: self::UUID, version: '2')->getStatus());
-		$document = $controller->versionDocument(catalogSlug: 'woo', id: self::UUID, version: '1', fileId: '77');
-		$this->assertSame(expected: 404, actual: $document->getStatus());
+		$this->assertSame(expected: 404, actual: $unknownVersion->show(catalogSlug: 'woo', id: self::UUID)->getStatus());
+		$this->assertSame(expected: 404, actual: $unknownDocument->document(catalogSlug: 'woo', id: self::UUID)->getStatus());
 	}//end testAnUnknownVersionOrDocumentIs404()
 
 	/**
@@ -227,7 +208,9 @@ final class PublicationVersionControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testADocumentOfAnEarlierVersionDownloads(): void {
-		$response = $this->controller(current: self::corrected())->versionDocument(catalogSlug: 'woo', id: self::UUID, version: '1', fileId: '1005');
+		$controller = $this->controller(current: self::corrected(), route: ['version' => '1', 'fileId' => '1005']);
+
+		$response = $controller->document(catalogSlug: 'woo', id: self::UUID);
 
 		$this->assertInstanceOf(expected: DataDownloadResponse::class, actual: $response);
 		$this->assertSame(expected: 200, actual: $response->getStatus());
@@ -240,13 +223,25 @@ final class PublicationVersionControllerTest extends TestCase {
 	 */
 	public function testAnUnreadableVersionStoreIs500(): void {
 		$versions = $this->createMock(originalClassName: PublicationVersionServiceInterface::class);
+		$versions->method('publicUuidOf')->willReturn(self::UUID);
 		$versions->method('versionsOf')->willThrowException(new RuntimeException('The publicationVersion schema is not configured.'));
 
-		$response = $this->controller(current: self::corrected(), versions: $versions)->versions(catalogSlug: 'woo', id: self::UUID);
+		$response = $this->controller(current: self::corrected(), with: ['versions' => $versions])->index(catalogSlug: 'woo', id: self::UUID);
 
 		$this->assertSame(expected: 500, actual: $response->getStatus());
 		$this->assertSame(expected: 'version-unavailable', actual: $response->getData()['error']);
 	}//end testAnUnreadableVersionStoreIs500()
+
+	/**
+	 * The preflight allows the read.
+	 *
+	 * @return void
+	 */
+	public function testThePreflightAllowsTheRead(): void {
+		$response = $this->controller(current: self::corrected())->preflightedCors();
+
+		$this->assertSame(expected: '*', actual: $response->getHeaders()['Access-Control-Allow-Origin']);
+	}//end testThePreflightAllowsTheRead()
 
 	/**
 	 * A file node double.

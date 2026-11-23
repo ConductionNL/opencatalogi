@@ -38,7 +38,9 @@ use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Throwable;
 
 /**
  * Stores the old public projection of a publication before a correction replaces it.
@@ -58,6 +60,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 * @param PublicationStateServiceInterface $states Says whether a publication is public.
 	 * @param PublishedRecordViewInterface $view The anonymous view of a rendered record.
 	 * @param OpenRegisterLookup $openRegister Resolves OpenRegister's services and the version schema.
+	 * @param LoggerInterface $logger Logs a version store that cannot be read.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
@@ -65,6 +68,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 		private readonly PublicationStateServiceInterface $states,
 		private readonly PublishedRecordViewInterface $view,
 		private readonly OpenRegisterLookup $openRegister,
+		private readonly LoggerInterface $logger,
 	) {
 
 	}//end __construct()
@@ -161,6 +165,25 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function versionsOf(string $publication): array {
+		try {
+			return $this->storedVersions(publication: $publication);
+		} catch (Throwable $e) {
+			$this->logger->error('[PublicationVersionService] The versions of publication "' . $publication . '" could not be read: ' . $e->getMessage());
+			throw $e;
+		}
+
+	}//end versionsOf()
+
+	/**
+	 * The stored versions of a publication, oldest first, as versionsOf() answers them.
+	 *
+	 * @param string $publication The publication uuid.
+	 *
+	 * @return list<array<string, mixed>> The versions.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	private function storedVersions(string $publication): array {
 		$target = $this->versionTarget();
 		$found = $this->openRegister->installedObjectService()->searchObjects(
 			query: ['@self' => ['register' => $target->register, 'schema' => $target->schema], 'publication' => $publication],
@@ -184,7 +207,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 
 		return array_values($versions);
 
-	}//end versionsOf()
+	}//end storedVersions()
 
 	/**
 	 * One stored document of a version, or null when the version does not list it.
@@ -206,9 +229,42 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 			return null;
 		}
 
-		return $this->fileService()->getFile(object: $uuid, file: $fileId);
+		try {
+			return $this->fileService()->getFile(object: $uuid, file: $fileId);
+		} catch (Throwable $e) {
+			$this->logger->error('[PublicationVersionService] Document ' . $fileId . ' of version "' . $uuid . '" could not be read: ' . $e->getMessage());
+			throw $e;
+		}
 
 	}//end documentOf()
+
+	/**
+	 * The uuid of a record the public read answered, when it is public now; otherwise null.
+	 *
+	 * A signed-in caller may read a draft or a withdrawn record through the
+	 * public read, so a record that carries its status must also be public now.
+	 *
+	 * @param array<string, mixed> $record The record the public read answered.
+	 *
+	 * @return string|null The uuid.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	public function publicUuidOf(array $record): ?string {
+		if (array_key_exists('status', $record) === true
+			&& $this->states->stateOf(publication: $record) !== PublicationStateServiceInterface::STATE_PUBLIC
+		) {
+			return null;
+		}
+
+		$uuid = (string)($record['id'] ?? ($record['@self']['id'] ?? ''));
+		if ($uuid === '') {
+			return null;
+		}
+
+		return $uuid;
+
+	}//end publicUuidOf()
 
 	/**
 	 * A searched version as an array with its `id`.

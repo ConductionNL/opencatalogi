@@ -162,15 +162,9 @@ class PublicationsRouteOrderTest extends TestCase {
 				'publications#preflightedCors OPTIONS',
 				'publications#preflightedCors OPTIONS',
 				'publications#preflightedCors OPTIONS',
-				'publications#preflightedCors OPTIONS',
-				'publications#preflightedCors OPTIONS',
-				'publications#preflightedCors OPTIONS',
 				'publications#show GET',
 				'publications#used GET',
 				'publications#uses GET',
-				'publications#version GET',
-				'publications#versionDocument GET',
-				'publications#versions GET',
 			],
 			$seen
 		);

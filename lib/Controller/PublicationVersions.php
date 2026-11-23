@@ -3,10 +3,10 @@
 /**
  * OpenCatalogi Publication Versions.
  *
- * The answers of the version routes of `PublicationsController`: the list of a
- * publication's earlier public versions, one version, and one of its
- * documents. The controller asks only once its own public read answered the
- * publication; this class then checks that the record is public now.
+ * The answers of the version routes: the list of a publication's earlier
+ * public versions, one version, and one of its documents. Every answer first
+ * asks the publication through `PublicationsController::show()` itself, so a
+ * version is never more reachable than the publication it belongs to.
  *
  * @category Controller
  * @package  OCA\OpenCatalogi\Controller
@@ -29,13 +29,14 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationVersionServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
+use OCP\IL10N;
 use OCP\IURLGenerator;
+use Throwable;
 
 /**
  * Builds the answers of the publication version routes.
@@ -47,86 +48,85 @@ class PublicationVersions {
 	/**
 	 * Constructor.
 	 *
+	 * @param PublicationsController $publications The public read of one publication.
 	 * @param PublicationVersionServiceInterface $versions The stored versions.
-	 * @param PublicationStateServiceInterface $states Says whether a publication is public.
 	 * @param IURLGenerator $urls Builds the version and document URLs.
+	 * @param IL10N $l10n Localisation.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
+		private readonly PublicationsController $publications,
 		private readonly PublicationVersionServiceInterface $versions,
-		private readonly PublicationStateServiceInterface $states,
 		private readonly IURLGenerator $urls,
+		private readonly IL10N $l10n,
 	) {
 
 	}//end __construct()
 
 	/**
-	 * The publication's uuid when the public read answered it and it is public now, otherwise null.
+	 * The answer to a version route: the list, one version, one document, 404 or 500.
 	 *
-	 * A signed-in caller may read a draft or a withdrawn record through the
-	 * same read, so a record that carries its status must also be public now.
+	 * @param array{catalogSlug: string, id: string, version?: int, fileId?: int} $asked The route's parameters.
 	 *
-	 * @param Response $read The answer of `PublicationsController::show()`.
-	 *
-	 * @return string|null The publication uuid.
+	 * @return Response The answer.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
-	public function publicUuid(Response $read): ?string {
-		$data = null;
-		if ($read instanceof JSONResponse && $read->getStatus() === Http::STATUS_OK) {
-			$data = $read->getData();
+	public function respond(array $asked): Response {
+		try {
+			$answer = $this->answer(asked: $asked);
+		} catch (Throwable) {
+			// The version service logged the reason; the caller gets none of it.
+			return new JSONResponse(
+				['error' => 'version-unavailable', 'message' => $this->l10n->t('The earlier versions cannot be shown right now.')],
+				Http::STATUS_INTERNAL_SERVER_ERROR
+			);
 		}
 
-		if (is_array($data) === false
-			|| (array_key_exists('status', $data) === true && $this->states->stateOf(publication: $data) !== PublicationStateServiceInterface::STATE_PUBLIC)
-		) {
-			return null;
+		if ($answer === null) {
+			return new JSONResponse(
+				['error' => 'unknown-version', 'message' => $this->l10n->t('This version does not exist or is not public.')],
+				Http::STATUS_NOT_FOUND
+			);
 		}
 
-		$uuid = (string)($data['id'] ?? ($data['@self']['id'] ?? ''));
-		if ($uuid === '') {
-			return null;
-		}
+		return $answer;
 
-		return $uuid;
-
-	}//end publicUuid()
+	}//end respond()
 
 	/**
-	 * The answer for a public publication: its versions, one version, or one document of it.
+	 * The answer for a publication that is public now, or null.
 	 *
-	 * @param array{catalogSlug: string, id: string, uuid: string} $target The publication as addressed and its uuid.
-	 * @param int|null $version The version asked for, null for the list.
-	 * @param int|null $fileId The document asked for, null for the version itself.
+	 * @param array{catalogSlug: string, id: string, version?: int, fileId?: int} $asked The route's parameters.
 	 *
-	 * @return Response|null The answer, or null when there is no such version or document.
+	 * @return Response|null The answer, or null when the publication is not public or has no such version or document.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
-	public function answer(array $target, ?int $version, ?int $fileId): ?Response {
-		$stored = $this->versions->versionsOf(publication: $target['uuid']);
-		if ($version === null) {
-			return $this->listAnswer(target: $target, stored: $stored);
+	private function answer(array $asked): ?Response {
+		$asked['uuid'] = $this->publicUuid(asked: $asked);
+		if ($asked['uuid'] === null) {
+			return null;
+		}
+
+		$stored = $this->versions->versionsOf(publication: $asked['uuid']);
+		if (isset($asked['version']) === false) {
+			return $this->listAnswer(asked: $asked, stored: $stored);
 		}
 
 		$found = null;
 		foreach ($stored as $candidate) {
-			if ((int)($candidate['version'] ?? 0) === $version) {
+			if ((int)($candidate['version'] ?? 0) === $asked['version']) {
 				$found = $candidate;
 			}
 		}
 
-		if ($found === null) {
-			return null;
+		if ($found === null || isset($asked['fileId']) === false) {
+			return $this->versionAnswer(asked: $asked, found: $found);
 		}
 
-		if ($fileId === null) {
-			return $this->versionAnswer(target: $target, found: $found);
-		}
-
-		$file = $this->versions->documentOf(version: $found, fileId: $fileId);
+		$file = $this->versions->documentOf(version: $found, fileId: $asked['fileId']);
 		if ($file === null) {
 			return null;
 		}
@@ -136,21 +136,40 @@ class PublicationVersions {
 	}//end answer()
 
 	/**
+	 * The publication's uuid when its public read answers it and it is public now.
+	 *
+	 * @param array{catalogSlug: string, id: string} $asked The route's parameters.
+	 *
+	 * @return string|null The uuid.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	private function publicUuid(array $asked): ?string {
+		$read = $this->publications->show(catalogSlug: $asked['catalogSlug'], id: $asked['id']);
+		if (($read instanceof JSONResponse) === false || $read->getStatus() !== Http::STATUS_OK || is_array($read->getData()) === false) {
+			return null;
+		}
+
+		return $this->versions->publicUuidOf(record: $read->getData());
+
+	}//end publicUuid()
+
+	/**
 	 * The list answer: number, moment superseded and URL of each version.
 	 *
-	 * @param array{catalogSlug: string, id: string, uuid: string} $target The publication.
+	 * @param array{catalogSlug: string, id: string} $asked The route's parameters.
 	 * @param list<array<string, mixed>> $stored The stored versions, oldest first.
 	 *
 	 * @return JSONResponse The list.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
-	private function listAnswer(array $target, array $stored): JSONResponse {
+	private function listAnswer(array $asked, array $stored): JSONResponse {
 		$results = array_map(
 			fn (array $version): array => [
 				'version' => (int)$version['version'],
 				'supersededAt' => ($version['supersededAt'] ?? null),
-				'url' => $this->link(route: 'version', target: $target, extra: ['version' => (int)$version['version']]),
+				'url' => $this->link(route: 'publicationVersion.show', parameters: $this->address(asked: $asked) + ['version' => (int)$version['version']]),
 			],
 			$stored
 		);
@@ -160,55 +179,69 @@ class PublicationVersions {
 	}//end listAnswer()
 
 	/**
-	 * One version: its fields, its documents with download URLs, and the current URL.
+	 * One version: its fields, its documents with download URLs, and the current URL; null when there is none.
 	 *
-	 * @param array{catalogSlug: string, id: string, uuid: string} $target The publication.
-	 * @param array<string, mixed> $found The stored version.
+	 * @param array{catalogSlug: string, id: string, version: int} $asked The route's parameters.
+	 * @param array<string, mixed>|null $found The stored version.
 	 *
-	 * @return JSONResponse The version.
+	 * @return JSONResponse|null The version.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
-	private function versionAnswer(array $target, array $found): JSONResponse {
-		$number = (int)$found['version'];
+	private function versionAnswer(array $asked, ?array $found): ?JSONResponse {
+		if ($found === null) {
+			return null;
+		}
+
+		$address = $this->address(asked: $asked) + ['version' => $asked['version']];
 		$documents = array_map(
 			fn (array $document): array => [
 				'title' => (string)($document['title'] ?? ''),
 				'format' => (string)($document['format'] ?? ''),
-				'downloadUrl' => $this->link(route: 'versionDocument', target: $target, extra: ['version' => $number, 'fileId' => (int)($document['fileId'] ?? 0)]),
+				'downloadUrl' => $this->link(route: 'publicationVersion.document', parameters: $address + ['fileId' => (int)($document['fileId'] ?? 0)]),
 			],
 			array_values(array_filter((array)($found['documents'] ?? []), 'is_array'))
 		);
 
 		return new JSONResponse(
 			[
-				'version' => $number,
+				'version' => $asked['version'],
 				'supersededAt' => ($found['supersededAt'] ?? null),
 				'superseded' => true,
 				'fields' => (array)($found['fields'] ?? []),
 				'documents' => $documents,
-				'current' => $this->link(route: 'show', target: $target, extra: []),
+				'current' => $this->link(route: 'publications.show', parameters: $this->address(asked: $asked)),
 			]
 		);
 
 	}//end versionAnswer()
 
 	/**
-	 * An absolute URL of a publications route of this publication.
+	 * The catalogue slug and id the publication was addressed by.
 	 *
-	 * @param string $route The publications action.
-	 * @param array{catalogSlug: string, id: string, uuid: string} $target The publication.
-	 * @param array<string, int> $extra The version and document parameters.
+	 * @param array{catalogSlug: string, id: string} $asked The route's parameters.
+	 *
+	 * @return array{catalogSlug: string, id: string} The address.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	private function address(array $asked): array {
+		return ['catalogSlug' => $asked['catalogSlug'], 'id' => $asked['id']];
+
+	}//end address()
+
+	/**
+	 * An absolute URL of an OpenCatalogi route.
+	 *
+	 * @param string $route The route, without the app prefix.
+	 * @param array<string, int|string> $parameters The route parameters.
 	 *
 	 * @return string The URL.
 	 *
 	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
-	private function link(string $route, array $target, array $extra): string {
-		return $this->urls->linkToRouteAbsolute(
-			'opencatalogi.publications.' . $route,
-			['catalogSlug' => $target['catalogSlug'], 'id' => $target['id']] + $extra
-		);
+	private function link(string $route, array $parameters): string {
+		return $this->urls->linkToRouteAbsolute('opencatalogi.' . $route, $parameters);
 
 	}//end link()
 }//end class

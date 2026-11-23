@@ -32,6 +32,7 @@ use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\Publication\PublicationVersionService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -92,7 +93,12 @@ final class PublicationVersionServiceTest extends TestCase {
 		$lookup->method('installedObjectService')->willReturn($this->objectService());
 		$lookup->method('installedService')->willReturn($this->fileService());
 
-		return new PublicationVersionService(states: new PublicationStateService(), view: $view, openRegister: $lookup);
+		return new PublicationVersionService(
+			states: new PublicationStateService(),
+			view: $view,
+			openRegister: $lookup,
+			logger: $this->createMock(originalClassName: LoggerInterface::class)
+		);
 	}//end service()
 
 	/**
@@ -453,4 +459,29 @@ final class PublicationVersionServiceTest extends TestCase {
 		$this->assertNotNull(actual: $service->documentOf(version: $version, fileId: 1005));
 		$this->assertSame(expected: [[1005, 'v1']], actual: $this->copies);
 	}//end testOnlyADocumentTheVersionListsIsServed()
+
+	/**
+	 * A record the public read answered gives its uuid only while it is public now.
+	 *
+	 * @return void
+	 */
+	public function testOnlyAPublicRecordGivesItsUuid(): void {
+		$service = $this->service();
+
+		$this->assertSame(expected: self::PUBLICATION, actual: $service->publicUuidOf(record: self::public(extra: ['id' => self::PUBLICATION])));
+		$this->assertSame(expected: self::PUBLICATION, actual: $service->publicUuidOf(record: ['@self' => ['id' => self::PUBLICATION], 'title' => 'Anoniem']));
+		$this->assertNull(actual: $service->publicUuidOf(record: self::public(extra: ['id' => self::PUBLICATION, 'depublicationDate' => '2026-02-01T00:00:00+00:00'])));
+		$this->assertNull(actual: $service->publicUuidOf(record: ['title' => 'Zonder id']));
+	}//end testOnlyAPublicRecordGivesItsUuid()
+
+	/**
+	 * A version store that cannot be read is logged and the failure passed on.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableVersionStoreIsPassedOn(): void {
+		$this->expectException(exception: RuntimeException::class);
+
+		$this->service(config: ['register' => '', 'schema' => ''])->versionsOf(publication: self::PUBLICATION);
+	}//end testAnUnreadableVersionStoreIsPassedOn()
 }//end class
