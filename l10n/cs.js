@@ -827,7 +827,9 @@ OC.L10N.register(
         "The document's title.": "Název dokumentu.",
         "The document's file format.": "Formát souboru dokumentu.",
         "The copy of the document kept on this version.": "Kopie dokumentu uchovaná s touto verzí.",
-        "The earlier public version could not be kept, so the change was not saved.": "Předchozí veřejnou verzi nebylo možné uchovat, proto změna nebyla uložena."
+        "The earlier public version could not be kept, so the change was not saved.": "Předchozí veřejnou verzi nebylo možné uchovat, proto změna nebyla uložena.",
+        "This version does not exist or is not public.": "Tato verze neexistuje nebo není veřejná.",
+        "The earlier versions cannot be shown right now.": "Předchozí verze teď nelze zobrazit."
     },
     "nplurals=2; plural=(n != 1);"
 )

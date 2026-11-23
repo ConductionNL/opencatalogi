@@ -120,9 +120,10 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 		$target = $this->versionTarget();
 		$objects = $this->openRegister->installedObjectService();
 		$publication = (string)$old->getUuid();
+		$stored = $this->versionsOf(publication: $publication);
 		$version = [
 			'publication' => $publication,
-			'version' => ($this->latestVersion(objects: $objects, target: $target, publication: $publication) + 1),
+			'version' => ((int)(end($stored)['version'] ?? 0) + 1),
 			'supersededAt' => ($now ?? new DateTimeImmutable())->format(DateTimeInterface::ATOM),
 			'fields' => $fields,
 			'documents' => [],
@@ -144,6 +145,88 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 		return $stored->jsonSerialize();
 
 	}//end snapshot()
+
+	/**
+	 * The stored versions of a publication, oldest first.
+	 *
+	 * Versions carry no public read rule, so they are read as the system; the
+	 * caller decides first whether the publication itself is public.
+	 *
+	 * @param string $publication The publication uuid.
+	 *
+	 * @return list<array<string, mixed>> The versions, each with its `id`.
+	 *
+	 * @throws RuntimeException When the version schema is not configured.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	public function versionsOf(string $publication): array {
+		$target = $this->versionTarget();
+		$found = $this->openRegister->installedObjectService()->searchObjects(
+			query: ['@self' => ['register' => $target->register, 'schema' => $target->schema], 'publication' => $publication],
+			_rbac: false,
+			_multitenancy: false
+		);
+		if (is_iterable($found) === false) {
+			return [];
+		}
+
+		$versions = [];
+		foreach ($found as $item) {
+			$row = $this->versionRow(item: $item);
+			// The search filters on the publication; the check keeps a loose match out.
+			if ((string)($row['publication'] ?? '') === $publication && (int)($row['version'] ?? 0) > 0) {
+				$versions[(int)$row['version']] = $row;
+			}
+		}
+
+		ksort($versions);
+
+		return array_values($versions);
+
+	}//end versionsOf()
+
+	/**
+	 * One stored document of a version, or null when the version does not list it.
+	 *
+	 * @param array<string, mixed> $version A version from versionsOf().
+	 * @param int $fileId The id of the copy kept on the version.
+	 *
+	 * @return object|null The file node.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	public function documentOf(array $version, int $fileId): ?object {
+		$listed = array_map(
+			static fn (array $document): int => (int)($document['fileId'] ?? 0),
+			array_filter((array)($version['documents'] ?? []), 'is_array')
+		);
+		$uuid = (string)($version['id'] ?? '');
+		if ($fileId <= 0 || $uuid === '' || in_array($fileId, $listed, true) === false) {
+			return null;
+		}
+
+		return $this->fileService()->getFile(object: $uuid, file: $fileId);
+
+	}//end documentOf()
+
+	/**
+	 * A searched version as an array with its `id`.
+	 *
+	 * @param mixed $item An ObjectEntity or an array.
+	 *
+	 * @return array<string, mixed> The version.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 */
+	private function versionRow(mixed $item): array {
+		if ($item instanceof ObjectEntity) {
+			return ($item->getObject() ?? []) + ['id' => (string)$item->getUuid()];
+		}
+
+		return (array)$item;
+
+	}//end versionRow()
 
 	/**
 	 * The fields the public read returns for a publication, or null when it is not public.
@@ -229,45 +312,6 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 		return $documents;
 
 	}//end copyPublicFiles()
-
-	/**
-	 * The highest version number stored for a publication, 0 when none is.
-	 *
-	 * @param object $objects OpenRegister's ObjectService.
-	 * @param ObjectFindTarget $target The version register and schema.
-	 * @param string $publication The publication uuid.
-	 *
-	 * @return int The latest version number.
-	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
-	 */
-	private function latestVersion(object $objects, ObjectFindTarget $target, string $publication): int {
-		$found = $objects->searchObjects(
-			query: ['@self' => ['register' => $target->register, 'schema' => $target->schema], 'publication' => $publication],
-			_rbac: false,
-			_multitenancy: false
-		);
-
-		if (is_iterable($found) === false) {
-			return 0;
-		}
-
-		$latest = 0;
-		foreach ($found as $item) {
-			$row = (array)$item;
-			if ($item instanceof ObjectEntity) {
-				$row = ($item->getObject() ?? []);
-			}
-
-			// The search filters on the publication; the check keeps a loose match out.
-			if ((string)($row['publication'] ?? '') === $publication) {
-				$latest = max($latest, (int)($row['version'] ?? 0));
-			}
-		}
-
-		return $latest;
-
-	}//end latestVersion()
 
 	/**
 	 * Whether two values hold the same content, the key order of maps aside.

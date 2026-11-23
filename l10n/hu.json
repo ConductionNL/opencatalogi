@@ -826,7 +826,9 @@
         "The document's title.": "A dokumentum címe.",
         "The document's file format.": "A dokumentum fájlformátuma.",
         "The copy of the document kept on this version.": "A dokumentum e verzióval megőrzött másolata.",
-        "The earlier public version could not be kept, so the change was not saved.": "A korábbi nyilvános változatot nem sikerült megőrizni, ezért a módosítás nem lett mentve."
+        "The earlier public version could not be kept, so the change was not saved.": "A korábbi nyilvános változatot nem sikerült megőrizni, ezért a módosítás nem lett mentve.",
+        "This version does not exist or is not public.": "Ez a változat nem létezik, vagy nem nyilvános.",
+        "The earlier versions cannot be shown right now.": "A korábbi változatok most nem jeleníthetők meg."
     },
     "plurals": {}
 }

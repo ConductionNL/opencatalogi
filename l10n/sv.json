@@ -826,7 +826,9 @@
         "The document's title.": "Dokumentets titel.",
         "The document's file format.": "Dokumentets filformat.",
         "The copy of the document kept on this version.": "Kopian av dokumentet som sparas med denna version.",
-        "The earlier public version could not be kept, so the change was not saved.": "Den tidigare offentliga versionen kunde inte bevaras, så ändringen sparades inte."
+        "The earlier public version could not be kept, so the change was not saved.": "Den tidigare offentliga versionen kunde inte bevaras, så ändringen sparades inte.",
+        "This version does not exist or is not public.": "Den här versionen finns inte eller är inte offentlig.",
+        "The earlier versions cannot be shown right now.": "De tidigare versionerna kan inte visas just nu."
     },
     "plurals": {}
 }

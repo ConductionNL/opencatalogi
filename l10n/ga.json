@@ -826,7 +826,9 @@
         "The document's title.": "Teideal an doiciméid.",
         "The document's file format.": "Formáid comhaid an doiciméid.",
         "The copy of the document kept on this version.": "Cóip an doiciméid a choinnítear leis an leagan seo.",
-        "The earlier public version could not be kept, so the change was not saved.": "Níorbh fhéidir an leagan poiblí roimhe seo a choinneáil, mar sin níor sábháladh an t-athrú."
+        "The earlier public version could not be kept, so the change was not saved.": "Níorbh fhéidir an leagan poiblí roimhe seo a choinneáil, mar sin níor sábháladh an t-athrú.",
+        "This version does not exist or is not public.": "Níl an leagan seo ann nó níl sé poiblí.",
+        "The earlier versions cannot be shown right now.": "Ní féidir na leaganacha roimhe seo a thaispeáint faoi láthair."
     },
     "plurals": {}
 }

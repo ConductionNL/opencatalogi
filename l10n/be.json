@@ -826,7 +826,9 @@
         "The document's title.": "Загаловак дакумента.",
         "The document's file format.": "Фармат файла дакумента.",
         "The copy of the document kept on this version.": "Копія дакумента, якая захоўваецца з гэтай версіяй.",
-        "The earlier public version could not be kept, so the change was not saved.": "Папярэднюю публічную версію не ўдалося захаваць, таму змяненне не захавана."
+        "The earlier public version could not be kept, so the change was not saved.": "Папярэднюю публічную версію не ўдалося захаваць, таму змяненне не захавана.",
+        "This version does not exist or is not public.": "Гэтай версіі не існуе або яна не публічная.",
+        "The earlier versions cannot be shown right now.": "Папярэднія версіі зараз немагчыма паказаць."
     },
     "plurals": {}
 }

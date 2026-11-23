@@ -2176,7 +2176,9 @@ OC.L10N.register(
         "The document's title.": "The document's title.",
         "The document's file format.": "The document's file format.",
         "The copy of the document kept on this version.": "The copy of the document kept on this version.",
-        "The earlier public version could not be kept, so the change was not saved.": "The earlier public version could not be kept, so the change was not saved."
+        "The earlier public version could not be kept, so the change was not saved.": "The earlier public version could not be kept, so the change was not saved.",
+        "This version does not exist or is not public.": "This version does not exist or is not public.",
+        "The earlier versions cannot be shown right now.": "The earlier versions cannot be shown right now."
     },
     "nplurals=2; plural=(n != 1);"
 )

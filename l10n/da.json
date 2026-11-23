@@ -826,7 +826,9 @@
         "The document's title.": "Dokumentets titel.",
         "The document's file format.": "Dokumentets filformat.",
         "The copy of the document kept on this version.": "Kopien af dokumentet, der gemmes med denne version.",
-        "The earlier public version could not be kept, so the change was not saved.": "Den tidligere offentlige version kunne ikke bevares, så ændringen blev ikke gemt."
+        "The earlier public version could not be kept, so the change was not saved.": "Den tidligere offentlige version kunne ikke bevares, så ændringen blev ikke gemt.",
+        "This version does not exist or is not public.": "Denne version findes ikke eller er ikke offentlig.",
+        "The earlier versions cannot be shown right now.": "De tidligere versioner kan ikke vises lige nu."
     },
     "plurals": {}
 }

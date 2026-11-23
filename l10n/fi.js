@@ -827,7 +827,9 @@ OC.L10N.register(
         "The document's title.": "Asiakirjan otsikko.",
         "The document's file format.": "Asiakirjan tiedostomuoto.",
         "The copy of the document kept on this version.": "Asiakirjan kopio, joka säilytetään tämän version mukana.",
-        "The earlier public version could not be kept, so the change was not saved.": "Aiempaa julkista versiota ei voitu säilyttää, joten muutosta ei tallennettu."
+        "The earlier public version could not be kept, so the change was not saved.": "Aiempaa julkista versiota ei voitu säilyttää, joten muutosta ei tallennettu.",
+        "This version does not exist or is not public.": "Tätä versiota ei ole tai se ei ole julkinen.",
+        "The earlier versions cannot be shown right now.": "Aiempia versioita ei voi juuri nyt näyttää."
     },
     "nplurals=2; plural=(n != 1);"
 )

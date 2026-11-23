@@ -826,7 +826,9 @@
         "The document's title.": "Dokumendi pealkiri.",
         "The document's file format.": "Dokumendi failivorming.",
         "The copy of the document kept on this version.": "Dokumendi koopia, mida selle versiooniga hoitakse.",
-        "The earlier public version could not be kept, so the change was not saved.": "Varasemat avalikku versiooni ei õnnestunud säilitada, seega muudatust ei salvestatud."
+        "The earlier public version could not be kept, so the change was not saved.": "Varasemat avalikku versiooni ei õnnestunud säilitada, seega muudatust ei salvestatud.",
+        "This version does not exist or is not public.": "Seda versiooni ei ole olemas või see ei ole avalik.",
+        "The earlier versions cannot be shown right now.": "Varasemaid versioone ei saa praegu näidata."
     },
     "plurals": {}
 }

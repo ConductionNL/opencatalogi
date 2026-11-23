@@ -827,7 +827,9 @@ OC.L10N.register(
         "The document's title.": "Naslov dokumenta.",
         "The document's file format.": "Oblika datoteke dokumenta.",
         "The copy of the document kept on this version.": "Kopija dokumenta, shranjena s to različico.",
-        "The earlier public version could not be kept, so the change was not saved.": "Prejšnje javne različice ni bilo mogoče ohraniti, zato sprememba ni bila shranjena."
+        "The earlier public version could not be kept, so the change was not saved.": "Prejšnje javne različice ni bilo mogoče ohraniti, zato sprememba ni bila shranjena.",
+        "This version does not exist or is not public.": "Ta različica ne obstaja ali ni javna.",
+        "The earlier versions cannot be shown right now.": "Prejšnjih različic trenutno ni mogoče prikazati."
     },
     "nplurals=2; plural=(n != 1);"
 )

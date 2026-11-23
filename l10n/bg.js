@@ -827,7 +827,9 @@ OC.L10N.register(
         "The document's title.": "Заглавието на документа.",
         "The document's file format.": "Файловият формат на документа.",
         "The copy of the document kept on this version.": "Копието на документа, пазено с тази версия.",
-        "The earlier public version could not be kept, so the change was not saved.": "Предишната публична версия не можа да бъде запазена, затова промяната не е записана."
+        "The earlier public version could not be kept, so the change was not saved.": "Предишната публична версия не можа да бъде запазена, затова промяната не е записана.",
+        "This version does not exist or is not public.": "Тази версия не съществува или не е публична.",
+        "The earlier versions cannot be shown right now.": "Предишните версии не могат да бъдат показани в момента."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -2131,7 +2131,9 @@ OC.L10N.register(
         "The document's title.": "De titel van het document.",
         "The document's file format.": "Het bestandsformaat van het document.",
         "The copy of the document kept on this version.": "De kopie van het document die bij deze versie wordt bewaard.",
-        "The earlier public version could not be kept, so the change was not saved.": "De eerdere openbare versie kon niet worden bewaard, dus de wijziging is niet opgeslagen."
+        "The earlier public version could not be kept, so the change was not saved.": "De eerdere openbare versie kon niet worden bewaard, dus de wijziging is niet opgeslagen.",
+        "This version does not exist or is not public.": "Deze versie bestaat niet of is niet openbaar.",
+        "The earlier versions cannot be shown right now.": "De eerdere versies kunnen nu niet worden getoond."
     },
     "nplurals=2; plural=(n != 1);"
 )
