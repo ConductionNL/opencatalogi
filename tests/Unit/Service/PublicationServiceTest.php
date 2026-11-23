@@ -1994,8 +1994,8 @@ class PublicationServiceTest extends TestCase {
 	public function testAWithdrawnPublicationIsNotServedToTheFederation(): void {
 		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
-		$this->mockObjectServiceAvailable($objectService);
-		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+		$this->mockObjectServiceAvailable(objectService: $objectService);
+		$catalog = $this->createSerializableObject(data: ['registers' => [1], 'schemas' => [1]]);
 		$objectService->method('searchObjects')->willReturn([$catalog]);
 
 		$reads = [];
@@ -2006,7 +2006,9 @@ class PublicationServiceTest extends TestCase {
 					throw new DoesNotExistException('Not found');
 				}
 
-				return $this->createSerializableObject(['id' => (string)$id, 'title' => 'Besluit ingetrokken', 'depublicationDate' => '2026-11-22T09:00:00+00:00']);
+				return $this->createSerializableObject(
+					data: ['id' => (string)$id, 'title' => 'Besluit ingetrokken', 'depublicationDate' => '2026-11-22T09:00:00+00:00']
+				);
 			}
 		);
 		$this->request->method('getParams')->willReturn([]);
