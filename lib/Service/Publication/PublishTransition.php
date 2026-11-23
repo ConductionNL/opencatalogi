@@ -59,13 +59,29 @@ class PublishTransition {
 	 * @param ContainerInterface      $container Reaches OpenRegister's lifecycle engine.
 	 * @param PublicationReviewPolicy $review    Whether review is required.
 	 * @param EmbargoGuard            $embargo   Refuses a publish that would release a publication under embargo early.
+	 * @param PublicationDocumentCount $documents Counts the files and document references of a publication (REQ-PSG-004).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly PublicationReviewPolicy $review,
 		private readonly EmbargoGuard $embargo,
+		private readonly PublicationDocumentCount $documents,
 	) {
 	}//end __construct()
+
+	/**
+	 * The number of documents the publication carries: its files plus the references pointing at it.
+	 *
+	 * @param string      $id          The publication id.
+	 * @param object|null $publication The publication entity when already loaded.
+	 *
+	 * @return int The count; an unreadable part counts as zero.
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.1
+	 */
+	public function documentCount(string $id, ?object $publication=null): int {
+		return $this->documents->count(id: $id, publication: $publication);
+	}//end documentCount()
 
 	/**
 	 * The embargo refusal for publishing $stored now as $record, or null when the caller may.

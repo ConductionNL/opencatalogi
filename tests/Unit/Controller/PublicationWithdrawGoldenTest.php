@@ -195,9 +195,9 @@ class PublicationWithdrawGoldenTest extends TestCase {
 			new PublishTransition(
 				container: $container,
 				review: new PublicationReviewPolicy(appConfig: $this->createMock(originalClassName: IAppConfig::class)),
-				embargo: $this->embargoGuard()
-			),
-			$this->createMock(originalClassName: PublicationDocumentCount::class)
+				embargo: $this->embargoGuard(),
+				documents: $this->createMock(originalClassName: PublicationDocumentCount::class)
+			)
 		);
 
 		return $controller;

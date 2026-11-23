@@ -294,13 +294,13 @@ class PublicationStateControllerTest extends TestCase {
 			new PublishTransition(
 				container: $container,
 				review: new PublicationReviewPolicy(appConfig: $config),
-				embargo: new EmbargoGuard(config: $config, groups: $groups, logger: $this->createMock(originalClassName: LoggerInterface::class))
-			),
-			new PublicationDocumentCount(
-				container: $this->documentContainer(),
-				openRegister: $this->createMock(originalClassName: OpenRegisterLookupInterface::class),
-				config: $config,
-				logger: $this->createMock(originalClassName: LoggerInterface::class)
+				embargo: new EmbargoGuard(config: $config, groups: $groups, logger: $this->createMock(originalClassName: LoggerInterface::class)),
+				documents: new PublicationDocumentCount(
+					container: $this->documentContainer(),
+					openRegister: $this->createMock(originalClassName: OpenRegisterLookupInterface::class),
+					config: $config,
+					logger: $this->createMock(originalClassName: LoggerInterface::class)
+				)
 			)
 		);
 	}

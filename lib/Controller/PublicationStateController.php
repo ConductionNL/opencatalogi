@@ -35,7 +35,6 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
-use OCA\OpenCatalogi\Service\Publication\PublicationDocumentCount;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
@@ -72,8 +71,7 @@ class PublicationStateController extends Controller {
 	 * @param IUserSession $userSession The current session.
 	 * @param PublicationRightsInterface $rights The update right on one publication, and the publish right.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
- * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003), and says whether an embargo holds (REQ-PSG-001).
-	 * @param PublicationDocumentCount $documents Counts the files and document references a publication carries (REQ-PSG-004).
+ * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003), says whether an embargo holds (REQ-PSG-001) and counts the documents (REQ-PSG-004).
 	 */
 	public function __construct(
 		$appName,
@@ -83,7 +81,6 @@ class PublicationStateController extends Controller {
 		private readonly PublicationRightsInterface $rights,
 		private readonly PublicationTransitions $registers,
 		private readonly PublishTransition $publisher,
-		private readonly PublicationDocumentCount $documents,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -326,7 +323,7 @@ class PublicationStateController extends Controller {
 	 */
 	private function noDocuments(string $id, object $publication): ?JSONResponse {
 		$confirmed = filter_var($this->request->getParam('confirmNoDocuments', false), FILTER_VALIDATE_BOOLEAN);
-		if ($confirmed === true || $this->documents->count(id: $id, publication: $publication) > 0) {
+		if ($confirmed === true || $this->publisher->documentCount(id: $id, publication: $publication) > 0) {
 			return null;
 		}
 
