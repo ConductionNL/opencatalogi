@@ -2,8 +2,8 @@
 
 /**
  * Unit tests for ThemeHotspotListener: only an administrator marks a subject as
- * an archive hotspot, with a reason; the marking sets the subject's appraisal
- * to permanent and is audited after the save.
+ * an archive hotspot, with a reason; the guard sets the subject's appraisal
+ * to permanent before the save, and the audit records it after.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests\Unit\Listener
@@ -24,15 +24,15 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Listener;
 
-use DateTime;
 use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
-use OCA\OpenCatalogi\Listener\ThemeHotspotListener;
+use OCA\OpenCatalogi\Listener\ThemeHotspotAudit;
+use OCA\OpenCatalogi\Listener\ThemeHotspotChange;
+use OCA\OpenCatalogi\Listener\ThemeHotspotGuard;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
 use OCP\IGroupManager;
 use OCP\IL10N;
@@ -43,7 +43,9 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
- * @covers \OCA\OpenCatalogi\Listener\ThemeHotspotListener
+ * @covers \OCA\OpenCatalogi\Listener\ThemeHotspotGuard
+ * @covers \OCA\OpenCatalogi\Listener\ThemeHotspotAudit
+ * @covers \OCA\OpenCatalogi\Listener\ThemeHotspotChange
  */
 final class ThemeHotspotListenerTest extends TestCase {
 
@@ -53,6 +55,8 @@ final class ThemeHotspotListenerTest extends TestCase {
 
 	/**
 	 * Whether the saving user is an administrator.
+	 *
+	 * @var bool
 	 */
 	private bool $admin = true;
 
@@ -65,6 +69,8 @@ final class ThemeHotspotListenerTest extends TestCase {
 
 	/**
 	 * Whether writing the audit entry fails.
+	 *
+	 * @var bool
 	 */
 	private bool $auditFails = false;
 
@@ -76,25 +82,55 @@ final class ThemeHotspotListenerTest extends TestCase {
 	private array $logged = [];
 
 	/**
-	 * The listener over the fixtures.
+	 * The change detector, for theme schema 14.
 	 *
-	 * @return ThemeHotspotListener
+	 * @return ThemeHotspotChange
 	 */
-	private function listener(): ThemeHotspotListener {
+	private function change(): ThemeHotspotChange {
 		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
-			static fn (string $app, string $key, string $default = ''): string => $key === 'theme_schema' ? self::THEME_SCHEMA : $default
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'theme_schema' => self::THEME_SCHEMA,
+				default => $default,
+			}
 		);
+
+		return new ThemeHotspotChange(config: $config);
+	}//end change()
+
+	/**
+	 * The signed-in user, an administrator or not.
+	 *
+	 * @return IUserSession
+	 */
+	private function session(): IUserSession {
 		$user = $this->createMock(originalClassName: IUser::class);
 		$user->method('getUID')->willReturn('beheerder');
 		$session = $this->createMock(originalClassName: IUserSession::class);
 		$session->method('getUser')->willReturn($user);
+		return $session;
+	}//end session()
+
+	/**
+	 * The guard before the save.
+	 *
+	 * @return ThemeHotspotGuard
+	 */
+	private function guard(): ThemeHotspotGuard {
 		$groups = $this->createMock(originalClassName: IGroupManager::class);
 		$groups->method('isAdmin')->willReturnCallback(fn (string $uid): bool => $this->admin);
-		$time = $this->createMock(originalClassName: ITimeFactory::class);
-		$time->method('getDateTime')->willReturnCallback(static fn (): DateTime => new DateTime('2026-11-23T10:00:00+00:00'));
 		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
+
+		return new ThemeHotspotGuard(change: $this->change(), session: $this->session(), groups: $groups, l10n: $l10n);
+	}//end guard()
+
+	/**
+	 * The audit after the save, over a recording audit trail mapper.
+	 *
+	 * @return ThemeHotspotAudit
+	 */
+	private function audit(): ThemeHotspotAudit {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$logger->method('error')->willReturnCallback(function (string $message): void {
 			$this->logged[] = $message;
@@ -103,9 +139,24 @@ final class ThemeHotspotListenerTest extends TestCase {
 		$test = $this;
 		$mapper = new class($test) {
 
+			/**
+			 * Constructor.
+			 *
+			 * @param ThemeHotspotListenerTest $test The test that records the entries.
+			 */
 			public function __construct(private readonly ThemeHotspotListenerTest $test) {
 			}
 
+			/**
+			 * OpenRegister's AuditTrailMapper::createAuditTrail(), called with named arguments.
+			 *
+			 * @param object|null $old The object before.
+			 * @param object|null $new The object after.
+			 * @param string|null $action The action.
+			 * @param array<string, mixed>|null $cascadeContext The context.
+			 *
+			 * @return void
+			 */
 			public function createAuditTrail(?object $old = null, ?object $new = null, ?string $action = null, ?array $cascadeContext = null): void {
 				$this->test->recordAudit(action: (string)$action, context: (array)$cascadeContext);
 			}
@@ -113,16 +164,8 @@ final class ThemeHotspotListenerTest extends TestCase {
 		$openRegister = $this->createMock(originalClassName: OpenRegisterServicesInterface::class);
 		$openRegister->method('installedService')->willReturn($mapper);
 
-		return new ThemeHotspotListener(
-			config: $config,
-			session: $session,
-			groups: $groups,
-			time: $time,
-			openRegister: $openRegister,
-			l10n: $l10n,
-			logger: $logger
-		);
-	}//end listener()
+		return new ThemeHotspotAudit(change: $this->change(), session: $this->session(), openRegister: $openRegister, logger: $logger);
+	}//end audit()
 
 	/**
 	 * Record an audit entry, or fail like a store that is down.
@@ -170,7 +213,7 @@ final class ThemeHotspotListenerTest extends TestCase {
 			$this->subject(data: [])
 		);
 
-		$this->listener()->handle(event: $event);
+		$this->guard()->handle(event: $event);
 
 		$this->assertTrue(condition: $event->isPropagationStopped());
 		$this->assertSame(expected: 'archiveHotspot', actual: $event->getErrors()['property']);
@@ -185,7 +228,7 @@ final class ThemeHotspotListenerTest extends TestCase {
 	public function testAMarkingWithoutAReasonIsRefused(): void {
 		$event = new ObjectCreatingEvent($this->subject(data: ['archiveHotspot' => true, 'archiveHotspotReason' => '  ']));
 
-		$this->listener()->handle(event: $event);
+		$this->guard()->handle(event: $event);
 
 		$this->assertTrue(condition: $event->isPropagationStopped());
 		$this->assertSame(expected: 'archiveHotspotReason', actual: $event->getErrors()['property']);
@@ -197,17 +240,21 @@ final class ThemeHotspotListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testMarkingSetsTheThemesAppraisalToRetainPermanently(): void {
-		$written = $this->subject(data: ['archiveHotspot' => true, 'archiveHotspotReason' => self::REASON], retention: ['archiefnominatie' => 'vernietigen']);
+		$written = $this->subject(
+			data: ['archiveHotspot' => true, 'archiveHotspotReason' => self::REASON],
+			retention: ['archiefnominatie' => 'vernietigen']
+		);
 		$event = new ObjectUpdatingEvent($written, $this->subject(data: [], retention: ['archiefnominatie' => 'vernietigen']));
 
-		$this->listener()->handle(event: $event);
+		$this->guard()->handle(event: $event);
 
 		$this->assertFalse(condition: $event->isPropagationStopped());
 		$this->assertSame(
-			expected: ['archiefnominatie' => ThemeHotspotListener::PERMANENT, ThemeHotspotListener::PREVIOUS => 'vernietigen'],
+			expected: ['archiefnominatie' => ThemeHotspotGuard::PERMANENT, ThemeHotspotGuard::PREVIOUS => 'vernietigen'],
 			actual: $written->getRetention()
 		);
-		$this->assertSame(expected: ['archiveHotspotSince' => '2026-11-23T10:00:00+00:00'], actual: $event->getModifiedData());
+		$since = (string)$event->getModifiedData()['archiveHotspotSince'];
+		$this->assertLessThan(maximum: 60, actual: abs(time() - (int)strtotime($since)), message: $since);
 	}//end testMarkingSetsTheThemesAppraisalToRetainPermanently()
 
 	/**
@@ -216,17 +263,20 @@ final class ThemeHotspotListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testUnmarkingRestoresThePreviousAppraisal(): void {
-		$stored = ['archiefnominatie' => ThemeHotspotListener::PERMANENT, ThemeHotspotListener::PREVIOUS => 'vernietigen'];
+		$stored = ['archiefnominatie' => ThemeHotspotGuard::PERMANENT, ThemeHotspotGuard::PREVIOUS => 'vernietigen'];
 		$written = $this->subject(data: ['archiveHotspot' => false, 'archiveHotspotReason' => 'Lijst herzien'], retention: $stored);
 		$event = new ObjectUpdatingEvent($written, $this->subject(data: ['archiveHotspot' => true], retention: $stored));
 
-		$this->listener()->handle(event: $event);
+		$this->guard()->handle(event: $event);
 
 		$this->assertSame(expected: ['archiefnominatie' => 'vernietigen'], actual: $written->getRetention());
 		$this->assertSame(expected: ['archiveHotspotSince' => null], actual: $event->getModifiedData());
 
-		$none = $this->subject(data: ['archiveHotspot' => false, 'archiveHotspotReason' => 'Lijst herzien'], retention: ['archiefnominatie' => ThemeHotspotListener::PERMANENT, ThemeHotspotListener::PREVIOUS => null]);
-		$this->listener()->handle(event: new ObjectUpdatingEvent($none, $this->subject(data: ['archiveHotspot' => true])));
+		$none = $this->subject(
+			data: ['archiveHotspot' => false, 'archiveHotspotReason' => 'Lijst herzien'],
+			retention: ['archiefnominatie' => ThemeHotspotGuard::PERMANENT, ThemeHotspotGuard::PREVIOUS => null]
+		);
+		$this->guard()->handle(event: new ObjectUpdatingEvent($none, $this->subject(data: ['archiveHotspot' => true])));
 		$this->assertSame(expected: [], actual: $none->getRetention());
 	}//end testUnmarkingRestoresThePreviousAppraisal()
 
@@ -244,7 +294,7 @@ final class ThemeHotspotListenerTest extends TestCase {
 		];
 
 		foreach ($events as $index => $event) {
-			$this->listener()->handle(event: $event);
+			$this->guard()->handle(event: $event);
 			$this->assertFalse(condition: $event->isPropagationStopped(), message: (string)$index);
 			$this->assertSame(expected: [], actual: $event->getModifiedData(), message: (string)$index);
 		}
@@ -256,19 +306,19 @@ final class ThemeHotspotListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheSavedChangeIsAudited(): void {
-		$this->listener()->handle(event: new ObjectCreatedEvent($this->subject(data: ['archiveHotspot' => true, 'archiveHotspotReason' => self::REASON])));
-		$this->listener()->handle(
+		$this->audit()->handle(event: new ObjectCreatedEvent($this->subject(data: ['archiveHotspot' => true, 'archiveHotspotReason' => self::REASON])));
+		$this->audit()->handle(
 			event: new ObjectUpdatedEvent(
 				$this->subject(data: ['archiveHotspot' => false, 'archiveHotspotReason' => 'Lijst herzien']),
 				$this->subject(data: ['archiveHotspot' => true])
 			)
 		);
-		$this->listener()->handle(event: new ObjectUpdatedEvent($this->subject(data: ['archiveHotspot' => false]), $this->subject(data: [])));
+		$this->audit()->handle(event: new ObjectUpdatedEvent($this->subject(data: ['archiveHotspot' => false]), $this->subject(data: [])));
 
 		$this->assertSame(
 			expected: [
-				[ThemeHotspotListener::MARKED, ['user' => 'beheerder', 'reason' => self::REASON]],
-				[ThemeHotspotListener::UNMARKED, ['user' => 'beheerder', 'reason' => 'Lijst herzien']],
+				[ThemeHotspotAudit::MARKED, ['user' => 'beheerder', 'reason' => self::REASON]],
+				[ThemeHotspotAudit::UNMARKED, ['user' => 'beheerder', 'reason' => 'Lijst herzien']],
 			],
 			actual: $this->audited
 		);
@@ -282,7 +332,7 @@ final class ThemeHotspotListenerTest extends TestCase {
 	public function testAFailedAuditIsLoggedNotThrown(): void {
 		$this->auditFails = true;
 
-		$this->listener()->handle(event: new ObjectCreatedEvent($this->subject(data: ['archiveHotspot' => true, 'archiveHotspotReason' => self::REASON])));
+		$this->audit()->handle(event: new ObjectCreatedEvent($this->subject(data: ['archiveHotspot' => true, 'archiveHotspotReason' => self::REASON])));
 
 		$this->assertCount(expectedCount: 1, haystack: $this->logged);
 		$this->assertStringContainsString(needle: 'audit store down', haystack: $this->logged[0]);

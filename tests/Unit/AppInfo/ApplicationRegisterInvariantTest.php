@@ -432,13 +432,12 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		$application->register(context: $context);
 
 		$this->assertSame(
-			expected: [
-				'OCA\\OpenRegister\\Event\\ObjectCreatingEvent',
-				'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent',
-				'OCA\\OpenRegister\\Event\\ObjectCreatedEvent',
-				'OCA\\OpenRegister\\Event\\ObjectUpdatedEvent',
-			],
-			actual: ($listeners[\OCA\OpenCatalogi\Listener\ThemeHotspotListener::class] ?? [])
+			expected: ['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'],
+			actual: ($listeners[\OCA\OpenCatalogi\Listener\ThemeHotspotGuard::class] ?? [])
+		);
+		$this->assertSame(
+			expected: ['OCA\\OpenRegister\\Event\\ObjectCreatedEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatedEvent'],
+			actual: ($listeners[\OCA\OpenCatalogi\Listener\ThemeHotspotAudit::class] ?? [])
 		);
 	}//end testTheThemeHotspotListenerIsRegisteredBeforeAndAfterTheSave()
 

@@ -258,10 +258,10 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectUpdatingEvent::class, EmbargoGuardListener::class);
 		$context->registerEventListener(ObjectCreatingEvent::class, LicenceCheck::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, LicenceCheck::class);
-		$context->registerEventListener(ObjectCreatingEvent::class, ThemeHotspotListener::class);
-		$context->registerEventListener(ObjectUpdatingEvent::class, ThemeHotspotListener::class);
-		$context->registerEventListener(ObjectCreatedEvent::class, ThemeHotspotListener::class);
-		$context->registerEventListener(ObjectUpdatedEvent::class, ThemeHotspotListener::class);
+		$context->registerEventListener(ObjectCreatingEvent::class, ThemeHotspotGuard::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, ThemeHotspotGuard::class);
+		$context->registerEventListener(ObjectCreatedEvent::class, ThemeHotspotAudit::class);
+		$context->registerEventListener(ObjectUpdatedEvent::class, ThemeHotspotAudit::class);
 	}//end registerWriteGuards()
 
 	/**

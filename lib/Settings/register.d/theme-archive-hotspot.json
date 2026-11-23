@@ -1,5 +1,5 @@
 {
-	"_note": "Register fragment for theme-archive-hotspot (REQ-THA-001). An administrator marks a subject as an archive hotspot, with the reason; ThemeHotspotListener stamps archiveHotspotSince and sets the subject's OpenRegister appraisal to permanent. No later fragment in name order declares the theme schema, so this one carries the version bump.",
+	"_note": "Register fragment for theme-archive-hotspot (REQ-THA-001). An administrator marks a subject as an archive hotspot, with the reason; ThemeHotspotGuard stamps archiveHotspotSince and sets the subject's OpenRegister appraisal to permanent. No later fragment in name order declares the theme schema, so this one carries the version bump.",
 	"components": {
 		"schemas": {
 			"theme": {
