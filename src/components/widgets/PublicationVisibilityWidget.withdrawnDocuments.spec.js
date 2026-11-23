@@ -138,6 +138,28 @@ describe('withdrawn documents on the publication page', () => {
 		expect(axios.get).toHaveBeenCalledWith(FILES_URL)
 	})
 
+	it('sends the public reason and the title choice with a whole withdrawal, never with a document', async () => {
+		const wrapper = await mountWidget()
+		axios.post.mockResolvedValue({ data: {} })
+		const dialog = wrapper.findComponent({ name: 'WithdrawPublicationDialog' })
+
+		dialog.vm.$emit('confirm', { reason: 'AVG-melding', fileId: '', publicReason: 'In strijd met de AVG', tombstoneShowsTitle: true })
+		await flushPromises()
+		expect(axios.post).toHaveBeenLastCalledWith('/apps/opencatalogi/api/publications/pub-1/withdraw', {
+			reason: 'AVG-melding',
+			publicReason: 'In strijd met de AVG',
+			tombstoneShowsTitle: true,
+		})
+
+		dialog.vm.$emit('confirm', { reason: 'AVG-melding', fileId: '', publicReason: '', tombstoneShowsTitle: false })
+		await flushPromises()
+		expect(axios.post).toHaveBeenLastCalledWith('/apps/opencatalogi/api/publications/pub-1/withdraw', { reason: 'AVG-melding', tombstoneShowsTitle: false })
+
+		dialog.vm.$emit('confirm', { reason: 'BSN', fileId: '11', publicReason: 'x', tombstoneShowsTitle: true })
+		await flushPromises()
+		expect(axios.post).toHaveBeenLastCalledWith('/apps/opencatalogi/api/publications/pub-1/files/11/withdraw', { reason: 'BSN' })
+	})
+
 	it('shows an unreadable date as it came', async () => {
 		const wrapper = await mountWidget()
 		expect(wrapper.vm.formatDate('not-a-date')).toBe('not-a-date')

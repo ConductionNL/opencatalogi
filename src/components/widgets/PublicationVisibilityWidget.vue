@@ -175,6 +175,28 @@ function withdrawPath(answer) {
 }
 
 /**
+ * The withdraw request's body: the reason, and for the whole publication what
+ * its public tombstone says (REQ-PWA-002).
+ *
+ * @param {{reason: string, fileId: string, publicReason?: string, tombstoneShowsTitle?: boolean}} answer What the dialog collected.
+ * @return {object} The body.
+ * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
+ */
+function withdrawBody(answer) {
+	const body = { reason: answer.reason }
+	if (answer.fileId) {
+		return body
+	}
+	if (answer.publicReason) {
+		body.publicReason = answer.publicReason
+	}
+	if (typeof answer.tombstoneShowsTitle === 'boolean') {
+		body.tombstoneShowsTitle = answer.tombstoneShowsTitle
+	}
+	return body
+}
+
+/**
  * Publish now, withdraw with a reason, and publish again (REQ-PPW-002/003/004).
  *
  * The state comes from the server, which reads the same dates OpenRegister's
@@ -459,16 +481,15 @@ export default {
 		/**
 		 * Withdraw the publication, or the one document chosen.
 		 *
-		 * @param {{reason: string, fileId: string}} answer What the dialog collected.
+		 * @param {{reason: string, fileId: string, publicReason?: string, tombstoneShowsTitle?: boolean}} answer What the dialog collected.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
+		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
 		 */
 		async withdraw(answer) {
 			this.busy = true
 			try {
-				const { data } = await axios.post(this.url(withdrawPath(answer)), {
-					reason: answer.reason,
-				})
+				const { data } = await axios.post(this.url(withdrawPath(answer)), withdrawBody(answer))
 				this.dialogOpen = false
 				if (answer.fileId) {
 					this.showDocumentWithdrawn()

@@ -376,6 +376,8 @@ class PublicationStateController extends Controller {
 	 * @param array<string, mixed> $properties The publication's properties.
 	 *
 	 * @return JSONResponse The stored depublication, or the refusal.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
 	 */
 	private function withdrawWithReason(string $id, array $properties): JSONResponse {
 		$state = $this->takeDown(id: $id, properties: $properties);
@@ -383,16 +385,16 @@ class PublicationStateController extends Controller {
 			return $state;
 		}
 
-		return $this->record(
-			depublication: $this->registers->depublish(
-				withdrawal: [
-					'publication' => array_replace($properties, ['id' => $id]),
-					'reason' => $this->reason(),
-					'depublishedBy' => $this->actor(),
-					'channels' => $this->channelsFor(state: $state, properties: $properties),
-				]
-			)
+		$depublication = $this->registers->depublish(
+			withdrawal: [
+				'publication' => array_replace($properties, ['id' => $id]),
+				'reason' => $this->reason(),
+				'depublishedBy' => $this->actor(),
+				'channels' => $this->channelsFor(state: $state, properties: $properties),
+			]
 		);
+
+		return $this->record(depublication: $depublication + $this->tombstoneChoice());
 
 	}//end withdrawWithReason()
 
@@ -446,6 +448,31 @@ class PublicationStateController extends Controller {
 	private function reason(): string {
 		return trim((string)$this->request->getParam('reason', ''));
 	}//end reason()
+
+	/**
+	 * What the public tombstone of the withdrawn publication says, as the officer chose it (REQ-PWA-002).
+	 *
+	 * Only what the request sends is stored: a public reason that is not empty,
+	 * and whether the tombstone shows the title.
+	 *
+	 * @return array{publicReason?: string, tombstoneShowsTitle?: bool} The choice.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
+	 */
+	private function tombstoneChoice(): array {
+		$choice = [];
+		$publicReason = trim((string)$this->request->getParam('publicReason', ''));
+		if ($publicReason !== '') {
+			$choice['publicReason'] = $publicReason;
+		}
+
+		$showsTitle = $this->request->getParam('tombstoneShowsTitle', null);
+		if ($showsTitle !== null) {
+			$choice['tombstoneShowsTitle'] = filter_var($showsTitle, FILTER_VALIDATE_BOOLEAN);
+		}
+
+		return $choice;
+	}//end tombstoneChoice()
 
 	/**
 	 * Withdraw one document of a publication with a reason.
