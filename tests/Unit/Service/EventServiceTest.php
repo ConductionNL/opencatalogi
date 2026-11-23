@@ -822,6 +822,35 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testPublishObjectAttachmentsNullEntity()
 
 	/**
+	 * A frozen publication shares none of its files: nothing reaches the file service (REQ-PWA-003).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 */
+	public function testPublishObjectAttachmentsOfAFrozenPublicationSharesNothing(): void {
+		$objectData = [
+			'@self' => [
+				'uuid' => 'obj-uuid',
+				'id' => 1,
+				'frozen' => ['by' => 'redacteur', 'at' => '2026-11-20T10:00:00+00:00', 'reason' => 'Verkeerde bijlage'],
+			],
+		];
+
+		$this->appManagerMock->method('getInstalledApps')->willReturn(['openregister']);
+		$this->containerMock->expects($this->never())->method('get');
+
+		$result = $this->invokePrivateMethod(object: $this->eventService, methodName: 'publishObjectAttachments', parameters: [$objectData]);
+
+		$this->assertSame(expected: 0, actual: $result['published']);
+		$this->assertSame(
+			expected: ['Cannot write to this object: it was frozen by redacteur on 2026-11-20T10:00:00+00:00. Unfreeze it before changing it.'],
+			actual: $result['errors']
+		);
+
+	}//end testPublishObjectAttachmentsOfAFrozenPublicationSharesNothing()
+
+	/**
 	 * Test publishObjectAttachments handles file service unavailable.
 	 */
 	public function testPublishObjectAttachmentsServiceUnavailable(): void {

@@ -35,6 +35,7 @@ use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
+use OCA\OpenCatalogi\Service\Publication\FrozenRecord;
 use OCA\OpenCatalogi\Service\WooCategory;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -425,9 +426,15 @@ class BatchPublicationWriter {
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-the-published-file-carries-its-official-title-req-pff-002
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	public function attach(array $publication, File $file): ?array {
 		$this->requireOpenRegister();
+		$frozen = (new FrozenRecord())->refusal(record: ($publication['entity'] ?? null));
+		if ($frozen !== null) {
+			throw new RuntimeException($frozen);
+		}
+
 		$files = $this->container->get('OCA\OpenRegister\Service\FileService');
 		$target = $publication['entity'];
 		if (is_object($target) === false) {
