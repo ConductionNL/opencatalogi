@@ -680,13 +680,14 @@ class RetentionService implements RetentionServiceInterface {
 	 *
 	 * @param bool $dryRun Report the planned actions without saving anything.
 	 *
-	 * @return array<string, mixed> Counts: expiringSoon, reviewRequired, depublished, archived; plus `planned` on a dry run.
+	 * @return array<string, mixed> Counts: expiringSoon, reviewRequired, depublished, archived, and heldByHotspot or heldUnresolved
+	 *                              when an archive hotspot held a publication; plus `planned` on a dry run.
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
 	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The dry run is the command's safe default; the job keeps the plain call.
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
 	 */
 	public function evaluate(bool $dryRun = false): array {
 		$counts = ['expiringSoon' => 0, 'reviewRequired' => 0, 'depublished' => 0, 'archived' => 0];

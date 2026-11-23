@@ -54,10 +54,30 @@ class FakeObjectService {
 		return ['results' => $this->objects, 'facets' => []];
 	}//end searchObjectsPaginated()
 
+	/**
+	 * The subjects find() answers, by id.
+	 *
+	 * @var array<string, array<string, mixed>>
+	 */
 	public array $themes = [];
 
+	/**
+	 * The ids whose read fails.
+	 *
+	 * @var array<int, string>
+	 */
 	public array $unreadable = [];
 
+	/**
+	 * OpenRegister's ObjectService::find(): a subject, a stored object, or a bare id; a failing id throws.
+	 *
+	 * @param string $id The id.
+	 * @param mixed $options The find options.
+	 * @param bool $_rbac Whether RBAC applies.
+	 * @param bool $_multitenancy Whether multitenancy applies.
+	 *
+	 * @return array<string, mixed> The object.
+	 */
 	public function find(string $id, mixed $options = null, bool $_rbac = true, bool $_multitenancy = true) {
 		if (in_array($id, $this->unreadable, true) === true) {
 			throw new \RuntimeException('theme store down');
