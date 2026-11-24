@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use Psr\Log\LoggerInterface;
  * `commentPeriodError: "unreadable-dates"` instead of a state. A period that
  * cannot be looked up adds nothing.
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
  */
 class PublicationCommentPeriod implements PublicationCommentPeriodInterface {
 
@@ -70,7 +70,7 @@ class PublicationCommentPeriod implements PublicationCommentPeriodInterface {
 	 *
 	 * @return array<string, mixed> The publication, with `commentPeriod` or `commentPeriodError` when it has a period.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#3.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#3.1
 	 */
 	public function addTo(array $publication, ?DateTimeInterface $now = null): array {
 		$id = self::publicationId(publication: $publication);
@@ -158,7 +158,7 @@ class PublicationCommentPeriod implements PublicationCommentPeriodInterface {
 	 *
 	 * @return array<string, mixed>|null The period, or null.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
 	 */
 	private static function periodOf(mixed $result, string $publicationId): ?array {
 		$first = (((array) ($result['results'] ?? []))[0] ?? null);

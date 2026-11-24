@@ -599,7 +599,7 @@ class FederationControllerTest extends TestCase {
 	/**
 	 * REQ-PDP-003: an open period on the federation endpoint carries its end and the reaction form.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
 	 */
 	public function testThePublicationCarriesItsOpenCommentPeriod(): void {
 		$end = (new \DateTimeImmutable('+7 days', new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s\Z');
@@ -625,7 +625,7 @@ class FederationControllerTest extends TestCase {
 	/**
 	 * REQ-PDP-003: dates that cannot be read give an error, not a state.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
 	 */
 	public function testUnreadableDatesGiveAnErrorNotAState(): void {
 		$controller = $this->controllerWithPeriod([
@@ -643,7 +643,7 @@ class FederationControllerTest extends TestCase {
 	/**
 	 * A closed period carries no reaction form, and a publication without a period carries no key.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
 	 */
 	public function testAClosedPeriodHasNoFormAndNoPeriodHasNoKey(): void {
 		$controller = $this->controllerWithPeriod([
@@ -665,7 +665,7 @@ class FederationControllerTest extends TestCase {
 	/**
 	 * REQ-PDP-002: the federation attachment list carries each document's id and links, the catalogue found by the service.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
 	 */
 	public function testTheFederationAttachmentListIsDescribed(): void {
 		$this->request->method('getParams')->willReturn([]);

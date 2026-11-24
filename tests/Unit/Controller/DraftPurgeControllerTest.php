@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.1
  */
 
 declare(strict_types=1);

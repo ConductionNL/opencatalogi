@@ -5,7 +5,7 @@
  * The permanent-delete dialog names the publication, says it cannot be undone,
  * and only asks: it calls nothing itself (REQ-PLC-004).
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
  */
 
 import { mount } from '@vue/test-utils'

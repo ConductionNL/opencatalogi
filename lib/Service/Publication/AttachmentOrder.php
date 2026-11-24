@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md
  */
 
 declare(strict_types=1);
@@ -33,7 +33,7 @@ use OCP\Files\Node;
  * it follow by upload time, oldest first, so a new upload goes last. An id in
  * the order that is no longer attached is skipped.
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
  */
 class AttachmentOrder {
 	/**
@@ -43,7 +43,7 @@ class AttachmentOrder {
 	 *
 	 * @return list<string> The ids, or an empty list when none is stored.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.1
 	 */
 	public static function storedOrder(mixed $publication): array {
 		if (is_object($publication) === true && method_exists($publication, 'jsonSerialize') === true) {
@@ -66,7 +66,7 @@ class AttachmentOrder {
 	 *
 	 * @return list<string> The ids; empty when the value is not a list.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
 	 */
 	private static function orderedIds(mixed $order): array {
 		if (is_array($order) === false) {
@@ -92,7 +92,7 @@ class AttachmentOrder {
 	 *
 	 * @return list<mixed> The files, sorted.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.1
 	 */
 	public static function sort(array $files, array $order): array {
 		$rank = array_flip($order);
@@ -126,7 +126,7 @@ class AttachmentOrder {
 	 *
 	 * @return int The comparison.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
 	 */
 	private static function compare(array $a, array $b): int {
 		if ($a['ranked'] !== $b['ranked']) {
@@ -149,7 +149,7 @@ class AttachmentOrder {
 	 *
 	 * @return array<string, mixed> The answer with `position` on each result.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.1
 	 */
 	public static function withPositions(array $page): array {
 		if (isset($page['results']) === false || is_array($page['results']) === false) {

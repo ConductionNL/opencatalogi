@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
  */
 
 declare(strict_types=1);
@@ -35,7 +35,7 @@ use Throwable;
  * creation date is the publication's stored `creationDate`. Neither is added
  * when nothing is stored.
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
  */
 final class DocumentFacts {
 
@@ -66,7 +66,7 @@ final class DocumentFacts {
 	 *
 	 * @return array<string, mixed> The attachment with `documentId`, `format` and, when stored, `documentsoort` and `creationDate`.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	public static function forFile(array $file, array $publication): array {
 		$documentId = self::text(value: ($file['id'] ?? null));
@@ -100,7 +100,7 @@ final class DocumentFacts {
 	 *
 	 * @return array<string, mixed> The answer.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	public static function onPage(array $page, array $publication, ?callable $links): array {
 		if (is_array($page['results'] ?? null) === false) {
@@ -131,7 +131,7 @@ final class DocumentFacts {
 	 *
 	 * @return array<string, mixed> The public keys that are present.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	public static function publicView(array $document): array {
 		return array_intersect_key($document, array_flip(self::PUBLIC_KEYS));
@@ -146,7 +146,7 @@ final class DocumentFacts {
 	 *
 	 * @return bool False for a draft, a future publication or a depublished one.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	public static function isLive(array $publication, DateTimeImmutable $now): bool {
 		$self = $publication['@self'] ?? [];
@@ -173,7 +173,7 @@ final class DocumentFacts {
 	 *
 	 * @return bool True when its `depublished` moment is now or past.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	public static function isWithdrawn(array $file, DateTimeImmutable $now): bool {
 		$end = self::moment(value: ($file['depublished'] ?? null));

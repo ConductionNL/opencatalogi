@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
  */
 
 declare(strict_types=1);
@@ -29,7 +29,7 @@ use RuntimeException;
 /**
  * Nothing was removed. The reason says which proof did not hold.
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
  */
 class DraftPurgeRefusedException extends RuntimeException {
 
@@ -64,7 +64,7 @@ class DraftPurgeRefusedException extends RuntimeException {
 	 * @param string $reason One of the reason constants.
 	 * @param string $evidence What proves it: a date, a record id or a step, empty when there is none.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function __construct(public readonly string $reason, public readonly string $evidence = '') {
 		parent::__construct(message: trim('The permanent delete was refused: ' . $reason . ' ' . $evidence));

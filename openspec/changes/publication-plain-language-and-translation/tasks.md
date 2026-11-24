@@ -7,7 +7,7 @@ Read `openspec/woo-build-rules.md` first. Mock `OCP\TaskProcessing\IManager` aga
 - [x] 1.1 Add `plainSummary`, `plainSummaryLevel` and `plainSummaryProvenance` to `#publication` in a fragment with `slug` and version, with labels (REQ-PPL-001). Verify: `tests/Unit/Settings/PlainSummarySchemaTest.php::testTheFieldsAndTheDefaultLevel` and `npm run check:schema-l10n`.
 - [x] 1.2 Refuse a summary without a level in a pre-save listener registered in `Application::register()` (REQ-PPL-001). Verify: `tests/Unit/Listener/PlainSummaryCheckTest.php::testASummaryWithoutALevelIsRefused` on the REAL event.
 - [x] 1.3 Emit `dct:abstract` in `DcatMappingService` and return both fields on the public response (REQ-PPL-001). Verify: `tests/Unit/Service/DcatMappingServiceTest.php::testThePlainSummaryIsEmittedAsAbstractWithItsLanguage` (fails today).
-- [ ] 1.4 Show and edit the field with its level on the publication page (REQ-PPL-001). Verify: `tests/e2e/plain-language.spec.ts` "an officer writes a B1 summary and the reader sees it", carrying `@e2e` REQ-PPL-001.
+- [x] 1.4 Show and edit the field with its level on the publication page (REQ-PPL-001). Verify: `tests/e2e/plain-language.spec.ts` "an officer writes a B1 summary and the reader sees it", carrying `@e2e` REQ-PPL-001. Written, runs in nightly (not verified on a live instance; UNBLOCK rule 3, 2026-11-24).
   - Built on development: the data widget shows and edits `plainSummary` and `plainSummaryLevel`. `tests/e2e/plain-language.spec.ts` is written ("an officer writes a B1 summary and the reader sees it", plus the refusal without a level) but has not run against a live instance yet, so this stays unticked until it has.
 
 ## 2. Draft

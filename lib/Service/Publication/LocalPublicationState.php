@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md
  */
 
 declare(strict_types=1);
@@ -32,7 +32,7 @@ use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
  * (REQ-PDP-003) to a publication this instance answered. Either part is left
  * out when its service is not available.
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
  */
 class LocalPublicationState implements LocalPublicationStateInterface {
 
@@ -55,7 +55,7 @@ class LocalPublicationState implements LocalPublicationStateInterface {
 	 *
 	 * @return array<string, mixed> The publication with what applies added.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
 	 */
 	public function addTo(array $publication): array {
 		if ($this->withheld !== null) {

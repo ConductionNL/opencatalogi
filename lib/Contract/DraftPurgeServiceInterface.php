@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
  */
 
 declare(strict_types=1);
@@ -29,7 +29,7 @@ namespace OCA\OpenCatalogi\Contract;
  *
  * Callers outside Service/ depend on this interface instead of on the class.
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
  */
 interface DraftPurgeServiceInterface {
 	/**
@@ -41,7 +41,7 @@ interface DraftPurgeServiceInterface {
 	 *
 	 * @throws \Throwable When the register cannot be reached.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function find(string $id): ?object;
 
@@ -57,7 +57,7 @@ interface DraftPurgeServiceInterface {
 	 * @throws \OCA\OpenCatalogi\Exception\DraftPurgeRefusedException When a proof does not hold; nothing was removed.
 	 * @throws \OCA\OpenCatalogi\Exception\DraftPurgeFailedException When a removal failed part way.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function purge(object $publication): array;
 }//end interface

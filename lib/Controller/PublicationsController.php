@@ -1595,7 +1595,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @return array<string, mixed> The publication, unchanged when the period cannot be added.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
 	 */
 	private function withCommentPeriod(array $publication): array {
 		try {
@@ -1701,7 +1701,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @return JSONResponse The list.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	private function describedAttachments(string $catalogSlug, string $id): JSONResponse {
 		$response = $this->publicationService->attachments(id: $id);

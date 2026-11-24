@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use OCP\IRequest;
 /**
  * Serves `GET /api/{catalogSlug}/{id}/documents/{documentId}` and its `/diwoo` twin.
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
  */
 class PublicDocumentController extends Controller {
 	use AnswersCrossOriginReadRequests;
@@ -78,7 +78,7 @@ class PublicDocumentController extends Controller {
 	 *   guard inside OpenRegister's anonymous scope, lists shared files only and refuses drafts and
 	 *   withdrawn files; there is no per-user object to guard.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -108,7 +108,7 @@ class PublicDocumentController extends Controller {
 	 *
 	 * @no-admin-idor-exempt Public read through the same PublicDocuments::find() as show().
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -132,7 +132,7 @@ class PublicDocumentController extends Controller {
 	 *
 	 * @return Response The preflight answer.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]

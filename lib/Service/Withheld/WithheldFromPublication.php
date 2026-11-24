@@ -68,7 +68,7 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 	 *
 	 * @return array<string, mixed>
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-show-that-documents-were-withheld-and-why-req-pdp-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-show-that-documents-were-withheld-and-why-req-pdp-004
 	 */
 	public function addForCatalog(array $response, array $catalog, string $publicationId): array {
 		if ($this->optedIn(catalog: $catalog) === false) {

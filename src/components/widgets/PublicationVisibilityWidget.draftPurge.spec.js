@@ -7,7 +7,7 @@
  * dialog, sent to `DELETE /api/publications/{id}/draft`, and a refusal said in
  * the server's words (REQ-PLC-004).
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
  */
 
 import axios from '@nextcloud/axios'

@@ -38,7 +38,7 @@ interface PublicationCommentPeriodInterface {
 	 *
 	 * @return array<string, mixed> The publication, with `commentPeriod` or `commentPeriodError` when it has a period.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
 	 */
 	public function addTo(array $publication, ?DateTimeInterface $now = null): array;
 }//end interface
