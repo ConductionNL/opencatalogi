@@ -842,6 +842,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Të publikohet „{name}” tani, para datës së publikimit? Heqja regjistrohet në gjurmën e auditimit me emrin tuaj dhe arsyen.",
         "The embargo was lifted. The publication is public.": "Embargoja u hoq. Publikimi është publik.",
         "Kept permanently: archive hotspot {subject}": "Ruhet përgjithmonë: pikë e nxehtë arkivore {subject}",
+        "until {date}": "deri më {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "U ruajt: ky publikim do të hiqet automatikisht më {date}.",
         "Publish {count} of {total} publications": "Publiko {count} nga {total} publikime",
         "These publications miss a field required to publish and will be skipped:": "Këtyre publikimeve u mungon një fushë e detyrueshme për publikim dhe do të anashkalohen:",
         "Required to publish": "E detyrueshme për publikim"

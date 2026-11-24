@@ -842,6 +842,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publier « {name} » maintenant, avant sa date de publication ? La levée est consignée dans le journal d'audit avec votre nom et le motif.",
         "The embargo was lifted. The publication is public.": "L'embargo a été levé. La publication est publique.",
         "Kept permanently: archive hotspot {subject}": "Conservé définitivement : point chaud d'archivage {subject}",
+        "until {date}": "jusqu'au {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Enregistré : cette publication sera dépubliée automatiquement le {date}.",
         "Publish {count} of {total} publications": "Publier {count} publications sur {total}",
         "These publications miss a field required to publish and will be skipped:": "Il manque à ces publications un champ requis pour publier ; elles seront ignorées :",
         "Required to publish": "Requis pour publier"

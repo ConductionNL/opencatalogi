@@ -13,7 +13,7 @@
 import fs from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
-import { PUBLICATION_FORMATTERS, publicationStateLabel } from '../../src/services/publicationState.js'
+import { PUBLICATION_FORMATTERS, publicationStateCell, publicationStateLabel } from '../../src/services/publicationState.js'
 import { listActions, visibilityActions } from '../../src/services/publicationVisibility.js'
 
 describe('publicationState', () => {
@@ -32,6 +32,31 @@ describe('publicationState', () => {
 		expect(column).toEqual({ key: 'state', label: 'State', formatter: 'publicationState' })
 		const app = fs.readFileSync(path.resolve(__dirname, '../../src/App.vue'), 'utf8')
 		expect(app).toContain(':formatters="formatters"')
+	})
+})
+
+describe('the state column marks an automatic depublication (REQ-PSG-003)', () => {
+	const NOW = new Date('2026-11-24T12:00:00Z')
+
+	/** @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1 */
+	it('adds the coming depublication date to the state', () => {
+		const date = new Date('2026-12-01T00:00:00Z').toLocaleDateString()
+		expect(publicationStateCell('public', { depublicationDate: '2026-12-01T00:00:00Z' }, NOW)).toBe(`Public · until ${date}`)
+		expect(publicationStateCell('', { depublicationDate: '2026-12-01T00:00:00Z' }, NOW)).toBe(`until ${date}`)
+	})
+
+	/** @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1 */
+	it('shows the state alone for a past, absent or unreadable date and without a row', () => {
+		expect(publicationStateCell('public', { depublicationDate: '2026-11-01T00:00:00Z' }, NOW)).toBe('Public')
+		expect(publicationStateCell('public', { depublicationDate: 'soon' }, NOW)).toBe('Public')
+		expect(publicationStateCell('draft', {}, NOW)).toBe('Draft')
+		expect(publicationStateCell('draft')).toBe('Draft')
+	})
+
+	/** @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1 */
+	it('is what the list formatter shows, reading the row', () => {
+		expect(PUBLICATION_FORMATTERS.publicationState('public', { depublicationDate: '2999-01-01T00:00:00Z' }))
+			.toContain('Public · until ')
 	})
 })
 

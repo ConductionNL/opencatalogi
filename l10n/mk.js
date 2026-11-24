@@ -842,6 +842,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Да се објави „{name}“ сега, пред датумот на објавување? Укинувањето се запишува во ревизорската трага со вашето име и причината.",
         "The embargo was lifted. The publication is public.": "Ембаргото е укинато. Публикацијата е јавна.",
         "Kept permanently: archive hotspot {subject}": "Трајно се чува: архивска жешка точка {subject}",
+        "until {date}": "до {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Зачувано: оваа објава ќе биде автоматски повлечена на {date}.",
         "Publish {count} of {total} publications": "Објави {count} од {total} публикации",
         "These publications miss a field required to publish and will be skipped:": "На овие публикации им недостасува поле задолжително за објавување и ќе бидат прескокнати:",
         "Required to publish": "Задолжително за објавување"

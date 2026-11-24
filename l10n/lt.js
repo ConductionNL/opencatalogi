@@ -842,6 +842,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Paskelbti „{name}“ dabar, prieš paskelbimo datą? Panaikinimas įrašomas į audito žurnalą su jūsų vardu ir priežastimi.",
         "The embargo was lifted. The publication is public.": "Embargas panaikintas. Leidinys yra viešas.",
         "Kept permanently: archive hotspot {subject}": "Saugoma nuolat: archyvo karštasis taškas {subject}",
+        "until {date}": "iki {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Išsaugota: šis leidinys bus automatiškai atšauktas {date}.",
         "Publish {count} of {total} publications": "Paskelbti {count} iš {total} publikacijų",
         "These publications miss a field required to publish and will be skipped:": "Šioms publikacijoms trūksta laukelio, privalomo skelbimui, todėl jos bus praleistos:",
         "Required to publish": "Privaloma skelbimui"

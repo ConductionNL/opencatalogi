@@ -841,6 +841,8 @@
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "\"{name}\" jetzt vor dem Veröffentlichungsdatum veröffentlichen? Die Aufhebung wird mit Ihrem Namen und dem Grund im Prüfprotokoll festgehalten.",
         "The embargo was lifted. The publication is public.": "Die Sperrfrist wurde aufgehoben. Die Veröffentlichung ist öffentlich.",
         "Kept permanently: archive hotspot {subject}": "Dauerhaft aufbewahrt: Archiv-Hotspot {subject}",
+        "until {date}": "bis {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Gespeichert: Diese Veröffentlichung wird am {date} automatisch depubliziert.",
         "Publish {count} of {total} publications": "{count} von {total} Veröffentlichungen veröffentlichen",
         "These publications miss a field required to publish and will be skipped:": "Diesen Veröffentlichungen fehlt ein für die Veröffentlichung erforderliches Feld; sie werden übersprungen:",
         "Required to publish": "Für die Veröffentlichung erforderlich"

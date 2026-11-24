@@ -842,6 +842,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Julkaistaanko \"{name}\" nyt, ennen julkaisupäivää? Purkaminen kirjataan tarkastuslokiin nimelläsi ja perusteluineen.",
         "The embargo was lifted. The publication is public.": "Julkaisukielto purettiin. Julkaisu on julkinen.",
         "Kept permanently: archive hotspot {subject}": "Säilytetään pysyvästi: arkiston kuuma kohta {subject}",
+        "until {date}": "{date} asti",
+        "Saved: this publication will be taken down automatically on {date}.": "Tallennettu: tämä julkaisu poistetaan automaattisesti {date}.",
         "Publish {count} of {total} publications": "Julkaise {count}/{total} julkaisua",
         "These publications miss a field required to publish and will be skipped:": "Näistä julkaisuista puuttuu julkaisemiseen vaadittu kenttä, ja ne ohitetaan:",
         "Required to publish": "Pakollinen julkaisemiseen"

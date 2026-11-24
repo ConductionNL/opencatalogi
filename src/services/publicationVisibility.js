@@ -181,6 +181,53 @@ export function comingDepublication(publication, now = new Date()) {
 }
 
 /**
+ * A record's id and depublication date as one key, or null when there is no
+ * loaded record yet (REQ-PSG-003).
+ *
+ * @param {object|null} publication The publication's properties.
+ * @return {string|null} `<id>|<depublicationDate>`.
+ * @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1
+ */
+export function depublicationKeyOf(publication) {
+	if (!publication || typeof publication !== 'object') {
+		return null
+	}
+	const self = publication['@self'] || {}
+	const id = String(publication.id ?? self.id ?? publication.uuid ?? '')
+	if (id === '') {
+		return null
+	}
+	return id + '|' + String(publication.depublicationDate ?? '')
+}
+
+/**
+ * One step of the save notice: the first key of a record is its baseline and
+ * says nothing; a later key with another depublication date answers that
+ * date when it lies ahead, or null to clear the notice (REQ-PSG-003).
+ *
+ * @param {{id: string, date: string}|null} baseline The key seen before.
+ * @param {string|null} key The current key.
+ * @param {Date} [now] The moment to compare with.
+ * @return {{baseline: ({id: string, date: string}|null), date: (Date|null|undefined)}}
+ *   `date` undefined leaves the notice as it is.
+ * @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1
+ */
+export function depublicationNoticeStep(baseline, key, now = new Date()) {
+	if (key === null) {
+		return { baseline, date: undefined }
+	}
+	const at = key.indexOf('|')
+	const current = { id: key.slice(0, at), date: key.slice(at + 1) }
+	if (baseline === null || baseline.id !== current.id) {
+		return { baseline: current, date: null }
+	}
+	if (baseline.date === current.date) {
+		return { baseline, date: undefined }
+	}
+	return { baseline: current, date: comingDepublication({ depublicationDate: current.date }, now) }
+}
+
+/**
  * The list moves the page offers: Unlist on a public or scheduled publication
  * that is listed, List again on an unlisted one, both only to a caller with
  * the update right (publication-lifecycle-on-or REQ-PLC-006).
