@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Titel betg scrit: quest tip da datoteca n'ha nagin titel",
         "Publish {count} of {total} publications": "Publitgar {count} da {total} publicaziuns",
         "These publications miss a field required to publish and will be skipped:": "A questas publicaziuns manca in champ necessari per publitgar ed ellas vegnan sursiglidas:",
-        "Required to publish": "Necessari per publitgar"
+        "Required to publish": "Necessari per publitgar",
+        "Publisher RSIN": "RSIN da l'editur",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Il RSIN da l'organisaziun che publitgescha, memorisà cura ch'in document vegn agiuntà."
     },
     "nplurals=2; plural=(n != 1);"
 )

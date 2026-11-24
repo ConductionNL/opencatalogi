@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Заголовок не записано: цей тип файлу не має заголовка",
         "Publish {count} of {total} publications": "Опублікувати {count} з {total} публікацій",
         "These publications miss a field required to publish and will be skipped:": "У цих публікаціях бракує поля, обов'язкового для публікації, тож їх буде пропущено:",
-        "Required to publish": "Обов'язково для публікації"
+        "Required to publish": "Обов'язково для публікації",
+        "Publisher RSIN": "RSIN видавця",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN організації-видавця, зберігається під час прикріплення документа."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Titel nicht geschrieben: Dieser Dateityp hat keinen Titel",
         "Publish {count} of {total} publications": "{count} von {total} Veröffentlichungen veröffentlichen",
         "These publications miss a field required to publish and will be skipped:": "Diesen Veröffentlichungen fehlt ein für die Veröffentlichung erforderliches Feld; sie werden übersprungen:",
-        "Required to publish": "Für die Veröffentlichung erforderlich"
+        "Required to publish": "Für die Veröffentlichung erforderlich",
+        "Publisher RSIN": "RSIN des Herausgebers",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Die RSIN der veröffentlichenden Organisation, gespeichert, wenn ein Dokument angehängt wird."
     },
     "nplurals=2; plural=(n != 1);"
 )

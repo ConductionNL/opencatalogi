@@ -853,7 +853,9 @@
         "Title not written: this file type has no title": "Titulli nuk u shkrua: ky lloj skedari nuk ka titull",
         "Publish {count} of {total} publications": "Publiko {count} nga {total} publikime",
         "These publications miss a field required to publish and will be skipped:": "Këtyre publikimeve u mungon një fushë e detyrueshme për publikim dhe do të anashkalohen:",
-        "Required to publish": "E detyrueshme për publikim"
+        "Required to publish": "E detyrueshme për publikim",
+        "Publisher RSIN": "RSIN i botuesit",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN i organizatës botuese, i ruajtur kur bashkëngjitet një dokument."
     },
     "plurals": {}
 }

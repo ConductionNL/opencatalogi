@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Otsikkoa ei kirjoitettu: tällä tiedostotyypillä ei ole otsikkoa",
         "Publish {count} of {total} publications": "Julkaise {count}/{total} julkaisua",
         "These publications miss a field required to publish and will be skipped:": "Näistä julkaisuista puuttuu julkaisemiseen vaadittu kenttä, ja ne ohitetaan:",
-        "Required to publish": "Pakollinen julkaisemiseen"
+        "Required to publish": "Pakollinen julkaisemiseen",
+        "Publisher RSIN": "Julkaisijan RSIN",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Julkaisevan organisaation RSIN, tallennetaan kun asiakirja liitetään."
     },
     "nplurals=2; plural=(n != 1);"
 )

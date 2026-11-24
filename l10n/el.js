@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Ο τίτλος δεν γράφτηκε: αυτός ο τύπος αρχείου δεν έχει τίτλο",
         "Publish {count} of {total} publications": "Δημοσίευση {count} από {total} δημοσιεύσεις",
         "These publications miss a field required to publish and will be skipped:": "Σε αυτές τις δημοσιεύσεις λείπει πεδίο που απαιτείται για δημοσίευση και θα παραλειφθούν:",
-        "Required to publish": "Απαιτείται για δημοσίευση"
+        "Required to publish": "Απαιτείται για δημοσίευση",
+        "Publisher RSIN": "RSIN εκδότη",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Το RSIN του εκδίδοντος οργανισμού, αποθηκεύεται όταν επισυνάπτεται έγγραφο."
     },
     "nplurals=2; plural=(n != 1);"
 )

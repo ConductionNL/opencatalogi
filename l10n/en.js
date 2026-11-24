@@ -2217,7 +2217,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Title not written: this file type has no title",
         "Publish {count} of {total} publications": "Publish {count} of {total} publications",
         "These publications miss a field required to publish and will be skipped:": "These publications miss a field required to publish and will be skipped:",
-        "Required to publish": "Required to publish"
+        "Required to publish": "Required to publish",
+        "Publisher RSIN": "Publisher RSIN",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "The RSIN of the publishing organisation, stored when a document is attached."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Pealkirja ei kirjutatud: sellel failitüübil pole pealkirja",
         "Publish {count} of {total} publications": "Avalda {count} väljaannet {total}-st",
         "These publications miss a field required to publish and will be skipped:": "Nendel väljaannetel puudub avaldamiseks nõutav väli ja need jäetakse vahele:",
-        "Required to publish": "Avaldamiseks nõutav"
+        "Required to publish": "Avaldamiseks nõutav",
+        "Publisher RSIN": "Väljaandja RSIN",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Avaldava organisatsiooni RSIN, salvestatakse dokumendi lisamisel."
     },
     "nplurals=2; plural=(n != 1);"
 )

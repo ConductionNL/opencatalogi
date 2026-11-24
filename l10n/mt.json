@@ -853,7 +853,9 @@
         "Title not written: this file type has no title": "It-titlu ma nkitibx: dan it-tip ta' fajl m'għandux titlu",
         "Publish {count} of {total} publications": "Ippubblika {count} minn {total} pubblikazzjonijiet",
         "These publications miss a field required to publish and will be skipped:": "Dawn il-pubblikazzjonijiet m'għandhomx qasam meħtieġ biex jiġu ppubblikati u se jinqabżu:",
-        "Required to publish": "Meħtieġ biex jiġi ppubblikat"
+        "Required to publish": "Meħtieġ biex jiġi ppubblikat",
+        "Publisher RSIN": "RSIN tal-pubblikatur",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "L-RSIN tal-organizzazzjoni li qed tippubblika, maħżun meta jiġi mehmuż dokument."
     },
     "plurals": {}
 }

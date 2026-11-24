@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Pavadinimas neįrašytas: šis failo tipas neturi pavadinimo",
         "Publish {count} of {total} publications": "Paskelbti {count} iš {total} publikacijų",
         "These publications miss a field required to publish and will be skipped:": "Šioms publikacijoms trūksta laukelio, privalomo skelbimui, todėl jos bus praleistos:",
-        "Required to publish": "Privaloma skelbimui"
+        "Required to publish": "Privaloma skelbimui",
+        "Publisher RSIN": "Leidėjo RSIN",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Skelbiančios organizacijos RSIN, išsaugomas pridedant dokumentą."
     },
     "nplurals=2; plural=(n != 1);"
 )

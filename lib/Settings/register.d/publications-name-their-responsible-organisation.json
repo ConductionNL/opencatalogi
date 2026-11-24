@@ -1,10 +1,10 @@
 {
-	"_note": "Register fragment for publications-name-their-responsible-organisation (REQ-PRO-001). Adds to the publication the organisation responsible for it, apart from the publisher in `organization`: a shared service centre can publish for a municipality. Optional; when it is empty the publisher is the responsible organisation. The version is the publication schema's merged version, so the last fragment in name order (woo-x-access-boundary-hardening.json) carries the same bump.",
+	"_note": "Register fragment for publications-name-their-responsible-organisation (REQ-PRO-001). Adds to the publication the organisation responsible for it, apart from the publisher in `organization`: a shared service centre can publish for a municipality. Optional; when it is empty the publisher is the responsible organisation. `publisherRsin` (task 2.2b) holds the publisher's RSIN, stored when the first document is attached and only when it passes the 11-proef. The version is the publication schema's merged version, so the last fragment in name order (woo-x-access-boundary-hardening.json) carries the same bump.",
 	"components": {
 		"schemas": {
 			"publication": {
 				"slug": "publication",
-				"version": "0.0.12",
+				"version": "0.0.17",
 				"properties": {
 					"responsibleOrganization": {
 						"type": "string",
@@ -13,6 +13,12 @@
 						"facetable": true,
 						"title": "Responsible organisation",
 						"description": "The organisation responsible for this publication, when it is not the publisher."
+					},
+					"publisherRsin": {
+						"type": "string",
+						"pattern": "^[0-9]{9}$",
+						"title": "Publisher RSIN",
+						"description": "The RSIN of the publishing organisation, stored when a document is attached."
 					}
 				}
 			}

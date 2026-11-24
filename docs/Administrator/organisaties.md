@@ -12,7 +12,7 @@ Open in OpenCatalogi de pagina **Organisaties** en kies de organisatie. Het blok
 | Samenvatting | Een korte omschrijving. |
 | OIN | Het Organisatie-identificatienummer, zoals het in het OIN-register staat. |
 | TOOI | De identificatie volgens de TOOI-waardelijsten (Thesauri en Ontologieën voor Overheidsinformatie). |
-| RSIN | Het Rechtspersonen en Samenwerkingsverbanden Informatienummer. Het nummer moet de elfproef doorstaan, bijvoorbeeld `002220647`. |
+| RSIN | Het Rechtspersonen en Samenwerkingsverbanden Informatienummer. Het nummer moet de elfproef doorstaan, bijvoorbeeld `002220647`. Het gaat mee met elk document dat aan een publicatie van de organisatie wordt toegevoegd, zie [Publicerende en verantwoordelijke organisatie](../Users/publicerende-en-verantwoordelijke-organisatie.md). |
 | PKI | De referentie naar het PKIoverheid-certificaat van de organisatie. |
 
 Klik op een waarde om die te wijzigen. Met **Toevoegen** op de pagina Organisaties maakt u een nieuwe organisatie aan in de gedeelde organisatie van OpenRegister.

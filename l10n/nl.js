@@ -2172,7 +2172,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Titel niet geschreven: dit bestandstype heeft geen titel",
         "Publish {count} of {total} publications": "{count} van {total} publicaties publiceren",
         "These publications miss a field required to publish and will be skipped:": "Deze publicaties missen een veld dat nodig is om te publiceren en worden overgeslagen:",
-        "Required to publish": "Verplicht om te publiceren"
+        "Required to publish": "Verplicht om te publiceren",
+        "Publisher RSIN": "RSIN van de publicerende organisatie",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Het RSIN van de publicerende organisatie, vastgelegd wanneer een document wordt toegevoegd."
     },
     "nplurals=2; plural=(n != 1);"
 )

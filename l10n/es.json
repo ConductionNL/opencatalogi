@@ -853,7 +853,9 @@
         "Title not written: this file type has no title": "Título no escrito: este tipo de archivo no tiene título",
         "Publish {count} of {total} publications": "Publicar {count} de {total} publicaciones",
         "These publications miss a field required to publish and will be skipped:": "A estas publicaciones les falta un campo obligatorio para publicar y se omitirán:",
-        "Required to publish": "Obligatorio para publicar"
+        "Required to publish": "Obligatorio para publicar",
+        "Publisher RSIN": "RSIN del editor",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "El RSIN de la organización editora, guardado cuando se adjunta un documento."
     },
     "plurals": {}
 }
