@@ -49,6 +49,7 @@ function knownSchema(id) {
  *
  * @param {object} publication The publication.
  * @return {object|null} The schema.
+ * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
  */
 export function resolveSchema(publication) {
 	const ref = publication?.['@self']?.schema ?? publication?.schema

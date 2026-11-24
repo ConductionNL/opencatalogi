@@ -545,6 +545,53 @@ export default {
 			this.publishDate = `${year}-${month}-${day}`
 		},
 
+		/**
+		 * Whether this publish leaves a selected object alone: its schema has no
+		 * publication date fields, it is already published (outside retroactive
+		 * mode, so its date is not overwritten), or it misses a field required to
+		 * publish (REQ-PRP-003).
+		 *
+		 * @param {object} obj The selected object.
+		 * @param {object[]} incomplete The selected objects missing a required field.
+		 * @return {boolean} True when the object is skipped.
+		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 */
+		skipsPublish(obj, incomplete) {
+			if (!schemaHasPublicationDateFields(obj)) return true
+			if (this.mode !== 'retroactive' && this.isAlreadyPublished(obj)) {
+				return true
+			}
+			return incomplete.includes(obj)
+		},
+
+		/**
+		 * Publish one object. A publication that is not yet published moves
+		 * through its lifecycle, so a refused move writes no date (REQ-PLC-003);
+		 * anything else gets its dates saved.
+		 *
+		 * @param {object} obj The selected object.
+		 * @param {string} targetDate The publication date to write.
+		 * @return {Promise<void>} Rejects when the publish is refused.
+		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1
+		 */
+		async publishOne(obj, targetDate) {
+			if (this.mode !== 'retroactive' && publishesThroughLifecycle(obj)) {
+				await publishThroughLifecycle(obj, targetDate)
+				return
+			}
+
+			const clone = JSON.parse(JSON.stringify(obj))
+			// In retroactive mode the publicationDate is left unchanged on purpose.
+			if (this.mode !== 'retroactive') {
+				clone.publicationDate = targetDate
+			}
+			clone.depublicationDate = null
+
+			const register = clone['@self']?.register ?? clone.register
+			const schema = clone['@self']?.schema ?? clone.schema
+			await objectStore.saveObject(clone, { register, schema })
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		async publishObjects() {
 			if (this.selectedMode?.disabled) return
@@ -552,56 +599,15 @@ export default {
 			this.error = false
 
 			const targetDate = this.mode === 'later' ? this.publishDate : this.today
-			const objectsToProcess = [...this.selectedObjects]
 			const successful = []
 			const failed = []
 			const refusals = []
 			const incomplete = this.incompleteObjects.map((entry) => entry.object)
 
-			for (const obj of objectsToProcess) {
+			for (const obj of [...this.selectedObjects]) {
+				if (this.skipsPublish(obj, incomplete)) continue
 				try {
-					// Skip publications whose schema lacks the publication date
-					// fields the publish flow writes to.
-					if (!schemaHasPublicationDateFields(obj)) {
-						continue
-					}
-					// Skip already-published items in publish-now / publish-later modes:
-					// their publicationDate must not be overwritten.
-					if (
-						this.mode !== 'retroactive'
-						&& this.isAlreadyPublished(obj)
-					) {
-						continue
-					}
-					// Skip publications that miss a field required to publish (REQ-PRP-003).
-					if (incomplete.includes(obj)) {
-						continue
-					}
-
-					// A publication that is not yet published moves through its
-					// lifecycle; a refused move writes no date (REQ-PLC-003).
-					if (
-						this.mode !== 'retroactive'
-						&& publishesThroughLifecycle(obj)
-					) {
-						await publishThroughLifecycle(obj, targetDate)
-						successful.push(obj)
-						continue
-					}
-
-					const clone = JSON.parse(JSON.stringify(obj))
-					if (this.mode === 'retroactive') {
-						// publicationDate is left unchanged on purpose
-						clone.depublicationDate = null
-					} else {
-						clone.publicationDate = targetDate
-						clone.depublicationDate = null
-					}
-
-					const register = clone['@self']?.register ?? clone.register
-					const schema = clone['@self']?.schema ?? clone.schema
-
-					await objectStore.saveObject(clone, { register, schema })
+					await this.publishOne(obj, targetDate)
 					successful.push(obj)
 				} catch (err) {
 					console.error('Error publishing object:', err)
