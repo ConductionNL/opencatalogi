@@ -107,8 +107,14 @@ import { NcDateTimePicker, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 import MassObjectActionDialog from './MassObjectActionDialog.vue'
-import { publishesThroughLifecycle, publishThroughLifecycle } from '../../services/publicationTransition.js'
-import { missingToPublish, refusalMessage } from '../../services/requiredToPublish.js'
+import {
+	publishesThroughLifecycle,
+	publishThroughLifecycle,
+} from '../../services/publicationTransition.js'
+import {
+	missingToPublish,
+	refusalMessage,
+} from '../../services/requiredToPublish.js'
 import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 import { objectStore } from '../../store/store.js'
 import massObjectAction from './massObjectAction.js'
@@ -233,7 +239,11 @@ export default {
 		incompleteObjects() {
 			if (this.mode === 'retroactive') return []
 			return this.selectedObjects
-				.filter((obj) => schemaHasPublicationDateFields(obj) && !this.isAlreadyPublished(obj))
+				.filter(
+					(obj) =>
+						schemaHasPublicationDateFields(obj)
+						&& !this.isAlreadyPublished(obj),
+				)
 				.map((obj) => ({
 					key: obj?.['@self']?.id ?? obj?.id ?? obj?.title,
 					title: obj?.title || obj?.['@self']?.name || obj?.id,
@@ -249,9 +259,14 @@ export default {
 		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
 		 */
 		publishableCount() {
-			return this.selectedObjects.filter((obj) => schemaHasPublicationDateFields(obj)
-				&& (this.mode === 'retroactive' || !this.isAlreadyPublished(obj))).length
-				- this.incompleteObjects.length
+			return (
+				this.selectedObjects.filter(
+					(obj) =>
+						schemaHasPublicationDateFields(obj)
+						&& (this.mode === 'retroactive'
+							|| !this.isAlreadyPublished(obj)),
+				).length - this.incompleteObjects.length
+			)
 		},
 
 		/**
@@ -565,7 +580,10 @@ export default {
 
 					// A publication that is not yet published moves through its
 					// lifecycle; a refused move writes no date (REQ-PLC-003).
-					if (this.mode !== 'retroactive' && publishesThroughLifecycle(obj)) {
+					if (
+						this.mode !== 'retroactive'
+						&& publishesThroughLifecycle(obj)
+					) {
 						await publishThroughLifecycle(obj, targetDate)
 						successful.push(obj)
 						continue
@@ -590,7 +608,9 @@ export default {
 					failed.push({ object: obj, error: err })
 					// OpenRegister's refusal names the publication's missing fields (REQ-PRP-003).
 					if (err?.response?.status === 422) {
-						refusals.push(`${obj?.title || obj?.id}: ${refusalMessage(err)}`)
+						refusals.push(
+							`${obj?.title || obj?.id}: ${refusalMessage(err)}`,
+						)
 					}
 				}
 			}

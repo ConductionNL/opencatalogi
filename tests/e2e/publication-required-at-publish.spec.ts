@@ -40,18 +40,30 @@ test.describe('Publication required at publish', () => {
 		scope = await publicationScope(request)
 		path = (await publicationCatalog(request, RUN_ID)).path
 
-		const schema = await (await request.get(`${OR_API}/schemas/${scope.schema}`)).json()
-		const lifecycle = schema?.['x-openregister-lifecycle'] ?? schema?.configuration?.['x-openregister-lifecycle']
-		declared = JSON.stringify(lifecycle?.states?.published?.fields?.required ?? []).includes('summary')
+		const schema = await (
+			await request.get(`${OR_API}/schemas/${scope.schema}`)
+		).json()
+		const lifecycle =
+			schema?.['x-openregister-lifecycle']
+			?? schema?.configuration?.['x-openregister-lifecycle']
+		declared = JSON.stringify(
+			lifecycle?.states?.published?.fields?.required ?? [],
+		).includes('summary')
 
 		const seeds: Array<[string, Record<string, unknown>]> = [
-			[complete, { summary: 'Begroting', description: 'De begroting voor 2027.' }],
+			[
+				complete,
+				{ summary: 'Begroting', description: 'De begroting voor 2027.' },
+			],
 			[incomplete, { description: 'Agenda en stukken.' }],
 		]
 		for (const [title, fields] of seeds) {
-			const res = await request.post(`${OR_API}/objects/${scope.register}/${scope.schema}`, {
-				data: { title, status: 'draft', ...fields },
-			})
+			const res = await request.post(
+				`${OR_API}/objects/${scope.register}/${scope.schema}`,
+				{
+					data: { title, status: 'draft', ...fields },
+				},
+			)
 			expect(res.ok(), `seed ${title}`).toBe(true)
 			created.set(title, String((await res.json()).id))
 		}
@@ -59,7 +71,9 @@ test.describe('Publication required at publish', () => {
 
 	test.afterAll(async ({ request }) => {
 		for (const id of created.values()) {
-			await request.delete(`${OR_API}/objects/${scope.register}/${scope.schema}/${id}`).catch(() => undefined)
+			await request
+				.delete(`${OR_API}/objects/${scope.register}/${scope.schema}/${id}`)
+				.catch(() => undefined)
 		}
 	})
 
@@ -70,11 +84,19 @@ test.describe('Publication required at publish', () => {
 	 * @param title The publication title.
 	 */
 	async function select(page: Page, title: string): Promise<void> {
-		await page.locator('main tbody tr').filter({ hasText: title }).locator('input[type="checkbox"]').first().check({ force: true })
+		await page
+			.locator('main tbody tr')
+			.filter({ hasText: title })
+			.locator('input[type="checkbox"]')
+			.first()
+			.check({ force: true })
 	}
 
 	test('Two selected, one incomplete', async ({ page, request }) => {
-		test.skip(!declared, 'The publication schema declares no fields required to publish yet (task 1.1 held back).')
+		test.skip(
+			!declared,
+			'The publication schema declares no fields required to publish yet (task 1.1 held back).',
+		)
 
 		await page.goto(`${APP}${path}&_search=${encodeURIComponent(RUN_ID)}`)
 		await dismissOverlays(page)
@@ -83,16 +105,26 @@ test.describe('Publication required at publish', () => {
 		await page.locator('[data-testid="cn-bulk-action-publish"]').first().click()
 
 		const dialog = page.getByRole('dialog')
-		await expect(dialog.getByTestId('publish-incomplete')).toContainText(`${incomplete}: summary`)
-		const confirm = dialog.getByRole('button', { name: /Publish 1 of 2 publications|1 van 2 publicaties publiceren/i })
+		await expect(dialog.getByTestId('publish-incomplete')).toContainText(
+			`${incomplete}: summary`,
+		)
+		const confirm = dialog.getByRole('button', {
+			name: /Publish 1 of 2 publications|1 van 2 publicaties publiceren/i,
+		})
 		await expect(confirm).toBeEnabled()
 		await confirm.click()
 
-		await expect.poll(async () => {
-			const res = await request.get(`${OR_API}/objects/${scope.register}/${scope.schema}/${created.get(complete)}`)
-			return (await res.json()).status
-		}).toBe('published')
-		const left = await request.get(`${OR_API}/objects/${scope.register}/${scope.schema}/${created.get(incomplete)}`)
+		await expect
+			.poll(async () => {
+				const res = await request.get(
+					`${OR_API}/objects/${scope.register}/${scope.schema}/${created.get(complete)}`,
+				)
+				return (await res.json()).status
+			})
+			.toBe('published')
+		const left = await request.get(
+			`${OR_API}/objects/${scope.register}/${scope.schema}/${created.get(incomplete)}`,
+		)
 		expect((await left.json()).status).toBe('draft')
 	})
 })

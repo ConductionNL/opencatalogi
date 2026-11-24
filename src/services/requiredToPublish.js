@@ -19,7 +19,11 @@ import { resolveSchema } from './schemaHelpers.js'
  */
 function lifecycleOf(schema) {
 	if (!schema || typeof schema !== 'object') return null
-	return schema['x-openregister-lifecycle'] ?? schema.configuration?.['x-openregister-lifecycle'] ?? null
+	return (
+		schema['x-openregister-lifecycle']
+		?? schema.configuration?.['x-openregister-lifecycle']
+		?? null
+	)
 }
 
 /**
@@ -35,8 +39,12 @@ export function requiredToPublishFields(schema) {
 
 	const names = []
 	for (const rule of rules) {
-		for (const field of (Array.isArray(rule?.fields) ? rule.fields : [])) {
-			if (typeof field === 'string' && field !== '' && !names.includes(field)) {
+		for (const field of Array.isArray(rule?.fields) ? rule.fields : []) {
+			if (
+				typeof field === 'string'
+				&& field !== ''
+				&& !names.includes(field)
+			) {
 				names.push(field)
 			}
 		}
@@ -67,7 +75,9 @@ function isEmpty(value) {
  * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
  */
 export function missingToPublish(publication, schema = undefined) {
-	const fields = requiredToPublishFields(schema === undefined ? resolveSchema(publication) : schema)
+	const fields = requiredToPublishFields(
+		schema === undefined ? resolveSchema(publication) : schema,
+	)
 	return fields.filter((field) => isEmpty(publication?.[field]))
 }
 

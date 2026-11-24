@@ -249,8 +249,15 @@ import '../../css/json-highlight.css'
 										<small
 											v-if="requiredToPublish.includes(key)"
 											class="form-field__required-to-publish"
-											:data-testid="'required-to-publish-' + key">
-											{{ t('opencatalogi', 'Required to publish') }}
+											:data-testid="
+												'required-to-publish-' + key
+											">
+											{{
+												t(
+													'opencatalogi',
+													'Required to publish',
+												)
+											}}
 										</small>
 									</div>
 								</div>
@@ -379,9 +386,7 @@ function optionOf(entry) {
  * @return {boolean} True in create mode
  */
 function isCreateTransfer(transferData) {
-	return (
-		transferData === 'ignore selectedCatalogus' || transferData === 'create'
-	)
+	return transferData === 'ignore selectedCatalogus' || transferData === 'create'
 }
 
 /**
@@ -750,7 +755,8 @@ export default {
 			this.selectedRegister = register && optionOf(register)
 
 			const schema = objectStore.availableSchemas.find(
-				(schema) => String(schema.id) === String(activeObject['@self'].schema),
+				(schema) =>
+					String(schema.id) === String(activeObject['@self'].schema),
 			)
 			this.selectedSchema = schema && optionOf(schema)
 		},
