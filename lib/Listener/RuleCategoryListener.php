@@ -23,7 +23,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Files a record a published collection publishes under that collection's category.
  *
- * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
  *
  * @template-implements IEventListener<Event>
  */
@@ -74,7 +74,7 @@ class RuleCategoryListener implements IEventListener {
 	 *
 	 * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatingEvent === true) {
@@ -96,7 +96,7 @@ class RuleCategoryListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
 	 */
 	private function stamp(ObjectCreatingEvent|ObjectUpdatingEvent $event, ObjectEntity $object): void {
 		try {

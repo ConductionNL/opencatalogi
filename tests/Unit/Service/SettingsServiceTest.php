@@ -649,7 +649,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-translations/design.md
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
 	 */
 	public function testPublicationLanguagesAreStoredAsTagsWithDutchFirst(): void {
 		$stored = [];
@@ -713,7 +713,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-translations/design.md
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
 	 */
 	public function testPublicationLanguagesDefaultToDutchAndEnglish(): void {
 		$this->appManager->method('getInstalledApps')->willReturn([]);

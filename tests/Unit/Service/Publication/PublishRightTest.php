@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * @covers \OCA\OpenCatalogi\Service\Publication\PublishRight
  *
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md
  */
 class PublishRightTest extends TestCase {
 

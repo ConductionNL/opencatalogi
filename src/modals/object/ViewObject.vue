@@ -1336,7 +1336,7 @@ export default {
 		 * schema declares translatable fields (REQ-PTR-003).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		translatable() {
 			return !this.isNewObject && hasTranslatableFields(this.resolvedSchema)
@@ -1347,7 +1347,7 @@ export default {
 		 * translated into the language being edited.
 		 *
 		 * @return {Array<string>}
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		editLanguageOutdated() {
 			return outdatedFields(this.translationStatus, this.editLanguage)
@@ -2099,7 +2099,7 @@ export default {
 		 *
 		 * @param {string} language The language to open in.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		async loadTranslationContext(language) {
 			if (!this.translatable) {
@@ -2131,7 +2131,7 @@ export default {
 		 *
 		 * @param {string} language The language.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		async setEditLanguage(language) {
 			this.editLanguage = language
@@ -2249,7 +2249,7 @@ export default {
 		 *
 		 * @param {boolean} isCreating - Whether a new object is created
 		 * @return {{isCreating: boolean, objectData: object, endpoint: string, method: string, language?: string}} The request
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		saveRequest(isCreating) {
 			// Build the complete object with all schema properties
@@ -2285,7 +2285,7 @@ export default {
 		 * @param {{isCreating: boolean, objectData: object, endpoint: string, method: string, language?: string}} request - The request
 		 * @return {Promise<object>} The saved object
 		 * @throws {Error} When the answer is not ok
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		async sendSave({ isCreating, objectData, endpoint, method, language }) {
 			const response = await fetch(endpoint, saveOptions({ objectData, method, language }))

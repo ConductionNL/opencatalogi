@@ -8,7 +8,7 @@
  * schema it names is a schema of that register, so a default install answers
  * each widget instead of an unknown register.
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#3.2
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md#3.2
  */
 
 import shipped from '../../lib/Settings/publication_register.json'

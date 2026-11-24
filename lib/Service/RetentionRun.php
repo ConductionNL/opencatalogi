@@ -98,7 +98,7 @@ final class RetentionRun {
 	 *
 	 * @return bool Whether OpenRegister removed it.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.7
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md#task-2.7
 	 * @spec exclude internal removal step of a recorded disposal decision; it pins the register, schema
 	 *   and RBAC-off flags for the retention run and is not a route wrapper.
 	 */

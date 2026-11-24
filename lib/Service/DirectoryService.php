@@ -1742,7 +1742,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @return void
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#REQ-FLS-001
+	 * @spec openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#REQ-FLS-001
 	 */
 	private function updateDirectoryStatusOnError(string $directoryUrl, int $statusCode, string $errorMessage = ''): void {
 		try {
@@ -1812,7 +1812,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * @return string The message without credentials or query strings
 	 *
-	 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#REQ-FLS-001
+	 * @spec openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#REQ-FLS-001
 	 */
 	private static function sanitizeSyncError(string $message): string {
 		$clean = preg_replace_callback(
@@ -2639,7 +2639,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * @return array<string, string> `Accept-Language` to the visitor's language, or empty.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private function peerLanguageHeaders(): array {
 		try {
@@ -2668,7 +2668,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private static function visitorAskedForALanguage(mixed $languageService): bool {
 		return is_object($languageService) === true

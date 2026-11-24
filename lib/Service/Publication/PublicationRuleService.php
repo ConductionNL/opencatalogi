@@ -112,7 +112,7 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 *
 	 * @return string|null The category code, such as `infocat004`.
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
 	 */
 	public static function categoryOf(array $rule): ?string {
 		$code = ($rule['wooCategory'] ?? null);
@@ -130,7 +130,7 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 *
 	 * @return string The label.
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
 	 */
 	public static function categoryLabel(string $code): string {
 		return WooCategory::ALL[$code]['nl'] . ' (' . $code . ')';

@@ -448,7 +448,7 @@ class DcatServiceTest extends TestCase {
 	 * afterwards, so each language becomes its own literal and later reads in
 	 * the request are not affected (publication-translations REQ-PTR-002).
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testTheFeedReadsEveryTranslationAndResetsItAfter(): void {
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);

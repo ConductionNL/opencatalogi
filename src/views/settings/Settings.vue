@@ -970,7 +970,7 @@ export default defineComponent({
 		 * The language options of the editors' language select.
 		 *
 		 * @return {Array<{id: string, label: string, locked: boolean}>} The options
-		 * @spec openspec/changes/publication-translations/design.md
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
 		 */
 		publicationLanguageChoices() {
 			return publicationLanguageOptions(this.publicationLanguages, document.documentElement.lang || 'en')
@@ -979,17 +979,17 @@ export default defineComponent({
 		/**
 		 * The selected language options, read and written as tags.
 		 *
-		 * @spec openspec/changes/publication-translations/design.md
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
 		 */
 		publicationLanguageSelection: {
-			/** @spec openspec/changes/publication-translations/design.md */
+			/** @spec openspec/changes/archive/2026-11-24-publication-translations/design.md */
 			get() {
 				return this.publicationLanguageChoices.filter((option) => this.publicationLanguages.includes(option.id))
 			},
 
 			/**
 			 * @param {Array<{id: string}>} options The selected options.
-			 * @spec openspec/changes/publication-translations/design.md
+			 * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
 			 */
 			set(options) {
 				this.publicationLanguages = publicationLanguagesPayload(options)
@@ -1130,7 +1130,7 @@ export default defineComponent({
 		 *
 		 * @param {object|undefined} configuration - The stored configuration
 		 * @return {void}
-		 * @spec openspec/changes/publication-translations/design.md
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
 		 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
 		 */
 		applyStoredConfiguration(configuration) {
@@ -1760,7 +1760,7 @@ export default defineComponent({
 		 * and drops what is not a language tag; what it stored is shown back.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/publication-translations/design.md
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
 		 */
 		async savePublicationLanguages() {
 			this.savingPublicationLanguages = true

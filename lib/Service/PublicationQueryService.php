@@ -1509,7 +1509,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @return array{language: string, source: string, accepted: list<string>} The language,
 	 *         where it came from (query, header or default) and the header's tags in order.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function visitorLanguage(array $queryParams, string $acceptLanguage): array {
 		$accepted = $this->acceptedLanguageTags(header: $acceptLanguage);
@@ -1541,7 +1541,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @return string The language asked of OpenRegister, or Dutch when it could not be passed.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function applyVisitorLanguage(array $queryParams, string $acceptLanguage): string {
 		$languageService = $this->orLanguageService();
@@ -1565,7 +1565,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @return array<string, string> Header name to value.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function languageHeaders(): array {
 		$languageService = $this->orLanguageService();
@@ -1591,7 +1591,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @return list<string> The tags, lower-cased primary subtag first; `*` and malformed ranges dropped.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private function acceptedLanguageTags(string $header): array {
 		$ranges = [];
@@ -1618,7 +1618,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @return array{tag: string, quality: float, position: int}|null The range; null for `*`, a malformed tag or q=0.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private static function languageRange(string $part, int $position): ?array {
 		$pieces = array_map('trim', explode(';', $part));
@@ -1642,7 +1642,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @return float The q-value.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private static function rangeQuality(array $parameters): float {
 		$quality = 1.0;

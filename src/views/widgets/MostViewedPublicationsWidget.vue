@@ -48,7 +48,7 @@ import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
  * publication by title, and clicking an entry opens that publication.
  *
  * @spec openspec/specs/publication-usage-analytics/spec.md
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md#task-2.3
  */
 export default {
 	name: 'MostViewedPublicationsWidget',

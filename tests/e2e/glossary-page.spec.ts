@@ -13,8 +13,8 @@
  * Base URL and the admin session come from the environment and
  * playwright.config.ts. Texts are matched in English and Dutch.
  *
- * @e2e openspec/changes/capability-rows-close-gaps/specs/content-management/spec.md#scenario-an-editor-adds-a-term
- * @e2e openspec/changes/capability-rows-close-gaps/specs/content-management/spec.md#scenario-an-editor-corrects-a-term
+ * @e2e openspec/changes/archive/2026-11-24-capability-rows-close-gaps/specs/content-management/spec.md#scenario-an-editor-adds-a-term
+ * @e2e openspec/changes/archive/2026-11-24-capability-rows-close-gaps/specs/content-management/spec.md#scenario-an-editor-corrects-a-term
  */
 import { expect, test } from './authenticated-request.ts'
 import { dismissOverlays } from './spec-coverage/_nav.ts'

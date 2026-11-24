@@ -154,7 +154,7 @@ interface DcatServiceInterface {
 	 *
 	 * @return array The dataset node.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md#task-2.5
 	 *
 	 * @contract-shift new-contract — added for the staff metadata-quality score; DcatService is its only implementation.
 	 */

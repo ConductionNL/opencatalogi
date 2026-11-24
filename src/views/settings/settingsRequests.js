@@ -154,7 +154,7 @@ export const PUBLICATION_LANGUAGE_TAGS = ['nl', 'en', 'de', 'fr', 'fy', 'es', 'i
  * @param {Array<string>} selected - The selected tags
  * @param {string} locale - The reader's locale
  * @return {Array<{id: string, label: string, locked: boolean}>} The options
- * @spec openspec/changes/publication-translations/design.md
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
  */
 export function publicationLanguageOptions(selected, locale) {
 	const tags = [...PUBLICATION_LANGUAGE_TAGS]
@@ -171,7 +171,7 @@ export function publicationLanguageOptions(selected, locale) {
  *
  * @param {Array<{id: string}>} options - The selected options
  * @return {Array<string>} The tags
- * @spec openspec/changes/publication-translations/design.md
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
  */
 export function publicationLanguagesPayload(options) {
 	return publicationLanguagesFrom((options || []).map((option) => option.id))

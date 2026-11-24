@@ -34,7 +34,7 @@ use ReflectionMethod;
  * @covers \OCA\OpenCatalogi\Controller\PublishRightsController
  * @uses \OCA\OpenCatalogi\Service\Publication\PublishRight
  *
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
  */
 class PublishRightsControllerTest extends TestCase {
 

@@ -194,7 +194,7 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publications(): JSONResponse {
@@ -277,7 +277,7 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publication(string $id): JSONResponse {
@@ -484,7 +484,7 @@ class FederationController extends Controller {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md#task-2.1
 	 */
 	private function countReach(string $publicationId, string $kind): void {
 		if ($this->usageCounter === null || strtoupper((string)$this->request->getMethod()) === 'HEAD') {

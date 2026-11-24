@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\OpenCatalogi\Service\Publication\RuleCategoryStamp
  * @uses \OCA\OpenCatalogi\Service\Publication\PublicationRuleService
  *
- * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
  */
 class RuleCategoryStampTest extends TestCase {
 

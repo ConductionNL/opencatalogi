@@ -13,7 +13,7 @@
  * @param {{group: string, exists: boolean, members: number}|null} status The group's state from the server, null when it could not be read.
  * @param {function(string, string, object=): string} t The translate function.
  * @return {Array<string>} The sentences, in reading order.
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
  */
 export function publishRightsLines(status, t) {
 	if (!status) {

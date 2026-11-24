@@ -18,12 +18,12 @@
  * over OCS. The publications that are left and the account are removed in
  * afterAll.
  *
- * @e2e openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#scenario-merging-a-draft-into-its-final-version
- * @e2e openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#scenario-merge-needs-exactly-two
- * @e2e openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#scenario-migrating-old-imports-to-the-current-schema
- * @e2e openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#scenario-no-mapping-no-migration
- * @e2e openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#scenario-a-reader-has-no-merge-action
- * @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md
+ * @e2e openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#scenario-merging-a-draft-into-its-final-version
+ * @e2e openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#scenario-merge-needs-exactly-two
+ * @e2e openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#scenario-migrating-old-imports-to-the-current-schema
+ * @e2e openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#scenario-no-mapping-no-migration
+ * @e2e openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#scenario-a-reader-has-no-merge-action
+ * @spec openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md
  */
 import type { Locator, Page } from '@playwright/test'
 

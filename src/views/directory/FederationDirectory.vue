@@ -81,7 +81,7 @@ export default {
 		FederationDeleteListingModal,
 	},
 
-	/** @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-an-administrator-re-syncs-one-listing-from-its-row-req-fls-003 */
+	/** @spec openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#requirement-an-administrator-re-syncs-one-listing-from-its-row-req-fls-003 */
 	setup() {
 		// Sync now is admin-only (REQ-FLS-003); the endpoint is an
 		// AuthorizedAdminSetting route, so non-admins must not see the action.
@@ -195,7 +195,7 @@ export default {
 		 *
 		 * @param {object} listing The listing.
 		 * @return {object} See listingSyncStatus().
-		 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
+		 * @spec openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
 		 */
 		syncStatusFor(listing) {
 			return listingSyncStatus(listing)
@@ -207,7 +207,7 @@ export default {
 		 *
 		 * @param {object} listing The listing.
 		 * @return {string} The status text.
-		 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
+		 * @spec openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
 		 */
 		statusTextFor(listing) {
 			const status = this.syncStatusFor(listing)
@@ -221,7 +221,7 @@ export default {
 		 *
 		 * @param {object} listing The listing to synchronise.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-an-administrator-re-syncs-one-listing-from-its-row-req-fls-003
+		 * @spec openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#requirement-an-administrator-re-syncs-one-listing-from-its-row-req-fls-003
 		 */
 		async syncNow(listing) {
 			if (!this.isAdmin || this.syncingId !== null) return

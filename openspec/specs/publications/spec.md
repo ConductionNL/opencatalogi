@@ -566,6 +566,117 @@ The publication register imported on install MUST NOT carry example publications
 - THEN it is withdrawn, has its depublication, and offers Publish again
 - @e2e exclude pinned by `PublicationStateServiceTest::testTheDemoDataCarriesAWithdrawnPublicationAndItsDepublication`
 
+### Requirement: A field an administrator adds to the publication schema shows on the publication form (REQ-CVS-001)
+
+When an administrator adds a property to the publication schema in
+OpenRegister's schema editor, the publication form on the Publications page
+MUST offer that property, and saving MUST store it on the publication. The
+public publication endpoint MUST serve it like the shipped properties. This
+MUST need no change to OpenCatalogi's code or manifest.
+
+#### Scenario: An administrator adds a case number
+- **GIVEN** an administrator who adds the text property `zaaknummer` to the publication schema in OpenRegister
+- **WHEN** an editor opens Add on the Publications page of catalogue "Woo-publicaties"
+- **THEN** the form offers the field `zaaknummer`
+- **AND** a publication saved with `zaaknummer` "Z-2026-00871" returns that value from `GET /api/woo-publicaties/{id}` once it is public
+
+#### Scenario: An added field that is required
+- **GIVEN** the same property, marked required in the schema
+- **WHEN** an editor saves a publication without it
+- **THEN** the save is refused and the form names `zaaknummer`
+
+### Requirement: Only publishers change whether a publication is public (REQ-OPR-001)
+
+Changing `publicationDate` or `depublicationDate` on a publication SHALL be allowed only for members of the group `opencatalogi-publishers` and for administrators. Editing any other property SHALL keep the rights it has today.
+
+#### Scenario: An editor tries to publish
+
+- **GIVEN** an editor who is not in `opencatalogi-publishers`
+- **WHEN** the editor saves a publication with a new `publicationDate`
+- **THEN** the save is refused with an error that names the property
+- **AND** the publication is not public
+
+#### Scenario: An editor edits a title
+
+- **GIVEN** the same editor
+- **WHEN** the editor saves a publication with a changed title and an unchanged `publicationDate`
+- **THEN** the save succeeds
+
+### Requirement: The screen offers publish actions only to publishers (REQ-OPR-002)
+
+`GET /api/publications/{id}/visibility` SHALL include `canPublish`, true for a publisher or an administrator. The Publish now, Withdraw and Publish again actions SHALL be hidden when it is false.
+
+#### Scenario: An editor opens a draft
+
+- **GIVEN** an editor outside the publishers group on a draft publication
+- **WHEN** the editor opens the Actions menu
+- **THEN** no Publish now action is listed
+
+### Requirement: The publish endpoints refuse a caller without the right (REQ-OPR-003)
+
+`POST /api/publications/{id}/publish` and `POST /api/publications/{id}/withdraw` SHALL answer 403 for a caller who is neither a publisher nor an administrator, with a message that names the group.
+
+#### Scenario: A direct call by an editor
+
+- **GIVEN** an editor outside the group
+- **WHEN** the editor calls `POST /api/publications/{id}/withdraw`
+- **THEN** the response is 403 and names `opencatalogi-publishers`
+
+### Requirement: The group exists and the administrator can see it (REQ-OPR-004)
+
+The app SHALL create the group `opencatalogi-publishers` when it is missing, on install and on repair, without adding members. The Woo section of the admin settings SHALL show the group and its member count.
+
+#### Scenario: A repair on an existing instance
+
+- **GIVEN** an instance without the group
+- **WHEN** the repair step runs twice
+- **THEN** the group exists once and has no members
+- **AND** the settings section shows 0 members
+
+### Requirement: Publication and catalogue text is translatable (REQ-PTR-001)
+
+The `publication` and `catalog` schemas SHALL declare `title`, `summary` and `description` as `translatable: true` with `sourceLanguage` `nl`. OpenCatalogi SHALL store and read translations only through OpenRegister.
+
+#### Scenario: The schema declares the fields
+<!-- @e2e exclude Schema contract; proven by PublicationTranslationsSchemaTest::testTheThreeFieldsAreTranslatable. -->
+- **WHEN** the publication register is imported
+- **THEN** `title`, `summary` and `description` of both schemas are translatable with source language `nl`
+
+### Requirement: The public API answers in the visitor's language (REQ-PTR-002)
+
+The public publication and catalogue endpoints SHALL pass the language from `_lang` or `Accept-Language` to OpenRegister, SHALL answer each translatable field in that language when a translation exists and in Dutch when it does not, and SHALL set `Content-Language`. An invalid language tag SHALL be served in Dutch, not refused. The DCAT feed SHALL write each language present as its own language-tagged literal.
+
+#### Scenario: An English visitor reads a partly translated publication
+- **GIVEN** a public publication with an English title and summary and only a Dutch description
+- **WHEN** a visitor requests it with `Accept-Language: en`
+- **THEN** the title and summary are English and the description is Dutch
+
+#### Scenario: A nonsense tag does not break the read
+<!-- @e2e exclude Negotiation edge; proven by PublicationQueryServiceTest::testAnInvalidTagFallsBackToDutch. -->
+- **WHEN** a visitor requests a publication with `?_lang=xx-!!`
+- **THEN** the answer is 200 in Dutch
+
+### Requirement: An editor writes a translation on the edit page (REQ-PTR-003)
+
+The publication and catalogue edit pages SHALL offer a language switch with Dutch as source and every language enabled in the settings. In another language, saving SHALL write only the translatable fields for that language, and the other fields SHALL be read-only. An outdated translation SHALL be marked on its field.
+
+#### Scenario: Adding an English summary
+- **GIVEN** a Dutch publication and English enabled in the settings
+- **WHEN** the editor switches to English, types a summary and saves
+- **THEN** the English summary is stored as a translation and the Dutch summary is unchanged
+
+### Requirement: The publication page shows what is translated (REQ-PTR-004)
+
+The publication page SHALL show a Languages card listing each enabled language as source, complete, or with the fields that are missing or outdated, and SHALL offer to open the editor in that language.
+
+#### Scenario: A missing description is named
+- **GIVEN** a publication with English title and summary and no English description
+- **WHEN** the editor opens the publication page
+- **THEN** the Languages card reads "Title and summary translated, description missing" for English
+
+
+
+
 ## Data Model
 
 The publication schema is defined in `publication_register.json`.

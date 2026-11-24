@@ -99,7 +99,7 @@ export function withdrawnDocuments(data, now = new Date()) {
  * @param {string} state The publication's state from the server.
  * @param {boolean} canPublish Whether the caller holds the publish right.
  * @return {{publishNow: boolean, publishAgain: boolean, withdraw: boolean}} Which moves show.
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
  */
 export function visibilityActions(state, canPublish) {
 	const allowed = canPublish === true
@@ -116,7 +116,7 @@ export function visibilityActions(state, canPublish) {
  *
  * @param {object} error The axios error.
  * @return {string} The server's message, or an empty string.
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
  */
 export function publishRefusalMessage(error) {
 	const data = error && error.response ? error.response.data : null

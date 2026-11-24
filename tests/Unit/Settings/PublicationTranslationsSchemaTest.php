@@ -20,7 +20,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-publication-and-catalogue-text-is-translatable-req-ptr-001
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-publication-and-catalogue-text-is-translatable-req-ptr-001
  */
 
 declare(strict_types=1);

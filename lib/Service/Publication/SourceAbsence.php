@@ -23,7 +23,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ use Exception;
 /**
  * Turns the source-absence markers on a publication into its depublication or its flag.
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
  */
 final class SourceAbsence {
 
@@ -89,7 +89,7 @@ final class SourceAbsence {
 	 *
 	 * @return string|null DEPUBLISHED, FLAGGED, or null when nothing arrived.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
 	 */
 	public function outcome(array $old, array $new): ?string {
 		if ($this->isSet(value: ($new[self::ENDED_AT] ?? null)) === true
@@ -121,7 +121,7 @@ final class SourceAbsence {
 	 *
 	 * @return array<string, mixed>|null The publication to save, or null when it is already down.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
 	 */
 	public function depublished(array $publication, ?DateTimeInterface $now = null): ?array {
 		$moment = $this->moment(now: $now);
@@ -147,7 +147,7 @@ final class SourceAbsence {
 	 *
 	 * @return array{since: string|null, endedAt: string|null}|null The markers, or null when its source still carries it.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
 	 */
 	public function summary(array $publication): ?array {
 		if (($publication[self::ABSENT] ?? false) !== true

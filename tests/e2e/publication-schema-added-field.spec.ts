@@ -17,9 +17,9 @@
  * WHAT IT CREATES AND REMOVES. The `zaaknummer` property (removed again), one
  * catalogue (through publicationCatalog) and one publication (deleted).
  *
- * @e2e openspec/changes/capability-rows-verify-scenarios/specs/publications/spec.md#scenario-an-administrator-adds-a-case-number
- * @e2e openspec/changes/capability-rows-verify-scenarios/specs/publications/spec.md#scenario-an-added-field-that-is-required
- * @spec openspec/changes/capability-rows-verify-scenarios/specs/publications/spec.md
+ * @e2e openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/publications/spec.md#scenario-an-administrator-adds-a-case-number
+ * @e2e openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/publications/spec.md#scenario-an-added-field-that-is-required
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/publications/spec.md
  */
 import type { APIRequestContext } from '@playwright/test'
 

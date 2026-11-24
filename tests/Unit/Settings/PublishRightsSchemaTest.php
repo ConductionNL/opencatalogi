@@ -34,7 +34,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
 /**
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-only-publishers-change-whether-a-publication-is-public-req-opr-001
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-only-publishers-change-whether-a-publication-is-public-req-opr-001
  */
 class PublishRightsSchemaTest extends TestCase {
 

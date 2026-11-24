@@ -404,7 +404,7 @@ export default {
 		 * catalogue's own in Dutch, the translation in another language.
 		 *
 		 * @return {object} The fields
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		textFields() {
 			return this.editLanguage === SOURCE_LANGUAGE
@@ -416,7 +416,7 @@ export default {
 		 * The translated fields the editor changed since the language was opened.
 		 *
 		 * @return {object} The changed fields
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		translationChanges() {
 			const changes = {}
@@ -432,7 +432,7 @@ export default {
 		 * The fields whose Dutch changed since they were translated.
 		 *
 		 * @return {Array<string>}
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		editLanguageOutdated() {
 			return outdatedFields(this.translationStatus, this.editLanguage)
@@ -445,7 +445,7 @@ export default {
 		/**
 		 * The slug the catalogue is saved under, which keys its retention defaults (RET-004).
 		 *
-		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-3.1
+		 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md#task-3.1
 		 */
 		storedSlug() {
 			return objectStore.getActiveObject('catalog')?.slug || ''
@@ -600,7 +600,7 @@ export default {
 		 * The OpenRegister object URL of the catalogue being edited.
 		 *
 		 * @return {string} The URL
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		catalogObjectUrl() {
 			const active = objectStore.getActiveObject('catalog') || {}
@@ -614,7 +614,7 @@ export default {
 		 *
 		 * @param {string} language The language to open in.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		async loadTranslationContext(language) {
 			this.editLanguage = SOURCE_LANGUAGE
@@ -654,7 +654,7 @@ export default {
 		 *
 		 * @param {string} language The language.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		async setEditLanguage(language) {
 			this.editLanguage = language
@@ -677,7 +677,7 @@ export default {
 		 * Save the changed fields of the language being edited as its translation.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		async saveTranslation() {
 			this.translationError = ''

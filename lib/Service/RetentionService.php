@@ -1014,7 +1014,7 @@ class RetentionService implements RetentionServiceInterface {
 	 *
 	 * @throws RuntimeException When OpenRegister does not remove it; the decision stays recorded.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.7
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md#task-2.7
 	 */
 	private function dispose(RetentionRun $run, string $id): void {
 		try {

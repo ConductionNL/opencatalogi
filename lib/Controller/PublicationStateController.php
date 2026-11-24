@@ -95,8 +95,8 @@ class PublicationStateController extends Controller {
 	 * @return JSONResponse `{state, canPublish}`, plus `sourceAbsence` when its source no longer carries it; 404 when the caller cannot read it.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001
-	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
 	 */
 	#[NoAdminRequired]
 	public function visibility(string $id): JSONResponse {
@@ -223,7 +223,7 @@ class PublicationStateController extends Controller {
 	 *                      409 `no-documents` when it carries no file or reference and the call does not carry `confirmNoDocuments: true`.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
-	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.2
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.1
 	 */
@@ -353,7 +353,7 @@ class PublicationStateController extends Controller {
 	 * @return JSONResponse The stored depublication and the channels still outstanding, 403 without the publish right.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
-	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
 	 */
 	#[NoAdminRequired]
 	public function withdraw(string $id): JSONResponse {
@@ -706,7 +706,7 @@ class PublicationStateController extends Controller {
 	 *
 	 * @return array{0: object|null, 1: JSONResponse|null} The publication, or the refusal.
 	 *
-	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
 	 */
 	private function guardPublish(string $id): array {
 		[$publication, $refusal] = $this->guardWrite(id: $id);
@@ -877,7 +877,7 @@ class PublicationStateController extends Controller {
 	 *
 	 * @return JSONResponse 403 naming the publishers group.
 	 *
-	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
 	 */
 	private function notAPublisher(): JSONResponse {
 		return new JSONResponse(

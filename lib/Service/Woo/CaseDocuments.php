@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
  */
 
 declare(strict_types=1);
@@ -35,7 +35,7 @@ use OCA\OpenCatalogi\Service\OpenRegisterLookup;
  * its file id as the reference, its name and its type. An unknown reference
  * is refused, naming it, rather than opening an empty batch nobody asked for.
  *
- * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
  */
 class CaseDocuments {
 
@@ -60,7 +60,7 @@ class CaseDocuments {
 	 *
 	 * @throws DomainException When no Woo request carries the reference.
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-transparency/spec.md#scenario-a-batch-starts-with-the-case-s-documents
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-transparency/spec.md#scenario-a-batch-starts-with-the-case-s-documents
 	 */
 	public function forCase(string $caseReference): array {
 		$request = $this->requests->byReference(reference: $caseReference);

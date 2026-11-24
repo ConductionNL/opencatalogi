@@ -20,7 +20,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use OCP\IRequest;
 /**
  * The publishers group as the admin settings show it.
  *
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
  */
 class PublishRightsController extends Controller {
 
@@ -62,7 +62,7 @@ class PublishRightsController extends Controller {
 	 *
 	 * @return JSONResponse `{group, exists, members}`.
 	 *
-	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
+	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function show(): JSONResponse {

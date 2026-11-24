@@ -761,7 +761,7 @@ export default {
 		/**
 		 * The source's register and schema ids, the pair both objects share.
 		 *
-		 * @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001
+		 * @spec openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001
 		 */
 		sourcePair() {
 			const self = this.sourceObject?.['@self'] || {}
@@ -770,7 +770,7 @@ export default {
 			return { register: id(self.register), schema: id(self.schema) }
 		},
 
-		/** @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001 */
+		/** @spec openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001 */
 		registerLabel() {
 			const { register } = this.sourcePair
 			const known = (objectStore.availableRegisters || []).find(
@@ -779,7 +779,7 @@ export default {
 			return known?.title || register || ''
 		},
 
-		/** @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001 */
+		/** @spec openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001 */
 		schemaLabel() {
 			const { schema } = this.sourcePair
 			const known = (objectStore.availableSchemas || []).find(
@@ -819,7 +819,7 @@ export default {
 		 * Read what the list handed over: the source, and the target with the
 		 * step to start at. Without a target the dialog starts at step 1.
 		 *
-		 * @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001
+		 * @spec openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001
 		 */
 		initializeMerge() {
 			const transfer = navigationStore.getTransferData?.() || {}
@@ -1062,7 +1062,7 @@ export default {
 			return text.substring(0, maxLength) + '...'
 		},
 
-		/** @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001 */
+		/** @spec openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001 */
 		async performMerge() {
 			if (!this.canMerge) {
 				return

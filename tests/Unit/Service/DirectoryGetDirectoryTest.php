@@ -212,7 +212,7 @@ class DirectoryGetDirectoryTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/federation/spec.md#requirement-the-installation-publishes-a-directory-of-its-own-catalogues-req-cvs-005
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/federation/spec.md#requirement-the-installation-publishes-a-directory-of-its-own-catalogues-req-cvs-005
 	 */
 	public function testTheDirectoryCarriesEveryOwnCatalogueWithItsPublicationsAddress(): void {
 		$this->objects->answers['catalog'] = [

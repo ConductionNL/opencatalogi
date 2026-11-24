@@ -775,7 +775,7 @@ class WooServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
 	 */
 	public function testCanMarkReadyForReviewFalseWhenUnassessed(): void {
 		$this->seedBatchWithAssessments();
@@ -790,7 +790,7 @@ class WooServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
 	 */
 	public function testAnEmptyBatchIsRefusedForReview(): void {
 		$this->objects->objects = [
@@ -815,7 +815,7 @@ class WooServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
 	 */
 	public function testMarkReadyForReviewWhenAllAssessed(): void {
 		$this->seedBatchWithAssessments(false);

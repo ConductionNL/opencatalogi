@@ -6,7 +6,7 @@
  * content versioning and compares two of them field by field, through the
  * library's `version-history` integration (capability-rows-close-gaps 2.4).
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
  */
 
 import { readFileSync } from 'node:fs'

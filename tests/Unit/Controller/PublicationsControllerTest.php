@@ -2691,7 +2691,7 @@ class PublicationsControllerTest extends TestCase {
 	 * searches, and the answer carries the language headers OpenRegister
 	 * reports (publication-translations REQ-PTR-002).
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testIndexPassesTheVisitorsLanguageAndAnswersInIt(): void {
 		$mockObjService = $this->mockObjectService();
