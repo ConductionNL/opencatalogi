@@ -15,6 +15,7 @@
  * @link https://www.OpenCatalogi.nl
  *
  * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-1.1
+ * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2b
  */
 
 declare(strict_types=1);
@@ -47,7 +48,7 @@ final class ResponsibleOrganisationSchemaTest extends TestCase {
 		$property    = $publication['properties']['responsibleOrganization'];
 
 		self::assertSame(expected: 'publication', actual: $publication['slug']);
-		self::assertSame(expected: ['responsibleOrganization'], actual: array_keys($publication['properties']));
+		self::assertSame(expected: ['responsibleOrganization', 'publisherRsin'], actual: array_keys($publication['properties']));
 		self::assertSame(expected: 'string', actual: $property['type']);
 		self::assertSame(expected: 'uuid', actual: $property['format']);
 		self::assertSame(expected: 'nc-organisation', actual: $property['$ref']);
@@ -55,6 +56,28 @@ final class ResponsibleOrganisationSchemaTest extends TestCase {
 		self::assertNotSame(expected: '', actual: trim(string: (string) ($property['description'] ?? '')));
 		self::assertNotContains(needle: 'responsibleOrganization', haystack: (array) ($publication['required'] ?? []));
 	}//end testTheReferencePointsAtNcOrganisation()
+
+	/**
+	 * The fragment's `publisherRsin` is an optional nine-digit string, at the bumped version (task 2.2b).
+	 *
+	 * @return void
+	 */
+	public function testThePublicationHoldsThePublisherRsin(): void {
+		$fragment = json_decode(
+			json: (string) file_get_contents(filename: self::settings() . '/register.d/publications-name-their-responsible-organisation.json'),
+			associative: true,
+			flags: JSON_THROW_ON_ERROR
+		);
+		$publication = $fragment['components']['schemas']['publication'];
+		$property    = $publication['properties']['publisherRsin'];
+
+		self::assertSame(expected: '0.0.17', actual: $publication['version']);
+		self::assertSame(expected: 'string', actual: $property['type']);
+		self::assertSame(expected: 1, actual: preg_match(pattern: '/' . $property['pattern'] . '/', subject: '002220647'));
+		self::assertSame(expected: 0, actual: preg_match(pattern: '/' . $property['pattern'] . '/', subject: '12345678'));
+		self::assertSame(expected: 'Publisher RSIN', actual: $property['title']);
+		self::assertNotContains(needle: 'publisherRsin', haystack: (array) ($publication['required'] ?? []));
+	}//end testThePublicationHoldsThePublisherRsin()
 
 	/**
 	 * Merged with every fragment, the publication keeps the publisher and gains the property at a bumped version.
@@ -79,6 +102,11 @@ final class ResponsibleOrganisationSchemaTest extends TestCase {
 		);
 		self::assertSame(expected: 'nc-organisation', actual: $publication['properties']['organization']['$ref']);
 		self::assertSame(expected: 'nc-organisation', actual: $publication['properties']['responsibleOrganization']['$ref']);
+		self::assertSame(expected: 'Publisher RSIN', actual: $publication['properties']['publisherRsin']['title']);
+		self::assertTrue(
+			condition: version_compare(version1: $publication['version'], version2: '0.0.17', operator: '>='),
+			message: $publication['version']
+		);
 	}//end testTheMergedSchemaCarriesItBesideThePublisher()
 
 	/**
@@ -99,6 +127,12 @@ final class ResponsibleOrganisationSchemaTest extends TestCase {
 			self::assertArrayHasKey(key: 'Responsible organisation', array: $translations, message: basename(path: $catalogue));
 			self::assertArrayHasKey(
 				key: 'The organisation responsible for this publication, when it is not the publisher.',
+				array: $translations,
+				message: basename(path: $catalogue)
+			);
+			self::assertArrayHasKey(key: 'Publisher RSIN', array: $translations, message: basename(path: $catalogue));
+			self::assertArrayHasKey(
+				key: 'The RSIN of the publishing organisation, stored when a document is attached.',
 				array: $translations,
 				message: basename(path: $catalogue)
 			);

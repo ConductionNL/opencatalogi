@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "A cím nincs beírva: ennek a fájltípusnak nincs címe",
         "Publish {count} of {total} publications": "{count} / {total} publikáció közzététele",
         "These publications miss a field required to publish and will be skipped:": "Ezekből a publikációkból hiányzik egy közzétételhez szükséges mező, ezért kimaradnak:",
-        "Required to publish": "Közzétételhez kötelező"
+        "Required to publish": "Közzétételhez kötelező",
+        "Publisher RSIN": "A kiadó RSIN-je",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "A közzétevő szervezet RSIN-je, amely dokumentum csatolásakor kerül tárolásra."
     },
     "nplurals=2; plural=(n != 1);"
 )

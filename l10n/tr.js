@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Başlık yazılmadı: bu dosya türünün başlığı yok",
         "Publish {count} of {total} publications": "{total} yayından {count} tanesini yayımla",
         "These publications miss a field required to publish and will be skipped:": "Bu yayınlarda yayımlamak için gereken bir alan eksik ve atlanacaklar:",
-        "Required to publish": "Yayımlamak için gerekli"
+        "Required to publish": "Yayımlamak için gerekli",
+        "Publisher RSIN": "Yayıncı RSIN",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Yayımlayan kuruluşun RSIN numarası, bir belge eklendiğinde kaydedilir."
     },
     "nplurals=2; plural=(n != 1);"
 )

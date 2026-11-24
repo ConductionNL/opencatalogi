@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Naslov nije upisan: ova vrsta datoteke nema naslov",
         "Publish {count} of {total} publications": "Objavi {count} od {total} publikacija",
         "These publications miss a field required to publish and will be skipped:": "Ovim publikacijama nedostaje polje obavezno za objavu i bit će preskočene:",
-        "Required to publish": "Obavezno za objavu"
+        "Required to publish": "Obavezno za objavu",
+        "Publisher RSIN": "RSIN izdavača",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN organizacije izdavača, spremljen kada se priloži dokument."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Títol no escrit: aquest tipus de fitxer no té títol",
         "Publish {count} of {total} publications": "Publica {count} de {total} publicacions",
         "These publications miss a field required to publish and will be skipped:": "A aquestes publicacions els falta un camp obligatori per publicar i s'ometran:",
-        "Required to publish": "Obligatori per publicar"
+        "Required to publish": "Obligatori per publicar",
+        "Publisher RSIN": "RSIN de l'editor",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "El RSIN de l'organització editora, desat quan s'adjunta un document."
     },
     "nplurals=2; plural=(n != 1);"
 )

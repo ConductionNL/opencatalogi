@@ -506,6 +506,7 @@ class BatchPublicationWriter {
 	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-the-published-file-carries-its-official-title-req-pff-002
 	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-the-publishers-rsin-travels-with-every-stored-document-req-pro-002
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2b
 	 */
 	public function attach(array $publication, File $file): ?array {
 		$this->requireOpenRegister();
@@ -542,7 +543,18 @@ class BatchPublicationWriter {
 			$embedded = $this->titles->write(file: $created, facts: $facts);
 		}
 
-		$this->publisherStamp()?->stamp(files: $files, publication: $target, fileId: (int)$created->getId());
+		$stamp = $this->publisherStamp();
+		$labels = $stamp?->stamp(files: $files, publication: $target, fileId: (int)$created->getId());
+		if ($stamp !== null && $labels !== null) {
+			$stamp->record(
+				objects: $this->container->get('OCA\OpenRegister\Service\ObjectService'),
+				publicationId: (string)$publication['id'],
+				labels: $labels,
+				register: self::REGISTER,
+				schema: self::SCHEMA
+			);
+		}
+
 		$files->publishFile(object: $target, file: $created->getId());
 		$this->readingQueue()?->queue(fileId: (int)$created->getId(), publicationId: (string)$publication['id']);
 

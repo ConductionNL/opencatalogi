@@ -853,7 +853,9 @@
         "Title not written: this file type has no title": "Насловот не е запишан: овој тип датотека нема наслов",
         "Publish {count} of {total} publications": "Објави {count} од {total} публикации",
         "These publications miss a field required to publish and will be skipped:": "На овие публикации им недостасува поле задолжително за објавување и ќе бидат прескокнати:",
-        "Required to publish": "Задолжително за објавување"
+        "Required to publish": "Задолжително за објавување",
+        "Publisher RSIN": "RSIN на издавачот",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN на организацијата издавач, зачуван кога ќе се прикачи документ."
     },
     "plurals": {}
 }

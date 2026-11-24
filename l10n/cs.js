@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Název nezapsán: tento typ souboru nemá název",
         "Publish {count} of {total} publications": "Publikovat {count} z {total} publikací",
         "These publications miss a field required to publish and will be skipped:": "Těmto publikacím chybí pole povinné pro publikování a budou přeskočeny:",
-        "Required to publish": "Povinné pro publikování"
+        "Required to publish": "Povinné pro publikování",
+        "Publisher RSIN": "RSIN vydavatele",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN vydávající organizace, uložené při připojení dokumentu."
     },
     "nplurals=2; plural=(n != 1);"
 )

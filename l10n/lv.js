@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Nosaukums nav ierakstīts: šim faila tipam nav nosaukuma",
         "Publish {count} of {total} publications": "Publicēt {count} no {total} publikācijām",
         "These publications miss a field required to publish and will be skipped:": "Šīm publikācijām trūkst publicēšanai obligāta lauka, un tās tiks izlaistas:",
-        "Required to publish": "Obligāts publicēšanai"
+        "Required to publish": "Obligāts publicēšanai",
+        "Publisher RSIN": "Izdevēja RSIN",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Publicējošās organizācijas RSIN, saglabāts, kad tiek pievienots dokuments."
     },
     "nplurals=2; plural=(n != 1);"
 )

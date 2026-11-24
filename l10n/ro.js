@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Titlu nescris: acest tip de fișier nu are titlu",
         "Publish {count} of {total} publications": "Publică {count} din {total} publicații",
         "These publications miss a field required to publish and will be skipped:": "Acestor publicații le lipsește un câmp obligatoriu pentru publicare și vor fi omise:",
-        "Required to publish": "Obligatoriu pentru publicare"
+        "Required to publish": "Obligatoriu pentru publicare",
+        "Publisher RSIN": "RSIN-ul editorului",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN-ul organizației care publică, salvat atunci când este atașat un document."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

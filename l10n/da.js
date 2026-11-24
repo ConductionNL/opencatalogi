@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Titel ikke skrevet: denne filtype har ingen titel",
         "Publish {count} of {total} publications": "Udgiv {count} af {total} publikationer",
         "These publications miss a field required to publish and will be skipped:": "Disse publikationer mangler et felt, der kræves for at udgive, og springes over:",
-        "Required to publish": "Påkrævet for at udgive"
+        "Required to publish": "Påkrævet for at udgive",
+        "Publisher RSIN": "Udgiverens RSIN",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN for den udgivende organisation, gemt når et dokument vedhæftes."
     },
     "nplurals=2; plural=(n != 1);"
 )

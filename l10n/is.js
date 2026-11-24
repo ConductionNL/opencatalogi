@@ -854,7 +854,9 @@ OC.L10N.register(
         "Title not written: this file type has no title": "Titill ekki skrifaður: þessi skráartegund hefur engan titil",
         "Publish {count} of {total} publications": "Birta {count} af {total} útgáfum",
         "These publications miss a field required to publish and will be skipped:": "Þessar útgáfur vantar reit sem þarf til að birta og þeim verður sleppt:",
-        "Required to publish": "Nauðsynlegt til að birta"
+        "Required to publish": "Nauðsynlegt til að birta",
+        "Publisher RSIN": "RSIN útgefanda",
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN útgefandi stofnunar, vistað þegar skjal er hengt við."
     },
     "nplurals=2; plural=(n != 1);"
 )
