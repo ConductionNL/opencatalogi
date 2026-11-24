@@ -1007,7 +1007,7 @@
 					"publications-name-their-responsible-organisation",
 					"publications-reference-the-shared-organisation"
 				],
-				"requirement": "openspec/changes/organisations-page-edits-the-shared-organisation/specs/shared-organisation :: Staff record the publishing organisation and its identifiers on the shared organisation (REQ-SHO-103)"
+				"requirement": "openspec/changes/archive/2026-11-24-organisations-page-edits-the-shared-organisation/specs/shared-organisation :: Staff record the publishing organisation and its identifiers on the shared organisation (REQ-SHO-103)"
 			},
 			"reachedOn": "/catalogi -> CatalogModal organisation picker; /organizations and /organizations/:id (manifest.json:1044, :1069)",
 			"note": "The projection side is done (openregister/the-organisation-projection-is-writable, every task ticked but other apps' migrations). What is left is opencatalogi's: src/manifest.json:1035,1060 still point the Organizations pages at the retired schema \"organization\"; change organisations-page-edits-the-shared-organisation moves them onto nc-organisation (re-measured 2026-10-30). Earlier: A catalogue can point at an organisation, and the identifier fields exist on OR's nc-organisation. The app's own Organizations page queries schema 'organization', which publication_register.json no longer ships, so where staff edit OIN/TOOI/RSIN is unproven. Specified in ConductionNL/openregister openspec/changes/the-organisation-projection-is-writable (openregister lane, OpenSpec pass 2026-09-27).",
@@ -1286,7 +1286,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/manifest.json:523-536 Publications index page, showAdd true, schema 'publication'; publication_register.json:100-217 title, summary, description, themes[], organization; nextcloud-vue CnIndexPage selfModeActions.js:185 handleFormSave -> OR saveObject",
 				"spec": "openspec/specs/publications",
-				"requirement": "openspec/changes/capability-rows-get-requirements/specs/publications :: An editor creates a publication with a title, summary, description and themes (REQ-CRR-001)",
+				"requirement": "openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publications :: An editor creates a publication with a title, summary, description and themes (REQ-CRR-001)",
 				"change": "publications"
 			},
 			"reachedOn": "/publications/:catalogSlug Add (CnIndexPage self-fetch form)",
@@ -6184,8 +6184,8 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Service/RetentionService.php recordHumanDecision(): an archive decision asks OpenRegister's TransferListService (lib/Service/EdepotHandover.php request()) for a transfer list of the publication and stores edepotTransfer {reference, status requested}; the daily RetentionEvaluation job calls refreshEdepotTransfers(), which records transferred, or failed with the e-depot's reason, while the publication stays archived. Tests: tests/Unit/Service/EdepotHandoverTest.php, tests/Unit/Service/RetentionEdepotTransferTest.php.",
 				"change": "publication-retention-lifecycle",
-				"requirement": "openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle :: An archive decision hands the publication to the e-depot (REQ-CRR-003)",
-				"plan": "openspec/changes/capability-rows-get-requirements"
+				"requirement": "openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publication-retention-lifecycle :: An archive decision hands the publication to the e-depot (REQ-CRR-003)",
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-get-requirements"
 			},
 			"reachedOn": "openregister e-Depot transfer API (/apps/openregister/api/transfers). opencatalogi never triggers it",
 			"note": "An archive decision hands the publication to OpenRegister's e-Depot transfer and shows the transfer reference and status on the publication.",
@@ -6303,7 +6303,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/info.xml:152-153 post-migration InitializeSettings -> loadSettings(force: false) (InitializeSettings.php:112); Settings.vue:12-35 Reimport and Force import buttons -> Settings.vue:1206 POST /api/settings/import -> SettingsController.php:367 manualImport",
 				"change": "retrofit-2026-05-26-app-shell-settings",
-				"requirement": "openspec/changes/capability-rows-get-requirements/specs/retrofit-2026-05-26-app-shell-settings :: An administrator re-imports the shipped configuration after an update (REQ-CRR-004)"
+				"requirement": "openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/retrofit-2026-05-26-app-shell-settings :: An administrator re-imports the shipped configuration after an update (REQ-CRR-004)"
 			},
 			"reachedOn": "automatic on update; admin settings Reimport configuration button",
 			"provider": "opencatalogi",
@@ -6462,8 +6462,8 @@
 					"dashboard-consume-or-aggregations",
 					"dashboard"
 				],
-				"requirement": "openspec/changes/capability-rows-get-requirements/specs/retrofit-2026-05-26-dashboard-widgets :: The dashboard counts catalogues, publications and attachments (REQ-CRR-005)",
-				"plan": "openspec/changes/capability-rows-get-requirements"
+				"requirement": "openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/retrofit-2026-05-26-dashboard-widgets :: The dashboard counts catalogues, publications and attachments (REQ-CRR-005)",
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-get-requirements"
 			},
 			"reachedOn": "/ (DashboardView)",
 			"note": "The dashboard counts catalogues, publications (split into concept, published and depublished) and attachments.",
@@ -7088,7 +7088,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): a catalogue selects its publications by register and schema plus optional filters rather than holding copies (lib/Settings/publication_register.json catalog.registers, schemas, filters; scope built in lib/Service/CatalogiService.php:796-833), and each catalogue carries its own owning organisation (catalog.organization). Two organisations' catalogues that name the same register and schema therefore both list the same publication object. Across installations, federation shows another organisation's publications live without copying (/api/federation/publications, lib/Controller/FederationController.php:81, called by src/store/modules/search.js:59).",
 				"spec": "openspec/specs/catalogs",
-				"requirement": "openspec/changes/capability-rows-get-requirements/specs/catalogs :: Catalogues of several organisations show one publication without copying it (REQ-CRR-002)"
+				"requirement": "openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/catalogs :: Catalogues of several organisations show one publication without copying it (REQ-CRR-002)"
 			},
 			"reachedOn": "/api/{catalogSlug} (publications#index) per catalogue, rendered in the portaliq reading room; /api/federation/publications in the search view",
 			"provider": "opencatalogi",

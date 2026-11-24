@@ -17,8 +17,8 @@
  * playwright.config.ts; the member signs in on a context with an empty
  * storage state. Texts are matched in English and Dutch.
  *
- * @e2e openspec/changes/organisations-page-edits-the-shared-organisation/specs/shared-organisation/spec.md#scenario-an-administrator-enters-the-rsin
- * @e2e openspec/changes/organisations-page-edits-the-shared-organisation/specs/shared-organisation/spec.md#scenario-another-user-reads-but-cannot-edit
+ * @e2e openspec/changes/archive/2026-11-24-organisations-page-edits-the-shared-organisation/specs/shared-organisation/spec.md#scenario-an-administrator-enters-the-rsin
+ * @e2e openspec/changes/archive/2026-11-24-organisations-page-edits-the-shared-organisation/specs/shared-organisation/spec.md#scenario-another-user-reads-but-cannot-edit
  */
 import { expect, test } from './authenticated-request.ts'
 import { dismissOverlays } from './spec-coverage/_nav.ts'

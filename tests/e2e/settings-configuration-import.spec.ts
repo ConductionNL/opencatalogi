@@ -14,9 +14,9 @@
  * WHAT IT CREATES AND REMOVES. Nothing: the import is idempotent on a current
  * configuration.
  *
- * @e2e openspec/changes/capability-rows-get-requirements/specs/retrofit-2026-05-26-app-shell-settings/spec.md#scenario-an-administrator-forces-the-import
- * @e2e openspec/changes/capability-rows-get-requirements/specs/retrofit-2026-05-26-app-shell-settings/spec.md#scenario-an-update-brings-a-newer-configuration
- * @spec openspec/changes/capability-rows-get-requirements/specs/retrofit-2026-05-26-app-shell-settings/spec.md
+ * @e2e openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/retrofit-2026-05-26-app-shell-settings/spec.md#scenario-an-administrator-forces-the-import
+ * @e2e openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/retrofit-2026-05-26-app-shell-settings/spec.md#scenario-an-update-brings-a-newer-configuration
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/retrofit-2026-05-26-app-shell-settings/spec.md
  */
 import { expect, test } from '@playwright/test'
 import { dismissOverlays } from './spec-coverage/_nav.ts'

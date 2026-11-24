@@ -13,9 +13,9 @@
  * theme "Welzijn <run>" and the publication the form saves. The theme and the
  * publication are deleted in afterAll.
  *
- * @e2e openspec/changes/capability-rows-get-requirements/specs/publications/spec.md#scenario-an-editor-adds-a-publication
- * @e2e openspec/changes/capability-rows-get-requirements/specs/publications/spec.md#scenario-a-publication-without-a-title-is-not-saved
- * @spec openspec/changes/capability-rows-get-requirements/specs/publications/spec.md
+ * @e2e openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publications/spec.md#scenario-an-editor-adds-a-publication
+ * @e2e openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publications/spec.md#scenario-a-publication-without-a-title-is-not-saved
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publications/spec.md
  */
 import { expect, test } from '@playwright/test'
 import { publicationCatalog, publicationScope } from './publication-catalog.ts'
