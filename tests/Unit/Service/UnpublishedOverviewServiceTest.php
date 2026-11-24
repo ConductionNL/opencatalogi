@@ -118,7 +118,7 @@ class UnpublishedOverviewServiceTest extends TestCase {
 			 *
 			 * @return array<string, mixed> The page.
 			 */
-			public function searchObjectsPaginated(array $query, bool $_rbac, bool $_multitenancy, bool $deleted): array {
+			public function searchObjectsPaginated(array $query, bool $_rbac, bool $_multitenancy, bool $deleted = false): array {
 				$this->searches[] = ['query' => $query, 'rbac' => $_rbac];
 				if (($query['@self']['schema'] ?? null) === 'catalog') {
 					return ['results' => $this->catalogs, 'total' => count($this->catalogs)];
