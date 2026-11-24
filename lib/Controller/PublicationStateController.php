@@ -471,12 +471,18 @@ class PublicationStateController extends Controller {
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-one-document-comes-down-without-its-publication-req-ppw-004
 	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	#[NoAdminRequired]
 	public function withdrawFile(string $id, string $fileId): JSONResponse {
 		[$publication, $refusal] = $this->guardWrite(id: $id);
 		if ($refusal !== null) {
 			return $refusal;
+		}
+
+		$frozen = $this->registers->documentWriteRefusal(publication: $publication);
+		if ($frozen !== null) {
+			return new JSONResponse(data: ['error' => 'frozen', 'message' => $frozen], statusCode: Http::STATUS_CONFLICT);
 		}
 
 		$reason = $this->reason();

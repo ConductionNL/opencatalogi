@@ -91,6 +91,9 @@ class PublicationStateControllerTest extends TestCase {
 	/** @var array<string, mixed> The publication find() answers. */
 	private array $publication = [];
 
+	/** @var array<string, mixed>|null The frozen marker the found publication carries, or null. */
+	private ?array $frozen = null;
+
 	/** @var array<int, array<string, mixed>> Every saveObject() call, in order. */
 	private array $saves = [];
 
@@ -427,6 +430,10 @@ class PublicationStateControllerTest extends TestCase {
 			->onlyMethods(['jsonSerialize'])
 			->getMock();
 		$entity->method('jsonSerialize')->willReturn($properties);
+		if ($this->frozen !== null) {
+			$entity->setFrozen($this->frozen);
+		}
+
 		return $entity;
 	}
 
@@ -554,6 +561,33 @@ class PublicationStateControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller->withdraw('p1')->getStatus());
 	}
+
+	/**
+	 * A document of a frozen publication is not withdrawn again: 409 with the frozen sentence, nothing unshared or saved (REQ-PWA-003).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 */
+	public function testAFileWithdrawalOnAFrozenPublicationIsRefused(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->frozen = ['by' => 'redacteur', 'at' => '2026-11-20T10:00:00+00:00', 'reason' => 'Verkeerde bijlage'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(params: ['reason' => 'Contains a home address']);
+
+		$response = $this->controller->withdrawFile(id: 'p1', fileId: '4711');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(
+			expected: [
+				'error' => 'frozen',
+				'message' => 'Cannot write to this object: it was frozen by redacteur on 2026-11-20T10:00:00+00:00. Unfreeze it before changing it.',
+			],
+			actual: $response->getData()
+		);
+		$this->assertSame(expected: [], actual: $this->fileService->unpublished);
+		$this->assertSame(expected: [], actual: $this->saves);
+	}//end testAFileWithdrawalOnAFrozenPublicationIsRefused()
 
 	/** The single-document withdrawal is not one of the two gated endpoints. */
 	public function testAFileWithdrawalDoesNotAskThePublishRight(): void {

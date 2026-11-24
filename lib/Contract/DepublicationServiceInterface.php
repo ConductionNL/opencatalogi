@@ -74,6 +74,20 @@ interface DepublicationServiceInterface {
 	public function depublishDocument(array $publication, string $reason, string $depublishedBy): array;
 
 	/**
+	 * Why no document of this publication may be withdrawn or written now, or null when it may.
+	 *
+	 * @param mixed $publication The publication, as an object entity or an object array.
+	 *
+	 * @return string|null The frozen refusal, or null.
+	 *
+	 * @contract-shift internal-only - DepublicationService, in this app, is the only implementer;
+	 *                 every double of the interface in this app is a createMock() that picks the method up.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 */
+	public function documentWriteRefusal(mixed $publication): ?string;
+
+	/**
 	 * The channels whose withdrawal is still outstanding.
 	 *
 	 * @param array<string, mixed> $depublication The depublication.

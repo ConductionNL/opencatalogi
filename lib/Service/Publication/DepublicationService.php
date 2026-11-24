@@ -120,6 +120,21 @@ class DepublicationService implements DepublicationServiceInterface {
 	}//end depublishDocument()
 
 	/**
+	 * Why no document of this publication may be withdrawn or written now, or null when it may.
+	 *
+	 * A withdrawn publication is frozen; its documents stay as they were (REQ-PWA-003).
+	 *
+	 * @param mixed $publication The publication, as an object entity or an object array.
+	 *
+	 * @return string|null The frozen refusal, or null.
+	 *
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 */
+	public function documentWriteRefusal(mixed $publication): ?string {
+		return (new FrozenRecord())->refusal(record: $publication);
+	}//end documentWriteRefusal()
+
+	/**
 	 * The depublication run, after refusing one without a reason.
 	 *
 	 * @param array<string, mixed> $publication The publication.

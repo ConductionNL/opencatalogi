@@ -29,6 +29,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Service\Publication\FrozenRecord;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use DateTime;
 use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
@@ -565,10 +566,18 @@ class EventService implements EventServiceInterface {
 	 * @return array Result of the attachment publishing operation.
 	 *
 	 * @spec openspec/specs/auto-publishing/spec.md
+	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	private function publishObjectAttachments(array $objectData): array {
 		$objectId = ($objectData['@self']['uuid'] ?? $objectData['@self']['id']);
 		$result = ['published' => 0, 'skipped' => 0, 'errors' => []];
+
+		// A frozen publication shares nothing new (REQ-PWA-003).
+		$frozen = (new FrozenRecord())->refusal(record: $objectData);
+		if ($frozen !== null) {
+			$result['errors'][] = $frozen;
+			return $result;
+		}
 
 		try {
 			$fileService = $this->getFileService();
