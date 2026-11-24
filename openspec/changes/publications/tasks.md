@@ -34,13 +34,13 @@
   - **Acceptance criteria**: test passes; controller returns `404` when `findObjectLocation` returns null.
   - **Done**: covered by `PublicationQueryServiceTest::testFindObjectLocationReturnsNullWhenNotFound` / `testFindObjectLocationFailsClosedWithoutConstraint`, and `PublicationsControllerTest::testShowReturns404WhenPublicationNotFound` for the 404.
 
-- [ ] 6. **Add unit test for `findObjectLocation` — table name parsing**: assert that tables named `oc_openregister_table_3_7` are correctly parsed as `register_id = 3`, `schema_id = 7`.
+- [x] 6. ~~**Add unit test for `findObjectLocation` — table name parsing**: assert that tables named `oc_openregister_table_3_7` are correctly parsed as `register_id = 3`, `schema_id = 7`.~~ Struck 24 Nov 2026: obsolete, see "Left open" below.
   - **Spec ref**: REQ-PUB-014
   - **Left open**: obsolete: there is no table-name parsing any more; the raw-SQL scan over `oc_openregister_table_*` was replaced by the `ObjectService` lookup (#734).
 
 ## Phase 5 — extractFilterValues coverage
 
-- [ ] 7. **Add unit tests for `extractFilterValues` covering all seven input formats**:
+- [x] 7. ~~**Add unit tests for `extractFilterValues` covering all seven input formats**:~~ Struck 24 Nov 2026: obsolete, see "Left open" below.
   - Single numeric (`1` → `[1]`)
   - Simple array (`[1,2,3]` → `[1,2,3]`)
   - OR array (`{ "or": [1,2,3] }` → `[1,2,3]`)
@@ -69,7 +69,7 @@
 
 ## Phase 8 — Seed data
 
-- [ ] 10. **Add seed data to `lib/Settings/publication_register.json`**: add the 5 Dutch publication objects defined in `design.md` (Seed Data section) under `components.objects[]`. Each object must use the `@self` envelope with matching `register`, `schema`, and a unique `slug`.
+- [x] 10. ~~**Add seed data to `lib/Settings/publication_register.json`**: add the 5 Dutch publication objects defined in `design.md` (Seed Data section) under `components.objects[]`. Each object must use the `@self` envelope with matching `register`, `schema`, and a unique `slug`.~~ Struck 24 Nov 2026: superseded, see "Left open" below.
   - **Spec ref**: ADR-001 seed data requirements
   - **Files**: `lib/Settings/publication_register.json`
   - **Acceptance criteria**:
