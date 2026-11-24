@@ -448,7 +448,7 @@ class OpenApiParityTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md#requirement-the-openapi-document-describes-appliedfilters-on-every-list-response-req-asf-004
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/api-documentation/spec.md#requirement-the-openapi-document-describes-appliedfilters-on-every-list-response-req-asf-004
 	 */
 	public function testEveryListResponseDocumentsAppliedFilters(): void {
 		$documents = [$this->loadOpenApiDocument(), $this->loadOpenApiDocument(file: 'openapi.standards.json')];

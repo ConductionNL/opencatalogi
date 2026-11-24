@@ -152,7 +152,7 @@ class SearchController extends Controller {
 	 * @spec openspec/changes/add-document-content-search/tasks.md#task-3
 	 * @spec openspec/changes/woo-dossier-publication/specs/publications/spec.md#requirement-public-search-takes-the-portals-filter-names-req-wdp-002
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) SearchQueryTranslator is a pure function over the query.
 	 */

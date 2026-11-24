@@ -632,7 +632,7 @@ class PublicationsController extends Controller {
 	 * @SuppressWarnings(PHPMD.StaticAccess) AppliedFilters::forResponse() is a pure fail-closed reader.
 	 *
 	 * @spec openspec/specs/publications/spec.md
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	private function emptyCatalogEnvelope(array $catalog, string $catalogSlug): JSONResponse {
 		$this->logger->warning(
@@ -691,7 +691,7 @@ class PublicationsController extends Controller {
 	 * @SuppressWarnings(PHPMD.StaticAccess) AppliedFilters::forResponse() is a pure fail-closed reader.
 	 *
 	 * @spec openspec/specs/publications/spec.md
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	private function catalogPublications(array $catalog, string $catalogSlug): JSONResponse {
 		$objectService = $this->getObjectService();

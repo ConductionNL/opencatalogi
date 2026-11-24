@@ -2558,7 +2558,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	private function recordPublicOnly(): void {
 		$this->appliedFilters?->record(
@@ -2577,7 +2577,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public function recordCatalogScope(array $schemaIds, array $registerIds): void {
 		if ($this->appliedFilters === null) {
@@ -2603,7 +2603,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @return array<int, string> The slugs, in the order of the ids.
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	private static function slugsOf(array $ids, array $resolved): array {
 		$slugs = [];

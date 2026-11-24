@@ -42,7 +42,7 @@ use RuntimeException;
  * @uses \OCA\OpenCatalogi\Service\CatalogScopeIds
  * @uses \OCA\OpenCatalogi\Controller\AnswersCacheably
  *
- * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+ * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
  */
 class AppliedFiltersResponseTest extends TestCase {
 

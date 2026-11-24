@@ -2556,7 +2556,7 @@ class PublicationQueryServiceTest extends TestCase {
 	/**
 	 * Two archived publications dropped from the page are counted as archivedExcluded (REQ-ASF-001).
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public function testTheArchivedDropIsRecorded(): void {
 		$filters = new AppliedFilters();
@@ -2586,7 +2586,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * A search with no archived rows and no caller scope keys claims only the
 	 * anonymous evaluation and the catalogue scope.
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public function testAFilterThatDidNotApplyIsNotListed(): void {
 		$filters = new AppliedFilters();
@@ -2607,7 +2607,7 @@ class PublicationQueryServiceTest extends TestCase {
 	/**
 	 * A caller's scope keys on the search are named as callerScopeIgnored.
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public function testTheSearchReportsTheStrippedCallerScope(): void {
 		$filters = new AppliedFilters();
@@ -2626,7 +2626,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * On an OpenRegister without the anonymous scope, publicOnly is claimed only
 	 * for an anonymous caller, because a signed-in read is not public-only.
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public function testWithoutTheAnonymousScopePublicOnlyFollowsTheCaller(): void {
 		$fake = new FakeLegacySearchObjectService();
@@ -2651,7 +2651,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * The catalogue index query records its scope and the stripped caller keys,
 	 * and the anonymous read-rule guard records publicOnly; a signed-in guard does not.
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public function testTheCatalogueQueryAndTheGuardRecordTheirFilters(): void {
 		$filters = new AppliedFilters();

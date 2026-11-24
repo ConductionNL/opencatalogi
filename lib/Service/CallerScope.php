@@ -85,7 +85,7 @@ final class CallerScope {
 	 * @return array The query without any caller-supplied register/schema scope.
 	 *
 	 * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public static function strip(array $query, ?AppliedFilters $appliedFilters = null): array {
 		$removed = self::removedKeys(query: $query);
@@ -112,7 +112,7 @@ final class CallerScope {
 	 *
 	 * @return array<int, string> The key names, in the order strip() checks them.
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public static function removedKeys(array $query): array {
 		$removed = array_values(array_filter(self::CALLER_SCOPE_KEYS, static fn (string $key): bool => array_key_exists($key, $query)));

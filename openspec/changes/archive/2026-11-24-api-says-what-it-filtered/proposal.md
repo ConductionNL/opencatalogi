@@ -54,7 +54,7 @@ Wave 1. It needs nothing new.
 
 ## Decisions
 
-- D10: 13.26 is flagged and awaits strike or keep. Its requirement (REQ-ASF-003) and tasks (group 4) are gated: the builder skips them unless Ruben has kept 13.26.
+- D10: decided 24 Nov 2026, strike. Row 13.26 is not built: an integrator-only filter with no screen behind it is a quirk the comparison round recorded, not a capability, and its drift test would depend on another repo's request builders. REQ-ASF-003 and task group 4 are removed.
 
 ## Rows
 
