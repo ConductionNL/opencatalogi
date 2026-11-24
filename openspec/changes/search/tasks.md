@@ -14,7 +14,8 @@
 - [x] 1.4 ~~Remove `uses(string $id)` method from `lib/Controller/SearchController.php`~~ Struck 24 Nov 2026: superseded, see the note above this group.
 - [x] 1.5 ~~Remove `used(string $id)` method from `lib/Controller/SearchController.php`~~ Struck 24 Nov 2026: superseded, see the note above this group.
 - [x] 1.6 ~~Verify `SearchController` now contains only `__construct()` and `index()` as public methods~~ Struck 24 Nov 2026: superseded, see the note above this group.
-- [ ] 1.7 Run `GET /api/search` against a local Nextcloud instance and confirm HTTP 200 with results
+- [x] 1.7 Run `GET /api/search` against a local Nextcloud instance and confirm HTTP 200 with results
+  - 24 Nov: written as `tests/e2e/search-endpoint.spec.ts` (a public publication with a unique word is found by `?_search=`, and the plain call answers 200 with a non-empty `results` array). Written, runs in nightly (UNBLOCK rule 3); not verified on a live instance. Not archived yet: the delta spec's REQ-SCH-001 still says the endpoint refuses an anonymous caller, while the canonical `openspec/specs/search/spec.md` (SCH-PFTS-001) made it public; the sync needs that reconciled first.
 
 ## 2. Backend — Spec Traceability (ADR-003)
 
