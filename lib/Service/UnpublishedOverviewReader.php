@@ -111,7 +111,7 @@ class UnpublishedOverviewReader {
 	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
 	 */
 	private function search(mixed $objectService, array $query): array {
-		$found = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		$found = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
 		$rows = array_map(fn (mixed $row): array => $this->toArray(item: $row), ($found['results'] ?? []));
 
 		return ['rows' => $rows, 'total' => (int)($found['total'] ?? count($rows))];

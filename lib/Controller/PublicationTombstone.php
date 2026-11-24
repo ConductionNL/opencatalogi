@@ -201,8 +201,7 @@ class PublicationTombstone {
 					'publication' => $publicationId,
 				],
 				_rbac: false,
-				_multitenancy: false,
-				deleted: false
+				_multitenancy: false
 			)
 		);
 		if (is_array($result) === false) {

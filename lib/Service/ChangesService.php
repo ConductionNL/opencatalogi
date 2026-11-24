@@ -318,7 +318,7 @@ class ChangesService implements ChangesServiceInterface {
 			registers: $read['scope']['registers'],
 			schemas: $read['scope']['schemas']
 		);
-		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
 		$rows   = self::changedRows(result: $result, window: $read);
 
 		return [
@@ -467,7 +467,7 @@ class ChangesService implements ChangesServiceInterface {
 		// Which of them are publications in this catalogue's scope.
 		$ids    = array_map('strval', array_keys($latest));
 		$query  = CallerScope::writeScope(query: ['_limit' => count($ids)], registers: $read['scope']['registers'], schemas: $read['scope']['schemas']);
-		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: false, _multitenancy: false, deleted: false, ids: $ids);
+		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: false, _multitenancy: false, ...SearchSelection::byIds(ids: $ids));
 
 		return self::withdrawnEntries(latest: $latest, inCatalog: self::foundIds(result: $result, ids: $ids));
 	}//end withdrawnSince()
@@ -521,8 +521,7 @@ class ChangesService implements ChangesServiceInterface {
 				'depublishedAt' => ['gte' => self::iso(moment: $since)],
 			],
 			_rbac: false,
-			_multitenancy: false,
-			deleted: false
+			_multitenancy: false
 		);
 
 		return self::latestDepublications(records: (array)($result['results'] ?? []), since: $since);
