@@ -14,11 +14,12 @@
 			:title="cardTitle"
 			:maxDisplay="content.maxDisplay || 100" />
 		<AttachmentOrderList
-			v-if="resolvedObjectId"
+			v-if="resolvedObjectId && !frozen"
 			:key="'order-' + refreshKey"
 			:route="orderRoute"
 			:order="storedOrder" />
 		<NcButton
+			v-if="!frozen"
 			class="publication-attachments__add"
 			variant="secondary"
 			:disabled="!publication"
@@ -38,6 +39,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { NcButton } from '@nextcloud/vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AttachmentOrderList from './AttachmentOrderList.vue'
+import { frozenMarker } from '../../services/frozenMarker.js'
 import { filesRouteParams } from '../../services/publicationVisibility.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 import { injectedObjectContext } from './objectContext.js'
@@ -50,6 +52,10 @@ import { injectedObjectContext } from './objectContext.js'
  * Lists the files with the library's CnFilesCard. The dialog uploads to the
  * active publication, so Add sets it from the page's object first; when the
  * dialog closes the list is read again.
+ *
+ * While the publication is frozen (withdrawn, REQ-PWA-003) the list stays but
+ * Add attachment and the order buttons are gone: OpenRegister refuses every
+ * file write on a frozen record, and the publication page says why.
  *
  * @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001
  */
@@ -99,6 +105,16 @@ export default {
 		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
 		publication() {
 			return this.ctx.object || null
+		},
+
+		/**
+		 * Whether the publication is frozen, so no upload or reorder is offered.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+		 */
+		frozen() {
+			return frozenMarker(this.publication) !== null
 		},
 
 		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */

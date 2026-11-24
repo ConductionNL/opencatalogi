@@ -36,6 +36,13 @@
 		</p>
 
 		<NcNoteCard
+			v-if="frozenNote"
+			type="info"
+			data-testid="publication-frozen">
+			{{ frozenNote }}
+		</NcNoteCard>
+
+		<NcNoteCard
 			v-if="sourceAbsenceNote"
 			type="warning"
 			data-testid="publication-source-absence">
@@ -114,6 +121,7 @@
 						</span>
 					</span>
 					<NcButton
+						v-if="!frozen"
 						:disabled="busy"
 						data-testid="publication-republish-document"
 						@click="openRepublish(document)">
@@ -166,6 +174,7 @@ import DeleteDraftPermanentlyDialog from '../../dialogs/publication/DeleteDraftP
 import PublishWithoutDocumentsDialog from '../../dialogs/publication/PublishWithoutDocumentsDialog.vue'
 import RepublishDocumentDialog from '../../dialogs/publication/RepublishDocumentDialog.vue'
 import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublicationDialog.vue'
+import { frozenMarker } from '../../services/frozenMarker.js'
 import {
 	canDeletePermanently,
 	comingDepublication,
@@ -281,6 +290,47 @@ export default {
 		/** @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006 */
 		lists() {
 			return listActions(this.state, this.unlisted, this.canUpdate)
+		},
+
+		/**
+		 * The publication's frozen marker, or null when it is not frozen.
+		 *
+		 * @return {object|null}
+		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+		 */
+		frozenState() {
+			return frozenMarker(this.ctx.object)
+		},
+
+		/**
+		 * Whether the publication is frozen, so no file action is offered.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+		 */
+		frozen() {
+			return this.frozenState !== null
+		},
+
+		/**
+		 * Why nothing on the page can be changed: frozen on its withdrawal, when,
+		 * by whom and with which reason (REQ-PWA-003).
+		 *
+		 * @return {string} The note, or an empty string when it is not frozen.
+		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+		 */
+		frozenNote() {
+			const marker = this.frozenState
+			if (marker === null) {
+				return ''
+			}
+			const when = marker.at ? formatMoment(marker.at) : this.t('opencatalogi', 'an unrecorded date')
+			const who = marker.by || this.t('opencatalogi', 'an unknown user')
+			const note = this.t('opencatalogi', 'Frozen on {date} by {user}: it cannot be edited, and no document can be added, withdrawn or republished.', { date: when, user: who })
+			if (!marker.reason) {
+				return note
+			}
+			return note + ' ' + this.t('opencatalogi', 'Reason: {reason}', { reason: marker.reason })
 		},
 
 		/** @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2 */
