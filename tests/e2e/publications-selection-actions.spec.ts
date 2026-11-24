@@ -9,9 +9,9 @@
  * dialog with exactly the rows the user selected, and Merge refuses anything
  * but two. The dialogs' own writes are OpenRegister's and covered there.
  *
- * @e2e openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#scenario-publishing-two-selected-publications
- * @e2e openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#scenario-locking-three-selected-publications
- * @e2e openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#scenario-locked-rows-show-their-new-state
+ * @e2e openspec/specs/publication-selection-actions/spec.md#scenario-publishing-two-selected-publications
+ * @e2e openspec/specs/publication-selection-actions/spec.md#scenario-locking-three-selected-publications
+ * @e2e openspec/specs/publication-selection-actions/spec.md#scenario-locked-rows-show-their-new-state
  * @e2e openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#scenario-merge-needs-exactly-two
  */
 import type { Locator, Page } from '@playwright/test'
