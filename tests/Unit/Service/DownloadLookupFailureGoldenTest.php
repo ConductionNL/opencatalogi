@@ -3,9 +3,9 @@
 /**
  * Golden test for how `DownloadService` answers a failed publication lookup.
  *
- * The method getPublicationData() turns four kinds of lookup failure into a
- * 500 that carries the exception message, and lets any other exception through.
- * Pinned for every kind.
+ * The method getPublicationData() turns three kinds of lookup failure into a
+ * 500 that carries the exception message, answers a DoesNotExistException with
+ * the 404 of DWN-OR-005, and lets any other exception through. Pinned for every kind.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests
@@ -20,6 +20,7 @@
  * @link https://www.OpenCatalogi.nl
  *
  * @spec openspec/specs/download-service/spec.md
+ * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md#7.2
  *
  * @covers \OCA\OpenCatalogi\Service\DownloadService
  */
@@ -47,7 +48,8 @@ use Throwable;
 class DownloadLookupFailureGoldenTest extends TestCase {
 
 	/**
-	 * Every handled failure is a 500 with the message; anything else propagates.
+	 * Every handled failure is a 500 with the message, a missing publication a 404;
+	 * anything else propagates.
 	 *
 	 * @return void
 	 */
@@ -58,7 +60,6 @@ class DownloadLookupFailureGoldenTest extends TestCase {
 			'container' => new class('ce') extends \Exception implements ContainerExceptionInterface {
 			},
 			'multiple' => new MultipleObjectsReturnedException('mo'),
-			'does not exist' => new DoesNotExistException('dne'),
 		];
 		$service = new DownloadService($this->createMock(FileService::class), $this->passthroughL10n());
 		$data = new ReflectionMethod($service, 'getPublicationData');
@@ -72,6 +73,10 @@ class DownloadLookupFailureGoldenTest extends TestCase {
 				$this->assertInstanceOf(JSONResponse::class, $response, $method . ' ' . $kind);
 				$this->assertSame([500, ['error' => $failure->getMessage()]], [$response->getStatus(), $response->getData()], $method . ' ' . $kind);
 			}
+
+			$missing = $call($this->failingStore(new DoesNotExistException('dne')));
+			$this->assertInstanceOf(JSONResponse::class, $missing, $method . ' does not exist');
+			$this->assertSame([404, ['error' => 'Publication not found']], [$missing->getStatus(), $missing->getData()], $method . ' does not exist');
 
 			try {
 				$call($this->failingStore(new RuntimeException('other')));
