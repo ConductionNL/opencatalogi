@@ -36,6 +36,8 @@ use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
@@ -319,6 +321,26 @@ class DcatController extends Controller {
 		}
 
 	}//end donlReport()
+
+	/**
+	 * The licences the licence pickers offer: the EU licences authority list.
+	 *
+	 * Read-only for any signed-in user (the catalogue form and the admin
+	 * settings read it); the same list a save is held to (REQ-DCC-001).
+	 *
+	 * @return JSONResponse The licences, their count, and where the list comes from.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
+	 *
+	 * @no-admin-idor-exempt Returns the EU licences authority list bundled with
+	 *   the app, the same rows for every caller. The endpoint takes no
+	 *   parameter, so there is no object id to scope.
+	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
+	public function licences(): JSONResponse {
+		return new JSONResponse(data: $this->dcatService->licences());
+	}//end licences()
 
 	/**
 	 * The data.overheid.nl registration, its harvest evidence and whether it reads harvested.

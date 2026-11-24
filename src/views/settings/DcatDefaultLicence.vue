@@ -54,11 +54,17 @@ export default {
 		}
 	},
 
+	/**
+	 * Read the stored default licence.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
+	 */
 	async mounted() {
 		try {
 			const response = await axios.get(generateUrl('/apps/opencatalogi/api/settings'))
 			this.licence = String(response.data?.configuration?.[KEY] ?? '')
-		} catch (e) {
+		} catch {
 			this.show(t('opencatalogi', 'The default licence could not be read.'), 'error')
 		} finally {
 			this.loaded = true

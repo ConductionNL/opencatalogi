@@ -1002,6 +1002,23 @@ class DcatService implements DcatServiceInterface {
 	}//end mandatoryViolations()
 
 	/**
+	 * The licences a licence picker offers, with the list's source and version.
+	 *
+	 * @return array{results: array<int, array{code: string, iri: string, label: string, labelNl: string}>, total: int, source: string, version: string}
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
+	 */
+	public function licences(): array {
+		$vocabulary = new DcatVocabularyService();
+		$rows = [];
+		foreach ($vocabulary->licenceList() as $code => $member) {
+			$rows[] = ['code' => (string)$code] + $member;
+		}
+
+		return ['results' => $rows, 'total' => count($rows)] + $vocabulary->licenceListSource();
+	}//end licences()
+
+	/**
 	 * Fetch all DCAT-enabled catalogs on the instance.
 	 *
 	 * @return array<int, array<string, mixed>> The DCAT-enabled catalog objects.

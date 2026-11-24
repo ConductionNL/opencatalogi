@@ -220,4 +220,17 @@ interface DcatServiceInterface {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
 	 */
 	public function getDcatEnabledCatalogs(): array;
+
+	/**
+	 * The licences a licence picker offers: the bundled EU licences authority list.
+	 *
+	 * Each row carries the authority code, the IRI a save stores and the English
+	 * and Dutch labels; `source` and `version` say where the list comes from. The
+	 * same list `LicenceCheck` and `DcatLicenceRule` hold a save to (REQ-DCC-001).
+	 *
+	 * @return array{results: array<int, array{code: string, iri: string, label: string, labelNl: string}>, total: int, source: string, version: string}
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
+	 */
+	public function licences(): array;
 }//end interface

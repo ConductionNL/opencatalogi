@@ -81,7 +81,7 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// Every controlled-list entry, public: declared before `/api/{catalogSlug}`, which would match it.
 		['name' => 'valueLists#index', 'url' => '/api/value-lists', 'verb' => 'GET'],
 		['name' => 'documentsoorten#index', 'url' => '/api/woo/documentsoorten', 'verb' => 'GET'],
-		['name' => 'licences#index', 'url' => '/api/dcat/licences', 'verb' => 'GET'],
+		['name' => 'dcat#licences', 'url' => '/api/dcat/licences', 'verb' => 'GET'],
 		['name' => 'woo#createBatch', 'url' => '/api/woo/batches', 'verb' => 'POST'],
 		['name' => 'woo#getBatch', 'url' => '/api/woo/batches/{batchId}', 'verb' => 'GET'],
 		['name' => 'woo#updateAssessment', 'url' => '/api/woo/batches/{batchId}/documents/{docId}', 'verb' => 'PUT'],

@@ -91,10 +91,16 @@ export default {
 		},
 	},
 
+	/**
+	 * Read the licence list once the picker is on the page.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
+	 */
 	async mounted() {
 		try {
 			this.rows = await fetchLicences()
-		} catch (e) {
+		} catch {
 			this.error = t('opencatalogi', 'The licence list could not be loaded.')
 		} finally {
 			this.loading = false
