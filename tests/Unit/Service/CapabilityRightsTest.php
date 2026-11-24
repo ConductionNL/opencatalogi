@@ -24,6 +24,7 @@ use OCA\OpenCatalogi\Service\CapabilityRights;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenRegister\Db\Schema;
 use OCA\OpenRegister\Db\SchemaMapper;
+use OCA\OpenCatalogi\Tests\Support\PermissionArgs;
 use OCA\OpenRegister\Service\Object\PermissionHandler;
 use OCA\OpenRegister\Service\ObjectService;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -84,9 +85,16 @@ class CapabilityRightsTest extends TestCase {
 		$mapper->expects($this->exactly(2))->method('find')->with('catalog')->willReturn($schema);
 
 		$handler = $this->createMock(PermissionHandler::class);
-		$handler->expects($this->exactly(2))->method('hasPermission')
-			->with($schema, 'openInspection', 'anna')
-			->willReturnOnConsecutiveCalls(true, false);
+		$answers = [true, false];
+		$handler->expects($this->exactly(2))->method('hasPermission')->willReturnCallback(
+			function (mixed ...$args) use ($schema, &$answers): bool {
+				[$asked, $action, $userId] = PermissionArgs::release(args: $args);
+				$this->assertSame(expected: $schema, actual: $asked);
+				$this->assertSame(expected: 'openInspection', actual: $action);
+				$this->assertSame(expected: 'anna', actual: $userId);
+				return array_shift($answers);
+			}
+		);
 
 		$rights = $this->rights($mapper, $handler);
 

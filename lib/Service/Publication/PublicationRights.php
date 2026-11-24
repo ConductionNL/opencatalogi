@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Publication;
 
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
+use OCA\OpenCatalogi\Service\PermissionQuestion;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -91,7 +92,8 @@ class PublicationRights implements PublicationRightsInterface {
 				$owner = null;
 			}
 
-			return $this->objects->getObjectService()->getPermissionHandler()->hasPermission(
+			return PermissionQuestion::ask(
+				handler: $this->objects->getObjectService()->getPermissionHandler(),
 				schema: $schema,
 				action: 'update',
 				objectOwner: $owner,

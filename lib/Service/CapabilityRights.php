@@ -92,11 +92,12 @@ class CapabilityRights {
 		try {
 			$schema = $this->container->get('OCA\OpenRegister\Db\SchemaMapper')->find(self::CATALOG_SCHEMA);
 
-			return $this->objects->getObjectService()->getPermissionHandler()->hasPermission(
+			return PermissionQuestion::ask(
+				handler: $this->objects->getObjectService()->getPermissionHandler(),
 				schema: $schema,
 				action: $verb,
 				userId: $userId
-			) === true;
+			);
 		} catch (\Throwable $e) {
 			$this->logger->warning('[CapabilityRights] The right '.$verb.' could not be checked: '.$e->getMessage());
 			return false;
