@@ -52,14 +52,14 @@ class DownloadTemplateRenderTest extends TestCase {
 	 */
 	public function testRealPublicationTemplateRendersThroughFileService(): void {
 		$fileService = new FileService(
-			$this->createMock(IUserSession::class),
-			$this->createMock(LoggerInterface::class),
-			$this->createMock(IRootFolder::class),
-			$this->createMock(IAppManager::class),
-			$this->createMock(ContainerInterface::class)
+			$this->createMock(originalClassName: IUserSession::class),
+			$this->createMock(originalClassName: LoggerInterface::class),
+			$this->createMock(originalClassName: IRootFolder::class),
+			$this->createMock(originalClassName: IAppManager::class),
+			$this->createMock(originalClassName: ContainerInterface::class)
 		);
 
-		$l10n = $this->createMock(IL10N::class);
+		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
 		$downloadService = new DownloadService(fileService: $fileService, l10n: $l10n);
@@ -74,14 +74,14 @@ class DownloadTemplateRenderTest extends TestCase {
 		];
 
 		$result = $downloadService->createPublicationFile(
-			objectService: $this->createMock(ObjectService::class),
+			objectService: $this->createMock(originalClassName: ObjectService::class),
 			id: 'abc-123',
 			options: ['download' => true, 'publication' => $publication]
 		);
 
-		$this->assertIsArray($result);
-		$this->assertSame('Real Template Publication.pdf', $result['filename']);
-		$this->assertStringStartsWith('%PDF', $result['content']);
+		$this->assertIsArray(actual: $result);
+		$this->assertSame(expected: 'Real Template Publication.pdf', actual: $result['filename']);
+		$this->assertStringStartsWith(prefix: '%PDF', string: $result['content']);
 
 	}//end testRealPublicationTemplateRendersThroughFileService()
 }//end class
