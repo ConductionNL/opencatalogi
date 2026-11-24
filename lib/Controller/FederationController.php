@@ -193,7 +193,7 @@ class FederationController extends Controller {
 	 * @SuppressWarnings(PHPMD.StaticAccess) AppliedFilters::forResponse() is a pure fail-closed reader.
 	 *
 	 * @spec openspec/specs/federation/spec.md
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]

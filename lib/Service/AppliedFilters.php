@@ -35,7 +35,7 @@ use Throwable;
  * entry when the collector is missing or fails, never an empty list that
  * reads as "nothing filtered".
  *
- * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+ * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
  */
 class AppliedFilters {
 
@@ -100,7 +100,7 @@ class AppliedFilters {
 	 *
 	 * @throws InvalidArgumentException When the name is not one of the stable names.
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public function record(string $name, mixed $value, string $reason): void {
 		if (in_array($name, self::NAMES, true) === false) {
@@ -124,7 +124,7 @@ class AppliedFilters {
 	 *
 	 * @throws InvalidArgumentException When the name is not one of the stable names.
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public function increment(string $name, string $reason): void {
 		$count = 0;
@@ -140,7 +140,7 @@ class AppliedFilters {
 	 *
 	 * @return array<int, array{name: string, value: mixed, reason: string}>
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public function all(): array {
 		return array_values($this->entries);
@@ -154,7 +154,7 @@ class AppliedFilters {
 	 *
 	 * @return array<int, array{name: string, value: mixed, reason: string}>
 	 *
-	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-api-says-what-it-filtered/specs/search/spec.md
 	 */
 	public static function forResponse(?AppliedFilters $appliedFilters): array {
 		if ($appliedFilters === null) {
