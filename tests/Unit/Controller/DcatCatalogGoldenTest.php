@@ -99,10 +99,16 @@ class DcatCatalogGoldenTest extends TestCase {
 		$name = $this->dataName();
 		try {
 			$response = $this->controller(case: $case)->catalog(catalogSlug: 'woo');
+			$headers  = $response->getHeaders();
+			if (isset($headers['X-Request-Id']) === true) {
+				// The per-request id: a booted Nextcloud fills in its own, the recording keeps the stub's.
+				$headers['X-Request-Id'] = 'test-request-id';
+			}
+
 			$actual = [
 				'status' => $response->getStatus(),
 				'class' => get_class($response),
-				'headers' => $response->getHeaders(),
+				'headers' => $headers,
 				'calls' => $this->calls,
 			];
 			if ($response instanceof DcatResponse) {

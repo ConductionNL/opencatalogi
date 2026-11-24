@@ -195,7 +195,7 @@ class DcatCatalogPagesGoldenTest extends TestCase {
 		$objectService = $this->createMock(ObjectService::class);
 		$objectService->method('searchObjectsPaginated')->willReturnCallback(
 			function (...$args) use ($world): array {
-				$this->log['searched'][] = $args;
+				$this->log['searched'][] = self::releaseSearchArgs(args: $args);
 				$rows = $world['rows'];
 				if (($world['entities'] ?? false) === true) {
 					$rows = array_map(static fn (array $row): object => new class($row) implements \JsonSerializable {
@@ -266,4 +266,23 @@ class DcatCatalogPagesGoldenTest extends TestCase {
 		);
 
 	}//end service()
+
+	/**
+	 * A paginated search's arguments in the release's positional form the recording keeps.
+	 *
+	 * OpenRegister main passes `deleted`, `ids`, `uses` and `views` inside one
+	 * SearchOptions; the release passes them one by one.
+	 *
+	 * @param array<int, mixed> $args The arguments the mock received.
+	 *
+	 * @return array<int, mixed> The arguments in the release's order.
+	 */
+	private static function releaseSearchArgs(array $args): array {
+		$options = ($args[3] ?? null);
+		if (is_object($options) === false) {
+			return $args;
+		}
+
+		return [$args[0], $args[1], $args[2], $options->deleted, $options->selection->ids, $options->selection->uses, $options->views];
+	}//end releaseSearchArgs()
 }//end class
