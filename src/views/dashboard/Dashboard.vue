@@ -556,7 +556,7 @@ function customWidget(id, title) {
  *
  * @param {Array<object>} publications The publications
  * @return {number} The number of attachments
- * @spec openspec/changes/capability-rows-get-requirements/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-the-dashboard-counts-catalogues-publications-and-attachments-req-crr-005
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-the-dashboard-counts-catalogues-publications-and-attachments-req-crr-005
  */
 export function attachmentCount(publications) {
 	return publications.reduce((total, publication) => {

@@ -9,7 +9,7 @@
  * shows the government identifiers in two columns, with its edit controls
  * following the record's update right.
  *
- * @spec openspec/changes/organisations-page-edits-the-shared-organisation/specs/shared-organisation/spec.md
+ * @spec openspec/changes/archive/2026-11-24-organisations-page-edits-the-shared-organisation/specs/shared-organisation/spec.md
  */
 
 import { readFileSync } from 'node:fs'

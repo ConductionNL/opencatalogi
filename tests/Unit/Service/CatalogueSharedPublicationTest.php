@@ -34,7 +34,7 @@ use Psr\Log\LoggerInterface;
  * @uses   \OCA\OpenCatalogi\Service\CatalogScopeResolver
  * @uses   \OCA\OpenCatalogi\Service\CallerScope
  *
- * @spec openspec/changes/capability-rows-get-requirements/specs/catalogs/spec.md#requirement-catalogues-of-several-organisations-show-one-publication-without-copying-it-req-crr-002
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/catalogs/spec.md#requirement-catalogues-of-several-organisations-show-one-publication-without-copying-it-req-crr-002
  */
 class CatalogueSharedPublicationTest extends TestCase {
 

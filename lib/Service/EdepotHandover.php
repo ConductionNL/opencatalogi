@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use Psr\Log\LoggerInterface;
  * rejected, is recorded as `failed` with the reason; the publication stays
  * archived in the app either way.
  *
- * @spec openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
  */
 class EdepotHandover {
 	use ReadsObjectProperties;
@@ -102,7 +102,7 @@ class EdepotHandover {
 	 *
 	 * @return array<string, mixed> The `edepotTransfer` value to store on the publication.
 	 *
-	 * @spec openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
 	 */
 	public function request(mixed $publication, ?DateTimeImmutable $now = null): array {
 		$moment = self::moment(now: $now);
@@ -141,7 +141,7 @@ class EdepotHandover {
 	 *
 	 * @return array<string, mixed> The state to store.
 	 *
-	 * @spec openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
 	 */
 	public function refresh(array $transfer, ?DateTimeImmutable $now = null): array {
 		$reference = (string)($transfer['reference'] ?? '');
@@ -164,7 +164,7 @@ class EdepotHandover {
 	 *
 	 * @return int How many publications got a new transfer status.
 	 *
-	 * @spec openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
 	 */
 	public function refreshArchived(RetentionRun $run): int {
 		$updated = 0;
@@ -214,7 +214,7 @@ class EdepotHandover {
 	 *
 	 * @return bool True for a requested transfer with a reference.
 	 *
-	 * @spec openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
 	 */
 	public static function isPending(mixed $transfer): bool {
 		return is_array($transfer) === true
