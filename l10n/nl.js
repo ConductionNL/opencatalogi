@@ -2154,7 +2154,8 @@ OC.L10N.register(
         "The default licence could not be read.": "De standaardlicentie kon niet worden gelezen.",
         "Default licence saved.": "Standaardlicentie opgeslagen.",
         "The default licence could not be saved.": "De standaardlicentie kon niet worden opgeslagen.",
-        "The licence of this catalogue's datasets in its DCAT feed, chosen from the EU licences authority list and stored as its authority IRI. Leave it empty to use the instance's default licence.": "De licentie van de datasets van deze catalogus in de DCAT-feed, gekozen uit de EU-licentielijst en opgeslagen als de IRI van die lijst. Laat het leeg om de standaardlicentie van deze installatie te gebruiken."
+        "The licence of this catalogue's datasets in its DCAT feed, chosen from the EU licences authority list and stored as its authority IRI. Leave it empty to use the instance's default licence.": "De licentie van de datasets van deze catalogus in de DCAT-feed, gekozen uit de EU-licentielijst en opgeslagen als de IRI van die lijst. Laat het leeg om de standaardlicentie van deze installatie te gebruiken.",
+        "The server could not complete this request. The details are in the Nextcloud log.": "De server kon dit verzoek niet afronden. De details staan in het Nextcloud-logboek."
     },
     "nplurals=2; plural=(n != 1);"
 )

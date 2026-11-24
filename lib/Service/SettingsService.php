@@ -2616,12 +2616,29 @@ class SettingsService implements SettingsServiceInterface {
 				'versionInfo' => $updatedVersionInfo,
 			];
 		} catch (\Exception $e) {
+			// The exception's text can name paths or OpenRegister internals:
+			// the log gets it, the caller gets a generic failure (admin-settings, Security).
+			$this->recordFailure(context: 'importing the configuration', exception: $e);
 			return [
 				'success' => false,
-				'message' => 'Import failed: ' . $e->getMessage(),
-				'error' => $e->getMessage(),
+				'message' => 'Import failed. The details are in the Nextcloud log.',
+				'error' => 'Import failed. The details are in the Nextcloud log.',
 			];
 		}//end try
 
 	}//end manualImport()
+
+	/**
+	 * Log why a settings request failed, with the exception, on the server only.
+	 *
+	 * @param string     $context   What the request was doing, e.g. "saving the settings".
+	 * @param \Exception $exception The failure.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-settings/specs/admin-settings.md#security
+	 */
+	public function recordFailure(string $context, \Exception $exception): void {
+		$this->logger->error('OpenCatalogi settings: ' . $context . ' failed', ['exception' => $exception]);
+	}//end recordFailure()
 }//end class

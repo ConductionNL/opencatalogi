@@ -73,6 +73,7 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - [ ] 4.2 After import, call `updateObjectTypeConfiguration()` to match schema slugs to IDs and persist to `IAppConfig`
 - [ ] 4.3 Return import result array with `registers`, `schemas`, `objects` counts
 - [ ] 4.4 Catch any exception from `ConfigurationService`; log with `$this->logger->error()` and return a failure indicator — never propagate `$e->getMessage()` to callers
+  - 24 Nov: no caller sees an exception's text any more. `SettingsController` logs every 500 through `SettingsService::recordFailure()` and answers with a generic message, and `manualImport()` logs and returns a generic failure (`SettingsControllerTest::testAServerFailureIsLoggedAndAnsweredGenerically`, `SettingsServiceTest::testManualImportForced`). Left unticked: `loadSettings()` itself still rethrows as a `RuntimeException` carrying the message to its in-process callers (controller, `InitializeSettings`, `FirstRunSettings`) instead of returning a failure indicator.
 
 ---
 

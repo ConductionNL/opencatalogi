@@ -105,7 +105,7 @@ class SettingsController extends Controller {
 			$data = $this->settingsService->getSettings();
 			return new JSONResponse($data);
 		} catch (\Exception $e) {
-			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+			return $this->serverError(exception: $e, context: 'reading the settings');
 		}
 
 	}//end index()
@@ -172,7 +172,7 @@ class SettingsController extends Controller {
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 400);
 		} catch (\Exception $e) {
-			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+			return $this->serverError(exception: $e, context: 'saving the settings');
 		}
 
 	}//end update()
@@ -258,7 +258,7 @@ class SettingsController extends Controller {
 			$result = $this->settingsService->loadSettings();
 			return new JSONResponse($result);
 		} catch (\Exception $e) {
-			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+			return $this->serverError(exception: $e, context: 'loading the configuration');
 		}
 
 	}//end load()
@@ -282,7 +282,7 @@ class SettingsController extends Controller {
 			$data = $this->settingsService->getPublishingOptions();
 			return new JSONResponse($data);
 		} catch (\Exception $e) {
-			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+			return $this->serverError(exception: $e, context: 'reading the publishing options');
 		}
 
 	}//end getPublishingOptions()
@@ -313,7 +313,7 @@ class SettingsController extends Controller {
 			$result = $this->settingsService->updatePublishingOptions($data);
 			return new JSONResponse($result);
 		} catch (\Exception $e) {
-			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+			return $this->serverError(exception: $e, context: 'saving the publishing options');
 		}
 
 	}//end updatePublishingOptions()
@@ -339,7 +339,7 @@ class SettingsController extends Controller {
 			$data = $this->settingsService->getSyncOptions();
 			return new JSONResponse($data);
 		} catch (\Exception $e) {
-			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+			return $this->serverError(exception: $e, context: 'reading the sync options');
 		}
 
 	}//end getSyncOptions()
@@ -373,7 +373,7 @@ class SettingsController extends Controller {
 			$result = $this->settingsService->updateSyncOptions($data);
 			return new JSONResponse($result);
 		} catch (\Exception $e) {
-			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+			return $this->serverError(exception: $e, context: 'saving the sync options');
 		}
 
 	}//end updateSyncOptions()
@@ -397,7 +397,7 @@ class SettingsController extends Controller {
 			$data = $this->settingsService->getVersionInfo();
 			return new JSONResponse($data);
 		} catch (\Exception $e) {
-			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
+			return $this->serverError(exception: $e, context: 'reading the version information');
 		}
 
 	}//end getVersionInfo()
@@ -436,15 +436,44 @@ class SettingsController extends Controller {
 
 			return new JSONResponse(data: $result, statusCode: 400);
 		} catch (\Exception $e) {
+			$this->settingsService->recordFailure(context: 'importing the configuration', exception: $e);
 			return new JSONResponse(
 				data: [
 					'success' => false,
-					'message' => $this->l10n->t('Import failed') . ': ' . $e->getMessage(),
-					'error' => $e->getMessage(),
+					'message' => $this->l10n->t('Import failed'),
+					'error' => $this->genericError(),
 				],
 				statusCode: 500
 			);
 		}//end try
 
 	}//end manualImport()
+	/**
+	 * Log a failed request and answer it with a generic message.
+	 *
+	 * The exception's message can name tables, paths or OpenRegister internals,
+	 * so it goes to the server log only (admin-settings, Security).
+	 *
+	 * @param \Exception $exception The failure.
+	 * @param string     $context   What the request was doing, for the log.
+	 *
+	 * @return JSONResponse A 500 carrying the generic message.
+	 *
+	 * @spec openspec/changes/admin-settings/specs/admin-settings.md#security
+	 */
+	private function serverError(\Exception $exception, string $context): JSONResponse {
+		$this->settingsService->recordFailure(context: $context, exception: $exception);
+		return new JSONResponse(data: ['error' => $this->genericError()], statusCode: 500);
+	}//end serverError()
+
+	/**
+	 * The message a caller gets when the server failed.
+	 *
+	 * @return string The translated message.
+	 *
+	 * @spec openspec/changes/admin-settings/specs/admin-settings.md#security
+	 */
+	private function genericError(): string {
+		return $this->l10n->t('The server could not complete this request. The details are in the Nextcloud log.');
+	}//end genericError()
 }//end class

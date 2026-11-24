@@ -348,4 +348,18 @@ interface SettingsServiceInterface {
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
 	 */
 	public function manualImport(bool $forceImport = false): array;
+
+	/**
+	 * Log why a settings request failed, with the exception, on the server only.
+	 *
+	 * @param string     $context   What the request was doing, e.g. "saving the settings".
+	 * @param \Exception $exception The failure.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-settings/specs/admin-settings.md#security
+	 *
+	 * @contract-shift internal-only — only SettingsService in this app implements this interface; no other app binds or doubles it.
+	 */
+	public function recordFailure(string $context, \Exception $exception): void;
 }//end interface
