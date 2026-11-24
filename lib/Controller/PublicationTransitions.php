@@ -27,6 +27,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\CompletenessSweepService;
+use OCA\OpenCatalogi\Service\RetentionHotspotHold;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -171,6 +172,36 @@ class PublicationTransitions {
 	public function documentWriteRefusal(mixed $publication): ?string {
 		return $this->depublisher->documentWriteRefusal(publication: $publication);
 	}//end documentWriteRefusal()
+
+	/**
+	 * The title of the archive-hotspot subject that keeps this publication permanently,
+	 * or null when none does or its subjects cannot be read (REQ-THA-003).
+	 *
+	 * @param array<string, mixed> $publication The publication's properties.
+	 *
+	 * @return string|null The subject's title.
+	 *
+	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+	 */
+	public function archiveHotspotOf(array $publication): ?string {
+		try {
+			$hold = $this->container->get(RetentionHotspotHold::class);
+			if ($hold instanceof RetentionHotspotHold === false) {
+				return null;
+			}
+
+			$found = $hold->holdOf(objectService: $this->getObjectService(), publication: $publication);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		if (($found['outcome'] ?? null) !== RetentionHotspotHold::BY_HOTSPOT) {
+			return null;
+		}
+
+		return ($found['subject'] ?? null);
+
+	}//end archiveHotspotOf()
 
 	/**
 	 * The channels a depublication has not reached yet.

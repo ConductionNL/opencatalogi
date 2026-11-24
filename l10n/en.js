@@ -2203,7 +2203,8 @@ OC.L10N.register(
         "The server could not complete this request. The details are in the Nextcloud log.": "The server could not complete this request. The details are in the Nextcloud log.",
         "Lift embargo": "Lift embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.",
-        "The embargo was lifted. The publication is public.": "The embargo was lifted. The publication is public."
+        "The embargo was lifted. The publication is public.": "The embargo was lifted. The publication is public.",
+        "Kept permanently: archive hotspot {subject}": "Kept permanently: archive hotspot {subject}"
     },
     "nplurals=2; plural=(n != 1);"
 )

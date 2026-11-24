@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Automatisk afpublicering den {date}",
         "Lift embargo": "Ophæv embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Udgiv \"{name}\" nu, før udgivelsesdatoen? Ophævelsen registreres i revisionssporet med dit navn og begrundelsen.",
-        "The embargo was lifted. The publication is public.": "Embargoen er ophævet. Publikationen er offentlig."
+        "The embargo was lifted. The publication is public.": "Embargoen er ophævet. Publikationen er offentlig.",
+        "Kept permanently: archive hotspot {subject}": "Bevares permanent: arkivhotspot {subject}"
     },
     "nplurals=2; plural=(n != 1);"
 )

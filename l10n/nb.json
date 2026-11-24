@@ -839,7 +839,8 @@
         "Automatic depublication on {date}": "Automatisk avpublisering {date}",
         "Lift embargo": "Opphev embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publisere «{name}» nå, før publiseringsdatoen? Opphevelsen registreres i revisjonsloggen med navnet ditt og begrunnelsen.",
-        "The embargo was lifted. The publication is public.": "Embargoen er opphevet. Publikasjonen er offentlig."
+        "The embargo was lifted. The publication is public.": "Embargoen er opphevet. Publikasjonen er offentlig.",
+        "Kept permanently: archive hotspot {subject}": "Bevares permanent: arkivhotspot {subject}"
     },
     "plurals": {}
 }
