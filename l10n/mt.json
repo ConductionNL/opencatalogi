@@ -840,6 +840,7 @@
         "Lift embargo": "Neħħi l-embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Tippubblika \"{name}\" issa, qabel id-data tal-pubblikazzjoni? It-tneħħija tiġi rreġistrata fir-reġistru tal-awditjar b'ismek u r-raġuni.",
         "The embargo was lifted. The publication is public.": "L-embargo tneħħa. Il-pubblikazzjoni hija pubblika.",
+        "Kept permanently: archive hotspot {subject}": "Miżmum b'mod permanenti: hotspot tal-arkivju {subject}",
         "Publish {count} of {total} publications": "Ippubblika {count} minn {total} pubblikazzjonijiet",
         "These publications miss a field required to publish and will be skipped:": "Dawn il-pubblikazzjonijiet m'għandhomx qasam meħtieġ biex jiġu ppubblikati u se jinqabżu:",
         "Required to publish": "Meħtieġ biex jiġi ppubblikat"

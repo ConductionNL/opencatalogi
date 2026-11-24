@@ -16,6 +16,12 @@
 			{{ automaticDepublicationNote }}
 		</p>
 		<p
+			v-if="archiveHotspot"
+			class="publication-visibility__state"
+			data-testid="publication-visibility-archive-hotspot">
+			{{ t('opencatalogi', 'Kept permanently: archive hotspot {subject}', { subject: archiveHotspot }) }}
+		</p>
+		<p
 			v-if="unlisted"
 			class="publication-visibility__state"
 			data-testid="publication-visibility-unlisted">
@@ -195,6 +201,7 @@ import RepublishDocumentDialog from '../../dialogs/publication/RepublishDocument
 import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublicationDialog.vue'
 import { frozenMarker } from '../../services/frozenMarker.js'
 import {
+	archiveHotspotOf,
 	canDeletePermanently,
 	comingDepublication,
 	documentOptions,
@@ -290,6 +297,7 @@ export default {
 			audience: 'public',
 			minimumAssurance: 'substantial',
 			sourceAbsence: null,
+			archiveHotspot: '',
 			documents: [],
 			withdrawn: [],
 			republishing: null,
@@ -550,6 +558,7 @@ export default {
 				this.audience = data.audience === 'signedIn' ? 'signedIn' : 'public'
 				this.minimumAssurance = data.minimumAssurance === 'high' ? 'high' : 'substantial'
 				this.sourceAbsence = data.sourceAbsence || null
+				this.archiveHotspot = archiveHotspotOf(data)
 			} catch {
 				this.state = ''
 				this.canPublish = false
@@ -557,6 +566,7 @@ export default {
 				this.audience = 'public'
 				this.minimumAssurance = 'substantial'
 				this.sourceAbsence = null
+				this.archiveHotspot = ''
 			}
 
 			await this.loadFiles()

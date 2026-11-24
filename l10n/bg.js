@@ -841,6 +841,7 @@ OC.L10N.register(
         "Lift embargo": "Отмени ембаргото",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Да се публикува ли „{name}“ сега, преди датата на публикуване? Отменянето се записва в одитната следа с вашето име и причината.",
         "The embargo was lifted. The publication is public.": "Ембаргото е отменено. Публикацията е публична.",
+        "Kept permanently: archive hotspot {subject}": "Съхранява се постоянно: архивна гореща точка {subject}",
         "Publish {count} of {total} publications": "Публикуване на {count} от {total} публикации",
         "These publications miss a field required to publish and will be skipped:": "На тези публикации липсва поле, задължително за публикуване, и те ще бъдат пропуснати:",
         "Required to publish": "Задължително за публикуване"

@@ -841,6 +841,7 @@ OC.L10N.register(
         "Lift embargo": "Ardaigh an lánchosc",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Foilsigh \"{name}\" anois, roimh a dháta foilsithe? Taifeadtar an t-ardú sa rian iniúchta le d'ainm agus leis an gcúis.",
         "The embargo was lifted. The publication is public.": "Ardaíodh an lánchosc. Tá an foilseachán poiblí.",
+        "Kept permanently: archive hotspot {subject}": "Coinnithe go buan: ceantar te cartlainne {subject}",
         "Publish {count} of {total} publications": "Foilsigh {count} as {total} foilseachán",
         "These publications miss a field required to publish and will be skipped:": "Tá réimse atá riachtanach le foilsiú in easnamh ar na foilseacháin seo agus scipeálfar iad:",
         "Required to publish": "Riachtanach le foilsiú"

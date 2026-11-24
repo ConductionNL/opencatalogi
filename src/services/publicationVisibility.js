@@ -145,6 +145,20 @@ export function isNoDocumentsRefusal(error) {
 }
 
 /**
+ * The title of the archive-hotspot subject the visibility answer says keeps
+ * the publication permanently, or an empty string when it names none
+ * (theme-archive-hotspot REQ-THA-003).
+ *
+ * @param {object|null} answer The `GET visibility` body.
+ * @return {string} The subject's title, trimmed.
+ * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+ */
+export function archiveHotspotOf(answer) {
+	const subject = answer ? answer.archiveHotspot : null
+	return typeof subject === 'string' ? subject.trim() : ''
+}
+
+/**
  * The publication's automatic depublication moment when it lies ahead: its
  * `depublicationDate` when that is a valid date after `now`, else null
  * (REQ-PSG-003). A past or unreadable date says nothing.

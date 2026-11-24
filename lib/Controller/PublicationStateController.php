@@ -93,12 +93,14 @@ class PublicationStateController extends Controller {
 	 * @param string $id The publication id.
 	 *
 	 * @return JSONResponse `{state, canPublish, canLiftEmbargo}`, plus `sourceAbsence` when its source no
-	 *                      longer carries it; 404 when the caller cannot read it.
+	 *                      longer carries it and `archiveHotspot` (the subject's title) when an archive
+	 *                      hotspot keeps it; 404 when the caller cannot read it.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001
 	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
 	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
+	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
 	 */
 	#[NoAdminRequired]
 	public function visibility(string $id): JSONResponse {
@@ -135,6 +137,12 @@ class PublicationStateController extends Controller {
 		$absence = (new SourceAbsence())->summary(publication: $properties);
 		if ($absence !== null) {
 			$answer['sourceAbsence'] = $absence;
+		}
+
+		// Kept permanently under an archive-hotspot subject (theme-archive-hotspot 3.2).
+		$hotspot = $this->registers->archiveHotspotOf(publication: $properties);
+		if ($hotspot !== null) {
+			$answer['archiveHotspot'] = $hotspot;
 		}
 
 		return new JSONResponse($answer);

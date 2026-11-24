@@ -841,6 +841,7 @@ OC.L10N.register(
         "Lift embargo": "Ridică embargoul",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publici „{name}” acum, înainte de data publicării? Ridicarea este înregistrată în jurnalul de audit cu numele tău și motivul.",
         "The embargo was lifted. The publication is public.": "Embargoul a fost ridicat. Publicația este publică.",
+        "Kept permanently: archive hotspot {subject}": "Păstrat permanent: punct fierbinte de arhivă {subject}",
         "Publish {count} of {total} publications": "Publică {count} din {total} publicații",
         "These publications miss a field required to publish and will be skipped:": "Acestor publicații le lipsește un câmp obligatoriu pentru publicare și vor fi omise:",
         "Required to publish": "Obligatoriu pentru publicare"

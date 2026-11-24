@@ -841,6 +841,7 @@ OC.L10N.register(
         "Lift embargo": "Άρση εμπάργκο",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Δημοσίευση του «{name}» τώρα, πριν από την ημερομηνία δημοσίευσης; Η άρση καταγράφεται στο αρχείο ελέγχου με το όνομά σας και τον λόγο.",
         "The embargo was lifted. The publication is public.": "Το εμπάργκο άρθηκε. Η δημοσίευση είναι δημόσια.",
+        "Kept permanently: archive hotspot {subject}": "Διατηρείται μόνιμα: αρχειακό σημείο ενδιαφέροντος {subject}",
         "Publish {count} of {total} publications": "Δημοσίευση {count} από {total} δημοσιεύσεις",
         "These publications miss a field required to publish and will be skipped:": "Σε αυτές τις δημοσιεύσεις λείπει πεδίο που απαιτείται για δημοσίευση και θα παραλειφθούν:",
         "Required to publish": "Απαιτείται για δημοσίευση"
