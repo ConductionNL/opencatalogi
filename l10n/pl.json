@@ -832,7 +832,10 @@
         "Delete permanently": "Usuń trwale",
         "Delete \"{name}\" permanently? This cannot be undone.": "Usunąć trwale „{name}”? Tej operacji nie można cofnąć.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Jej pliki, odwołania do dokumentów i rekordy, które do niej się odwołują, zostaną usunięte razem z nią. Nie można jej przywrócić.",
-        "The publication was deleted permanently.": "Publikacja została trwale usunięta."
+        "The publication was deleted permanently.": "Publikacja została trwale usunięta.",
+        "Publish without documents": "Opublikuj bez dokumentów",
+        "Publish it without documents": "Opublikuj ją bez dokumentów",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}” nie ma dokumentów: żadnych plików ani odwołań do dokumentów. Czytelnicy znajdą publikację, ale nic do otwarcia."
     },
     "plurals": {}
 }

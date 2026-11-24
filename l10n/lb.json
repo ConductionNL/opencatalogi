@@ -832,7 +832,10 @@
         "Delete permanently": "Definitiv läschen",
         "Delete \"{name}\" permanently? This cannot be undone.": "\"{name}\" definitiv läschen? Dat kann net réckgängeg gemaach ginn.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Hir Dateien, hir Dokumentreferenzen an d'Donnéeën, déi op si verweisen, gi mat geläscht. Si kann net erëm hiergestallt ginn.",
-        "The publication was deleted permanently.": "D'Publikatioun gouf definitiv geläscht."
+        "The publication was deleted permanently.": "D'Publikatioun gouf definitiv geläscht.",
+        "Publish without documents": "Ouni Dokumenter publizéieren",
+        "Publish it without documents": "Ouni Dokumenter publizéieren",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ huet keng Dokumenter: keng Fichieren a keng Dokumentreferenzen. D’Lieser fannen d’Publikatioun, mee näischt fir opzemaachen."
     },
     "plurals": {}
 }

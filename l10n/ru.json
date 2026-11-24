@@ -832,7 +832,10 @@
         "Delete permanently": "Удалить навсегда",
         "Delete \"{name}\" permanently? This cannot be undone.": "Удалить «{name}» навсегда? Это действие нельзя отменить.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Её файлы, ссылки на документы и записи, которые на неё ссылаются, удаляются вместе с ней. Восстановить её нельзя.",
-        "The publication was deleted permanently.": "Публикация удалена навсегда."
+        "The publication was deleted permanently.": "Публикация удалена навсегда.",
+        "Publish without documents": "Опубликовать без документов",
+        "Publish it without documents": "Опубликовать без документов",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "«{name}» не содержит документов: ни файлов, ни ссылок на документы. Читатели найдут публикацию, но открыть будет нечего."
     },
     "plurals": {}
 }

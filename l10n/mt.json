@@ -832,7 +832,10 @@
         "Delete permanently": "Ħassar għal kollox",
         "Delete \"{name}\" permanently? This cannot be undone.": "Tħassar \"{name}\" għal kollox? Dan ma jistax jitreġġa' lura.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Il-fajls tagħha, ir-referenzi tad-dokumenti u r-rekords li jirreferu għaliha jitħassru magħha. Ma tistax terġa' tiġi rkuprata.",
-        "The publication was deleted permanently.": "Il-pubblikazzjoni tħassret għal kollox."
+        "The publication was deleted permanently.": "Il-pubblikazzjoni tħassret għal kollox.",
+        "Publish without documents": "Ippubblika mingħajr dokumenti",
+        "Publish it without documents": "Ippubblikaha mingħajr dokumenti",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" m’għandha l-ebda dokument: l-ebda fajl u l-ebda referenza għal dokument. Il-qarrejja jsibu l-pubblikazzjoni iżda xejn x’jiftħu."
     },
     "plurals": {}
 }

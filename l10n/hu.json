@@ -832,7 +832,10 @@
         "Delete permanently": "Végleges törlés",
         "Delete \"{name}\" permanently? This cannot be undone.": "Véglegesen törli a következőt: „{name}”? Ez nem vonható vissza.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "A fájljai, a dokumentumhivatkozásai és a rá mutató rekordok vele együtt törlődnek. Nem állítható vissza.",
-        "The publication was deleted permanently.": "A publikáció véglegesen törölve."
+        "The publication was deleted permanently.": "A publikáció véglegesen törölve.",
+        "Publish without documents": "Közzététel dokumentumok nélkül",
+        "Publish it without documents": "Közzététel dokumentumok nélkül",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "A(z) „{name}” nem tartalmaz dokumentumot: sem fájlt, sem dokumentumhivatkozást. Az olvasók megtalálják a közzétételt, de nem lesz mit megnyitniuk."
     },
     "plurals": {}
 }

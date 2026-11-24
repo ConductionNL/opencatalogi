@@ -832,7 +832,10 @@
         "Delete permanently": "Fshije përgjithmonë",
         "Delete \"{name}\" permanently? This cannot be undone.": "Të fshihet përgjithmonë \"{name}\"? Ky veprim nuk mund të zhbëhet.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Skedarët e saj, referencat e dokumenteve dhe të dhënat që tregojnë drejt saj fshihen bashkë me të. Nuk mund të rikthehet.",
-        "The publication was deleted permanently.": "Publikimi u fshi përgjithmonë."
+        "The publication was deleted permanently.": "Publikimi u fshi përgjithmonë.",
+        "Publish without documents": "Publiko pa dokumente",
+        "Publish it without documents": "Publikoje pa dokumente",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" nuk ka dokumente: asnjë skedar dhe asnjë referencë dokumenti. Lexuesit do ta gjejnë publikimin, por asgjë për të hapur."
     },
     "plurals": {}
 }

@@ -832,7 +832,10 @@
         "Delete permanently": "Stizzar definitivamain",
         "Delete \"{name}\" permanently? This cannot be undone.": "Stizzar definitivamain \"{name}\"? Quai na po betg vegnir revocà.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Sias datotecas, sias referenzas a documents e las datas che renvieschan ad ella vegnan stizzadas cun ella. Ella na po betg vegnir restaurada.",
-        "The publication was deleted permanently.": "La publicaziun è vegnida stizzada definitivamain."
+        "The publication was deleted permanently.": "La publicaziun è vegnida stizzada definitivamain.",
+        "Publish without documents": "Publitgar senza documents",
+        "Publish it without documents": "La publitgar senza documents",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "«{name}» n’ha nagins documents: nagina datoteca e nagina referenza a documents. Las lecturas chattan la publicaziun, ma nagut per avrir."
     },
     "plurals": {}
 }

@@ -833,7 +833,10 @@ OC.L10N.register(
         "Delete permanently": "Trvale smazat",
         "Delete \"{name}\" permanently? This cannot be undone.": "Trvale smazat „{name}“? Tuto akci nelze vrátit zpět.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Její soubory, odkazy na dokumenty a záznamy, které na ni odkazují, budou smazány s ní. Nelze ji obnovit.",
-        "The publication was deleted permanently.": "Publikace byla trvale smazána."
+        "The publication was deleted permanently.": "Publikace byla trvale smazána.",
+        "Publish without documents": "Publikovat bez dokumentů",
+        "Publish it without documents": "Publikovat ji bez dokumentů",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ nemá žádné dokumenty: žádné soubory ani odkazy na dokumenty. Čtenáři publikaci najdou, ale nebudou mít co otevřít."
     },
     "nplurals=2; plural=(n != 1);"
 )

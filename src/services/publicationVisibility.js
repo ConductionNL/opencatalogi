@@ -127,6 +127,20 @@ export function publishRefusalMessage(error) {
 }
 
 /**
+ * Whether the publish route refused because the publication carries no
+ * documents and the call did not confirm it (409 `no-documents`, REQ-PSG-004).
+ * The page then asks a second time instead of reporting a conflict.
+ *
+ * @param {object} error The axios error.
+ * @return {boolean} True for that refusal.
+ * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
+ */
+export function isNoDocumentsRefusal(error) {
+	const response = error && error.response ? error.response : null
+	return Boolean(response && response.status === 409 && response.data && response.data.error === 'no-documents')
+}
+
+/**
  * The list moves the page offers: Unlist on a public or scheduled publication
  * that is listed, List again on an unlisted one, both only to a caller with
  * the update right (publication-lifecycle-on-or REQ-PLC-006).

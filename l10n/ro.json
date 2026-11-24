@@ -832,7 +832,10 @@
         "Delete permanently": "Șterge definitiv",
         "Delete \"{name}\" permanently? This cannot be undone.": "Ștergeți definitiv „{name}”? Acțiunea nu poate fi anulată.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Fișierele, referințele la documente și înregistrările care trimit la ea sunt șterse odată cu ea. Nu poate fi restaurată.",
-        "The publication was deleted permanently.": "Publicația a fost ștearsă definitiv."
+        "The publication was deleted permanently.": "Publicația a fost ștearsă definitiv.",
+        "Publish without documents": "Publică fără documente",
+        "Publish it without documents": "Publică-o fără documente",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}” nu are documente: niciun fișier și nicio referință la documente. Cititorii vor găsi publicația, dar nimic de deschis."
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

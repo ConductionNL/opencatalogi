@@ -833,7 +833,10 @@ OC.L10N.register(
         "Delete permanently": "Οριστική διαγραφή",
         "Delete \"{name}\" permanently? This cannot be undone.": "Οριστική διαγραφή του «{name}»; Η ενέργεια δεν μπορεί να αναιρεθεί.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Τα αρχεία της, οι αναφορές σε έγγραφα και οι εγγραφές που παραπέμπουν σε αυτήν διαγράφονται μαζί της. Δεν μπορεί να επαναφερθεί.",
-        "The publication was deleted permanently.": "Η δημοσίευση διαγράφηκε οριστικά."
+        "The publication was deleted permanently.": "Η δημοσίευση διαγράφηκε οριστικά.",
+        "Publish without documents": "Δημοσίευση χωρίς έγγραφα",
+        "Publish it without documents": "Δημοσίευσή της χωρίς έγγραφα",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "Η «{name}» δεν έχει έγγραφα: ούτε αρχεία ούτε παραπομπές σε έγγραφα. Οι αναγνώστες θα βρουν τη δημοσίευση αλλά τίποτα για να ανοίξουν."
     },
     "nplurals=2; plural=(n != 1);"
 )

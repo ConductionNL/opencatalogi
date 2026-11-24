@@ -832,7 +832,10 @@
         "Delete permanently": "Trajno izbriši",
         "Delete \"{name}\" permanently? This cannot be undone.": "Ali želite trajno izbrisati »{name}«? Tega ni mogoče razveljaviti.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Njene datoteke, sklici na dokumente in zapisi, ki kažejo nanjo, se izbrišejo skupaj z njo. Obnovitev ni mogoča.",
-        "The publication was deleted permanently.": "Objava je bila trajno izbrisana."
+        "The publication was deleted permanently.": "Objava je bila trajno izbrisana.",
+        "Publish without documents": "Objavi brez dokumentov",
+        "Publish it without documents": "Objavi jo brez dokumentov",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "»{name}« nima dokumentov: ne datotek ne sklicev na dokumente. Bralci bodo našli objavo, a ničesar za odpiranje."
     },
     "plurals": {}
 }

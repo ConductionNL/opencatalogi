@@ -833,7 +833,10 @@ OC.L10N.register(
         "Delete permanently": "Ištrinti visam laikui",
         "Delete \"{name}\" permanently? This cannot be undone.": "Ištrinti „{name}“ visam laikui? Šio veiksmo atšaukti negalima.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Jos failai, dokumentų nuorodos ir į ją nurodantys įrašai ištrinami kartu. Jos atkurti negalima.",
-        "The publication was deleted permanently.": "Publikacija ištrinta visam laikui."
+        "The publication was deleted permanently.": "Publikacija ištrinta visam laikui.",
+        "Publish without documents": "Skelbti be dokumentų",
+        "Publish it without documents": "Skelbti ją be dokumentų",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ neturi dokumentų: nei failų, nei nuorodų į dokumentus. Skaitytojai ras leidinį, bet nieko, ką galėtų atidaryti."
     },
     "nplurals=2; plural=(n != 1);"
 )

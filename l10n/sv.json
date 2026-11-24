@@ -832,7 +832,10 @@
         "Delete permanently": "Radera permanent",
         "Delete \"{name}\" permanently? This cannot be undone.": "Radera \"{name}\" permanent? Detta kan inte ångras.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Dess filer, dokumentreferenser och de poster som pekar på den raderas också. Den kan inte återställas.",
-        "The publication was deleted permanently.": "Publikationen har raderats permanent."
+        "The publication was deleted permanently.": "Publikationen har raderats permanent.",
+        "Publish without documents": "Publicera utan dokument",
+        "Publish it without documents": "Publicera den utan dokument",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "”{name}” har inga dokument: inga filer och inga dokumenthänvisningar. Läsare hittar publikationen men inget att öppna."
     },
     "plurals": {}
 }
