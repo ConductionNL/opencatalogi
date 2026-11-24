@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "Scriosadh an foilseachán go buan.",
         "Publish without documents": "Foilsigh gan doiciméid",
         "Publish it without documents": "Foilsigh é gan doiciméid",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "Níl aon doiciméad ag \"{name}\": gan chomhaid agus gan tagairtí doiciméid. Gheobhaidh léitheoirí an foilseachán ach ní bheidh aon rud le hoscailt."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "Níl aon doiciméad ag \"{name}\": gan chomhaid agus gan tagairtí doiciméid. Gheobhaidh léitheoirí an foilseachán ach ní bheidh aon rud le hoscailt.",
+        "Automatic depublication on {date}": "Dífhoilsiú uathoibríoch ar {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

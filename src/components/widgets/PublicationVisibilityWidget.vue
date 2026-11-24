@@ -10,6 +10,12 @@
 			{{ stateLabel }}
 		</p>
 		<p
+			v-if="automaticDepublicationNote"
+			class="publication-visibility__state"
+			data-testid="publication-visibility-auto-depublication">
+			{{ automaticDepublicationNote }}
+		</p>
+		<p
 			v-if="unlisted"
 			class="publication-visibility__state"
 			data-testid="publication-visibility-unlisted">
@@ -162,6 +168,7 @@ import RepublishDocumentDialog from '../../dialogs/publication/RepublishDocument
 import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublicationDialog.vue'
 import {
 	canDeletePermanently,
+	comingDepublication,
 	documentOptions,
 	draftPurgeMessage,
 	filesRouteParams,
@@ -290,6 +297,23 @@ export default {
 		publicationTitle() {
 			const object = this.ctx.object || this.content || {}
 			return String(object.title || object.name || '')
+		},
+
+		/**
+		 * "Automatic depublication on <date>" while the publication's
+		 * depublication date lies ahead (REQ-PSG-003).
+		 *
+		 * @return {string} The line, or an empty string without a coming date.
+		 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1
+		 */
+		automaticDepublicationNote() {
+			const date = comingDepublication(this.ctx.object || this.content || null)
+			if (date === null) {
+				return ''
+			}
+			return this.t('opencatalogi', 'Automatic depublication on {date}', {
+				date: date.toLocaleDateString(),
+			})
 		},
 
 		/** @spec exclude presentational widget adapter; resolves the object context from inject. */

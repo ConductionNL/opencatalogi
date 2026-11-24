@@ -835,7 +835,8 @@
         "The publication was deleted permanently.": "Publikace byla trvale smazána.",
         "Publish without documents": "Publikovat bez dokumentů",
         "Publish it without documents": "Publikovat ji bez dokumentů",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ nemá žádné dokumenty: žádné soubory ani odkazy na dokumenty. Čtenáři publikaci najdou, ale nebudou mít co otevřít."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ nemá žádné dokumenty: žádné soubory ani odkazy na dokumenty. Čtenáři publikaci najdou, ale nebudou mít co otevřít.",
+        "Automatic depublication on {date}": "Automatické stažení z publikace {date}"
     },
     "plurals": {}
 }

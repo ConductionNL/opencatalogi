@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "La publicaziun è vegnida stizzada definitivamain.",
         "Publish without documents": "Publitgar senza documents",
         "Publish it without documents": "La publitgar senza documents",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "«{name}» n’ha nagins documents: nagina datoteca e nagina referenza a documents. Las lecturas chattan la publicaziun, ma nagut per avrir."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "«{name}» n’ha nagins documents: nagina datoteca e nagina referenza a documents. Las lecturas chattan la publicaziun, ma nagut per avrir.",
+        "Automatic depublication on {date}": "Retratga automatica da la publicaziun ils {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

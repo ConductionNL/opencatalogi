@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "Objava je bila trajno izbrisana.",
         "Publish without documents": "Objavi brez dokumentov",
         "Publish it without documents": "Objavi jo brez dokumentov",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "»{name}« nima dokumentov: ne datotek ne sklicev na dokumente. Bralci bodo našli objavo, a ničesar za odpiranje."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "»{name}« nima dokumentov: ne datotek ne sklicev na dokumente. Bralci bodo našli objavo, a ničesar za odpiranje.",
+        "Automatic depublication on {date}": "Samodejni umik objave {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

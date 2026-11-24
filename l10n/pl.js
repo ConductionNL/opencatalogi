@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "Publikacja została trwale usunięta.",
         "Publish without documents": "Opublikuj bez dokumentów",
         "Publish it without documents": "Opublikuj ją bez dokumentów",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}” nie ma dokumentów: żadnych plików ani odwołań do dokumentów. Czytelnicy znajdą publikację, ale nic do otwarcia."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}” nie ma dokumentów: żadnych plików ani odwołań do dokumentów. Czytelnicy znajdą publikację, ale nic do otwarcia.",
+        "Automatic depublication on {date}": "Automatyczne wycofanie publikacji {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

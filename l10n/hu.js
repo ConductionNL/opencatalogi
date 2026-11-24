@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "A publikáció véglegesen törölve.",
         "Publish without documents": "Közzététel dokumentumok nélkül",
         "Publish it without documents": "Közzététel dokumentumok nélkül",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "A(z) „{name}” nem tartalmaz dokumentumot: sem fájlt, sem dokumentumhivatkozást. Az olvasók megtalálják a közzétételt, de nem lesz mit megnyitniuk."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "A(z) „{name}” nem tartalmaz dokumentumot: sem fájlt, sem dokumentumhivatkozást. Az olvasók megtalálják a közzétételt, de nem lesz mit megnyitniuk.",
+        "Automatic depublication on {date}": "Automatikus visszavonás: {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

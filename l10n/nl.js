@@ -2140,7 +2140,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "De publicatie is definitief verwijderd.",
         "Publish without documents": "Publiceren zonder documenten",
         "Publish it without documents": "Zonder documenten publiceren",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" heeft geen documenten: geen bestanden en geen documentverwijzingen. Lezers vinden de publicatie, maar niets om te openen."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" heeft geen documenten: geen bestanden en geen documentverwijzingen. Lezers vinden de publicatie, maar niets om te openen.",
+        "Automatic depublication on {date}": "Automatische depublicatie op {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )
