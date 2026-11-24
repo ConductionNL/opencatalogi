@@ -292,7 +292,7 @@ class PublicationStateControllerTest extends TestCase {
 		$this->objectService->method('find')->willReturnCallback(
 			function (string|int $id = '') {
 				if ($this->subjects !== null && array_key_exists((string)$id, $this->subjects) === true) {
-					return $this->entity($this->subjects[(string)$id]);
+					return $this->entity(properties: $this->subjects[(string)$id]);
 				}
 
 				if ($this->subjects !== null && str_starts_with((string)$id, 'theme-') === true) {
@@ -542,6 +542,8 @@ class PublicationStateControllerTest extends TestCase {
 	 * theme-archive-hotspot 3.2 (REQ-THA-003): a publication under an archive-hotspot subject
 	 * tells the page which subject keeps it permanently.
 	 *
+	 * @return void
+	 *
 	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
 	 */
 	public function testVisibilityNamesTheHotspotThatKeepsThePublication(): void {
@@ -551,34 +553,38 @@ class PublicationStateControllerTest extends TestCase {
 		];
 		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'themes' => ['theme-1', 'theme-2']];
 
-		$data = $this->controller->visibility('p1')->getData();
+		$data = $this->controller->visibility(id: 'p1')->getData();
 
-		$this->assertSame('Herindeling gemeente', $data['archiveHotspot']);
+		$this->assertSame(expected: 'Herindeling gemeente', actual: $data['archiveHotspot']);
 	}
 
 	/**
 	 * theme-archive-hotspot 3.2: no hotspot among the subjects, or a subject that cannot be read,
 	 * says nothing on the page (the retention run holds an unresolved one; the page does not guess).
 	 *
+	 * @return void
+	 *
 	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
 	 */
 	public function testVisibilityNamesNoHotspotWithoutOne(): void {
 		$this->subjects = ['theme-1' => ['id' => 'theme-1', 'title' => 'Verkeer', 'archiveHotspot' => false]];
 		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'themes' => ['theme-1']];
-		$this->assertArrayNotHasKey('archiveHotspot', $this->controller->visibility('p1')->getData());
+		$this->assertArrayNotHasKey(key: 'archiveHotspot', array: $this->controller->visibility(id: 'p1')->getData());
 
 		$this->publication['themes'] = ['theme-gone'];
-		$this->assertArrayNotHasKey('archiveHotspot', $this->controller->visibility('p1')->getData());
+		$this->assertArrayNotHasKey(key: 'archiveHotspot', array: $this->controller->visibility(id: 'p1')->getData());
 	}
 
 	/**
 	 * theme-archive-hotspot 3.2: without the hotspot hold in the container the answer keeps its shape.
 	 *
+	 * @return void
+	 *
 	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
 	 */
 	public function testVisibilityWithoutTheHoldNamesNoHotspot(): void {
 		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'themes' => ['theme-2']];
-		$this->assertArrayNotHasKey('archiveHotspot', $this->controller->visibility('p1')->getData());
+		$this->assertArrayNotHasKey(key: 'archiveHotspot', array: $this->controller->visibility(id: 'p1')->getData());
 	}
 
 	/** REQ-OPR-002: an editor outside the publishers group is told it cannot publish. */
