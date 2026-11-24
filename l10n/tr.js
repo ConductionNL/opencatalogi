@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "Yayın kalıcı olarak silindi.",
         "Publish without documents": "Belgesiz yayımla",
         "Publish it without documents": "Belgeler olmadan yayımla",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" hiçbir belge içermiyor: dosya da belge bağlantısı da yok. Okuyucular yayını bulacak ama açacak bir şey olmayacak."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" hiçbir belge içermiyor: dosya da belge bağlantısı da yok. Okuyucular yayını bulacak ama açacak bir şey olmayacak.",
+        "Automatic depublication on {date}": "{date} tarihinde otomatik yayından kaldırma"
     },
     "nplurals=2; plural=(n != 1);"
 )

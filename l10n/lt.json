@@ -835,7 +835,8 @@
         "The publication was deleted permanently.": "Publikacija ištrinta visam laikui.",
         "Publish without documents": "Skelbti be dokumentų",
         "Publish it without documents": "Skelbti ją be dokumentų",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ neturi dokumentų: nei failų, nei nuorodų į dokumentus. Skaitytojai ras leidinį, bet nieko, ką galėtų atidaryti."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ neturi dokumentų: nei failų, nei nuorodų į dokumentus. Skaitytojai ras leidinį, bet nieko, ką galėtų atidaryti.",
+        "Automatic depublication on {date}": "Automatinis paskelbimo atšaukimas {date}"
     },
     "plurals": {}
 }

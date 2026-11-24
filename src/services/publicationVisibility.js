@@ -141,6 +141,28 @@ export function isNoDocumentsRefusal(error) {
 }
 
 /**
+ * The publication's automatic depublication moment when it lies ahead: its
+ * `depublicationDate` when that is a valid date after `now`, else null
+ * (REQ-PSG-003). A past or unreadable date says nothing.
+ *
+ * @param {object|null} publication The publication's properties.
+ * @param {Date} [now] The moment to compare with.
+ * @return {Date|null} The coming depublication, or null.
+ * @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1
+ */
+export function comingDepublication(publication, now = new Date()) {
+	const value = publication ? publication.depublicationDate : null
+	if (!value) {
+		return null
+	}
+	const date = new Date(value)
+	if (Number.isNaN(date.getTime()) || date.getTime() <= now.getTime()) {
+		return null
+	}
+	return date
+}
+
+/**
  * The list moves the page offers: Unlist on a public or scheduled publication
  * that is listed, List again on an unlisted one, both only to a caller with
  * the update right (publication-lifecycle-on-or REQ-PLC-006).

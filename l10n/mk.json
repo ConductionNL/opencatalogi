@@ -835,7 +835,8 @@
         "The publication was deleted permanently.": "Публикацијата е трајно избришана.",
         "Publish without documents": "Објави без документи",
         "Publish it without documents": "Објави ја без документи",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ нема документи: ниту датотеки ниту упатувања кон документи. Читателите ќе ја најдат објавата, но ништо што може да се отвори."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ нема документи: ниту датотеки ниту упатувања кон документи. Читателите ќе ја најдат објавата, но ништо што може да се отвори.",
+        "Automatic depublication on {date}": "Автоматско повлекување од објава на {date}"
     },
     "plurals": {}
 }

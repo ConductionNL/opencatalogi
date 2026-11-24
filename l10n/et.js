@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "Väljaanne on jäädavalt kustutatud.",
         "Publish without documents": "Avalda ilma dokumentideta",
         "Publish it without documents": "Avalda see ilma dokumentideta",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ ei sisalda dokumente: ei faile ega dokumendiviiteid. Lugejad leiavad väljaande, kuid ei midagi avamiseks."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ ei sisalda dokumente: ei faile ega dokumendiviiteid. Lugejad leiavad väljaande, kuid ei midagi avamiseks.",
+        "Automatic depublication on {date}": "Automaatne avaldamise lõpetamine {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

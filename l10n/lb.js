@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "D'Publikatioun gouf definitiv geläscht.",
         "Publish without documents": "Ouni Dokumenter publizéieren",
         "Publish it without documents": "Ouni Dokumenter publizéieren",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ huet keng Dokumenter: keng Fichieren a keng Dokumentreferenzen. D’Lieser fannen d’Publikatioun, mee näischt fir opzemaachen."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ huet keng Dokumenter: keng Fichieren a keng Dokumentreferenzen. D’Lieser fannen d’Publikatioun, mee näischt fir opzemaachen.",
+        "Automatic depublication on {date}": "Automatesch Depublikatioun den {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

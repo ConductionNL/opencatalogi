@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "Publikācija ir neatgriezeniski dzēsta.",
         "Publish without documents": "Publicēt bez dokumentiem",
         "Publish it without documents": "Publicēt to bez dokumentiem",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "“{name}” nav dokumentu: nav ne failu, ne dokumentu atsauču. Lasītāji atradīs publikāciju, bet neko, ko atvērt."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "“{name}” nav dokumentu: nav ne failu, ne dokumentu atsauču. Lasītāji atradīs publikāciju, bet neko, ko atvērt.",
+        "Automatic depublication on {date}": "Automātiska publikācijas atsaukšana {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

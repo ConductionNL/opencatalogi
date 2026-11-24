@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "Útgáfunni hefur verið eytt varanlega.",
         "Publish without documents": "Birta án skjala",
         "Publish it without documents": "Birta hana án skjala",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ hefur engin skjöl: engar skrár og engar skjalatilvísanir. Lesendur finna birtinguna en ekkert til að opna."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ hefur engin skjöl: engar skrár og engar skjalatilvísanir. Lesendur finna birtinguna en ekkert til að opna.",
+        "Automatic depublication on {date}": "Sjálfvirk afturköllun birtingar {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

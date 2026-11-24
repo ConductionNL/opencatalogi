@@ -2185,7 +2185,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "The publication was deleted permanently.",
         "Publish without documents": "Publish without documents",
         "Publish it without documents": "Publish it without documents",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.",
+        "Automatic depublication on {date}": "Automatic depublication on {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "Publikácia bola natrvalo odstránená.",
         "Publish without documents": "Publikovať bez dokumentov",
         "Publish it without documents": "Publikovať ju bez dokumentov",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ nemá žiadne dokumenty: žiadne súbory ani odkazy na dokumenty. Čitatelia publikáciu nájdu, ale nebudú mať čo otvoriť."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ nemá žiadne dokumenty: žiadne súbory ani odkazy na dokumenty. Čitatelia publikáciu nájdu, ale nebudú mať čo otvoriť.",
+        "Automatic depublication on {date}": "Automatické stiahnutie z publikovania {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

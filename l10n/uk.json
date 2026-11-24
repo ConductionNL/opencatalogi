@@ -835,7 +835,8 @@
         "The publication was deleted permanently.": "Публікацію видалено назавжди.",
         "Publish without documents": "Опублікувати без документів",
         "Publish it without documents": "Опублікувати без документів",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "«{name}» не має документів: ні файлів, ні посилань на документи. Читачі знайдуть публікацію, але нічого не зможуть відкрити."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "«{name}» не має документів: ні файлів, ні посилань на документи. Читачі знайдуть публікацію, але нічого не зможуть відкрити.",
+        "Automatic depublication on {date}": "Автоматичне зняття з публікації {date}"
     },
     "plurals": {}
 }

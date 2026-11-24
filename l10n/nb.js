@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "Publikasjonen er slettet permanent.",
         "Publish without documents": "Publiser uten dokumenter",
         "Publish it without documents": "Publiser den uten dokumenter",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "«{name}» har ingen dokumenter: ingen filer og ingen dokumenthenvisninger. Lesere finner publikasjonen, men ingenting å åpne."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "«{name}» har ingen dokumenter: ingen filer og ingen dokumenthenvisninger. Lesere finner publikasjonen, men ingenting å åpne.",
+        "Automatic depublication on {date}": "Automatisk avpublisering {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

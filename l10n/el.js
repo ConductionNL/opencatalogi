@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "Η δημοσίευση διαγράφηκε οριστικά.",
         "Publish without documents": "Δημοσίευση χωρίς έγγραφα",
         "Publish it without documents": "Δημοσίευσή της χωρίς έγγραφα",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "Η «{name}» δεν έχει έγγραφα: ούτε αρχεία ούτε παραπομπές σε έγγραφα. Οι αναγνώστες θα βρουν τη δημοσίευση αλλά τίποτα για να ανοίξουν."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "Η «{name}» δεν έχει έγγραφα: ούτε αρχεία ούτε παραπομπές σε έγγραφα. Οι αναγνώστες θα βρουν τη δημοσίευση αλλά τίποτα για να ανοίξουν.",
+        "Automatic depublication on {date}": "Αυτόματη απόσυρση δημοσίευσης στις {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )

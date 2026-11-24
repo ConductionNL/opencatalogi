@@ -836,7 +836,8 @@ OC.L10N.register(
         "The publication was deleted permanently.": "Publikacija je trajno izbrisana.",
         "Publish without documents": "Objavi bez dokumenata",
         "Publish it without documents": "Objavi je bez dokumenata",
-        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" nema dokumenata: ni datoteka ni referenci na dokumente. Čitaoci će pronaći objavu, ali ništa što mogu otvoriti."
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" nema dokumenata: ni datoteka ni referenci na dokumente. Čitaoci će pronaći objavu, ali ništa što mogu otvoriti.",
+        "Automatic depublication on {date}": "Automatsko povlačenje objave {date}"
     },
     "nplurals=2; plural=(n != 1);"
 )
