@@ -196,9 +196,9 @@ final class EventServiceAutoPublishingTest extends TestCase {
 
 		$result = $service->handleObjectUpdateEvents([self::publishedObject()]);
 
-		$this->assertSame(3, $result['attachmentsPublished']);
-		$this->assertSame(0, $result['published']);
-		$this->assertCount(3, $this->sharedPaths);
+		$this->assertSame(expected: 3, actual: $result['attachmentsPublished']);
+		$this->assertSame(expected: 0, actual: $result['published']);
+		$this->assertCount(expectedCount: 3, haystack: $this->sharedPaths);
 	}//end testSharingThreeFilesWritesNoObject()
 
 	/**
@@ -218,7 +218,7 @@ final class EventServiceAutoPublishingTest extends TestCase {
 			}//end jsonSerialize()
 		};
 
-		$objects = $this->createMock(ObjectService::class);
+		$objects = $this->createMock(originalClassName: ObjectService::class);
 		$objects->expects($this->once())->method('searchObjects')->willReturn([$catalog]);
 		$objects->expects($this->never())->method('saveObject');
 
@@ -228,10 +228,10 @@ final class EventServiceAutoPublishingTest extends TestCase {
 		unset($object['publicationDate']);
 		$result = $service->handleObjectCreateEvents([$object]);
 
-		$this->assertSame(1, $result['processed']);
-		$this->assertSame(0, $result['published']);
-		$this->assertSame([], $result['details'][0]['actions']);
-		$this->assertSame([], $result['errors']);
+		$this->assertSame(expected: 1, actual: $result['processed']);
+		$this->assertSame(expected: 0, actual: $result['published']);
+		$this->assertSame(expected: [], actual: $result['details'][0]['actions']);
+		$this->assertSame(expected: [], actual: $result['errors']);
 	}//end testAnObjectNoCatalogListsIsNotPublished()
 
 	/**
