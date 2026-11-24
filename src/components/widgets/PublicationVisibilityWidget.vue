@@ -165,10 +165,14 @@
 			:title="publicationTitle"
 			@close="purgeOpen = false"
 			@confirm="purge" />
-		<LiftEmbargoDialog
+		<ReasonDialog
 			:open="liftOpen"
 			:busy="busy"
-			:title="publicationTitle"
+			:name="t('opencatalogi', 'Lift embargo')"
+			:hint="liftHint"
+			:confirmLabel="t('opencatalogi', 'Lift embargo')"
+			testid="lift-embargo"
+			data-testid="lift-embargo-dialog"
 			@close="liftOpen = false"
 			@confirm="liftEmbargo" />
 		<PublishWithoutDocumentsDialog
@@ -185,8 +189,8 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import DeleteDraftPermanentlyDialog from '../../dialogs/publication/DeleteDraftPermanentlyDialog.vue'
-import LiftEmbargoDialog from '../../dialogs/publication/LiftEmbargoDialog.vue'
 import PublishWithoutDocumentsDialog from '../../dialogs/publication/PublishWithoutDocumentsDialog.vue'
+import ReasonDialog from '../../dialogs/publication/ReasonDialog.vue'
 import RepublishDocumentDialog from '../../dialogs/publication/RepublishDocumentDialog.vue'
 import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublicationDialog.vue'
 import { frozenMarker } from '../../services/frozenMarker.js'
@@ -263,7 +267,7 @@ function withdrawBody(answer) {
  */
 export default {
 	name: 'PublicationVisibilityWidget',
-	components: { DeleteDraftPermanentlyDialog, LiftEmbargoDialog, NcButton, NcNoteCard, PublishWithoutDocumentsDialog, RepublishDocumentDialog, WithdrawPublicationDialog },
+	components: { DeleteDraftPermanentlyDialog, NcButton, NcNoteCard, PublishWithoutDocumentsDialog, ReasonDialog, RepublishDocumentDialog, WithdrawPublicationDialog },
 	inject: {
 		cnObjectContext: { default: null },
 		cnDetailObjectContext: { default: null },
@@ -308,6 +312,20 @@ export default {
 		/** @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2 */
 		liftable() {
 			return mayLiftEmbargo(this.state, this.canLiftEmbargo)
+		},
+
+		/**
+		 * What lifting the embargo does, as the lift dialog says it.
+		 *
+		 * @return {string} The sentence, naming the publication.
+		 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
+		 */
+		liftHint() {
+			return this.t(
+				'opencatalogi',
+				'Publish "{name}" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.',
+				{ name: this.publicationTitle },
+			)
 		},
 
 		/** @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006 */

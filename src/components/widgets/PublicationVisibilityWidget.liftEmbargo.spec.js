@@ -56,7 +56,7 @@ async function mountWidget(visibility) {
 				RepublishDocumentDialog: true,
 				DeleteDraftPermanentlyDialog: true,
 				PublishWithoutDocumentsDialog: true,
-				LiftEmbargoDialog: true,
+				ReasonDialog: true,
 			},
 		},
 	})
@@ -115,6 +115,14 @@ describe('PublicationVisibilityWidget lifting an embargo', () => {
 		expect(
 			wrapper.find('[data-testid="publication-publish-now"]').exists(),
 		).toBe(true)
+	})
+
+	it('names the publication in the lift dialog', async () => {
+		const wrapper = await mountWidget({ state: 'scheduled', canLiftEmbargo: true })
+
+		expect(wrapper.vm.liftHint).toBe(
+			'Publish "Besluit parkeren" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.',
+		)
 	})
 
 	it('opens the dialog and clears the previous message', async () => {
@@ -181,7 +189,7 @@ describe('PublicationVisibilityWidget lifting an embargo', () => {
 			props: { objectId: 'pub-1', register: 'reg-1', schema: 'pubs' },
 			global: {
 				mocks: { t: T },
-				stubs: { WithdrawPublicationDialog: true, LiftEmbargoDialog: true },
+				stubs: { WithdrawPublicationDialog: true, ReasonDialog: true },
 			},
 		})
 		wrapper.vm.canLiftEmbargo = true

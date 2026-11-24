@@ -5,27 +5,20 @@
 <template>
 	<NcDialog
 		:open="open"
-		:name="t('opencatalogi', 'Lift embargo')"
-		data-testid="lift-embargo-dialog"
+		:name="name"
 		@update:open="(value) => !value && $emit('close')">
-		<p class="lift-embargo-dialog__hint">
-			{{
-				t(
-					'opencatalogi',
-					'Publish "{name}" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.',
-					{ name: title },
-				)
-			}}
+		<p class="reason-dialog__hint">
+			{{ hint }}
 		</p>
 		<NcTextArea
 			v-model="reason"
 			:label="t('opencatalogi', 'Reason')"
 			:disabled="busy"
-			data-testid="lift-embargo-reason"
+			:data-testid="testid + '-reason'"
 			required />
 		<template #actions>
 			<NcButton
-				data-testid="lift-embargo-cancel"
+				:data-testid="testid + '-cancel'"
 				:disabled="busy"
 				@click="$emit('close')">
 				{{ t('opencatalogi', 'Cancel') }}
@@ -33,12 +26,12 @@
 			<NcButton
 				variant="primary"
 				:disabled="busy || reason.trim() === ''"
-				data-testid="lift-embargo-confirm"
+				:data-testid="testid + '-confirm'"
 				@click="confirm">
 				<template v-if="busy" #icon>
 					<NcLoadingIcon :size="20" />
 				</template>
-				{{ t('opencatalogi', 'Lift embargo') }}
+				{{ confirmLabel }}
 			</NcButton>
 		</template>
 	</NcDialog>
@@ -48,23 +41,29 @@
 import { NcButton, NcDialog, NcLoadingIcon, NcTextArea } from '@nextcloud/vue'
 
 /**
- * Asks for the reason an embargo is lifted before a scheduled publication is
- * published early (REQ-PSG-002).
- *
- * The dialog only collects the reason; the widget that opened it calls the
- * server, which checks the lift right again and logs the lift.
+ * Asks for the reason of one move on a publication, and hands the trimmed
+ * reason to whoever opened it: putting a withdrawn document back
+ * (REQ-ATT-104), lifting an embargo (REQ-PSG-002). The confirm button stays
+ * disabled until a reason is given, and the reason starts empty each time the
+ * dialog opens. The dialog calls nothing itself.
  *
  * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
  */
 export default {
-	name: 'LiftEmbargoDialog',
+	name: 'ReasonDialog',
 	components: { NcButton, NcDialog, NcLoadingIcon, NcTextArea },
 
 	props: {
 		open: { type: Boolean, default: false },
 		busy: { type: Boolean, default: false },
-		/** The publication's title, named in the question. */
-		title: { type: String, default: '' },
+		/** The dialog's title. */
+		name: { type: String, required: true },
+		/** What the move does, shown above the reason. */
+		hint: { type: String, default: '' },
+		/** The confirm button's label. */
+		confirmLabel: { type: String, required: true },
+		/** Prefix of the reason, cancel and confirm test ids. */
+		testid: { type: String, default: 'reason' },
 	},
 
 	emits: ['close', 'confirm'],
@@ -91,7 +90,7 @@ export default {
 
 	methods: {
 		/**
-		 * Hand the trimmed reason to the widget.
+		 * Hand the trimmed reason to the caller.
 		 *
 		 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
 		 */
@@ -103,7 +102,7 @@ export default {
 </script>
 
 <style scoped>
-.lift-embargo-dialog__hint {
+.reason-dialog__hint {
 	color: var(--color-text-maxcontrast);
 	margin-block-end: 12px;
 }

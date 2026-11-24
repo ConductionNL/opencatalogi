@@ -2,14 +2,15 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * The lift dialog names the publication, asks for a reason and hands it to the
- * widget; it calls nothing itself (REQ-PSG-002).
+ * The reason dialog shows its title, hint and confirm label, asks for a
+ * reason and hands it to the caller; it calls nothing itself (REQ-PSG-002,
+ * REQ-ATT-104).
  *
  * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
  */
 
 import { mount } from '@vue/test-utils'
-import LiftEmbargoDialog from './LiftEmbargoDialog.vue'
+import ReasonDialog from './ReasonDialog.vue'
 
 const T = (app, text, vars = {}) => text.replace(/{(\w+)}/g, (_, key) => vars[key])
 
@@ -18,7 +19,7 @@ const stubs = {
 		name: 'NcDialog',
 		props: ['open', 'name'],
 		emits: ['update:open'],
-		template: '<div><slot /><slot name="actions" /></div>',
+		template: '<div><h2>{{ name }}</h2><slot /><slot name="actions" /></div>',
 	},
 	NcTextArea: {
 		name: 'NcTextArea',
@@ -36,22 +37,40 @@ const stubs = {
 }
 
 /**
- * Mount the dialog for one publication.
+ * Mount the dialog as the lift embargo dialog.
  *
  * @param {object} props The props.
  * @return {object} The wrapper.
  */
 function mountDialog(props = {}) {
-	return mount(LiftEmbargoDialog, {
-		props: { open: false, title: 'Besluit parkeren', ...props },
+	return mount(ReasonDialog, {
+		props: {
+			open: false,
+			name: 'Lift embargo',
+			hint: 'Publish "Besluit parkeren" now, before its publication date?',
+			confirmLabel: 'Lift embargo',
+			testid: 'lift-embargo',
+			...props,
+		},
 		global: { mocks: { t: T }, stubs },
 	})
 }
 
-describe('LiftEmbargoDialog', () => {
-	it('names the publication and keeps Lift embargo disabled until a reason is given', async () => {
+/**
+ * The reason text area.
+ *
+ * @param {object} wrapper The wrapper.
+ * @return {object} The text area.
+ */
+function reasonField(wrapper) {
+	return wrapper.findComponent({ name: 'NcTextArea' })
+}
+
+describe('ReasonDialog', () => {
+	it('shows its title and hint and keeps confirm disabled until a reason is given', async () => {
 		const wrapper = mountDialog({ open: true })
 
+		expect(wrapper.text()).toContain('Lift embargo')
 		expect(wrapper.text()).toContain(
 			'Publish "Besluit parkeren" now, before its publication date?',
 		)
@@ -61,9 +80,7 @@ describe('LiftEmbargoDialog', () => {
 				.attributes('disabled'),
 		).toBeDefined()
 
-		wrapper
-			.findComponent({ name: 'NcTextArea' })
-			.vm.$emit('update:modelValue', '   ')
+		reasonField(wrapper).vm.$emit('update:modelValue', '   ')
 		await wrapper.vm.$nextTick()
 		expect(
 			wrapper
@@ -72,11 +89,12 @@ describe('LiftEmbargoDialog', () => {
 		).toBeDefined()
 	})
 
-	it('hands the trimmed reason to the widget', async () => {
+	it('hands the trimmed reason to the caller', async () => {
 		const wrapper = mountDialog({ open: true })
-		wrapper
-			.findComponent({ name: 'NcTextArea' })
-			.vm.$emit('update:modelValue', '  Raad heeft het besluit vervroegd ')
+		reasonField(wrapper).vm.$emit(
+			'update:modelValue',
+			'  Raad heeft het besluit vervroegd ',
+		)
 		await wrapper.vm.$nextTick()
 
 		await wrapper.find('[data-testid="lift-embargo-confirm"]').trigger('click')
@@ -98,11 +116,9 @@ describe('LiftEmbargoDialog', () => {
 		expect(wrapper.emitted('close')).toHaveLength(2)
 	})
 
-	it('allows no confirm while the widget is still working', async () => {
+	it('allows no confirm while the caller is still working', async () => {
 		const wrapper = mountDialog({ open: true, busy: true })
-		wrapper
-			.findComponent({ name: 'NcTextArea' })
-			.vm.$emit('update:modelValue', 'Vervroegd')
+		reasonField(wrapper).vm.$emit('update:modelValue', 'Vervroegd')
 		await wrapper.vm.$nextTick()
 
 		expect(
@@ -110,5 +126,11 @@ describe('LiftEmbargoDialog', () => {
 				.find('[data-testid="lift-embargo-confirm"]')
 				.attributes('disabled'),
 		).toBeDefined()
+	})
+
+	it('falls back to the reason test ids', () => {
+		const wrapper = mountDialog({ open: true, testid: undefined })
+
+		expect(wrapper.find('[data-testid="reason-confirm"]').exists()).toBe(true)
 	})
 })
