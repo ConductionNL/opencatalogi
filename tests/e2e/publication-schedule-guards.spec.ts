@@ -26,7 +26,9 @@
  * list and "Automatic depublication on <date>" on its page; setting the date
  * in the page's Publication card shows the notice that names it.
  *
- * NOT HERE YET. The document count up front of task 4.2 is not built.
+ * THE COUNT UP FRONT (task 4.2). Before publishing, `GET visibility` answers
+ * how many documents a publish would carry, a document reference counting as
+ * one, and the Visibility card shows it beside Publish now.
  *
  * 🔴 THE PUBLISHER IS A REAL ACCOUNT, provisioned over OCS in its own request
  * context with an empty cookie jar, so a refusal is that account's and not the
@@ -36,6 +38,7 @@
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-a-lift-is-logged REQ-PSG-002
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-publishing-with-no-documents-asks-twice REQ-PSG-004
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-automatic-depublication-is-shown REQ-PSG-003
+ * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-a-reference-counts-as-a-document REQ-PSG-004
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-the-officer-is-warned-at-save REQ-PSG-003
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-a-lift-is-logged REQ-PPW-002
  * @spec openspec/changes/publication-schedule-guards/specs/publications/spec.md
@@ -272,5 +275,23 @@ test.describe('Publication schedule guards', () => {
 		})
 		expect(confirmed.status(), await confirmed.text()).toBeLessThan(300)
 		expect(await anonymousStatus(playwright, baseURL, id), 'confirmed, it is public').toBe(200)
+	})
+
+	test('a reference counts as a document', async ({ page, request }) => {
+		const id = await publication(request, 'one-reference')
+		const ref = await request.post('/index.php/apps/openregister/api/objects/publication/documentReference', {
+			data: { title: `E2E reference ${RUN}`, url: 'https://example.org/besluit.pdf', publication: id },
+		})
+		expect(ref.ok(), await ref.text()).toBe(true)
+		const refId = idOf(await ref.json())
+
+		const visibility = await request.get(`${APP_API}/publications/${id}/visibility`)
+		expect(visibility.ok(), await visibility.text()).toBe(true)
+		expect((await visibility.json()).documents).toBe(1)
+
+		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+		await expect(page.getByTestId('publication-visibility-documents')).toHaveText('Documents to publish: 1')
+
+		await request.delete(`/index.php/apps/openregister/api/objects/publication/documentReference/${refId}`).catch(() => undefined)
 	})
 })

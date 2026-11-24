@@ -228,6 +228,19 @@ export function depublicationNoticeStep(baseline, key, now = new Date()) {
 }
 
 /**
+ * The number of documents the visibility answer says a publish would carry,
+ * or null when it names none (REQ-PSG-004).
+ *
+ * @param {object|null} answer The `GET visibility` body.
+ * @return {number|null} The count.
+ * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
+ */
+export function documentCountOf(answer) {
+	const count = answer ? answer.documents : null
+	return Number.isInteger(count) && count >= 0 ? count : null
+}
+
+/**
  * The list moves the page offers: Unlist on a public or scheduled publication
  * that is listed, List again on an unlisted one, both only to a caller with
  * the update right (publication-lifecycle-on-or REQ-PLC-006).

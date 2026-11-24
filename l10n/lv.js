@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Embargo ir atcelts. Publikācija ir publiska.",
         "Kept permanently: archive hotspot {subject}": "Glabājas pastāvīgi: arhīva karstais punkts {subject}",
         "until {date}": "līdz {date}",
-        "Saved: this publication will be taken down automatically on {date}.": "Saglabāts: šī publikācija tiks automātiski atsaukta {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Saglabāts: šī publikācija tiks automātiski atsaukta {date}.",
+        "Documents to publish: {count}": "Publicējamie dokumenti: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

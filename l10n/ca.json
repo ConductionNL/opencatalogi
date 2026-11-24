@@ -842,7 +842,8 @@
         "The embargo was lifted. The publication is public.": "S'ha aixecat l'embargament. La publicació és pública.",
         "Kept permanently: archive hotspot {subject}": "Conservat permanentment: punt calent d'arxiu {subject}",
         "until {date}": "fins al {date}",
-        "Saved: this publication will be taken down automatically on {date}.": "Desat: aquesta publicació es despublicarà automàticament el {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Desat: aquesta publicació es despublicarà automàticament el {date}.",
+        "Documents to publish: {count}": "Documents per publicar: {count}"
     },
     "plurals": {}
 }

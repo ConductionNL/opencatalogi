@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "L'embargo è stato revocato. La pubblicazione è pubblica.",
         "Kept permanently: archive hotspot {subject}": "Conservato in modo permanente: hotspot d'archivio {subject}",
         "until {date}": "fino al {date}",
-        "Saved: this publication will be taken down automatically on {date}.": "Salvato: questa pubblicazione verrà rimossa automaticamente il {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Salvato: questa pubblicazione verrà rimossa automaticamente il {date}.",
+        "Documents to publish: {count}": "Documenti da pubblicare: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Эмбарго снято. Публикация общедоступна.",
         "Kept permanently: archive hotspot {subject}": "Хранится постоянно: архивная горячая точка {subject}",
         "until {date}": "до {date}",
-        "Saved: this publication will be taken down automatically on {date}.": "Сохранено: эта публикация будет автоматически снята {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Сохранено: эта публикация будет автоматически снята {date}.",
+        "Documents to publish: {count}": "Документы к публикации: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

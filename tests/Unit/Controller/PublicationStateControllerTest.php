@@ -587,6 +587,42 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertArrayNotHasKey(key: 'archiveHotspot', array: $this->controller->visibility(id: 'p1')->getData());
 	}
 
+	/**
+	 * REQ-PSG-004: a publisher sees how many documents a publish would carry, files plus
+	 * references, before publishing; zero when there are none.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
+	 */
+	public function testVisibilityCountsTheDocumentsBeforePublishing(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'concept'];
+		$this->attachedFiles = [['id' => 1, 'name' => 'besluit.pdf'], ['id' => 2, 'name' => 'bijlage.pdf']];
+		$this->assertSame(expected: 2, actual: $this->controller->visibility(id: 'p1')->getData()['documents']);
+
+		$this->attachedFiles = [];
+		$this->assertSame(expected: 0, actual: $this->controller->visibility(id: 'p1')->getData()['documents']);
+
+		$this->filesFailure = new \RuntimeException('The files cannot be read.');
+		$this->assertSame(expected: 0, actual: $this->controller->visibility(id: 'p1')->getData()['documents']);
+	}
+
+	/**
+	 * REQ-PSG-004: no count for a public publication or for a caller who cannot publish.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
+	 */
+	public function testVisibilityCountsNoDocumentsWhenNothingIsToBePublished(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->assertArrayNotHasKey(key: 'documents', array: $this->controller->visibility(id: 'p1')->getData());
+
+		$this->publication = ['id' => 'p1', 'status' => 'concept'];
+		$this->mayPublish = false;
+		$this->assertArrayNotHasKey(key: 'documents', array: $this->controller->visibility(id: 'p1')->getData());
+	}
+
 	/** REQ-OPR-002: an editor outside the publishers group is told it cannot publish. */
 	public function testVisibilityTellsAnEditorItCannotPublish(): void {
 		$this->publication = ['id' => 'p1'];

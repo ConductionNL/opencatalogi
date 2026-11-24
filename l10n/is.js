@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Banninu hefur verið aflétt. Birtingin er opinber.",
         "Kept permanently: archive hotspot {subject}": "Varðveitt til frambúðar: skjalasafnsáhersla {subject}",
         "until {date}": "til {date}",
-        "Saved: this publication will be taken down automatically on {date}.": "Vistað: þessi birting verður sjálfkrafa afturkölluð {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Vistað: þessi birting verður sjálfkrafa afturkölluð {date}.",
+        "Documents to publish: {count}": "Skjöl til birtingar: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

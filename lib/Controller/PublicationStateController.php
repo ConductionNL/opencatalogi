@@ -93,14 +93,15 @@ class PublicationStateController extends Controller {
 	 * @param string $id The publication id.
 	 *
 	 * @return JSONResponse `{state, canPublish, canLiftEmbargo}`, plus `sourceAbsence` when its source no
-	 *                      longer carries it and `archiveHotspot` (the subject's title) when an archive
-	 *                      hotspot keeps it; 404 when the caller cannot read it.
+	 *                      longer carries it, `archiveHotspot` (the subject's title) when an archive
+	 *                      hotspot keeps it, and `documents` for a publisher before publishing; 404 when the caller cannot read it.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001
 	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
 	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
 	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
 	 */
 	#[NoAdminRequired]
 	public function visibility(string $id): JSONResponse {
@@ -139,6 +140,12 @@ class PublicationStateController extends Controller {
 			$answer['sourceAbsence'] = $absence;
 		}
 
+		// The documents a publish would carry, shown before the editor publishes (REQ-PSG-004).
+		$documents = $this->documentsBeforePublish(id: $id, publication: $publication, answer: $answer);
+		if ($documents !== null) {
+			$answer['documents'] = $documents;
+		}
+
 		// Kept permanently under an archive-hotspot subject (theme-archive-hotspot 3.2).
 		$hotspot = $this->registers->archiveHotspotOf(publication: $properties);
 		if ($hotspot !== null) {
@@ -147,6 +154,31 @@ class PublicationStateController extends Controller {
 
 		return new JSONResponse($answer);
 	}//end visibility()
+
+	/**
+	 * The number of documents a publish would carry, for a publisher looking at a
+	 * publication it can still publish (not public, not archived); null otherwise,
+	 * so a reader's page costs no count (REQ-PSG-004).
+	 *
+	 * @param string               $id          The publication id.
+	 * @param object               $publication The publication.
+	 * @param array<string, mixed> $answer      The visibility answer so far.
+	 *
+	 * @return int|null The count; an unreadable part counts as zero.
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
+	 */
+	private function documentsBeforePublish(string $id, object $publication, array $answer): ?int {
+		if ($answer['canPublish'] !== true) {
+			return null;
+		}
+
+		if (in_array($answer['state'], [PublicationStateServiceInterface::STATE_PUBLIC, PublicationStateServiceInterface::STATE_ARCHIVED], true) === true) {
+			return null;
+		}
+
+		return $this->publisher->documentCount(id: $id, publication: $publication);
+	}//end documentsBeforePublish()
 
 	/**
 	 * Whether the caller may lift an embargo on this publication: in a lift group and

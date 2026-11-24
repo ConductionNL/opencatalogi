@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Embargas panaikintas. Leidinys yra viešas.",
         "Kept permanently: archive hotspot {subject}": "Saugoma nuolat: archyvo karštasis taškas {subject}",
         "until {date}": "iki {date}",
-        "Saved: this publication will be taken down automatically on {date}.": "Išsaugota: šis leidinys bus automatiškai atšauktas {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Išsaugota: šis leidinys bus automatiškai atšauktas {date}.",
+        "Documents to publish: {count}": "Skelbiami dokumentai: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

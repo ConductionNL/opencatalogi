@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Το εμπάργκο άρθηκε. Η δημοσίευση είναι δημόσια.",
         "Kept permanently: archive hotspot {subject}": "Διατηρείται μόνιμα: αρχειακό σημείο ενδιαφέροντος {subject}",
         "until {date}": "έως {date}",
-        "Saved: this publication will be taken down automatically on {date}.": "Αποθηκεύτηκε: αυτή η δημοσίευση θα αποσυρθεί αυτόματα στις {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Αποθηκεύτηκε: αυτή η δημοσίευση θα αποσυρθεί αυτόματα στις {date}.",
+        "Documents to publish: {count}": "Έγγραφα προς δημοσίευση: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

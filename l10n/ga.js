@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Ardaíodh an lánchosc. Tá an foilseachán poiblí.",
         "Kept permanently: archive hotspot {subject}": "Coinnithe go buan: ceantar te cartlainne {subject}",
         "until {date}": "go dtí {date}",
-        "Saved: this publication will be taken down automatically on {date}.": "Sábháilte: dífhoilseofar an foilseachán seo go huathoibríoch ar {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Sábháilte: dífhoilseofar an foilseachán seo go huathoibríoch ar {date}.",
+        "Documents to publish: {count}": "Doiciméid le foilsiú: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )
