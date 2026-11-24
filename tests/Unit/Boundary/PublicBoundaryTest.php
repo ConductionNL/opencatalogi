@@ -158,12 +158,16 @@ class PublicBoundaryTest extends TestCase {
 	 * @spec openspec/changes/woo-access-boundary-hardening/tasks.md#task-2.2
 	 */
 	public function testEveryNonPublicRouteRefusesAnonymous(): void {
-		$reviewed = array_values(array_filter(array_map('trim', (array)file(self::LIST)), static fn (string $line): bool => $line !== '' && str_starts_with($line, '#') === false));
+		$lines = array_map('trim', (array)file(self::LIST));
+		$reviewed = array_values(
+			array_filter($lines, static fn (string $line): bool => $line !== '' && str_starts_with($line, '#') === false)
+		);
 
 		$this->assertSame(
 			expected: $reviewed,
 			actual: self::publicRoutes(),
-			message: 'A route became public or stopped being public. Review it against REQ-WAB-002 and update tests/Unit/Boundary/public-routes.txt in the same change.'
+			message: 'A route became public or stopped being public. Review it against REQ-WAB-002 '
+				. 'and update tests/Unit/Boundary/public-routes.txt in the same change.'
 		);
 	}//end testEveryNonPublicRouteRefusesAnonymous()
 
