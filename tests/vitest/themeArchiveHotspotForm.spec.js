@@ -12,11 +12,10 @@
  * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-1.4
  */
 
+import { evaluateVisibleWhenLocal } from '@conduction/nextcloud-vue/src/utils/visibleWhen.js'
 import * as fs from 'fs'
 import * as path from 'path'
 import { describe, expect, it } from 'vitest'
-
-import { evaluateVisibleWhenLocal } from '@conduction/nextcloud-vue/src/utils/visibleWhen.js'
 
 const ROOT = path.resolve(__dirname, '../..')
 const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'))
