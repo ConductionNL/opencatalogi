@@ -178,6 +178,13 @@ The system MUST only auto-publish objects whose register/schema match a configur
 - WHEN the auto-publish listener evaluates it
 - THEN the system MUST NOT publish it
 
+#### Scenario: object does not belong to any catalog
+- GIVEN `auto_publish_objects` is `"true"`
+- AND the object has `@self.register = 5` and `@self.schema = 10`
+- AND no catalog lists register 5 in its `registers[]` and schema 10 in its `schemas[]`
+- WHEN the object is created
+- THEN the object is not saved and the result shows `published = 0`
+
 ### Requirement: Determine publication status from `publicatiedatum` and `depublicatiedatum` (APB-006)
 
 The system MUST determine publication status from the object's own
@@ -217,6 +224,12 @@ The system MUST skip event processing when both auto-publish options are disable
 - WHEN an OR object event arrives
 - THEN the system MUST skip processing and do no publishing work
 
+#### Scenario: early return when auto-publish is disabled
+- GIVEN `auto_publish_objects` and `auto_publish_attachments` are both `"false"`
+- WHEN an OpenRegister object is created or updated
+- THEN the listener returns without calling `EventService`
+- AND no object is saved and no share link is created
+
 ### Requirement: On update events, only process attachment publishing for already-published objects (APB-008)
 The system MUST, on update events, only process attachment publishing for already-published objects.
 
@@ -226,6 +239,12 @@ The system MUST, on update events, only process attachment publishing for alread
 - GIVEN an update event for an object that is not yet published
 - WHEN attachment publishing is considered
 - THEN the system MUST NOT publish attachments until the object itself is published
+
+#### Scenario: update on a published object shares its unshared files
+- GIVEN `auto_publish_attachments` is `"true"`
+- AND an existing object is currently published (APB-006)
+- WHEN the object is updated
+- THEN share links are created for its files that have no `share_token` yet
 
 ### Requirement: On update events, detect publication status transitions (APB-009)
 
@@ -251,6 +270,14 @@ The system MUST use FileMapper for direct database file access to avoid an infin
 - WHEN the system reads them
 - THEN it MUST use FileMapper for direct database access so it does not re-trigger OR object events
 
+#### Scenario: sharing three files writes no object
+- GIVEN `auto_publish_attachments` is `"true"`
+- AND a published object has 3 files without a `share_token`
+- WHEN its attachments are shared
+- THEN the files are read through `FileMapper.getFilesForObject()`
+- AND no object is saved, so no new `ObjectUpdatedEvent` is dispatched and the handler does not recurse
+- AND the result shows `attachmentsPublished = 3`
+
 ### Requirement: Skip already-published files (those with existing share tokens) (APB-011)
 The system MUST skip already-published files (those with existing share tokens).
 
@@ -260,6 +287,12 @@ The system MUST skip already-published files (those with existing share tokens).
 - GIVEN a file that already has a share token
 - WHEN attachment publishing runs
 - THEN the system MUST skip creating a new share link for it
+
+#### Scenario: one shared and one unshared file
+- GIVEN a published object has file A with `share_token = "abc123"` and file B with no `share_token`
+- WHEN attachment publishing runs
+- THEN a share link is created only for file B
+- AND the result shows `attachmentsPublished = 1`
 
 ### Requirement: Return structured results with processed/published/error counts (APB-012)
 The system MUST return structured results with processed/published/error counts.
@@ -271,6 +304,12 @@ The system MUST return structured results with processed/published/error counts.
 - WHEN it completes
 - THEN it MUST return a structured result containing processed, published, and error counts
 
+#### Scenario: the result carries per-object details
+- GIVEN one object with one unshared attachment is processed
+- WHEN the run completes
+- THEN the result holds `processed`, `published`, `attachmentsPublished`, `errors` and `details`
+- AND `details[0]` holds the object's id, its actions (`object_published`, `attachments_processed`) and its errors
+
 ### Requirement: Log all processing results for monitoring (APB-013)
 The system MUST log all processing results for monitoring.
 
@@ -280,6 +319,13 @@ The system MUST log all processing results for monitoring.
 - GIVEN an auto-publish run completes
 - WHEN results are available
 - THEN the system MUST log the processing results for monitoring
+
+#### Scenario: an attachment error is logged and processing continues
+- GIVEN sharing one file of an object fails
+- WHEN the object's attachments are processed
+- THEN the error is logged with the file's details
+- AND the remaining files are still processed
+- AND the error is recorded in the result
 
 ### Requirement: Gracefully handle exceptions without breaking the originating OR operation (APB-014)
 The system MUST gracefully handle exceptions without breaking the originating OR operation.
@@ -291,6 +337,12 @@ The system MUST gracefully handle exceptions without breaking the originating OR
 - WHEN the exception occurs
 - THEN the system MUST catch it so the originating OR create/update operation still succeeds
 
+#### Scenario: a failing share does not break the originating operation
+- GIVEN sharing a file throws an exception
+- WHEN the listener processes an object with several attachments
+- THEN the exception is caught for that file
+- AND the listener returns normally and the OpenRegister operation is unaffected
+
 ### Requirement: Event listeners registered in Application.php bootstrap (APB-015)
 The system MUST register the event listeners in the Application.php bootstrap.
 
@@ -300,6 +352,38 @@ The system MUST register the event listeners in the Application.php bootstrap.
 - GIVEN the app is bootstrapped via Application.php
 - WHEN registration runs
 - THEN the `ObjectCreatedEvent` and `ObjectUpdatedEvent` listeners MUST be registered
+
+### Requirement: No debug logging in the update listener (APB-016)
+
+The `ObjectUpdatedEventListener` MUST NOT write the temporary
+`OPENCATALOGI_EVENT_LISTENER_CALLED_AT_*` debug entries. Functional logging of
+the `EventService` results stays.
+
+**Priority:** Should **Status:** Implemented
+
+#### Scenario: no debug logging on update
+- GIVEN the app is deployed
+- WHEN an `ObjectUpdatedEvent` is dispatched for any object
+- THEN no `OPENCATALOGI_EVENT_LISTENER_CALLED_AT_*` entry appears in the Nextcloud log
+- AND the info and error results of `EventService` are still logged
+
+### Requirement: Update events share the object's real files (APB-017)
+
+Attachment publishing on an update event MUST use the object's real file list,
+read through `FileMapper.getFilesForObject()` in `EventService`. The update
+listener carries no file list of its own (`@self.files = []`); `EventService`
+reads the files lazily from the container, so the app stays installable
+without OpenRegister and the files are read once.
+
+**Priority:** Must **Status:** Implemented
+
+#### Scenario: an update shares both unshared files
+- GIVEN a published object with 2 files without a `share_token` is updated
+- AND `auto_publish_attachments` is `"true"`
+- WHEN the update listener hands the object to `EventService` with `@self.files = []`
+- THEN `EventService` reads both files through `FileMapper.getFilesForObject()`
+- AND share links are created for both
+- AND the result shows `attachmentsPublished = 2`
 
 ## Change history
 
@@ -327,5 +411,6 @@ The system MUST register the event listeners in the Application.php bootstrap.
 - `.claude/audit-2026-05-03/04-hardcoded.md` (Stream 4 rationale for Phase 8)
 - `openspec/changes/opencatalogi-adopt-or-abstractions/` (Phase 8 implementation change)
 - `openspec/specs/file-management/spec.md` (FIL-OR-002 — share creation)
+- `openspec/changes/archive/2026-11-24-auto-publishing/` (scenarios and APB-016, APB-017 synced)
 - ADR-022 — Apps consume OR abstractions
 - ADR-031 — Schema-declarative business logic
