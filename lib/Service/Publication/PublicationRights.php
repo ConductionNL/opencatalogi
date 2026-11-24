@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Publication;
 
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
+use OCA\OpenCatalogi\Service\PermissionQuestion;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -91,12 +92,8 @@ class PublicationRights implements PublicationRightsInterface {
 				$owner = null;
 			}
 
-			return $this->objects->getObjectService()->getPermissionHandler()->hasPermission(
-				schema: $schema,
-				action: 'update',
-				objectOwner: $owner,
-				object: $publication
-			);
+			$question = (new PermissionQuestion(schema: $schema, action: 'update'))->askedBy(userId: null, objectOwner: $owner)->about(object: $publication);
+			return $question->answerOf(handler: $this->objects->getObjectService()->getPermissionHandler());
 		} catch (\Throwable $e) {
 			$this->logger->warning('[PublicationRights] The update right could not be checked: ' . $e->getMessage());
 			return false;

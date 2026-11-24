@@ -26,6 +26,7 @@ use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Db\Schema;
 use OCA\OpenRegister\Db\SchemaMapper;
+use OCA\OpenCatalogi\Tests\Support\PermissionArgs;
 use OCA\OpenRegister\Service\Object\PermissionHandler;
 use OCA\OpenRegister\Service\ObjectService;
 use PHPUnit\Framework\TestCase;
@@ -90,14 +91,12 @@ class PublicationRightsTest extends TestCase {
 
 		$publication = $this->publication('eigenaar');
 		$handler = $this->getMockBuilder(PermissionHandler::class)->disableOriginalConstructor()->onlyMethods(['hasPermission'])->getMock();
-		$handler->expects($this->once())->method('hasPermission')->with(
-			$schema,
-			'update',
-			null,
-			'eigenaar',
-			true,
-			$publication
-		)->willReturn(true);
+		$handler->expects($this->once())->method('hasPermission')->willReturnCallback(
+			function (mixed ...$args) use ($schema, $publication): bool {
+				$this->assertSame(expected: [$schema, 'update', null, 'eigenaar', true, $publication], actual: PermissionArgs::release(args: $args));
+				return true;
+			}
+		);
 
 		$this->assertTrue($this->rights($mapper, $handler)->mayUpdate($publication));
 	}
