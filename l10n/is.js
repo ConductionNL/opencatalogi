@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Afrit skjalsins sem geymt er með þessari útgáfu.",
         "The earlier public version could not be kept, so the change was not saved.": "Ekki tókst að varðveita fyrri opinberu útgáfuna, svo breytingin var ekki vistuð.",
         "This version does not exist or is not public.": "Þessi útgáfa er ekki til eða er ekki opinber.",
-        "The earlier versions cannot be shown right now.": "Ekki er hægt að sýna fyrri útgáfur núna."
+        "The earlier versions cannot be shown right now.": "Ekki er hægt að sýna fyrri útgáfur núna.",
+        "Delete permanently": "Eyða varanlega",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Eyða \"{name}\" varanlega? Ekki er hægt að afturkalla þetta.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Skrár hennar, skjalatilvísanir og færslur sem vísa á hana eyðast líka. Ekki er hægt að endurheimta hana.",
+        "The publication was deleted permanently.": "Útgáfunni hefur verið eytt varanlega."
     },
     "nplurals=2; plural=(n != 1);"
 )

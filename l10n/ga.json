@@ -828,7 +828,11 @@
         "The copy of the document kept on this version.": "Cóip an doiciméid a choinnítear leis an leagan seo.",
         "The earlier public version could not be kept, so the change was not saved.": "Níorbh fhéidir an leagan poiblí roimhe seo a choinneáil, mar sin níor sábháladh an t-athrú.",
         "This version does not exist or is not public.": "Níl an leagan seo ann nó níl sé poiblí.",
-        "The earlier versions cannot be shown right now.": "Ní féidir na leaganacha roimhe seo a thaispeáint faoi láthair."
+        "The earlier versions cannot be shown right now.": "Ní féidir na leaganacha roimhe seo a thaispeáint faoi láthair.",
+        "Delete permanently": "Scrios go buan",
+        "Delete \"{name}\" permanently? This cannot be undone.": "An bhfuil tú ag iarraidh \"{name}\" a scriosadh go buan? Ní féidir é seo a chealú.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Scriostar a comhaid, a tagairtí doiciméad agus na taifid a thagraíonn di in éineacht léi. Ní féidir í a athchóiriú.",
+        "The publication was deleted permanently.": "Scriosadh an foilseachán go buan."
     },
     "plurals": {}
 }

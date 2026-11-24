@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Asiakirjan kopio, joka säilytetään tämän version mukana.",
         "The earlier public version could not be kept, so the change was not saved.": "Aiempaa julkista versiota ei voitu säilyttää, joten muutosta ei tallennettu.",
         "This version does not exist or is not public.": "Tätä versiota ei ole tai se ei ole julkinen.",
-        "The earlier versions cannot be shown right now.": "Aiempia versioita ei voi juuri nyt näyttää."
+        "The earlier versions cannot be shown right now.": "Aiempia versioita ei voi juuri nyt näyttää.",
+        "Delete permanently": "Poista pysyvästi",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Poistetaanko \"{name}\" pysyvästi? Toimintoa ei voi kumota.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Sen tiedostot, asiakirjaviittaukset ja siihen viittaavat tietueet poistetaan sen mukana. Sitä ei voi palauttaa.",
+        "The publication was deleted permanently.": "Julkaisu on poistettu pysyvästi."
     },
     "nplurals=2; plural=(n != 1);"
 )

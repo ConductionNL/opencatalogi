@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "La copia del documento conservata con questa versione.",
         "The earlier public version could not be kept, so the change was not saved.": "Non è stato possibile conservare la versione pubblica precedente, quindi la modifica non è stata salvata.",
         "This version does not exist or is not public.": "Questa versione non esiste o non è pubblica.",
-        "The earlier versions cannot be shown right now.": "Le versioni precedenti non possono essere mostrate in questo momento."
+        "The earlier versions cannot be shown right now.": "Le versioni precedenti non possono essere mostrate in questo momento.",
+        "Delete permanently": "Elimina definitivamente",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Eliminare definitivamente \"{name}\"? L'operazione non può essere annullata.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "I suoi file, i riferimenti ai documenti e i record che vi rimandano vengono eliminati con essa. Non può essere ripristinata.",
+        "The publication was deleted permanently.": "La pubblicazione è stata eliminata definitivamente."
     },
     "nplurals=2; plural=(n != 1);"
 )

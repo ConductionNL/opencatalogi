@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Il-kopja tad-dokument miżmuma ma' din il-verżjoni.",
         "The earlier public version could not be kept, so the change was not saved.": "Il-verżjoni pubblika ta' qabel ma setgħetx tinżamm, għalhekk il-bidla ma ġietx salvata.",
         "This version does not exist or is not public.": "Din il-verżjoni ma teżistix jew mhijiex pubblika.",
-        "The earlier versions cannot be shown right now.": "Il-verżjonijiet ta' qabel ma jistgħux jintwerew bħalissa."
+        "The earlier versions cannot be shown right now.": "Il-verżjonijiet ta' qabel ma jistgħux jintwerew bħalissa.",
+        "Delete permanently": "Ħassar għal kollox",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Tħassar \"{name}\" għal kollox? Dan ma jistax jitreġġa' lura.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Il-fajls tagħha, ir-referenzi tad-dokumenti u r-rekords li jirreferu għaliha jitħassru magħha. Ma tistax terġa' tiġi rkuprata.",
+        "The publication was deleted permanently.": "Il-pubblikazzjoni tħassret għal kollox."
     },
     "nplurals=2; plural=(n != 1);"
 )

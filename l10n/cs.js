@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Kopie dokumentu uchovaná s touto verzí.",
         "The earlier public version could not be kept, so the change was not saved.": "Předchozí veřejnou verzi nebylo možné uchovat, proto změna nebyla uložena.",
         "This version does not exist or is not public.": "Tato verze neexistuje nebo není veřejná.",
-        "The earlier versions cannot be shown right now.": "Předchozí verze teď nelze zobrazit."
+        "The earlier versions cannot be shown right now.": "Předchozí verze teď nelze zobrazit.",
+        "Delete permanently": "Trvale smazat",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Trvale smazat „{name}“? Tuto akci nelze vrátit zpět.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Její soubory, odkazy na dokumenty a záznamy, které na ni odkazují, budou smazány s ní. Nelze ji obnovit.",
+        "The publication was deleted permanently.": "Publikace byla trvale smazána."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Dokumenta kopija, kas tiek glabāta ar šo versiju.",
         "The earlier public version could not be kept, so the change was not saved.": "Iepriekšējo publisko versiju neizdevās saglabāt, tāpēc izmaiņas netika saglabātas.",
         "This version does not exist or is not public.": "Šī versija nepastāv vai nav publiska.",
-        "The earlier versions cannot be shown right now.": "Iepriekšējās versijas pašlaik nevar parādīt."
+        "The earlier versions cannot be shown right now.": "Iepriekšējās versijas pašlaik nevar parādīt.",
+        "Delete permanently": "Dzēst neatgriezeniski",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Neatgriezeniski dzēst \"{name}\"? Šo darbību nevar atsaukt.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Tās faili, dokumentu atsauces un ieraksti, kas uz to norāda, tiek dzēsti kopā ar to. To nevar atjaunot.",
+        "The publication was deleted permanently.": "Publikācija ir neatgriezeniski dzēsta."
     },
     "nplurals=2; plural=(n != 1);"
 )

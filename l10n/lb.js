@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "D'Kopie vum Dokument, déi mat dëser Versioun gehale gëtt.",
         "The earlier public version could not be kept, so the change was not saved.": "Déi fréier ëffentlech Versioun konnt net gehale ginn, dofir gouf d'Ännerung net gespäichert.",
         "This version does not exist or is not public.": "Dës Versioun gëtt et net oder se ass net ëffentlech.",
-        "The earlier versions cannot be shown right now.": "Déi fréier Versioune kënnen elo net gewise ginn."
+        "The earlier versions cannot be shown right now.": "Déi fréier Versioune kënnen elo net gewise ginn.",
+        "Delete permanently": "Definitiv läschen",
+        "Delete \"{name}\" permanently? This cannot be undone.": "\"{name}\" definitiv läschen? Dat kann net réckgängeg gemaach ginn.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Hir Dateien, hir Dokumentreferenzen an d'Donnéeën, déi op si verweisen, gi mat geläscht. Si kann net erëm hiergestallt ginn.",
+        "The publication was deleted permanently.": "D'Publikatioun gouf definitiv geläscht."
     },
     "nplurals=2; plural=(n != 1);"
 )

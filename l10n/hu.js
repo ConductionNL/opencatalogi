@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "A dokumentum e verzióval megőrzött másolata.",
         "The earlier public version could not be kept, so the change was not saved.": "A korábbi nyilvános változatot nem sikerült megőrizni, ezért a módosítás nem lett mentve.",
         "This version does not exist or is not public.": "Ez a változat nem létezik, vagy nem nyilvános.",
-        "The earlier versions cannot be shown right now.": "A korábbi változatok most nem jeleníthetők meg."
+        "The earlier versions cannot be shown right now.": "A korábbi változatok most nem jeleníthetők meg.",
+        "Delete permanently": "Végleges törlés",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Véglegesen törli a következőt: „{name}”? Ez nem vonható vissza.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "A fájljai, a dokumentumhivatkozásai és a rá mutató rekordok vele együtt törlődnek. Nem állítható vissza.",
+        "The publication was deleted permanently.": "A publikáció véglegesen törölve."
     },
     "nplurals=2; plural=(n != 1);"
 )

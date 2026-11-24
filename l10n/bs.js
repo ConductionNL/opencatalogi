@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Kopija dokumenta koja se čuva uz ovu verziju.",
         "The earlier public version could not be kept, so the change was not saved.": "Ranija javna verzija nije mogla biti sačuvana, pa promjena nije spremljena.",
         "This version does not exist or is not public.": "Ova verzija ne postoji ili nije javna.",
-        "The earlier versions cannot be shown right now.": "Ranije verzije trenutno nije moguće prikazati."
+        "The earlier versions cannot be shown right now.": "Ranije verzije trenutno nije moguće prikazati.",
+        "Delete permanently": "Trajno izbriši",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Trajno izbrisati „{name}”? Ovo se ne može poništiti.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Njeni fajlovi, reference na dokumente i zapisi koji upućuju na nju brišu se zajedno s njom. Ne može se vratiti.",
+        "The publication was deleted permanently.": "Publikacija je trajno izbrisana."
     },
     "nplurals=2; plural=(n != 1);"
 )

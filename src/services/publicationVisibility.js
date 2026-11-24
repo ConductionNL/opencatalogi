@@ -144,3 +144,39 @@ export function listActions(state, unlisted, canUpdate) {
 		listAgain: allowed && unlisted === true,
 	}
 }
+
+/**
+ * Whether the page offers Delete permanently: only for a draft or a
+ * publication in review, and only to a caller with the update right. The
+ * server still proves it was never published before it deletes anything
+ * (publication-lifecycle-on-or-draft-purge REQ-PLC-004).
+ *
+ * @param {string} state The publication's state from the server.
+ * @param {boolean} canUpdate Whether the caller may update it.
+ * @return {boolean} Whether Delete permanently shows.
+ * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+ */
+export function canDeletePermanently(state, canUpdate) {
+	return canUpdate === true && (state === 'draft' || state === 'in_review')
+}
+
+/**
+ * The words for a refused or failed permanent delete: the server's own
+ * sentence, with the removed items named when it stopped part way, else none.
+ *
+ * @param {object} error The axios error.
+ * @return {string} The message, or an empty string when the server gave none.
+ * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+ */
+export function draftPurgeMessage(error) {
+	const data = error && error.response ? error.response.data : null
+	if (!data || typeof data.message !== 'string') {
+		return ''
+	}
+	const removed = Array.isArray(data.removed) ? data.removed : []
+	if (data.error !== 'purge-incomplete' || removed.length === 0) {
+		return data.message
+	}
+	const names = removed.map((item) => (item && (item.title || item.name || item.id)) || String(item))
+	return data.message + ' ' + names.join(', ')
+}

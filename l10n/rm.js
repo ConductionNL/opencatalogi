@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "La copia dal document che vegn tegnida cun questa versiun.",
         "The earlier public version could not be kept, so the change was not saved.": "La versiun publica precedenta n'ha betg pudì vegnir conservada, perquai n'è la midada betg vegnida memorisada.",
         "This version does not exist or is not public.": "Questa versiun n'exista betg u n'è betg publica.",
-        "The earlier versions cannot be shown right now.": "Las versiuns precedentas na pon betg vegnir mussadas ussa."
+        "The earlier versions cannot be shown right now.": "Las versiuns precedentas na pon betg vegnir mussadas ussa.",
+        "Delete permanently": "Stizzar definitivamain",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Stizzar definitivamain \"{name}\"? Quai na po betg vegnir revocà.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Sias datotecas, sias referenzas a documents e las datas che renvieschan ad ella vegnan stizzadas cun ella. Ella na po betg vegnir restaurada.",
+        "The publication was deleted permanently.": "La publicaziun è vegnida stizzada definitivamain."
     },
     "nplurals=2; plural=(n != 1);"
 )

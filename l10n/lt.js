@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Dokumento kopija, saugoma su šia versija.",
         "The earlier public version could not be kept, so the change was not saved.": "Ankstesnės viešos versijos išsaugoti nepavyko, todėl pakeitimas neišsaugotas.",
         "This version does not exist or is not public.": "Šios versijos nėra arba ji nėra vieša.",
-        "The earlier versions cannot be shown right now.": "Ankstesnių versijų šiuo metu parodyti negalima."
+        "The earlier versions cannot be shown right now.": "Ankstesnių versijų šiuo metu parodyti negalima.",
+        "Delete permanently": "Ištrinti visam laikui",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Ištrinti „{name}“ visam laikui? Šio veiksmo atšaukti negalima.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Jos failai, dokumentų nuorodos ir į ją nurodantys įrašai ištrinami kartu. Jos atkurti negalima.",
+        "The publication was deleted permanently.": "Publikacija ištrinta visam laikui."
     },
     "nplurals=2; plural=(n != 1);"
 )
