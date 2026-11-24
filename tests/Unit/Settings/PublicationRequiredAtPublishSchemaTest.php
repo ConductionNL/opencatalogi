@@ -25,18 +25,15 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * The shipped publication schema demands summary, description and organisation from in_review on (REQ-PRP-001).
+ * The required-to-publish state rules are held back (REQ-PRP-001, tasks.md 1.1): OpenRegister enforces a state's
+ * `required` on every save, the upgrade repair steps that run after the schema import re-save legacy published
+ * publications, and a legacy publication without a summary, description or organisation would be refused there and
+ * left without its state or audience, which hides it. The rule ships again once those steps can save such a
+ * publication.
  *
  * @coversNothing
  */
 final class PublicationRequiredAtPublishSchemaTest extends TestCase {
-
-	/**
-	 * The fields every state past draft requires.
-	 *
-	 * @var array<int, string>
-	 */
-	private const REQUIRED = ['summary', 'description', 'organization'];
 
 	/**
 	 * The publication schema as it is imported: the base register with every register.d fragment merged.
@@ -52,42 +49,31 @@ final class PublicationRequiredAtPublishSchemaTest extends TestCase {
 	}//end publication()
 
 	/**
-	 * A draft declares no rule; in_review, approved and published require the three fields, for everyone.
+	 * No state of the publication lifecycle requires a field, so an upgrade can re-save every legacy publication.
 	 *
 	 * @return void
 	 */
-	public function testTheFieldsAndTheStates(): void {
+	public function testNoStateRequiresAFieldWhileTheUpgradePathCannotFillIt(): void {
 		$publication = self::publication();
-		$states = $publication['x-openregister-lifecycle']['states'];
 
-		self::assertArrayNotHasKey(key: 'draft', array: $states, message: 'a draft declares no rule, so it may stay incomplete');
-		foreach (['in_review', 'approved', 'published'] as $state) {
-			self::assertSame(expected: [['fields' => self::REQUIRED]], actual: $states[$state]['fields']['required'], message: $state);
-			self::assertArrayNotHasKey(key: 'groups', array: $states[$state]['fields']['required'][0], message: $state);
-		}
-
-		self::assertArrayNotHasKey(key: 'archived', array: $states);
+		self::assertArrayNotHasKey(key: 'states', array: $publication['x-openregister-lifecycle']);
 		self::assertSame(expected: ['title'], actual: $publication['required']);
-		foreach (self::REQUIRED as $field) {
-			self::assertArrayHasKey(key: $field, array: $publication['properties'], message: $field);
-		}
-	}//end testTheFieldsAndTheStates()
+	}//end testNoStateRequiresAFieldWhileTheUpgradePathCannotFillIt()
 
 	/**
-	 * The lifecycle keeps its transitions next to the states, and the schema version moved past 0.0.14.
+	 * The schema version moved past 0.0.15, so an instance that imported the rule imports it away again.
 	 *
 	 * @return void
 	 */
-	public function testTheTransitionsStayAndTheVersionIsBumped(): void {
+	public function testTheVersionMovedPastTheOneThatDeclaredTheRule(): void {
 		$publication = self::publication();
 
 		self::assertSame(expected: 'draft', actual: $publication['x-openregister-lifecycle']['initial']);
-		self::assertArrayHasKey(key: 'publish', array: $publication['x-openregister-lifecycle']['transitions']);
-		self::assertTrue(condition: version_compare($publication['version'], '0.0.14', '>'), message: $publication['version']);
-	}//end testTheTransitionsStayAndTheVersionIsBumped()
+		self::assertTrue(condition: version_compare($publication['version'], '0.0.15', '>'), message: $publication['version']);
+	}//end testTheVersionMovedPastTheOneThatDeclaredTheRule()
 
 	/**
-	 * OpenRegister's own annotation validator accepts the declaration with its states.
+	 * OpenRegister's own annotation validator accepts the declaration.
 	 *
 	 * @return void
 	 */
