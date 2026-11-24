@@ -2207,7 +2207,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Kept permanently: archive hotspot {subject}",
         "until {date}": "until {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Saved: this publication will be taken down automatically on {date}.",
-        "Documents to publish: {count}": "Documents to publish: {count}"
+        "Documents to publish: {count}": "Documents to publish: {count}",
+        "Published files": "Published files",
+        "Title written into the file": "Title written into the file",
+        "Title not written": "Title not written",
+        "Title not written: the file is signed": "Title not written: the file is signed",
+        "Title not written: the file is encrypted": "Title not written: the file is encrypted",
+        "Title not written: the file could not be read": "Title not written: the file could not be read",
+        "Title not written: this file type has no title": "Title not written: this file type has no title"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -843,7 +843,14 @@
         "Kept permanently: archive hotspot {subject}": "Trajno se čuva: arhivska žarišna točka {subject}",
         "until {date}": "do {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Spremljeno: ova objava bit će automatski povučena {date}.",
-        "Documents to publish: {count}": "Dokumenti za objavu: {count}"
+        "Documents to publish: {count}": "Dokumenti za objavu: {count}",
+        "Published files": "Objavljene datoteke",
+        "Title written into the file": "Naslov upisan u datoteku",
+        "Title not written": "Naslov nije upisan",
+        "Title not written: the file is signed": "Naslov nije upisan: datoteka je potpisana",
+        "Title not written: the file is encrypted": "Naslov nije upisan: datoteka je šifrirana",
+        "Title not written: the file could not be read": "Naslov nije upisan: datoteku nije moguće pročitati",
+        "Title not written: this file type has no title": "Naslov nije upisan: ova vrsta datoteke nema naslov"
     },
     "plurals": {}
 }

@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Saugoma nuolat: archyvo karštasis taškas {subject}",
         "until {date}": "iki {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Išsaugota: šis leidinys bus automatiškai atšauktas {date}.",
-        "Documents to publish: {count}": "Skelbiami dokumentai: {count}"
+        "Documents to publish: {count}": "Skelbiami dokumentai: {count}",
+        "Published files": "Paskelbti failai",
+        "Title written into the file": "Pavadinimas įrašytas į failą",
+        "Title not written": "Pavadinimas neįrašytas",
+        "Title not written: the file is signed": "Pavadinimas neįrašytas: failas pasirašytas",
+        "Title not written: the file is encrypted": "Pavadinimas neįrašytas: failas užšifruotas",
+        "Title not written: the file could not be read": "Pavadinimas neįrašytas: failo nepavyko perskaityti",
+        "Title not written: this file type has no title": "Pavadinimas neįrašytas: šis failo tipas neturi pavadinimo"
     },
     "nplurals=2; plural=(n != 1);"
 )

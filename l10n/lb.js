@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Dauerhaft opbewaart: Archiv-Hotspot {subject}",
         "until {date}": "bis {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Gespäichert: dës Publikatioun gëtt den {date} automatesch depubliéiert.",
-        "Documents to publish: {count}": "Dokumenter fir ze publizéieren: {count}"
+        "Documents to publish: {count}": "Dokumenter fir ze publizéieren: {count}",
+        "Published files": "Publizéiert Fichieren",
+        "Title written into the file": "Titel an de Fichier geschriwwen",
+        "Title not written": "Titel net geschriwwen",
+        "Title not written: the file is signed": "Titel net geschriwwen: de Fichier ass ënnerschriwwen",
+        "Title not written: the file is encrypted": "Titel net geschriwwen: de Fichier ass verschlësselt",
+        "Title not written: the file could not be read": "Titel net geschriwwen: de Fichier konnt net gelies ginn",
+        "Title not written: this file type has no title": "Titel net geschriwwen: dësen Fichierstyp huet keen Titel"
     },
     "nplurals=2; plural=(n != 1);"
 )

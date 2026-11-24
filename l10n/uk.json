@@ -843,7 +843,14 @@
         "Kept permanently: archive hotspot {subject}": "Зберігається постійно: архівна гаряча точка {subject}",
         "until {date}": "до {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Збережено: цю публікацію буде автоматично знято {date}.",
-        "Documents to publish: {count}": "Документи до публікації: {count}"
+        "Documents to publish: {count}": "Документи до публікації: {count}",
+        "Published files": "Опубліковані файли",
+        "Title written into the file": "Заголовок записано у файл",
+        "Title not written": "Заголовок не записано",
+        "Title not written: the file is signed": "Заголовок не записано: файл підписано",
+        "Title not written: the file is encrypted": "Заголовок не записано: файл зашифровано",
+        "Title not written: the file could not be read": "Заголовок не записано: не вдалося прочитати файл",
+        "Title not written: this file type has no title": "Заголовок не записано: цей тип файлу не має заголовка"
     },
     "plurals": {}
 }

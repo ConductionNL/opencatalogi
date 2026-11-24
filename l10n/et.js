@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Säilitatakse alaliselt: arhiivi kuum koht {subject}",
         "until {date}": "kuni {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Salvestatud: selle väljaande avaldamine lõpetatakse automaatselt {date}.",
-        "Documents to publish: {count}": "Avaldatavad dokumendid: {count}"
+        "Documents to publish: {count}": "Avaldatavad dokumendid: {count}",
+        "Published files": "Avaldatud failid",
+        "Title written into the file": "Pealkiri kirjutati faili",
+        "Title not written": "Pealkirja ei kirjutatud",
+        "Title not written: the file is signed": "Pealkirja ei kirjutatud: fail on allkirjastatud",
+        "Title not written: the file is encrypted": "Pealkirja ei kirjutatud: fail on krüpteeritud",
+        "Title not written: the file could not be read": "Pealkirja ei kirjutatud: faili ei saanud lugeda",
+        "Title not written: this file type has no title": "Pealkirja ei kirjutatud: sellel failitüübil pole pealkirja"
     },
     "nplurals=2; plural=(n != 1);"
 )

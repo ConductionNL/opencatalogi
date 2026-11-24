@@ -843,7 +843,14 @@
         "Kept permanently: archive hotspot {subject}": "Dauerhaft aufbewahrt: Archiv-Hotspot {subject}",
         "until {date}": "bis {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Gespeichert: Diese Veröffentlichung wird am {date} automatisch depubliziert.",
-        "Documents to publish: {count}": "Zu veröffentlichende Dokumente: {count}"
+        "Documents to publish: {count}": "Zu veröffentlichende Dokumente: {count}",
+        "Published files": "Veröffentlichte Dateien",
+        "Title written into the file": "Titel in die Datei geschrieben",
+        "Title not written": "Titel nicht geschrieben",
+        "Title not written: the file is signed": "Titel nicht geschrieben: Die Datei ist signiert",
+        "Title not written: the file is encrypted": "Titel nicht geschrieben: Die Datei ist verschlüsselt",
+        "Title not written: the file could not be read": "Titel nicht geschrieben: Die Datei konnte nicht gelesen werden",
+        "Title not written: this file type has no title": "Titel nicht geschrieben: Dieser Dateityp hat keinen Titel"
     },
     "plurals": {}
 }

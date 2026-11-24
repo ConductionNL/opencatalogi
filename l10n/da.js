@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Bevares permanent: arkivhotspot {subject}",
         "until {date}": "indtil {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Gemt: denne publikation afpubliceres automatisk den {date}.",
-        "Documents to publish: {count}": "Dokumenter der publiceres: {count}"
+        "Documents to publish: {count}": "Dokumenter der publiceres: {count}",
+        "Published files": "Publicerede filer",
+        "Title written into the file": "Titel skrevet ind i filen",
+        "Title not written": "Titel ikke skrevet",
+        "Title not written: the file is signed": "Titel ikke skrevet: filen er signeret",
+        "Title not written: the file is encrypted": "Titel ikke skrevet: filen er krypteret",
+        "Title not written: the file could not be read": "Titel ikke skrevet: filen kunne ikke læses",
+        "Title not written: this file type has no title": "Titel ikke skrevet: denne filtype har ingen titel"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Säilytetään pysyvästi: arkiston kuuma kohta {subject}",
         "until {date}": "{date} asti",
         "Saved: this publication will be taken down automatically on {date}.": "Tallennettu: tämä julkaisu poistetaan automaattisesti {date}.",
-        "Documents to publish: {count}": "Julkaistavat asiakirjat: {count}"
+        "Documents to publish: {count}": "Julkaistavat asiakirjat: {count}",
+        "Published files": "Julkaistut tiedostot",
+        "Title written into the file": "Otsikko kirjoitettu tiedostoon",
+        "Title not written": "Otsikkoa ei kirjoitettu",
+        "Title not written: the file is signed": "Otsikkoa ei kirjoitettu: tiedosto on allekirjoitettu",
+        "Title not written: the file is encrypted": "Otsikkoa ei kirjoitettu: tiedosto on salattu",
+        "Title not written: the file could not be read": "Otsikkoa ei kirjoitettu: tiedostoa ei voitu lukea",
+        "Title not written: this file type has no title": "Otsikkoa ei kirjoitettu: tällä tiedostotyypillä ei ole otsikkoa"
     },
     "nplurals=2; plural=(n != 1);"
 )

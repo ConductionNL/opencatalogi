@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Varðveitt til frambúðar: skjalasafnsáhersla {subject}",
         "until {date}": "til {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Vistað: þessi birting verður sjálfkrafa afturkölluð {date}.",
-        "Documents to publish: {count}": "Skjöl til birtingar: {count}"
+        "Documents to publish: {count}": "Skjöl til birtingar: {count}",
+        "Published files": "Birtar skrár",
+        "Title written into the file": "Titill skrifaður í skrána",
+        "Title not written": "Titill ekki skrifaður",
+        "Title not written: the file is signed": "Titill ekki skrifaður: skráin er undirrituð",
+        "Title not written: the file is encrypted": "Titill ekki skrifaður: skráin er dulkóðuð",
+        "Title not written: the file could not be read": "Titill ekki skrifaður: ekki tókst að lesa skrána",
+        "Title not written: this file type has no title": "Titill ekki skrifaður: þessi skráartegund hefur engan titil"
     },
     "nplurals=2; plural=(n != 1);"
 )

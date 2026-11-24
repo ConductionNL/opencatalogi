@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Uchováváno trvale: archivní hotspot {subject}",
         "until {date}": "do {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Uloženo: tato publikace bude automaticky stažena {date}.",
-        "Documents to publish: {count}": "Dokumenty ke zveřejnění: {count}"
+        "Documents to publish: {count}": "Dokumenty ke zveřejnění: {count}",
+        "Published files": "Zveřejněné soubory",
+        "Title written into the file": "Název zapsán do souboru",
+        "Title not written": "Název nezapsán",
+        "Title not written: the file is signed": "Název nezapsán: soubor je podepsaný",
+        "Title not written: the file is encrypted": "Název nezapsán: soubor je zašifrovaný",
+        "Title not written: the file could not be read": "Název nezapsán: soubor nelze přečíst",
+        "Title not written: this file type has no title": "Název nezapsán: tento typ souboru nemá název"
     },
     "nplurals=2; plural=(n != 1);"
 )
