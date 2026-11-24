@@ -102,7 +102,7 @@ class DatasetViewData {
 	 * @return array<string, mixed> `kind`, `x`, `y`, `aggregate`, `points` and `truncated`.
 	 *
 	 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-anyone-reads-a-view-s-data-while-the-publication-is-public-req-dsv-002
-	 * @SuppressWarnings(PHPMD.StaticAccess) AggregationQuery::create() is OpenRegister's value factory.
+	 * @SuppressWarnings(PHPMD.StaticAccess) AggregationQuery::grouped() and ::create() are OpenRegister's value factories.
 	 */
 	public function chart(array $view, array $table): array {
 		$aggregate = (string)($view['aggregate'] ?? 'count');
@@ -112,11 +112,17 @@ class DatasetViewData {
 			$field = $measure;
 		}
 
-		$query = AggregationQuery::create(
-			metric: $aggregate,
-			field: $field,
-			groupBy: ['field' => (string)$view['x'], 'limit' => (self::MAX_GROUPS + 1)]
-		);
+		$groupBy = ['field' => (string)$view['x'], 'limit' => (self::MAX_GROUPS + 1)];
+		// OpenRegister main moved the grouping into an AggregationLayout behind grouped();
+		// the release takes it as create()'s own argument.
+		$query = null;
+		// The analysed OpenRegister is the release, which has no grouped(); the installed one may be main.
+		// @phpstan-ignore function.impossibleType
+		if (method_exists(AggregationQuery::class, 'grouped') === true) {
+			$query = AggregationQuery::grouped(metric: $aggregate, field: $field, groupBy: $groupBy);
+		}
+
+		$query ??= AggregationQuery::create(metric: $aggregate, field: $field, groupBy: $groupBy);
 
 		$result = $this->aggregation->runAdhocByRef(
 			registerRef: PublishedTableService::ROWS_REGISTER,
