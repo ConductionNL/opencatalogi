@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Захоўваецца пастаянна: архіўная гарачая кропка {subject}",
         "until {date}": "да {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Захавана: гэтая публікацыя будзе аўтаматычна знята {date}.",
+        "Documents to publish: {count}": "Дакументы да публікацыі: {count}",
         "Publish {count} of {total} publications": "Апублікаваць {count} з {total} публікацый",
         "These publications miss a field required to publish and will be skipped:": "Гэтым публікацыям не хапае поля, патрэбнага для публікацыі, і яны будуць прапушчаны:",
         "Required to publish": "Патрэбна для публікацыі"

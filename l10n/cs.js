@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Uchováváno trvale: archivní hotspot {subject}",
         "until {date}": "do {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Uloženo: tato publikace bude automaticky stažena {date}.",
+        "Documents to publish: {count}": "Dokumenty ke zveřejnění: {count}",
         "Publish {count} of {total} publications": "Publikovat {count} z {total} publikací",
         "These publications miss a field required to publish and will be skipped:": "Těmto publikacím chybí pole povinné pro publikování a budou přeskočeny:",
         "Required to publish": "Povinné pro publikování"

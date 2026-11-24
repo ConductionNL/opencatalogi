@@ -843,6 +843,7 @@
         "Kept permanently: archive hotspot {subject}": "Kalıcı olarak saklanır: arşiv odak noktası {subject}",
         "until {date}": "{date} tarihine kadar",
         "Saved: this publication will be taken down automatically on {date}.": "Kaydedildi: bu yayın {date} tarihinde otomatik olarak yayından kaldırılacak.",
+        "Documents to publish: {count}": "Yayımlanacak belgeler: {count}",
         "Publish {count} of {total} publications": "{total} yayından {count} tanesini yayımla",
         "These publications miss a field required to publish and will be skipped:": "Bu yayınlarda yayımlamak için gereken bir alan eksik ve atlanacaklar:",
         "Required to publish": "Yayımlamak için gerekli"

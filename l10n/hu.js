@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Véglegesen megőrzendő: levéltári kiemelt téma {subject}",
         "until {date}": "{date}-ig",
         "Saved: this publication will be taken down automatically on {date}.": "Mentve: ez a közzététel {date} napján automatikusan visszavonásra kerül.",
+        "Documents to publish: {count}": "Közzéteendő dokumentumok: {count}",
         "Publish {count} of {total} publications": "{count} / {total} publikáció közzététele",
         "These publications miss a field required to publish and will be skipped:": "Ezekből a publikációkból hiányzik egy közzétételhez szükséges mező, ezért kimaradnak:",
         "Required to publish": "Közzétételhez kötelező"

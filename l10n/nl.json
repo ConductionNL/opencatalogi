@@ -2161,6 +2161,7 @@
         "Kept permanently: archive hotspot {subject}": "Blijvend bewaard: archiefhotspot {subject}",
         "until {date}": "tot {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Opgeslagen: deze publicatie wordt op {date} automatisch gedepubliceerd.",
+        "Documents to publish: {count}": "Te publiceren documenten: {count}",
         "Publish {count} of {total} publications": "{count} van {total} publicaties publiceren",
         "These publications miss a field required to publish and will be skipped:": "Deze publicaties missen een veld dat nodig is om te publiceren en worden overgeslagen:",
         "Required to publish": "Verplicht om te publiceren"

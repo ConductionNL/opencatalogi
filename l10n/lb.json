@@ -843,6 +843,7 @@
         "Kept permanently: archive hotspot {subject}": "Dauerhaft opbewaart: Archiv-Hotspot {subject}",
         "until {date}": "bis {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Gespäichert: dës Publikatioun gëtt den {date} automatesch depubliéiert.",
+        "Documents to publish: {count}": "Dokumenter fir ze publizéieren: {count}",
         "Publish {count} of {total} publications": "{count} vun {total} Publikatiounen publizéieren",
         "These publications miss a field required to publish and will be skipped:": "Dëse Publikatiounen feelt e Feld, dat fir d'Publikatioun néideg ass; si ginn iwwersprongen:",
         "Required to publish": "Néideg fir ze publizéieren"

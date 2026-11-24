@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Säilytetään pysyvästi: arkiston kuuma kohta {subject}",
         "until {date}": "{date} asti",
         "Saved: this publication will be taken down automatically on {date}.": "Tallennettu: tämä julkaisu poistetaan automaattisesti {date}.",
+        "Documents to publish: {count}": "Julkaistavat asiakirjat: {count}",
         "Publish {count} of {total} publications": "Julkaise {count}/{total} julkaisua",
         "These publications miss a field required to publish and will be skipped:": "Näistä julkaisuista puuttuu julkaisemiseen vaadittu kenttä, ja ne ohitetaan:",
         "Required to publish": "Pakollinen julkaisemiseen"

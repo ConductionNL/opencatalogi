@@ -843,6 +843,7 @@
         "Kept permanently: archive hotspot {subject}": "Dauerhaft aufbewahrt: Archiv-Hotspot {subject}",
         "until {date}": "bis {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Gespeichert: Diese Veröffentlichung wird am {date} automatisch depubliziert.",
+        "Documents to publish: {count}": "Zu veröffentlichende Dokumente: {count}",
         "Publish {count} of {total} publications": "{count} von {total} Veröffentlichungen veröffentlichen",
         "These publications miss a field required to publish and will be skipped:": "Diesen Veröffentlichungen fehlt ein für die Veröffentlichung erforderliches Feld; sie werden übersprungen:",
         "Required to publish": "Für die Veröffentlichung erforderlich"

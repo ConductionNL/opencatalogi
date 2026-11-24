@@ -843,6 +843,7 @@
         "Kept permanently: archive hotspot {subject}": "Säilitatakse alaliselt: arhiivi kuum koht {subject}",
         "until {date}": "kuni {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Salvestatud: selle väljaande avaldamine lõpetatakse automaatselt {date}.",
+        "Documents to publish: {count}": "Avaldatavad dokumendid: {count}",
         "Publish {count} of {total} publications": "Avalda {count} väljaannet {total}-st",
         "These publications miss a field required to publish and will be skipped:": "Nendel väljaannetel puudub avaldamiseks nõutav väli ja need jäetakse vahele:",
         "Required to publish": "Avaldamiseks nõutav"

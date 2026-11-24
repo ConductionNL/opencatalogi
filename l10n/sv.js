@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Bevaras permanent: arkivhotspot {subject}",
         "until {date}": "till {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Sparat: den här publiceringen avpubliceras automatiskt {date}.",
+        "Documents to publish: {count}": "Dokument som publiceras: {count}",
         "Publish {count} of {total} publications": "Publicera {count} av {total} publikationer",
         "These publications miss a field required to publish and will be skipped:": "Dessa publikationer saknar ett fält som krävs för att publicera och hoppas över:",
         "Required to publish": "Krävs för att publicera"

@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Saugoma nuolat: archyvo karštasis taškas {subject}",
         "until {date}": "iki {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Išsaugota: šis leidinys bus automatiškai atšauktas {date}.",
+        "Documents to publish: {count}": "Skelbiami dokumentai: {count}",
         "Publish {count} of {total} publications": "Paskelbti {count} iš {total} publikacijų",
         "These publications miss a field required to publish and will be skipped:": "Šioms publikacijoms trūksta laukelio, privalomo skelbimui, todėl jos bus praleistos:",
         "Required to publish": "Privaloma skelbimui"

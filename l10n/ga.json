@@ -843,6 +843,7 @@
         "Kept permanently: archive hotspot {subject}": "Coinnithe go buan: ceantar te cartlainne {subject}",
         "until {date}": "go dtí {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Sábháilte: dífhoilseofar an foilseachán seo go huathoibríoch ar {date}.",
+        "Documents to publish: {count}": "Doiciméid le foilsiú: {count}",
         "Publish {count} of {total} publications": "Foilsigh {count} as {total} foilseachán",
         "These publications miss a field required to publish and will be skipped:": "Tá réimse atá riachtanach le foilsiú in easnamh ar na foilseacháin seo agus scipeálfar iad:",
         "Required to publish": "Riachtanach le foilsiú"

@@ -2207,6 +2207,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Kept permanently: archive hotspot {subject}",
         "until {date}": "until {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Saved: this publication will be taken down automatically on {date}.",
+        "Documents to publish: {count}": "Documents to publish: {count}",
         "Publish {count} of {total} publications": "Publish {count} of {total} publications",
         "These publications miss a field required to publish and will be skipped:": "These publications miss a field required to publish and will be skipped:",
         "Required to publish": "Required to publish"

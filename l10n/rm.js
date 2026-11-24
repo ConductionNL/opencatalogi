@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Conservà permanentamain: hotspot d'archiv {subject}",
         "until {date}": "fin ils {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Memorisà: questa publicaziun vegn retratga automaticamain ils {date}.",
+        "Documents to publish: {count}": "Documents da publitgar: {count}",
         "Publish {count} of {total} publications": "Publitgar {count} da {total} publicaziuns",
         "These publications miss a field required to publish and will be skipped:": "A questas publicaziuns manca in champ necessari per publitgar ed ellas vegnan sursiglidas:",
         "Required to publish": "Necessari per publitgar"

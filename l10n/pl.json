@@ -843,6 +843,7 @@
         "Kept permanently: archive hotspot {subject}": "Przechowywane trwale: hotspot archiwalny {subject}",
         "until {date}": "do {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Zapisano: ta publikacja zostanie automatycznie wycofana {date}.",
+        "Documents to publish: {count}": "Dokumenty do opublikowania: {count}",
         "Publish {count} of {total} publications": "Opublikuj {count} z {total} publikacji",
         "These publications miss a field required to publish and will be skipped:": "Tym publikacjom brakuje pola wymaganego do publikacji i zostaną pominięte:",
         "Required to publish": "Wymagane do publikacji"

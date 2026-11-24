@@ -843,6 +843,7 @@
         "Kept permanently: archive hotspot {subject}": "Διατηρείται μόνιμα: αρχειακό σημείο ενδιαφέροντος {subject}",
         "until {date}": "έως {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Αποθηκεύτηκε: αυτή η δημοσίευση θα αποσυρθεί αυτόματα στις {date}.",
+        "Documents to publish: {count}": "Έγγραφα προς δημοσίευση: {count}",
         "Publish {count} of {total} publications": "Δημοσίευση {count} από {total} δημοσιεύσεις",
         "These publications miss a field required to publish and will be skipped:": "Σε αυτές τις δημοσιεύσεις λείπει πεδίο που απαιτείται για δημοσίευση και θα παραλειφθούν:",
         "Required to publish": "Απαιτείται για δημοσίευση"

@@ -843,6 +843,7 @@
         "Kept permanently: archive hotspot {subject}": "Glabājas pastāvīgi: arhīva karstais punkts {subject}",
         "until {date}": "līdz {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Saglabāts: šī publikācija tiks automātiski atsaukta {date}.",
+        "Documents to publish: {count}": "Publicējamie dokumenti: {count}",
         "Publish {count} of {total} publications": "Publicēt {count} no {total} publikācijām",
         "These publications miss a field required to publish and will be skipped:": "Šīm publikācijām trūkst publicēšanai obligāta lauka, un tās tiks izlaistas:",
         "Required to publish": "Obligāts publicēšanai"

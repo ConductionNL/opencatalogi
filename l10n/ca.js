@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Conservat permanentment: punt calent d'arxiu {subject}",
         "until {date}": "fins al {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Desat: aquesta publicació es despublicarà automàticament el {date}.",
+        "Documents to publish: {count}": "Documents per publicar: {count}",
         "Publish {count} of {total} publications": "Publica {count} de {total} publicacions",
         "These publications miss a field required to publish and will be skipped:": "A aquestes publicacions els falta un camp obligatori per publicar i s'ometran:",
         "Required to publish": "Obligatori per publicar"

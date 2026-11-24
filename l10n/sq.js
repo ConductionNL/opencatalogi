@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Ruhet përgjithmonë: pikë e nxehtë arkivore {subject}",
         "until {date}": "deri më {date}",
         "Saved: this publication will be taken down automatically on {date}.": "U ruajt: ky publikim do të hiqet automatikisht më {date}.",
+        "Documents to publish: {count}": "Dokumente për publikim: {count}",
         "Publish {count} of {total} publications": "Publiko {count} nga {total} publikime",
         "These publications miss a field required to publish and will be skipped:": "Këtyre publikimeve u mungon një fushë e detyrueshme për publikim dhe do të anashkalohen:",
         "Required to publish": "E detyrueshme për publikim"

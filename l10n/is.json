@@ -843,6 +843,7 @@
         "Kept permanently: archive hotspot {subject}": "Varðveitt til frambúðar: skjalasafnsáhersla {subject}",
         "until {date}": "til {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Vistað: þessi birting verður sjálfkrafa afturkölluð {date}.",
+        "Documents to publish: {count}": "Skjöl til birtingar: {count}",
         "Publish {count} of {total} publications": "Birta {count} af {total} útgáfum",
         "These publications miss a field required to publish and will be skipped:": "Þessar útgáfur vantar reit sem þarf til að birta og þeim verður sleppt:",
         "Required to publish": "Nauðsynlegt til að birta"

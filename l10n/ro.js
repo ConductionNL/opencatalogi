@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Păstrat permanent: punct fierbinte de arhivă {subject}",
         "until {date}": "până la {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Salvat: această publicație va fi retrasă automat pe {date}.",
+        "Documents to publish: {count}": "Documente de publicat: {count}",
         "Publish {count} of {total} publications": "Publică {count} din {total} publicații",
         "These publications miss a field required to publish and will be skipped:": "Acestor publicații le lipsește un câmp obligatoriu pentru publicare și vor fi omise:",
         "Required to publish": "Obligatoriu pentru publicare"

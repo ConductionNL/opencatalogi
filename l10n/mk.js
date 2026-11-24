@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Трајно се чува: архивска жешка точка {subject}",
         "until {date}": "до {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Зачувано: оваа објава ќе биде автоматски повлечена на {date}.",
+        "Documents to publish: {count}": "Документи за објава: {count}",
         "Publish {count} of {total} publications": "Објави {count} од {total} публикации",
         "These publications miss a field required to publish and will be skipped:": "На овие публикации им недостасува поле задолжително за објавување и ќе бидат прескокнати:",
         "Required to publish": "Задолжително за објавување"

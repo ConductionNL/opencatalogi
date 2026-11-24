@@ -844,6 +844,7 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Miżmum b'mod permanenti: hotspot tal-arkivju {subject}",
         "until {date}": "sal-{date}",
         "Saved: this publication will be taken down automatically on {date}.": "Salvat: din il-pubblikazzjoni se titneħħa awtomatikament fil-{date}.",
+        "Documents to publish: {count}": "Dokumenti għall-pubblikazzjoni: {count}",
         "Publish {count} of {total} publications": "Ippubblika {count} minn {total} pubblikazzjonijiet",
         "These publications miss a field required to publish and will be skipped:": "Dawn il-pubblikazzjonijiet m'għandhomx qasam meħtieġ biex jiġu ppubblikati u se jinqabżu:",
         "Required to publish": "Meħtieġ biex jiġi ppubblikat"
