@@ -68,7 +68,7 @@ and delete it, or accept the loss with `--force`.
 
 ## 6. Found while retiring, not fixed here
 
-- [ ] 6.1 `UnpublishedAttachmentsWidget` renders permanently empty. It calls
+- [x] 6.1 `UnpublishedAttachmentsWidget` renders permanently empty. It calls
       `objectStore.fetchCollection('attachment')` and filters on
       `status === 'Concept'`, but there is no `attachment` schema in the
       descriptor, no `attachment` entry in `SettingsService`'s object types, and
@@ -84,6 +84,8 @@ and delete it, or accept the loss with `--force`.
       `isPublished === false` on a publication's files, which openregister's
       `file-publication-window` change made a real property. That is a different
       data source (files, not objects), so it needs its own change.
+
+      Done (noted 24 Nov 2026) by `publications-unpublished-overview` (REQ-PUO-002): the widget no longer reads an `attachment` collection; `src/views/widgets/UnpublishedAttachmentsWidget.vue` lists `fetchUnpublished('documents')`, the non-public documents of the reader's publications, covered by `src/views/widgets/WidgetData.spec.js`.
 
 ## 7. Amendment 2026-10-05: a withdrawn attachment holds (row 4.16)
 
