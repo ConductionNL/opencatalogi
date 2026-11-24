@@ -2140,7 +2140,10 @@
         "Publish without documents": "Publiceren zonder documenten",
         "Publish it without documents": "Zonder documenten publiceren",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" heeft geen documenten: geen bestanden en geen documentverwijzingen. Lezers vinden de publicatie, maar niets om te openen.",
-        "Automatic depublication on {date}": "Automatische depublicatie op {date}"
+        "Automatic depublication on {date}": "Automatische depublicatie op {date}",
+        "Frozen on {date} by {user}: it cannot be edited, and no document can be added, withdrawn or republished.": "Bevroren op {date} door {user}: de publicatie kan niet worden bewerkt en er kan geen document worden toegevoegd, ingetrokken of opnieuw gepubliceerd.",
+        "an unrecorded date": "een onbekende datum",
+        "an unknown user": "een onbekende gebruiker"
     },
     "plurals": {}
 }

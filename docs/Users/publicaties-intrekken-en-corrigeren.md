@@ -46,6 +46,8 @@ Bij het terugtrekken van een hele publicatie wordt ze ook bevroren, met de inter
 
 De melding noemt wie de publicatie bevroor en wanneer, bijvoorbeeld: "Cannot write to this object: it was frozen by alice on 2026-11-23. Unfreeze it before changing it."
 
+Op de pagina van de publicatie zie je dat vooraf. De kaart Zichtbaarheid meldt wanneer, door wie en met welke reden de publicatie bevroren is. Bewerken staat uit. De kaart Bijlagen toont de documenten nog wel, maar biedt geen Bijlage toevoegen en geen volgorde-knoppen. Een teruggetrokken document krijgt geen knop Opnieuw publiceren.
+
 Lukt het bevriezen niet, dan blijft de publicatie toch teruggetrokken. Het antwoord op het terugtrekken meldt dan `frozen: false` met de fout, zodat je weet dat de publicatie nog wel te wijzigen is. Vraag in dat geval de beheerder om het bevriezen te herstellen.
 
 Moet een teruggetrokken publicatie toch weer veranderen, dan heft een beheerder eerst de bevriezing op in OpenRegister.

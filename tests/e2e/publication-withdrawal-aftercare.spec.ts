@@ -11,10 +11,15 @@
  * title, and nothing else of the record. Withdrawn without the title, the
  * tombstone carries no title.
  *
+ * The withdrawal also freezes the publication (REQ-PWA-003). Opened by the
+ * editor, its page says who froze it, when and with which reason, and offers
+ * no Edit, no Add attachment and no Republish.
+ *
  * The base URL comes from NEXTCLOUD_URL (base-url.ts); anonymous calls run in a
  * context with an empty storage state.
  *
  * @e2e openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#scenario-the-officer-chooses-what-the-tombstone-says REQ-PWA-002
+ * @e2e openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#scenario-the-page-says-why REQ-PWA-003
  */
 import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog } from './publication-catalog.ts'
@@ -22,6 +27,9 @@ import { BASE, Fixtures, REG_PUBLICATION } from './workflows/_fixtures.ts'
 
 /** The app's own API base path. */
 const API_BASE = '/index.php/apps/opencatalogi/api'
+
+/** The app's page base path. */
+const APP_BASE = '/index.php/apps/opencatalogi'
 
 test.describe('Publication withdrawal aftercare', () => {
 	const fx = new Fixtures()
@@ -107,5 +115,32 @@ test.describe('Publication withdrawal aftercare', () => {
 		} finally {
 			await anonymous.dispose()
 		}
+	})
+	test('the page says why', async ({ request: admin, page }) => {
+		const catalog = await publicationCatalog(admin, 'e2e-frozen-page')
+		const publication = await fx.createPublication(
+			'frozen-page',
+			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			REG_PUBLICATION,
+		)
+
+		const withdrawn = await admin.post(
+			`${API_BASE}/publications/${publication.id}/withdraw`,
+			{ data: { reason: 'AVG-melding 14' } },
+		)
+		expect(withdrawn.ok(), `withdraw: ${await withdrawn.text()}`).toBe(true)
+		expect((await withdrawn.json()).depublication.frozen).toBeTruthy()
+
+		await page.goto(
+			`${APP_BASE}/publications/${encodeURIComponent(catalog.slug)}/${publication.id}`,
+		)
+		const note = page.getByTestId('publication-frozen')
+		await expect(note).toBeVisible()
+		await expect(note).toContainText('Frozen on')
+		await expect(note).toContainText('AVG-melding 14')
+
+		await expect(page.getByRole('button', { name: 'Edit', exact: true })).toHaveCount(0)
+		await expect(page.getByTestId('publication-attachments-add')).toHaveCount(0)
+		await expect(page.getByTestId('publication-republish-document')).toHaveCount(0)
 	})
 })

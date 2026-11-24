@@ -2186,7 +2186,10 @@ OC.L10N.register(
         "Publish without documents": "Publish without documents",
         "Publish it without documents": "Publish it without documents",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.",
-        "Automatic depublication on {date}": "Automatic depublication on {date}"
+        "Automatic depublication on {date}": "Automatic depublication on {date}",
+        "Frozen on {date} by {user}: it cannot be edited, and no document can be added, withdrawn or republished.": "Frozen on {date} by {user}: it cannot be edited, and no document can be added, withdrawn or republished.",
+        "an unrecorded date": "an unrecorded date",
+        "an unknown user": "an unknown user"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -115,4 +115,16 @@ describe('PublicationAttachmentsWidget', () => {
 
 		expect(wrapper.vm.refreshKey).toBe(before + 1)
 	})
+	// @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+	it('offers no upload or reorder on a frozen publication, and still lists its files (REQ-PWA-003)', () => {
+		const frozen = {
+			...publication,
+			'@self': { ...publication['@self'], frozen: { by: 'admin', at: '2026-11-20T09:00:00+00:00' } },
+		}
+		const wrapper = mountWidget({ objectId: 'pub-1', object: frozen })
+
+		expect(wrapper.findComponent({ name: 'CnFilesCard' }).exists()).toBe(true)
+		expect(wrapper.find('[data-testid="publication-attachments-add"]').exists()).toBe(false)
+		expect(wrapper.findComponent({ name: 'AttachmentOrderList' }).exists()).toBe(false)
+	})
 })
