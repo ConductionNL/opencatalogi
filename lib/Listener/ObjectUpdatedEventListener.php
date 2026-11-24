@@ -249,7 +249,7 @@ class ObjectUpdatedEventListener implements IEventListener {
 	 * @return array The object data in array format.
 	 *
 	 * @spec openspec/specs/auto-publishing/spec.md
-	 * @spec openspec/changes/auto-publishing/specs/auto-publishing/spec.md#requirement-apb-017-safe-file-retrieval-on-update-events-replaces-the-selffiles-placeholder
+	 * @spec openspec/changes/archive/2026-11-24-auto-publishing/specs/auto-publishing/spec.md#requirement-apb-017-safe-file-retrieval-on-update-events-replaces-the-selffiles-placeholder
 	 */
 	private function convertObjectEntityToArray(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): array {
 		$objectData = $this->eventObjectData(objectEntity: $objectEntity);

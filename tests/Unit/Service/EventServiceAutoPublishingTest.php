@@ -15,7 +15,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/auto-publishing/specs/auto-publishing/spec.md
+ * @spec openspec/changes/archive/2026-11-24-auto-publishing/specs/auto-publishing/spec.md
  */
 
 declare(strict_types=1);
@@ -169,6 +169,70 @@ final class EventServiceAutoPublishingTest extends TestCase {
 		$this->assertSame(['/OpenRegister/files/obj-uuid/a.pdf', '/OpenRegister/files/obj-uuid/b.pdf'], $this->sharedPaths);
 		$this->assertSame(['attachments_processed'], $result['details'][0]['actions']);
 	}//end testAnUpdateSharesTheRealFileList()
+
+	/**
+	 * APB-010: sharing the three files of a published object reads them through FileMapper and writes no object.
+	 *
+	 * The object service only finds the object: it is never asked to save or
+	 * list files, so sharing dispatches no new ObjectUpdatedEvent and the
+	 * handler cannot recurse.
+	 *
+	 * @return void
+	 */
+	public function testSharingThreeFilesWritesNoObject(): void {
+		$entity = new ObjectEntity();
+		$objects = $this->objectServiceFinding(entity: $entity);
+		$objects->expects($this->never())->method('saveObject');
+
+		$service = $this->service(
+			files: [
+				['name' => 'a.pdf', 'path' => 'files/obj-uuid/a.pdf', 'share_token' => null],
+				['name' => 'b.pdf', 'path' => 'files/obj-uuid/b.pdf', 'share_token' => null],
+				['name' => 'c.pdf', 'path' => 'files/obj-uuid/c.pdf', 'share_token' => null],
+			],
+			options: ['auto_publish_objects' => true, 'auto_publish_attachments' => true],
+			objects: $objects
+		);
+
+		$result = $service->handleObjectUpdateEvents([self::publishedObject()]);
+
+		$this->assertSame(3, $result['attachmentsPublished']);
+		$this->assertSame(0, $result['published']);
+		$this->assertCount(3, $this->sharedPaths);
+	}//end testSharingThreeFilesWritesNoObject()
+
+	/**
+	 * APB-005: a created object whose register and schema no catalog lists is not published.
+	 *
+	 * @return void
+	 */
+	public function testAnObjectNoCatalogListsIsNotPublished(): void {
+		$catalog = new class {
+			/**
+			 * The catalog's data: another register than the object's.
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function jsonSerialize(): array {
+				return ['registers' => [99], 'schemas' => [7]];
+			}//end jsonSerialize()
+		};
+
+		$objects = $this->createMock(ObjectService::class);
+		$objects->expects($this->once())->method('searchObjects')->willReturn([$catalog]);
+		$objects->expects($this->never())->method('saveObject');
+
+		$service = $this->service(files: [], options: ['auto_publish_objects' => true, 'auto_publish_attachments' => false], objects: $objects);
+
+		$object = self::publishedObject();
+		unset($object['publicationDate']);
+		$result = $service->handleObjectCreateEvents([$object]);
+
+		$this->assertSame(1, $result['processed']);
+		$this->assertSame(0, $result['published']);
+		$this->assertSame([], $result['details'][0]['actions']);
+		$this->assertSame([], $result['errors']);
+	}//end testAnObjectNoCatalogListsIsNotPublished()
 
 	/**
 	 * REQ-PTS-002: sharing files re-evaluates the publication's completeness once, after the shares exist.
