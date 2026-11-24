@@ -15,7 +15,7 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * @spec openspec/changes/download-service/tasks.md#4.4
+ * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md#4.4
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,14 +39,14 @@ use Psr\Log\LoggerInterface;
 /**
  * The metadata PDF renders from the shipped template.
  *
- * @spec openspec/changes/download-service/tasks.md#4.4
+ * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md#4.4
  */
 class DownloadTemplateRenderTest extends TestCase {
 
 	/**
 	 * Renders publication.html.twig through the real FileService into a PDF.
 	 *
-	 * @spec openspec/changes/download-service/tasks.md#4.4
+	 * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md#4.4
 	 *
 	 * @return void
 	 */

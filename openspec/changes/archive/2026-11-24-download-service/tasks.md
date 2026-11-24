@@ -76,13 +76,14 @@
 
 - [x] 7.1 Run `openspec sync --change download-service` (or manually copy `specs/download-service/spec.md` to `openspec/specs/download-service/spec.md`) to promote the change spec to the living specs directory
   - Nothing left to copy (24 Nov): the living `openspec/specs/download-service/spec.md` already supersedes this change's REQ-DWN-001 to REQ-DWN-010 with DWN-OR-001 to DWN-OR-005, and its Change history records DWN-002, DWN-003 and DWN-007 as removed. Copying the change spec over it would bring the removed save-to-Nextcloud behaviour back.
-- [ ] 7.2 Confirm the synced spec matches the implementation by reviewing `lib/Service/DownloadService.php` against each REQ-DWN-NNN requirement
+- [x] 7.2 Confirm the synced spec matches the implementation by reviewing `lib/Service/DownloadService.php` against each REQ-DWN-NNN requirement
   - Reviewed 24 Nov against DWN-OR-001 to DWN-OR-005 (`DownloadService` and `PublicationService::download()`). Matches: the metadata PDF is rendered to a temp file and removed in a `finally` block, never saved to user storage (DWN-OR-003); `download=false` answers 400 before rendering (DWN-OR-004); attachments come from OpenRegister's `createObjectFilesZip()` and sit under `Bijlagen/`, with the PDF at the root (DWN-OR-001). Gaps, left open for a decision:
     - DWN-OR-001 asks for streaming without buffering; `PublicationService::download()` reads the whole ZIP with `file_get_contents()` into a `DataDownloadResponse`.
     - DWN-OR-002 asks to pass a version selector through to OpenRegister; the download route takes none.
     - DWN-OR-004 names a `saveToOR` option; only `download` exists.
     - DWN-OR-005 asks for 404 on an unresolvable publication; `PublicationService::download()` answers 404, but `DownloadService::getPublicationData()` turns a thrown `DoesNotExistException` into 500, which `DownloadLookupFailureGoldenTest` pins.
   - Question: build the gaps or narrow the spec? (a) narrow DWN-OR-001/002/004 to what ships (buffered ZIP, no versions, `download` only) and map the thrown lookup to 404; (b) build streaming and the version selector in a new change; (c) leave as is. Recommendation: (a), since no caller asks for versions or saving and the ZIPs are small.
+  - Decided 24 Nov (builder lane): (a). The living spec narrows DWN-OR-001, DWN-OR-002 and DWN-OR-004 to what ships, and `getPublicationData()` answers a thrown `DoesNotExistException` with the 404 of DWN-OR-005. Tests: `DownloadLookupFailureGoldenTest::testLookupFailures`, `DownloadServiceTest::testGetPublicationDataNotFound`, `::testCreatePublicationFileFetchFails`, and the re-recorded `lookup fails` case of `DownloadPublicationFileGoldenTest`.
 
 ## 8. Verify
 
@@ -93,5 +94,6 @@
 - [x] 8.3 Manual smoke test: call `/api/{catalogSlug}/{id}/download?download=true` for a publication with at least one attachment and verify the ZIP contains a PDF at the root and the attachment under `Bijlagen/` (live pass, decision 139) Live pass 17 Nov (livepass-opencatalogi): after this pass's fix: the ZIP holds `<title>.pdf` (a real %PDF-1.4) at the root and `Bijlagen/bijlage-livepass.txt`. Before it the attachment sat at the root: OpenRegister's `createObjectFilesZip()` writes files there.
 - [x] 8.4 Manual smoke test: call with `saveToNextCloud=true` and verify the file appears in Nextcloud under `Publicaties/({id}) {title}/` with a working share link (live pass, decision 139)
   - Obsolete: `saveToNextCloud` was removed (DWN-OR-003).
-- [ ] 8.5 Verify calling with `download=false&saveToNextCloud=false` returns HTTP 500 with a descriptive message and creates no files (live pass, decision 139)
+- [x] 8.5 Verify calling with `download=false&saveToNextCloud=false` returns HTTP 500 with a descriptive message and creates no files (live pass, decision 139)
   - Changed by DWN-OR-004: `download=false` is answered with 400 and no file by `createPublicationFile()` (unit-tested); the public route takes no options, so a live check needs a new route.
+  - Obsolete (24 Nov): the 500 this asks for contradicts DWN-OR-004, which answers 400; that is pinned by `DownloadServiceTest` and the `download off` case of `DownloadPublicationFileGoldenTest`, and no route exposes the option, so there is nothing to check live.

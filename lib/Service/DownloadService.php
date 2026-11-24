@@ -53,7 +53,7 @@ use Twig\Error\SyntaxError;
  * on-demand artefact — it is never saved to Nextcloud user storage by this service.
  *
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
- * @spec openspec/changes/download-service/tasks.md#2.1
+ * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md#2.1
  */
 class DownloadService {
 	/**
@@ -186,24 +186,30 @@ class DownloadService {
 	 * @param string|integer $id The id of a publication.
 	 * @param ObjectService $objectService The objectService.
 	 *
-	 * @return array|JSONResponse The publication found as array or an error JSONResponse.
+	 * @return array|JSONResponse The publication found as array, a 404 when it cannot be
+	 *                            resolved, or a 500 when the lookup itself fails.
 	 *
 	 * @spec openspec/specs/download-service/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md#7.2
 	 */
 	private function getPublicationData(string|int $id, ObjectService $objectService): array|JSONResponse {
 		try {
 			$entity = $objectService->find($id);
-			if ($entity !== null) {
-				return $entity->jsonSerialize();
-			}
-
-			return new JSONResponse(
-				data: ['error' => $this->l10n->t('Publication not found')],
-				statusCode: 404
-			);
-		} catch (ContainerExceptionInterface|MultipleObjectsReturnedException|DoesNotExistException $e) {
+		} catch (DoesNotExistException) {
+			$entity = null;
+		} catch (ContainerExceptionInterface|MultipleObjectsReturnedException $e) {
 			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
-		}//end try
+		}
+
+		if ($entity !== null) {
+			return $entity->jsonSerialize();
+		}
+
+		// DWN-OR-005: an unresolvable publication is a 404, however the store says so.
+		return new JSONResponse(
+			data: ['error' => $this->l10n->t('Publication not found')],
+			statusCode: 404
+		);
 
 	}//end getPublicationData()
 }//end class

@@ -120,9 +120,9 @@
     },
     "lookup fails": {
         "result": {
-            "status": 500,
+            "status": 404,
             "data": {
-                "error": "gone"
+                "error": "Publication not found"
             }
         },
         "log": [

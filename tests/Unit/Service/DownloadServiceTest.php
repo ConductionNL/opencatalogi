@@ -7,7 +7,7 @@
  * cleanup. FileService and ObjectService are mocks in every test here; the render of
  * the real Twig template lives in DownloadTemplateRenderTest.
  *
- * @spec openspec/changes/download-service/tasks.md#4.4
+ * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md#4.4
  *
  * @category Test
  * @package  Unit\Service
@@ -74,7 +74,7 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	/**
 	 * The error messages are fixed texts in the caller's language (download-service task 6).
 	 *
-	 * @spec openspec/changes/download-service/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md
 	 *
 	 * @return void
 	 */
@@ -177,7 +177,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testGetPublicationDataSuccess()
 
 	/**
-	 * Returns 500 JSON response when entity is not found.
+	 * Returns a 404 JSON response when the store throws DoesNotExistException (DWN-OR-005).
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md#7.2
 	 *
 	 * @return void
 	 */
@@ -191,7 +193,7 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$result = $this->invokePrivateMethod('getPublicationData', ['999', $objectService]);
 		$this->assertInstanceOf(JSONResponse::class, $result);
-		$this->assertSame(500, $result->getStatus());
+		$this->assertSame(404, $result->getStatus());
 
 	}//end testGetPublicationDataNotFound()
 
@@ -334,7 +336,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testCreatePublicationFileNeverWritesToNextcloudStorage()
 
 	/**
-	 * Returns 500 when the publication cannot be fetched.
+	 * Returns 404 when the store throws DoesNotExistException for the publication (DWN-OR-005).
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md#7.2
 	 *
 	 * @return void
 	 */
@@ -353,7 +357,7 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 		);
 
 		$this->assertInstanceOf(JSONResponse::class, $result);
-		$this->assertSame(500, $result->getStatus());
+		$this->assertSame(404, $result->getStatus());
 
 	}//end testCreatePublicationFileFetchFails()
 
@@ -419,7 +423,7 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/download-service/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md#2.1
 	 */
 	public function testPublicationAttachmentsMethodDoesNotExist(): void {
 		$this->assertFalse(
@@ -430,7 +434,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testPublicationAttachmentsMethodDoesNotExist()
 
 	/**
-	 * Returns 500 error response when entity lookup throws exception.
+	 * Returns a 500 carrying the message when the lookup itself fails (more than one match).
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-download-service/tasks.md#7.2
 	 *
 	 * @return void
 	 */
@@ -440,11 +446,11 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 			->with(...LegacyObjectArgs::with(method: 'find', expected: [
 				'id' => 'null-id',
 			]))
-			->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
+			->willThrowException(new \OCP\AppFramework\Db\MultipleObjectsReturnedException('Two found'));
 
 		$result = $this->invokePrivateMethod('getPublicationData', ['null-id', $objectService]);
 		$this->assertInstanceOf(\OCP\AppFramework\Http\JSONResponse::class, $result);
-		$this->assertSame(500, $result->getStatus());
+		$this->assertSame([500, ['error' => 'Two found']], [$result->getStatus(), $result->getData()]);
 
 	}//end testGetPublicationDataReturnsErrorOnException()
 
