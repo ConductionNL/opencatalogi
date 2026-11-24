@@ -17,6 +17,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Unit tests for SettingsController.
@@ -202,7 +203,7 @@ class SettingsControllerTest extends TestCase {
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(500, $response->getStatus());
-		$this->assertSame(['error' => 'Update failed'], $response->getData());
+		$this->assertSame(['error' => 'The server could not complete this request. The details are in the Nextcloud log.'], $response->getData());
 	}
 
 	/**
@@ -560,4 +561,63 @@ class SettingsControllerTest extends TestCase {
 		$this->assertEquals(500, $response->getStatus());
 
 	}//end testUpdateSyncOptionsReturns500OnServiceFailure()
+
+	/**
+	 * Every endpoint that fails on the server, with the service method it calls.
+	 *
+	 * @return array<string, array{0: string, 1: string}>
+	 */
+	public static function failingEndpoints(): array {
+		return [
+			'index' => ['index', 'getSettings'],
+			'update' => ['update', 'updateSettings'],
+			'load' => ['load', 'loadSettings'],
+			'publishing options' => ['getPublishingOptions', 'getPublishingOptions'],
+			'save publishing options' => ['updatePublishingOptions', 'updatePublishingOptions'],
+			'sync options' => ['getSyncOptions', 'getSyncOptions'],
+			'save sync options' => ['updateSyncOptions', 'updateSyncOptions'],
+			'version' => ['getVersionInfo', 'getVersionInfo'],
+			'import' => ['manualImport', 'manualImport'],
+		];
+	}//end failingEndpoints()
+
+	/**
+	 * A server failure is logged with its exception and answered with a generic message,
+	 * never the exception's own text (admin-settings, Security).
+	 *
+	 * @param string $endpoint      The controller method.
+	 * @param string $serviceMethod The settings service method that throws.
+	 *
+	 * @dataProvider failingEndpoints
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-settings/specs/admin-settings.md#security
+	 */
+	public function testAServerFailureIsLoggedAndAnsweredGenerically(string $endpoint, string $serviceMethod): void {
+		$exception = new \Exception('SQLSTATE[42S02]: oc_openregister_objects missing');
+		$this->request->method('getParams')->willReturn([]);
+		$this->settingsService->method($serviceMethod)->willThrowException($exception);
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('error')
+			->with($this->stringContains('OpenCatalogi settings: '), ['exception' => $exception]);
+		$controller = new SettingsController(
+			appName: 'opencatalogi',
+			request: $this->request,
+			settingsService: $this->settingsService,
+			l10n: $this->l10n,
+			userSession: $this->userSession,
+			logger: $logger,
+		);
+
+		$response = $controller->$endpoint();
+
+		$this->assertSame(500, $response->getStatus());
+		$this->assertSame(
+			'The server could not complete this request. The details are in the Nextcloud log.',
+			$response->getData()['error']
+		);
+		$this->assertStringNotContainsString('SQLSTATE', json_encode($response->getData()));
+	}//end testAServerFailureIsLoggedAndAnsweredGenerically()
 }

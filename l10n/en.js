@@ -2199,7 +2199,8 @@ OC.L10N.register(
         "The default licence could not be read.": "The default licence could not be read.",
         "Default licence saved.": "Default licence saved.",
         "The default licence could not be saved.": "The default licence could not be saved.",
-        "The licence of this catalogue's datasets in its DCAT feed, chosen from the EU licences authority list and stored as its authority IRI. Leave it empty to use the instance's default licence.": "The licence of this catalogue's datasets in its DCAT feed, chosen from the EU licences authority list and stored as its authority IRI. Leave it empty to use the instance's default licence."
+        "The licence of this catalogue's datasets in its DCAT feed, chosen from the EU licences authority list and stored as its authority IRI. Leave it empty to use the instance's default licence.": "The licence of this catalogue's datasets in its DCAT feed, chosen from the EU licences authority list and stored as its authority IRI. Leave it empty to use the instance's default licence.",
+        "The server could not complete this request. The details are in the Nextcloud log.": "The server could not complete this request. The details are in the Nextcloud log."
     },
     "nplurals=2; plural=(n != 1);"
 )
