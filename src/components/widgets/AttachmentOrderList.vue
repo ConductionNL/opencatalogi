@@ -84,7 +84,7 @@ import { documentOptions } from '../../services/publicationVisibility.js'
  * region. Save order writes `attachmentOrder` on the publication, which the
  * public attachment list then follows (REQ-PDP-001).
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
  */
 export default {
 	name: 'AttachmentOrderList',
@@ -109,7 +109,7 @@ export default {
 	},
 
 	computed: {
-		/** @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2 */
+		/** @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.2 */
 		changed() {
 			return storedOrder(this.documents).join('\n') !== this.saved.join('\n')
 		},
@@ -126,7 +126,7 @@ export default {
 		 * Read the publication's files and put them in the stored order.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2
+		 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.2
 		 */
 		async load() {
 			try {
@@ -150,7 +150,7 @@ export default {
 		 * @param {number} index The document's position, from 0.
 		 * @param {number} delta -1 for up, 1 for down.
 		 * @return {void}
-		 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2
+		 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.2
 		 */
 		move(index, delta) {
 			const doc = this.documents[index]
@@ -181,7 +181,7 @@ export default {
 		 * Store the order on the publication.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2
+		 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.2
 		 */
 		async save() {
 			this.saving = true

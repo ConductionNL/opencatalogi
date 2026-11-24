@@ -20,7 +20,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
  */
 
 declare(strict_types=1);
@@ -33,7 +33,7 @@ use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 /**
  * Refuses unless every proof holds. A proof that cannot be read refuses too.
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
  */
 class DraftPurgeProof {
 	use ReadsObjectProperties;
@@ -57,7 +57,7 @@ class DraftPurgeProof {
 	 *
 	 * @param DraftPurgeRecords $records The depublications and the audit trail.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function __construct(private readonly DraftPurgeRecords $records) {
 
@@ -73,7 +73,7 @@ class DraftPurgeProof {
 	 *
 	 * @throws DraftPurgeRefusedException When one of them does not hold or cannot be read.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function neverReleased(array $record, string $uuid): void {
 		$state = (string)($record['status'] ?? '');

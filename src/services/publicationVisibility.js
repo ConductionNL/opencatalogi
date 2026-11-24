@@ -190,7 +190,7 @@ export function listActions(state, unlisted, canUpdate) {
  * @param {string} state The publication's state from the server.
  * @param {boolean} canUpdate Whether the caller may update it.
  * @return {boolean} Whether Delete permanently shows.
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
  */
 export function canDeletePermanently(state, canUpdate) {
 	return canUpdate === true && (state === 'draft' || state === 'in_review')
@@ -202,7 +202,7 @@ export function canDeletePermanently(state, canUpdate) {
  *
  * @param {object} error The axios error.
  * @return {string} The message, or an empty string when the server gave none.
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
  */
 export function draftPurgeMessage(error) {
 	const data = error && error.response ? error.response.data : null

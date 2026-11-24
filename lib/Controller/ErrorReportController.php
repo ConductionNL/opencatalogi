@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use OCP\IRequest;
 /**
  * Serves `POST /api/publications/{id}/error-reports` and its preflight.
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
  */
 class ErrorReportController extends Controller {
 	use AnswersCrossOriginRequests;
@@ -75,7 +75,7 @@ class ErrorReportController extends Controller {
 	 *   publication inside OpenRegister's anonymous scope and only for a catalogue that opted in and names
 	 *   a moderator; it writes one new report and reads or changes no existing object of the caller's choosing.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#5.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#5.1
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -107,7 +107,7 @@ class ErrorReportController extends Controller {
 	 *
 	 * @return Response The preflight answer.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#5.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#5.1
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]

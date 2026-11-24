@@ -15,8 +15,8 @@
  * NOT RUN BY THE BUILDER. Written from the change's scenario; it needs a live
  * instance and the Delete permanently action of task 1.2.
  *
- * @e2e openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#scenario-a-draft-and-everything-on-it-goes
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md
+ * @e2e openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#scenario-a-draft-and-everything-on-it-goes
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md
  */
 import { expect, test } from './authenticated-request.ts'
 import {

@@ -35,7 +35,7 @@ interface LocalPublicationStateInterface {
 	 *
 	 * @return array<string, mixed> The publication with what applies added.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
 	 */
 	public function addTo(array $publication): array;
 }//end interface

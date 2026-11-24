@@ -39,7 +39,7 @@ interface PublicDocumentsInterface {
 	 *
 	 * @return JSONResponse The list, unchanged when it is not a local answer.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
 	 */
 	public function describe(JSONResponse $response, ?string $catalogSlug, string $publicationId): JSONResponse;
 
@@ -53,7 +53,7 @@ interface PublicDocumentsInterface {
 	 * @return array{publication: array<string, mixed>, document: array<string, mixed>, slug: string}|null The document, or null
 	 *         when it is not a public attachment of a live publication.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
 	 */
 	public function find(string $catalogSlug, string $publicationId, string $documentId): ?array;
 
@@ -64,7 +64,7 @@ interface PublicDocumentsInterface {
 	 *
 	 * @return array<string, mixed> The public keys of the document and `publication: {id, title, url}`.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
 	 */
 	public function metadata(array $found): array;
 
@@ -75,7 +75,7 @@ interface PublicDocumentsInterface {
 	 *
 	 * @return array<string, mixed> The XML data, rooted at `diwoo:Document`.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
 	 */
 	public function diwoo(array $found): array;
 }//end interface

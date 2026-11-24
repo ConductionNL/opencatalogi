@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
  */
 
 declare(strict_types=1);
@@ -49,7 +49,7 @@ use Throwable;
  * holds the moderator groups so the notification rule can reach them, and
  * never an IP address.
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
  *
  * @SuppressWarnings(PHPMD.StaticAccess) DocumentFacts::isLive() is a pure function.
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Reads catalogues and publications and writes one OpenRegister object.
@@ -89,7 +89,7 @@ class ErrorReportIntake implements ErrorReportIntakeInterface {
 	 *
 	 * @return array{status: int, error?: string, reference?: string} The outcome.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#5.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#5.1
 	 */
 	public function submit(string $publicationId, mixed $message, mixed $contact): array {
 		try {

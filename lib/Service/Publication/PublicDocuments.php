@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
  */
 
 declare(strict_types=1);
@@ -45,7 +45,7 @@ use Throwable;
  * shared files only. A document of a draft or depublished publication, a
  * withdrawn file and a file of another publication are not found.
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
  *
  * @SuppressWarnings(PHPMD.StaticAccess) DocumentFacts and AttachmentOrder are pure functions.
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Reads catalogues, OpenRegister objects and files, and renders DiWoo.
@@ -82,7 +82,7 @@ class PublicDocuments implements PublicDocumentsInterface {
 	 *
 	 * @return JSONResponse The list, unchanged when it is not a local answer.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	public function describe(JSONResponse $response, ?string $catalogSlug, string $publicationId): JSONResponse {
 		$page = $response->getData();
@@ -116,7 +116,7 @@ class PublicDocuments implements PublicDocumentsInterface {
 	 *
 	 * @return array{publication: array<string, mixed>, document: array<string, mixed>, slug: string}|null The document, or null.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	public function find(string $catalogSlug, string $publicationId, string $documentId): ?array {
 		try {
@@ -150,7 +150,7 @@ class PublicDocuments implements PublicDocumentsInterface {
 	 *
 	 * @return array<string, mixed> The public keys of the document and `publication: {id, title, url}`.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	public function metadata(array $found): array {
 		$publication = $found['publication'];
@@ -176,7 +176,7 @@ class PublicDocuments implements PublicDocumentsInterface {
 	 *
 	 * @return array<string, mixed> The XML data, rooted at `diwoo:Document`.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	public function diwoo(array $found): array {
 		$entry = $this->mapper->map(publication: $found['publication'], file: $found['document']);

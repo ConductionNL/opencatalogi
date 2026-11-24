@@ -428,7 +428,7 @@ class FederationController extends Controller {
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationAttachments(string $id): JSONResponse {

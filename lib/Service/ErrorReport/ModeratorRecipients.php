@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
  */
 
 declare(strict_types=1);
@@ -36,7 +36,7 @@ use OCP\IGroupManager;
  * and this resolver answers their members. A group that no longer exists
  * addresses nobody.
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
  */
 class ModeratorRecipients implements RecipientResolverInterface {
 
@@ -61,7 +61,7 @@ class ModeratorRecipients implements RecipientResolverInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The interface hands every resolver the context.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#5.1
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#5.1
 	 */
 	public function resolve(ObjectEntity $object, array $context): array {
 		$data = $object->getObject();

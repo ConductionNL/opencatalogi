@@ -55,7 +55,7 @@ import { NcButton, NcDialog, NcLoadingIcon } from '@nextcloud/vue'
  *
  * The dialog only asks; the widget that opened it calls the server.
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
  */
 export default {
 	name: 'DeleteDraftPermanentlyDialog',

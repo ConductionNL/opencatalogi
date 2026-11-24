@@ -103,7 +103,7 @@ class WithheldFromPublicationStore {
 	 *
 	 * @throws RuntimeException When OpenRegister is not there, an assessment cannot be read, or the batch register is too large to scan.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-show-that-documents-were-withheld-and-why-req-pdp-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-show-that-documents-were-withheld-and-why-req-pdp-004
 	 */
 	public function batchAssessments(string $publicationId): array {
 		$register = $this->optional(key: WooService::CONFIG_BATCH_REGISTER);

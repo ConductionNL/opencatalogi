@@ -21,7 +21,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use Throwable;
 /**
  * Every read answers null when it cannot be completed, so the caller can refuse.
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
  */
 class DraftPurgeRecords {
 	use ReadsObjectProperties;
@@ -66,7 +66,7 @@ class DraftPurgeRecords {
 	 * @param IAppConfig $config Where the registers and schemas are configured.
 	 * @param OpenRegisterServicesInterface $openRegister OpenRegister's object, file and audit services.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
@@ -84,7 +84,7 @@ class DraftPurgeRecords {
 	 *
 	 * @throws Throwable When the register cannot be reached.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function publication(string $id): ?object {
 		$configuration = $this->openRegister->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
@@ -113,7 +113,7 @@ class DraftPurgeRecords {
 	 *
 	 * @return array{register: string, schema: string}|null
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function target(array $keys): ?array {
 		$register = trim($this->config->getValueString('opencatalogi', $keys[0], ''));
@@ -136,7 +136,7 @@ class DraftPurgeRecords {
 	 * @return array<int, array{id: string, name: string, target: array{register: string, schema: string}}>|null
 	 *         The records, an empty list when the schema is not configured, null when they could not all be read.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function naming(array $keys, string $property, string $value): ?array {
 		$target = $this->target(keys: $keys);
@@ -176,7 +176,7 @@ class DraftPurgeRecords {
 	 *
 	 * @return array<int, array{kind: string, id: string, name: string}>|null The files, null when they cannot be listed.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function files(object $publication): ?array {
 		try {
@@ -201,7 +201,7 @@ class DraftPurgeRecords {
 	 *
 	 * @return array<int, mixed>|null The entries, null when the trail cannot be read.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function trail(string $uuid): ?array {
 		try {
@@ -220,7 +220,7 @@ class DraftPurgeRecords {
 	 *
 	 * @return bool Whether it is gone.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function remove(object $publication, array $item): bool {
 		try {
@@ -256,7 +256,7 @@ class DraftPurgeRecords {
 	 *
 	 * @throws Throwable When the entry cannot be written.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function log(object $publication, string $action, array $context): void {
 		$this->service(id: self::AUDIT_MAPPER)->createAuditTrail(old: $publication, new: null, action: $action, cascadeContext: $context);

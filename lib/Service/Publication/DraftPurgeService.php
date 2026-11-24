@@ -21,7 +21,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use Throwable;
  * or a read failure leaves everything in place. The publication is removed
  * last, so a failure part way keeps it.
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
  */
 class DraftPurgeService implements DraftPurgeServiceInterface {
 	use ReadsObjectProperties;
@@ -76,7 +76,7 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 	 * @param DraftPurgeRecords $records The OpenRegister reads and writes.
 	 * @param DraftPurgeProof $proof The proof that the publication was never released.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function __construct(
 		private readonly DraftPurgeRecords $records,
@@ -94,7 +94,7 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 	 *
 	 * @throws Throwable When the register cannot be reached.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function find(string $id): ?object {
 		return $this->records->publication(id: $id);
@@ -110,7 +110,7 @@ class DraftPurgeService implements DraftPurgeServiceInterface {
 	 * @throws DraftPurgeRefusedException When a proof does not hold; nothing was removed.
 	 * @throws DraftPurgeFailedException When a removal failed part way.
 	 *
-	 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
+	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function purge(object $publication): array {
 		$record = $this->asRecord(object: $publication);

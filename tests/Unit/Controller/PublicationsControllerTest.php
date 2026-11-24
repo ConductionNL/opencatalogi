@@ -2414,7 +2414,7 @@ class PublicationsControllerTest extends TestCase {
 	/**
 	 * REQ-PDP-002: the catalogue attachment list is described through the catalogue it was read through.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-document-has-a-stable-id-and-its-own-metadata-req-pdp-002
 	 */
 	public function testTheCatalogueAttachmentListIsDescribed(): void {
 		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);

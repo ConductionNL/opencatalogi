@@ -5,7 +5,7 @@
  * The officer's order of a publication's documents (REQ-PDP-001): the stored
  * `attachmentOrder` first, then the rest as the files endpoint lists them.
  *
- * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
  */
 
 /**
@@ -15,7 +15,7 @@
  * @param {Array<{id: (string|number), label: string}>} documents The documents.
  * @param {Array<(string|number)>} order The stored `attachmentOrder`.
  * @return {Array<{id: string, label: string}>} The documents, ids as strings.
- * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.2
  */
 export function orderedDocuments(documents, order) {
 	const byId = new Map(
@@ -44,7 +44,7 @@ export function orderedDocuments(documents, order) {
  * @param {number} index The position of the document, from 0.
  * @param {number} delta -1 for up, 1 for down.
  * @return {Array<object>} A new list.
- * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.2
  */
 export function moveDocument(documents, index, delta) {
 	const target = index + delta
@@ -68,7 +68,7 @@ export function moveDocument(documents, index, delta) {
  *
  * @param {Array<{id: string}>} documents The documents in order.
  * @return {Array<string>} Their ids.
- * @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2
+ * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.2
  */
 export function storedOrder(documents) {
 	return documents.map((doc) => String(doc.id))

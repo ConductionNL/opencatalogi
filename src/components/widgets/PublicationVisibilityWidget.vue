@@ -333,7 +333,7 @@ export default {
 			return note + ' ' + this.t('opencatalogi', 'Reason: {reason}', { reason: marker.reason })
 		},
 
-		/** @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2 */
+		/** @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2 */
 		deletable() {
 			return canDeletePermanently(this.state, this.canUpdate)
 		},
@@ -342,7 +342,7 @@ export default {
 		 * The publication's title, as the delete question names it.
 		 *
 		 * @return {string} The title, or an empty string when the page has none.
-		 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+		 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
 		 */
 		publicationTitle() {
 			const object = this.ctx.object || this.content || {}
@@ -605,7 +605,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2 */
+		/** @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2 */
 		openPurge() {
 			this.message = ''
 			this.purgeOpen = true
@@ -617,7 +617,7 @@ export default {
 		 * or a stop part way is said in the server's words.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+		 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
 		 */
 		async purge() {
 			this.busy = true
@@ -640,7 +640,7 @@ export default {
 		/**
 		 * Go to the catalog's publications list when the page knows its catalog.
 		 *
-		 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+		 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
 		 */
 		leaveDeletedPage() {
 			const catalogSlug = this.$route && this.$route.params ? this.$route.params.catalogSlug : ''

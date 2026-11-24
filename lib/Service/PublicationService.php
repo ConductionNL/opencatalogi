@@ -1225,7 +1225,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/publications/spec.md
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
 	 */
 	public function attachments(string $id): JSONResponse {
 		// Catalog-scope gate (C-1 / wave-7): verify the requested object belongs to one

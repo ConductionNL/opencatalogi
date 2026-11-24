@@ -5,7 +5,7 @@
  * When the page offers Delete permanently, and how a refused or stopped
  * permanent delete is put into words (REQ-PLC-004).
  *
- * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
  */
 
 import { canDeletePermanently, draftPurgeMessage } from './publicationVisibility.js'

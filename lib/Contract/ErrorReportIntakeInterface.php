@@ -38,7 +38,7 @@ interface ErrorReportIntakeInterface {
 	 * @return array{status: int, error?: string, reference?: string} 201 with the reference, 400 or 404 with an
 	 *                                                                  error code, 503 when the schema is not configured.
 	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
 	 */
 	public function submit(string $publicationId, mixed $message, mixed $contact): array;
 }//end interface

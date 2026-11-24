@@ -124,7 +124,7 @@ export default {
 			)
 		},
 
-		/** @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2 */
+		/** @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.2 */
 		orderRoute() {
 			return filesRouteParams({
 				register: this.resolvedRegister,
@@ -134,7 +134,7 @@ export default {
 			})
 		},
 
-		/** @spec openspec/changes/publication-detail-for-the-portal/tasks.md#1.2 */
+		/** @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#1.2 */
 		storedOrder() {
 			const order = this.publication?.attachmentOrder
 			return Array.isArray(order) ? order : []
