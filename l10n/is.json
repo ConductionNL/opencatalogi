@@ -844,6 +844,13 @@
         "until {date}": "til {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Vistað: þessi birting verður sjálfkrafa afturkölluð {date}.",
         "Documents to publish: {count}": "Skjöl til birtingar: {count}",
+        "Published files": "Birtar skrár",
+        "Title written into the file": "Titill skrifaður í skrána",
+        "Title not written": "Titill ekki skrifaður",
+        "Title not written: the file is signed": "Titill ekki skrifaður: skráin er undirrituð",
+        "Title not written: the file is encrypted": "Titill ekki skrifaður: skráin er dulkóðuð",
+        "Title not written: the file could not be read": "Titill ekki skrifaður: ekki tókst að lesa skrána",
+        "Title not written: this file type has no title": "Titill ekki skrifaður: þessi skráartegund hefur engan titil",
         "Publish {count} of {total} publications": "Birta {count} af {total} útgáfum",
         "These publications miss a field required to publish and will be skipped:": "Þessar útgáfur vantar reit sem þarf til að birta og þeim verður sleppt:",
         "Required to publish": "Nauðsynlegt til að birta"

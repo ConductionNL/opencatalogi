@@ -845,6 +845,13 @@ OC.L10N.register(
         "until {date}": "до {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Сачувано: ова објава ће бити аутоматски повучена {date}.",
         "Documents to publish: {count}": "Документи за објаву: {count}",
+        "Published files": "Објављене датотеке",
+        "Title written into the file": "Наслов уписан у датотеку",
+        "Title not written": "Наслов није уписан",
+        "Title not written: the file is signed": "Наслов није уписан: датотека је потписана",
+        "Title not written: the file is encrypted": "Наслов није уписан: датотека је шифрована",
+        "Title not written: the file could not be read": "Наслов није уписан: датотеку није могуће прочитати",
+        "Title not written: this file type has no title": "Наслов није уписан: ова врста датотеке нема наслов",
         "Publish {count} of {total} publications": "Објави {count} од {total} публикација",
         "These publications miss a field required to publish and will be skipped:": "Овим публикацијама недостаје поље обавезно за објављивање и биће прескочене:",
         "Required to publish": "Обавезно за објављивање"

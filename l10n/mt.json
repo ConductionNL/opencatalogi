@@ -844,6 +844,13 @@
         "until {date}": "sal-{date}",
         "Saved: this publication will be taken down automatically on {date}.": "Salvat: din il-pubblikazzjoni se titneħħa awtomatikament fil-{date}.",
         "Documents to publish: {count}": "Dokumenti għall-pubblikazzjoni: {count}",
+        "Published files": "Fajls ippubblikati",
+        "Title written into the file": "It-titlu nkiteb fil-fajl",
+        "Title not written": "It-titlu ma nkitibx",
+        "Title not written: the file is signed": "It-titlu ma nkitibx: il-fajl huwa ffirmat",
+        "Title not written: the file is encrypted": "It-titlu ma nkitibx: il-fajl huwa kriptat",
+        "Title not written: the file could not be read": "It-titlu ma nkitibx: il-fajl ma setax jinqara",
+        "Title not written: this file type has no title": "It-titlu ma nkitibx: dan it-tip ta' fajl m'għandux titlu",
         "Publish {count} of {total} publications": "Ippubblika {count} minn {total} pubblikazzjonijiet",
         "These publications miss a field required to publish and will be skipped:": "Dawn il-pubblikazzjonijiet m'għandhomx qasam meħtieġ biex jiġu ppubblikati u se jinqabżu:",
         "Required to publish": "Meħtieġ biex jiġi ppubblikat"

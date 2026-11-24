@@ -844,6 +844,13 @@
         "until {date}": "til {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Lagret: denne publikasjonen avpubliseres automatisk {date}.",
         "Documents to publish: {count}": "Dokumenter som publiseres: {count}",
+        "Published files": "Publiserte filer",
+        "Title written into the file": "Tittel skrevet inn i filen",
+        "Title not written": "Tittel ikke skrevet",
+        "Title not written: the file is signed": "Tittel ikke skrevet: filen er signert",
+        "Title not written: the file is encrypted": "Tittel ikke skrevet: filen er kryptert",
+        "Title not written: the file could not be read": "Tittel ikke skrevet: filen kunne ikke leses",
+        "Title not written: this file type has no title": "Tittel ikke skrevet: denne filtypen har ingen tittel",
         "Publish {count} of {total} publications": "Publiser {count} av {total} publikasjoner",
         "These publications miss a field required to publish and will be skipped:": "Disse publikasjonene mangler et felt som kreves for å publisere, og hoppes over:",
         "Required to publish": "Påkrevd for å publisere"

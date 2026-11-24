@@ -844,6 +844,13 @@
         "until {date}": "fin ils {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Memorisà: questa publicaziun vegn retratga automaticamain ils {date}.",
         "Documents to publish: {count}": "Documents da publitgar: {count}",
+        "Published files": "Datotecas publitgadas",
+        "Title written into the file": "Titel scrit en la datoteca",
+        "Title not written": "Titel betg scrit",
+        "Title not written: the file is signed": "Titel betg scrit: la datoteca è suttascritta",
+        "Title not written: the file is encrypted": "Titel betg scrit: la datoteca è criptada",
+        "Title not written: the file could not be read": "Titel betg scrit: la datoteca na pudeva betg vegnir legida",
+        "Title not written: this file type has no title": "Titel betg scrit: quest tip da datoteca n'ha nagin titel",
         "Publish {count} of {total} publications": "Publitgar {count} da {total} publicaziuns",
         "These publications miss a field required to publish and will be skipped:": "A questas publicaziuns manca in champ necessari per publitgar ed ellas vegnan sursiglidas:",
         "Required to publish": "Necessari per publitgar"

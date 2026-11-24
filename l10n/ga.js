@@ -845,6 +845,13 @@ OC.L10N.register(
         "until {date}": "go dtí {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Sábháilte: dífhoilseofar an foilseachán seo go huathoibríoch ar {date}.",
         "Documents to publish: {count}": "Doiciméid le foilsiú: {count}",
+        "Published files": "Comhaid foilsithe",
+        "Title written into the file": "Teideal scríofa sa chomhad",
+        "Title not written": "Teideal gan scríobh",
+        "Title not written: the file is signed": "Teideal gan scríobh: tá an comhad sínithe",
+        "Title not written: the file is encrypted": "Teideal gan scríobh: tá an comhad criptithe",
+        "Title not written: the file could not be read": "Teideal gan scríobh: níorbh fhéidir an comhad a léamh",
+        "Title not written: this file type has no title": "Teideal gan scríobh: níl teideal ag an gcineál comhaid seo",
         "Publish {count} of {total} publications": "Foilsigh {count} as {total} foilseachán",
         "These publications miss a field required to publish and will be skipped:": "Tá réimse atá riachtanach le foilsiú in easnamh ar na foilseacháin seo agus scipeálfar iad:",
         "Required to publish": "Riachtanach le foilsiú"

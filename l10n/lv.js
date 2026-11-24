@@ -845,6 +845,13 @@ OC.L10N.register(
         "until {date}": "līdz {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Saglabāts: šī publikācija tiks automātiski atsaukta {date}.",
         "Documents to publish: {count}": "Publicējamie dokumenti: {count}",
+        "Published files": "Publicētie faili",
+        "Title written into the file": "Nosaukums ierakstīts failā",
+        "Title not written": "Nosaukums nav ierakstīts",
+        "Title not written: the file is signed": "Nosaukums nav ierakstīts: fails ir parakstīts",
+        "Title not written: the file is encrypted": "Nosaukums nav ierakstīts: fails ir šifrēts",
+        "Title not written: the file could not be read": "Nosaukums nav ierakstīts: failu nevarēja nolasīt",
+        "Title not written: this file type has no title": "Nosaukums nav ierakstīts: šim faila tipam nav nosaukuma",
         "Publish {count} of {total} publications": "Publicēt {count} no {total} publikācijām",
         "These publications miss a field required to publish and will be skipped:": "Šīm publikācijām trūkst publicēšanai obligāta lauka, un tās tiks izlaistas:",
         "Required to publish": "Obligāts publicēšanai"

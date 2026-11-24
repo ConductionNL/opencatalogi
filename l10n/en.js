@@ -2208,6 +2208,13 @@ OC.L10N.register(
         "until {date}": "until {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Saved: this publication will be taken down automatically on {date}.",
         "Documents to publish: {count}": "Documents to publish: {count}",
+        "Published files": "Published files",
+        "Title written into the file": "Title written into the file",
+        "Title not written": "Title not written",
+        "Title not written: the file is signed": "Title not written: the file is signed",
+        "Title not written: the file is encrypted": "Title not written: the file is encrypted",
+        "Title not written: the file could not be read": "Title not written: the file could not be read",
+        "Title not written: this file type has no title": "Title not written: this file type has no title",
         "Publish {count} of {total} publications": "Publish {count} of {total} publications",
         "These publications miss a field required to publish and will be skipped:": "These publications miss a field required to publish and will be skipped:",
         "Required to publish": "Required to publish"

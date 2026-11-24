@@ -845,6 +845,13 @@ OC.L10N.register(
         "until {date}": "till {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Sparat: den här publiceringen avpubliceras automatiskt {date}.",
         "Documents to publish: {count}": "Dokument som publiceras: {count}",
+        "Published files": "Publicerade filer",
+        "Title written into the file": "Titel skriven i filen",
+        "Title not written": "Titel inte skriven",
+        "Title not written: the file is signed": "Titel inte skriven: filen är signerad",
+        "Title not written: the file is encrypted": "Titel inte skriven: filen är krypterad",
+        "Title not written: the file could not be read": "Titel inte skriven: filen kunde inte läsas",
+        "Title not written: this file type has no title": "Titel inte skriven: den här filtypen har ingen titel",
         "Publish {count} of {total} publications": "Publicera {count} av {total} publikationer",
         "These publications miss a field required to publish and will be skipped:": "Dessa publikationer saknar ett fält som krävs för att publicera och hoppas över:",
         "Required to publish": "Krävs för att publicera"

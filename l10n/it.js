@@ -845,6 +845,13 @@ OC.L10N.register(
         "until {date}": "fino al {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Salvato: questa pubblicazione verrà rimossa automaticamente il {date}.",
         "Documents to publish: {count}": "Documenti da pubblicare: {count}",
+        "Published files": "File pubblicati",
+        "Title written into the file": "Titolo scritto nel file",
+        "Title not written": "Titolo non scritto",
+        "Title not written: the file is signed": "Titolo non scritto: il file è firmato",
+        "Title not written: the file is encrypted": "Titolo non scritto: il file è cifrato",
+        "Title not written: the file could not be read": "Titolo non scritto: impossibile leggere il file",
+        "Title not written: this file type has no title": "Titolo non scritto: questo tipo di file non ha un titolo",
         "Publish {count} of {total} publications": "Pubblica {count} di {total} pubblicazioni",
         "These publications miss a field required to publish and will be skipped:": "A queste pubblicazioni manca un campo obbligatorio per la pubblicazione e verranno saltate:",
         "Required to publish": "Obbligatorio per pubblicare"

@@ -845,6 +845,13 @@ OC.L10N.register(
         "until {date}": "έως {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Αποθηκεύτηκε: αυτή η δημοσίευση θα αποσυρθεί αυτόματα στις {date}.",
         "Documents to publish: {count}": "Έγγραφα προς δημοσίευση: {count}",
+        "Published files": "Δημοσιευμένα αρχεία",
+        "Title written into the file": "Ο τίτλος γράφτηκε στο αρχείο",
+        "Title not written": "Ο τίτλος δεν γράφτηκε",
+        "Title not written: the file is signed": "Ο τίτλος δεν γράφτηκε: το αρχείο είναι υπογεγραμμένο",
+        "Title not written: the file is encrypted": "Ο τίτλος δεν γράφτηκε: το αρχείο είναι κρυπτογραφημένο",
+        "Title not written: the file could not be read": "Ο τίτλος δεν γράφτηκε: το αρχείο δεν ήταν δυνατό να διαβαστεί",
+        "Title not written: this file type has no title": "Ο τίτλος δεν γράφτηκε: αυτός ο τύπος αρχείου δεν έχει τίτλο",
         "Publish {count} of {total} publications": "Δημοσίευση {count} από {total} δημοσιεύσεις",
         "These publications miss a field required to publish and will be skipped:": "Σε αυτές τις δημοσιεύσεις λείπει πεδίο που απαιτείται για δημοσίευση και θα παραλειφθούν:",
         "Required to publish": "Απαιτείται για δημοσίευση"

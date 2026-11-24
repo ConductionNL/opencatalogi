@@ -845,6 +845,13 @@ OC.L10N.register(
         "until {date}": "indtil {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Gemt: denne publikation afpubliceres automatisk den {date}.",
         "Documents to publish: {count}": "Dokumenter der publiceres: {count}",
+        "Published files": "Publicerede filer",
+        "Title written into the file": "Titel skrevet ind i filen",
+        "Title not written": "Titel ikke skrevet",
+        "Title not written: the file is signed": "Titel ikke skrevet: filen er signeret",
+        "Title not written: the file is encrypted": "Titel ikke skrevet: filen er krypteret",
+        "Title not written: the file could not be read": "Titel ikke skrevet: filen kunne ikke læses",
+        "Title not written: this file type has no title": "Titel ikke skrevet: denne filtype har ingen titel",
         "Publish {count} of {total} publications": "Udgiv {count} af {total} publikationer",
         "These publications miss a field required to publish and will be skipped:": "Disse publikationer mangler et felt, der kræves for at udgive, og springes over:",
         "Required to publish": "Påkrævet for at udgive"

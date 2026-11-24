@@ -845,6 +845,13 @@ OC.L10N.register(
         "until {date}": "bis {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Gespäichert: dës Publikatioun gëtt den {date} automatesch depubliéiert.",
         "Documents to publish: {count}": "Dokumenter fir ze publizéieren: {count}",
+        "Published files": "Publizéiert Fichieren",
+        "Title written into the file": "Titel an de Fichier geschriwwen",
+        "Title not written": "Titel net geschriwwen",
+        "Title not written: the file is signed": "Titel net geschriwwen: de Fichier ass ënnerschriwwen",
+        "Title not written: the file is encrypted": "Titel net geschriwwen: de Fichier ass verschlësselt",
+        "Title not written: the file could not be read": "Titel net geschriwwen: de Fichier konnt net gelies ginn",
+        "Title not written: this file type has no title": "Titel net geschriwwen: dësen Fichierstyp huet keen Titel",
         "Publish {count} of {total} publications": "{count} vun {total} Publikatiounen publizéieren",
         "These publications miss a field required to publish and will be skipped:": "Dëse Publikatiounen feelt e Feld, dat fir d'Publikatioun néideg ass; si ginn iwwersprongen:",
         "Required to publish": "Néideg fir ze publizéieren"

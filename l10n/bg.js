@@ -845,6 +845,13 @@ OC.L10N.register(
         "until {date}": "до {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Запазено: тази публикация ще бъде автоматично свалена на {date}.",
         "Documents to publish: {count}": "Документи за публикуване: {count}",
+        "Published files": "Публикувани файлове",
+        "Title written into the file": "Заглавието е записано във файла",
+        "Title not written": "Заглавието не е записано",
+        "Title not written: the file is signed": "Заглавието не е записано: файлът е подписан",
+        "Title not written: the file is encrypted": "Заглавието не е записано: файлът е шифрован",
+        "Title not written: the file could not be read": "Заглавието не е записано: файлът не можа да бъде прочетен",
+        "Title not written: this file type has no title": "Заглавието не е записано: този тип файл няма заглавие",
         "Publish {count} of {total} publications": "Публикуване на {count} от {total} публикации",
         "These publications miss a field required to publish and will be skipped:": "На тези публикации липсва поле, задължително за публикуване, и те ще бъдат пропуснати:",
         "Required to publish": "Задължително за публикуване"
