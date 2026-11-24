@@ -2162,7 +2162,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Blijvend bewaard: archiefhotspot {subject}",
         "until {date}": "tot {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Opgeslagen: deze publicatie wordt op {date} automatisch gedepubliceerd.",
-        "Documents to publish: {count}": "Te publiceren documenten: {count}"
+        "Documents to publish: {count}": "Te publiceren documenten: {count}",
+        "Published files": "Gepubliceerde bestanden",
+        "Title written into the file": "Titel in het bestand geschreven",
+        "Title not written": "Titel niet geschreven",
+        "Title not written: the file is signed": "Titel niet geschreven: het bestand is ondertekend",
+        "Title not written: the file is encrypted": "Titel niet geschreven: het bestand is versleuteld",
+        "Title not written: the file could not be read": "Titel niet geschreven: het bestand kon niet worden gelezen",
+        "Title not written: this file type has no title": "Titel niet geschreven: dit bestandstype heeft geen titel"
     },
     "nplurals=2; plural=(n != 1);"
 )

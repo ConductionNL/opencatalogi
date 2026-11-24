@@ -843,7 +843,14 @@
         "Kept permanently: archive hotspot {subject}": "Conservat permanentment: punt calent d'arxiu {subject}",
         "until {date}": "fins al {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Desat: aquesta publicació es despublicarà automàticament el {date}.",
-        "Documents to publish: {count}": "Documents per publicar: {count}"
+        "Documents to publish: {count}": "Documents per publicar: {count}",
+        "Published files": "Fitxers publicats",
+        "Title written into the file": "Títol escrit al fitxer",
+        "Title not written": "Títol no escrit",
+        "Title not written: the file is signed": "Títol no escrit: el fitxer està signat",
+        "Title not written: the file is encrypted": "Títol no escrit: el fitxer està xifrat",
+        "Title not written: the file could not be read": "Títol no escrit: no s'ha pogut llegir el fitxer",
+        "Title not written: this file type has no title": "Títol no escrit: aquest tipus de fitxer no té títol"
     },
     "plurals": {}
 }

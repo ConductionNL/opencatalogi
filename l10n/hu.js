@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Véglegesen megőrzendő: levéltári kiemelt téma {subject}",
         "until {date}": "{date}-ig",
         "Saved: this publication will be taken down automatically on {date}.": "Mentve: ez a közzététel {date} napján automatikusan visszavonásra kerül.",
-        "Documents to publish: {count}": "Közzéteendő dokumentumok: {count}"
+        "Documents to publish: {count}": "Közzéteendő dokumentumok: {count}",
+        "Published files": "Közzétett fájlok",
+        "Title written into the file": "A cím beírva a fájlba",
+        "Title not written": "A cím nincs beírva",
+        "Title not written: the file is signed": "A cím nincs beírva: a fájl alá van írva",
+        "Title not written: the file is encrypted": "A cím nincs beírva: a fájl titkosított",
+        "Title not written: the file could not be read": "A cím nincs beírva: a fájl nem olvasható",
+        "Title not written: this file type has no title": "A cím nincs beírva: ennek a fájltípusnak nincs címe"
     },
     "nplurals=2; plural=(n != 1);"
 )

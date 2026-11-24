@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Păstrat permanent: punct fierbinte de arhivă {subject}",
         "until {date}": "până la {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Salvat: această publicație va fi retrasă automat pe {date}.",
-        "Documents to publish: {count}": "Documente de publicat: {count}"
+        "Documents to publish: {count}": "Documente de publicat: {count}",
+        "Published files": "Fișiere publicate",
+        "Title written into the file": "Titlu scris în fișier",
+        "Title not written": "Titlu nescris",
+        "Title not written: the file is signed": "Titlu nescris: fișierul este semnat",
+        "Title not written: the file is encrypted": "Titlu nescris: fișierul este criptat",
+        "Title not written: the file could not be read": "Titlu nescris: fișierul nu a putut fi citit",
+        "Title not written: this file type has no title": "Titlu nescris: acest tip de fișier nu are titlu"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

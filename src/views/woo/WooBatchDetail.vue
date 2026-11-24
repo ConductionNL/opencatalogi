@@ -27,6 +27,7 @@ import {
 } from '@nextcloud/vue'
 import BatchReviewPanel from '../../components/review/BatchReviewPanel.vue'
 import WooAssessmentDialog from '../../dialogs/woo/WooAssessmentDialog.vue'
+import { embeddedTitleRows } from '../../services/embeddedTitleStatus.js'
 import {
 	ASSESSMENTS,
 	canMarkReadyForReview,
@@ -89,6 +90,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * What the publish wrote into each published file (REQ-PFF-002).
+		 *
+		 * @return {Array<{name: string, label: string, written: boolean}>}
+		 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.3
+		 */
+		embeddedTitles() {
+			return embeddedTitleRows(this.batch ? this.batch.wooPublication : null)
+		},
+
 		/** @spec openspec/specs/woo-transparency/spec.md#requirement-woo-frontend-components */
 		batchId() {
 			return this.$route?.params?.id || ''
@@ -645,6 +656,22 @@ export default {
 					{{ t('opencatalogi', 'Public reading room') }}
 				</a>
 			</p>
+
+			<section
+				v-if="embeddedTitles.length > 0"
+				class="woo-batch__embedded-titles"
+				data-testid="woo-batch-embedded-titles">
+				<h4>{{ t('opencatalogi', 'Published files') }}</h4>
+				<ul>
+					<li
+						v-for="row in embeddedTitles"
+						:key="row.name"
+						:class="{ 'woo-batch__embedded-title--skipped': !row.written }"
+						data-testid="woo-batch-embedded-title">
+						<strong>{{ row.name }}</strong>: {{ row.label }}
+					</li>
+				</ul>
+			</section>
 		</div>
 	</div>
 </template>
@@ -759,5 +786,13 @@ export default {
 
 .woo-batch__published {
 	margin-top: 12px;
+}
+
+.woo-batch__embedded-titles {
+	margin-top: 12px;
+}
+
+.woo-batch__embedded-title--skipped {
+	color: var(--color-warning-text);
 }
 </style>

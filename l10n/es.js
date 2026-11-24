@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Conservado de forma permanente: punto crítico de archivo {subject}",
         "until {date}": "hasta el {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Guardado: esta publicación se despublicará automáticamente el {date}.",
-        "Documents to publish: {count}": "Documentos para publicar: {count}"
+        "Documents to publish: {count}": "Documentos para publicar: {count}",
+        "Published files": "Archivos publicados",
+        "Title written into the file": "Título escrito en el archivo",
+        "Title not written": "Título no escrito",
+        "Title not written: the file is signed": "Título no escrito: el archivo está firmado",
+        "Title not written: the file is encrypted": "Título no escrito: el archivo está cifrado",
+        "Title not written: the file could not be read": "Título no escrito: no se pudo leer el archivo",
+        "Title not written: this file type has no title": "Título no escrito: este tipo de archivo no tiene título"
     },
     "nplurals=2; plural=(n != 1);"
 )

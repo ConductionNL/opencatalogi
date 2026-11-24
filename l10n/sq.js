@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Ruhet përgjithmonë: pikë e nxehtë arkivore {subject}",
         "until {date}": "deri më {date}",
         "Saved: this publication will be taken down automatically on {date}.": "U ruajt: ky publikim do të hiqet automatikisht më {date}.",
-        "Documents to publish: {count}": "Dokumente për publikim: {count}"
+        "Documents to publish: {count}": "Dokumente për publikim: {count}",
+        "Published files": "Skedarët e publikuar",
+        "Title written into the file": "Titulli u shkrua në skedar",
+        "Title not written": "Titulli nuk u shkrua",
+        "Title not written: the file is signed": "Titulli nuk u shkrua: skedari është i nënshkruar",
+        "Title not written: the file is encrypted": "Titulli nuk u shkrua: skedari është i enkriptuar",
+        "Title not written: the file could not be read": "Titulli nuk u shkrua: skedari nuk mund të lexohej",
+        "Title not written: this file type has no title": "Titulli nuk u shkrua: ky lloj skedari nuk ka titull"
     },
     "nplurals=2; plural=(n != 1);"
 )

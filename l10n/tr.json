@@ -843,7 +843,14 @@
         "Kept permanently: archive hotspot {subject}": "Kalıcı olarak saklanır: arşiv odak noktası {subject}",
         "until {date}": "{date} tarihine kadar",
         "Saved: this publication will be taken down automatically on {date}.": "Kaydedildi: bu yayın {date} tarihinde otomatik olarak yayından kaldırılacak.",
-        "Documents to publish: {count}": "Yayımlanacak belgeler: {count}"
+        "Documents to publish: {count}": "Yayımlanacak belgeler: {count}",
+        "Published files": "Yayımlanan dosyalar",
+        "Title written into the file": "Başlık dosyaya yazıldı",
+        "Title not written": "Başlık yazılmadı",
+        "Title not written: the file is signed": "Başlık yazılmadı: dosya imzalı",
+        "Title not written: the file is encrypted": "Başlık yazılmadı: dosya şifreli",
+        "Title not written: the file could not be read": "Başlık yazılmadı: dosya okunamadı",
+        "Title not written: this file type has no title": "Başlık yazılmadı: bu dosya türünün başlığı yok"
     },
     "plurals": {}
 }

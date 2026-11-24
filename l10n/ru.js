@@ -844,7 +844,14 @@ OC.L10N.register(
         "Kept permanently: archive hotspot {subject}": "Хранится постоянно: архивная горячая точка {subject}",
         "until {date}": "до {date}",
         "Saved: this publication will be taken down automatically on {date}.": "Сохранено: эта публикация будет автоматически снята {date}.",
-        "Documents to publish: {count}": "Документы к публикации: {count}"
+        "Documents to publish: {count}": "Документы к публикации: {count}",
+        "Published files": "Опубликованные файлы",
+        "Title written into the file": "Заголовок записан в файл",
+        "Title not written": "Заголовок не записан",
+        "Title not written: the file is signed": "Заголовок не записан: файл подписан",
+        "Title not written: the file is encrypted": "Заголовок не записан: файл зашифрован",
+        "Title not written: the file could not be read": "Заголовок не записан: не удалось прочитать файл",
+        "Title not written: this file type has no title": "Заголовок не записан: у этого типа файла нет заголовка"
     },
     "nplurals=2; plural=(n != 1);"
 )
