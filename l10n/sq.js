@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Heqje automatike nga publikimi më {date}",
         "Lift embargo": "Hiq embargon",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Të publikohet „{name}” tani, para datës së publikimit? Heqja regjistrohet në gjurmën e auditimit me emrin tuaj dhe arsyen.",
-        "The embargo was lifted. The publication is public.": "Embargoja u hoq. Publikimi është publik."
+        "The embargo was lifted. The publication is public.": "Embargoja u hoq. Publikimi është publik.",
+        "Kept permanently: archive hotspot {subject}": "Ruhet përgjithmonë: pikë e nxehtë arkivore {subject}"
     },
     "nplurals=2; plural=(n != 1);"
 )

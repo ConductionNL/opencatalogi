@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Автоматско повлекување од објава на {date}",
         "Lift embargo": "Укини ембарго",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Да се објави „{name}“ сега, пред датумот на објавување? Укинувањето се запишува во ревизорската трага со вашето име и причината.",
-        "The embargo was lifted. The publication is public.": "Ембаргото е укинато. Публикацијата е јавна."
+        "The embargo was lifted. The publication is public.": "Ембаргото е укинато. Публикацијата е јавна.",
+        "Kept permanently: archive hotspot {subject}": "Трајно се чува: архивска жешка точка {subject}"
     },
     "nplurals=2; plural=(n != 1);"
 )

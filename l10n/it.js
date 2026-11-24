@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Rimozione automatica dalla pubblicazione il {date}",
         "Lift embargo": "Revoca embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Pubblicare «{name}» ora, prima della data di pubblicazione? La revoca viene registrata nel registro di controllo con il tuo nome e il motivo.",
-        "The embargo was lifted. The publication is public.": "L'embargo è stato revocato. La pubblicazione è pubblica."
+        "The embargo was lifted. The publication is public.": "L'embargo è stato revocato. La pubblicazione è pubblica.",
+        "Kept permanently: archive hotspot {subject}": "Conservato in modo permanente: hotspot d'archivio {subject}"
     },
     "nplurals=2; plural=(n != 1);"
 )

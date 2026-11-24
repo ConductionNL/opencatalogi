@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Automātiska publikācijas atsaukšana {date}",
         "Lift embargo": "Atcelt embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publicēt “{name}” tagad, pirms publicēšanas datuma? Atcelšana tiek reģistrēta audita žurnālā ar jūsu vārdu un iemeslu.",
-        "The embargo was lifted. The publication is public.": "Embargo ir atcelts. Publikācija ir publiska."
+        "The embargo was lifted. The publication is public.": "Embargo ir atcelts. Publikācija ir publiska.",
+        "Kept permanently: archive hotspot {subject}": "Glabājas pastāvīgi: arhīva karstais punkts {subject}"
     },
     "nplurals=2; plural=(n != 1);"
 )
