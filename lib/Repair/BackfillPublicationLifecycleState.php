@@ -186,6 +186,7 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 	 * @return void
 	 *
 	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @SuppressWarnings(PHPMD.StaticAccess) RequiredToPublish::missing() is a pure field check.
 	 */
 	private function backfillOne(array $publication, array $scope): void {
 		$stored = trim((string)($publication['status'] ?? ''));
