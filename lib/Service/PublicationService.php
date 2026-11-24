@@ -1077,7 +1077,7 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @return JSONResponse A JSON response containing the list of objects
 	 *
-	 * @spec openspec/changes/search/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-24-search/tasks.md#task-2.3
 	 * @spec openspec/specs/publications/spec.md
 	 */
 	public function index(null|string|int $catalogId = null, ?array $customParams = null): JSONResponse {
@@ -1894,7 +1894,7 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @spec openspec/changes/search/tasks.md#task-2.4
+	 * @spec openspec/changes/archive/2026-11-24-search/tasks.md#task-2.4
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getAggregatedPublications(array $queryParams = [], array $requestParams = [], string $baseUrl = ''): array {

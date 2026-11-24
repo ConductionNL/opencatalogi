@@ -8,6 +8,7 @@ audit_ref: .claude/audit-2026-05-03/02-spec-rewrite.md
 **OpenSpec changes**:
 
 - [add-public-fulltext-search](../../changes/archive/2026-07-16-add-public-fulltext-search/) — done _(archived 2026-07-16)_
+- [search](../../changes/archive/2026-11-24-search/) — done _(archived 2026-11-24; its requirements are the SCH-001 to SCH-015 rows of the Change history below)_
 
 # Search
 

@@ -9,7 +9,7 @@
  * WHAT IT CREATES AND REMOVES. One catalogue (through the shared helper) and
  * one public publication with a unique title, deleted in afterAll.
  *
- * @spec openspec/changes/search/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-search/tasks.md
  */
 
 import { expect, test } from '@playwright/test'
