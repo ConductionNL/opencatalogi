@@ -1481,7 +1481,15 @@
 					"archiveHotspot",
 					"archiveHotspotReason",
 					"archiveHotspotSince"
-				]
+				],
+				"fieldOverrides": {
+					"featuredOrder": {
+						"condition": {
+							"field": "featured",
+							"truthy": true
+						}
+					}
+				}
 			}
 		},
 		{
@@ -1525,6 +1533,13 @@
 										]
 									},
 									"editable": false
+								},
+								"featuredOrder": {
+									"visibleWhen": {
+										"field": "featured",
+										"op": "eq",
+										"value": true
+									}
 								}
 							}
 						}
@@ -1647,7 +1662,15 @@
 					"archiveHotspot",
 					"archiveHotspotReason",
 					"archiveHotspotSince"
-				]
+				],
+				"fieldOverrides": {
+					"featuredOrder": {
+						"condition": {
+							"field": "featured",
+							"truthy": true
+						}
+					}
+				}
 			}
 		},
 		{
