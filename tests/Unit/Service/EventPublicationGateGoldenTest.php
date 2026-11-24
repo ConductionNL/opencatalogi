@@ -195,8 +195,13 @@ class EventPublicationGateGoldenTest extends TestCase {
 	 * @return void
 	 */
 	private function record(string $call, array $args): void {
+		[$class, $method] = explode('::', $call);
+		// The object service is named in the release's signature the recording keeps (LegacyObjectArgs);
+		// its callers already pass the arguments in the release's order.
+		$parameters = LegacyObjectArgs::parameters(class: $class, method: $method);
+
 		$named = [];
-		foreach ((new \ReflectionMethod($call))->getParameters() as $position => $parameter) {
+		foreach ($parameters as $position => $parameter) {
 			if (array_key_exists($position, $args) === false) {
 				continue;
 			}
@@ -215,6 +220,11 @@ class EventPublicationGateGoldenTest extends TestCase {
 			}
 
 			$named[$parameter->getName()] = $value;
+		}
+
+		if ($method === 'createShareLink' && is_string($named['request'] ?? null) === true) {
+			// OpenRegister main renamed the path argument `request`; the recording keeps the release's `path`.
+			$named = ['path' => $named['request']] + array_diff_key($named, ['request' => true]);
 		}
 
 		$this->calls[] = [substr($call, (int)strrpos($call, '\\') + 1) => $named];
