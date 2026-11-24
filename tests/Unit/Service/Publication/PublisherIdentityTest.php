@@ -22,8 +22,16 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Service\Publication;
 
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
+use OCA\OpenCatalogi\Service\Publication\PublisherFileStamp;
 use OCA\OpenCatalogi\Service\Publication\PublisherIdentity;
+use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
+use OCP\App\IAppManager;
+use OCP\Files\File;
+use OCP\Files\IRootFolder;
+use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
 
@@ -31,6 +39,10 @@ use RuntimeException;
  * The publisher's RSIN is resolved from the shared organisation and checked with the 11-proef (REQ-PRO-002).
  *
  * @covers \OCA\OpenCatalogi\Service\Publication\PublisherIdentity
+ * @covers \OCA\OpenCatalogi\Service\Publication\PublisherFileStamp
+ * @covers \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
+ *
+ * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2
  */
 final class PublisherIdentityTest extends TestCase {
 
@@ -146,6 +158,174 @@ final class PublisherIdentityTest extends TestCase {
 	}//end testTheElevenTest()
 
 	/**
+	 * Attaching a document to a publication writes the publisher's RSIN, name and TOOI identifier
+	 * into the file's metadata, before the file is published (REQ-PRO-002).
+	 *
+	 * @return void
+	 */
+	public function testTheRsinIsWrittenToTheFileMetadataOnAttach(): void {
+		$files = new StampFakeFileService();
+		$this->writer(
+			files: $files,
+			stamp: new PublisherFileStamp(identity: $this->identity(organisation: [
+				'name' => 'Gemeente Zuiddrecht',
+				'tooi' => 'gm9999',
+				'rsin' => '002220647',
+			]))
+		)->attach(publication: $this->publication(), file: $this->document());
+
+		self::assertSame(
+			expected: ['addFile besluit.pdf', 'changeFileMetadata 200', 'publishFile 200'],
+			actual: $files->log
+		);
+		self::assertSame(expected: 200, actual: $files->changes[0]->fileId);
+		self::assertSame(
+			expected: ['rsin:002220647', 'publisherName:Gemeente Zuiddrecht', 'publisherTooi:gm9999'],
+			actual: $files->changes[0]->labels
+		);
+		self::assertSame(expected: self::ORGANISATION, actual: $this->finds[0]['id']);
+	}//end testTheRsinIsWrittenToTheFileMetadataOnAttach()
+
+	/**
+	 * An RSIN that fails the 11-proef is not stamped; the file says the RSIN is missing and why.
+	 *
+	 * @return void
+	 */
+	public function testAnInvalidRsinIsRecordedAsMissingOnAttach(): void {
+		$files = new StampFakeFileService();
+		$this->writer(
+			files: $files,
+			stamp: new PublisherFileStamp(identity: $this->identity(organisation: [
+				'name' => 'Gemeente Zuiddrecht',
+				'tooi' => 'gm9999',
+				'rsin' => '123456789',
+			]))
+		)->attach(publication: $this->publication(), file: $this->document());
+
+		self::assertSame(
+			expected: ['rsinStatus:missing', 'rsinReason:The RSIN of the organisation fails the 11-proef.'],
+			actual: $files->changes[0]->labels
+		);
+		self::assertSame(expected: 'publishFile 200', actual: $files->log[2]);
+	}//end testAnInvalidRsinIsRecordedAsMissingOnAttach()
+
+	/**
+	 * Without a stamp the container can give, the document is still attached and published.
+	 *
+	 * @return void
+	 */
+	public function testWithoutAStampTheDocumentIsStillPublished(): void {
+		$files = new StampFakeFileService();
+		$this->writer(files: $files, stamp: new \stdClass())->attach(publication: $this->publication(), file: $this->document());
+		$this->writer(files: $files, stamp: null)->attach(publication: $this->publication(), file: $this->document());
+
+		self::assertSame(
+			expected: ['addFile besluit.pdf', 'publishFile 200', 'addFile besluit.pdf', 'publishFile 201'],
+			actual: $files->log
+		);
+		self::assertSame(expected: [], actual: $files->changes);
+	}//end testWithoutAStampTheDocumentIsStillPublished()
+
+	/**
+	 * A file service that cannot change file metadata gets nothing written, and the stamp says so.
+	 *
+	 * @return void
+	 */
+	public function testAFileServiceWithoutMetadataGetsNoStamp(): void {
+		$stamp = new PublisherFileStamp(identity: $this->identity(organisation: ['rsin' => '002220647']));
+
+		self::assertNull(actual: $stamp->stamp(files: new \stdClass(), publication: ['organization' => self::ORGANISATION], fileId: 7));
+		self::assertSame(expected: [], actual: $this->finds);
+	}//end testAFileServiceWithoutMetadataGetsNoStamp()
+
+	/**
+	 * The labels name only what is known: an organisation without a name or TOOI identifier gives the RSIN alone.
+	 *
+	 * @return void
+	 */
+	public function testTheLabelsNameOnlyWhatIsKnown(): void {
+		self::assertSame(
+			expected: ['rsin:002220647'],
+			actual: PublisherFileStamp::labels(identity: ['rsin' => '002220647', 'name' => null, 'tooi' => null, 'rsinStatus' => PublisherIdentity::STATUS_VALID, 'reason' => null])
+		);
+		self::assertSame(
+			expected: ['rsinStatus:missing', 'rsinReason:The publication names no organisation.'],
+			actual: PublisherFileStamp::labels(identity: ['rsin' => null, 'name' => 'Gemeente Zuiddrecht', 'tooi' => 'gm9999', 'rsinStatus' => PublisherIdentity::STATUS_MISSING, 'reason' => 'The publication names no organisation.'])
+		);
+	}//end testTheLabelsNameOnlyWhatIsKnown()
+
+	/**
+	 * A batch publication writer whose container answers this file service and this stamp.
+	 *
+	 * @param StampFakeFileService $files The file service double.
+	 * @param object|null          $stamp What the container answers for the stamp; null throws.
+	 *
+	 * @return BatchPublicationWriter The writer.
+	 */
+	private function writer(StampFakeFileService $files, ?object $stamp): BatchPublicationWriter {
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static fn (string $id): object => match ($id) {
+				'OCA\OpenRegister\Service\FileService' => $files,
+				PublisherFileStamp::class => ($stamp ?? throw new RuntimeException(message: 'not registered: ' . $id)),
+				default => throw new RuntimeException(message: 'not registered: ' . $id),
+			}
+		);
+		$apps = $this->createMock(originalClassName: IAppManager::class);
+		$apps->method('isInstalled')->willReturn(true);
+
+		return new BatchPublicationWriter(
+			$this->createMock(originalClassName: IRootFolder::class),
+			$container,
+			$this->createMock(originalClassName: PublicationLinker::class),
+			$this->createMock(originalClassName: IL10N::class),
+			$apps,
+			null
+		);
+	}//end writer()
+
+	/**
+	 * A saved publication of the organisation, as an entity that serialises to its properties.
+	 *
+	 * @return array{id: string, entity: object, title: string} The publication as BatchPublicationWriter::publication() answers it.
+	 */
+	private function publication(): array {
+		$entity = new class(self::ORGANISATION) implements \JsonSerializable {
+			/**
+			 * Constructor.
+			 *
+			 * @param string $organisation The publisher.
+			 */
+			public function __construct(private readonly string $organisation) {
+			}
+
+			/**
+			 * The properties.
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function jsonSerialize(): array {
+				return ['id' => 'pub-1', 'title' => 'Besluit', 'organization' => $this->organisation];
+			}
+		};
+
+		return ['id' => 'pub-1', 'entity' => $entity, 'title' => 'Besluit'];
+	}//end publication()
+
+	/**
+	 * The document to attach.
+	 *
+	 * @return File The file.
+	 */
+	private function document(): File {
+		$file = $this->createMock(originalClassName: File::class);
+		$file->method('getName')->willReturn('besluit.pdf');
+		$file->method('fopen')->willReturnCallback(static fn () => fopen('php://memory', 'r+'));
+
+		return $file;
+	}//end document()
+
+	/**
 	 * A PublisherIdentity over an ObjectService double that answers one organisation.
 	 *
 	 * @param array<string, mixed>|null $organisation The organisation's properties, or null when it is not found.
@@ -188,4 +368,94 @@ final class PublisherIdentityTest extends TestCase {
 
 		return new PublisherIdentity(openRegister: $lookup, logger: new NullLogger());
 	}//end identity()
+}//end class
+
+/**
+ * Double of OpenRegister's FileService: attaches, changes file metadata and publishes, in one log.
+ */
+class StampFakeFileService {
+
+	/**
+	 * The calls, in order.
+	 *
+	 * @var list<string>
+	 */
+	public array $log = [];
+
+	/**
+	 * The metadata changes received.
+	 *
+	 * @var list<object>
+	 */
+	public array $changes = [];
+
+	/**
+	 * The number of files attached.
+	 *
+	 * @var int
+	 */
+	private int $attached = 0;
+
+	/**
+	 * Attach a file and answer it.
+	 *
+	 * @param mixed  $objectEntity The publication.
+	 * @param string $fileName     The name.
+	 * @param mixed  $content      The bytes.
+	 * @param mixed  ...$rest      The other arguments.
+	 *
+	 * @return object The file, with its id.
+	 */
+	public function addFile(mixed $objectEntity, string $fileName, mixed $content, mixed ...$rest): object {
+		$this->log[] = 'addFile ' . $fileName;
+		$id = (200 + $this->attached);
+		$this->attached++;
+
+		return new class($id) {
+			/**
+			 * Constructor.
+			 *
+			 * @param int $id The file id.
+			 */
+			public function __construct(private readonly int $id) {
+			}
+
+			/**
+			 * The file id.
+			 *
+			 * @return int
+			 */
+			public function getId(): int {
+				return $this->id;
+			}
+		};
+	}//end addFile()
+
+	/**
+	 * Record a metadata change.
+	 *
+	 * @param object $change The change.
+	 *
+	 * @return object The change.
+	 */
+	public function changeFileMetadata(object $change): object {
+		$this->log[]     = 'changeFileMetadata ' . $change->fileId;
+		$this->changes[] = $change;
+
+		return $change;
+	}//end changeFileMetadata()
+
+	/**
+	 * Record a publish.
+	 *
+	 * @param mixed      $object The publication.
+	 * @param string|int $file   The file.
+	 *
+	 * @return object Nothing of use.
+	 */
+	public function publishFile(mixed $object, string|int $file): object {
+		$this->log[] = 'publishFile ' . $file;
+
+		return new \stdClass();
+	}//end publishFile()
 }//end class
