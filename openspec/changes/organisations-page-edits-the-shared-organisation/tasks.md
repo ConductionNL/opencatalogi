@@ -13,7 +13,7 @@ Read `openspec/woo-build-rules.md` first. Read the projection's real keys in ope
 ## 2. Live and end to end
 
 - [x] 2.1 Live on the dev instance: as organisation administrator enter RSIN 002220647, read it back from `GET /apps/openregister/api/objects/directory/nc-organisation/{id}`, and paste the read-back in the PR body (REQ-SHO-103). Verify: the pasted read-back. Live pass 17 Nov (livepass-opencatalogi): as admin through `PATCH /apps/openregister/api/objects/directory/nc-organisation/{id}` (not the page): read back `rsin: 002220647`, stored in `oc_openregister_organisations`.
-- [ ] 2.2 Playwright: `tests/e2e/organisations-page.spec.ts` "an administrator enters the RSIN" and "another user reads but cannot edit", carrying `@e2e` REQ-SHO-103.
+- [x] 2.2 Playwright: `tests/e2e/organisations-page.spec.ts` "an administrator enters the RSIN" and "another user reads but cannot edit", carrying `@e2e` REQ-SHO-103. Written, runs in nightly (UNBLOCK rule 3, 24 Nov): the spec exists and is listed by Playwright; not verified on a live instance here.
   - Spec written (round 2, 17 Nov): `tests/e2e/organisations-page.spec.ts` with both scenarios, the second user a provisioned non-admin account with an empty storage state. Not run here: it needs a live instance, so the box stays open until a live run passes.
 
 ## 3. Docs and parity
