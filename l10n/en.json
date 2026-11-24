@@ -2188,7 +2188,18 @@
         "Automatic depublication on {date}": "Automatic depublication on {date}",
         "Frozen on {date} by {user}: it cannot be edited, and no document can be added, withdrawn or republished.": "Frozen on {date} by {user}: it cannot be edited, and no document can be added, withdrawn or republished.",
         "an unrecorded date": "an unrecorded date",
-        "an unknown user": "an unknown user"
+        "an unknown user": "an unknown user",
+        "Licence": "Licence",
+        "The stored licence \"{licence}\" is not on the EU licences list. The feed leaves it out until you choose one from the list.": "The stored licence \"{licence}\" is not on the EU licences list. The feed leaves it out until you choose one from the list.",
+        "The licence list could not be loaded.": "The licence list could not be loaded.",
+        "Licence of the datasets in the feed": "Licence of the datasets in the feed",
+        "The instance default licence": "The instance default licence",
+        "Default licence": "Default licence",
+        "The licence the DCAT feed gives a catalogue that names none. Chosen from the EU licences list; with none chosen the feed carries no default licence.": "The licence the DCAT feed gives a catalogue that names none. Chosen from the EU licences list; with none chosen the feed carries no default licence.",
+        "The default licence could not be read.": "The default licence could not be read.",
+        "Default licence saved.": "Default licence saved.",
+        "The default licence could not be saved.": "The default licence could not be saved.",
+        "The licence of this catalogue's datasets in its DCAT feed, chosen from the EU licences authority list and stored as its authority IRI. Leave it empty to use the instance's default licence.": "The licence of this catalogue's datasets in its DCAT feed, chosen from the EU licences authority list and stored as its authority IRI. Leave it empty to use the instance's default licence."
     },
     "plurals": {}
 }

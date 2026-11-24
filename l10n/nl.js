@@ -2144,7 +2144,18 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Automatische depublicatie op {date}",
         "Frozen on {date} by {user}: it cannot be edited, and no document can be added, withdrawn or republished.": "Bevroren op {date} door {user}: de publicatie kan niet worden bewerkt en er kan geen document worden toegevoegd, ingetrokken of opnieuw gepubliceerd.",
         "an unrecorded date": "een onbekende datum",
-        "an unknown user": "een onbekende gebruiker"
+        "an unknown user": "een onbekende gebruiker",
+        "Licence": "Licentie",
+        "The stored licence \"{licence}\" is not on the EU licences list. The feed leaves it out until you choose one from the list.": "De opgeslagen licentie \"{licence}\" staat niet op de EU-licentielijst. De feed laat haar weg tot je er een uit de lijst kiest.",
+        "The licence list could not be loaded.": "De licentielijst kon niet worden geladen.",
+        "Licence of the datasets in the feed": "Licentie van de datasets in de feed",
+        "The instance default licence": "De standaardlicentie van deze installatie",
+        "Default licence": "Standaardlicentie",
+        "The licence the DCAT feed gives a catalogue that names none. Chosen from the EU licences list; with none chosen the feed carries no default licence.": "De licentie die de DCAT-feed geeft aan een catalogus die er zelf geen noemt. Gekozen uit de EU-licentielijst; zonder keuze heeft de feed geen standaardlicentie.",
+        "The default licence could not be read.": "De standaardlicentie kon niet worden gelezen.",
+        "Default licence saved.": "Standaardlicentie opgeslagen.",
+        "The default licence could not be saved.": "De standaardlicentie kon niet worden opgeslagen.",
+        "The licence of this catalogue's datasets in its DCAT feed, chosen from the EU licences authority list and stored as its authority IRI. Leave it empty to use the instance's default licence.": "De licentie van de datasets van deze catalogus in de DCAT-feed, gekozen uit de EU-licentielijst en opgeslagen als de IRI van die lijst. Laat het leeg om de standaardlicentie van deze installatie te gebruiken."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -261,6 +261,8 @@
 
 				<DonlHarvestStatus />
 
+				<DcatDefaultLicence />
+
 				<DcatFeedValidation />
 
 				<PublishRightsLine />
@@ -744,6 +746,7 @@ import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
 import CapabilityRightsSection from './CapabilityRightsSection.vue'
 import CouncilHarvest from './CouncilHarvest.vue'
+import DcatDefaultLicence from './DcatDefaultLicence.vue'
 import DcatFeedValidation from './DcatFeedValidation.vue'
 import DonlHarvestStatus from './DonlHarvestStatus.vue'
 import InstanceModeSection from './InstanceModeSection.vue'
@@ -880,6 +883,7 @@ export default defineComponent({
 		RefusalGroundsSource,
 		WooIndexConnection,
 		WooIncidents,
+		DcatDefaultLicence,
 		DcatFeedValidation,
 		DonlHarvestStatus,
 		PubliccodeHarvest,

@@ -174,6 +174,13 @@ const { isAdmin } = useIsAdmin()
 							)
 						}}
 					</NcCheckboxRadioSwitch>
+					<LicencePicker
+						v-if="catalogi.hasDcat"
+						v-model="catalogi.dcatLicense"
+						:inputLabel="t('opencatalogi', 'Licence of the datasets in the feed')"
+						:placeholder="t('opencatalogi', 'The instance default licence')"
+						:disabled="objectStore.isLoading('catalog')"
+						data-testid="catalog-dcat-licence" />
 					<NcCheckboxRadioSwitch
 						v-model="catalogi.showWithheld"
 						:disabled="objectStore.isLoading('catalog')"
@@ -253,6 +260,7 @@ import Cancel from 'vue-material-design-icons/Cancel.vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import CatalogRetentionDefaultsFields from '../../components/CatalogRetentionDefaultsFields.vue'
 import CatalogStaffAccessFields from '../../components/CatalogStaffAccessFields.vue'
+import LicencePicker from '../../components/LicencePicker.vue'
 import TranslationLanguageSwitch from '../../components/TranslationLanguageSwitch.vue'
 import { Catalogi } from '../../entities/index.js'
 import {
@@ -289,6 +297,7 @@ function emptyCatalogForm() {
 		hasWooSitemap: false,
 		hasOoapi: false,
 		hasDcat: false,
+		dcatLicense: '',
 		showWithheld: false,
 		staffAccess: null,
 	}
@@ -348,6 +357,7 @@ export default {
 	name: 'CatalogModal',
 	components: {
 		CatalogRetentionDefaultsFields,
+		LicencePicker,
 		TranslationLanguageSwitch,
 		CatalogStaffAccessFields,
 		NcModal,

@@ -139,6 +139,7 @@ class DcatService implements DcatServiceInterface {
 	 *                              license/contactPoint/organisation).
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-dcat-ap-nl-mandatory-property-completion-dcat-005
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
 	 */
 	public function resolveDefaults(array $catalog): array {
 		$organisation = ($catalog['organisation'] ?? $catalog['organization'] ?? null);
@@ -148,10 +149,16 @@ class DcatService implements DcatServiceInterface {
 
 		$defaultLicense = 'http://creativecommons.org/publicdomain/zero/1.0/';
 
+		// An empty catalogue licence is no choice: the instance default applies (REQ-DCC-001).
+		$licence = trim((string)($catalog['dcatLicense'] ?? ''));
+		if ($licence === '') {
+			$licence = $this->instance->stringValue('dcat_default_license', $defaultLicense);
+		}
+
 		return [
 			'publisherName' => ($catalog['dcatPublisherName'] ?? $this->instance->stringValue('dcat_publisher_name', '')),
 			'publisherUri' => ($catalog['dcatPublisherUri'] ?? $this->instance->stringValue('dcat_publisher_uri', '')),
-			'license' => ($catalog['dcatLicense'] ?? $this->instance->stringValue('dcat_default_license', $defaultLicense)),
+			'license' => $licence,
 			'contactPoint' => ($catalog['dcatContactPoint'] ?? $this->instance->stringValue('dcat_contact_point', '')),
 			'organisation' => $organisation,
 		];
@@ -993,6 +1000,17 @@ class DcatService implements DcatServiceInterface {
 
 		return $missing;
 	}//end mandatoryViolations()
+
+	/**
+	 * The licences a licence picker offers, with the list's source and version.
+	 *
+	 * @return array{results: array<int, array{code: string, iri: string, label: string, labelNl: string}>, total: int, source: string, version: string}
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
+	 */
+	public function licences(): array {
+		return (new DcatVocabularyService())->licencePickerList();
+	}//end licences()
 
 	/**
 	 * Fetch all DCAT-enabled catalogs on the instance.
