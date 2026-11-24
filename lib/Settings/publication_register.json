@@ -610,7 +610,7 @@
           }
         },
         "title": "Catalog",
-        "version": "0.6.0",
+        "version": "0.6.1",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A collection of publications organized by theme and schema",
         "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface. Catalogs can be public or private and can be associated with specific organizations.",
@@ -741,6 +741,12 @@
             "default": false,
             "facetable": false,
             "title": "Has OOAPI 5.0 Publication"
+          },
+          "dcatLicense": {
+            "type": "string",
+            "description": "The licence of this catalogue's datasets in its DCAT feed, chosen from the EU licences authority list and stored as its authority IRI. Leave it empty to use the instance's default licence.",
+            "facetable": false,
+            "title": "Licence"
           },
           "hasDcat": {
             "type": "boolean",

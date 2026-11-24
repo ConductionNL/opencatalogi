@@ -42,7 +42,7 @@ class PortalDetailSchemaTest extends TestCase {
 		$this->assertSame(['type' => 'boolean', 'default' => false], array_intersect_key($catalog['properties']['acceptErrorReports'], ['type' => 1, 'default' => 1]));
 		$this->assertSame([], $catalog['properties']['errorReportModerators']['default']);
 		$this->assertSame(['authenticated'], $catalog['properties']['errorReportModerators']['authorization']['read'], 'anonymous readers never learn the moderator groups');
-		$this->assertSame('0.6.0', $catalog['version'], 'a schema change moves its version');
+		$this->assertSame('0.6.1', $catalog['version'], 'a schema change moves its version');
 		$this->assertSame('0.3.0', $assessment['version'], 'the base fragment keeps its version; the last fragment carries the bump');
 	}//end testTheDefaultsAreOff()
 

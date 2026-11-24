@@ -3,351 +3,11 @@
 <script setup>
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { navigationStore, objectStore } from '../../store/store.js'
-
-const { isAdmin } = useIsAdmin()
-</script>
-
-<template>
-	<NcModal
-		v-if="navigationStore.modal === 'catalog'"
-		ref="modalRef"
-		:name="
-			isEdit
-				? t('opencatalogi', 'Catalog edit')
-				: t('opencatalogi', 'Add Catalog')
-		"
-		:labelId="isEdit ? 'editCatalogModal' : 'addCatalogModal'"
-		@close="closeModal">
-		<div class="modal__content">
-			<div
-				v-if="
-					objectStore.getState('catalog').success !== null
-					|| objectStore.getState('catalog').error
-				">
-				<NcNoteCard
-					v-if="objectStore.getState('catalog').success"
-					type="success">
-					<p>
-						{{
-							isEdit
-								? t('opencatalogi', 'Catalog successfully edited')
-								: t('opencatalogi', 'Catalog successfully added')
-						}}
-					</p>
-				</NcNoteCard>
-				<NcNoteCard
-					v-if="!objectStore.getState('catalog').success"
-					type="error">
-					<p>
-						{{
-							isEdit
-								? t(
-										'opencatalogi',
-										'Something went wrong while editing the catalog',
-									)
-								: t(
-										'opencatalogi',
-										'Something went wrong while adding the catalog',
-									)
-						}}
-					</p>
-				</NcNoteCard>
-				<NcNoteCard
-					v-if="objectStore.getState('catalog').error"
-					type="error">
-					<p>{{ objectStore.getState('catalog').error }}</p>
-				</NcNoteCard>
-			</div>
-			<div
-				v-if="
-					objectStore.getState('catalog').success === null
-					&& !objectStore.isLoading('catalog')
-				"
-				class="form-group">
-				<TranslationLanguageSwitch
-					v-if="isEdit && editLanguages.length > 1"
-					:languages="editLanguages"
-					:modelValue="editLanguage"
-					:outdated="editLanguageOutdated"
-					:disabled="objectStore.isLoading('catalog')"
-					@update:modelValue="setEditLanguage" />
-				<NcNoteCard v-if="translationError" type="error">
-					<p>{{ translationError }}</p>
-				</NcNoteCard>
-				<NcTextField
-					v-model="textFields.title"
-					:disabled="objectStore.isLoading('catalog')"
-					:label="t('opencatalogi', 'Title*')"
-					maxlength="255"
-					:error="!!inputValidation.fieldErrors?.['title']"
-					:helperText="inputValidation.fieldErrors?.['title']?.[0]" />
-				<NcTextField
-					v-model="textFields.summary"
-					:disabled="objectStore.isLoading('catalog')"
-					:label="t('opencatalogi', 'Summary')"
-					maxlength="255"
-					:error="!!inputValidation.fieldErrors?.['summary']"
-					:helperText="inputValidation.fieldErrors?.['summary']?.[0]" />
-				<NcTextField
-					v-model="textFields.description"
-					:disabled="objectStore.isLoading('catalog')"
-					:label="t('opencatalogi', 'Description')"
-					maxlength="255"
-					:error="!!inputValidation.fieldErrors?.['description']"
-					:helperText="
-						inputValidation.fieldErrors?.['description']?.[0]
-					" />
-				<!-- REQ-PTR-003: the same in every language, read-only in another one. -->
-				<fieldset
-					class="catalog-shared-fields"
-					:disabled="editLanguage !== sourceLanguage">
-					<NcTextField
-						v-model="catalogi.slug"
-						:disabled="objectStore.isLoading('catalog')"
-						:label="t('opencatalogi', 'Slug*')"
-						maxlength="255"
-						:error="!!inputValidation.fieldErrors?.['slug']"
-						:helperText="
-							inputValidation.fieldErrors?.['slug']?.[0]
-							|| t(
-								'opencatalogi',
-								'URL-friendly identifier (e.g., publications, datasets)',
-							)
-						"
-						:placeholder="t('opencatalogi', 'publications')" />
-					<NcCheckboxRadioSwitch
-						v-model="catalogi.listed"
-						:disabled="objectStore.isLoading('catalog')"
-						:label="t('opencatalogi', 'Publicly available')">
-						{{ t('opencatalogi', 'Publicly available') }}
-					</NcCheckboxRadioSwitch>
-					<NcSelect
-						v-model="selectedOrganization"
-						:options="organizationOptions"
-						:inputLabel="t('opencatalogi', 'Organization')"
-						:disabled="objectStore.isLoading('catalog')" />
-					<NcSelect
-						v-model="selectedRegisters"
-						:options="registerOptions"
-						:inputLabel="t('opencatalogi', 'Registers*')"
-						:disabled="objectStore.isLoading('catalog')"
-						multiple />
-					<NcSelect
-						v-model="selectedSchemas"
-						:options="schemaOptions"
-						:inputLabel="t('opencatalogi', 'Schemas*')"
-						:disabled="objectStore.isLoading('catalog')"
-						:keepOpen="true"
-						multiple />
-					<NcSelect
-						v-model="catalogi.status"
-						:options="statusOptions"
-						labelAttribute="label"
-						:inputLabel="t('opencatalogi', 'Status*')"
-						:disabled="objectStore.isLoading('catalog')" />
-					<NcCheckboxRadioSwitch
-						v-model="catalogi.hasWooSitemap"
-						:disabled="objectStore.isLoading('catalog')"
-						:label="t('opencatalogi', 'Has Woo Sitemap')">
-						{{ t('opencatalogi', 'Requires Woo sitemap') }}
-					</NcCheckboxRadioSwitch>
-					<NcCheckboxRadioSwitch
-						v-model="catalogi.hasOoapi"
-						:disabled="objectStore.isLoading('catalog')"
-						:label="t('opencatalogi', 'Has OOAPI 5.0 publication')">
-						{{
-							t(
-								'opencatalogi',
-								"Publish this catalog's course/program/offering data via the Open Onderwijs API (OOAPI 5.0)",
-							)
-						}}
-					</NcCheckboxRadioSwitch>
-					<NcCheckboxRadioSwitch
-						v-model="catalogi.hasDcat"
-						:disabled="objectStore.isLoading('catalog')"
-						:label="t('opencatalogi', 'Has DCAT feed')"
-						data-testid="catalog-has-dcat">
-						{{
-							t(
-								'opencatalogi',
-								"Publish this catalog's datasets as a DCAT-AP-NL feed that data.overheid.nl can harvest",
-							)
-						}}
-					</NcCheckboxRadioSwitch>
-					<NcCheckboxRadioSwitch
-						v-model="catalogi.showWithheld"
-						:disabled="objectStore.isLoading('catalog')"
-						data-testid="catalog-show-withheld">
-						{{
-							t(
-								'opencatalogi',
-								'Show which documents of a publication were withheld, and on which grounds',
-							)
-						}}
-					</NcCheckboxRadioSwitch>
-					<CatalogStaffAccessFields
-						v-if="isAdmin"
-						v-model="catalogi.staffAccess"
-						:disabled="objectStore.isLoading('catalog')" />
-					<CatalogRetentionDefaultsFields
-						v-if="isAdmin && storedSlug"
-						:catalogSlug="storedSlug"
-						:disabled="objectStore.isLoading('catalog')" />
-				</fieldset>
-			</div>
-			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
-				<NcLoadingIcon :size="20" />
-				<span>{{
-					isEdit
-						? t('opencatalogi', 'Catalog is being edited...')
-						: t('opencatalogi', 'Catalog is being added...')
-				}}</span>
-			</div>
-			<div class="modalActions">
-				<NcButton class="modalCloseButton" @click="closeModal">
-					<template #icon>
-						<Cancel :size="20" />
-					</template>
-					{{
-						isEdit
-							? t('opencatalogi', 'Close')
-							: t('opencatalogi', 'Cancel')
-					}}
-				</NcButton>
-				<NcButton
-					v-if="
-						objectStore.getState('catalog').success === null
-						&& !objectStore.isLoading('catalog')
-					"
-					:title="inputValidation.errorMessages?.[0]"
-					:disabled="
-						!inputValidation.success || objectStore.isLoading('catalog')
-					"
-					variant="primary"
-					@click="saveCatalog">
-					<template #icon>
-						<ContentSaveOutline :size="20" />
-					</template>
-					{{
-						isEdit ? t('opencatalogi', 'Save') : t('opencatalogi', 'Add')
-					}}
-				</NcButton>
-			</div>
-		</div>
-	</NcModal>
-</template>
-
-<script>
-import {
-	NcButton,
-	NcCheckboxRadioSwitch,
-	NcLoadingIcon,
-	NcModal,
-	NcNoteCard,
-	NcSelect,
-	NcTextField,
-} from '@conduction/nextcloud-vue'
-import { translate as t } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
-import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
-import CatalogRetentionDefaultsFields from '../../components/CatalogRetentionDefaultsFields.vue'
-import CatalogStaffAccessFields from '../../components/CatalogStaffAccessFields.vue'
-import TranslationLanguageSwitch from '../../components/TranslationLanguageSwitch.vue'
-import { Catalogi } from '../../entities/index.js'
-import {
-	catalogFormFromObject,
-	catalogOrganizationOption,
-	idOptions,
-} from '../../services/catalogForm.js'
-import {
-	outdatedFields,
-	publicationLanguagesFrom,
-	SOURCE_LANGUAGE,
-	takeRequestedEditorLanguage,
-	translationItem,
-	translationPayload,
-} from '../../services/publicationTranslations.js'
-import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
-
-/**
- * The form of a catalog that is being added.
- *
- * @return {object} A fresh, empty form.
- */
-function emptyCatalogForm() {
-	return {
-		title: '',
-		summary: '',
-		description: '',
-		slug: '',
-		listed: false,
-		registers: [],
-		schemas: [],
-		filters: {},
-		status: { id: 'development', label: 'Development' },
-		hasWooSitemap: false,
-		hasOoapi: false,
-		hasDcat: false,
-		showWithheld: false,
-		staffAccess: null,
-	}
-}
-
-/**
- * The ids of every schema the selected registers list, once each.
- *
- * @param {Array<object>} registers The available registers.
- * @param {Array<object>} selectedRegisters The selected register options.
- * @return {Array<number|string>} The schema ids.
- */
-function schemaIdsOfSelected(registers, selectedRegisters) {
-	const selectedRegisterIds = selectedRegisters.map((register) => register.id)
-	return [
-		...new Set(
-			registers
-				.filter((register) => selectedRegisterIds.includes(register.id))
-				.flatMap((register) => register.schemas.map((schema) => schema.id)),
-		),
-	]
-}
-
-/**
- * The first schema of each id, in order.
- *
- * availableSchemas holds one entry per (register, schema) pair, so a schema
- * exposed by several selected registers would otherwise appear several times
- * and trigger Vue duplicate-key warnings in NcSelect.
- *
- * @param {Array<object>} schemas The schemas.
- * @return {Array<object>} The schemas, one per id.
- */
-function firstOfEachId(schemas) {
-	const seen = new Set()
-	return schemas.filter((schema) => {
-		if (seen.has(schema.id)) return false
-		seen.add(schema.id)
-		return true
-	})
-}
-
-/**
- * A schema as a select option, labelled with its register.
- *
- * @param {object} schema The schema.
- * @return {object} The option.
- */
-function schemaOption(schema) {
-	return {
-		id: schema.id,
-		label: `${schema.title} (${schema.registerTitle})`,
-	}
-}
-
-export default {
+defineOptions({
 	name: 'CatalogModal',
 	components: {
 		CatalogRetentionDefaultsFields,
+		LicencePicker,
 		TranslationLanguageSwitch,
 		CatalogStaffAccessFields,
 		NcModal,
@@ -716,7 +376,358 @@ export default {
 			}
 		},
 	},
+})
+
+
+const { isAdmin } = useIsAdmin()
+</script>
+
+<template>
+	<NcModal
+		v-if="navigationStore.modal === 'catalog'"
+		ref="modalRef"
+		:name="
+			isEdit
+				? t('opencatalogi', 'Catalog edit')
+				: t('opencatalogi', 'Add Catalog')
+		"
+		:labelId="isEdit ? 'editCatalogModal' : 'addCatalogModal'"
+		@close="closeModal">
+		<div class="modal__content">
+			<div
+				v-if="
+					objectStore.getState('catalog').success !== null
+					|| objectStore.getState('catalog').error
+				">
+				<NcNoteCard
+					v-if="objectStore.getState('catalog').success"
+					type="success">
+					<p>
+						{{
+							isEdit
+								? t('opencatalogi', 'Catalog successfully edited')
+								: t('opencatalogi', 'Catalog successfully added')
+						}}
+					</p>
+				</NcNoteCard>
+				<NcNoteCard
+					v-if="!objectStore.getState('catalog').success"
+					type="error">
+					<p>
+						{{
+							isEdit
+								? t(
+										'opencatalogi',
+										'Something went wrong while editing the catalog',
+									)
+								: t(
+										'opencatalogi',
+										'Something went wrong while adding the catalog',
+									)
+						}}
+					</p>
+				</NcNoteCard>
+				<NcNoteCard
+					v-if="objectStore.getState('catalog').error"
+					type="error">
+					<p>{{ objectStore.getState('catalog').error }}</p>
+				</NcNoteCard>
+			</div>
+			<div
+				v-if="
+					objectStore.getState('catalog').success === null
+					&& !objectStore.isLoading('catalog')
+				"
+				class="form-group">
+				<TranslationLanguageSwitch
+					v-if="isEdit && editLanguages.length > 1"
+					:languages="editLanguages"
+					:modelValue="editLanguage"
+					:outdated="editLanguageOutdated"
+					:disabled="objectStore.isLoading('catalog')"
+					@update:modelValue="setEditLanguage" />
+				<NcNoteCard v-if="translationError" type="error">
+					<p>{{ translationError }}</p>
+				</NcNoteCard>
+				<NcTextField
+					v-model="textFields.title"
+					:disabled="objectStore.isLoading('catalog')"
+					:label="t('opencatalogi', 'Title*')"
+					maxlength="255"
+					:error="!!inputValidation.fieldErrors?.['title']"
+					:helperText="inputValidation.fieldErrors?.['title']?.[0]" />
+				<NcTextField
+					v-model="textFields.summary"
+					:disabled="objectStore.isLoading('catalog')"
+					:label="t('opencatalogi', 'Summary')"
+					maxlength="255"
+					:error="!!inputValidation.fieldErrors?.['summary']"
+					:helperText="inputValidation.fieldErrors?.['summary']?.[0]" />
+				<NcTextField
+					v-model="textFields.description"
+					:disabled="objectStore.isLoading('catalog')"
+					:label="t('opencatalogi', 'Description')"
+					maxlength="255"
+					:error="!!inputValidation.fieldErrors?.['description']"
+					:helperText="
+						inputValidation.fieldErrors?.['description']?.[0]
+					" />
+				<!-- REQ-PTR-003: the same in every language, read-only in another one. -->
+				<fieldset
+					class="catalog-shared-fields"
+					:disabled="editLanguage !== sourceLanguage">
+					<NcTextField
+						v-model="catalogi.slug"
+						:disabled="objectStore.isLoading('catalog')"
+						:label="t('opencatalogi', 'Slug*')"
+						maxlength="255"
+						:error="!!inputValidation.fieldErrors?.['slug']"
+						:helperText="
+							inputValidation.fieldErrors?.['slug']?.[0]
+							|| t(
+								'opencatalogi',
+								'URL-friendly identifier (e.g., publications, datasets)',
+							)
+						"
+						:placeholder="t('opencatalogi', 'publications')" />
+					<NcCheckboxRadioSwitch
+						v-model="catalogi.listed"
+						:disabled="objectStore.isLoading('catalog')"
+						:label="t('opencatalogi', 'Publicly available')">
+						{{ t('opencatalogi', 'Publicly available') }}
+					</NcCheckboxRadioSwitch>
+					<NcSelect
+						v-model="selectedOrganization"
+						:options="organizationOptions"
+						:inputLabel="t('opencatalogi', 'Organization')"
+						:disabled="objectStore.isLoading('catalog')" />
+					<NcSelect
+						v-model="selectedRegisters"
+						:options="registerOptions"
+						:inputLabel="t('opencatalogi', 'Registers*')"
+						:disabled="objectStore.isLoading('catalog')"
+						multiple />
+					<NcSelect
+						v-model="selectedSchemas"
+						:options="schemaOptions"
+						:inputLabel="t('opencatalogi', 'Schemas*')"
+						:disabled="objectStore.isLoading('catalog')"
+						:keepOpen="true"
+						multiple />
+					<NcSelect
+						v-model="catalogi.status"
+						:options="statusOptions"
+						labelAttribute="label"
+						:inputLabel="t('opencatalogi', 'Status*')"
+						:disabled="objectStore.isLoading('catalog')" />
+					<NcCheckboxRadioSwitch
+						v-model="catalogi.hasWooSitemap"
+						:disabled="objectStore.isLoading('catalog')"
+						:label="t('opencatalogi', 'Has Woo Sitemap')">
+						{{ t('opencatalogi', 'Requires Woo sitemap') }}
+					</NcCheckboxRadioSwitch>
+					<NcCheckboxRadioSwitch
+						v-model="catalogi.hasOoapi"
+						:disabled="objectStore.isLoading('catalog')"
+						:label="t('opencatalogi', 'Has OOAPI 5.0 publication')">
+						{{
+							t(
+								'opencatalogi',
+								"Publish this catalog's course/program/offering data via the Open Onderwijs API (OOAPI 5.0)",
+							)
+						}}
+					</NcCheckboxRadioSwitch>
+					<NcCheckboxRadioSwitch
+						v-model="catalogi.hasDcat"
+						:disabled="objectStore.isLoading('catalog')"
+						:label="t('opencatalogi', 'Has DCAT feed')"
+						data-testid="catalog-has-dcat">
+						{{
+							t(
+								'opencatalogi',
+								"Publish this catalog's datasets as a DCAT-AP-NL feed that data.overheid.nl can harvest",
+							)
+						}}
+					</NcCheckboxRadioSwitch>
+					<LicencePicker
+						v-if="catalogi.hasDcat"
+						v-model="catalogi.dcatLicense"
+						:inputLabel="t('opencatalogi', 'Licence of the datasets in the feed')"
+						:placeholder="t('opencatalogi', 'The instance default licence')"
+						:disabled="objectStore.isLoading('catalog')"
+						data-testid="catalog-dcat-licence" />
+					<NcCheckboxRadioSwitch
+						v-model="catalogi.showWithheld"
+						:disabled="objectStore.isLoading('catalog')"
+						data-testid="catalog-show-withheld">
+						{{
+							t(
+								'opencatalogi',
+								'Show which documents of a publication were withheld, and on which grounds',
+							)
+						}}
+					</NcCheckboxRadioSwitch>
+					<CatalogStaffAccessFields
+						v-if="isAdmin"
+						v-model="catalogi.staffAccess"
+						:disabled="objectStore.isLoading('catalog')" />
+					<CatalogRetentionDefaultsFields
+						v-if="isAdmin && storedSlug"
+						:catalogSlug="storedSlug"
+						:disabled="objectStore.isLoading('catalog')" />
+				</fieldset>
+			</div>
+			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
+				<NcLoadingIcon :size="20" />
+				<span>{{
+					isEdit
+						? t('opencatalogi', 'Catalog is being edited…')
+						: t('opencatalogi', 'Catalog is being added…')
+				}}</span>
+			</div>
+			<div class="modalActions">
+				<NcButton class="modalCloseButton" @click="closeModal">
+					<template #icon>
+						<Cancel :size="20" />
+					</template>
+					{{
+						isEdit
+							? t('opencatalogi', 'Close')
+							: t('opencatalogi', 'Cancel')
+					}}
+				</NcButton>
+				<NcButton
+					v-if="
+						objectStore.getState('catalog').success === null
+						&& !objectStore.isLoading('catalog')
+					"
+					:title="inputValidation.errorMessages?.[0]"
+					:disabled="
+						!inputValidation.success || objectStore.isLoading('catalog')
+					"
+					variant="primary"
+					@click="saveCatalog">
+					<template #icon>
+						<ContentSaveOutline :size="20" />
+					</template>
+					{{
+						isEdit ? t('opencatalogi', 'Save') : t('opencatalogi', 'Add')
+					}}
+				</NcButton>
+			</div>
+		</div>
+	</NcModal>
+</template>
+
+<script>
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcLoadingIcon,
+	NcModal,
+	NcNoteCard,
+	NcSelect,
+	NcTextField,
+} from '@conduction/nextcloud-vue'
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
+import Cancel from 'vue-material-design-icons/Cancel.vue'
+import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import CatalogRetentionDefaultsFields from '../../components/CatalogRetentionDefaultsFields.vue'
+import CatalogStaffAccessFields from '../../components/CatalogStaffAccessFields.vue'
+import LicencePicker from '../../components/LicencePicker.vue'
+import TranslationLanguageSwitch from '../../components/TranslationLanguageSwitch.vue'
+import { Catalogi } from '../../entities/index.js'
+import {
+	catalogFormFromObject,
+	catalogOrganizationOption,
+	idOptions,
+} from '../../services/catalogForm.js'
+import {
+	outdatedFields,
+	publicationLanguagesFrom,
+	SOURCE_LANGUAGE,
+	takeRequestedEditorLanguage,
+	translationItem,
+	translationPayload,
+} from '../../services/publicationTranslations.js'
+import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
+
+/**
+ * The form of a catalog that is being added.
+ *
+ * @return {object} A fresh, empty form.
+ */
+function emptyCatalogForm() {
+	return {
+		title: '',
+		summary: '',
+		description: '',
+		slug: '',
+		listed: false,
+		registers: [],
+		schemas: [],
+		filters: {},
+		status: { id: 'development', label: 'Development' },
+		hasWooSitemap: false,
+		hasOoapi: false,
+		hasDcat: false,
+		dcatLicense: '',
+		showWithheld: false,
+		staffAccess: null,
+	}
 }
+
+/**
+ * The ids of every schema the selected registers list, once each.
+ *
+ * @param {Array<object>} registers The available registers.
+ * @param {Array<object>} selectedRegisters The selected register options.
+ * @return {Array<number|string>} The schema ids.
+ */
+function schemaIdsOfSelected(registers, selectedRegisters) {
+	const selectedRegisterIds = selectedRegisters.map((register) => register.id)
+	return [
+		...new Set(
+			registers
+				.filter((register) => selectedRegisterIds.includes(register.id))
+				.flatMap((register) => register.schemas.map((schema) => schema.id)),
+		),
+	]
+}
+
+/**
+ * The first schema of each id, in order.
+ *
+ * availableSchemas holds one entry per (register, schema) pair, so a schema
+ * exposed by several selected registers would otherwise appear several times
+ * and trigger Vue duplicate-key warnings in NcSelect.
+ *
+ * @param {Array<object>} schemas The schemas.
+ * @return {Array<object>} The schemas, one per id.
+ */
+function firstOfEachId(schemas) {
+	const seen = new Set()
+	return schemas.filter((schema) => {
+		if (seen.has(schema.id)) return false
+		seen.add(schema.id)
+		return true
+	})
+}
+
+/**
+ * A schema as a select option, labelled with its register.
+ *
+ * @param {object} schema The schema.
+ * @return {object} The option.
+ */
+function schemaOption(schema) {
+	return {
+		id: schema.id,
+		label: `${schema.title} (${schema.registerTitle})`,
+	}
+}
+
 </script>
 
 <style>

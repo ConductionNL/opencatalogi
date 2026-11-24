@@ -123,6 +123,23 @@ class DcatServiceTest extends TestCase {
 		$this->assertSame('https://custom-license', $defaults['license']);
 	}
 
+	/**
+	 * A catalogue whose licence picker was left empty takes the instance default.
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
+	 */
+	public function testAnEmptyCatalogueLicenceFallsBackToTheInstanceDefault(): void {
+		$this->appConfig->method('getValueString')->willReturnCallback(
+			static function ($app, $key, $default = '') {
+				return ($key === 'dcat_default_license') ? 'https://cc0' : $default;
+			}
+		);
+
+		$this->assertSame('https://cc0', $this->service->resolveDefaults(['dcatLicense' => ''])['license']);
+		$this->assertSame('https://cc0', $this->service->resolveDefaults(['dcatLicense' => '  '])['license']);
+		$this->assertSame('https://cc0', $this->service->resolveDefaults(['dcatLicense' => null])['license']);
+	}
+
 	public function testResolveDefaultsFallsBackToAppConfig(): void {
 		$this->appConfig->method('getValueString')->willReturnCallback(
 			static function ($app, $key, $default = '') {
