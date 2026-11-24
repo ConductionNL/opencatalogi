@@ -693,7 +693,7 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			}
 
 			$default = $parameter->getDefaultValue();
-			if ($named[$key] === $default || (is_object($default) === true && $named[$key] == $default)) {
+			if ($named[$key] === $default || (is_object($default) === true && serialize($named[$key]) === serialize($default))) {
 				unset($named[$key]);
 			}
 		}
