@@ -1,6 +1,6 @@
 # Tasks: publication-plain-language-and-translation
 
-Read `openspec/woo-build-rules.md` first. Mock `OCP\TaskProcessing\IManager` against the real OCP interface in `vendor/nextcloud/ocp` (`getAvailableTaskTypes()`, `scheduleTask(Task)`, `getTask(int)`); check the signatures there before writing the double. Group 4 is gated on decision D10: skip it unless the PR author has Ruben's written keep of row 14.7, and say in the PR body that it was skipped.
+Read `openspec/woo-build-rules.md` first. Mock `OCP\TaskProcessing\IManager` against the real OCP interface in `vendor/nextcloud/ocp` (`getAvailableTaskTypes()`, `scheduleTask(Task)`, `getTask(int)`); check the signatures there before writing the double. Group 4 was gated on decision D10 and is decided (24 Nov 2026): translation ships through `publication-translations`; no machine drafting.
 
 ## 1. Field
 
@@ -21,9 +21,9 @@ Read `openspec/woo-build-rules.md` first. Mock `OCP\TaskProcessing\IManager` aga
 
 - [x] 3.1 Document the plain summary and the reading levels for editors in `docs/`, following the writing skill. Verify: a grep for U+2014 on the changed docs.
 
-## 4. Translation (gated on D10; skip unless row 14.7 is kept)
+## 4. Translation (decided by D10, 24 Nov 2026: delivered by publication-translations)
 
-- [ ] 4.1 Add `translations`, the translate draft through `core:text2text:translate`, the accept route and the language negotiation on the public response (REQ-PPL-003). Verify: `tests/Unit/Controller/PublicationTranslationTest.php::testAReaderAsksForEnglish` and `::testAnUnknownLanguageAnswersTheOriginal`.
+- [x] 4.1 ~~Add `translations`, the translate draft through `core:text2text:translate`, the accept route and the language negotiation on the public response (REQ-PPL-003)~~. Decided under D10 (24 Nov 2026): row 14.7's translation is delivered by `publication-translations` (archived 2026-11-24): `title`, `summary` and `description` are translatable through OpenRegister's i18n, an editor writes each language, and the public API negotiates `_lang` and `Accept-Language`. A separate `translations` property would store the same thing twice. The machine-drafted half (`core:text2text:translate`) is struck: area 14 keeps the AI app outside this bundle. REQ-PPL-003 is removed from the spec delta.
 
 ## 5. Verification
 
@@ -32,4 +32,4 @@ Read `openspec/woo-build-rules.md` first. Mock `OCP\TaskProcessing\IManager` aga
 - [ ] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
 - [ ] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
 
-Done when merged on `development` with CI green. Row 15.4 becomes `production` only once a store release ships it; 14.7 only if D10 keeps it and group 4 ships.
+Done when merged on `development` with CI green. Row 15.4 becomes `production` only once a store release ships it; 14.7 rides on `publication-translations`.
