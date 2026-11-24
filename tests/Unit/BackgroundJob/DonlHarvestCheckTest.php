@@ -88,7 +88,7 @@ class DonlHarvestCheckTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheJobIsRegistered(): void {
-		$info = simplexml_load_file(__DIR__ . '/../../../appinfo/info.xml');
+		$info = simplexml_load_string(data: (string)file_get_contents(filename: __DIR__ . '/../../../appinfo/info.xml'));
 		$jobs = array_map('strval', iterator_to_array($info->{'background-jobs'}->job, false));
 
 		$this->assertContains(DonlHarvestCheck::class, $jobs);

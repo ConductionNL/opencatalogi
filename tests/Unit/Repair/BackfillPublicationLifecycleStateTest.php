@@ -301,7 +301,7 @@ class BackfillPublicationLifecycleStateTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheStepIsRegisteredPostMigration(): void {
-		$info  = simplexml_load_file(__DIR__ . '/../../../appinfo/info.xml');
+		$info  = simplexml_load_string(data: (string)file_get_contents(filename: __DIR__ . '/../../../appinfo/info.xml'));
 		$steps = array_map('strval', iterator_to_array($info->{'repair-steps'}->{'post-migration'}->step, false));
 
 		$position = array_search('OCA\OpenCatalogi\Repair\BackfillPublicationLifecycleState', $steps, true);

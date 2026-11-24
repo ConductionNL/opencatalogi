@@ -195,7 +195,7 @@ class MapStoredRefusalGroundsTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheStepIsRegisteredPostMigration(): void {
-		$info = simplexml_load_file(dirname(__DIR__, 3) . '/appinfo/info.xml');
+		$info = simplexml_load_string(data: (string)file_get_contents(filename: dirname(__DIR__, 3) . '/appinfo/info.xml'));
 		$steps = array_map('strval', iterator_to_array($info->{'repair-steps'}->{'post-migration'}->step, false));
 
 		$mine = array_search(MapStoredRefusalGrounds::class, $steps, true);

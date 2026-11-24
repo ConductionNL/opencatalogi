@@ -29,7 +29,7 @@ class CommandRegistrationTest extends TestCase {
 	 * @return string[]
 	 */
 	private function registeredCommands(): array {
-		$xml = simplexml_load_file(__DIR__ . '/../../../appinfo/info.xml');
+		$xml = simplexml_load_string(data: (string)file_get_contents(filename: __DIR__ . '/../../../appinfo/info.xml'));
 		$this->assertNotFalse(condition: $xml, message: 'appinfo/info.xml must parse');
 
 		$commands = [];

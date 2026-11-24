@@ -194,7 +194,7 @@ final class CompletenessSweepTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheJobIsRegistered(): void {
-		$info = simplexml_load_file(dirname(__DIR__, 3) . '/appinfo/info.xml');
+		$info = simplexml_load_string(data: (string)file_get_contents(filename: dirname(__DIR__, 3) . '/appinfo/info.xml'));
 		$jobs = array_map('strval', iterator_to_array($info->{'background-jobs'}->job, false));
 		self::assertContains(CompletenessSweep::class, $jobs);
 

@@ -191,3 +191,10 @@ spl_autoload_register(
 		}
 	}
 );
+
+// IRequest double base and the capability-rights double for the controller
+// tests, loaded as tests/bootstrap-unit.php loads them: the tests carry no
+// PSR-4 test namespace, so without this every test that mocks them fails on
+// "Unit\Support\... does not exist" under this (phpunit.xml) bootstrap.
+require_once __DIR__ . '/Unit/Support/ServerAwareRequest.php';
+require_once __DIR__ . '/Unit/Support/AllowingCapabilityRights.php';
