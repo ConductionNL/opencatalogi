@@ -43,7 +43,6 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling settings-related operations in the OpenCatalogi.
@@ -70,7 +69,6 @@ class SettingsController extends Controller {
 	 * @param ConnectionReporterInterface|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
 	 * @param IJobList|null $jobs Queues the rewrite of every publication's pages.
 	 * @param IAppConfig|null $config Reads the link settings before a save.
-	 * @param LoggerInterface|null $logger Records why a request failed; the caller gets a generic message.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
@@ -83,7 +81,6 @@ class SettingsController extends Controller {
 		private readonly ?ConnectionReporterInterface $connectionReporter = null,
 		private readonly ?IJobList $jobs = null,
 		private readonly ?IAppConfig $config = null,
-		private readonly ?LoggerInterface $logger = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -439,7 +436,7 @@ class SettingsController extends Controller {
 
 			return new JSONResponse(data: $result, statusCode: 400);
 		} catch (\Exception $e) {
-			$this->logger?->error('OpenCatalogi settings: importing the configuration failed', ['exception' => $e]);
+			$this->settingsService->recordFailure(context: 'importing the configuration', exception: $e);
 			return new JSONResponse(
 				data: [
 					'success' => false,
@@ -457,15 +454,15 @@ class SettingsController extends Controller {
 	 * The exception's message can name tables, paths or OpenRegister internals,
 	 * so it goes to the server log only (admin-settings, Security).
 	 *
-	 * @param \Throwable $exception The failure.
+	 * @param \Exception $exception The failure.
 	 * @param string     $context   What the request was doing, for the log.
 	 *
 	 * @return JSONResponse A 500 carrying the generic message.
 	 *
 	 * @spec openspec/changes/admin-settings/specs/admin-settings.md#security
 	 */
-	private function serverError(\Throwable $exception, string $context): JSONResponse {
-		$this->logger?->error('OpenCatalogi settings: ' . $context . ' failed', ['exception' => $exception]);
+	private function serverError(\Exception $exception, string $context): JSONResponse {
+		$this->settingsService->recordFailure(context: $context, exception: $exception);
 		return new JSONResponse(data: ['error' => $this->genericError()], statusCode: 500);
 	}//end serverError()
 

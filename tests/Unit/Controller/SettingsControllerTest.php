@@ -17,7 +17,6 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 
 /**
  * Unit tests for SettingsController.
@@ -203,7 +202,7 @@ class SettingsControllerTest extends TestCase {
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(500, $response->getStatus());
-		$this->assertSame(['error' => 'The server could not complete this request. The details are in the Nextcloud log.'], $response->getData());
+		$this->assertSame(expected: ['error' => 'The server could not complete this request. The details are in the Nextcloud log.'], actual: $response->getData());
 	}
 
 	/**
@@ -598,26 +597,17 @@ class SettingsControllerTest extends TestCase {
 		$exception = new \Exception('SQLSTATE[42S02]: oc_openregister_objects missing');
 		$this->request->method('getParams')->willReturn([]);
 		$this->settingsService->method($serviceMethod)->willThrowException($exception);
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects($this->once())
-			->method('error')
-			->with($this->stringContains('OpenCatalogi settings: '), ['exception' => $exception]);
-		$controller = new SettingsController(
-			appName: 'opencatalogi',
-			request: $this->request,
-			settingsService: $this->settingsService,
-			l10n: $this->l10n,
-			userSession: $this->userSession,
-			logger: $logger,
-		);
+		$this->settingsService->expects($this->once())
+			->method('recordFailure')
+			->with($this->isType(type: 'string'), $exception);
 
-		$response = $controller->$endpoint();
+		$response = $this->controller->$endpoint();
 
-		$this->assertSame(500, $response->getStatus());
+		$this->assertSame(expected: 500, actual: $response->getStatus());
 		$this->assertSame(
-			'The server could not complete this request. The details are in the Nextcloud log.',
-			$response->getData()['error']
+			expected: 'The server could not complete this request. The details are in the Nextcloud log.',
+			actual: $response->getData()['error']
 		);
-		$this->assertStringNotContainsString('SQLSTATE', json_encode($response->getData()));
+		$this->assertStringNotContainsString(needle: 'SQLSTATE', haystack: json_encode($response->getData()));
 	}//end testAServerFailureIsLoggedAndAnsweredGenerically()
 }
