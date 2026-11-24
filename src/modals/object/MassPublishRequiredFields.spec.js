@@ -32,8 +32,9 @@ const { publishThroughLifecycle } = jest.requireMock(
 	'../../services/publicationTransition.js',
 )
 
-const translate = (app, text, vars = {}) =>
-	text.replace(/{(\w+)}/g, (match, key) => String(vars[key] ?? match))
+function translate(app, text, vars = {}) {
+	return text.replace(/{(\w+)}/g, (match, key) => String(vars[key] ?? match))
+}
 
 const SCHEMA = {
 	properties: { publicationDate: {}, depublicationDate: {} },
