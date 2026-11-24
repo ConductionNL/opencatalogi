@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Julkaisukielto purettiin. Julkaisu on julkinen.",
         "Kept permanently: archive hotspot {subject}": "Säilytetään pysyvästi: arkiston kuuma kohta {subject}",
         "until {date}": "{date} asti",
-        "Saved: this publication will be taken down automatically on {date}.": "Tallennettu: tämä julkaisu poistetaan automaattisesti {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Tallennettu: tämä julkaisu poistetaan automaattisesti {date}.",
+        "Documents to publish: {count}": "Julkaistavat asiakirjat: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

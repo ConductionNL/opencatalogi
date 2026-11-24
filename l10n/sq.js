@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Embargoja u hoq. Publikimi është publik.",
         "Kept permanently: archive hotspot {subject}": "Ruhet përgjithmonë: pikë e nxehtë arkivore {subject}",
         "until {date}": "deri më {date}",
-        "Saved: this publication will be taken down automatically on {date}.": "U ruajt: ky publikim do të hiqet automatikisht më {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "U ruajt: ky publikim do të hiqet automatikisht më {date}.",
+        "Documents to publish: {count}": "Dokumente për publikim: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

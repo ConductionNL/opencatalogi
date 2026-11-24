@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Ambargo kaldırıldı. Yayın herkese açık.",
         "Kept permanently: archive hotspot {subject}": "Kalıcı olarak saklanır: arşiv odak noktası {subject}",
         "until {date}": "{date} tarihine kadar",
-        "Saved: this publication will be taken down automatically on {date}.": "Kaydedildi: bu yayın {date} tarihinde otomatik olarak yayından kaldırılacak."
+        "Saved: this publication will be taken down automatically on {date}.": "Kaydedildi: bu yayın {date} tarihinde otomatik olarak yayından kaldırılacak.",
+        "Documents to publish: {count}": "Yayımlanacak belgeler: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "L-embargo tneħħa. Il-pubblikazzjoni hija pubblika.",
         "Kept permanently: archive hotspot {subject}": "Miżmum b'mod permanenti: hotspot tal-arkivju {subject}",
         "until {date}": "sal-{date}",
-        "Saved: this publication will be taken down automatically on {date}.": "Salvat: din il-pubblikazzjoni se titneħħa awtomatikament fil-{date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Salvat: din il-pubblikazzjoni se titneħħa awtomatikament fil-{date}.",
+        "Documents to publish: {count}": "Dokumenti għall-pubblikazzjoni: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

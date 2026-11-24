@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Az embargó feloldva. A közzététel nyilvános.",
         "Kept permanently: archive hotspot {subject}": "Véglegesen megőrzendő: levéltári kiemelt téma {subject}",
         "until {date}": "{date}-ig",
-        "Saved: this publication will be taken down automatically on {date}.": "Mentve: ez a közzététel {date} napján automatikusan visszavonásra kerül."
+        "Saved: this publication will be taken down automatically on {date}.": "Mentve: ez a közzététel {date} napján automatikusan visszavonásra kerül.",
+        "Documents to publish: {count}": "Közzéteendő dokumentumok: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

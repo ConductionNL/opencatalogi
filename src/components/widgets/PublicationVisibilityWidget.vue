@@ -61,6 +61,13 @@
 			{{ sourceAbsenceNote }}
 		</NcNoteCard>
 
+		<p
+			v-if="documentsLine"
+			class="publication-visibility__state"
+			data-testid="publication-visibility-documents">
+			{{ documentsLine }}
+		</p>
+
 		<div class="publication-visibility__actions">
 			<NcButton
 				v-if="actions.publishNow"
@@ -212,6 +219,7 @@ import {
 	comingDepublication,
 	depublicationKeyOf,
 	depublicationNoticeStep,
+	documentCountOf,
 	documentOptions,
 	draftPurgeMessage,
 	filesRouteParams,
@@ -306,6 +314,7 @@ export default {
 			minimumAssurance: 'substantial',
 			sourceAbsence: null,
 			archiveHotspot: '',
+			documentCount: null,
 			depublicationBaseline: null,
 			depublicationNotice: '',
 			documents: [],
@@ -434,6 +443,21 @@ export default {
 		 */
 		depublicationKey() {
 			return depublicationKeyOf(this.ctx.object || this.content || null)
+		},
+
+		/**
+		 * How many documents a publish would carry, shown beside the publish
+		 * buttons (REQ-PSG-004); empty when no publish move shows.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
+		 */
+		documentsLine() {
+			const publishable = this.actions.publishNow || this.actions.publishAgain || this.liftable
+			if (!publishable || this.documentCount === null) {
+				return ''
+			}
+			return this.t('opencatalogi', 'Documents to publish: {count}', { count: String(this.documentCount) })
 		},
 
 		/** @spec exclude presentational widget adapter; resolves the object context from inject. */
@@ -605,6 +629,7 @@ export default {
 				this.minimumAssurance = data.minimumAssurance === 'high' ? 'high' : 'substantial'
 				this.sourceAbsence = data.sourceAbsence || null
 				this.archiveHotspot = archiveHotspotOf(data)
+				this.documentCount = documentCountOf(data)
 			} catch {
 				this.state = ''
 				this.canPublish = false
@@ -613,6 +638,7 @@ export default {
 				this.minimumAssurance = 'substantial'
 				this.sourceAbsence = null
 				this.archiveHotspot = ''
+				this.documentCount = null
 			}
 
 			await this.loadFiles()

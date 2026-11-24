@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Embargo je ukinut. Publikacija je javna.",
         "Kept permanently: archive hotspot {subject}": "Trajno se čuva: arhivska žarišna tačka {subject}",
         "until {date}": "do {date}",
-        "Saved: this publication will be taken down automatically on {date}.": "Sačuvano: ova objava će biti automatski povučena {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Sačuvano: ova objava će biti automatski povučena {date}.",
+        "Documents to publish: {count}": "Dokumenti za objavu: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

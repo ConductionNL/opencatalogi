@@ -843,7 +843,8 @@ OC.L10N.register(
         "The embargo was lifted. The publication is public.": "Embargo on tühistatud. Väljaanne on avalik.",
         "Kept permanently: archive hotspot {subject}": "Säilitatakse alaliselt: arhiivi kuum koht {subject}",
         "until {date}": "kuni {date}",
-        "Saved: this publication will be taken down automatically on {date}.": "Salvestatud: selle väljaande avaldamine lõpetatakse automaatselt {date}."
+        "Saved: this publication will be taken down automatically on {date}.": "Salvestatud: selle väljaande avaldamine lõpetatakse automaatselt {date}.",
+        "Documents to publish: {count}": "Avaldatavad dokumendid: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )
