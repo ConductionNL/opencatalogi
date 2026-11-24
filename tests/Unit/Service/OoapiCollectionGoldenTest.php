@@ -186,7 +186,7 @@ class OoapiCollectionGoldenTest extends TestCase {
 			}
 		);
 		$objects->method('find')->willReturnCallback(
-			function (string|int $id, array $_extend): ?\OCA\OpenRegister\Db\ObjectEntity {
+			function (string|int $id, mixed ...$rest): ?\OCA\OpenRegister\Db\ObjectEntity {
 				$this->calls[] = ['find' => $id];
 				$known = [
 					'course-1' => [['catalog' => 'catalog-1', 'code' => 'INF101', 'name' => 'Course'], '11', 'reg-1'],
