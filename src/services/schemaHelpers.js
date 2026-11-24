@@ -50,7 +50,7 @@ function knownSchema(id) {
  * @param {object} publication The publication.
  * @return {object|null} The schema.
  */
-function resolveSchema(publication) {
+export function resolveSchema(publication) {
 	const ref = publication?.['@self']?.schema ?? publication?.schema
 	if (!ref) return null
 

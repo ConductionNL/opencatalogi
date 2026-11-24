@@ -840,7 +840,9 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Автоматическое снятие с публикации {date}",
         "Lift embargo": "Снять эмбарго",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Опубликовать «{name}» сейчас, до даты публикации? Снятие записывается в журнал аудита с вашим именем и причиной.",
-        "The embargo was lifted. The publication is public.": "Эмбарго снято. Публикация общедоступна."
+        "The embargo was lifted. The publication is public.": "Эмбарго снято. Публикация общедоступна.",
+        "Publish {count} of {total} publications": "Опубликовать {count} из {total} публикаций",
+        "These publications miss a field required to publish and will be skipped:": "В этих публикациях не заполнено поле, обязательное для публикации, и они будут пропущены:"
     },
     "nplurals=2; plural=(n != 1);"
 )

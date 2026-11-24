@@ -2203,7 +2203,9 @@ OC.L10N.register(
         "The server could not complete this request. The details are in the Nextcloud log.": "The server could not complete this request. The details are in the Nextcloud log.",
         "Lift embargo": "Lift embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.",
-        "The embargo was lifted. The publication is public.": "The embargo was lifted. The publication is public."
+        "The embargo was lifted. The publication is public.": "The embargo was lifted. The publication is public.",
+        "Publish {count} of {total} publications": "Publish {count} of {total} publications",
+        "These publications miss a field required to publish and will be skipped:": "These publications miss a field required to publish and will be skipped:"
     },
     "nplurals=2; plural=(n != 1);"
 )

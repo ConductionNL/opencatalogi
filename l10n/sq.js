@@ -840,7 +840,9 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Heqje automatike nga publikimi më {date}",
         "Lift embargo": "Hiq embargon",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Të publikohet „{name}” tani, para datës së publikimit? Heqja regjistrohet në gjurmën e auditimit me emrin tuaj dhe arsyen.",
-        "The embargo was lifted. The publication is public.": "Embargoja u hoq. Publikimi është publik."
+        "The embargo was lifted. The publication is public.": "Embargoja u hoq. Publikimi është publik.",
+        "Publish {count} of {total} publications": "Publiko {count} nga {total} publikime",
+        "These publications miss a field required to publish and will be skipped:": "Këtyre publikimeve u mungon një fushë e detyrueshme për publikim dhe do të anashkalohen:"
     },
     "nplurals=2; plural=(n != 1);"
 )

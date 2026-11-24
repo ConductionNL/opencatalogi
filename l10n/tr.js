@@ -840,7 +840,9 @@ OC.L10N.register(
         "Automatic depublication on {date}": "{date} tarihinde otomatik yayından kaldırma",
         "Lift embargo": "Ambargoyu kaldır",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "\"{name}\" yayın tarihinden önce şimdi yayımlansın mı? Kaldırma işlemi adınız ve gerekçeyle birlikte denetim kaydına yazılır.",
-        "The embargo was lifted. The publication is public.": "Ambargo kaldırıldı. Yayın herkese açık."
+        "The embargo was lifted. The publication is public.": "Ambargo kaldırıldı. Yayın herkese açık.",
+        "Publish {count} of {total} publications": "{total} yayından {count} tanesini yayımla",
+        "These publications miss a field required to publish and will be skipped:": "Bu yayınlarda yayımlamak için gereken bir alan eksik ve atlanacaklar:"
     },
     "nplurals=2; plural=(n != 1);"
 )

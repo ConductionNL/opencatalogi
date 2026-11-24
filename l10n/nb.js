@@ -840,7 +840,9 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Automatisk avpublisering {date}",
         "Lift embargo": "Opphev embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publisere «{name}» nå, før publiseringsdatoen? Opphevelsen registreres i revisjonsloggen med navnet ditt og begrunnelsen.",
-        "The embargo was lifted. The publication is public.": "Embargoen er opphevet. Publikasjonen er offentlig."
+        "The embargo was lifted. The publication is public.": "Embargoen er opphevet. Publikasjonen er offentlig.",
+        "Publish {count} of {total} publications": "Publiser {count} av {total} publikasjoner",
+        "These publications miss a field required to publish and will be skipped:": "Disse publikasjonene mangler et felt som kreves for å publisere, og hoppes over:"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -840,7 +840,9 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Sjálfvirk afturköllun birtingar {date}",
         "Lift embargo": "Aflétta banni",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Birta „{name}“ núna, fyrir birtingardag? Afléttingin er skráð í endurskoðunarslóðina með nafni þínu og ástæðunni.",
-        "The embargo was lifted. The publication is public.": "Banninu hefur verið aflétt. Birtingin er opinber."
+        "The embargo was lifted. The publication is public.": "Banninu hefur verið aflétt. Birtingin er opinber.",
+        "Publish {count} of {total} publications": "Birta {count} af {total} útgáfum",
+        "These publications miss a field required to publish and will be skipped:": "Þessar útgáfur vantar reit sem þarf til að birta og þeim verður sleppt:"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -839,7 +839,9 @@
         "Automatic depublication on {date}": "Automatisk afpublicering den {date}",
         "Lift embargo": "Ophæv embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Udgiv \"{name}\" nu, før udgivelsesdatoen? Ophævelsen registreres i revisionssporet med dit navn og begrundelsen.",
-        "The embargo was lifted. The publication is public.": "Embargoen er ophævet. Publikationen er offentlig."
+        "The embargo was lifted. The publication is public.": "Embargoen er ophævet. Publikationen er offentlig.",
+        "Publish {count} of {total} publications": "Udgiv {count} af {total} publikationer",
+        "These publications miss a field required to publish and will be skipped:": "Disse publikationer mangler et felt, der kræves for at udgive, og springes over:"
     },
     "plurals": {}
 }

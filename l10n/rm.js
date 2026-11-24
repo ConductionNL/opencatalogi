@@ -840,7 +840,9 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Retratga automatica da la publicaziun ils {date}",
         "Lift embargo": "Annullar l'embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publitgar «{name}» ussa, avant la data da publicaziun? L'annullaziun vegn registrada en il protocol da revisiun cun Voss num ed il motiv.",
-        "The embargo was lifted. The publication is public.": "L'embargo è vegnì annullà. La publicaziun è publica."
+        "The embargo was lifted. The publication is public.": "L'embargo è vegnì annullà. La publicaziun è publica.",
+        "Publish {count} of {total} publications": "Publitgar {count} da {total} publicaziuns",
+        "These publications miss a field required to publish and will be skipped:": "A questas publicaziuns manca in champ necessari per publitgar ed ellas vegnan sursiglidas:"
     },
     "nplurals=2; plural=(n != 1);"
 )

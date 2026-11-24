@@ -839,7 +839,9 @@
         "Automatic depublication on {date}": "Automatsko povlačenje objave {date}",
         "Lift embargo": "Ukini embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Objaviti „{name}” sada, prije datuma objave? Ukidanje se bilježi u revizijskom zapisu s vašim imenom i razlogom.",
-        "The embargo was lifted. The publication is public.": "Embargo je ukinut. Publikacija je javna."
+        "The embargo was lifted. The publication is public.": "Embargo je ukinut. Publikacija je javna.",
+        "Publish {count} of {total} publications": "Objavi {count} od {total} publikacija",
+        "These publications miss a field required to publish and will be skipped:": "Ovim publikacijama nedostaje polje obavezno za objavu i bit će preskočene:"
     },
     "plurals": {}
 }

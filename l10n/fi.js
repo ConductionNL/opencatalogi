@@ -840,7 +840,9 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Automaattinen julkaisun poisto {date}",
         "Lift embargo": "Pura julkaisukielto",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Julkaistaanko \"{name}\" nyt, ennen julkaisupäivää? Purkaminen kirjataan tarkastuslokiin nimelläsi ja perusteluineen.",
-        "The embargo was lifted. The publication is public.": "Julkaisukielto purettiin. Julkaisu on julkinen."
+        "The embargo was lifted. The publication is public.": "Julkaisukielto purettiin. Julkaisu on julkinen.",
+        "Publish {count} of {total} publications": "Julkaise {count}/{total} julkaisua",
+        "These publications miss a field required to publish and will be skipped:": "Näistä julkaisuista puuttuu julkaisemiseen vaadittu kenttä, ja ne ohitetaan:"
     },
     "nplurals=2; plural=(n != 1);"
 )

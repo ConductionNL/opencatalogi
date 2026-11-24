@@ -5,7 +5,7 @@
 <template>
 	<MassObjectActionDialog
 		:title="dialogTitle"
-		:confirmLabel="t('opencatalogi', 'Publish')"
+		:confirmLabel="confirmLabel"
 		confirmVariant="primary"
 		:confirmDisabled="submitDisabled"
 		:loading="loading"
@@ -83,6 +83,17 @@
 			<NcNoteCard v-if="unsupportedCount > 0" type="warning">
 				{{ unsupportedWarning }}
 			</NcNoteCard>
+			<NcNoteCard
+				v-if="incompleteObjects.length > 0"
+				type="warning"
+				data-testid="publish-incomplete">
+				<p>{{ incompleteWarning }}</p>
+				<ul>
+					<li v-for="entry in incompleteObjects" :key="entry.key">
+						{{ entry.title }}: {{ entry.missing.join(', ') }}
+					</li>
+				</ul>
+			</NcNoteCard>
 		</template>
 
 		<template #icon>
@@ -97,6 +108,7 @@ import Publish from 'vue-material-design-icons/Publish.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 import MassObjectActionDialog from './MassObjectActionDialog.vue'
 import { publishesThroughLifecycle, publishThroughLifecycle } from '../../services/publicationTransition.js'
+import { missingToPublish, refusalMessage } from '../../services/requiredToPublish.js'
 import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 import { objectStore } from '../../store/store.js'
 import massObjectAction from './massObjectAction.js'
@@ -212,6 +224,63 @@ export default {
 			)
 		},
 
+		/**
+		 * The selected publications this publish would move but that miss a field
+		 * the schema's lifecycle requires to publish, each with those fields.
+		 *
+		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 */
+		incompleteObjects() {
+			if (this.mode === 'retroactive') return []
+			return this.selectedObjects
+				.filter((obj) => schemaHasPublicationDateFields(obj) && !this.isAlreadyPublished(obj))
+				.map((obj) => ({
+					key: obj?.['@self']?.id ?? obj?.id ?? obj?.title,
+					title: obj?.title || obj?.['@self']?.name || obj?.id,
+					object: obj,
+					missing: missingToPublish(obj),
+				}))
+				.filter((entry) => entry.missing.length > 0)
+		},
+
+		/**
+		 * How many selected publications this publish actually moves.
+		 *
+		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 */
+		publishableCount() {
+			return this.selectedObjects.filter((obj) => schemaHasPublicationDateFields(obj)
+				&& (this.mode === 'retroactive' || !this.isAlreadyPublished(obj))).length
+				- this.incompleteObjects.length
+		},
+
+		/**
+		 * The confirm button: "Publish", or "Publish 1 of 2 publications" when incomplete ones are left out.
+		 *
+		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 */
+		confirmLabel() {
+			if (this.incompleteObjects.length === 0) {
+				return t('opencatalogi', 'Publish')
+			}
+			return t('opencatalogi', 'Publish {count} of {total} publications', {
+				count: this.publishableCount,
+				total: this.selectedObjects.length,
+			})
+		},
+
+		/**
+		 * The note above the list of incomplete publications.
+		 *
+		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 */
+		incompleteWarning() {
+			return t(
+				'opencatalogi',
+				'These publications miss a field required to publish and will be skipped:',
+			)
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		modeOptions() {
 			const options = [
@@ -277,6 +346,9 @@ export default {
 				this.mode !== 'retroactive'
 				&& this.alreadyPublishedCount === this.selectedObjects.length
 			) {
+				return true
+			}
+			if (this.publishableCount <= 0) {
 				return true
 			}
 			return false
@@ -468,6 +540,8 @@ export default {
 			const objectsToProcess = [...this.selectedObjects]
 			const successful = []
 			const failed = []
+			const refusals = []
+			const incomplete = this.incompleteObjects.map((entry) => entry.object)
 
 			for (const obj of objectsToProcess) {
 				try {
@@ -482,6 +556,10 @@ export default {
 						this.mode !== 'retroactive'
 						&& this.isAlreadyPublished(obj)
 					) {
+						continue
+					}
+					// Skip publications that miss a field required to publish (REQ-PRP-003).
+					if (incomplete.includes(obj)) {
 						continue
 					}
 
@@ -510,12 +588,19 @@ export default {
 				} catch (err) {
 					console.error('Error publishing object:', err)
 					failed.push({ object: obj, error: err })
+					// OpenRegister's refusal names the publication's missing fields (REQ-PRP-003).
+					if (err?.response?.status === 422) {
+						refusals.push(`${obj?.title || obj?.id}: ${refusalMessage(err)}`)
+					}
 				}
 			}
 
 			this.finishMassAction({ successful, failed }, (count) =>
 				t('opencatalogi', 'Failed to publish {count} object(s)', { count }),
 			)
+			if (refusals.length > 0) {
+				this.error = refusals.join('\n')
+			}
 
 			this.loading = false
 		},

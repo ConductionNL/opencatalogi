@@ -840,7 +840,9 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Samodejni umik objave {date}",
         "Lift embargo": "Odpravi embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Objavim »{name}« zdaj, pred datumom objave? Odprava se zabeleži v revizijsko sled z vašim imenom in razlogom.",
-        "The embargo was lifted. The publication is public.": "Embargo je odpravljen. Objava je javna."
+        "The embargo was lifted. The publication is public.": "Embargo je odpravljen. Objava je javna.",
+        "Publish {count} of {total} publications": "Objavi {count} od {total} objav",
+        "These publications miss a field required to publish and will be skipped:": "Tem objavam manjka polje, obvezno za objavo, zato bodo preskočene:"
     },
     "nplurals=2; plural=(n != 1);"
 )

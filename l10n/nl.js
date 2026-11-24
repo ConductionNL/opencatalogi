@@ -2158,7 +2158,9 @@ OC.L10N.register(
         "The server could not complete this request. The details are in the Nextcloud log.": "De server kon dit verzoek niet afronden. De details staan in het Nextcloud-logboek.",
         "Lift embargo": "Embargo opheffen",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "\"{name}\" nu publiceren, vóór de publicatiedatum? Het opheffen wordt in het auditlog vastgelegd met je naam en de reden.",
-        "The embargo was lifted. The publication is public.": "Het embargo is opgeheven. De publicatie is openbaar."
+        "The embargo was lifted. The publication is public.": "Het embargo is opgeheven. De publicatie is openbaar.",
+        "Publish {count} of {total} publications": "{count} van {total} publicaties publiceren",
+        "These publications miss a field required to publish and will be skipped:": "Deze publicaties missen een veld dat nodig is om te publiceren en worden overgeslagen:"
     },
     "nplurals=2; plural=(n != 1);"
 )
