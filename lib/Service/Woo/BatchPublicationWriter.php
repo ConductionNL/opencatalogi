@@ -507,6 +507,8 @@ class BatchPublicationWriter {
 	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-the-publishers-rsin-travels-with-every-stored-document-req-pro-002
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2b
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c
+	 * @SuppressWarnings(PHPMD.StaticAccess) PublisherFileStamp::rsinOf() and ::publisherOf() read labels.
 	 */
 	public function attach(array $publication, File $file): ?array {
 		$this->requireOpenRegister();
@@ -537,14 +539,20 @@ class BatchPublicationWriter {
 			}
 		}
 
+		$stamp = $this->publisherStamp();
+		$labels = $stamp?->stamp(files: $files, publication: $target, fileId: (int)$created->getId());
+
 		$embedded = null;
 		if ($this->titles !== null && $created instanceof File) {
-			$facts = new EmbeddedTitle(title: (string)($publication['title'] ?? ''), identifier: $publication['id']);
+			$facts = new EmbeddedTitle(
+				title: (string)($publication['title'] ?? ''),
+				identifier: $publication['id'],
+				publisher: PublisherFileStamp::publisherOf(labels: ($labels ?? [])),
+				rsin: PublisherFileStamp::rsinOf(labels: ($labels ?? []))
+			);
 			$embedded = $this->titles->write(file: $created, facts: $facts);
 		}
 
-		$stamp = $this->publisherStamp();
-		$labels = $stamp?->stamp(files: $files, publication: $target, fileId: (int)$created->getId());
 		if ($stamp !== null && $labels !== null) {
 			$stamp->record(
 				objects: $this->container->get('OCA\OpenRegister\Service\ObjectService'),

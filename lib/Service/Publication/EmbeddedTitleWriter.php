@@ -95,7 +95,7 @@ class EmbeddedTitleWriter {
 		}
 
 		$hash = hash('sha256', $before);
-		$facts = new EmbeddedTitle(title: trim($facts->title), identifier: $facts->identifier);
+		$facts = new EmbeddedTitle(title: trim($facts->title), identifier: $facts->identifier, publisher: $facts->publisher, rsin: $facts->rsin);
 		if ($facts->title === '') {
 			return self::outcome(status: self::SKIPPED, before: $hash, after: $hash, reason: self::NO_TITLE);
 		}

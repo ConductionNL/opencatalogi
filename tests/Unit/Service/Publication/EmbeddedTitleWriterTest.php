@@ -125,8 +125,141 @@ class EmbeddedTitleWriterTest extends TestCase {
 		$this->assertSame(self::TITLE, $read['title']);
 		$this->assertSame(self::TITLE, $read['xmpTitle']);
 		$this->assertSame(self::IDENTIFIER, $read['xmpIdentifier']);
+		$this->assertNull($read['xmpPublisher'], 'without a known publisher no dc:publisher is written');
+		$this->assertNull($read['xmpRsin']);
 		$this->assertSame(hash('sha256', (string)$this->written), $outcome['hashAfter']);
 	}//end testThePdfInfoAndXmpCarryTheTitle()
+
+	/**
+	 * The publisher's name and RSIN go into the XMP beside the title: `dc:publisher` and `oc:rsin` (REQ-PRO-002).
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c
+	 */
+	public function testTheRsinIsEmbeddedBesideTheTitle(): void {
+		$plain = self::fixture('plain');
+		$outcome = $this->writer()->write(file: $this->file($plain), facts: self::withPublisher());
+
+		$this->assertSame(EmbeddedTitleWriter::WRITTEN, $outcome['status']);
+		$read = PdfReadBack::read((string)$this->written);
+		$this->assertSame(self::TITLE, $read['xmpTitle']);
+		$this->assertSame('Gemeente Zuiddrecht & Co', $read['xmpPublisher']);
+		$this->assertSame('002220647', $read['xmpRsin']);
+		$this->assertStringContainsString('xmlns:oc="' . PdfTitleUpdate::XMP_NAMESPACE . '"', $read['xmp']);
+		$this->assertStringStartsWith($plain, (string)$this->written, 'the update is still appended after the last byte');
+	}//end testTheRsinIsEmbeddedBesideTheTitle()
+
+	/**
+	 * A docx gets the publisher in `docProps/custom.xml`, declared with its content type and relationship;
+	 * a second write updates the values and adds nothing twice (REQ-PRO-002).
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c
+	 */
+	public function testADocxCarriesThePublisherInCustomProperties(): void {
+		$docx = self::package([
+			'[Content_Types].xml' => '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"/>',
+			'_rels/.rels' => '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+			'docProps/core.xml' => '<?xml version="1.0" encoding="UTF-8"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"/>',
+		]);
+		$outcome = $this->writer()->write(file: $this->file($docx), facts: self::withPublisher());
+
+		$this->assertSame(EmbeddedTitleWriter::WRITTEN, $outcome['status']);
+		$custom = self::part((string)$this->written, 'docProps/custom.xml');
+		$this->assertSame(['Gemeente Zuiddrecht & Co', '002220647'], self::texts($custom, 'lpwstr'));
+		$this->assertSame(['publisher' => '2', 'rsin' => '3'], self::pids($custom));
+		$types = self::part((string)$this->written, '[Content_Types].xml');
+		$this->assertStringContainsString('PartName="/docProps/custom.xml"', $types);
+		$this->assertStringContainsString('application/vnd.openxmlformats-officedocument.custom-properties+xml', $types);
+		$rels = self::part((string)$this->written, '_rels/.rels');
+		$this->assertStringContainsString('Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties" Target="docProps/custom.xml"', $rels);
+
+		$this->writer()->write(
+			file: $this->file((string)$this->written),
+			facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER, publisher: 'Gemeente Noorddrecht', rsin: '002220647')
+		);
+		$again = self::part((string)$this->written, 'docProps/custom.xml');
+		$this->assertSame(['Gemeente Noorddrecht', '002220647'], self::texts($again, 'lpwstr'));
+		$this->assertSame(1, substr_count(self::part((string)$this->written, '[Content_Types].xml'), 'custom.xml'));
+		$this->assertSame(1, substr_count(self::part((string)$this->written, '_rels/.rels'), 'custom.xml'));
+	}//end testADocxCarriesThePublisherInCustomProperties()
+
+	/**
+	 * A docx that has custom properties keeps them and gets the publisher's after the highest `pid`.
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c
+	 */
+	public function testExistingCustomPropertiesAreKept(): void {
+		$docx = self::package([
+			'docProps/core.xml' => '<?xml version="1.0" encoding="UTF-8"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"/>',
+			'docProps/custom.xml' => '<?xml version="1.0"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/custom-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><property fmtid="{D5CDD505-2E9C-101B-9397-08002B2CF9AE}" pid="7" name="kenmerk"><vt:lpwstr>K-1</vt:lpwstr></property></Properties>',
+		]);
+		$this->writer()->write(
+			file: $this->file($docx),
+			facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER, publisher: null, rsin: '002220647')
+		);
+
+		$custom = self::part((string)$this->written, 'docProps/custom.xml');
+		$this->assertSame(['kenmerk' => '7', 'rsin' => '8'], self::pids($custom));
+		$this->assertSame(['K-1', '002220647'], self::texts($custom, 'lpwstr'));
+	}//end testExistingCustomPropertiesAreKept()
+
+	/**
+	 * A docx without its package relationships cannot declare a new custom part, so it is skipped
+	 * when there is a publisher to write; without one it still gets its title.
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c
+	 */
+	public function testADocxThatCannotDeclareTheCustomPartIsSkipped(): void {
+		$docx = self::package([
+			'docProps/core.xml' => '<?xml version="1.0" encoding="UTF-8"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/"/>',
+		]);
+		$outcome = $this->writer()->write(file: $this->file($docx), facts: self::withPublisher());
+
+		$this->assertSame(['skipped', 'no-metadata-part'], [$outcome['status'], $outcome['reason']]);
+		$this->assertNull($this->written);
+	}//end testADocxThatCannotDeclareTheCustomPartIsSkipped()
+
+	/**
+	 * An odt gets the publisher and RSIN as user-defined fields beside the identifier.
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c
+	 */
+	public function testAnOdtCarriesThePublisherInUserDefinedFields(): void {
+		$meta = '<?xml version="1.0" encoding="UTF-8"?><office:document-meta xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
+			. 'xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><office:meta/></office:document-meta>';
+		$odt = self::package(['mimetype' => 'application/vnd.oasis.opendocument.text', 'meta.xml' => $meta]);
+		$this->writer()->write(file: $this->file($odt), facts: self::withPublisher());
+		$this->writer()->write(file: $this->file((string)$this->written), facts: self::withPublisher());
+
+		$written = self::part((string)$this->written, 'meta.xml');
+		$this->assertSame([self::IDENTIFIER, 'Gemeente Zuiddrecht & Co', '002220647'], self::texts($written, 'user-defined'));
+	}//end testAnOdtCarriesThePublisherInUserDefinedFields()
+
+	/**
+	 * Facts with a known publisher.
+	 *
+	 * @return EmbeddedTitle
+	 */
+	private static function withPublisher(): EmbeddedTitle {
+		return new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER, publisher: 'Gemeente Zuiddrecht & Co', rsin: '002220647');
+	}//end withPublisher()
+
+	/**
+	 * The `pid` of each custom property, by name.
+	 *
+	 * @param string $xml The custom.xml.
+	 *
+	 * @return array<string, string>
+	 */
+	private static function pids(string $xml): array {
+		$doc = new \DOMDocument();
+		$doc->loadXML($xml);
+		$pids = [];
+		foreach ($doc->getElementsByTagNameNS('*', 'property') as $node) {
+			$pids[$node->getAttribute('name')] = $node->getAttribute('pid');
+		}
+
+		return $pids;
+	}//end pids()
 
 	public function testTheVerifiedRedactedBytesAreAnExactPrefix(): void {
 		$verified = self::fixture('plain');

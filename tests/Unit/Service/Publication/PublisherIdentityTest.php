@@ -23,6 +23,8 @@ namespace OCA\OpenCatalogi\Tests\Unit\Service\Publication;
 
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
+use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
+use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\Publication\PublisherFileStamp;
 use OCA\OpenCatalogi\Service\Publication\PublisherIdentity;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
@@ -44,6 +46,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2
  * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2b
+ * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c
  */
 final class PublisherIdentityTest extends TestCase {
 
@@ -374,6 +377,34 @@ final class PublisherIdentityTest extends TestCase {
 	}//end testOnlyAnRsinLabelIsStored()
 
 	/**
+	 * The attached copy's embedded metadata gets the publisher's name and RSIN beside the title,
+	 * and an RSIN that fails the 11-proef gives neither (REQ-PRO-002).
+	 *
+	 * @return void
+	 */
+	public function testTheTitleWriterGetsThePublisherAndTheRsin(): void {
+		$facts  = [];
+		$titles = $this->createMock(originalClassName: EmbeddedTitleWriter::class);
+		$titles->method('write')->willReturnCallback(
+			static function (File $file, EmbeddedTitle $given) use (&$facts): array {
+				$facts[] = $given;
+
+				return ['status' => EmbeddedTitleWriter::WRITTEN, 'hashBefore' => 'a', 'hashAfter' => 'b'];
+			}
+		);
+		$created = $this->createMock(originalClassName: File::class);
+		$created->method('getId')->willReturn(200);
+		$files = new StampFakeFileService(answer: $created);
+
+		$this->writer(files: $files, stamp: $this->validStamp(), titles: $titles)->attach(publication: $this->publication(), file: $this->document());
+		$invalid = new PublisherFileStamp(identity: $this->identity(organisation: ['name' => 'Gemeente Zuiddrecht', 'rsin' => '123456789']));
+		$this->writer(files: $files, stamp: $invalid, titles: $titles)->attach(publication: $this->publication(), file: $this->document());
+
+		self::assertSame(expected: ['Besluit', 'pub-1', 'Gemeente Zuiddrecht', '002220647'], actual: [$facts[0]->title, $facts[0]->identifier, $facts[0]->publisher, $facts[0]->rsin]);
+		self::assertSame(expected: [null, null], actual: [$facts[1]->publisher, $facts[1]->rsin]);
+	}//end testTheTitleWriterGetsThePublisherAndTheRsin()
+
+	/**
 	 * A stamp over an organisation with a valid RSIN.
 	 *
 	 * @return PublisherFileStamp The stamp.
@@ -390,10 +421,11 @@ final class PublisherIdentityTest extends TestCase {
 	 *
 	 * @param StampFakeFileService $files The file service double.
 	 * @param object|null          $stamp What the container answers for the stamp; null throws.
+	 * @param EmbeddedTitleWriter|null $titles The title writer, none by default.
 	 *
 	 * @return BatchPublicationWriter The writer.
 	 */
-	private function writer(StampFakeFileService $files, ?object $stamp): BatchPublicationWriter {
+	private function writer(StampFakeFileService $files, ?object $stamp, ?EmbeddedTitleWriter $titles=null): BatchPublicationWriter {
 		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$publications = $this->publications;
 		$container->method('get')->willReturnCallback(
@@ -413,7 +445,7 @@ final class PublisherIdentityTest extends TestCase {
 			linker: $this->createMock(originalClassName: PublicationLinker::class),
 			l10n: $this->createMock(originalClassName: IL10N::class),
 			appManager: $apps,
-			titles: null
+			titles: $titles
 		);
 	}//end writer()
 
@@ -530,6 +562,14 @@ class StampFakeFileService {
 	private int $attached = 0;
 
 	/**
+	 * Constructor.
+	 *
+	 * @param File|null $answer The file addFile() answers, instead of a plain object with an id.
+	 */
+	public function __construct(private readonly ?File $answer=null) {
+	}//end __construct()
+
+	/**
 	 * Attach a file and answer it.
 	 *
 	 * @param mixed  $objectEntity The publication.
@@ -543,6 +583,9 @@ class StampFakeFileService {
 		$this->log[] = 'addFile ' . $fileName;
 		$id = (200 + $this->attached);
 		$this->attached++;
+		if ($this->answer !== null) {
+			return $this->answer;
+		}
 
 		return new class($id) {
 			/**

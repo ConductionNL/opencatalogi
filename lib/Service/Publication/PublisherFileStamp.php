@@ -150,16 +150,47 @@ class PublisherFileStamp {
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2b
 	 */
 	public static function rsinOf(array $labels): ?string {
-		foreach ($labels as $label) {
-			if (str_starts_with($label, self::RSIN_LABEL) === true) {
-				$rsin = substr($label, strlen(self::RSIN_LABEL));
+		return self::valueOf(labels: $labels, prefix: self::RSIN_LABEL);
+	}//end rsinOf()
 
-				return $rsin === '' ? null : $rsin;
+	/**
+	 * The publisher's name the labels carry, only beside a valid RSIN.
+	 *
+	 * @param array<int, string> $labels The labels `labels()` gave.
+	 *
+	 * @return string|null The name.
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c
+	 */
+	public static function publisherOf(array $labels): ?string {
+		if (self::rsinOf(labels: $labels) === null) {
+			return null;
+		}
+
+		return self::valueOf(labels: $labels, prefix: 'publisherName:');
+	}//end publisherOf()
+
+	/**
+	 * The value of the first label with a prefix, or null when there is none or it is empty.
+	 *
+	 * @param array<int, string> $labels The labels.
+	 * @param string             $prefix The prefix, with its colon.
+	 *
+	 * @return string|null The value.
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2b
+	 */
+	private static function valueOf(array $labels, string $prefix): ?string {
+		foreach ($labels as $label) {
+			if (str_starts_with($label, $prefix) === true) {
+				$value = substr($label, strlen($prefix));
+
+				return $value === '' ? null : $value;
 			}
 		}
 
 		return null;
-	}//end rsinOf()
+	}//end valueOf()
 
 	/**
 	 * Store the stamped RSIN on the publication as `publisherRsin`.
