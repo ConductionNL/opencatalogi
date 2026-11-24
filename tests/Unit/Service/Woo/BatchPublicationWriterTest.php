@@ -215,12 +215,12 @@ class BatchPublicationWriterTest extends TestCase {
 			now: '2026-11-17T10:00:00+00:00'
 		);
 
-		$this->assertSame('approved', $payload['status']);
-		$this->assertSame('Besluit parkeren.', $payload['summary']);
-		$this->assertSame('Besluit en openbaar gemaakte documenten: Besluit parkeren. Zaak Z-9.', $payload['description']);
-		$this->assertSame('org-uuid', $payload['organization']);
+		$this->assertSame(expected: 'approved', actual: $payload['status']);
+		$this->assertSame(expected: 'Besluit parkeren.', actual: $payload['summary']);
+		$this->assertSame(expected: 'Besluit en openbaar gemaakte documenten: Besluit parkeren. Zaak Z-9.', actual: $payload['description']);
+		$this->assertSame(expected: 'org-uuid', actual: $payload['organization']);
 		foreach (['summary', 'description', 'organization'] as $field) {
-			$this->assertNotSame('', trim((string)$payload[$field]), $field);
+			$this->assertNotSame(expected: '', actual: trim((string)$payload[$field]), message: $field);
 		}
 	}//end testABatchPublicationPassesTheDeclaredRule()
 
@@ -241,9 +241,9 @@ class BatchPublicationWriterTest extends TestCase {
 			now: '2026-11-17T10:00:00+00:00'
 		);
 
-		$this->assertSame(255, mb_strlen($payload['summary']));
-		$this->assertSame('Eigen beschrijving', $payload['description']);
-		$this->assertSame('own-org', $payload['organization']);
+		$this->assertSame(expected: 255, actual: mb_strlen($payload['summary']));
+		$this->assertSame(expected: 'Eigen beschrijving', actual: $payload['description']);
+		$this->assertSame(expected: 'own-org', actual: $payload['organization']);
 	}//end testTheBatchsOwnTextAndOrganisationWin()
 
 	/**
@@ -255,9 +255,9 @@ class BatchPublicationWriterTest extends TestCase {
 	public function testWithoutAnOrganisationNoneIsInvented(): void {
 		$payload = $this->writer()->payload(batch: ['@self' => ['organisation' => '  ']], now: '2026-11-17T10:00:00+00:00');
 
-		$this->assertSame('Woo-publicatie', $payload['summary']);
-		$this->assertSame('Besluit en openbaar gemaakte documenten: Woo-publicatie.', $payload['description']);
-		$this->assertArrayNotHasKey('organization', $payload);
+		$this->assertSame(expected: 'Woo-publicatie', actual: $payload['summary']);
+		$this->assertSame(expected: 'Besluit en openbaar gemaakte documenten: Woo-publicatie.', actual: $payload['description']);
+		$this->assertArrayNotHasKey(key: 'organization', array: $payload);
 	}//end testWithoutAnOrganisationNoneIsInvented()
 
 	private function writer(bool $withTitles = true): BatchPublicationWriter {

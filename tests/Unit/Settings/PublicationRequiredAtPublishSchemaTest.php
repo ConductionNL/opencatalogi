@@ -60,16 +60,16 @@ final class PublicationRequiredAtPublishSchemaTest extends TestCase {
 		$publication = self::publication();
 		$states = $publication['x-openregister-lifecycle']['states'];
 
-		self::assertArrayNotHasKey('draft', $states, 'a draft declares no rule, so it may stay incomplete');
+		self::assertArrayNotHasKey(key: 'draft', array: $states, message: 'a draft declares no rule, so it may stay incomplete');
 		foreach (['in_review', 'approved', 'published'] as $state) {
-			self::assertSame([['fields' => self::REQUIRED]], $states[$state]['fields']['required'], $state);
-			self::assertArrayNotHasKey('groups', $states[$state]['fields']['required'][0], $state);
+			self::assertSame(expected: [['fields' => self::REQUIRED]], actual: $states[$state]['fields']['required'], message: $state);
+			self::assertArrayNotHasKey(key: 'groups', array: $states[$state]['fields']['required'][0], message: $state);
 		}
 
-		self::assertArrayNotHasKey('archived', $states);
-		self::assertSame(['title'], $publication['required']);
+		self::assertArrayNotHasKey(key: 'archived', array: $states);
+		self::assertSame(expected: ['title'], actual: $publication['required']);
 		foreach (self::REQUIRED as $field) {
-			self::assertArrayHasKey($field, $publication['properties'], $field);
+			self::assertArrayHasKey(key: $field, array: $publication['properties'], message: $field);
 		}
 	}//end testTheFieldsAndTheStates()
 
@@ -81,9 +81,9 @@ final class PublicationRequiredAtPublishSchemaTest extends TestCase {
 	public function testTheTransitionsStayAndTheVersionIsBumped(): void {
 		$publication = self::publication();
 
-		self::assertSame('draft', $publication['x-openregister-lifecycle']['initial']);
-		self::assertArrayHasKey('publish', $publication['x-openregister-lifecycle']['transitions']);
-		self::assertTrue(version_compare($publication['version'], '0.0.14', '>'), $publication['version']);
+		self::assertSame(expected: 'draft', actual: $publication['x-openregister-lifecycle']['initial']);
+		self::assertArrayHasKey(key: 'publish', array: $publication['x-openregister-lifecycle']['transitions']);
+		self::assertTrue(condition: version_compare($publication['version'], '0.0.14', '>'), message: $publication['version']);
 	}//end testTheTransitionsStayAndTheVersionIsBumped()
 
 	/**
@@ -93,9 +93,9 @@ final class PublicationRequiredAtPublishSchemaTest extends TestCase {
 	 */
 	public function testTheDeclarationPassesOpenRegistersValidator(): void {
 		if (class_exists(LifecycleAnnotationValidator::class) === false) {
-			self::markTestSkipped('OpenRegister is not installed beside this app, so its lifecycle validator cannot run.');
+			self::markTestSkipped(message: 'OpenRegister is not installed beside this app, so its lifecycle validator cannot run.');
 		}
 
-		self::assertSame([], (new LifecycleAnnotationValidator())->validate(self::publication()));
+		self::assertSame(expected: [], actual: (new LifecycleAnnotationValidator())->validate(self::publication()));
 	}//end testTheDeclarationPassesOpenRegistersValidator()
 }//end class
