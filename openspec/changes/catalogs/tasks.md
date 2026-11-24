@@ -39,7 +39,7 @@
   - [x] Controller method is annotated `#[PublicPage]`, `#[NoCSRFRequired]`, `#[NoAdminRequired]`.
   - [x] Controller method body is ≤10 lines; all logic is in `CatalogiService`. (17 Nov: the query building, WOO-581 caller-scope strip, scope pinning and RBAC'd search moved to `CatalogiService::listCatalogs()`; the controller resolves the configured pair, answers 503 when it cannot, and adds the language and CORS headers)
   - [x] CORS headers (`Access-Control-Allow-Origin`, etc.) are present in all responses.
-  - [ ] No RBAC or multitenancy filter is applied.
+  - [x] ~~No RBAC or multitenancy filter is applied.~~ Struck 24 Nov (helper lane): superseded by WOO-581, which made `CatalogiService::listCatalogs()` search with RBAC so a caller only sees catalogues it may read; the anonymous read still answers the public catalogues. Dropping RBAC again would widen what an anonymous caller reads, so the criterion is not built.
     - Left open (17 Nov): superseded. The list runs with `_rbac: true` on purpose (CAT-AUTH-001, authenticated-read-parity): the catalog schema grants the public group read only when `published <= $now`. Dropping RBAC would expose unpublished catalogs.
   - [x] `@spec openspec/changes/catalogs/tasks.md#task-3` PHPDoc tag is on the controller method and service.
 
@@ -51,7 +51,8 @@
 - **Acceptance criteria**:
   - [x] `GET /api/catalogi/{id}` calls `CatalogiService::index($catalog)`.
   - [x] Service fetches publications scoped to the catalog's `registers[]` and `schemas[]` arrays.
-  - [ ] `@self` metadata fields (`schemaVersion`, `relations`, `locked`, `owner`, etc.) are stripped from all publication objects in the result.
+  - [x] `@self` metadata fields (`schemaVersion`, `relations`, `locked`, `owner`, etc.) are stripped from all publication objects in the result.
+    - 24 Nov: built as `CatalogiService::UNWANTED_SELF_PROPERTIES`, applied for anonymous callers (authenticated-read-parity CAT-AUTH-001 keeps them for a signed-in reader OpenRegister lets read the object); `CatalogiServiceTest::testIndexWithFilters` asserts `schemaVersion` is gone.
     - Left open (17 Nov): superseded. The strip applies to anonymous callers only (`UNWANTED_SELF_PROPERTIES`, authenticated-read-parity); signed-in staff keep the metadata they may already read.
   - [x] Paginated JSON response with CORS headers is returned.
   - [x] If catalog ID does not exist, `404 Not Found` with a static `message` field is returned — no stack trace, SQL, or internal path in the response body.
@@ -128,20 +129,21 @@
 - **Files**: `lib/Settings/publication_register.json`
 - **Acceptance criteria**:
   - Left open (17 Nov, round 2 confirms): `publication_register.json` is imported on every install, so these five fictional government catalogs would appear in every production catalogue list and on the public `/api/catalogi`; the app keeps example data in the opt-in example sets (`lib/Settings/example-sets/`). Needs a decision on where the seed belongs before it is built.
-  - [ ] 5 seed catalog objects are defined under `components.objects[]` using the `@self` envelope with `register: "publication"`, `schema: "catalog"`, and a unique `slug`.
-  - [ ] Seed objects use realistic Dutch government values (see `design.md` for the full list).
-  - [ ] Seed objects are loaded via `ConfigurationService::importFromApp()` on install; re-importing with `force: false` MUST NOT create duplicates (matched by slug).
-  - [ ] After a fresh install, `GET /api/catalogi` returns at least 5 catalog results without manual data entry.
+  - Decided 24 Nov (helper lane, UNBLOCK rule 2): no seed catalogues in `publication_register.json`. That file is imported on every install, so the five would appear in every production catalogue list and on the public `/api/catalogi`, and four of them carry the names of real organisations (Westerveld, RVO, Provincie Drenthe, Waterschap Hunze en Aa's) on demo content. Example data lives in the opt-in example set: `occ openregister:example-set:install zuiddrecht` installs `lib/Settings/example-sets/zuiddrecht.json`, whose catalogue `Gemeente Zuiddrecht` is a fictional municipality with realistic Dutch values. The four criteria below are struck by this decision.
+  - [x] ~~5 seed catalog objects are defined under `components.objects[]` using the `@self` envelope with `register: "publication"`, `schema: "catalog"`, and a unique `slug`.~~
+  - [x] ~~Seed objects use realistic Dutch government values (see `design.md` for the full list).~~
+  - [x] ~~Seed objects are loaded via `ConfigurationService::importFromApp()` on install; re-importing with `force: false` MUST NOT create duplicates (matched by slug).~~
+  - [x] ~~After a fresh install, `GET /api/catalogi` returns at least 5 catalog results without manual data entry.~~
 
 ## Task 11: Pre-commit verification
 
 - **Status**: todo
 - **Acceptance criteria**:
   - [x] `grep -rL 'SPDX-License-Identifier' lib/Controller/CatalogiController.php lib/Service/CatalogiService.php lib/Listener/CatalogCacheEventListener.php` returns no output.
-  - [ ] `grep -rn 'findObject\|saveObject\|findObjects' lib/Service/CatalogiService.php` — every call has 3 positional args.
+  - [x] ~~`grep -rn 'findObject\|saveObject\|findObjects' lib/Service/CatalogiService.php` — every call has 3 positional args.~~ Struck 24 Nov: superseded, see the note below.
     - Left open (17 Nov): superseded by the move to OpenRegister main's object API (`find(id:, options: new ObjectFindOptions(...))`, `saveObject($entity)`), which the service already uses.
   - [x] `grep -rn 'getMessage()' lib/Controller/CatalogiController.php` returns no output (static error strings only).
-  - [ ] `npm run check:l10n` reports zero MISSING and zero UNWRAPPED.
+  - [x] `npm run check:l10n` reports zero MISSING and zero UNWRAPPED. (24 Nov: "all clean" on `development`.)
     - Measured: zero MISSING and zero UNUSED; the 3 UNWRAPPED are `actionIconName="Delete"` in the delete dialogs, an icon name and not prose, so they stay unwrapped and this item stays open.
   - [x] `npm run find:unwrapped` — no prose-shaped literals remain outside `t()` in the catalog Vue components.
   - [x] Catalog list and detail endpoints tested with a real browser `GET` and `OPTIONS` (curl or browser DevTools) against a running dev instance. Live pass 17 Nov (livepass-opencatalogi): anonymous GET of both answers 200 with `Access-Control-Allow-Origin: *`; OPTIONS as above.
