@@ -2137,7 +2137,10 @@ OC.L10N.register(
         "Delete permanently": "Definitief verwijderen",
         "Delete \"{name}\" permanently? This cannot be undone.": "\"{name}\" definitief verwijderen? Dit kan niet ongedaan worden gemaakt.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "De bestanden, de documentverwijzingen en de records die ernaar verwijzen gaan mee. Herstellen kan niet.",
-        "The publication was deleted permanently.": "De publicatie is definitief verwijderd."
+        "The publication was deleted permanently.": "De publicatie is definitief verwijderd.",
+        "Publish without documents": "Publiceren zonder documenten",
+        "Publish it without documents": "Zonder documenten publiceren",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" heeft geen documenten: geen bestanden en geen documentverwijzingen. Lezers vinden de publicatie, maar niets om te openen."
     },
     "nplurals=2; plural=(n != 1);"
 )

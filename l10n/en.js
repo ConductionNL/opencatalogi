@@ -2182,7 +2182,10 @@ OC.L10N.register(
         "Delete permanently": "Delete permanently",
         "Delete \"{name}\" permanently? This cannot be undone.": "Delete \"{name}\" permanently? This cannot be undone.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Its files, its document references and the records that point at it go with it. It cannot be restored.",
-        "The publication was deleted permanently.": "The publication was deleted permanently."
+        "The publication was deleted permanently.": "The publication was deleted permanently.",
+        "Publish without documents": "Publish without documents",
+        "Publish it without documents": "Publish it without documents",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open."
     },
     "nplurals=2; plural=(n != 1);"
 )

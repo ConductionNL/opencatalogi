@@ -833,7 +833,10 @@ OC.L10N.register(
         "Delete permanently": "Kalıcı olarak sil",
         "Delete \"{name}\" permanently? This cannot be undone.": "\"{name}\" kalıcı olarak silinsin mi? Bu işlem geri alınamaz.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Dosyaları, belge başvuruları ve ona işaret eden kayıtlar da onunla birlikte silinir. Geri yüklenemez.",
-        "The publication was deleted permanently.": "Yayın kalıcı olarak silindi."
+        "The publication was deleted permanently.": "Yayın kalıcı olarak silindi.",
+        "Publish without documents": "Belgesiz yayımla",
+        "Publish it without documents": "Belgeler olmadan yayımla",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" hiçbir belge içermiyor: dosya da belge bağlantısı da yok. Okuyucular yayını bulacak ama açacak bir şey olmayacak."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -833,7 +833,10 @@ OC.L10N.register(
         "Delete permanently": "Supprimer définitivement",
         "Delete \"{name}\" permanently? This cannot be undone.": "Supprimer définitivement « {name} » ? Cette action est irréversible.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Ses fichiers, ses références de documents et les enregistrements qui y renvoient sont supprimés avec elle. Elle ne peut pas être restaurée.",
-        "The publication was deleted permanently.": "La publication a été supprimée définitivement."
+        "The publication was deleted permanently.": "La publication a été supprimée définitivement.",
+        "Publish without documents": "Publier sans documents",
+        "Publish it without documents": "La publier sans documents",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "« {name} » n’a aucun document : ni fichier ni référence de document. Les lecteurs trouveront la publication mais rien à ouvrir."
     },
     "nplurals=2; plural=(n != 1);"
 )

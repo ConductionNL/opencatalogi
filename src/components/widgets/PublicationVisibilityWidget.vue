@@ -143,6 +143,12 @@
 			:title="publicationTitle"
 			@close="purgeOpen = false"
 			@confirm="purge" />
+		<PublishWithoutDocumentsDialog
+			:open="noDocumentsOpen"
+			:busy="busy"
+			:title="publicationTitle"
+			@close="noDocumentsOpen = false"
+			@confirm="publish(true)" />
 	</div>
 </template>
 
@@ -151,6 +157,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import DeleteDraftPermanentlyDialog from '../../dialogs/publication/DeleteDraftPermanentlyDialog.vue'
+import PublishWithoutDocumentsDialog from '../../dialogs/publication/PublishWithoutDocumentsDialog.vue'
 import RepublishDocumentDialog from '../../dialogs/publication/RepublishDocumentDialog.vue'
 import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublicationDialog.vue'
 import {
@@ -158,6 +165,7 @@ import {
 	documentOptions,
 	draftPurgeMessage,
 	filesRouteParams,
+	isNoDocumentsRefusal,
 	listActions,
 	publishRefusalMessage,
 	visibilityActions,
@@ -223,7 +231,7 @@ function withdrawBody(answer) {
  */
 export default {
 	name: 'PublicationVisibilityWidget',
-	components: { DeleteDraftPermanentlyDialog, NcButton, NcNoteCard, RepublishDocumentDialog, WithdrawPublicationDialog },
+	components: { DeleteDraftPermanentlyDialog, NcButton, NcNoteCard, PublishWithoutDocumentsDialog, RepublishDocumentDialog, WithdrawPublicationDialog },
 	inject: {
 		cnObjectContext: { default: null },
 		cnDetailObjectContext: { default: null },
@@ -251,6 +259,7 @@ export default {
 			busy: false,
 			dialogOpen: false,
 			purgeOpen: false,
+			noDocumentsOpen: false,
 			message: '',
 			messageType: 'success',
 		}
@@ -467,18 +476,34 @@ export default {
 		/**
 		 * Publish now, or publish again.
 		 *
+		 * A publication with no documents is refused with 409 `no-documents`
+		 * until the editor confirms it in its own dialog; the confirmed call
+		 * sends `confirmNoDocuments: true` (REQ-PSG-004).
+		 *
+		 * @param {boolean} [confirmNoDocuments] Whether the editor confirmed publishing without documents.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+		 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
 		 */
-		async publish() {
+		async publish(confirmNoDocuments = false) {
 			this.busy = true
 			this.message = ''
 			try {
-				await axios.post(this.url('publish'))
+				if (confirmNoDocuments === true) {
+					await axios.post(this.url('publish'), { confirmNoDocuments: true })
+				} else {
+					await axios.post(this.url('publish'))
+				}
+				this.noDocumentsOpen = false
 				this.state = 'public'
 				this.messageType = 'success'
 				this.message = this.t('opencatalogi', 'The publication is public.')
 			} catch (error) {
+				if (isNoDocumentsRefusal(error)) {
+					this.noDocumentsOpen = true
+					return
+				}
+				this.noDocumentsOpen = false
 				this.showError(error)
 			} finally {
 				this.busy = false

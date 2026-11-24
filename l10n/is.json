@@ -832,7 +832,10 @@
         "Delete permanently": "Eyða varanlega",
         "Delete \"{name}\" permanently? This cannot be undone.": "Eyða \"{name}\" varanlega? Ekki er hægt að afturkalla þetta.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Skrár hennar, skjalatilvísanir og færslur sem vísa á hana eyðast líka. Ekki er hægt að endurheimta hana.",
-        "The publication was deleted permanently.": "Útgáfunni hefur verið eytt varanlega."
+        "The publication was deleted permanently.": "Útgáfunni hefur verið eytt varanlega.",
+        "Publish without documents": "Birta án skjala",
+        "Publish it without documents": "Birta hana án skjala",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ hefur engin skjöl: engar skrár og engar skjalatilvísanir. Lesendur finna birtinguna en ekkert til að opna."
     },
     "plurals": {}
 }

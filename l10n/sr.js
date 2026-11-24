@@ -833,7 +833,10 @@ OC.L10N.register(
         "Delete permanently": "Трајно обриши",
         "Delete \"{name}\" permanently? This cannot be undone.": "Трајно обрисати „{name}”? Ово се не може поништити.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Њене датотеке, референце на документе и записи који упућују на њу бришу се заједно с њом. Не може се вратити.",
-        "The publication was deleted permanently.": "Публикација је трајно обрисана."
+        "The publication was deleted permanently.": "Публикација је трајно обрисана.",
+        "Publish without documents": "Објави без докумената",
+        "Publish it without documents": "Објави је без докумената",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ нема докумената: ни датотека ни референци на документе. Читаоци ће пронаћи објаву, али ништа што могу да отворе."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -833,7 +833,10 @@ OC.L10N.register(
         "Delete permanently": "Kustuta jäädavalt",
         "Delete \"{name}\" permanently? This cannot be undone.": "Kas kustutada „{name}” jäädavalt? Seda ei saa tagasi võtta.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Selle failid, dokumendiviited ja sellele viitavad kirjed kustutatakse koos sellega. Seda ei saa taastada.",
-        "The publication was deleted permanently.": "Väljaanne on jäädavalt kustutatud."
+        "The publication was deleted permanently.": "Väljaanne on jäädavalt kustutatud.",
+        "Publish without documents": "Avalda ilma dokumentideta",
+        "Publish it without documents": "Avalda see ilma dokumentideta",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ ei sisalda dokumente: ei faile ega dokumendiviiteid. Lugejad leiavad väljaande, kuid ei midagi avamiseks."
     },
     "nplurals=2; plural=(n != 1);"
 )

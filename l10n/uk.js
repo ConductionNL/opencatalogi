@@ -833,7 +833,10 @@ OC.L10N.register(
         "Delete permanently": "Видалити назавжди",
         "Delete \"{name}\" permanently? This cannot be undone.": "Видалити «{name}» назавжди? Цю дію не можна скасувати.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Її файли, посилання на документи та записи, що на неї посилаються, видаляються разом із нею. Відновити її неможливо.",
-        "The publication was deleted permanently.": "Публікацію видалено назавжди."
+        "The publication was deleted permanently.": "Публікацію видалено назавжди.",
+        "Publish without documents": "Опублікувати без документів",
+        "Publish it without documents": "Опублікувати без документів",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "«{name}» не має документів: ні файлів, ні посилань на документи. Читачі знайдуть публікацію, але нічого не зможуть відкрити."
     },
     "nplurals=2; plural=(n != 1);"
 )

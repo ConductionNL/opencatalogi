@@ -832,7 +832,10 @@
         "Delete permanently": "Dzēst neatgriezeniski",
         "Delete \"{name}\" permanently? This cannot be undone.": "Neatgriezeniski dzēst \"{name}\"? Šo darbību nevar atsaukt.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Tās faili, dokumentu atsauces un ieraksti, kas uz to norāda, tiek dzēsti kopā ar to. To nevar atjaunot.",
-        "The publication was deleted permanently.": "Publikācija ir neatgriezeniski dzēsta."
+        "The publication was deleted permanently.": "Publikācija ir neatgriezeniski dzēsta.",
+        "Publish without documents": "Publicēt bez dokumentiem",
+        "Publish it without documents": "Publicēt to bez dokumentiem",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "“{name}” nav dokumentu: nav ne failu, ne dokumentu atsauču. Lasītāji atradīs publikāciju, bet neko, ko atvērt."
     },
     "plurals": {}
 }

@@ -832,7 +832,10 @@
         "Delete permanently": "Poista pysyvästi",
         "Delete \"{name}\" permanently? This cannot be undone.": "Poistetaanko \"{name}\" pysyvästi? Toimintoa ei voi kumota.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Sen tiedostot, asiakirjaviittaukset ja siihen viittaavat tietueet poistetaan sen mukana. Sitä ei voi palauttaa.",
-        "The publication was deleted permanently.": "Julkaisu on poistettu pysyvästi."
+        "The publication was deleted permanently.": "Julkaisu on poistettu pysyvästi.",
+        "Publish without documents": "Julkaise ilman asiakirjoja",
+        "Publish it without documents": "Julkaise se ilman asiakirjoja",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "Julkaisussa \"{name}\" ei ole asiakirjoja: ei tiedostoja eikä asiakirjaviittauksia. Lukijat löytävät julkaisun, mutta eivät mitään avattavaa."
     },
     "plurals": {}
 }

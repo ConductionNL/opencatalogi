@@ -832,7 +832,10 @@
         "Delete permanently": "Slett permanent",
         "Delete \"{name}\" permanently? This cannot be undone.": "Slette \"{name}\" permanent? Dette kan ikke angres.",
         "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Filene, dokumentreferansene og postene som viser til den, slettes også. Den kan ikke gjenopprettes.",
-        "The publication was deleted permanently.": "Publikasjonen er slettet permanent."
+        "The publication was deleted permanently.": "Publikasjonen er slettet permanent.",
+        "Publish without documents": "Publiser uten dokumenter",
+        "Publish it without documents": "Publiser den uten dokumenter",
+        "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "«{name}» har ingen dokumenter: ingen filer og ingen dokumenthenvisninger. Lesere finner publikasjonen, men ingenting å åpne."
     },
     "plurals": {}
 }
