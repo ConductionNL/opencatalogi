@@ -115,11 +115,14 @@ class DatasetViewData {
 		$groupBy = ['field' => (string)$view['x'], 'limit' => (self::MAX_GROUPS + 1)];
 		// OpenRegister main moved the grouping into an AggregationLayout behind grouped();
 		// the release takes it as create()'s own argument.
+		$query = null;
+		// The analysed OpenRegister is the release, which has no grouped(); the installed one may be main.
+		// @phpstan-ignore function.impossibleType
 		if (method_exists(AggregationQuery::class, 'grouped') === true) {
 			$query = AggregationQuery::grouped(metric: $aggregate, field: $field, groupBy: $groupBy);
-		} else {
-			$query = AggregationQuery::create(metric: $aggregate, field: $field, groupBy: $groupBy);
 		}
+
+		$query ??= AggregationQuery::create(metric: $aggregate, field: $field, groupBy: $groupBy);
 
 		$result = $this->aggregation->runAdhocByRef(
 			registerRef: PublishedTableService::ROWS_REGISTER,
