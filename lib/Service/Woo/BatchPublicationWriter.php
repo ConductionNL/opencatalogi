@@ -36,6 +36,7 @@ use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\Publication\FrozenRecord;
+use OCA\OpenCatalogi\Service\Publication\PublisherFileStamp;
 use OCA\OpenCatalogi\Service\WooCategory;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -427,6 +428,7 @@ class BatchPublicationWriter {
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-the-published-file-carries-its-official-title-req-pff-002
 	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-the-publishers-rsin-travels-with-every-stored-document-req-pro-002
 	 */
 	public function attach(array $publication, File $file): ?array {
 		$this->requireOpenRegister();
@@ -463,11 +465,36 @@ class BatchPublicationWriter {
 			$embedded = $this->titles->write(file: $created, facts: $facts);
 		}
 
+		$this->publisherStamp()?->stamp(files: $files, publication: $target, fileId: (int)$created->getId());
 		$files->publishFile(object: $target, file: $created->getId());
 		$this->readingQueue()?->queue(fileId: (int)$created->getId(), publicationId: (string)$publication['id']);
 
 		return $embedded;
 	}//end attach()
+
+	/**
+	 * What stamps the publisher's RSIN onto each attached file, or null when it cannot be resolved.
+	 *
+	 * Resolved from the container on use, like the reading queue, so this
+	 * writer's constructor keeps its collaborators.
+	 *
+	 * @return PublisherFileStamp|null
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-the-publishers-rsin-travels-with-every-stored-document-req-pro-002
+	 */
+	private function publisherStamp(): ?PublisherFileStamp {
+		try {
+			$stamp = $this->container->get(PublisherFileStamp::class);
+		} catch (\Throwable) {
+			return null;
+		}
+
+		if ($stamp instanceof PublisherFileStamp === false) {
+			return null;
+		}
+
+		return $stamp;
+	}//end publisherStamp()
 
 	/**
 	 * The queue that reads each attached document, or null when it cannot be resolved.
