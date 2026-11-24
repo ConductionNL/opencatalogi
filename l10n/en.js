@@ -940,7 +940,6 @@ OC.L10N.register(
         "OpenCatalogi has no separate 'publish' switch. Visibility is governed by schema-RBAC and the catalog's scope. Grant the public (or a group) read access on the publication schema, within the catalog scope you chose, and the publication becomes discoverable.": "OpenCatalogi has no separate 'publish' switch. Visibility is governed by schema-RBAC and the catalog's scope. Grant the public (or a group) read access on the publication schema, within the catalog scope you chose, and the publication becomes discoverable.",
         "OpenCatalogi is a federated network: instances share their published catalogs so they can be discovered together. Connect to the national directory now to see federated catalogs in your Directory, or skip this and it will sync automatically later.": "OpenCatalogi is a federated network: instances share their published catalogs so they can be discovered together. Connect to the national directory now to see federated catalogs in your Directory, or skip this and it will sync automatically later.",
         "OpenCatalogi is ready. Open Catalogs to manage what you publish, or the Directory to discover federated catalogs.": "OpenCatalogi is ready. Open Catalogs to manage what you publish, or the Directory to discover federated catalogs.",
-        "Organization & themes": "Organization & themes",
         "Preview": "Preview",
         "Private (explicitly granted groups only)": "Private (explicitly granted groups only)",
         "Public (anyone can discover and read)": "Public (anyone can discover and read)",

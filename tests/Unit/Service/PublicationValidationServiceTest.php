@@ -113,6 +113,24 @@ final class PublicationValidationServiceTest extends TestCase {
 	}//end testTheSaveIsStoppedWithTheTranslatedMessage()
 
 	/**
+	 * A refusal the listener has no literal for is still translated.
+	 *
+	 * @return void
+	 */
+	public function testAnotherRefusalIsStillTranslated(): void {
+		$validation = $this->createMock(originalClassName: PublicationValidationService::class);
+		$validation->method('refusal')->willReturn(['message' => 'Another rule.', 'property' => 'title']);
+		$l10n = $this->createMock(originalClassName: IL10N::class);
+		$l10n->method('t')->willReturnCallback(static fn (string $text): string => 'NL: ' . $text);
+		$event = new ObjectCreatingEvent($this->entity(data: ['title' => 'Besluit']));
+
+		(new PublicationAudienceCheck(validation: $validation, l10n: $l10n))->handle($event);
+
+		self::assertTrue(condition: $event->isPropagationStopped());
+		self::assertSame(expected: ['message' => 'NL: Another rule.', 'property' => 'title'], actual: $event->getErrors());
+	}//end testAnotherRefusalIsStillTranslated()
+
+	/**
 	 * A create of a signedIn publication without a Woo category goes through untouched.
 	 *
 	 * @return void

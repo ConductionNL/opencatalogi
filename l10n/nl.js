@@ -892,7 +892,6 @@ OC.L10N.register(
         "Views": "Weergaven",
         "Downloads": "Downloads",
         "Retention": "Bewaartermijn",
-        "Organization & themes": "Organisatie en thema's",
         "Images": "Afbeeldingen",
         "Links": "Koppelingen",
         "History": "Geschiedenis",
