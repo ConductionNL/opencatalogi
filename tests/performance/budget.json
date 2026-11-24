@@ -1,0 +1,10 @@
+{
+	"app": "opencatalogi",
+	"pages": [
+		{ "name": "Dashboard", "path": "/index.php/apps/opencatalogi/" },
+		{ "name": "Search", "path": "/index.php/apps/opencatalogi/search" },
+		{ "name": "Catalogs", "path": "/index.php/apps/opencatalogi/catalogi" },
+		{ "name": "Directory", "path": "/index.php/apps/opencatalogi/directory" },
+		{ "name": "Flows", "path": "/index.php/apps/opencatalogi/flows" }
+	]
+}
