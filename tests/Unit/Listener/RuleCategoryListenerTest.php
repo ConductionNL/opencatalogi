@@ -207,6 +207,8 @@ class RuleCategoryListenerTest extends TestCase {
 
 	/**
 	 * A schema that cannot be looked up (no OpenRegister, or no such schema) is logged and the save goes ahead unchanged.
+	 *
+	 * @return void
 	 */
 	public function testASchemaThatCannotBeLookedUpDoesNotStopTheSave(): void {
 		$configured = $this->createMock(originalClassName: PublishedCollectionsServiceInterface::class);
