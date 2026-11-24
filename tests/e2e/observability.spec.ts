@@ -19,7 +19,7 @@
  *
  * WHAT IT CREATES AND REMOVES. Nothing; it only reads.
  *
- * @spec openspec/changes/prometheus-metrics/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-prometheus-metrics/tasks.md
  */
 
 import { expect, test } from '@playwright/test'
