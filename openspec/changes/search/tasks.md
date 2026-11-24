@@ -8,12 +8,12 @@
 > `search-cors-on-every-public-endpoint`) specify and harden them. Removing them would
 > delete live, specified endpoints. 1.7 additionally needs a live Nextcloud instance.
 
-- [ ] 1.1 Remove `show(string $id)` method from `lib/Controller/SearchController.php`
-- [ ] 1.2 Remove `attachments(string $id)` method from `lib/Controller/SearchController.php`
-- [ ] 1.3 Remove `download(string $id)` method from `lib/Controller/SearchController.php`
-- [ ] 1.4 Remove `uses(string $id)` method from `lib/Controller/SearchController.php`
-- [ ] 1.5 Remove `used(string $id)` method from `lib/Controller/SearchController.php`
-- [ ] 1.6 Verify `SearchController` now contains only `__construct()` and `index()` as public methods
+- [x] 1.1 ~~Remove `show(string $id)` method from `lib/Controller/SearchController.php`~~ Struck 24 Nov 2026: superseded, see the note above this group.
+- [x] 1.2 ~~Remove `attachments(string $id)` method from `lib/Controller/SearchController.php`~~ Struck 24 Nov 2026: superseded, see the note above this group.
+- [x] 1.3 ~~Remove `download(string $id)` method from `lib/Controller/SearchController.php`~~ Struck 24 Nov 2026: superseded, see the note above this group.
+- [x] 1.4 ~~Remove `uses(string $id)` method from `lib/Controller/SearchController.php`~~ Struck 24 Nov 2026: superseded, see the note above this group.
+- [x] 1.5 ~~Remove `used(string $id)` method from `lib/Controller/SearchController.php`~~ Struck 24 Nov 2026: superseded, see the note above this group.
+- [x] 1.6 ~~Verify `SearchController` now contains only `__construct()` and `index()` as public methods~~ Struck 24 Nov 2026: superseded, see the note above this group.
 - [ ] 1.7 Run `GET /api/search` against a local Nextcloud instance and confirm HTTP 200 with results
 
 ## 2. Backend — Spec Traceability (ADR-003)
@@ -30,8 +30,8 @@
 > `search-cors-on-every-public-endpoint` (REQ-SCO-001) added the OPTIONS preflight
 > routes. Left unticked because the stated conditions are deliberately false now.
 
-- [ ] 3.1 Confirm `SearchController::index()` does NOT carry `#[PublicPage]` or `#[NoCSRFRequired]` (authenticated, CSRF-protected)
-- [ ] 3.2 Confirm there is no OPTIONS route for `/api/search` in `appinfo/routes.php`
+- [x] 3.1 ~~Confirm `SearchController::index()` does NOT carry `#[PublicPage]` or `#[NoCSRFRequired]` (authenticated, CSRF-protected)~~ Struck 24 Nov 2026: superseded, see the note above this group.
+- [x] 3.2 ~~Confirm there is no OPTIONS route for `/api/search` in `appinfo/routes.php`~~ Struck 24 Nov 2026: superseded, see the note above this group.
 - [x] 3.3 Confirm `SearchController` has the correct Nextcloud default (admin-only) or explicit `#[NoAdminRequired]` annotation — whichever matches the actual access requirement; update if mismatched
 
 ## 4. Frontend — i18n Audit (ADR-007 / CLAUDE.md l10n rules)
@@ -70,6 +70,6 @@
 > not `PublicationService::index()`; that delegation with the request parameters is
 > already asserted by `testIndexReturnsAssembledSearchResultsForAnonymousCallers` (7.3).
 
-- [ ] 7.1 Update `tests/Unit/Controller/SearchControllerTest.php` to remove test cases for `show()`, `attachments()`, `download()`, `uses()`, and `used()` (if present)
-- [ ] 7.2 Add a test asserting `SearchController` only exposes `index()` as a public API method
-- [ ] 7.3 Add a test for `SearchController::index()` verifying it delegates to `PublicationService::index()` with the request parameters
+- [x] 7.1 ~~Update `tests/Unit/Controller/SearchControllerTest.php` to remove test cases for `show()`, `attachments()`, `download()`, `uses()`, and `used()` (if present)~~ Struck 24 Nov 2026: superseded, see the note above this group.
+- [x] 7.2 ~~Add a test asserting `SearchController` only exposes `index()` as a public API method~~ Struck 24 Nov 2026: superseded, see the note above this group.
+- [x] 7.3 ~~Add a test for `SearchController::index()` verifying it delegates to `PublicationService::index()` with the request parameters~~ Struck 24 Nov 2026: superseded, see the note above this group.
