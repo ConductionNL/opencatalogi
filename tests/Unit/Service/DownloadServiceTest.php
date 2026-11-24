@@ -3,8 +3,11 @@
 /**
  * Unit tests for DownloadService.
  *
- * Covers publication metadata PDF rendering (including the real Twig template),
- * option validation, temporary-file cleanup, and attachment enumeration.
+ * Covers publication metadata PDF rendering, option validation and temporary-file
+ * cleanup. FileService and ObjectService are mocks in every test here; the render of
+ * the real Twig template lives in DownloadTemplateRenderTest.
+ *
+ * @spec openspec/changes/download-service/tasks.md#4.4
  *
  * @category Test
  * @package  Unit\Service
@@ -475,48 +478,6 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame('publication.pdf', $result['filename']);
 
 	}//end testCreatePublicationFileWithoutTitle()
-
-	/**
-	 * Renders the real publication.html.twig template through the real FileService.
-	 *
-	 * Every other test in this file mocks `createPdf()`, which is exactly why the
-	 * missing template went unnoticed for so long: a Twig LoaderError could never
-	 * surface. This test resolves the template for real so its absence fails here.
-	 *
-	 * @return void
-	 */
-	public function testRealPublicationTemplateRendersThroughFileService(): void {
-		$fileService = new FileService(
-			$this->createMock(\OCP\IUserSession::class),
-			$this->createMock(\Psr\Log\LoggerInterface::class),
-			$this->createMock(\OCP\Files\IRootFolder::class),
-			$this->createMock(\OCP\App\IAppManager::class),
-			$this->createMock(\Psr\Container\ContainerInterface::class)
-		);
-
-		$downloadService = new DownloadService($fileService, $this->passthroughL10n());
-		$objectService = $this->createObjectServiceMock();
-
-		$publication = [
-			'id' => 'abc-123',
-			'title' => 'Real Template Publication',
-			'summary' => 'A short summary.',
-			'description' => 'A longer description of the publication.',
-			'status' => 'published',
-			'attachments' => [['title' => 'Attachment One'], 'plain-attachment-id'],
-		];
-
-		$result = $downloadService->createPublicationFile(
-			$objectService,
-			'abc-123',
-			['download' => true, 'publication' => $publication]
-		);
-
-		$this->assertIsArray($result);
-		$this->assertSame('Real Template Publication.pdf', $result['filename']);
-		$this->assertStringStartsWith('%PDF', $result['content']);
-
-	}//end testRealPublicationTemplateRendersThroughFileService()
 
 	// phpcs:enable CustomSniffs.Functions.NamedParameters
 
