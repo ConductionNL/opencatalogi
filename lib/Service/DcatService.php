@@ -1009,13 +1009,7 @@ class DcatService implements DcatServiceInterface {
 	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
 	 */
 	public function licences(): array {
-		$vocabulary = new DcatVocabularyService();
-		$rows = [];
-		foreach ($vocabulary->licenceList() as $code => $member) {
-			$rows[] = ['code' => (string)$code] + $member;
-		}
-
-		return ['results' => $rows, 'total' => count($rows)] + $vocabulary->licenceListSource();
+		return (new DcatVocabularyService())->licencePickerList();
 	}//end licences()
 
 	/**

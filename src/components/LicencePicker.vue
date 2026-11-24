@@ -11,7 +11,7 @@
 			:placeholder="placeholder"
 			:disabled="disabled || loading"
 			:loading="loading"
-			:clearable="clearable"
+			:clearable="!required"
 			@update:modelValue="choose" />
 		<p
 			v-if="unlisted"
@@ -54,8 +54,8 @@ export default {
 		inputLabel: { type: String, default: '' },
 		/** The text shown while nothing is chosen. */
 		placeholder: { type: String, default: '' },
-		/** Whether the choice can be cleared back to empty. */
-		clearable: { type: Boolean, default: true },
+		/** Whether a licence must stay chosen, so the choice cannot be cleared back to empty. */
+		required: { type: Boolean, default: false },
 		disabled: { type: Boolean, default: false },
 	},
 

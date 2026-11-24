@@ -279,6 +279,22 @@ class DcatVocabularyService {
 	}//end licenceList()
 
 	/**
+	 * The licence list as a picker reads it: one row per member with its code, and the list's provenance.
+	 *
+	 * @return array{results: array<int, array{code: string, iri: string, label: string, labelNl: string}>, total: int, source: string, version: string}
+	 *
+	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
+	 */
+	public function licencePickerList(): array {
+		$rows = [];
+		foreach ($this->licenceList() as $code => $member) {
+			$rows[] = ['code' => (string)$code] + $member;
+		}
+
+		return ['results' => $rows, 'total' => count($rows)] + $this->licenceListSource();
+	}//end licencePickerList()
+
+	/**
 	 * Where the bundled licence list comes from: the authority and its version.
 	 *
 	 * @return array{source: string, version: string} The provenance.
