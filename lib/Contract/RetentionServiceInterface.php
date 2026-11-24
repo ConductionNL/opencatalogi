@@ -50,7 +50,7 @@ interface RetentionServiceInterface {
 	 *
 	 * @return object|null The DecisionTableEvaluator, or null when OpenRegister is unavailable.
 	 *
-	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 * @spec openspec/changes/archive/2026-11-24-retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
 	 */
 	public function getDecisionTableEvaluator(): ?object;
 
@@ -113,7 +113,7 @@ interface RetentionServiceInterface {
 	 *
 	 * @return array<string, mixed> The publication with defaults applied.
 	 *
-	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 * @spec openspec/changes/archive/2026-11-24-retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
 	 */
 	public function applyDefaults(array $publication, string $catalogSlug): array;
 

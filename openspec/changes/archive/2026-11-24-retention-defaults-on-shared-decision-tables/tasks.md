@@ -43,5 +43,7 @@
 
 - [x] 4.1 phpcs / phpmd (per subdirectory) / psalm / phpstan run individually
       and green on the touched files
-- [ ] 4.2 Hydra gates `--scope-to-diff` green against
-      `origin/development`
+- [x] 4.2 Hydra gates `--scope-to-diff` green against
+      `origin/development` (verified 2026-11-24: `run-hydra-gates.sh --scope-to-diff --base 1846dbd5a^` on the
+      landing commit 1846dbd5a; every gate in scope passes except gate-124 perf-budget, a repo-level
+      gate added after the change that development satisfies since #2909)

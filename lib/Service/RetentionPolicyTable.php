@@ -23,7 +23,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+ * @spec openspec/changes/archive/2026-11-24-retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
  */
 
 declare(strict_types=1);
@@ -58,7 +58,7 @@ class RetentionPolicyTable {
 	 *
 	 * @return array<string, mixed>|null The decision-table definition, or null when no usable row is configured.
 	 *
-	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 * @spec openspec/changes/archive/2026-11-24-retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
 	 */
 	public function fromDefaults(array $catalogDefaults): ?array {
 		$rules = array_merge($this->categoryRules(catalogDefaults: $catalogDefaults), $this->fallbackRules(catalogDefaults: $catalogDefaults));
