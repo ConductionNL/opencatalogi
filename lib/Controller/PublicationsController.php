@@ -281,7 +281,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private function negotiateLanguage(): void {
 		$this->queryService->applyVisitorLanguage(
@@ -299,7 +299,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private function addLanguageHeaders(JSONResponse $response): void {
 		foreach ($this->queryService->languageHeaders() as $name => $value) {

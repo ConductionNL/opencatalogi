@@ -282,7 +282,7 @@ export default {
 	},
 
 	computed: {
-		/** @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002 */
+		/** @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002 */
 		actions() {
 			return visibilityActions(this.state, this.canPublish)
 		},
@@ -382,7 +382,7 @@ export default {
 		 * until the editor acts.
 		 *
 		 * @return {string} The note, or an empty string when its source still carries it.
-		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+		 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
 		 */
 		sourceAbsenceNote() {
 			const absence = this.sourceAbsence

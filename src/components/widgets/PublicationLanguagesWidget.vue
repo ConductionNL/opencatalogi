@@ -101,7 +101,7 @@ export default {
 		 * One row per enabled language.
 		 *
 		 * @return {Array<{language: string, name: string, source: boolean, summary: string}>} The rows
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
 		 */
 		rows() {
 			const locale = document.documentElement.lang || 'en'
@@ -121,7 +121,7 @@ export default {
 			 * Load the languages and the status once the object id is known.
 			 *
 			 * @param {string} id The publication id.
-			 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
+			 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
 			 */
 			handler(id) {
 				if (id) {
@@ -136,7 +136,7 @@ export default {
 		 * Read the enabled languages and the publication's translation status.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
 		 */
 		async load() {
 			this.failed = false
@@ -172,7 +172,7 @@ export default {
 		 *
 		 * @param {string} language The language.
 		 * @return {void}
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
 		 */
 		translate(language) {
 			requestEditorLanguage(language)

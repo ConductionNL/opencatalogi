@@ -416,7 +416,7 @@ class DcatService implements DcatServiceInterface {
 	 *
 	 * @return object|null The service.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private function languageService(): ?object {
 		try {
@@ -542,7 +542,7 @@ class DcatService implements DcatServiceInterface {
 	 *
 	 * @return array The dataset node.
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md#task-2.5
 	 */
 	public function buildPublicationDataset(array $catalog, string $catalogSlug, array $publication): array {
 		$scope = $this->resolveCatalogScope(catalog: $catalog, catalogSlug: $catalogSlug);

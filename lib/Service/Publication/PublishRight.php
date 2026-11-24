@@ -24,7 +24,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use OCP\IUserSession;
 /**
  * Whether the current user may publish, and the state of the publishers group.
  *
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md
  */
 class PublishRight {
 
@@ -67,7 +67,7 @@ class PublishRight {
 	 *
 	 * @return boolean False without a session.
 	 *
-	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
+	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
 	 */
 	public function mayPublish(): bool {
 		$user = $this->userSession->getUser();
@@ -90,7 +90,7 @@ class PublishRight {
 	 *
 	 * @return array{group: string, exists: bool, members: int} The group's state.
 	 *
-	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
+	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
 	 */
 	public function groupStatus(): array {
 		$group = $this->groupManager->get(self::GROUP);

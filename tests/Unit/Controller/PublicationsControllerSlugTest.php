@@ -176,7 +176,7 @@ class PublicationsControllerSlugTest extends TestCase {
 	 * REQ-CVS-006: the UUID address keeps answering with the same id after an editor
 	 * changes the title and the slug; the old slug stops answering, the new one answers.
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/publications/spec.md#requirement-a-publication-keeps-one-identifier-for-life-req-cvs-006
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/publications/spec.md#requirement-a-publication-keeps-one-identifier-for-life-req-cvs-006
 	 */
 	public function testTheUuidAddressSurvivesATitleAndSlugEdit(): void {
 		$uuid = '4f2c9a1e-7b3d-4e8a-9c51-2d6f0b8e3a17';

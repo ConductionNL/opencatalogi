@@ -17,11 +17,11 @@
  * `opencatalogi-publishers`) and one draft publication each of them creates.
  * The publications are deleted and the accounts removed in afterAll.
  *
- * @e2e openspec/changes/operations-publish-rights/specs/publications/spec.md#scenario-an-editor-tries-to-publish
- * @e2e openspec/changes/operations-publish-rights/specs/publications/spec.md#scenario-an-editor-edits-a-title
- * @e2e openspec/changes/operations-publish-rights/specs/publications/spec.md#scenario-an-editor-opens-a-draft
- * @e2e openspec/changes/operations-publish-rights/specs/publications/spec.md#scenario-a-direct-call-by-an-editor
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md
+ * @e2e openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#scenario-an-editor-tries-to-publish
+ * @e2e openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#scenario-an-editor-edits-a-title
+ * @e2e openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#scenario-an-editor-opens-a-draft
+ * @e2e openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#scenario-a-direct-call-by-an-editor
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md
  */
 
 import type { APIRequestContext } from '@playwright/test'

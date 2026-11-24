@@ -249,7 +249,7 @@ class DcatMappingService {
 	 *
 	 * @return array<mixed>|null The literals, the value unchanged, or null.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private function languageTaggedLiterals(array $value): ?array {
 		if ($this->isKeyedByLanguage(value: $value) === false) {
@@ -271,7 +271,7 @@ class DcatMappingService {
 	 *
 	 * @return list<array{'@value': string, '@language': string}> The literals.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private static function literalsByLanguage(array $value): array {
 		if (array_key_exists('nl', $value) === true) {
@@ -295,7 +295,7 @@ class DcatMappingService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private function isKeyedByLanguage(array $value): bool {
 		if ($value === [] || array_is_list($value) === true) {

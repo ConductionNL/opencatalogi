@@ -5,7 +5,7 @@
  * Component test for `PublicationQualityWidget.vue`: the score and the missing
  * fields of the publication in the catalogue the page was opened in (PQM-001).
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-2.5
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md#task-2.5
  */
 
 import axios from '@nextcloud/axios'

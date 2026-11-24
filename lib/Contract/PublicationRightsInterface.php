@@ -34,7 +34,7 @@ interface PublicationRightsInterface {
 	 *
 	 * @return boolean
 	 *
-	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
 	 */
 	public function mayPublish(): bool;
 

@@ -10,9 +10,9 @@
  * description, the fallback for the field nobody translated. The publication
  * page's Languages card names the missing English description.
  *
- * @e2e openspec/changes/publication-translations/specs/publications/spec.md#scenario-adding-an-english-summary
- * @e2e openspec/changes/publication-translations/specs/publications/spec.md#scenario-an-english-visitor-reads-a-partly-translated-publication
- * @e2e openspec/changes/publication-translations/specs/publications/spec.md#scenario-a-missing-description-is-named
+ * @e2e openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#scenario-adding-an-english-summary
+ * @e2e openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#scenario-an-english-visitor-reads-a-partly-translated-publication
+ * @e2e openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#scenario-a-missing-description-is-named
  */
 import { request as playwrightRequest } from '@playwright/test'
 import { expect, test } from './authenticated-request.ts'

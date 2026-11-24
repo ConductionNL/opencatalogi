@@ -94,7 +94,7 @@ export function createPublicationActionHandlers({
 		 * @param {{objects?: Array<object>}} payload The bulk payload.
 		 * @return {boolean} Whether the dialog opened.
 		 *
-		 * @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001
+		 * @spec openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001
 		 */
 		openPublicationMerge({ objects = [] }) {
 			if (objects.length !== 2) {
@@ -118,7 +118,7 @@ export function createPublicationActionHandlers({
 		 * @param {{objects?: Array<object>}} payload The bulk payload.
 		 * @return {boolean} Whether the dialog opened.
 		 *
-		 * @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-selected-publications-can-be-migrated-to-another-schema-req-pmm-002
+		 * @spec openspec/changes/archive/2026-11-24-publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-selected-publications-can-be-migrated-to-another-schema-req-pmm-002
 		 */
 		openPublicationMigration({ objects = [] }) {
 			return openSelectionDialog({

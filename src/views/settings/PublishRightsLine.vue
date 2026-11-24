@@ -38,7 +38,7 @@ export default {
 	},
 
 	computed: {
-		/** @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004 */
+		/** @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004 */
 		lines() {
 			if (!this.loaded) {
 				return []
@@ -56,7 +56,7 @@ export default {
 		 * Read the publishers group.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
+		 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
 		 */
 		async load() {
 			try {

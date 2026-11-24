@@ -33,7 +33,7 @@ use OCP\AppFramework\Http\Response;
  * Without a query service (a controller built without one) the read stays in
  * the source language and the answer carries no language headers.
  *
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
  */
 trait AnswersInTheVisitorsLanguage {
 	/**
@@ -43,7 +43,7 @@ trait AnswersInTheVisitorsLanguage {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private function negotiateVisitorLanguage(?PublicationQueryServiceInterface $queryService): void {
 		$queryService?->applyVisitorLanguage(
@@ -64,7 +64,7 @@ trait AnswersInTheVisitorsLanguage {
 	 *
 	 * @template T of Response
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private function withVisitorLanguageHeaders(Response $response, ?PublicationQueryServiceInterface $queryService): Response {
 		if ($queryService === null) {

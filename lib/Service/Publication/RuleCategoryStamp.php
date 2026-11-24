@@ -22,7 +22,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
  */
 
 declare(strict_types=1);
@@ -35,7 +35,7 @@ use OCA\OpenCatalogi\Contract\PublishedCollectionsServiceInterface;
 /**
  * The category a published collection files a record under.
  *
- * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
  */
 class RuleCategoryStamp {
 
@@ -61,7 +61,7 @@ class RuleCategoryStamp {
 	 *
 	 * @throws UnreadableRuleException When the configuration cannot be read.
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
 	 */
 	public function recordTypes(): array {
 		$types = [];
@@ -91,7 +91,7 @@ class RuleCategoryStamp {
 	 *
 	 * @throws UnreadableRuleException When the configuration or a condition cannot be read.
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
 	 */
 	public function categoryFor(array $record, array $typeNames): ?string {
 		foreach ($this->collections->collections() as $collection) {

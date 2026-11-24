@@ -71,7 +71,7 @@ import {
  * page: Dutch as the source and every language the administrator enabled
  * (publication-translations REQ-PTR-003, design D4).
  *
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
  */
 export default {
 	name: 'TranslationLanguageSwitch',
@@ -95,7 +95,7 @@ export default {
 		 * One option per language, Dutch named as the source.
 		 *
 		 * @return {Array<{id: string, label: string}>} The options
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		options() {
 			const locale = document.documentElement.lang || 'en'
@@ -114,7 +114,7 @@ export default {
 		 * The outdated fields as one list.
 		 *
 		 * @return {string} The field names, or ''
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		outdatedNames() {
 			const names = {
@@ -135,7 +135,7 @@ export default {
 		 *
 		 * @param {string} tag The language.
 		 * @return {void}
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		choose(tag) {
 			if (tag !== this.modelValue) {

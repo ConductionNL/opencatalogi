@@ -138,7 +138,7 @@ class DcatMappingServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/publications/spec.md#requirement-a-publication-keeps-one-identifier-for-life-req-cvs-006
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/publications/spec.md#requirement-a-publication-keeps-one-identifier-for-life-req-cvs-006
 	 */
 	public function testTheIdentifierIsTheUuidAndSurvivesAnEdit(): void {
 		$uuid = '4f2c9a1e-7b3d-4e8a-9c51-2d6f0b8e3a17';
@@ -494,7 +494,7 @@ class DcatMappingServiceTest extends TestCase {
 	 * language-tagged literal per language, Dutch first; an empty translation
 	 * is left out and a plain value stays plain (publication-translations REQ-PTR-002).
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testEachLanguageIsATaggedLiteral(): void {
 		$dataset = $this->mapDataset(
@@ -530,7 +530,7 @@ class DcatMappingServiceTest extends TestCase {
 	/**
 	 * An array that is not keyed by language is not turned into literals.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testAnArrayNotKeyedByLanguageStaysAsItIs(): void {
 		$dataset = $this->mapDataset(

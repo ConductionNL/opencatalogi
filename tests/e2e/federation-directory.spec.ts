@@ -17,9 +17,9 @@
  * Locale: nothing forces the E2E language, so the row is found by its URL and
  * the texts are matched in English and Dutch.
  *
- * @e2e openspec/changes/federation-connection-last-success/specs/federation/spec.md#scenario-a-new-peer-that-never-answered
- * @e2e openspec/changes/federation-connection-last-success/specs/federation/spec.md#scenario-an-administrator-checks-a-failing-peer
- * @e2e openspec/changes/federation-connection-last-success/specs/federation/spec.md#scenario-a-user-who-is-not-an-administrator
+ * @e2e openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#scenario-a-new-peer-that-never-answered
+ * @e2e openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#scenario-an-administrator-checks-a-failing-peer
+ * @e2e openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#scenario-a-user-who-is-not-an-administrator
  */
 import { randomUUID } from 'node:crypto'
 import { expect, test } from './authenticated-request.ts'

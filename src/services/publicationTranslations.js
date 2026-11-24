@@ -24,7 +24,7 @@ export const TRANSLATABLE_FIELDS = ['title', 'summary', 'description']
  *
  * @param {string|Array<string>|undefined} stored - The stored value
  * @return {Array<string>} The language tags
- * @spec openspec/changes/publication-translations/design.md
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
  */
 export function publicationLanguagesFrom(stored) {
 	let tags = stored
@@ -53,7 +53,7 @@ export function publicationLanguagesFrom(stored) {
  * @param {string} tag - The BCP 47 tag
  * @param {string} locale - The reader's locale
  * @return {string} The name
- * @spec openspec/changes/publication-translations/design.md
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
  */
 export function languageName(tag, locale) {
 	try {
@@ -71,7 +71,7 @@ export function languageName(tag, locale) {
  * @param {object|null} schema - The schema
  * @param {string} language - The language being edited
  * @return {object|null} The schema to show
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
  */
 export function translationSchema(schema, language) {
 	if (!schema || language === SOURCE_LANGUAGE) {
@@ -113,7 +113,7 @@ function valueIn(value, language) {
  * @param {object|null} allTranslations - The object read with every translation
  * @param {string} language - The language being edited
  * @return {object|null} The object to show
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
  */
 export function translationItem(object, allTranslations, language) {
 	if (!object || language === SOURCE_LANGUAGE) {
@@ -132,7 +132,7 @@ export function translationItem(object, allTranslations, language) {
  *
  * @param {object} formData - The changed fields
  * @return {object} The fields to write
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
  */
 export function translationPayload(formData) {
 	const payload = {}
@@ -153,7 +153,7 @@ export function translationPayload(formData) {
  * @param {string} language - The language written
  * @param {string} requestToken - The CSRF token
  * @return {{method: string, headers: object, body: string}} The request options
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
  */
 export function translationSaveOptions(payload, language, requestToken) {
 	return {
@@ -192,7 +192,7 @@ function rowsIn(answer, language) {
  * @param {object|null} answer - The answer of GET /api/translations/object/{uuid}
  * @param {string} language - The language
  * @return {Array<string>} The field names, in field order
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
  */
 export function outdatedFields(answer, language) {
 	const outdated = rowsIn(answer, language)
@@ -208,7 +208,7 @@ export function outdatedFields(answer, language) {
  * @param {object|null} answer - The answer of GET /api/translations/object/{uuid}
  * @param {Array<string>} languages - The enabled languages
  * @return {Array<{language: string, source: boolean, translated: Array<string>, missing: Array<string>, outdated: Array<string>}>} One state per language
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
  */
 export function languageStates(answer, languages) {
 	return languages.map((language) => {
@@ -284,7 +284,7 @@ function fieldName(field, t) {
  * @param {{source: boolean, translated: Array<string>, missing: Array<string>, outdated: Array<string>}} state - The language's state
  * @param {(app: string, text: string, vars?: object) => string} t - The translate function
  * @return {string} The line
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
  */
 export function languageSummary(state, t) {
 	if (state.source) {
@@ -352,7 +352,7 @@ let requestedEditorLanguage = null
  *
  * @param {string} language - The language
  * @return {void}
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
  */
 export function requestEditorLanguage(language) {
 	requestedEditorLanguage = language
@@ -363,7 +363,7 @@ export function requestEditorLanguage(language) {
  * is cleared, so the next edit opens in Dutch again.
  *
  * @return {string} The language
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-publication-page-shows-what-is-translated-req-ptr-004
  */
 export function takeRequestedEditorLanguage() {
 	const language = requestedEditorLanguage || SOURCE_LANGUAGE
@@ -376,7 +376,7 @@ export function takeRequestedEditorLanguage() {
  *
  * @param {object|null} schema - The schema
  * @return {boolean} True when one of its properties is translatable
- * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+ * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
  */
 export function hasTranslatableFields(schema) {
 	return Object.values((schema && schema.properties) || {}).some(

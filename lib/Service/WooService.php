@@ -463,7 +463,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 *
 	 * @throws RuntimeException When OpenRegister or the Woo batch schema is unavailable.
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
 	 */
 	public function openBatchFor(string $caseReference): ?array {
 		$objectService = $this->getObjectService();

@@ -24,7 +24,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
  */
 
 declare(strict_types=1);
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
  */
 class SourceAbsenceListener implements IEventListener {
 
@@ -76,7 +76,7 @@ class SourceAbsenceListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatedEvent === false) {

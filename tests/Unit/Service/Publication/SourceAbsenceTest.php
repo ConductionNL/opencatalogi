@@ -15,7 +15,7 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
  */
 
 declare(strict_types=1);

@@ -326,7 +326,7 @@ interface PublicationQueryServiceInterface {
 	 *
 	 * @return string The language asked of OpenRegister.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 * @contract-shift new-contract — added for publication-translations; PublicationQueryService is the one implementation.
 	 */
 	public function applyVisitorLanguage(array $queryParams, string $acceptLanguage): string;
@@ -337,7 +337,7 @@ interface PublicationQueryServiceInterface {
 	 *
 	 * @return array<string, string> Header name to value.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 * @contract-shift new-contract — added for publication-translations; PublicationQueryService is the one implementation.
 	 */
 	public function languageHeaders(): array;

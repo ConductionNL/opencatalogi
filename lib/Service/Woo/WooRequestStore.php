@@ -205,7 +205,7 @@ class WooRequestStore implements InformationRequestStoreInterface {
 	 *
 	 * @return array<string, mixed>|null The request, or null.
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-transparency/spec.md#requirement-opening-a-batch-gathers-the-documents-of-the-woo-request-req-cvs-004
 	 */
 	public function byReference(string $reference): ?array {
 		$reference = trim($reference);

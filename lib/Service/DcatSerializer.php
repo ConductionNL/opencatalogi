@@ -496,7 +496,7 @@ class DcatSerializer implements DcatSerializerInterface {
 	 *
 	 * @return string|null The element, or null.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private function rdfXmlSingleTerm(string $tag, mixed $value): ?string {
 		if (is_array($value) === false) {
@@ -522,7 +522,7 @@ class DcatSerializer implements DcatSerializerInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private static function isLanguageLiteral(array $value): bool {
 		return count($value) === 2

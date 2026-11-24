@@ -1119,7 +1119,7 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @return string The JSON list to store.
 	 *
-	 * @spec openspec/changes/publication-translations/design.md
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
 	 */
 	private function normalisePublicationLanguages(mixed $value): string {
 		if (is_string($value) === true) {
@@ -1185,7 +1185,7 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @return string|null The tag to store, or null.
 	 *
-	 * @spec openspec/changes/publication-translations/design.md
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/design.md
 	 */
 	private static function normalisedLanguageTag(mixed $tag): ?string {
 		if (is_string($tag) === false) {

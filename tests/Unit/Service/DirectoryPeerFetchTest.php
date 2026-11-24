@@ -292,7 +292,7 @@ class DirectoryPeerFetchTest extends TestCase {
 	 * A peer read forwards the language the visitor asked for, so the peer
 	 * answers in it (publication-translations REQ-PTR-002).
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testAPeerReadForwardsTheVisitorsLanguage(): void {
 		$this->wireVisitorLanguage(language: 'en', source: 'header');
@@ -315,7 +315,7 @@ class DirectoryPeerFetchTest extends TestCase {
 	/**
 	 * A visitor who asked for no language gets the peer's default: nothing is forwarded.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testAPeerReadForwardsNoLanguageWhenNoneWasAsked(): void {
 		$this->wireVisitorLanguage(language: 'nl', source: 'default');

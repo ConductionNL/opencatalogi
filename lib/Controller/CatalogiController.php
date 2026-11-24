@@ -126,7 +126,7 @@ class CatalogiController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 * @spec openspec/changes/catalogs/tasks.md#task-3
 	 */
 	#[PublicPage]
@@ -167,7 +167,7 @@ class CatalogiController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 * @spec openspec/changes/catalogs/tasks.md#task-4
 	 */
 	#[PublicPage]

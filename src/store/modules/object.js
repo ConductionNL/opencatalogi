@@ -2238,7 +2238,7 @@ export const useObjectStore = defineStore('object', {
 		 * @param {string} url - The OpenRegister object URL
 		 * @param {{fields: object, language: string}} translation - The fields and their language
 		 * @return {Promise<boolean>} Whether the translation was stored
-		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		async saveObjectTranslation(url, { fields, language }) {
 			try {

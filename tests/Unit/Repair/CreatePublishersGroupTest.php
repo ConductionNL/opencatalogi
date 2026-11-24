@@ -29,7 +29,7 @@ use RuntimeException;
 /**
  * @covers \OCA\OpenCatalogi\Repair\CreatePublishersGroup
  *
- * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
+ * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
  */
 final class CreatePublishersGroupTest extends TestCase {
 

@@ -553,7 +553,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * REQ-CVS-002: the schemas saved on a catalogue decide what `GET /api/{catalogSlug}` lists.
 	 * "Raadsstukken" holds agendas (31); adding decisions (32) lists both; taking agendas off lists only decisions.
 	 *
-	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/catalogs/spec.md#requirement-an-administrator-chooses-the-kinds-of-publication-a-catalogue-holds-req-cvs-002
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/catalogs/spec.md#requirement-an-administrator-chooses-the-kinds-of-publication-a-catalogue-holds-req-cvs-002
 	 *
 	 * @return void
 	 */
@@ -2439,7 +2439,7 @@ class PublicationQueryServiceTest extends TestCase {
 	/**
 	 * `_lang` wins over Accept-Language, and the header's tags go to OpenRegister in q-order.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testTheVisitorsLanguageIsPassedToOpenRegister(): void {
 		$fake = $this->wireLanguageService();
@@ -2467,7 +2467,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * A nonsense tag is skipped, never refused: the read falls through to the
 	 * header, and without one to Dutch.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testAnInvalidTagFallsBackToDutch(): void {
 		$fake = $this->wireLanguageService();
@@ -2493,7 +2493,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * The answer names the language OpenRegister served, Dutch as the source,
 	 * and says when a field fell back to Dutch.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testTheLanguageHeadersComeFromOpenRegister(): void {
 		$fake = $this->wireLanguageService();
@@ -2511,7 +2511,7 @@ class PublicationQueryServiceTest extends TestCase {
 	/**
 	 * Without OpenRegister's language service the read stays Dutch and says so.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testWithoutTheLanguageServiceTheReadStaysDutch(): void {
 		$this->container->method('get')->willThrowException(new \RuntimeException('no openregister'));

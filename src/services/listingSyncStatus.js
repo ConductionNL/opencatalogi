@@ -20,7 +20,7 @@
  *
  * @param {object|null|undefined} listing The listing object from the listings API.
  * @return {{lastSuccessAt: string|null, lastAttemptAt: string|null, error: string, neverSucceeded: boolean}}
- * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
+ * @spec openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
  */
 export function listingSyncStatus(listing) {
 	const source = listing || {}
@@ -42,7 +42,7 @@ export function listingSyncStatus(listing) {
  * @param {string|null} lastSync The last attempt, or null
  * @param {string|null} lastSuccessAt The last success, or null
  * @return {string|null} The attempt, or null
- * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
+ * @spec openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
  */
 function separateAttempt(lastSync, lastSuccessAt) {
 	return lastSync !== null && lastSync !== lastSuccessAt ? lastSync : null
@@ -54,7 +54,7 @@ function separateAttempt(lastSync, lastSuccessAt) {
  * @param {string|null} lastAttemptAt The separate last attempt, or null
  * @param {string|number|null|undefined} lastError The error the listing carries
  * @return {string} The error, or an empty string
- * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
+ * @spec openspec/changes/archive/2026-11-24-federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
  */
 function attemptError(lastAttemptAt, lastError) {
 	return lastAttemptAt !== null && typeof lastError === 'string' ? lastError : ''

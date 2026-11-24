@@ -141,7 +141,7 @@ class DcatSerializerTest extends TestCase {
 	 * A language-tagged literal is written with its tag in Turtle and with
 	 * xml:lang in RDF/XML, once per language (publication-translations REQ-PTR-002).
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testALanguageTaggedLiteralKeepsItsLanguage(): void {
 		$document = [

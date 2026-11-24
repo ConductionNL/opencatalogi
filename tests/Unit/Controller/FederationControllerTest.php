@@ -409,7 +409,7 @@ class FederationControllerTest extends TestCase {
 	 * The federated list sets the visitor's language before it reads locally or
 	 * asks a peer, and names the language served (REQ-PTR-002).
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testPublicationsAreReadInTheVisitorsLanguage(): void {
 		$order = [];
@@ -430,7 +430,7 @@ class FederationControllerTest extends TestCase {
 	/**
 	 * A federated publication is read in the visitor's language too.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testAPublicationIsReadInTheVisitorsLanguage(): void {
 		$order = [];

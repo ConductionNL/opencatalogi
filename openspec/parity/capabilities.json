@@ -918,7 +918,7 @@
 				"spec": "openspec/specs/retrofit-2026-05-26-catalog-management",
 				"requirement": [
 					"openspec/specs/retrofit-2026-05-26-catalog-management :: A catalogue has its own title, summary and web address (REQ-CATM-006)",
-					"openspec/changes/capability-rows-verify-scenarios/specs/catalogs :: An administrator chooses the kinds of publication a catalogue holds (REQ-CVS-002)"
+					"openspec/specs/catalogs :: An administrator chooses the kinds of publication a catalogue holds (REQ-CVS-002)"
 				]
 			},
 			"reachedOn": "/catalogi -> CatalogModal (CatalogiIndex.vue:297 editCatalog)",
@@ -1092,7 +1092,7 @@
 				"spec": "openspec/specs/content-management",
 				"requirement": [
 					"openspec/specs/content-management :: List all glossary terms with pagination and facets via public API (CMS-030)",
-					"openspec/changes/capability-rows-close-gaps/specs/content-management :: Staff keep the glossary on the Glossary page (REQ-CRG-002)"
+					"openspec/specs/content-management :: Staff keep the glossary on the Glossary page (REQ-CRG-002)"
 				],
 				"change": [
 					"capability-rows-close-gaps",
@@ -1211,7 +1211,7 @@
 					"capability-rows-verify-scenarios"
 				],
 				"requirement": [
-					"openspec/changes/capability-rows-verify-scenarios/specs/publications :: A field an administrator adds to the publication schema shows on the publication form (REQ-CVS-001)",
+					"openspec/specs/publications :: A field an administrator adds to the publication schema shows on the publication form (REQ-CVS-001)",
 					"openregister:openspec/changes/local-changes-to-app-shipped-configuration/specs/schema-import :: An upgrade never silently discards a local change (REQ-LCA-003)"
 				]
 			},
@@ -1584,7 +1584,7 @@
 				"evidence": "src/manifest.json PublicationDetail pub-versions card = the nextcloud-vue version-history integration (CnVersionHistory, registered by OpenRegister's registerBuiltinIntegrations): it lists the publication's versions from OpenRegister's object audit trail (GET /api/objects/{register}/{schema}/{id}/audit-trails: semantic version, action, date, user) newest first, opens one to see what it changed, and compares two checked versions field by field by folding the audit deltas between them (added, removed, changed, with old and new values). The sidebar History tab stays the raw event log (tests/vitest/publicationVersionHistory.spec.js). OpenRegister has no server-side diff endpoint and no revert from this card.",
 				"spec": "openregister/openspec/specs/enhanced-audit-trail",
 				"requirement": "openregister:openspec/specs/content-versioning :: The system MUST support version comparison with visual diffs",
-				"plan": "openspec/changes/capability-rows-close-gaps"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-close-gaps"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id sidebar History tab",
 			"note": "You see what changed per edit, but there is no list of versions to open or compare and no revert.",
@@ -1737,7 +1737,7 @@
 					"openspec/specs/publication-quality :: Per-publication metadata-quality score over MQA dimensions (PQM-001)",
 					"openspec/specs/publication-quality :: Per-catalog quality dashboard and roll-up (PQM-003)"
 				],
-				"plan": "openspec/changes/capability-rows-close-gaps"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-close-gaps"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/catalogs/{slug}/quality (authenticated); no page calls it",
 			"note": "The scoring backend exists without a staff page, so nobody sees the missing metadata before publishing.",
@@ -2284,9 +2284,9 @@
 				"requirement": [
 					"openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: A record type is readable without an account, with the visible parts chosen (REQ-PIN-101)",
 					"openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: Which collections are published, and on what conditions, is configured (REQ-PIN-108)",
-					"openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance :: A publication rule names the information category its records are filed under (REQ-CVS-003)"
+					"openspec/specs/woo-compliance :: A publication rule names the information category its records are filed under (REQ-CVS-003)"
 				],
-				"plan": "openspec/changes/capability-rows-verify-scenarios"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios"
 			},
 			"reachedOn": "nothing for staff: no page authors a rule or calls the preview; rules take effect only in GET /api/feeds/{catalogSlug} (public)",
 			"provider": "opencatalogi",
@@ -2577,9 +2577,9 @@
 				],
 				"requirement": [
 					"openspec/specs/woo-transparency :: WOO document queue (consumes the OpenRegister deck leaf)",
-					"openspec/changes/capability-rows-verify-scenarios/specs/woo-transparency :: Opening a batch gathers the documents of the Woo request (REQ-CVS-004)"
+					"openspec/specs/woo-transparency :: Opening a batch gathers the documents of the Woo request (REQ-CVS-004)"
 				],
-				"plan": "openspec/changes/capability-rows-verify-scenarios"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios"
 			},
 			"reachedOn": "/woo (generic index + add form); document gathering has no page",
 			"note": "The index has no rowRoute and WooBatchDetail is type custom, so a row click opens nothing (nextcloud-vue 2.56.0 CnPageRenderer.vue:1678-1680).",
@@ -4160,7 +4160,7 @@
 				"evidence": "source read at opencatalogi development 7a5a8a492: tasks 1.1 and 1.2 of federation-connection-last-success are done: the listing schema has lastSuccessAt and lastError (lib/Settings/publication_register.json:778) and lib/Service/DirectoryService.php:862-866 moves lastSuccessAt only on success, :999 and :1542 leave it on failure (#1662). Not shown: the only component that renders them, src/sidebars/directory/DirectorySideBar.vue:91-110, is imported nowhere; FederationDirectory.vue (src/manifest.json:1371) shows the status dot per listing. Tasks 2.1, 2.2 and 3.1 are open.",
 				"change": "federation-connection-last-success",
 				"readOn": "2026-10-07",
-				"requirement": "openspec/changes/federation-connection-last-success/specs/federation :: The directory page shows when each connection last worked (REQ-FLS-002)"
+				"requirement": "openspec/specs/federation :: The directory page shows when each connection last worked (REQ-FLS-002)"
 			},
 			"reachedOn": "/directory (status dot per listing); integriq Integrations page for last sync/broadcast result",
 			"note": "Whether each connection works is visible per listing, but when it last succeeded is stored (lastSync) and not shown on the directory page. Specified in openspec/changes/federation-connection-last-success (OpenSpec pass 2026-09-27). Corrections round 8 (2026-09-28): lastSync records the last attempt, failed or not, so when a connection last succeeded is not stored at all, not only left unshown as said above, opencatalogi#1647; rating kept because whether each connection works is still visible per listing (status dot and HTTP status). Re-rated 2026-10-07: the last success is stored now, but no page shows it and Sync now per row is not built.",
@@ -4541,7 +4541,7 @@
 				"spec": "openspec/specs/dcat-ap-harvest",
 				"requirement": [
 					"openspec/specs/dcat-ap-harvest :: Attachments rendered as distributions with stable IRIs (DCAT-006)",
-					"openspec/changes/capability-rows-verify-scenarios/specs/publications :: A publication keeps one identifier for life (REQ-CVS-006)"
+					"openspec/specs/publications :: A publication keeps one identifier for life (REQ-CVS-006)"
 				]
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{uuid} (public)",
@@ -4806,8 +4806,8 @@
 					"publication-plain-language-and-translation"
 				],
 				"requirement": [
-					"openspec/changes/publication-translations/specs/publications :: Publication and catalogue text is translatable (REQ-PTR-001)",
-					"openspec/changes/publication-translations/specs/publications :: The public API answers in the visitor's language (REQ-PTR-002)"
+					"openspec/specs/publications :: Publication and catalogue text is translatable (REQ-PTR-001)",
+					"openspec/specs/publications :: The public API answers in the visitor's language (REQ-PTR-002)"
 				]
 			},
 			"reachedOn": "staff UI labels via Nextcloud l10n; publication content: nothing",
@@ -5992,7 +5992,7 @@
 				"evidence": "src/manifest.d/retention-review-queue.json RetentionReview index page (/retention) lists the publications expiring within 30 days or expired, with quick filters, per-item and bulk extend, depublish and archive (RetentionDecisionDialog -> POST /api/retention/publications/{id}/decision) and the report; each row opens RetentionPublication (/retention/:id) with the retention fields and decision log; src/views/widgets/RetentionWidget.vue opens /retention; the unused src/services/retentionStatus.js is removed (validate-manifest, retentionActions.spec.js)",
 				"change": "publication-retention-lifecycle",
 				"requirement": "openspec/specs/publication-retention-lifecycle :: Retention review queue and dashboard widget (RET-007)",
-				"plan": "openspec/changes/capability-rows-close-gaps"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-close-gaps"
 			},
 			"reachedOn": "Nextcloud dashboard widget 'retention' (counts). Clicking it lands on the app dashboard unfiltered",
 			"note": "The counts are real. There is no list to work through: the deep link goes nowhere, and src/services/retentionStatus.js is imported by nothing.",
@@ -6032,7 +6032,7 @@
 					"openspec/specs/publication-retention-lifecycle :: Retention review queue and dashboard widget (RET-007)",
 					"openspec/specs/publication-retention-lifecycle :: Archived state semantics (RET-006)"
 				],
-				"plan": "openspec/changes/capability-rows-close-gaps"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-close-gaps"
 			},
 			"reachedOn": "nothing: admin API only, no page calls the decision endpoint",
 			"note": "'dispose' only sets status=archived, the same as archive, and deletes nothing. retentionDecisionLog is not declared on the publication schema, so nobody has shown that the log survives the save.",
@@ -6075,7 +6075,7 @@
 					"retention-defaults-on-shared-decision-tables"
 				],
 				"requirement": "openspec/specs/publication-retention-lifecycle :: Per-catalog retention defaults per WOO information category (RET-004)",
-				"plan": "openspec/changes/capability-rows-close-gaps"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-close-gaps"
 			},
 			"reachedOn": "nothing: admin API only, no settings section in src/ edits retention defaults",
 			"note": "Defaults are applied automatically once set, but they can only be set over the API.",
@@ -6342,7 +6342,7 @@
 					"openspec/specs/publication-usage-analytics :: Count public publication views and file downloads (ANA-001)",
 					"openspec/specs/publication-usage-analytics :: Aggregate-only, privacy-safe counter storage in OR (ANA-002)"
 				],
-				"plan": "openspec/changes/capability-rows-close-gaps"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-close-gaps"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{id} and /download (public)",
 			"note": "Counting is dark until an admin picks the usageCounter schema by hand in settings. It also misses the federation endpoint portaliq reads (FederationController has no countReach).",
@@ -6382,7 +6382,7 @@
 				"evidence": "src/views/dashboard/Dashboard.vue usage card \"Publication views\" <- fetchUsageChart -> services/usageStats.js GET /api/stats/series -> StatsController::series -> UsageCounterService::aggregateInstanceSeries over the usage counters, which a default install now writes (ops-usage, SettingsObjectTypeConfigurationTest); requests-not-visitors and counting-start notes on the card",
 				"change": "publication-usage-analytics",
 				"requirement": "openspec/specs/publication-usage-analytics :: Dashboard usage card shows publication views and downloads (ANA-009)",
-				"plan": "openspec/changes/capability-rows-close-gaps"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-close-gaps"
 			},
 			"reachedOn": "/ app dashboard usage card (Dashboard.vue:185)",
 			"note": "The chart is on the app's own dashboard, not the Nextcloud dashboard. It stays empty on a stock install for the provisioning reason on ops-usage.",
@@ -6419,7 +6419,7 @@
 				"evidence": "lib/Dashboard/MostViewedPublicationsWidget.php -> src/views/widgets/MostViewedPublicationsWidget.vue -> services/usageStats.js fetchMostViewed GET /api/stats/top -> StatsController::top -> lib/Service/MostViewedPublications.php ranks the counted views of every catalogue the caller may read, keeps only publications the caller may read under RBAC and names them by title; the row opens /publications/{catalog}/{id} (MostViewedPublicationsTest, StatsTopTest, tests/vitest/mostViewedRows.spec.js)",
 				"change": "publication-usage-analytics",
 				"requirement": "openspec/specs/publication-usage-analytics :: Catalog roll-ups and top-N (ANA-005)",
-				"plan": "openspec/changes/capability-rows-close-gaps"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-close-gaps"
 			},
 			"reachedOn": "Nextcloud dashboard 'most viewed' widget",
 			"note": "It renders, but only for one catalogue slug, shows UUIDs not titles, and the row link is broken. It also depends on the unprovisioned counter. Reworded 2026-09-27 out of Nextcloud and OpenRegister terms into a capability any product can be rated on; the old wording was \"See the most viewed publications on the Nextcloud dashboard.\". Ratings and evidence are unchanged, so a competitor search quoting the old wording refers to this row.",
@@ -6500,7 +6500,7 @@
 				"evidence": "src/manifest.json:1241 Reports page with PublicationsReport :1281, UsageReport :1524, FederationReport :1711; every widget source uses register 'opencatalogi' (manifest.json:1303), but the only register the app ships has slug 'publication' (publication_register.json, components.registers.publication) Missing (spec-coverage pass 2026-11-12, development bba37fc7): every report widget in src/manifest.json reads register 'opencatalogi', but the app ships only register 'publication', so the reports have no data.",
 				"spec": "openspec/specs/reports",
 				"requirement": "openspec/specs/reports :: A reports page lists the three reports (REP-001)",
-				"plan": "openspec/changes/capability-rows-close-gaps"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-close-gaps"
 			},
 			"reachedOn": "/reports -> /reports/publications|usage|federation",
 			"note": "The pages exist, but they query a register slug that OR's RegisterMapper (id/uuid/slug match) will not find, so they probably render empty. Not verified live.",
@@ -6614,7 +6614,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "Searched publication_register.json authorization blocks: publication (:291) has read rules only, no create/update/publish split; no role or group concept in lib/; publishing is a plain publicationDate write (EventService.php:381), so no separate publish right can exist",
 				"change": "operations-publish-rights",
-				"requirement": "openspec/changes/operations-publish-rights/specs/publications :: Only publishers change whether a publication is public (REQ-OPR-001)"
+				"requirement": "openspec/specs/publications :: Only publishers change whether a publication is public (REQ-OPR-001)"
 			},
 			"reachedOn": "nothing: no editor/publisher split",
 			"note": "An admin could set CRUD rights per group in OR's schema editor, but that cannot tell editing from publishing. Open Register's half shipped in ConductionNL/openregister openspec/changes/archive/2026-06-15-rbac-and-lifecycle-enforcement (per-transition authorization on x-openregister-lifecycle); opencatalogi's half is not done, since lib/Settings/publication_register.json declares only an archive transition and no publish transition limited to publishers, so the owner moved to ConductionNL/opencatalogi (openregister lane, OpenSpec pass 2026-09-27; owner was ConductionNL/openregister).",
@@ -7323,7 +7323,7 @@
 				"readOn": "2026-10-07",
 				"spec": "integriq/openspec/specs/source-owned-records",
 				"requirement": "integriq:openspec/specs/source-owned-records :: What happens when a record disappears is declared, not hardcoded (REQ-SOR-002)",
-				"plan": "openspec/changes/capability-rows-close-gaps"
+				"plan": "openspec/changes/archive/2026-11-24-capability-rows-close-gaps"
 			},
 			"reachedOn": "integriq synchronisation editor (disappearance policy)",
 			"provider": "integriq",
@@ -7599,7 +7599,7 @@
 				"change": "publications-merge-and-migrate",
 				"note": "Added by decision 99 (8 Oct): board without a row. OpenRegister owns the endpoints (objects#merge POST /api/objects/{register}/{schema}/{id}/merge, objects#migrate POST /api/migrate) and ships the same dialogs; its specs do not cover offering them from an app list: openregister/mdm-merge and mdm-merge-ui are the reversible master-data merge on x-openregister-merge schemas launched from a duplicate pair (source kept as merged-into-other), openregister/entity-management-modals names MigrationObject.vue among the bulk modals, and no OR spec owns objects#merge or objects#migrate beyond api-test-coverage.",
 				"readOn": "2026-10-08",
-				"requirement": "openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration :: Two selected publications can be merged from the list (REQ-PMM-001)"
+				"requirement": "openspec/specs/publication-merge-and-migration :: Two selected publications can be merged from the list (REQ-PMM-001)"
 			},
 			"ckan": "unknown",
 			"dkan": "unknown",
@@ -7625,7 +7625,7 @@
 				"change": "publications-merge-and-migrate",
 				"note": "Added by decision 99 (8 Oct): board without a row. OpenRegister owns the endpoints (objects#merge POST /api/objects/{register}/{schema}/{id}/merge, objects#migrate POST /api/migrate) and ships the same dialogs; its specs do not cover offering them from an app list: openregister/mdm-merge and mdm-merge-ui are the reversible master-data merge on x-openregister-merge schemas launched from a duplicate pair (source kept as merged-into-other), openregister/entity-management-modals names MigrationObject.vue among the bulk modals, and no OR spec owns objects#merge or objects#migrate beyond api-test-coverage.",
 				"readOn": "2026-10-08",
-				"requirement": "openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration :: Selected publications can be migrated to another schema (REQ-PMM-002)"
+				"requirement": "openspec/specs/publication-merge-and-migration :: Selected publications can be migrated to another schema (REQ-PMM-002)"
 			},
 			"ckan": "unknown",
 			"dkan": "unknown",

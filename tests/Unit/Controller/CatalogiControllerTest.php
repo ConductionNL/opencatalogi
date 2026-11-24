@@ -330,7 +330,7 @@ class CatalogiControllerTest extends TestCase {
 	 * The catalogue list hands the visitor's language to OpenRegister before it
 	 * searches, and its answer names the language served (REQ-PTR-002).
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testIndexPassesTheVisitorsLanguageBeforeTheSearch(): void {
 		$order = [];
@@ -366,7 +366,7 @@ class CatalogiControllerTest extends TestCase {
 	 * A catalogue's publication list is read in the visitor's language and says
 	 * when a field fell back to Dutch (REQ-PTR-002).
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testShowPassesTheVisitorsLanguageAndNamesTheFallback(): void {
 		$order = [];
@@ -401,7 +401,7 @@ class CatalogiControllerTest extends TestCase {
 	/**
 	 * A controller built without a query service answers without language headers.
 	 *
-	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	public function testWithoutAQueryServiceTheAnswerCarriesNoLanguageHeaders(): void {
 		$this->catalogiService->method('index')->willReturn(new JSONResponse([]));
