@@ -146,8 +146,9 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - **acceptance_criteria:**
   - GIVEN all 4 files exist WHEN Nextcloud migration system runs THEN they execute in date order without error AND no existing migration file has been modified
 - [x] 9.1 Verify all 4 migration files exist in `lib/Migration/` with correct class names matching file names
-- [ ] 9.2 Confirm each class extends `SimpleMigrationStep` (or equivalent) and implements `changeSchema()` or `postSchemaChange()`
+- [x] 9.2 Confirm each class extends `SimpleMigrationStep` (or equivalent) and implements `changeSchema()` or `postSchemaChange()` (verified 2026-11-24: all four extend `SimpleMigrationStep` and declare `preSchemaChange`, `changeSchema` and `postSchemaChange`; pinned by tests/Unit/Migration/MigrationStepShapeTest.php)
 - [ ] 9.3 Confirm no existing migration file has been modified — git blame to verify original authorship
+  - 24 Nov: does not hold. A token diff against each file's first commit shows code changes beyond formatting: `Version6Date20241011085015` (1,707 changed tokens, the options arrays rewritten in the 2026 coding-standard and PHPMD passes), `Version6Date20250419123213` (its `SettingsService` call removed), and small edits in the other two. Left open for a decision: accept the edits as behaviour-preserving, or restore the shipped versions.
 - [x] 9.4 Add SPDX header to any migration file missing one
 
 ---
@@ -185,9 +186,9 @@ Before implementation, verify no overlap with existing OpenRegister services:
   - `CnSettingsSection` section for publishing options with three `NcCheckboxRadioSwitch` toggles
   - `NcButton` "Save settings" that calls `POST /api/settings` via `@nextcloud/axios`
   - `NcButton` "Import configuration" that calls `POST /api/settings/import`
-- [ ] 11.4 All user-visible strings use `t('opencatalogi', '...')` — no hardcoded Dutch or English text
+- [x] 11.4 All user-visible strings use `t('opencatalogi', '...')` — no hardcoded Dutch or English text (verified 2026-11-24: `npm run find:unwrapped -- src/views/settings/Settings.vue` reports 0 candidates; `npm run check:l10n` reports 0 MISSING and 0 UNWRAPPED)
 - [ ] 11.5 All `await axios.post(...)` calls are wrapped in `try/catch` with `showError(t('opencatalogi', 'Failed to save settings'))` feedback
-- [ ] 11.6 `Settings.vue` imports ALL used components in `components: {}` — no implicit global registration
+- [x] 11.6 `Settings.vue` imports ALL used components in `components: {}` — no implicit global registration (verified 2026-11-24: every PascalCase tag of the template is registered; pinned by tests/vitest/settingsComponentsRegistered.spec.js)
 - [x] 11.7 Add SPDX header `<!-- SPDX-License-Identifier: EUPL-1.2 -->` to both `.vue` files
 
 ---
@@ -200,9 +201,9 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - **files:** `l10n/en.js`, `l10n/nl.js` (via `scripts/l10n-ai.js add`)
 - **acceptance_criteria:**
   - GIVEN all user-visible strings in `Settings.vue` and `AdminRoot.vue` WHEN `npm run check:l10n` is run THEN zero MISSING keys are reported
-- [ ] 12.1 Run `node scripts/l10n-ai.js list-locales` to identify all locales
+- [x] 12.1 Run `node scripts/l10n-ai.js list-locales` to identify all locales (verified 2026-11-24: 37 locales, be to uk)
 - [ ] 12.2 For each new `t('opencatalogi', '...')` key in the settings UI, run `node scripts/l10n-ai.js add "<key>" --value en="<key>" --value nl="<dutch translation>"`
-- [ ] 12.3 Run `npm run check:l10n` — confirm zero MISSING and zero UNWRAPPED
+- [x] 12.3 Run `npm run check:l10n` — confirm zero MISSING and zero UNWRAPPED (verified 2026-11-24 on development after #2914: all clean)
 - [x] 12.4 Run `npm run find:unwrapped -- src/views/settings/` — confirm no unwrapped prose candidates remain
 
 ---
@@ -222,8 +223,8 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - [ ] 13.5 Test repair step by simulating install: clear `configuredVersion` key, run `occ maintenance:repair` — verify settings are re-imported (live pass, decision 139)
   - Live pass 17 Nov: left open, fails. With the configuration's version cleared (and the legacy `opencatalogi_config_version` key deleted), `occ maintenance:repair` runs "Initialize OpenCatalogi settings" and reports `Configuration loaded: 1 registers, 0 schemas, 0 objects`, but the version is not written back: `/api/settings/version` keeps `configuredVersion: null, needsUpdate: true` until a forced import. OpenRegister's `ImportHandler::importFromApp()` only calls `track()` (which sets the version) when the import changed a register, schema or object, so a no-change import never records the version.
 - [ ] 13.6 Open Nextcloud admin settings → OpenCatalogi — verify `CnVersionInfoCard` renders first, dropdowns populate, save works (live pass, decision 139)
-- [ ] 13.7 Run `npm run check:l10n` — zero MISSING, zero UNWRAPPED
-- [ ] 13.8 Verify `AdminRoot.vue` is absent from the vue-router: `grep -rn "AdminRoot" src/router/` must return no results
+- [x] 13.7 Run `npm run check:l10n` — zero MISSING, zero UNWRAPPED (verified 2026-11-24 on development after #2914: all clean)
+- [x] 13.8 Verify `AdminRoot.vue` is absent from the vue-router: `grep -rn "AdminRoot" src/router/` must return no results (verified 2026-11-24: there is no `src/router/` and no `AdminRoot` anywhere in `src/`; `src/settings.js` mounts `Settings.vue` with `createApp` and no router)
 - [ ] 13.9 Run all Hydra gates: `hydra-gate-route-auth`, `hydra-gate-semantic-auth`, `hydra-gate-spdx`, `hydra-gate-forbidden-patterns`, `hydra-gate-admin-router`, `hydra-gate-nc-input-labels`
 
 ## Verification checklist
