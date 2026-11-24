@@ -1037,7 +1037,7 @@ class RetentionService implements RetentionServiceInterface {
 	 *
 	 * @return int How many publications got a new transfer status.
 	 *
-	 * @spec openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
 	 */
 	public function refreshEdepotTransfers(): int {
 		$run = $this->configuredRun();

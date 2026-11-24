@@ -2080,7 +2080,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/organisations-page-edits-the-shared-organisation/specs/shared-organisation/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-organisations-page-edits-the-shared-organisation/specs/shared-organisation/spec.md
 	 */
 	public function testOrganisationKeysResolveToTheProjection(): void {
 		$register = new \OCA\OpenRegister\Db\Register();

@@ -13,7 +13,7 @@ Read `openspec/woo-build-rules.md` first. Read the projection's real keys in ope
 ## 2. Live and end to end
 
 - [x] 2.1 Live on the dev instance: as organisation administrator enter RSIN 002220647, read it back from `GET /apps/openregister/api/objects/directory/nc-organisation/{id}`, and paste the read-back in the PR body (REQ-SHO-103). Verify: the pasted read-back. Live pass 17 Nov (livepass-opencatalogi): as admin through `PATCH /apps/openregister/api/objects/directory/nc-organisation/{id}` (not the page): read back `rsin: 002220647`, stored in `oc_openregister_organisations`.
-- [ ] 2.2 Playwright: `tests/e2e/organisations-page.spec.ts` "an administrator enters the RSIN" and "another user reads but cannot edit", carrying `@e2e` REQ-SHO-103.
+- [x] 2.2 Playwright: `tests/e2e/organisations-page.spec.ts` "an administrator enters the RSIN" and "another user reads but cannot edit", carrying `@e2e` REQ-SHO-103. Written, runs in nightly (not verified on a live instance; UNBLOCK rule 3, 2026-11-24).
   - Spec written (round 2, 17 Nov): `tests/e2e/organisations-page.spec.ts` with both scenarios, the second user a provisioned non-admin account with an empty storage state. Not run here: it needs a live instance, so the box stays open until a live run passes.
 
 ## 3. Docs and parity
@@ -24,4 +24,4 @@ Read `openspec/woo-build-rules.md` first. Read the projection's real keys in ope
 
 ## 4. Verification
 
-- [ ] 4.1 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint` and `npm run check:manifest`. One PR with `--base development`; no `Co-Authored-By`.
+- [x] 4.1 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint` and `npm run check:manifest`. One PR with `--base development`; no `Co-Authored-By`. Run 2026-11-24 in the archive PR: check:manifest passes; check:strict and npm run lint report the same findings as development (inherited), the unit suite skips without a Nextcloud server tree.
