@@ -371,3 +371,4 @@ require_once __DIR__ . '/Unit/Support/AllowingCapabilityRights.php';
 // Test helpers for OpenRegister's option objects (tests carry no PSR-4 test namespace).
 require_once __DIR__ . '/Support/ReleaseObjectSignatures.php';
 require_once __DIR__ . '/Support/LegacyObjectArgs.php';
+require_once __DIR__ . '/Support/PermissionArgs.php';
