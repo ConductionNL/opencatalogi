@@ -12,7 +12,7 @@ Publications link to each other with typed relations visible from both sides, an
 - Rows: 2.15, 2.19; 2.16 gated on D10 (REQ-PRS-004 and task group 5 are skipped unless Ruben keeps 2.16).
 - Wave: 2.
 - Depends on: `openregister/relation-types-with-inverses` (open change outside this plan, 14 of 15 tasks; no `[OpenSpec]` issue found); `openregister/geometry-on-a-map` (open change outside this plan, for the gated 2.16 only; no `[OpenSpec]` issue found); `opencatalogi/publication-lifecycle-on-or` (https://github.com/ConductionNL/opencatalogi/issues/1754), whose ready list gains the `sourceIdentifier` filter.
-- Decision: D10 (2.16 flagged).
+- Decision: D10 (2.16 struck, 24 Nov 2026).
 - Build rules: openspec/woo-build-rules.md
 
 ## Why
@@ -59,7 +59,7 @@ Wave 2. It waits on two OpenRegister changes outside this plan, and it adds a fi
 
 ## Decisions
 
-- D10: 2.16 is flagged and awaits strike or keep. Its requirement (REQ-PRS-004) and tasks (group 5) are gated: the builder skips them unless Ruben has kept 2.16. The other two rows are built.
+- D10: decided 24 Nov 2026, strike. Row 2.16 is not built: DiWoo carries no place, so `geo` would be a field nothing reads, and it would wait on `openregister/geometry-on-a-map`. REQ-PRS-004 and task group 5 are removed. The other two rows are built.
 
 ## Rows
 

@@ -71,15 +71,3 @@ The publication schema SHALL carry `sourceIdentifiers`: an array of `{system (st
 - **WHEN** it is saved as a publication
 - **THEN** `sourceIdentifiers` holds `{system: "case", identifier: <that uuid>, public: false}`
 
-### Requirement: A publication carries a geographic location (REQ-PRS-004)
-
-Gated on decision D10: build only once Ruben keeps row 2.16.
-
-The publication schema SHALL carry `geo`, a GeoJSON geometry validated on save by OpenRegister's geometry support (REQ-GEOMAP-001 of `openregister/geometry-on-a-map`). `DcatMappingService` SHALL emit it as `dct:spatial` with a `locn:geometry` literal, and the public response SHALL carry it as `geo`. The publication detail manifest SHALL place the OpenRegister maps leaf widget bound to `publication.geo` (PUB-MAP-001).
-
-#### Scenario: A publication with a place
-
-- **GIVEN** a public publication with `geo` a point in Utrecht
-- **WHEN** a reader opens it, and the DCAT feed is requested
-- **THEN** the detail page shows the point on a map
-- **AND** the dataset in the feed carries `dct:spatial` with that point
