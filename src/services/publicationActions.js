@@ -33,7 +33,7 @@ export function createPublicationActionHandlers({
 	 * @param {{objects?: Array<object>, props?: {dialog?: string, modal?: string}}} payload The bulk payload.
 	 * @return {boolean} Whether something opened.
 	 *
-	 * @spec openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#requirement-the-selection-bar-opens-the-mass-dialogs-on-the-selected-publications-psa-001
+	 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-the-selection-bar-opens-the-mass-dialogs-on-the-selected-publications-psa-001
 	 */
 	function openSelectionDialog({ objects = [], props = {} }) {
 		if (!names(props) || objects.length === 0) {

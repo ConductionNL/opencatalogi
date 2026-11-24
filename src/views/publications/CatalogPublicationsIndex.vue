@@ -303,7 +303,7 @@ export default {
 		/**
 		 * Whether one of the app's modals or dialogs is open.
 		 *
-		 * @spec openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#requirement-the-list-reloads-after-a-selection-action-psa-002
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-the-list-reloads-after-a-selection-action-psa-002
 		 */
 		overlayOpen() {
 			return Boolean(navigationStore.modal || navigationStore.dialog)
@@ -322,7 +322,7 @@ export default {
 		 * the selection clears, so the rows show what the dialog changed.
 		 *
 		 * @param {boolean} open Whether a modal or dialog is open.
-		 * @spec openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#requirement-the-list-reloads-after-a-selection-action-psa-002
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-the-list-reloads-after-a-selection-action-psa-002
 		 */
 		overlayOpen(open) {
 			if (open || !this.selectionActionOpen) {
@@ -495,7 +495,7 @@ export default {
 		 *
 		 * @param {object} action The manifest bulk action.
 		 * @return {object} The action, with a bound handler when it names one.
-		 * @spec openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#requirement-the-selection-bar-opens-the-mass-dialogs-on-the-selected-publications-psa-001
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-the-selection-bar-opens-the-mass-dialogs-on-the-selected-publications-psa-001
 		 */
 		bindBulkAction(action) {
 			const handler =
