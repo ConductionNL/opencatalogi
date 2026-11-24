@@ -239,7 +239,9 @@ class SitemapIndexGoldenTest extends TestCase {
 		$pages = ($case['pages'] ?? []);
 		$objectService = $this->createMock(ObjectService::class);
 		$objectService->method('searchObjectsPaginated')->willReturnCallback(
-			static function (array $query = [], bool $_rbac = true, bool $_multitenancy = true, bool $deleted = false) use (&$calls, $catalog, $pages): array {
+			static function (array $query = [], bool $_rbac = true, bool $_multitenancy = true, mixed $deleted = false) use (&$calls, $catalog, $pages): array {
+				// Either OpenRegister signature: a bool, or SearchOptions carrying it.
+				$deleted = is_object($deleted) === true ? $deleted->deleted : $deleted;
 				$calls[] = ['searchObjectsPaginated', $query, $_rbac, $_multitenancy, $deleted];
 				if (isset($query['slug']) === true) {
 					if ($catalog === null) {
