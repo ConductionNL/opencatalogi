@@ -15,6 +15,12 @@
 			data-testid="publication-visibility-auto-depublication">
 			{{ automaticDepublicationNote }}
 		</p>
+		<NcNoteCard
+			v-if="depublicationNotice"
+			type="info"
+			data-testid="publication-visibility-depublication-notice">
+			{{ depublicationNotice }}
+		</NcNoteCard>
 		<p
 			v-if="archiveHotspot"
 			class="publication-visibility__state"
@@ -204,6 +210,8 @@ import {
 	archiveHotspotOf,
 	canDeletePermanently,
 	comingDepublication,
+	depublicationKeyOf,
+	depublicationNoticeStep,
 	documentOptions,
 	draftPurgeMessage,
 	filesRouteParams,
@@ -298,6 +306,8 @@ export default {
 			minimumAssurance: 'substantial',
 			sourceAbsence: null,
 			archiveHotspot: '',
+			depublicationBaseline: null,
+			depublicationNotice: '',
 			documents: [],
 			withdrawn: [],
 			republishing: null,
@@ -415,6 +425,17 @@ export default {
 			})
 		},
 
+		/**
+		 * The record's id and depublication date as one key, or null before the
+		 * record is there; the notice watches it (REQ-PSG-003).
+		 *
+		 * @return {string|null}
+		 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1
+		 */
+		depublicationKey() {
+			return depublicationKeyOf(this.ctx.object || this.content || null)
+		},
+
 		/** @spec exclude presentational widget adapter; resolves the object context from inject. */
 		ctx() {
 			return injectedObjectContext(this)
@@ -511,6 +532,31 @@ export default {
 	},
 
 	watch: {
+		depublicationKey: {
+			immediate: true,
+			/**
+			 * Say at save that the publication comes down by itself: when the
+			 * loaded record's depublication date is set or changed to a coming
+			 * date, the card shows a notice naming it (REQ-PSG-003). Opening the
+			 * page shows no notice; the line above already says it.
+			 *
+			 * @param {string|null} key The record's id and depublication date.
+			 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1
+			 */
+			handler(key) {
+				const step = depublicationNoticeStep(this.depublicationBaseline, key)
+				this.depublicationBaseline = step.baseline
+				if (step.date === undefined) {
+					return
+				}
+				this.depublicationNotice = step.date === null
+					? ''
+					: this.t('opencatalogi', 'Saved: this publication will be taken down automatically on {date}.', {
+						date: step.date.toLocaleDateString(),
+					})
+			},
+		},
+
 		resolvedObjectId: {
 			immediate: true,
 			/**

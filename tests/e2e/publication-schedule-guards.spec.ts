@@ -21,6 +21,11 @@
  * reads that the publication is public; the publisher outside the lift
  * groups sees neither button on its own scheduled publication.
  *
+ * AUTOMATIC DEPUBLICATION (task 3.1). A publication with a depublication date
+ * next week carries "until <date>" in the state column of the publications
+ * list and "Automatic depublication on <date>" on its page; setting the date
+ * in the page's Publication card shows the notice that names it.
+ *
  * NOT HERE YET. The document count up front of task 4.2 is not built.
  *
  * 🔴 THE PUBLISHER IS A REAL ACCOUNT, provisioned over OCS in its own request
@@ -30,6 +35,8 @@
  *
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-a-lift-is-logged REQ-PSG-002
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-publishing-with-no-documents-asks-twice REQ-PSG-004
+ * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-automatic-depublication-is-shown REQ-PSG-003
+ * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-the-officer-is-warned-at-save REQ-PSG-003
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-a-lift-is-logged REQ-PPW-002
  * @spec openspec/changes/publication-schedule-guards/specs/publications/spec.md
  */
@@ -217,6 +224,39 @@ test.describe('Publication schedule guards', () => {
 		} finally {
 			await context.close()
 		}
+	})
+
+	test('automatic depublication is shown', async ({ page, request }) => {
+		const title = `E2E schedule auto-depublication ${RUN}`
+		const id = await publication(request, 'auto-depublication', {
+			title,
+			publicationDate: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+			depublicationDate: NEXT_WEEK,
+		})
+
+		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}`)
+		const row = page.getByRole('row').filter({ hasText: title })
+		await expect(row).toContainText('until')
+
+		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+		await expect(page.getByTestId('publication-visibility-auto-depublication')).toContainText('Automatic depublication on')
+	})
+
+	test('the officer is warned at save', async ({ page, request }) => {
+		const id = await publication(request, 'warned-at-save', {
+			publicationDate: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+		})
+		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+		await expect(page.getByTestId('publication-visibility-state')).toBeVisible()
+		await expect(page.getByTestId('publication-visibility-depublication-notice')).toHaveCount(0)
+
+		// Set the date in the Publication card and save it there.
+		await page.getByText('Depublication date', { exact: true }).first().click()
+		await page.locator('input[type="datetime-local"], input[type="date"]').first().fill(NEXT_WEEK.slice(0, 16))
+		await page.getByRole('button', { name: 'Save' }).first().click()
+
+		await expect(page.getByTestId('publication-visibility-depublication-notice'))
+			.toContainText('will be taken down automatically on')
 	})
 
 	test('publishing with no documents asks twice', async ({ request, playwright, baseURL }) => {

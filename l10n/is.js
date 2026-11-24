@@ -841,7 +841,9 @@ OC.L10N.register(
         "Lift embargo": "Aflétta banni",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Birta „{name}“ núna, fyrir birtingardag? Afléttingin er skráð í endurskoðunarslóðina með nafni þínu og ástæðunni.",
         "The embargo was lifted. The publication is public.": "Banninu hefur verið aflétt. Birtingin er opinber.",
-        "Kept permanently: archive hotspot {subject}": "Varðveitt til frambúðar: skjalasafnsáhersla {subject}"
+        "Kept permanently: archive hotspot {subject}": "Varðveitt til frambúðar: skjalasafnsáhersla {subject}",
+        "until {date}": "til {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Vistað: þessi birting verður sjálfkrafa afturkölluð {date}."
     },
     "nplurals=2; plural=(n != 1);"
 )

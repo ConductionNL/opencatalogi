@@ -841,7 +841,9 @@ OC.L10N.register(
         "Lift embargo": "Embargó feloldása",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Közzéteszi most a(z) „{name}” elemet, a közzététel dátuma előtt? A feloldást a nevével és az indokkal együtt rögzíti a naplózás.",
         "The embargo was lifted. The publication is public.": "Az embargó feloldva. A közzététel nyilvános.",
-        "Kept permanently: archive hotspot {subject}": "Véglegesen megőrzendő: levéltári kiemelt téma {subject}"
+        "Kept permanently: archive hotspot {subject}": "Véglegesen megőrzendő: levéltári kiemelt téma {subject}",
+        "until {date}": "{date}-ig",
+        "Saved: this publication will be taken down automatically on {date}.": "Mentve: ez a közzététel {date} napján automatikusan visszavonásra kerül."
     },
     "nplurals=2; plural=(n != 1);"
 )

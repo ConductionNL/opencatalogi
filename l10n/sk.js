@@ -841,7 +841,9 @@ OC.L10N.register(
         "Lift embargo": "Zrušiť embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publikovať „{name}“ teraz, pred dátumom publikovania? Zrušenie sa zaznamená do auditného záznamu s vaším menom a dôvodom.",
         "The embargo was lifted. The publication is public.": "Embargo bolo zrušené. Publikácia je verejná.",
-        "Kept permanently: archive hotspot {subject}": "Uchovávané trvalo: archívny hotspot {subject}"
+        "Kept permanently: archive hotspot {subject}": "Uchovávané trvalo: archívny hotspot {subject}",
+        "until {date}": "do {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Uložené: táto publikácia bude automaticky stiahnutá {date}."
     },
     "nplurals=2; plural=(n != 1);"
 )

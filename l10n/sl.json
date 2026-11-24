@@ -840,7 +840,9 @@
         "Lift embargo": "Odpravi embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Objavim »{name}« zdaj, pred datumom objave? Odprava se zabeleži v revizijsko sled z vašim imenom in razlogom.",
         "The embargo was lifted. The publication is public.": "Embargo je odpravljen. Objava je javna.",
-        "Kept permanently: archive hotspot {subject}": "Trajno hranjeno: arhivska vroča točka {subject}"
+        "Kept permanently: archive hotspot {subject}": "Trajno hranjeno: arhivska vroča točka {subject}",
+        "until {date}": "do {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Shranjeno: ta objava bo samodejno umaknjena {date}."
     },
     "plurals": {}
 }

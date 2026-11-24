@@ -840,7 +840,9 @@
         "Lift embargo": "Ridică embargoul",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publici „{name}” acum, înainte de data publicării? Ridicarea este înregistrată în jurnalul de audit cu numele tău și motivul.",
         "The embargo was lifted. The publication is public.": "Embargoul a fost ridicat. Publicația este publică.",
-        "Kept permanently: archive hotspot {subject}": "Păstrat permanent: punct fierbinte de arhivă {subject}"
+        "Kept permanently: archive hotspot {subject}": "Păstrat permanent: punct fierbinte de arhivă {subject}",
+        "until {date}": "până la {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Salvat: această publicație va fi retrasă automat pe {date}."
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }
