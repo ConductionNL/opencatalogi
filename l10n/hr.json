@@ -836,7 +836,10 @@
         "Publish without documents": "Objavi bez dokumenata",
         "Publish it without documents": "Objavi je bez dokumenata",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" nema dokumenata: ni datoteka ni referenci na dokumente. Čitatelji će pronaći objavu, ali ništa što mogu otvoriti.",
-        "Automatic depublication on {date}": "Automatsko povlačenje objave {date}"
+        "Automatic depublication on {date}": "Automatsko povlačenje objave {date}",
+        "Lift embargo": "Ukini embargo",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Objaviti „{name}” sada, prije datuma objave? Ukidanje se bilježi u revizijskom zapisu s vašim imenom i razlogom.",
+        "The embargo was lifted. The publication is public.": "Embargo je ukinut. Publikacija je javna."
     },
     "plurals": {}
 }

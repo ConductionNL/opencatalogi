@@ -837,7 +837,10 @@ OC.L10N.register(
         "Publish without documents": "Publică fără documente",
         "Publish it without documents": "Publică-o fără documente",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}” nu are documente: niciun fișier și nicio referință la documente. Cititorii vor găsi publicația, dar nimic de deschis.",
-        "Automatic depublication on {date}": "Retragere automată din publicare pe {date}"
+        "Automatic depublication on {date}": "Retragere automată din publicare pe {date}",
+        "Lift embargo": "Ridică embargoul",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publici „{name}” acum, înainte de data publicării? Ridicarea este înregistrată în jurnalul de audit cu numele tău și motivul.",
+        "The embargo was lifted. The publication is public.": "Embargoul a fost ridicat. Publicația este publică."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

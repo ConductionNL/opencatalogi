@@ -14,9 +14,24 @@ import LiftEmbargoDialog from './LiftEmbargoDialog.vue'
 const T = (app, text, vars = {}) => text.replace(/{(\w+)}/g, (_, key) => vars[key])
 
 const stubs = {
-	NcDialog: { name: 'NcDialog', props: ['open', 'name'], emits: ['update:open'], template: '<div><slot /><slot name="actions" /></div>' },
-	NcTextArea: { name: 'NcTextArea', props: ['modelValue', 'label', 'disabled'], emits: ['update:modelValue'], template: '<textarea />' },
-	NcButton: { props: ['disabled', 'variant'], emits: ['click'], template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>' },
+	NcDialog: {
+		name: 'NcDialog',
+		props: ['open', 'name'],
+		emits: ['update:open'],
+		template: '<div><slot /><slot name="actions" /></div>',
+	},
+	NcTextArea: {
+		name: 'NcTextArea',
+		props: ['modelValue', 'label', 'disabled'],
+		emits: ['update:modelValue'],
+		template: '<textarea />',
+	},
+	NcButton: {
+		props: ['disabled', 'variant'],
+		emits: ['click'],
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+	},
 	NcLoadingIcon: { template: '<span />' },
 }
 
@@ -37,22 +52,38 @@ describe('LiftEmbargoDialog', () => {
 	it('names the publication and keeps Lift embargo disabled until a reason is given', async () => {
 		const wrapper = mountDialog({ open: true })
 
-		expect(wrapper.text()).toContain('Publish "Besluit parkeren" now, before its publication date?')
-		expect(wrapper.find('[data-testid="lift-embargo-confirm"]').attributes('disabled')).toBeDefined()
+		expect(wrapper.text()).toContain(
+			'Publish "Besluit parkeren" now, before its publication date?',
+		)
+		expect(
+			wrapper
+				.find('[data-testid="lift-embargo-confirm"]')
+				.attributes('disabled'),
+		).toBeDefined()
 
-		wrapper.findComponent({ name: 'NcTextArea' }).vm.$emit('update:modelValue', '   ')
+		wrapper
+			.findComponent({ name: 'NcTextArea' })
+			.vm.$emit('update:modelValue', '   ')
 		await wrapper.vm.$nextTick()
-		expect(wrapper.find('[data-testid="lift-embargo-confirm"]').attributes('disabled')).toBeDefined()
+		expect(
+			wrapper
+				.find('[data-testid="lift-embargo-confirm"]')
+				.attributes('disabled'),
+		).toBeDefined()
 	})
 
 	it('hands the trimmed reason to the widget', async () => {
 		const wrapper = mountDialog({ open: true })
-		wrapper.findComponent({ name: 'NcTextArea' }).vm.$emit('update:modelValue', '  Raad heeft het besluit vervroegd ')
+		wrapper
+			.findComponent({ name: 'NcTextArea' })
+			.vm.$emit('update:modelValue', '  Raad heeft het besluit vervroegd ')
 		await wrapper.vm.$nextTick()
 
 		await wrapper.find('[data-testid="lift-embargo-confirm"]').trigger('click')
 
-		expect(wrapper.emitted('confirm')).toEqual([[{ reason: 'Raad heeft het besluit vervroegd' }]])
+		expect(wrapper.emitted('confirm')).toEqual([
+			[{ reason: 'Raad heeft het besluit vervroegd' }],
+		])
 	})
 
 	it('starts empty each time it opens, and closes on cancel or when the dialog closes', async () => {
@@ -69,9 +100,15 @@ describe('LiftEmbargoDialog', () => {
 
 	it('allows no confirm while the widget is still working', async () => {
 		const wrapper = mountDialog({ open: true, busy: true })
-		wrapper.findComponent({ name: 'NcTextArea' }).vm.$emit('update:modelValue', 'Vervroegd')
+		wrapper
+			.findComponent({ name: 'NcTextArea' })
+			.vm.$emit('update:modelValue', 'Vervroegd')
 		await wrapper.vm.$nextTick()
 
-		expect(wrapper.find('[data-testid="lift-embargo-confirm"]').attributes('disabled')).toBeDefined()
+		expect(
+			wrapper
+				.find('[data-testid="lift-embargo-confirm"]')
+				.attributes('disabled'),
+		).toBeDefined()
 	})
 })

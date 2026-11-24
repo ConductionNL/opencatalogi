@@ -2154,7 +2154,10 @@
         "Default licence saved.": "Standaardlicentie opgeslagen.",
         "The default licence could not be saved.": "De standaardlicentie kon niet worden opgeslagen.",
         "The licence of this catalogue's datasets in its DCAT feed, chosen from the EU licences authority list and stored as its authority IRI. Leave it empty to use the instance's default licence.": "De licentie van de datasets van deze catalogus in de DCAT-feed, gekozen uit de EU-licentielijst en opgeslagen als de IRI van die lijst. Laat het leeg om de standaardlicentie van deze installatie te gebruiken.",
-        "The server could not complete this request. The details are in the Nextcloud log.": "De server kon dit verzoek niet afronden. De details staan in het Nextcloud-logboek."
+        "The server could not complete this request. The details are in the Nextcloud log.": "De server kon dit verzoek niet afronden. De details staan in het Nextcloud-logboek.",
+        "Lift embargo": "Embargo opheffen",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "\"{name}\" nu publiceren, vóór de publicatiedatum? Het opheffen wordt in het auditlog vastgelegd met je naam en de reden.",
+        "The embargo was lifted. The publication is public.": "Het embargo is opgeheven. De publicatie is openbaar."
     },
     "plurals": {}
 }

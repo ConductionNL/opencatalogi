@@ -16,9 +16,12 @@
  * - Publish on a record with no documents answers 409 `no-documents` until the
  *   call carries `confirmNoDocuments: true`.
  *
- * NOT HERE YET. The dialogs themselves (the Lift embargo dialog of task 2.2,
- * the hidden Publish now, the count and the confirmation tick of task 4.2) are
- * not built; their clicks join these tests when they are.
+ * ON THE PAGE (task 2.2). An administrator opens a scheduled publication,
+ * sees Lift embargo and no Publish now, gives the reason in the dialog and
+ * reads that the publication is public; the publisher outside the lift
+ * groups sees neither button on its own scheduled publication.
+ *
+ * NOT HERE YET. The document count up front of task 4.2 is not built.
  *
  * 🔴 THE PUBLISHER IS A REAL ACCOUNT, provisioned over OCS in its own request
  * context with an empty cookie jar, so a refusal is that account's and not the
@@ -27,6 +30,7 @@
  *
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-a-lift-is-logged REQ-PSG-002
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-publishing-with-no-documents-asks-twice REQ-PSG-004
+ * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-a-lift-is-logged REQ-PPW-002
  * @spec openspec/changes/publication-schedule-guards/specs/publications/spec.md
  */
 
@@ -36,7 +40,8 @@ import { expect, test } from '@playwright/test'
 import { randomBytes } from 'node:crypto'
 import { publicationCatalog } from './publication-catalog.ts'
 
-const APP_API = '/index.php/apps/opencatalogi/api'
+const APP_BASE = '/index.php/apps/opencatalogi'
+const APP_API = `${APP_BASE}/api`
 const OBJECTS = '/index.php/apps/openregister/api/objects/publication/publication'
 const PUBLISHERS = 'opencatalogi-publishers'
 const RUN = Date.now().toString(36)
@@ -171,6 +176,47 @@ test.describe('Publication schedule guards', () => {
 		expect((await lift.json()).error).toBe('not-allowed-to-lift')
 
 		expect(await anonymousStatus(playwright, baseURL, id), 'the embargo still holds').toBe(404)
+	})
+
+	test('an administrator lifts the embargo from the publication page', async ({ page, request, playwright, baseURL }) => {
+		const id = await publication(request, 'page-lift', { publicationDate: NEXT_WEEK })
+		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+
+		const lift = page.getByTestId('publication-lift-embargo')
+		await expect(lift).toBeVisible()
+		await expect(page.getByTestId('publication-publish-now')).toHaveCount(0)
+
+		await lift.click()
+		const dialog = page.getByTestId('lift-embargo-dialog')
+		await expect(dialog).toBeVisible()
+		const confirm = page.getByTestId('lift-embargo-confirm')
+		await expect(confirm).toBeDisabled()
+		await dialog.getByRole('textbox').fill('Raad heeft het besluit vervroegd')
+		await confirm.click()
+
+		await expect(page.getByTestId('publication-visibility-message')).toContainText('The embargo was lifted')
+		expect(await anonymousStatus(playwright, baseURL, id), 'lifted from the page, it is public').toBe(200)
+	})
+
+	test('the page offers no lift and no Publish now without the lift right', async ({ browser, baseURL }) => {
+		const id = await publication(publisher.ctx, 'page-held', { publicationDate: NEXT_WEEK })
+		const visibility = await publisher.ctx.get(`${APP_API}/publications/${id}/visibility`)
+		expect(visibility.ok(), await visibility.text()).toBe(true)
+		const answer = await visibility.json()
+		expect(answer.state).toBe('scheduled')
+		expect(answer.canLiftEmbargo).toBe(false)
+
+		const credentials = await publisher.ctx.storageState()
+		const context = await browser.newContext({ baseURL, storageState: credentials })
+		try {
+			const page = await context.newPage()
+			await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+			await expect(page.getByTestId('publication-visibility-state')).toBeVisible()
+			await expect(page.getByTestId('publication-lift-embargo')).toHaveCount(0)
+			await expect(page.getByTestId('publication-publish-now')).toHaveCount(0)
+		} finally {
+			await context.close()
+		}
 	})
 
 	test('publishing with no documents asks twice', async ({ request, playwright, baseURL }) => {

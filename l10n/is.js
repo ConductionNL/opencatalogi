@@ -837,7 +837,10 @@ OC.L10N.register(
         "Publish without documents": "Birta án skjala",
         "Publish it without documents": "Birta hana án skjala",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ hefur engin skjöl: engar skrár og engar skjalatilvísanir. Lesendur finna birtinguna en ekkert til að opna.",
-        "Automatic depublication on {date}": "Sjálfvirk afturköllun birtingar {date}"
+        "Automatic depublication on {date}": "Sjálfvirk afturköllun birtingar {date}",
+        "Lift embargo": "Aflétta banni",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Birta „{name}“ núna, fyrir birtingardag? Afléttingin er skráð í endurskoðunarslóðina með nafni þínu og ástæðunni.",
+        "The embargo was lifted. The publication is public.": "Banninu hefur verið aflétt. Birtingin er opinber."
     },
     "nplurals=2; plural=(n != 1);"
 )

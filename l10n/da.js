@@ -837,7 +837,10 @@ OC.L10N.register(
         "Publish without documents": "Udgiv uden dokumenter",
         "Publish it without documents": "Udgiv den uden dokumenter",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" har ingen dokumenter: ingen filer og ingen dokumenthenvisninger. Læsere finder publikationen, men intet at åbne.",
-        "Automatic depublication on {date}": "Automatisk afpublicering den {date}"
+        "Automatic depublication on {date}": "Automatisk afpublicering den {date}",
+        "Lift embargo": "Ophæv embargo",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Udgiv \"{name}\" nu, før udgivelsesdatoen? Ophævelsen registreres i revisionssporet med dit navn og begrundelsen.",
+        "The embargo was lifted. The publication is public.": "Embargoen er ophævet. Publikationen er offentlig."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -836,7 +836,10 @@
         "Publish without documents": "Közzététel dokumentumok nélkül",
         "Publish it without documents": "Közzététel dokumentumok nélkül",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "A(z) „{name}” nem tartalmaz dokumentumot: sem fájlt, sem dokumentumhivatkozást. Az olvasók megtalálják a közzétételt, de nem lesz mit megnyitniuk.",
-        "Automatic depublication on {date}": "Automatikus visszavonás: {date}"
+        "Automatic depublication on {date}": "Automatikus visszavonás: {date}",
+        "Lift embargo": "Embargó feloldása",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Közzéteszi most a(z) „{name}” elemet, a közzététel dátuma előtt? A feloldást a nevével és az indokkal együtt rögzíti a naplózás.",
+        "The embargo was lifted. The publication is public.": "Az embargó feloldva. A közzététel nyilvános."
     },
     "plurals": {}
 }

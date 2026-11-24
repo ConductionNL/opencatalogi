@@ -14,9 +14,14 @@ import axios from '@nextcloud/axios'
 import { flushPromises, mount } from '@vue/test-utils'
 import PublicationVisibilityWidget from './PublicationVisibilityWidget.vue'
 
-jest.mock('@nextcloud/axios', () => ({ get: jest.fn(), post: jest.fn(), delete: jest.fn() }))
+jest.mock('@nextcloud/axios', () => ({
+	get: jest.fn(),
+	post: jest.fn(),
+	delete: jest.fn(),
+}))
 jest.mock('@nextcloud/router', () => ({
-	generateUrl: (path, params = {}) => path.replace(/{(\w+)}/g, (_, key) => params[key]),
+	generateUrl: (path, params = {}) =>
+		path.replace(/{(\w+)}/g, (_, key) => params[key]),
 }))
 
 const T = (app, text, vars = {}) => text.replace(/{(\w+)}/g, (_, key) => vars[key])
@@ -38,7 +43,12 @@ async function mountWidget(visibility) {
 		return Promise.resolve({ data: [] })
 	})
 	const wrapper = mount(PublicationVisibilityWidget, {
-		props: { objectId: 'pub-1', register: 'reg-1', schema: 'pubs', content: { title: 'Besluit parkeren' } },
+		props: {
+			objectId: 'pub-1',
+			register: 'reg-1',
+			schema: 'pubs',
+			content: { title: 'Besluit parkeren' },
+		},
 		global: {
 			mocks: { t: T },
 			stubs: {
@@ -61,55 +71,100 @@ beforeEach(() => {
 
 describe('PublicationVisibilityWidget lifting an embargo', () => {
 	it('offers Lift embargo, not Publish now, on a scheduled publication to a caller who may lift', async () => {
-		const wrapper = await mountWidget({ state: 'scheduled', canPublish: true, canUpdate: true, canLiftEmbargo: true })
+		const wrapper = await mountWidget({
+			state: 'scheduled',
+			canPublish: true,
+			canUpdate: true,
+			canLiftEmbargo: true,
+		})
 
-		expect(wrapper.find('[data-testid="publication-lift-embargo"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="publication-publish-now"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="publication-lift-embargo"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="publication-publish-now"]').exists(),
+		).toBe(false)
 	})
 
 	it('hides both from a scheduled publication without the lift right', async () => {
-		const wrapper = await mountWidget({ state: 'scheduled', canPublish: true, canUpdate: true, canLiftEmbargo: false })
+		const wrapper = await mountWidget({
+			state: 'scheduled',
+			canPublish: true,
+			canUpdate: true,
+			canLiftEmbargo: false,
+		})
 
-		expect(wrapper.find('[data-testid="publication-lift-embargo"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="publication-publish-now"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="publication-lift-embargo"]').exists(),
+		).toBe(false)
+		expect(
+			wrapper.find('[data-testid="publication-publish-now"]').exists(),
+		).toBe(false)
 	})
 
 	it('offers no lift on a publication that is not scheduled', async () => {
-		const wrapper = await mountWidget({ state: 'approved', canPublish: true, canLiftEmbargo: true })
+		const wrapper = await mountWidget({
+			state: 'approved',
+			canPublish: true,
+			canLiftEmbargo: true,
+		})
 
-		expect(wrapper.find('[data-testid="publication-lift-embargo"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="publication-publish-now"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="publication-lift-embargo"]').exists(),
+		).toBe(false)
+		expect(
+			wrapper.find('[data-testid="publication-publish-now"]').exists(),
+		).toBe(true)
 	})
 
 	it('opens the dialog and clears the previous message', async () => {
-		const wrapper = await mountWidget({ state: 'scheduled', canLiftEmbargo: true })
+		const wrapper = await mountWidget({
+			state: 'scheduled',
+			canLiftEmbargo: true,
+		})
 		wrapper.vm.message = 'old'
 
-		await wrapper.find('[data-testid="publication-lift-embargo"]').trigger('click')
+		await wrapper
+			.find('[data-testid="publication-lift-embargo"]')
+			.trigger('click')
 
 		expect(wrapper.vm.liftOpen).toBe(true)
 		expect(wrapper.vm.message).toBe('')
 	})
 
 	it('posts the reason and says the publication is public', async () => {
-		const wrapper = await mountWidget({ state: 'scheduled', canLiftEmbargo: true })
+		const wrapper = await mountWidget({
+			state: 'scheduled',
+			canLiftEmbargo: true,
+		})
 		wrapper.vm.liftOpen = true
-		axios.post.mockResolvedValue({ data: { publicationDate: '2026-11-24T10:00:00+00:00' } })
+		axios.post.mockResolvedValue({
+			data: { publicationDate: '2026-11-24T10:00:00+00:00' },
+		})
 
 		await wrapper.vm.liftEmbargo({ reason: 'Raad heeft het besluit vervroegd' })
 
-		expect(axios.post).toHaveBeenCalledWith(LIFT_URL, { reason: 'Raad heeft het besluit vervroegd' })
+		expect(axios.post).toHaveBeenCalledWith(LIFT_URL, {
+			reason: 'Raad heeft het besluit vervroegd',
+		})
 		expect(wrapper.vm.liftOpen).toBe(false)
 		expect(wrapper.vm.state).toBe('public')
 		expect(wrapper.vm.messageType).toBe('success')
-		expect(wrapper.vm.message).toBe('The embargo was lifted. The publication is public.')
+		expect(wrapper.vm.message).toBe(
+			'The embargo was lifted. The publication is public.',
+		)
 		expect(wrapper.vm.busy).toBe(false)
 	})
 
 	it('reports a refusal and keeps the state', async () => {
-		const wrapper = await mountWidget({ state: 'scheduled', canLiftEmbargo: true })
+		const wrapper = await mountWidget({
+			state: 'scheduled',
+			canLiftEmbargo: true,
+		})
 		wrapper.vm.liftOpen = true
-		axios.post.mockRejectedValue({ response: { status: 403, data: { error: 'not-allowed-to-lift' } } })
+		axios.post.mockRejectedValue({
+			response: { status: 403, data: { error: 'not-allowed-to-lift' } },
+		})
 
 		await wrapper.vm.liftEmbargo({ reason: 'Vervroegd' })
 
@@ -124,7 +179,10 @@ describe('PublicationVisibilityWidget lifting an embargo', () => {
 		axios.get.mockRejectedValue(new Error('down'))
 		const wrapper = mount(PublicationVisibilityWidget, {
 			props: { objectId: 'pub-1', register: 'reg-1', schema: 'pubs' },
-			global: { mocks: { t: T }, stubs: { WithdrawPublicationDialog: true, LiftEmbargoDialog: true } },
+			global: {
+				mocks: { t: T },
+				stubs: { WithdrawPublicationDialog: true, LiftEmbargoDialog: true },
+			},
 		})
 		wrapper.vm.canLiftEmbargo = true
 		await flushPromises()
