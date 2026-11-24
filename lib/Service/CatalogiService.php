@@ -1127,8 +1127,7 @@ class CatalogiService implements CatalogiServiceInterface {
 
 		return $objectService->searchObjectsPaginated(
 			query: $searchQuery,
-			_rbac: true,
-			deleted: false
+			_rbac: true
 		);
 	}//end listCatalogs()
 

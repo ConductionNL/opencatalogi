@@ -327,7 +327,7 @@ class DcatService implements DcatServiceInterface {
 			registers: $scope['registers'],
 			schemas: $scope['schemas']
 		);
-		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
 		foreach (array_map($this->toArray(...), ($result['results'] ?? [])) as $publication) {
 			if ((string)($publication['@self']['uuid'] ?? $publication['id'] ?? '') === $uuid) {
 				return $publication;
@@ -401,8 +401,7 @@ class DcatService implements DcatServiceInterface {
 				page: $this->getObjectService()->searchObjectsPaginated(
 					query: $searchQuery,
 					_rbac: true,
-					_multitenancy: false,
-					deleted: false
+					_multitenancy: false
 				)
 			);
 		} finally {
@@ -1027,7 +1026,7 @@ class DcatService implements DcatServiceInterface {
 		}
 
 		$query = ['@self' => ['register' => $register, 'schema' => $schema], 'hasDcat' => true, '_limit' => self::MAX_PER_PAGE];
-		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
 
 		$catalogs = [];
 		foreach (($result['results'] ?? []) as $catalog) {

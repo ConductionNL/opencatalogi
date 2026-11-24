@@ -74,8 +74,7 @@ final class SitemapIndexBuilder {
 			$found = $this->objectService->searchObjectsPaginated(
 				query: $query,
 				_rbac: true,
-				_multitenancy: false,
-				deleted: false
+				_multitenancy: false
 			);
 
 			$rows = ($found['results'] ?? []);

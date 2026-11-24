@@ -308,7 +308,7 @@ class OoapiService implements OoapiServiceInterface {
 		// The same organisation scope as the single read (fetchObject), so a listed
 		// resource can always be read and nothing is listed that a read would refuse.
 		$query = $this->collectionQuery(scope: $scope, page: $page);
-		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: true, deleted: false);
+		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: true);
 
 		$items = [];
 		foreach (($result['results'] ?? []) as $object) {

@@ -177,7 +177,9 @@ class ChangesEndpointTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function searchObjectsPaginated(array $query = [], bool $_rbac = true, bool $_multitenancy = true, bool $deleted = false, ?array $ids = null): array {
+			public function searchObjectsPaginated(array $query = [], bool $_rbac = true, bool $_multitenancy = true, mixed ...$rest): array {
+				// Either OpenRegister signature: `ids:` of its own, or inside `options:` (SearchOptions).
+				$ids = ($rest['ids'] ?? ($rest['options']->selection->ids ?? null));
 				$this->searches[] = ['query' => $query, 'rbac' => $_rbac, 'anonymous' => $this->anonymous, 'ids' => $ids];
 
 				if (($query['@self']['schema'] ?? null) === 'depublication') {

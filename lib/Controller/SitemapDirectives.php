@@ -76,8 +76,7 @@ class SitemapDirectives {
 		$catalogResult = $this->getObjectService()->searchObjectsPaginated(
 			query: $searchQuery,
 			_rbac: true,
-			_multitenancy: false,
-			deleted: false
+			_multitenancy: false
 		);
 
 		// Visibility governed by RBAC on the search above (_rbac: true) — robots.txt
