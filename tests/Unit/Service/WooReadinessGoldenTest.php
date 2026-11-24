@@ -338,7 +338,10 @@ class WooReadinessGoldenTest extends TestCase {
 		$parameters = (new \ReflectionMethod(\OCA\OpenRegister\Service\ObjectService::class, 'searchObjectsPaginated'))->getParameters();
 		foreach ($parameters as $position => $parameter) {
 			$passed = array_key_exists($position, $args);
-			if ($passed === true && ($parameter->isDefaultValueAvailable() === false || $args[$position] !== $parameter->getDefaultValue())) {
+			// A default object (OpenRegister main's SearchOptions) is the default when it carries the same values.
+			$isDefault = $passed === true && $parameter->isDefaultValueAvailable() === true
+				&& ($args[$position] === $parameter->getDefaultValue() || (is_object($args[$position]) === true && $args[$position] == $parameter->getDefaultValue()));
+			if ($passed === true && $isDefault === false) {
 				$named[$parameter->getName()] = $args[$position];
 			}
 		}

@@ -206,7 +206,10 @@ class RobotsIndexGoldenTest extends TestCase {
 				continue;
 			}
 
-			if ($parameter->isDefaultValueAvailable() === true && $args[$position] === $parameter->getDefaultValue()) {
+			// A default object (OpenRegister main's SearchOptions) is the default when it carries the same values.
+			if ($parameter->isDefaultValueAvailable() === true
+				&& ($args[$position] === $parameter->getDefaultValue() || (is_object($args[$position]) === true && $args[$position] == $parameter->getDefaultValue()))
+			) {
 				continue;
 			}
 
