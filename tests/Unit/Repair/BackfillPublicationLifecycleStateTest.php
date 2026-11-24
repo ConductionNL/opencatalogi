@@ -213,6 +213,28 @@ class BackfillPublicationLifecycleStateTest extends TestCase {
 	}//end testALegacyPublicationWithoutADateBecomesADraft()
 
 	/**
+	 * Design D2 of publication-required-at-publish: the log counts the published publications that miss a field
+	 * required to publish, a complete one and a draft are not counted, and nothing is moved back to draft.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 */
+	public function testThePublishedPublicationsMissingARequiredFieldAreCounted(): void {
+		$this->store = [
+			'pub-5' => ['id' => 'pub-5', 'status' => 'published', 'summary' => 'Kort', 'description' => 'Lang', 'organization' => ['id' => 'org-1']],
+			'pub-6' => ['id' => 'pub-6', 'status' => 'published', 'summary' => ' ', 'description' => 'Lang', 'organization' => ['id' => 'org-1']],
+			'pub-7' => ['id' => 'pub-7', 'publicationDate' => '2025-03-01T00:00:00+00:00', 'summary' => 'Kort', 'description' => 'Lang'],
+			'pub-8' => ['id' => 'pub-8', 'status' => 'draft'],
+		];
+		$this->runStep();
+
+		$this->assertSame('published', $this->store['pub-6']['status']);
+		$this->assertSame('published', $this->store['pub-7']['status']);
+		$this->assertStringContainsString('2 published publication(s) miss a field required to publish (summary, description, organization)', $this->info[0]);
+	}//end testThePublishedPublicationsMissingARequiredFieldAreCounted()
+
+	/**
 	 * REQ-PLC-007: a stored state, archived included, is left as it is.
 	 *
 	 * @return void
