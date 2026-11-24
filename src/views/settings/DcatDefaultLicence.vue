@@ -10,15 +10,15 @@
 		<p class="dcat-default-licence__hint">
 			{{ t('opencatalogi', 'The licence the DCAT feed gives a catalogue that names none. Chosen from the EU licences list; with none chosen the feed carries no default licence.') }}
 		</p>
+		<NcNoteCard v-if="message" :type="messageType" data-testid="dcat-default-licence-message">
+			{{ message }}
+		</NcNoteCard>
 		<LicencePicker
 			v-if="loaded"
 			:modelValue="licence"
 			:inputLabel="t('opencatalogi', 'Default licence')"
 			:disabled="saving"
 			@update:modelValue="save" />
-		<NcNoteCard v-if="message" :type="messageType" data-testid="dcat-default-licence-message">
-			{{ message }}
-		</NcNoteCard>
 	</div>
 </template>
 

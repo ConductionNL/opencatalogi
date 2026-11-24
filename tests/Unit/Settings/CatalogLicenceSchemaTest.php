@@ -66,7 +66,11 @@ class CatalogLicenceSchemaTest extends TestCase {
 			expected: ['type' => 'string', 'title' => 'Licence'],
 			actual: array_intersect_key($catalog['properties']['dcatLicense'], ['type' => 1, 'title' => 1])
 		);
-		$this->assertArrayNotHasKey(key: 'enum', array: $catalog['properties']['dcatLicense'], message: 'the list is held by LicenceCheck, so a stored legacy value never blocks a save');
+		$this->assertArrayNotHasKey(
+			key: 'enum',
+			array: $catalog['properties']['dcatLicense'],
+			message: 'the list is held by LicenceCheck, so a stored legacy value never blocks a save'
+		);
 	}//end testDcatLicenceIsDeclaredOnTheCatalogue()
 
 	/**

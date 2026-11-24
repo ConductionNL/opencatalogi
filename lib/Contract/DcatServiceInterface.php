@@ -231,6 +231,9 @@ interface DcatServiceInterface {
 	 * @return array{results: array<int, array{code: string, iri: string, label: string, labelNl: string}>, total: int, source: string, version: string}
 	 *
 	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
+	 *
+	 * @contract-shift internal-only — DcatService, in this app, is the only implementer; the app's own
+	 *   tests double this interface with createMock(), which keeps working.
 	 */
 	public function licences(): array;
 }//end interface

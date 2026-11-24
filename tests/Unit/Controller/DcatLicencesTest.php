@@ -88,7 +88,12 @@ class DcatLicencesTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheRouteAnswersTheListToAnySignedInUser(): void {
-		$list = ['results' => [['code' => 'CC0', 'iri' => 'http://x/CC0', 'label' => 'CC0', 'labelNl' => 'CC0']], 'total' => 1, 'source' => 's', 'version' => 'v'];
+		$list = [
+			'results' => [['code' => 'CC0', 'iri' => 'http://x/CC0', 'label' => 'CC0', 'labelNl' => 'CC0']],
+			'total' => 1,
+			'source' => 's',
+			'version' => 'v',
+		];
 		$dcatService = $this->createMock(originalClassName: DcatServiceInterface::class);
 		$dcatService->method('licences')->willReturn($list);
 
