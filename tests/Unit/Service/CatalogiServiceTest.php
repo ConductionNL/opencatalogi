@@ -119,8 +119,7 @@ class CatalogiServiceTest extends TestCase {
 					&& $q['_schema'] === '5'
 					&& $q['_register'] === '3'),
 				true,
-				true,
-				false
+				true
 			)
 			->willReturn(['results' => [['id' => 1]], 'total' => 1]);
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
@@ -141,7 +140,7 @@ class CatalogiServiceTest extends TestCase {
 		$objectService = $this->createMock(ObjectService::class);
 		$objectService->method('buildSearchQuery')->willReturn(['_limit' => 10]);
 		$objectService->expects($this->once())->method('searchObjectsPaginated')
-			->with(['_limit' => 10], true, true, false)
+			->with(['_limit' => 10], true, true)
 			->willReturn(['results' => [], 'total' => 0]);
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 		$this->container->method('get')->willReturn($objectService);

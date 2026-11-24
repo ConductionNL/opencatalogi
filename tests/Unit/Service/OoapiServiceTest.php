@@ -177,8 +177,7 @@ class OoapiServiceTest extends TestCase {
 					}
 				),
 				true,
-				true,
-				false
+				true
 			)
 			->willReturn(
 				[

@@ -467,7 +467,8 @@ class ChangesService implements ChangesServiceInterface {
 		// Which of them are publications in this catalogue's scope.
 		$ids    = array_map('strval', array_keys($latest));
 		$query  = CallerScope::writeScope(query: ['_limit' => count($ids)], registers: $read['scope']['registers'], schemas: $read['scope']['schemas']);
-		$result = $objectService->searchObjectsPaginated(...(['query' => $query, '_rbac' => false, '_multitenancy' => false] + SearchSelection::byIds(ids: $ids)));
+		$args   = ['query' => $query, '_rbac' => false, '_multitenancy' => false] + SearchSelection::byIds(ids: $ids);
+		$result = $objectService->searchObjectsPaginated(...$args);
 
 		return self::withdrawnEntries(latest: $latest, inCatalog: self::foundIds(result: $result, ids: $ids));
 	}//end withdrawnSince()

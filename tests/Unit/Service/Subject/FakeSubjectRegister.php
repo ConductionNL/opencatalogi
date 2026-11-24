@@ -91,6 +91,13 @@ class FakeSubjectRegister extends ObjectService {
 	 * The variadic tail takes the rest of either OpenRegister signature: the
 	 * released one (`deleted`, `ids`, `uses`, `views`) and the newer one
 	 * (`options: SearchOptions`), so the fake loads against both.
+	 *
+	 * @param array<string, mixed> $query         The search query.
+	 * @param bool                 $_rbac         Whether RBAC applies.
+	 * @param bool                 $_multitenancy Whether multitenancy applies.
+	 * @param mixed                ...$options    The rest of either signature; not read.
+	 *
+	 * @return array<string, mixed> The page of results and the total.
 	 */
 	public function searchObjectsPaginated(
 		array $query = [],
