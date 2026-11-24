@@ -167,7 +167,10 @@ class OoapiCollectionGoldenTest extends TestCase {
 		$objects->method('searchObjectsPaginated')->willReturnCallback(
 			function (array $query, bool $_rbac, bool $_multitenancy, mixed $deleted = false): array {
 				// Either OpenRegister signature: a bool, or SearchOptions carrying it.
-				$deleted = is_object($deleted) === true ? $deleted->deleted : $deleted;
+				if (is_object($deleted) === true) {
+					$deleted = $deleted->deleted;
+				}
+
 				$this->calls[] = ['search' => $query, 'flags' => [$_rbac, $_multitenancy, $deleted]];
 				$page = (int)$query['_page'];
 				$results = [

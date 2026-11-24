@@ -221,7 +221,10 @@ class SitemapRequestGoldenTest extends TestCase {
 		$objectService->method('searchObjectsPaginated')->willReturnCallback(
 			static function (array $query = [], bool $_rbac = true, bool $_multitenancy = true, mixed $deleted = false) use (&$calls, $case): array {
 				// Either OpenRegister signature: a bool, or SearchOptions carrying it.
-				$deleted = is_object($deleted) === true ? $deleted->deleted : $deleted;
+				if (is_object($deleted) === true) {
+					$deleted = $deleted->deleted;
+				}
+
 				$calls[] = ['searchObjectsPaginated' => $query, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy, 'deleted' => $deleted];
 				if (($case['catalog'] ?? null) === null) {
 					return ['results' => []];
