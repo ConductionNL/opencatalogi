@@ -52,7 +52,7 @@ final class PublicationRequiredAtPublishSchemaTest extends TestCase {
 	}//end publication()
 
 	/**
-	 * A draft requires nothing extra; in_review, approved and published require the three fields, for everyone.
+	 * A draft declares no rule; in_review, approved and published require the three fields, for everyone.
 	 *
 	 * @return void
 	 */
@@ -60,7 +60,7 @@ final class PublicationRequiredAtPublishSchemaTest extends TestCase {
 		$publication = self::publication();
 		$states = $publication['x-openregister-lifecycle']['states'];
 
-		self::assertSame([], $states['draft']['fields']['required']);
+		self::assertArrayNotHasKey('draft', $states, 'a draft declares no rule, so it may stay incomplete');
 		foreach (['in_review', 'approved', 'published'] as $state) {
 			self::assertSame([['fields' => self::REQUIRED]], $states[$state]['fields']['required'], $state);
 			self::assertArrayNotHasKey('groups', $states[$state]['fields']['required'][0], $state);
