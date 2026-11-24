@@ -92,11 +92,12 @@ class PublicationStateController extends Controller {
 	 *
 	 * @param string $id The publication id.
 	 *
-	 * @return JSONResponse `{state, canPublish}`, plus `sourceAbsence` when its source no longer carries it; 404 when the caller cannot read it.
+	 * @return JSONResponse `{state, canPublish, canLiftEmbargo}`, plus `sourceAbsence` when its source no longer carries it; 404 when the caller cannot read it.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001
 	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
 	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
 	 */
 	#[NoAdminRequired]
 	public function visibility(string $id): JSONResponse {
@@ -123,6 +124,7 @@ class PublicationStateController extends Controller {
 				'canPublish' => $this->rights->mayPublish(),
 				'unlisted' => ($properties['unlisted'] ?? false) === true,
 				'canUpdate' => $this->rights->mayUpdate(publication: $publication),
+				'canLiftEmbargo' => $this->mayLiftEmbargo(publication: $publication),
 			],
 			self::readers(properties: $properties)
 		);
@@ -136,6 +138,24 @@ class PublicationStateController extends Controller {
 
 		return new JSONResponse($answer);
 	}//end visibility()
+
+	/**
+	 * Whether the caller may lift an embargo on this publication: in a lift group and
+	 * holding the update right, the same two checks `POST lift-embargo` makes (REQ-PSG-002).
+	 *
+	 * @param object $publication The publication.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
+	 */
+	private function mayLiftEmbargo(object $publication): bool {
+		if ($this->publisher->mayLiftEmbargo(caller: $this->userSession->getUser()) === false) {
+			return false;
+		}
+
+		return $this->rights->mayUpdate(publication: $publication);
+	}//end mayLiftEmbargo()
 
 	/**
 	 * Who can read the publication (publications-for-signed-in-readers, REQ-PSR-001);

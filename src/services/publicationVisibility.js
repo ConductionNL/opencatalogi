@@ -94,17 +94,21 @@ export function withdrawnDocuments(data, now = new Date()) {
 /**
  * The visibility moves the page offers for a state. Each shows only when its
  * move applies, and none shows to a caller without the publish right: only
- * publishers and administrators publish or withdraw (REQ-OPR-002).
+ * publishers and administrators publish or withdraw (REQ-OPR-002). A scheduled
+ * publication is under embargo, so it is not offered Publish now: publishing
+ * it early is Lift embargo, for a caller with the lift right (REQ-PPW-002,
+ * REQ-PSG-002; see `mayLiftEmbargo`).
  *
  * @param {string} state The publication's state from the server.
  * @param {boolean} canPublish Whether the caller holds the publish right.
  * @return {{publishNow: boolean, publishAgain: boolean, withdraw: boolean}} Which moves show.
  * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
+ * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
  */
 export function visibilityActions(state, canPublish) {
 	const allowed = canPublish === true
 	return {
-		publishNow: allowed && (state === 'draft' || state === 'approved' || state === 'scheduled'),
+		publishNow: allowed && (state === 'draft' || state === 'approved'),
 		publishAgain: allowed && state === 'withdrawn',
 		withdraw: allowed && (state === 'public' || state === 'scheduled'),
 	}
@@ -215,4 +219,18 @@ export function draftPurgeMessage(error) {
 	}
 	const names = removed.map((item) => (item && (item.title || item.name || item.id)) || String(item))
 	return data.message + ' ' + names.join(', ')
+}
+
+/**
+ * Whether the page offers Lift embargo: only on a scheduled publication, and
+ * only to a caller the server says may lift it (in a lift group, with the
+ * update right; REQ-PSG-002).
+ *
+ * @param {string} state The publication's state from the server.
+ * @param {boolean} canLiftEmbargo The server's `canLiftEmbargo`.
+ * @return {boolean} True when Lift embargo shows.
+ * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
+ */
+export function mayLiftEmbargo(state, canLiftEmbargo) {
+	return state === 'scheduled' && canLiftEmbargo === true
 }

@@ -59,6 +59,14 @@
 				{{ t('opencatalogi', 'Publish now') }}
 			</NcButton>
 			<NcButton
+				v-if="liftable"
+				variant="primary"
+				:disabled="busy"
+				data-testid="publication-lift-embargo"
+				@click="openLift">
+				{{ t('opencatalogi', 'Lift embargo') }}
+			</NcButton>
+			<NcButton
 				v-if="actions.publishAgain"
 				variant="primary"
 				:disabled="busy"
@@ -157,6 +165,12 @@
 			:title="publicationTitle"
 			@close="purgeOpen = false"
 			@confirm="purge" />
+		<LiftEmbargoDialog
+			:open="liftOpen"
+			:busy="busy"
+			:title="publicationTitle"
+			@close="liftOpen = false"
+			@confirm="liftEmbargo" />
 		<PublishWithoutDocumentsDialog
 			:open="noDocumentsOpen"
 			:busy="busy"
@@ -171,6 +185,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import DeleteDraftPermanentlyDialog from '../../dialogs/publication/DeleteDraftPermanentlyDialog.vue'
+import LiftEmbargoDialog from '../../dialogs/publication/LiftEmbargoDialog.vue'
 import PublishWithoutDocumentsDialog from '../../dialogs/publication/PublishWithoutDocumentsDialog.vue'
 import RepublishDocumentDialog from '../../dialogs/publication/RepublishDocumentDialog.vue'
 import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublicationDialog.vue'
@@ -183,6 +198,7 @@ import {
 	filesRouteParams,
 	isNoDocumentsRefusal,
 	listActions,
+	mayLiftEmbargo,
 	publishRefusalMessage,
 	visibilityActions,
 	withdrawnDocuments,
@@ -247,7 +263,7 @@ function withdrawBody(answer) {
  */
 export default {
 	name: 'PublicationVisibilityWidget',
-	components: { DeleteDraftPermanentlyDialog, NcButton, NcNoteCard, PublishWithoutDocumentsDialog, RepublishDocumentDialog, WithdrawPublicationDialog },
+	components: { DeleteDraftPermanentlyDialog, LiftEmbargoDialog, NcButton, NcNoteCard, PublishWithoutDocumentsDialog, RepublishDocumentDialog, WithdrawPublicationDialog },
 	inject: {
 		cnObjectContext: { default: null },
 		cnDetailObjectContext: { default: null },
@@ -265,6 +281,7 @@ export default {
 			state: '',
 			canPublish: false,
 			canUpdate: false,
+			canLiftEmbargo: false,
 			unlisted: false,
 			audience: 'public',
 			minimumAssurance: 'substantial',
@@ -276,6 +293,7 @@ export default {
 			dialogOpen: false,
 			purgeOpen: false,
 			noDocumentsOpen: false,
+			liftOpen: false,
 			message: '',
 			messageType: 'success',
 		}
@@ -285,6 +303,11 @@ export default {
 		/** @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002 */
 		actions() {
 			return visibilityActions(this.state, this.canPublish)
+		},
+
+		/** @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2 */
+		liftable() {
+			return mayLiftEmbargo(this.state, this.canLiftEmbargo)
 		},
 
 		/** @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006 */
@@ -504,6 +527,7 @@ export default {
 				this.state = data.state || ''
 				this.canPublish = data.canPublish === true
 				this.canUpdate = data.canUpdate === true
+				this.canLiftEmbargo = data.canLiftEmbargo === true
 				this.unlisted = data.unlisted === true
 				this.audience = data.audience === 'signedIn' ? 'signedIn' : 'public'
 				this.minimumAssurance = data.minimumAssurance === 'high' ? 'high' : 'substantial'
@@ -511,6 +535,7 @@ export default {
 			} catch {
 				this.state = ''
 				this.canPublish = false
+				this.canLiftEmbargo = false
 				this.audience = 'public'
 				this.minimumAssurance = 'substantial'
 				this.sourceAbsence = null
@@ -600,6 +625,37 @@ export default {
 			} catch {
 				this.messageType = 'error'
 				this.message = this.t('opencatalogi', 'The list status could not be changed.')
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/** @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2 */
+		openLift() {
+			this.message = ''
+			this.liftOpen = true
+		},
+
+		/**
+		 * Lift the embargo with the reason the dialog collected: the server
+		 * publishes now, checks the lift right again and logs the lift
+		 * (REQ-PSG-002).
+		 *
+		 * @param {{reason: string}} answer What the dialog collected.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
+		 */
+		async liftEmbargo(answer) {
+			this.busy = true
+			try {
+				await axios.post(this.url('lift-embargo'), { reason: answer.reason })
+				this.liftOpen = false
+				this.state = 'public'
+				this.messageType = 'success'
+				this.message = this.t('opencatalogi', 'The embargo was lifted. The publication is public.')
+			} catch (error) {
+				this.liftOpen = false
+				this.showError(error)
 			} finally {
 				this.busy = false
 			}

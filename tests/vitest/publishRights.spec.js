@@ -5,10 +5,12 @@
  * Tests for the publish right on the publication page
  * (operations-publish-rights, REQ-OPR-002 / REQ-OPR-003): which moves the
  * visibility widget offers, and the words it shows when the server refuses a
- * caller outside the publishers group. Offline, no DOM.
+ * caller outside the publishers group; and when Lift embargo shows
+ * (publication-schedule-guards, REQ-PSG-002). Offline, no DOM.
  */
 import { describe, expect, it } from 'vitest'
 import {
+	mayLiftEmbargo,
 	publishRefusalMessage,
 	visibilityActions,
 } from '../../src/services/publicationVisibility.js'
@@ -18,7 +20,7 @@ const NONE = { publishNow: false, publishAgain: false, withdraw: false }
 describe('visibilityActions', () => {
 	it.each([
 		['draft', { publishNow: true, publishAgain: false, withdraw: false }],
-		['scheduled', { publishNow: true, publishAgain: false, withdraw: true }],
+		['scheduled', { publishNow: false, publishAgain: false, withdraw: true }],
 		['public', { publishNow: false, publishAgain: false, withdraw: true }],
 		['withdrawn', { publishNow: false, publishAgain: true, withdraw: false }],
 		['archived', NONE],
@@ -63,5 +65,25 @@ describe('publishRefusalMessage', () => {
 		expect(publishRefusalMessage({ response: { status: 403, data: { error: 'not-a-publisher' } } })).toBe('')
 		expect(publishRefusalMessage(new Error('network'))).toBe('')
 		expect(publishRefusalMessage(null)).toBe('')
+	})
+})
+
+describe('mayLiftEmbargo (REQ-PSG-002, REQ-PPW-002)', () => {
+	it('offers Lift embargo on a scheduled publication to a caller who may lift it', () => {
+		expect(mayLiftEmbargo('scheduled', true)).toBe(true)
+	})
+
+	it.each(['draft', 'approved', 'public', 'withdrawn', 'archived', ''])('offers nothing on %s', (state) => {
+		expect(mayLiftEmbargo(state, true)).toBe(false)
+	})
+
+	it('offers nothing without the right, and reads a non-boolean as no right', () => {
+		expect(mayLiftEmbargo('scheduled', false)).toBe(false)
+		expect(mayLiftEmbargo('scheduled', undefined)).toBe(false)
+		expect(mayLiftEmbargo('scheduled', 'true')).toBe(false)
+	})
+
+	it('no longer offers Publish now on a scheduled publication: early publishing is the lift', () => {
+		expect(visibilityActions('scheduled', true).publishNow).toBe(false)
 	})
 })
