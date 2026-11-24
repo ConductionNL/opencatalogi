@@ -21,7 +21,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/search/tasks.md
+ * @spec openspec/changes/archive/2026-11-24-search/tasks.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -148,7 +148,7 @@ class SearchController extends Controller {
 	 * @return JSONResponse JSON response containing the mixed publication/document result envelope.
 	 *
 	 * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-3
-	 * @spec openspec/changes/search/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-24-search/tasks.md#task-2.2
 	 * @spec openspec/changes/add-document-content-search/tasks.md#task-3
 	 * @spec openspec/changes/woo-dossier-publication/specs/publications/spec.md#requirement-public-search-takes-the-portals-filter-names-req-wdp-002
 	 *
