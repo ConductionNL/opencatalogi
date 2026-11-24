@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Automatinis paskelbimo atšaukimas {date}",
         "Lift embargo": "Panaikinti embargą",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Paskelbti „{name}“ dabar, prieš paskelbimo datą? Panaikinimas įrašomas į audito žurnalą su jūsų vardu ir priežastimi.",
-        "The embargo was lifted. The publication is public.": "Embargas panaikintas. Leidinys yra viešas."
+        "The embargo was lifted. The publication is public.": "Embargas panaikintas. Leidinys yra viešas.",
+        "Documents published with it: {count}": "Kartu skelbiami dokumentai: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Automatesch Depublikatioun den {date}",
         "Lift embargo": "Embargo ophiewen",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "\"{name}\" elo publizéieren, virum Publikatiounsdatum? D'Ophiewen gëtt mat Ärem Numm an dem Grond am Auditprotokoll festgehalen.",
-        "The embargo was lifted. The publication is public.": "D'Embargo gouf opgehuewen. D'Publikatioun ass ëffentlech."
+        "The embargo was lifted. The publication is public.": "D'Embargo gouf opgehuewen. D'Publikatioun ass ëffentlech.",
+        "Documents published with it: {count}": "Dokumenter, déi mat publizéiert ginn: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

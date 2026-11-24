@@ -839,7 +839,8 @@
         "Automatic depublication on {date}": "Automatikus visszavonás: {date}",
         "Lift embargo": "Embargó feloldása",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Közzéteszi most a(z) „{name}” elemet, a közzététel dátuma előtt? A feloldást a nevével és az indokkal együtt rögzíti a naplózás.",
-        "The embargo was lifted. The publication is public.": "Az embargó feloldva. A közzététel nyilvános."
+        "The embargo was lifted. The publication is public.": "Az embargó feloldva. A közzététel nyilvános.",
+        "Documents published with it: {count}": "Vele együtt közzétett dokumentumok: {count}"
     },
     "plurals": {}
 }

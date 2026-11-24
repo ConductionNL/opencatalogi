@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Automaatne avaldamise lõpetamine {date}",
         "Lift embargo": "Tühista embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Kas avaldada „{name}” kohe, enne avaldamiskuupäeva? Tühistamine salvestatakse auditilogisse koos sinu nime ja põhjusega.",
-        "The embargo was lifted. The publication is public.": "Embargo on tühistatud. Väljaanne on avalik."
+        "The embargo was lifted. The publication is public.": "Embargo on tühistatud. Väljaanne on avalik.",
+        "Documents published with it: {count}": "Koos sellega avaldatavad dokumendid: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

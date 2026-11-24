@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Automatsko povlačenje objave {date}",
         "Lift embargo": "Ukini embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Objaviti „{name}” sada, prije datuma objave? Ukidanje se bilježi u revizijskom zapisu s vašim imenom i razlogom.",
-        "The embargo was lifted. The publication is public.": "Embargo je ukinut. Publikacija je javna."
+        "The embargo was lifted. The publication is public.": "Embargo je ukinut. Publikacija je javna.",
+        "Documents published with it: {count}": "Dokumenti objavljeni s njom: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -93,12 +93,14 @@ class PublicationStateController extends Controller {
 	 * @param string $id The publication id.
 	 *
 	 * @return JSONResponse `{state, canPublish, canLiftEmbargo}`, plus `sourceAbsence` when its source no
-	 *                      longer carries it; 404 when the caller cannot read it.
+	 *                      longer carries it and `documents` when the caller may publish it now or again;
+	 *                      404 when the caller cannot read it.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001
 	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
 	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
 	 */
 	#[NoAdminRequired]
 	public function visibility(string $id): JSONResponse {
@@ -137,8 +139,33 @@ class PublicationStateController extends Controller {
 			$answer['sourceAbsence'] = $absence;
 		}
 
+		$documents = $this->publishableDocuments(id: $id, publication: $publication, answer: $answer);
+		if ($documents !== null) {
+			$answer['documents'] = $documents;
+		}
+
 		return new JSONResponse($answer);
 	}//end visibility()
+
+	/**
+	 * The number of documents Publish would publish with the publication (REQ-PSG-004), counted only
+	 * when the page offers Publish now or Publish again, so other reads do not pay for the count.
+	 *
+	 * @param string               $id          The publication id.
+	 * @param object               $publication The publication.
+	 * @param array<string, mixed> $answer      The visibility answer so far (`state`, `canPublish`).
+	 *
+	 * @return int|null The count, an unreadable part counting as zero; null when publishing does not apply.
+	 *
+	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
+	 */
+	private function publishableDocuments(string $id, object $publication, array $answer): ?int {
+		if ($answer['canPublish'] !== true || in_array($answer['state'], ['draft', 'approved', 'withdrawn'], true) === false) {
+			return null;
+		}
+
+		return $this->publisher->documentCount(id: $id, publication: $publication);
+	}//end publishableDocuments()
 
 	/**
 	 * Whether the caller may lift an embargo on this publication: in a lift group and

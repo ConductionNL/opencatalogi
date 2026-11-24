@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Dífhoilsiú uathoibríoch ar {date}",
         "Lift embargo": "Ardaigh an lánchosc",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Foilsigh \"{name}\" anois, roimh a dháta foilsithe? Taifeadtar an t-ardú sa rian iniúchta le d'ainm agus leis an gcúis.",
-        "The embargo was lifted. The publication is public.": "Ardaíodh an lánchosc. Tá an foilseachán poiblí."
+        "The embargo was lifted. The publication is public.": "Ardaíodh an lánchosc. Tá an foilseachán poiblí.",
+        "Documents published with it: {count}": "Doiciméid a fhoilsítear léi: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

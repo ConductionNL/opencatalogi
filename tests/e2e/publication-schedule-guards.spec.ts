@@ -21,7 +21,10 @@
  * reads that the publication is public; the publisher outside the lift
  * groups sees neither button on its own scheduled publication.
  *
- * NOT HERE YET. The document count up front of task 4.2 is not built.
+ * THE DOCUMENT COUNT (task 4.2). The Visibility card says how many
+ * documents go with the publication while Publish now is offered; with none,
+ * Publish now opens the confirmation (warning and tick) before anything is
+ * sent; one document reference counts as a document and nothing is asked.
  *
  * 🔴 THE PUBLISHER IS A REAL ACCOUNT, provisioned over OCS in its own request
  * context with an empty cookie jar, so a refusal is that account's and not the
@@ -31,6 +34,7 @@
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-a-lift-is-logged REQ-PSG-002
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-publishing-with-no-documents-asks-twice REQ-PSG-004
  * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-a-lift-is-logged REQ-PPW-002
+ * @e2e openspec/changes/publication-schedule-guards/specs/publications/spec.md#scenario-a-reference-counts-as-a-document REQ-PSG-004
  * @spec openspec/changes/publication-schedule-guards/specs/publications/spec.md
  */
 
@@ -217,6 +221,37 @@ test.describe('Publication schedule guards', () => {
 		} finally {
 			await context.close()
 		}
+	})
+
+	test('the page asks twice before publishing with no documents', async ({ page, request, playwright, baseURL }) => {
+		const id = await publication(request, 'page-no-documents', { status: 'approved' })
+		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+
+		await expect(page.getByTestId('publication-visibility-documents')).toContainText('0')
+		await page.getByTestId('publication-publish-now').click()
+		await expect(page.getByTestId('publish-without-documents-warning')).toBeVisible()
+		await expect(page.getByTestId('publish-without-documents-confirm')).toBeDisabled()
+		await page.getByTestId('publish-without-documents-tick').click()
+		await page.getByTestId('publish-without-documents-confirm').click()
+
+		await expect(page.getByTestId('publication-visibility-message')).toContainText('The publication is public')
+		expect(await anonymousStatus(playwright, baseURL, id), 'confirmed on the page, it is public').toBe(200)
+	})
+
+	test('a reference counts as a document', async ({ page, request }) => {
+		const id = await publication(request, 'page-reference', { status: 'approved' })
+		const reference = await request.post('/index.php/apps/openregister/api/objects/publication/documentReference', {
+			data: { title: 'Zaakdossier', publication: id, sourceSystem: 'e2e' },
+		})
+		expect(reference.ok(), `document reference: ${await reference.text()}`).toBe(true)
+		created.push(idOf(await reference.json()))
+
+		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+		await expect(page.getByTestId('publication-visibility-documents')).toContainText('1')
+		await page.getByTestId('publication-publish-now').click()
+
+		await expect(page.getByTestId('publication-visibility-message')).toContainText('The publication is public')
+		await expect(page.getByTestId('publish-without-documents-warning')).toHaveCount(0)
 	})
 
 	test('publishing with no documents asks twice', async ({ request, playwright, baseURL }) => {

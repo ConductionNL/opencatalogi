@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Αυτόματη απόσυρση δημοσίευσης στις {date}",
         "Lift embargo": "Άρση εμπάργκο",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Δημοσίευση του «{name}» τώρα, πριν από την ημερομηνία δημοσίευσης; Η άρση καταγράφεται στο αρχείο ελέγχου με το όνομά σας και τον λόγο.",
-        "The embargo was lifted. The publication is public.": "Το εμπάργκο άρθηκε. Η δημοσίευση είναι δημόσια."
+        "The embargo was lifted. The publication is public.": "Το εμπάργκο άρθηκε. Η δημοσίευση είναι δημόσια.",
+        "Documents published with it: {count}": "Έγγραφα που δημοσιεύονται μαζί της: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

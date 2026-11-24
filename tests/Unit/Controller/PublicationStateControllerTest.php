@@ -558,6 +558,38 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertFalse(condition: $this->controller->visibility(id: 'p1')->getData()['canLiftEmbargo']);
 	}
 
+	/**
+	 * REQ-PSG-004: where Publish applies, the page is told how many documents go with the publication.
+	 *
+	 * @return void
+	 */
+	public function testVisibilityCountsTheDocumentsWherePublishApplies(): void {
+		$this->attachedFiles = [['id' => 1, 'name' => 'besluit.pdf'], ['id' => 2, 'name' => 'bijlage.pdf']];
+		$this->publication   = ['id' => 'p1', 'status' => 'approved', 'title' => 'Besluit'];
+
+		$this->assertSame(expected: 2, actual: $this->controller->visibility(id: 'p1')->getData()['documents']);
+
+		$this->attachedFiles = [];
+		$this->assertSame(expected: 0, actual: $this->controller->visibility(id: 'p1')->getData()['documents']);
+
+		$this->filesFailure = new \RuntimeException('The file table could not be read.');
+		$this->assertSame(expected: 0, actual: $this->controller->visibility(id: 'p1')->getData()['documents']);
+	}
+
+	/**
+	 * REQ-PSG-004: no count where Publish does not apply, or for a caller who may not publish.
+	 *
+	 * @return void
+	 */
+	public function testVisibilityLeavesTheCountOutWherePublishDoesNotApply(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->assertArrayNotHasKey(key: 'documents', array: $this->controller->visibility(id: 'p1')->getData());
+
+		$this->publication = ['id' => 'p1', 'status' => 'approved'];
+		$this->mayPublish  = false;
+		$this->assertArrayNotHasKey(key: 'documents', array: $this->controller->visibility(id: 'p1')->getData());
+	}
+
 	/** REQ-OPR-003: an editor who may edit but not publish gets 403 naming the group, and nothing is saved. */
 	public function testAnEditorOutsideThePublishersGroupCannotPublish(): void {
 		$this->publication = ['id' => 'p1'];

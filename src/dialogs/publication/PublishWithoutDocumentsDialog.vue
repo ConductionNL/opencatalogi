@@ -50,7 +50,8 @@ import { NcButton, NcCheckboxRadioSwitch, NcDialog, NcLoadingIcon, NcNoteCard } 
 /**
  * Asks a second time before a publication with no documents is published:
  * a warning, and a tick the editor must set before Publish is enabled
- * (REQ-PSG-004). Opened when the publish route refuses with 409
+ * (REQ-PSG-004). Opened when the page knows the count is zero, or when the
+ * publish route refuses with 409
  * `no-documents`; the widget that opened it sends the publish again with
  * `confirmNoDocuments: true`.
  *

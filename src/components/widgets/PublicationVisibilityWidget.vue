@@ -35,6 +35,13 @@
 			{{ t('opencatalogi', 'The link works for readers who log in') }}
 		</p>
 
+		<p
+			v-if="documentCountNote"
+			class="publication-visibility__state"
+			data-testid="publication-visibility-documents">
+			{{ documentCountNote }}
+		</p>
+
 		<NcNoteCard
 			v-if="frozenNote"
 			type="info"
@@ -286,6 +293,7 @@ export default {
 			canPublish: false,
 			canUpdate: false,
 			canLiftEmbargo: false,
+			documentCount: null,
 			unlisted: false,
 			audience: 'public',
 			minimumAssurance: 'substantial',
@@ -307,6 +315,20 @@ export default {
 		/** @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002 */
 		actions() {
 			return visibilityActions(this.state, this.canPublish)
+		},
+
+		/**
+		 * How many documents Publish publishes with the publication, while
+		 * Publish now or Publish again is offered (REQ-PSG-004).
+		 *
+		 * @return {string} The line, or an empty string when no count applies.
+		 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
+		 */
+		documentCountNote() {
+			if (this.documentCount === null || !(this.actions.publishNow || this.actions.publishAgain)) {
+				return ''
+			}
+			return this.t('opencatalogi', 'Documents published with it: {count}', { count: this.documentCount })
 		},
 
 		/** @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2 */
@@ -546,6 +568,7 @@ export default {
 				this.canPublish = data.canPublish === true
 				this.canUpdate = data.canUpdate === true
 				this.canLiftEmbargo = data.canLiftEmbargo === true
+				this.documentCount = Number.isInteger(data.documents) ? data.documents : null
 				this.unlisted = data.unlisted === true
 				this.audience = data.audience === 'signedIn' ? 'signedIn' : 'public'
 				this.minimumAssurance = data.minimumAssurance === 'high' ? 'high' : 'substantial'
@@ -554,6 +577,7 @@ export default {
 				this.state = ''
 				this.canPublish = false
 				this.canLiftEmbargo = false
+				this.documentCount = null
 				this.audience = 'public'
 				this.minimumAssurance = 'substantial'
 				this.sourceAbsence = null
@@ -595,7 +619,8 @@ export default {
 		 *
 		 * A publication with no documents is refused with 409 `no-documents`
 		 * until the editor confirms it in its own dialog; the confirmed call
-		 * sends `confirmNoDocuments: true` (REQ-PSG-004).
+		 * sends `confirmNoDocuments: true` (REQ-PSG-004). When the page already
+		 * knows the count is zero it asks before calling the server at all.
 		 *
 		 * @param {boolean} [confirmNoDocuments] Whether the editor confirmed publishing without documents.
 		 * @return {Promise<void>}
@@ -603,8 +628,12 @@ export default {
 		 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
 		 */
 		async publish(confirmNoDocuments = false) {
-			this.busy = true
 			this.message = ''
+			if (confirmNoDocuments !== true && this.documentCount === 0) {
+				this.noDocumentsOpen = true
+				return
+			}
+			this.busy = true
 			try {
 				if (confirmNoDocuments === true) {
 					await axios.post(this.url('publish'), { confirmNoDocuments: true })

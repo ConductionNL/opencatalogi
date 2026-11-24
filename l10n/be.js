@@ -840,7 +840,8 @@ OC.L10N.register(
         "Automatic depublication on {date}": "Аўтаматычнае зняцце з публікацыі {date}",
         "Lift embargo": "Зняць эмбарга",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Апублікаваць «{name}» зараз, да даты публікацыі? Зняцце запісваецца ў журнал аўдыту з вашым імем і прычынай.",
-        "The embargo was lifted. The publication is public.": "Эмбарга знята. Публікацыя агульнадаступная."
+        "The embargo was lifted. The publication is public.": "Эмбарга знята. Публікацыя агульнадаступная.",
+        "Documents published with it: {count}": "Дакументы, якія публікуюцца разам з ёй: {count}"
     },
     "nplurals=2; plural=(n != 1);"
 )

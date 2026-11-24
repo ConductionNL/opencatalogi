@@ -839,7 +839,8 @@
         "Automatic depublication on {date}": "Samodejni umik objave {date}",
         "Lift embargo": "Odpravi embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Objavim »{name}« zdaj, pred datumom objave? Odprava se zabeleži v revizijsko sled z vašim imenom in razlogom.",
-        "The embargo was lifted. The publication is public.": "Embargo je odpravljen. Objava je javna."
+        "The embargo was lifted. The publication is public.": "Embargo je odpravljen. Objava je javna.",
+        "Documents published with it: {count}": "Dokumenti, objavljeni z njo: {count}"
     },
     "plurals": {}
 }
