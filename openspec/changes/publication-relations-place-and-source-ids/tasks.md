@@ -1,6 +1,6 @@
 # Tasks: publication-relations-place-and-source-ids
 
-Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Real classes checked in openregister `development` at 1dc6a46: `OCA\OpenRegister\Service\Relation\RelationTypeResolver`, `RelationAnnotationValidator`, the `uses` and `used` rows (each carries the property and its `label` or `inverseLabel`), `ObjectCreatingEvent` and `ObjectUpdatingEvent`. `ObjectEntity` getters are magic. Group 5 is gated on decision D10: skip it unless the PR author has Ruben's written keep of row 2.16, and say in the PR body that it was skipped.
+Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environmentAwareDouble()` from `tests/Unit/Service/SitemapServiceTest.php`. Real classes checked in openregister `development` at 1dc6a46: `OCA\OpenRegister\Service\Relation\RelationTypeResolver`, `RelationAnnotationValidator`, the `uses` and `used` rows (each carries the property and its `label` or `inverseLabel`), `ObjectCreatingEvent` and `ObjectUpdatingEvent`. `ObjectEntity` getters are magic. Group 5 was gated on decision D10 and is struck (24 Nov 2026): row 2.16 is not kept.
 
 ## 1. Relations
 
@@ -8,6 +8,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 - [x] 1.2 Add the self-relation check to a pre-save listener registered in `Application::register()` (REQ-PRS-001). Verify: `tests/Unit/Listener/PublicationRelationCheckTest.php::testASelfRelationIsRefused` on the REAL event, and an `ApplicationRegisterInvariantTest` case.
 - [x] 1.3 Add `relations` to `PublicationsController::show()`, filtered through the public read path (REQ-PRS-002). Verify: `tests/Unit/Controller/PublicationRelationsResponseTest.php::testBothSidesReadTheRelation` and `::testARelationToANonPublicPublicationIsLeftOut` (fails today: no `relations` key).
 - [ ] 1.4 Show the relations with their labels in the Related panel of the publication page and add the four properties to the edit form (REQ-PRS-001). Verify: `tests/e2e/publication-relations.spec.ts` "both sides read the relation", carrying `@e2e` REQ-PRS-001.
+  - Code built (the Related panel's `groupByRelation` on `pub-related` in `src/manifest.json`, and the self-relation pickers in `src/modals/object/ViewObject.vue` with `relationFields.spec.js`). The e2e spec `tests/e2e/publication-relations.spec.ts` is written, runs in nightly; left unticked until it has run green.
 
 ## 2. Source identifiers
 
@@ -24,10 +25,10 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 - [x] 4.1 Document relations and source identifiers in `docs/` (including the filter for integrators) and the strings in `l10n/` (en, nl). Verify: `npm run check:schema-l10n`, `npm run check:l10n`, and a grep for U+2014 on the changed docs.
 
-## 5. Place (gated on D10; skip unless row 2.16 is kept)
+## 5. Place (struck by D10, 24 Nov 2026)
 
-- [ ] 5.1 Add `geo` with OpenRegister's geometry validation, emit `dct:spatial` in `DcatMappingService` and `geo` on the public API (REQ-PRS-004). Verify: `tests/Unit/Service/DcatMappingServiceTest.php::testAPublicationWithGeoEmitsDctSpatial`.
-- [ ] 5.2 Place the maps leaf widget bound to `publication.geo` on the detail page in `src/manifest.json` and remove the "geo/maps dropped" note (REQ-PRS-004, PUB-MAP-001). Verify: `tests/e2e/publication-relations.spec.ts` "a publication with a place" and `npm run check:manifest`.
+- [x] 5.1 ~~Add `geo` with OpenRegister's geometry validation, emit `dct:spatial` in `DcatMappingService` and `geo` on the public API (REQ-PRS-004).~~ Struck by decision D10 (24 Nov 2026): row 2.16 is not kept. The plan already flagged it as deliberately not building because DiWoo carries no place, so the field is one nothing would read, and it would wait on `openregister/geometry-on-a-map` (2 of 4 tasks). REQ-PRS-004 is removed from the spec delta.
+- [x] 5.2 ~~Place the maps leaf widget bound to `publication.geo` on the detail page in `src/manifest.json` and remove the "geo/maps dropped" note~~ Struck with 5.1 by D10 (24 Nov 2026); the manifest's "geo/maps dropped" note stays true.
 
 ## 6. Verification
 
@@ -36,4 +37,4 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 - [ ] 6.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
 - [ ] 6.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
 
-Done when merged on `development` with CI green. Rows 2.15 and 2.19 become `production` only once a store release ships it; 2.16 only if D10 keeps it and group 5 ships.
+Done when merged on `development` with CI green. Rows 2.15 and 2.19 become `production` only once a store release ships it; 2.16 is struck by D10.
