@@ -842,7 +842,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publicera \"{name}\" nu, före publiceringsdatumet? Hävningen registreras i granskningsloggen med ditt namn och skälet.",
         "The embargo was lifted. The publication is public.": "Embargot har hävts. Publikationen är offentlig.",
         "Publish {count} of {total} publications": "Publicera {count} av {total} publikationer",
-        "These publications miss a field required to publish and will be skipped:": "Dessa publikationer saknar ett fält som krävs för att publicera och hoppas över:"
+        "These publications miss a field required to publish and will be skipped:": "Dessa publikationer saknar ett fält som krävs för att publicera och hoppas över:",
+        "Required to publish": "Krävs för att publicera"
     },
     "nplurals=2; plural=(n != 1);"
 )

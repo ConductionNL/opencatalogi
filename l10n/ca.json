@@ -841,7 +841,8 @@
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Voleu publicar «{name}» ara, abans de la data de publicació? L'aixecament queda registrat al registre d'auditoria amb el vostre nom i el motiu.",
         "The embargo was lifted. The publication is public.": "S'ha aixecat l'embargament. La publicació és pública.",
         "Publish {count} of {total} publications": "Publica {count} de {total} publicacions",
-        "These publications miss a field required to publish and will be skipped:": "A aquestes publicacions els falta un camp obligatori per publicar i s'ometran:"
+        "These publications miss a field required to publish and will be skipped:": "A aquestes publicacions els falta un camp obligatori per publicar i s'ometran:",
+        "Required to publish": "Obligatori per publicar"
     },
     "plurals": {}
 }

@@ -2160,7 +2160,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "\"{name}\" nu publiceren, vóór de publicatiedatum? Het opheffen wordt in het auditlog vastgelegd met je naam en de reden.",
         "The embargo was lifted. The publication is public.": "Het embargo is opgeheven. De publicatie is openbaar.",
         "Publish {count} of {total} publications": "{count} van {total} publicaties publiceren",
-        "These publications miss a field required to publish and will be skipped:": "Deze publicaties missen een veld dat nodig is om te publiceren en worden overgeslagen:"
+        "These publications miss a field required to publish and will be skipped:": "Deze publicaties missen een veld dat nodig is om te publiceren en worden overgeslagen:",
+        "Required to publish": "Verplicht om te publiceren"
     },
     "nplurals=2; plural=(n != 1);"
 )

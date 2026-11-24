@@ -246,6 +246,12 @@ import '../../css/json-highlight.css'
 										<template v-else>
 											{{ prop.type }}
 										</template>
+										<small
+											v-if="requiredToPublish.includes(key)"
+											class="form-field__required-to-publish"
+											:data-testid="'required-to-publish-' + key">
+											{{ t('opencatalogi', 'Required to publish') }}
+										</small>
 									</div>
 								</div>
 								<NcEmptyContent v-else>
@@ -353,6 +359,7 @@ import Plus from 'vue-material-design-icons/Plus.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
 import { getTheme } from '../../services/getTheme.js'
+import { requiredToPublishFields } from '../../services/requiredToPublish.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 /**
@@ -547,6 +554,15 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		schemaProperties() {
 			return this.fullSelectedSchema?.properties || {}
+		},
+
+		/**
+		 * The fields the schema's lifecycle requires to publish; each gets the hint "Required to publish".
+		 *
+		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 */
+		requiredToPublish() {
+			return requiredToPublishFields(this.fullSelectedSchema)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
@@ -1045,6 +1061,11 @@ function toSchemaOption(schema) {
 
 .edit-tabs {
 	margin-top: 20px;
+}
+
+.form-field__required-to-publish {
+	display: block;
+	color: var(--color-text-maxcontrast);
 }
 
 .form-field {

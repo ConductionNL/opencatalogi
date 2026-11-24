@@ -842,7 +842,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Julkaistaanko \"{name}\" nyt, ennen julkaisupäivää? Purkaminen kirjataan tarkastuslokiin nimelläsi ja perusteluineen.",
         "The embargo was lifted. The publication is public.": "Julkaisukielto purettiin. Julkaisu on julkinen.",
         "Publish {count} of {total} publications": "Julkaise {count}/{total} julkaisua",
-        "These publications miss a field required to publish and will be skipped:": "Näistä julkaisuista puuttuu julkaisemiseen vaadittu kenttä, ja ne ohitetaan:"
+        "These publications miss a field required to publish and will be skipped:": "Näistä julkaisuista puuttuu julkaisemiseen vaadittu kenttä, ja ne ohitetaan:",
+        "Required to publish": "Pakollinen julkaisemiseen"
     },
     "nplurals=2; plural=(n != 1);"
 )

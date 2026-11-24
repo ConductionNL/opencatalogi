@@ -842,7 +842,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Опубликовать «{name}» сейчас, до даты публикации? Снятие записывается в журнал аудита с вашим именем и причиной.",
         "The embargo was lifted. The publication is public.": "Эмбарго снято. Публикация общедоступна.",
         "Publish {count} of {total} publications": "Опубликовать {count} из {total} публикаций",
-        "These publications miss a field required to publish and will be skipped:": "В этих публикациях не заполнено поле, обязательное для публикации, и они будут пропущены:"
+        "These publications miss a field required to publish and will be skipped:": "В этих публикациях не заполнено поле, обязательное для публикации, и они будут пропущены:",
+        "Required to publish": "Обязательно для публикации"
     },
     "nplurals=2; plural=(n != 1);"
 )

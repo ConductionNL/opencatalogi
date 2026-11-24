@@ -842,7 +842,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publicēt “{name}” tagad, pirms publicēšanas datuma? Atcelšana tiek reģistrēta audita žurnālā ar jūsu vārdu un iemeslu.",
         "The embargo was lifted. The publication is public.": "Embargo ir atcelts. Publikācija ir publiska.",
         "Publish {count} of {total} publications": "Publicēt {count} no {total} publikācijām",
-        "These publications miss a field required to publish and will be skipped:": "Šīm publikācijām trūkst publicēšanai obligāta lauka, un tās tiks izlaistas:"
+        "These publications miss a field required to publish and will be skipped:": "Šīm publikācijām trūkst publicēšanai obligāta lauka, un tās tiks izlaistas:",
+        "Required to publish": "Obligāts publicēšanai"
     },
     "nplurals=2; plural=(n != 1);"
 )

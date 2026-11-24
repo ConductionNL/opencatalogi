@@ -841,7 +841,8 @@
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Kas avaldada „{name}” kohe, enne avaldamiskuupäeva? Tühistamine salvestatakse auditilogisse koos sinu nime ja põhjusega.",
         "The embargo was lifted. The publication is public.": "Embargo on tühistatud. Väljaanne on avalik.",
         "Publish {count} of {total} publications": "Avalda {count} väljaannet {total}-st",
-        "These publications miss a field required to publish and will be skipped:": "Nendel väljaannetel puudub avaldamiseks nõutav väli ja need jäetakse vahele:"
+        "These publications miss a field required to publish and will be skipped:": "Nendel väljaannetel puudub avaldamiseks nõutav väli ja need jäetakse vahele:",
+        "Required to publish": "Avaldamiseks nõutav"
     },
     "plurals": {}
 }

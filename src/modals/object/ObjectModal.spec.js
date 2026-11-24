@@ -77,3 +77,19 @@ describe('ObjectModal schema dropdown', () => {
 		expect(labels).toEqual(['Alpha', 'beta', 'Schema 2', 'Schema 10'])
 	})
 })
+
+describe('ObjectModal and the fields required to publish', () => {
+	// publication-required-at-publish REQ-PRP-003: the hint follows the schema's lifecycle.
+	it('marks the fields the lifecycle requires in state published', () => {
+		const schema = {
+			properties: { title: { type: 'string' }, summary: { type: 'string' }, description: { type: 'string' } },
+			'x-openregister-lifecycle': { states: { published: { fields: { required: [{ fields: ['summary', 'description', 'organization'] }] } } } },
+		}
+		expect(ObjectModal.computed.requiredToPublish.call({ fullSelectedSchema: schema })).toEqual(['summary', 'description', 'organization'])
+	})
+
+	it('marks nothing when the schema declares no rule', () => {
+		expect(ObjectModal.computed.requiredToPublish.call({ fullSelectedSchema: { properties: {} } })).toEqual([])
+		expect(ObjectModal.computed.requiredToPublish.call({ fullSelectedSchema: undefined })).toEqual([])
+	})
+})

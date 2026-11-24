@@ -842,7 +842,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publikovať „{name}“ teraz, pred dátumom publikovania? Zrušenie sa zaznamená do auditného záznamu s vaším menom a dôvodom.",
         "The embargo was lifted. The publication is public.": "Embargo bolo zrušené. Publikácia je verejná.",
         "Publish {count} of {total} publications": "Publikovať {count} z {total} publikácií",
-        "These publications miss a field required to publish and will be skipped:": "Týmto publikáciám chýba pole povinné na publikovanie a budú preskočené:"
+        "These publications miss a field required to publish and will be skipped:": "Týmto publikáciám chýba pole povinné na publikovanie a budú preskočené:",
+        "Required to publish": "Povinné na publikovanie"
     },
     "nplurals=2; plural=(n != 1);"
 )

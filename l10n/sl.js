@@ -842,7 +842,8 @@ OC.L10N.register(
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Objavim »{name}« zdaj, pred datumom objave? Odprava se zabeleži v revizijsko sled z vašim imenom in razlogom.",
         "The embargo was lifted. The publication is public.": "Embargo je odpravljen. Objava je javna.",
         "Publish {count} of {total} publications": "Objavi {count} od {total} objav",
-        "These publications miss a field required to publish and will be skipped:": "Tem objavam manjka polje, obvezno za objavo, zato bodo preskočene:"
+        "These publications miss a field required to publish and will be skipped:": "Tem objavam manjka polje, obvezno za objavo, zato bodo preskočene:",
+        "Required to publish": "Obvezno za objavo"
     },
     "nplurals=2; plural=(n != 1);"
 )
