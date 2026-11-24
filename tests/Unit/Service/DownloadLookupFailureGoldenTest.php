@@ -74,9 +74,13 @@ class DownloadLookupFailureGoldenTest extends TestCase {
 				$this->assertSame([500, ['error' => $failure->getMessage()]], [$response->getStatus(), $response->getData()], $method . ' ' . $kind);
 			}
 
-			$missing = $call($this->failingStore(new DoesNotExistException('dne')));
-			$this->assertInstanceOf(JSONResponse::class, $missing, $method . ' does not exist');
-			$this->assertSame([404, ['error' => 'Publication not found']], [$missing->getStatus(), $missing->getData()], $method . ' does not exist');
+			$missing = $call($this->failingStore(failure: new DoesNotExistException('dne')));
+			$this->assertInstanceOf(expected: JSONResponse::class, actual: $missing, message: $method . ' does not exist');
+			$this->assertSame(
+				expected: [404, ['error' => 'Publication not found']],
+				actual: [$missing->getStatus(), $missing->getData()],
+				message: $method . ' does not exist'
+			);
 
 			try {
 				$call($this->failingStore(new RuntimeException('other')));
