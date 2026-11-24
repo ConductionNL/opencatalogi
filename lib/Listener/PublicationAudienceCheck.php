@@ -93,10 +93,33 @@ class PublicationAudienceCheck implements IEventListener {
 
 		$event->setErrors(
 			[
-				'message' => $this->l10n->t($refusal['message']),
+				'message' => $this->translate(message: $refusal['message']),
 				'property' => $refusal['property'],
 			]
 		);
 		$event->stopPropagation();
 	}//end check()
+
+	/**
+	 * Translate a refusal's source string.
+	 *
+	 * A known refusal is translated through a literal call, so the l10n tools
+	 * (`npm run check:l10n`, Nextcloud's extractor) see its key; a call with a
+	 * variable hides the key from both. An unknown message still goes through
+	 * the translator.
+	 *
+	 * @param string $message The refusal's source string.
+	 *
+	 * @return string The translated message.
+	 *
+	 * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#requirement-a-woo-publication-stays-public-req-psr-004
+	 */
+	private function translate(string $message): string {
+		return match ($message) {
+			PublicationValidationService::WOO_STAYS_PUBLIC => $this->l10n->t(
+				'A Woo publication is public by law. Remove the Woo category or make it readable for everyone.'
+			),
+			default => $this->l10n->t($message),
+		};
+	}//end translate()
 }//end class
