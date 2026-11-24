@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCA\OpenCatalogi\Service\Withheld\WithheldEntryReader;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Throwable;
@@ -111,11 +112,13 @@ class WithheldDocuments {
 	 * @param WithheldDocumentStore $store Reads and writes the withheldDocument objects.
 	 * @param ContainerInterface $container Resolves dossiq's grounds list.
 	 * @param IAppManager $appManager Says whether dossiq is there.
+	 * @param WithheldEntryReader $reader Reduces each entry to `{position, grounds}`.
 	 */
 	public function __construct(
 		private readonly WithheldDocumentStore $store,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
+		private readonly WithheldEntryReader $reader=new WithheldEntryReader(),
 	) {
 	}//end __construct()
 
@@ -131,7 +134,7 @@ class WithheldDocuments {
 	 * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
 	 */
 	public function record(string $publicationId, array $entries, string $source): array {
-		$entries = array_map(fn (mixed $entry): array => $this->reduce(entry: $entry), array_values($entries));
+		$entries = array_map(fn (mixed $entry): array => $this->reader->reduce(entry: $entry), array_values($entries));
 
 		$refusal = $this->publicationRefusal(publicationId: $publicationId, entries: $entries);
 		if ($refusal !== null) {
@@ -210,56 +213,6 @@ class WithheldDocuments {
 			return null;
 		}
 	}//end resolveUnlessUnavailable()
-
-	/**
-	 * Reduce an entry to `{position, grounds}`; a title or anything else is dropped here.
-	 *
-	 * @param mixed $entry The raw entry.
-	 *
-	 * @return array{position: int, grounds: list<string>}
-	 */
-	private function reduce(mixed $entry): array {
-		if (is_array($entry) === false) {
-			return ['position' => 0, 'grounds' => []];
-		}
-
-		$grounds = $this->groundCodes(codes: ($entry['grounds'] ?? []));
-
-		return ['position' => $this->position(position: ($entry['position'] ?? null)), 'grounds' => $grounds];
-	}//end reduce()
-
-	/**
-	 * The trimmed, non-blank text codes of an entry's grounds.
-	 *
-	 * @param mixed $codes The entry's grounds.
-	 *
-	 * @return list<string>
-	 */
-	private function groundCodes(mixed $codes): array {
-		$grounds = [];
-		foreach ((array)$codes as $code) {
-			if (is_string($code) === true && trim($code) !== '') {
-				$grounds[] = trim($code);
-			}
-		}
-
-		return $grounds;
-	}//end groundCodes()
-
-	/**
-	 * An entry's position as a number, or 0 when it is not numeric.
-	 *
-	 * @param mixed $position The entry's position.
-	 *
-	 * @return int
-	 */
-	private function position(mixed $position): int {
-		if (is_numeric($position) === true) {
-			return (int)$position;
-		}
-
-		return 0;
-	}//end position()
 
 	/**
 	 * Resolve every entry, accepting each position once.
