@@ -34,7 +34,8 @@ Read `openspec/woo-build-rules.md` first. Start once `publication-lifecycle-on-o
 
 ## 4. Docs
 
-- [ ] 4.1 Document versions, the tombstone and the freeze for editors in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n`, `npm run check:schema-l10n`, and a grep for U+2014 on the changed docs.
+- [x] 4.1 Document versions, the tombstone and the freeze for editors in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n`, `npm run check:schema-l10n`, and a grep for U+2014 on the changed docs.
+  - Built 24 Nov: `docs/Users/publicaties-intrekken-en-corrigeren.md` (editors, Dutch) covers earlier versions and their public routes, the withdraw dialog's Reden, Openbare reden and Titel tonen na intrekking, the 410 answer and what it carries, the never-public 404, and the freeze with its refusal and the failed-freeze case. The strings were added with groups 1 to 3 (schema titles in all 37 catalogues, dialog labels in en and nl); this task adds none. `check:l10n` and `check:schema-l10n` report the same issues as development, none from this change; no U+2014 in the page.
 
 ## 5. Verification
 
