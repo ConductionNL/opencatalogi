@@ -92,13 +92,8 @@ class PublicationRights implements PublicationRightsInterface {
 				$owner = null;
 			}
 
-			return PermissionQuestion::ask(
-				handler: $this->objects->getObjectService()->getPermissionHandler(),
-				schema: $schema,
-				action: 'update',
-				objectOwner: $owner,
-				object: $publication
-			);
+			$question = (new PermissionQuestion(schema: $schema, action: 'update'))->askedBy(userId: null, objectOwner: $owner)->about(object: $publication);
+			return $question->answerOf(handler: $this->objects->getObjectService()->getPermissionHandler());
 		} catch (\Throwable $e) {
 			$this->logger->warning('[PublicationRights] The update right could not be checked: ' . $e->getMessage());
 			return false;

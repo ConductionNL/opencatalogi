@@ -60,14 +60,8 @@ final class PermissionQuestionTest extends TestCase {
 			}//end hasPermission()
 		};
 
-		$answer = PermissionQuestion::ask(
-			handler: $handler,
-			schema: $schema,
-			action: 'update',
-			objectOwner: 'eigenaar',
-			object: $object,
-			askClass: PermissionQuestionAskDouble::class
-		);
+		$question = new PermissionQuestion(schema: $schema, action: 'update', askClass: PermissionQuestionAskDouble::class);
+		$answer   = $question->askedBy(userId: null, objectOwner: 'eigenaar')->about(object: $object)->answerOf(handler: $handler);
 
 		$this->assertTrue(condition: $answer);
 		$this->assertSame(expected: [$schema, 'update', null, 'eigenaar', $object], actual: $handler->asked?->fields());
@@ -105,13 +99,8 @@ final class PermissionQuestionTest extends TestCase {
 			}//end hasPermission()
 		};
 
-		$answer = PermissionQuestion::ask(
-			handler: $handler,
-			schema: $schema,
-			action: 'openInspection',
-			userId: 'anna',
-			askClass: 'OCA\OpenRegister\Service\Object\NoSuchAsk'
-		);
+		$question = new PermissionQuestion(schema: $schema, action: 'openInspection', askClass: 'OCA\OpenRegister\Service\Object\NoSuchAsk');
+		$answer   = $question->askedBy(userId: 'anna')->answerOf(handler: $handler);
 
 		$this->assertFalse(condition: $answer);
 		$this->assertSame(expected: [$schema, 'openInspection', 'anna', null, null], actual: $handler->asked);

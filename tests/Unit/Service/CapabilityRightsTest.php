@@ -86,7 +86,7 @@ class CapabilityRightsTest extends TestCase {
 
 		$handler = $this->createMock(PermissionHandler::class);
 		$answers = [true, false];
-		$handler->expects($this->exactly(2))->method('hasPermission')->willReturnCallback(
+		$handler->expects($this->exactly(count: 2))->method('hasPermission')->willReturnCallback(
 			function (mixed ...$args) use ($schema, &$answers): bool {
 				[$asked, $action, $userId] = PermissionArgs::release(args: $args);
 				$this->assertSame(expected: $schema, actual: $asked);
