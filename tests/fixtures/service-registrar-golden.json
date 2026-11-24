@@ -386,6 +386,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublicationVersionServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublicationVersionService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\SitemapServiceInterface",
         "OCA\\OpenCatalogi\\Service\\SitemapService"
     ],

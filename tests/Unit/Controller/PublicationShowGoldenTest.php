@@ -308,7 +308,12 @@ class PublicationShowGoldenTest extends TestCase {
 		$commentPeriods = $this->createMock(\OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod::class);
 		$commentPeriods->method('addTo')->willReturnArgument(0);
 
+		// REQ-PWA-002: a miss asks for a tombstone; nothing was withdrawn in these cases, so there is none.
+		$tombstones = $this->createMock(\OCA\OpenCatalogi\Controller\PublicationTombstone::class);
+		$tombstones->method('tombstone')->willReturn(null);
+
 		$services = [
+			\OCA\OpenCatalogi\Controller\PublicationTombstone::class => $tombstones,
 			\OCA\OpenCatalogi\Contract\PublicationCommentPeriodInterface::class => $commentPeriods,
 			IUserSession::class => $session,
 			IAppConfig::class => $config,

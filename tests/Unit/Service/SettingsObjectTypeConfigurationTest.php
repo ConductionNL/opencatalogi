@@ -221,8 +221,9 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 
 		$this->update(['schemas' => [['slug' => 'catalog', 'id' => 3]]]);
 
-		// One lookup per mapped schema slug without an id, tableView included.
-		$this->assertCount(36, $looked);
+		// One lookup per mapped schema slug without an id, tableView and publicationVersion included.
+		$this->assertCount(37, $looked);
+		$this->assertContains('publicationVersion@opencatalogi', $looked);
 		$this->assertSame('listing@opencatalogi', $looked[0]);
 		$this->assertSame(
 			[

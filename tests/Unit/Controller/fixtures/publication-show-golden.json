@@ -56,6 +56,9 @@
                 }
             },
             {
+                "get": "OCA\\OpenCatalogi\\Controller\\PublicationTombstone"
+            },
+            {
                 "warning": "[PublicationsController::show] Object not found in any register/schema",
                 "context": {
                     "id": "0b1e7a52-0000-4000-8000-000000000001",
@@ -996,6 +999,9 @@
                 }
             },
             {
+                "get": "OCA\\OpenCatalogi\\Controller\\PublicationTombstone"
+            },
+            {
                 "warning": "[PublicationsController::show] Object not found in any register/schema",
                 "context": {
                     "id": "dup",
@@ -1159,6 +1165,9 @@
                 },
                 "rbac": true,
                 "multitenancy": false
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Controller\\PublicationTombstone"
             },
             {
                 "warning": "[PublicationsController::show] Object not found in any register/schema",
