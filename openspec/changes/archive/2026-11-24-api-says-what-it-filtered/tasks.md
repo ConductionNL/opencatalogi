@@ -19,13 +19,13 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 4. Integrator-only marker (gated on D10; skip unless row 13.26 is kept)
 
-- [ ] 4.1 Mark integrator-only parameters in `openapi.json` and add the drift test (REQ-ASF-003). Verify: `tests/Unit/OpenApiIntegratorOnlyDriftTest.php::testAnUnmarkedIntegratorOnlyParameterFails`.
+- [x] 4.1 ~~Mark integrator-only parameters in `openapi.json` and add the drift test (REQ-ASF-003).~~ Struck by decision D10 (24 Nov 2026): row 13.26 is not kept. The plan already flagged it as a quirk the comparison round recorded, not a capability, and a drift test would have to read portaliq's request builders from another repo. REQ-ASF-003 is removed from the spec delta.
 
 ## 5. Verification
 
 - [x] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. Public search is central: run the full unit suite once.
-- [ ] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
-- [ ] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
+- [x] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+- [x] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
 
 Done when merged on `development` with CI green. Row 13.27 becomes `production` only once a store release ships it; 13.26 only if D10 keeps it and group 4 ships.

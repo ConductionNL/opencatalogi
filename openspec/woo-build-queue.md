@@ -17,7 +17,7 @@ Two things need a person, not an agent: settling the Woo refusal grounds against
 | change | rows | depends on |
 |---|---|---|
 | [opencatalogi/diwoo-metadata-on-the-publication](https://github.com/ConductionNL/opencatalogi/issues/1753) | 2.3 (statutory), 2.13, 2.23, 2.25 | nothing |
-| [opencatalogi/api-says-what-it-filtered](https://github.com/ConductionNL/opencatalogi/issues/1756) | 13.27; 13.26 gated on D10 | nothing |
+| [opencatalogi/api-says-what-it-filtered](https://github.com/ConductionNL/opencatalogi/issues/1756) | 13.27 (13.26 struck by D10) | nothing |
 | [opencatalogi/dcat-catalogue-completion](https://github.com/ConductionNL/opencatalogi/issues/1757) | 8.5, 8.6, 8.8 | nothing |
 | [opencatalogi/instance-staging-mode](https://github.com/ConductionNL/opencatalogi/issues/1758) | 13.5 | nothing |
 | [opencatalogi/oai-pmh-endpoint](https://github.com/ConductionNL/opencatalogi/issues/1759) | 8.12 (9.10 struck by D10) | nothing |
