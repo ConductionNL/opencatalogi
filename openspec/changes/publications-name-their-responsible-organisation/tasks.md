@@ -24,7 +24,8 @@ Read `openspec/woo-build-rules.md` first. Start once `diwoo-metadata-on-the-publ
 
 ## 3. Docs
 
-- [ ] 3.1 Document the two organisations and the RSIN for editors in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+- [x] 3.1 Document the two organisations and the RSIN for editors in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+  - Built 24 Nov: `docs/Users/publicerende-en-verantwoordelijke-organisatie.md` (the two organisations, the sitemap elements, the RSIN labels on the file and `publisherRsin` on the publication, the fail-closed 11-proef path), linked from `docs/Administrator/organisaties.md` and `docs/features/woo-transparency.md`. Strings: `Responsible organisation` (1.1) and `Publisher RSIN` (2.2b) with their descriptions in all 37 catalogues. `npm run check:l10n` clean; no U+2014 in the changed docs.
 
 ## 4. Verification
 

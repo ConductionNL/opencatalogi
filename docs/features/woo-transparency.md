@@ -102,7 +102,7 @@ Publishing a Woo batch reports the same refusal and leaves the batch unpublished
 
 ### What the sitemap emits
 
-Each document carries its title, document type, language, creation date, validity and the responsible organisation. Until the responsible organisation has its own field, it is the publisher.
+Each document carries its title, document type, language, creation date, validity and the responsible organisation. The responsible organisation is the publication's `responsibleOrganization`, and the publisher when that field is empty. Each attached document also carries the publisher's RSIN in its file metadata, and the publication holds it as `publisherRsin`; an RSIN that fails the 11-proef is not stamped (see [Publicerende en verantwoordelijke organisatie](../Users/publicerende-en-verantwoordelijke-organisatie.md)).
 
 A publication created before these fields existed falls back to the old derivation: the day it was saved for the creation date, and `nl` for the language. A newer publication gets no fallback. A document that still lacks a required field is left off the sitemap page, and the rest of the page is served. The DiWoo validation report at `/api/{catalogSlug}/sitemaps/{categoryCode}/validate` lists each held-back document with the field and the reason.
 
