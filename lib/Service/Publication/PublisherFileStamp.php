@@ -92,7 +92,7 @@ class PublisherFileStamp {
 	 * whichever of the two is known. Anything else stamps no RSIN and gives
 	 * `rsinStatus:missing` with the reason.
 	 *
-	 * @param array{rsin: ?string, name: ?string, tooi: ?string, rsinStatus: string, reason: ?string} $identity The identity from PublisherIdentity::of().
+	 * @param array{rsin: ?string, name: ?string, tooi: ?string, rsinStatus: string, reason: ?string} $identity The identity.
 	 *
 	 * @return array<int, string> The labels.
 	 *

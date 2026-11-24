@@ -246,11 +246,21 @@ final class PublisherIdentityTest extends TestCase {
 	public function testTheLabelsNameOnlyWhatIsKnown(): void {
 		self::assertSame(
 			expected: ['rsin:002220647'],
-			actual: PublisherFileStamp::labels(identity: ['rsin' => '002220647', 'name' => null, 'tooi' => null, 'rsinStatus' => PublisherIdentity::STATUS_VALID, 'reason' => null])
+			actual: PublisherFileStamp::labels(
+				identity: ['rsin' => '002220647', 'name' => null, 'tooi' => null, 'rsinStatus' => PublisherIdentity::STATUS_VALID, 'reason' => null]
+			)
 		);
 		self::assertSame(
 			expected: ['rsinStatus:missing', 'rsinReason:The publication names no organisation.'],
-			actual: PublisherFileStamp::labels(identity: ['rsin' => null, 'name' => 'Gemeente Zuiddrecht', 'tooi' => 'gm9999', 'rsinStatus' => PublisherIdentity::STATUS_MISSING, 'reason' => 'The publication names no organisation.'])
+			actual: PublisherFileStamp::labels(
+				identity: [
+					'rsin'       => null,
+					'name'       => 'Gemeente Zuiddrecht',
+					'tooi'       => 'gm9999',
+					'rsinStatus' => PublisherIdentity::STATUS_MISSING,
+					'reason'     => 'The publication names no organisation.',
+				]
+			)
 		);
 	}//end testTheLabelsNameOnlyWhatIsKnown()
 
@@ -275,12 +285,12 @@ final class PublisherIdentityTest extends TestCase {
 		$apps->method('isInstalled')->willReturn(true);
 
 		return new BatchPublicationWriter(
-			$this->createMock(originalClassName: IRootFolder::class),
-			$container,
-			$this->createMock(originalClassName: PublicationLinker::class),
-			$this->createMock(originalClassName: IL10N::class),
-			$apps,
-			null
+			rootFolder: $this->createMock(originalClassName: IRootFolder::class),
+			container: $container,
+			linker: $this->createMock(originalClassName: PublicationLinker::class),
+			l10n: $this->createMock(originalClassName: IL10N::class),
+			appManager: $apps,
+			titles: null
 		);
 	}//end writer()
 
