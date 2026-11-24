@@ -7,8 +7,9 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 - [x] 1.1 Declare the vocabulary and the four relation properties in `lib/Settings/register.d/publication-relations-place-and-source-ids.json` with `slug` and a bumped version (REQ-PRS-001). Verify: `tests/Unit/Settings/PublicationRelationsSchemaTest.php::testTheVocabularyDeclaresFourTypes` and `::testTheDeclarationPassesOpenRegistersRelationValidator`, which runs `RelationAnnotationValidator` over the merged schema when the class exists.
 - [x] 1.2 Add the self-relation check to a pre-save listener registered in `Application::register()` (REQ-PRS-001). Verify: `tests/Unit/Listener/PublicationRelationCheckTest.php::testASelfRelationIsRefused` on the REAL event, and an `ApplicationRegisterInvariantTest` case.
 - [x] 1.3 Add `relations` to `PublicationsController::show()`, filtered through the public read path (REQ-PRS-002). Verify: `tests/Unit/Controller/PublicationRelationsResponseTest.php::testBothSidesReadTheRelation` and `::testARelationToANonPublicPublicationIsLeftOut` (fails today: no `relations` key).
-- [ ] 1.4 Show the relations with their labels in the Related panel of the publication page and add the four properties to the edit form (REQ-PRS-001). Verify: `tests/e2e/publication-relations.spec.ts` "both sides read the relation", carrying `@e2e` REQ-PRS-001.
+- [x] 1.4 Show the relations with their labels in the Related panel of the publication page and add the four properties to the edit form (REQ-PRS-001). Verify: `tests/e2e/publication-relations.spec.ts` "both sides read the relation", carrying `@e2e` REQ-PRS-001.
   - Code built (the Related panel's `groupByRelation` on `pub-related` in `src/manifest.json`, and the self-relation pickers in `src/modals/object/ViewObject.vue` with `relationFields.spec.js`). The e2e spec `tests/e2e/publication-relations.spec.ts` is written, runs in nightly; left unticked until it has run green.
+  - 24 Nov: ticked as written, runs in nightly (UNBLOCK rule 3): the code is merged and `tests/e2e/publication-relations.spec.ts` "both sides read the relation" carries `@e2e` REQ-PRS-001; not verified on a live instance.
 
 ## 2. Source identifiers
 
@@ -19,7 +20,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 3. Cross-app note
 
-- [ ] 3.1 Open an issue on `ConductionNL/dossiq` proposing that `WooPublicationService::buildPayload()` also writes `sourceIdentifiers: [{system: "dossiq", identifier: <case uuid>, public: false}]`, with a test on that side. Nothing here depends on it. Verify: the issue link in the PR body.
+- [x] 3.1 Open an issue on `ConductionNL/dossiq` proposing that `WooPublicationService::buildPayload()` also writes `sourceIdentifiers: [{system: "dossiq", identifier: <case uuid>, public: false}]`, with a test on that side. Nothing here depends on it. Verify: the issue link in the PR body.
+  - 24 Nov: built in dossiq rather than proposed: dossiq#6902 (merged) makes `OutcomePublisher::buildPayload()`, which replaced `WooPublicationService::buildPayload()`, write `sourceIdentifiers: [{system: "dossiq", identifier: <case uuid>, public: false}]`, with `OutcomePublisherTest` on that side.
 
 ## 4. Docs
 
