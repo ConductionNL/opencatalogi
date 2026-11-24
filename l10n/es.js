@@ -841,7 +841,9 @@ OC.L10N.register(
         "Lift embargo": "Levantar el embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "¿Publicar «{name}» ahora, antes de su fecha de publicación? El levantamiento se registra en el registro de auditoría con su nombre y el motivo.",
         "The embargo was lifted. The publication is public.": "Se ha levantado el embargo. La publicación es pública.",
-        "Kept permanently: archive hotspot {subject}": "Conservado de forma permanente: punto crítico de archivo {subject}"
+        "Kept permanently: archive hotspot {subject}": "Conservado de forma permanente: punto crítico de archivo {subject}",
+        "until {date}": "hasta el {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Guardado: esta publicación se despublicará automáticamente el {date}."
     },
     "nplurals=2; plural=(n != 1);"
 )

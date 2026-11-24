@@ -841,7 +841,9 @@ OC.L10N.register(
         "Lift embargo": "Зняти ембарго",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Опублікувати «{name}» зараз, до дати публікації? Зняття записується в журнал аудиту з вашим іменем і причиною.",
         "The embargo was lifted. The publication is public.": "Ембарго знято. Публікація загальнодоступна.",
-        "Kept permanently: archive hotspot {subject}": "Зберігається постійно: архівна гаряча точка {subject}"
+        "Kept permanently: archive hotspot {subject}": "Зберігається постійно: архівна гаряча точка {subject}",
+        "until {date}": "до {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Збережено: цю публікацію буде автоматично знято {date}."
     },
     "nplurals=2; plural=(n != 1);"
 )

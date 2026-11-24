@@ -841,7 +841,9 @@ OC.L10N.register(
         "Lift embargo": "Укини ембарго",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Објавити „{name}” сада, пре датума објаве? Укидање се бележи у ревизорском запису са вашим именом и разлогом.",
         "The embargo was lifted. The publication is public.": "Ембарго је укинут. Публикација је јавна.",
-        "Kept permanently: archive hotspot {subject}": "Трајно се чува: архивска жаришна тачка {subject}"
+        "Kept permanently: archive hotspot {subject}": "Трајно се чува: архивска жаришна тачка {subject}",
+        "until {date}": "до {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Сачувано: ова објава ће бити аутоматски повучена {date}."
     },
     "nplurals=2; plural=(n != 1);"
 )

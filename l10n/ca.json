@@ -840,7 +840,9 @@
         "Lift embargo": "Aixeca l'embargament",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Voleu publicar «{name}» ara, abans de la data de publicació? L'aixecament queda registrat al registre d'auditoria amb el vostre nom i el motiu.",
         "The embargo was lifted. The publication is public.": "S'ha aixecat l'embargament. La publicació és pública.",
-        "Kept permanently: archive hotspot {subject}": "Conservat permanentment: punt calent d'arxiu {subject}"
+        "Kept permanently: archive hotspot {subject}": "Conservat permanentment: punt calent d'arxiu {subject}",
+        "until {date}": "fins al {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Desat: aquesta publicació es despublicarà automàticament el {date}."
     },
     "plurals": {}
 }

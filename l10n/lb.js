@@ -841,7 +841,9 @@ OC.L10N.register(
         "Lift embargo": "Embargo ophiewen",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "\"{name}\" elo publizéieren, virum Publikatiounsdatum? D'Ophiewen gëtt mat Ärem Numm an dem Grond am Auditprotokoll festgehalen.",
         "The embargo was lifted. The publication is public.": "D'Embargo gouf opgehuewen. D'Publikatioun ass ëffentlech.",
-        "Kept permanently: archive hotspot {subject}": "Dauerhaft opbewaart: Archiv-Hotspot {subject}"
+        "Kept permanently: archive hotspot {subject}": "Dauerhaft opbewaart: Archiv-Hotspot {subject}",
+        "until {date}": "bis {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Gespäichert: dës Publikatioun gëtt den {date} automatesch depubliéiert."
     },
     "nplurals=2; plural=(n != 1);"
 )

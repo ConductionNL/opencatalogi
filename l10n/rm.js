@@ -841,7 +841,9 @@ OC.L10N.register(
         "Lift embargo": "Annullar l'embargo",
         "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publitgar «{name}» ussa, avant la data da publicaziun? L'annullaziun vegn registrada en il protocol da revisiun cun Voss num ed il motiv.",
         "The embargo was lifted. The publication is public.": "L'embargo è vegnì annullà. La publicaziun è publica.",
-        "Kept permanently: archive hotspot {subject}": "Conservà permanentamain: hotspot d'archiv {subject}"
+        "Kept permanently: archive hotspot {subject}": "Conservà permanentamain: hotspot d'archiv {subject}",
+        "until {date}": "fin ils {date}",
+        "Saved: this publication will be taken down automatically on {date}.": "Memorisà: questa publicaziun vegn retratga automaticamain ils {date}."
     },
     "nplurals=2; plural=(n != 1);"
 )

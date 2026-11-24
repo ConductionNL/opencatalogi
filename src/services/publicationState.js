@@ -11,6 +11,7 @@
  */
 
 import { translate as t } from '@nextcloud/l10n'
+import { comingDepublication } from './publicationVisibility.js'
 
 /**
  * The visible label of a server-computed publication state; an unknown value
@@ -37,10 +38,34 @@ export function publicationStateLabel(value) {
 }
 
 /**
+ * The state cell of a publications list row: the state's label, and the
+ * marker "until <date>" while the row's depublication date lies ahead
+ * (publication-schedule-guards REQ-PSG-003).
+ *
+ * @param {string} value The server-computed state.
+ * @param {object|null} [row] The list row, read for its `depublicationDate`.
+ * @param {Date} [now] The moment to compare with.
+ * @return {string} The cell text.
+ *
+ * @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1
+ */
+export function publicationStateCell(value, row = null, now = new Date()) {
+	const label = publicationStateLabel(value)
+	const date = comingDepublication(row, now)
+	if (date === null) {
+		return label
+	}
+	const marker = t('opencatalogi', 'until {date}', { date: date.toLocaleDateString() })
+
+	return label === '' ? marker : label + ' · ' + marker
+}
+
+/**
  * The cell formatters the app adds to the library's built-in ones.
  *
  * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-the-state-of-a-publication-is-one-value-the-server-computes-req-plc-002
+ * @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1
  */
 export const PUBLICATION_FORMATTERS = {
-	publicationState: (value) => publicationStateLabel(value),
+	publicationState: (value, row) => publicationStateCell(value, row),
 }
