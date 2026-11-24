@@ -65,7 +65,7 @@ describe('DeleteDraftPermanentlyDialog', () => {
 	it('closes on Cancel and when the dialog is dismissed', async () => {
 		const wrapper = mountDialog()
 
-		await wrapper.findAll('button')[0].trigger('click')
+		await wrapper.find('[data-testid="delete-draft-cancel"]').trigger('click')
 		wrapper.findComponent({ name: 'NcDialog' }).vm.$emit('update:open', false)
 
 		expect(wrapper.emitted('close')).toHaveLength(2)

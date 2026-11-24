@@ -26,16 +26,19 @@
 			}}
 		</p>
 		<template #actions>
-			<NcButton :disabled="busy" @click="$emit('close')">
+			<NcButton
+				data-testid="delete-draft-cancel"
+				:disabled="busy"
+				@click="$emit('close')">
 				{{ t('opencatalogi', 'Cancel') }}
 			</NcButton>
 			<NcButton
+				data-testid="delete-draft-confirm"
 				variant="error"
 				:disabled="busy"
-				data-testid="delete-draft-confirm"
 				@click="$emit('confirm')">
-				<template #icon>
-					<NcLoadingIcon v-if="busy" :size="20" />
+				<template v-if="busy" #icon>
+					<NcLoadingIcon :size="20" />
 				</template>
 				{{ t('opencatalogi', 'Delete permanently') }}
 			</NcButton>
