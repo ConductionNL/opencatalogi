@@ -150,6 +150,7 @@ class PublishedTableController extends Controller {
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->readOnlyPreflight();
 	}//end preflightedCors()

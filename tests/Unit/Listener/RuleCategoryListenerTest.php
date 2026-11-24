@@ -206,6 +206,33 @@ class RuleCategoryListenerTest extends TestCase {
 	}//end testAnUnreadableConfigurationDoesNotStopTheSave()
 
 	/**
+	 * A schema that cannot be looked up (no OpenRegister, or no such schema) is logged and the save goes ahead unchanged.
+	 *
+	 * @return void
+	 */
+	public function testASchemaThatCannotBeLookedUpDoesNotStopTheSave(): void {
+		$configured = $this->createMock(originalClassName: PublishedCollectionsServiceInterface::class);
+		$configured->method('collections')->willReturn(self::councilDecisions());
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willThrowException(new \RuntimeException(message: 'no OpenRegister'));
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
+		$logger->expects($this->once())->method('warning')->with(
+			'[RuleCategoryListener] The schema could not be looked up; the record is saved without a category: no OpenRegister'
+		);
+		$listener = new RuleCategoryListener(
+			stamp: new RuleCategoryStamp(collections: $configured, rules: new PublicationRuleService()),
+			container: $container,
+			logger: $logger
+		);
+		$event = new ObjectCreatingEvent(self::entity(data: ['status' => 'Vastgesteld']));
+
+		$listener->handle(event: $event);
+
+		$this->assertSame(expected: [], actual: $event->getModifiedData());
+		$this->assertFalse(condition: $event->isPropagationStopped());
+	}//end testASchemaThatCannotBeLookedUpDoesNotStopTheSave()
+
+	/**
 	 * Any other event is ignored.
 	 */
 	public function testAnotherEventIsIgnored(): void {

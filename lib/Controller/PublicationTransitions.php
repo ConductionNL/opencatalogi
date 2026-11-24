@@ -367,7 +367,7 @@ class PublicationTransitions {
 		$change = 'OCA\OpenRegister\Service\File\FileMetadataChange';
 		try {
 			$service = $this->container->get('OCA\OpenRegister\Service\FileService');
-			$labels  = $this->currentLabels(fileId: $fileId);
+			$labels  = $this->currentLabels(files: $this->container->get('OCA\OpenRegister\Files\Db\FileMapper'), fileId: $fileId);
 			$kept    = array_values(array_filter($labels, fn (string $label): bool => $this->isWithdrawalLabel(label: $label) === false));
 			if (method_exists($service, 'changeFileMetadata') === false || class_exists($change) === false
 				|| ($withdrawal === [] && $kept === $labels)
@@ -386,12 +386,19 @@ class PublicationTransitions {
 	/**
 	 * A file's OpenRegister labels, as strings; none when it has no metadata row.
 	 *
-	 * @param int $fileId The file id.
+	 * The caller looks the file mapper up inside its try, so a missing
+	 * OpenRegister is reported as a failed write, never as no labels (which
+	 * would overwrite the file's own labels).
+	 *
+	 * @param object $files  OpenRegister's file mapper.
+	 * @param int    $fileId The file id.
 	 *
 	 * @return array<string> The labels.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
 	 */
-	private function currentLabels(int $fileId): array {
-		$current = ($this->container->get('OCA\OpenRegister\Files\Db\FileMapper')->findByFileIds([$fileId])[$fileId] ?? null);
+	private function currentLabels(object $files, int $fileId): array {
+		$current = ($files->findByFileIds([$fileId])[$fileId] ?? null);
 		if (is_object($current) === false || is_callable([$current, 'getLabels']) === false) {
 			return [];
 		}

@@ -136,7 +136,10 @@ class RuleCategoryListener implements IEventListener {
 	 * @param ObjectEntity $object The object.
 	 * @param array<int, string> $types The governed record types.
 	 *
-	 * @return array<int, string> The matching names; empty when no collection governs the schema.
+	 * @return array<int, string> The matching names; empty when no collection governs the schema,
+	 *                            or when the schema cannot be looked up.
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
 	 */
 	private function typeNames(ObjectEntity $object, array $types): array {
 		$schemaId = trim((string)$object->getSchema());
@@ -148,7 +151,14 @@ class RuleCategoryListener implements IEventListener {
 			return [$schemaId];
 		}
 
-		$schema = $this->container->get('OCA\OpenRegister\Db\SchemaMapper')->find($schemaId);
+		try {
+			$schema = $this->container->get('OCA\OpenRegister\Db\SchemaMapper')->find($schemaId);
+		} catch (\Throwable $e) {
+			// No OpenRegister or no such schema: nothing governs it, and the save goes on.
+			$this->logger->warning('[RuleCategoryListener] The schema could not be looked up; the record is saved without a category: ' . $e->getMessage());
+			return [];
+		}
+
 		$slug = trim((string)($schema?->getSlug() ?? ''));
 		if ($slug === '' || in_array($slug, $types, true) === false) {
 			return [];
