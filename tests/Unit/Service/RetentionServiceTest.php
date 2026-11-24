@@ -280,7 +280,7 @@ class RetentionServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/tasks.md
+	 * @spec openspec/changes/archive/2026-11-24-retention-defaults-on-shared-decision-tables/tasks.md
 	 */
 	public function testACategoryWithADoubleQuoteStillMatchesThroughTheEvaluator(): void {
 		$this->store['retention_defaults'] = json_encode(
