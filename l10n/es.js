@@ -837,7 +837,10 @@ OC.L10N.register(
         "Publish without documents": "Publicar sin documentos",
         "Publish it without documents": "Publicarla sin documentos",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "«{name}» no tiene documentos: ni archivos ni referencias a documentos. Los lectores encontrarán la publicación, pero nada que abrir.",
-        "Automatic depublication on {date}": "Despublicación automática el {date}"
+        "Automatic depublication on {date}": "Despublicación automática el {date}",
+        "Lift embargo": "Levantar el embargo",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "¿Publicar «{name}» ahora, antes de su fecha de publicación? El levantamiento se registra en el registro de auditoría con su nombre y el motivo.",
+        "The embargo was lifted. The publication is public.": "Se ha levantado el embargo. La publicación es pública."
     },
     "nplurals=2; plural=(n != 1);"
 )

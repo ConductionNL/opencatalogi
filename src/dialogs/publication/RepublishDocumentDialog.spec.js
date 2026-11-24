@@ -56,10 +56,10 @@ describe('RepublishDocumentDialog', () => {
 
 	it('starts empty each time it opens, and closes on cancel or when the dialog closes', async () => {
 		const wrapper = mountDialog({ open: true })
-		wrapper.vm.reason = 'old'
+		wrapper.findComponent({ name: 'ReasonDialog' }).vm.reason = 'old'
 		await wrapper.setProps({ open: false })
 		await wrapper.setProps({ open: true })
-		expect(wrapper.vm.reason).toBe('')
+		expect(wrapper.findComponent({ name: 'ReasonDialog' }).vm.reason).toBe('')
 
 		await wrapper.findAll('button')[0].trigger('click')
 		wrapper.findComponent({ name: 'NcDialog' }).vm.$emit('update:open', false)
@@ -68,7 +68,7 @@ describe('RepublishDocumentDialog', () => {
 
 	it('stays busy: no confirm while the widget is still working', () => {
 		const wrapper = mountDialog({ open: true, busy: true })
-		wrapper.vm.reason = 'x'
+		wrapper.findComponent({ name: 'ReasonDialog' }).vm.reason = 'x'
 
 		expect(wrapper.find('[data-testid="republish-confirm"]').attributes('disabled')).toBeDefined()
 	})

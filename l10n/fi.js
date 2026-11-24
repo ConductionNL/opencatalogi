@@ -837,7 +837,10 @@ OC.L10N.register(
         "Publish without documents": "Julkaise ilman asiakirjoja",
         "Publish it without documents": "Julkaise se ilman asiakirjoja",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "Julkaisussa \"{name}\" ei ole asiakirjoja: ei tiedostoja eikä asiakirjaviittauksia. Lukijat löytävät julkaisun, mutta eivät mitään avattavaa.",
-        "Automatic depublication on {date}": "Automaattinen julkaisun poisto {date}"
+        "Automatic depublication on {date}": "Automaattinen julkaisun poisto {date}",
+        "Lift embargo": "Pura julkaisukielto",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Julkaistaanko \"{name}\" nyt, ennen julkaisupäivää? Purkaminen kirjataan tarkastuslokiin nimelläsi ja perusteluineen.",
+        "The embargo was lifted. The publication is public.": "Julkaisukielto purettiin. Julkaisu on julkinen."
     },
     "nplurals=2; plural=(n != 1);"
 )

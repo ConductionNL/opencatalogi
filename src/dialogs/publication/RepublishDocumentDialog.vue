@@ -3,56 +3,32 @@
   - SPDX-License-Identifier: EUPL-1.2
 -->
 <template>
-	<NcDialog
+	<ReasonDialog
 		:open="open"
+		:busy="busy"
 		:name="t('opencatalogi', 'Put a document back')"
+		:hint="t('opencatalogi', '{document} becomes public again on the public site and in the sitemap.', { document: document ? document.label : '' })"
+		:confirmLabel="t('opencatalogi', 'Republish')"
+		testid="republish"
 		data-testid="republish-document-dialog"
-		@update:open="(value) => !value && $emit('close')">
-		<p class="republish-dialog__hint">
-			{{
-				t(
-					'opencatalogi',
-					'{document} becomes public again on the public site and in the sitemap.',
-					{ document: document ? document.label : '' },
-				)
-			}}
-		</p>
-		<NcTextArea
-			v-model="reason"
-			:label="t('opencatalogi', 'Reason')"
-			:disabled="busy"
-			data-testid="republish-reason"
-			required />
-		<template #actions>
-			<NcButton :disabled="busy" @click="$emit('close')">
-				{{ t('opencatalogi', 'Cancel') }}
-			</NcButton>
-			<NcButton
-				variant="primary"
-				:disabled="busy || reason.trim() === ''"
-				data-testid="republish-confirm"
-				@click="confirm">
-				<template #icon>
-					<NcLoadingIcon v-if="busy" :size="20" />
-				</template>
-				{{ t('opencatalogi', 'Republish') }}
-			</NcButton>
-		</template>
-	</NcDialog>
+		@close="$emit('close')"
+		@confirm="(answer) => $emit('confirm', answer)" />
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcTextArea } from '@nextcloud/vue'
+import ReasonDialog from './ReasonDialog.vue'
 
 /**
  * Asks why a withdrawn document is put back (REQ-ATT-104).
  *
  * The dialog only collects the reason; the widget that opened it calls the
  * server.
+ *
+ * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
  */
 export default {
 	name: 'RepublishDocumentDialog',
-	components: { NcButton, NcDialog, NcLoadingIcon, NcTextArea },
+	components: { ReasonDialog },
 
 	props: {
 		open: { type: Boolean, default: false },
@@ -62,43 +38,5 @@ export default {
 	},
 
 	emits: ['close', 'confirm'],
-
-	data() {
-		return {
-			reason: '',
-		}
-	},
-
-	watch: {
-		/**
-		 * Start empty every time the dialog opens.
-		 *
-		 * @param {boolean} value Whether the dialog is open.
-		 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
-		 */
-		open(value) {
-			if (value) {
-				this.reason = ''
-			}
-		},
-	},
-
-	methods: {
-		/**
-		 * Hand the reason to the widget.
-		 *
-		 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
-		 */
-		confirm() {
-			this.$emit('confirm', { reason: this.reason.trim() })
-		},
-	},
 }
 </script>
-
-<style scoped>
-.republish-dialog__hint {
-	color: var(--color-text-maxcontrast);
-	margin-block-end: 12px;
-}
-</style>

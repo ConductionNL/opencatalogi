@@ -836,7 +836,10 @@
         "Publish without documents": "Opublikuj bez dokumentów",
         "Publish it without documents": "Opublikuj ją bez dokumentów",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}” nie ma dokumentów: żadnych plików ani odwołań do dokumentów. Czytelnicy znajdą publikację, ale nic do otwarcia.",
-        "Automatic depublication on {date}": "Automatyczne wycofanie publikacji {date}"
+        "Automatic depublication on {date}": "Automatyczne wycofanie publikacji {date}",
+        "Lift embargo": "Znieś embargo",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Opublikować „{name}” teraz, przed datą publikacji? Zniesienie zostanie zapisane w dzienniku audytu z Twoim nazwiskiem i powodem.",
+        "The embargo was lifted. The publication is public.": "Embargo zostało zniesione. Publikacja jest publiczna."
     },
     "plurals": {}
 }

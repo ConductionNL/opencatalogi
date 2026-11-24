@@ -837,7 +837,10 @@ OC.L10N.register(
         "Publish without documents": "Belgesiz yayımla",
         "Publish it without documents": "Belgeler olmadan yayımla",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" hiçbir belge içermiyor: dosya da belge bağlantısı da yok. Okuyucular yayını bulacak ama açacak bir şey olmayacak.",
-        "Automatic depublication on {date}": "{date} tarihinde otomatik yayından kaldırma"
+        "Automatic depublication on {date}": "{date} tarihinde otomatik yayından kaldırma",
+        "Lift embargo": "Ambargoyu kaldır",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "\"{name}\" yayın tarihinden önce şimdi yayımlansın mı? Kaldırma işlemi adınız ve gerekçeyle birlikte denetim kaydına yazılır.",
+        "The embargo was lifted. The publication is public.": "Ambargo kaldırıldı. Yayın herkese açık."
     },
     "nplurals=2; plural=(n != 1);"
 )

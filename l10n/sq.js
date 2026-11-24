@@ -837,7 +837,10 @@ OC.L10N.register(
         "Publish without documents": "Publiko pa dokumente",
         "Publish it without documents": "Publikoje pa dokumente",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "\"{name}\" nuk ka dokumente: asnjë skedar dhe asnjë referencë dokumenti. Lexuesit do ta gjejnë publikimin, por asgjë për të hapur.",
-        "Automatic depublication on {date}": "Heqje automatike nga publikimi më {date}"
+        "Automatic depublication on {date}": "Heqje automatike nga publikimi më {date}",
+        "Lift embargo": "Hiq embargon",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Të publikohet „{name}” tani, para datës së publikimit? Heqja regjistrohet në gjurmën e auditimit me emrin tuaj dhe arsyen.",
+        "The embargo was lifted. The publication is public.": "Embargoja u hoq. Publikimi është publik."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -452,7 +452,18 @@ class PublicationStateControllerTest extends TestCase {
 		$this->rights->method('mayUpdate')->willReturn(true);
 		$response = $this->controller->visibility('p1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(['state' => 'public', 'canPublish' => true, 'unlisted' => false, 'canUpdate' => true, 'audience' => 'public', 'minimumAssurance' => 'substantial'], $response->getData());
+		$this->assertSame(
+			expected: [
+				'state'            => 'public',
+				'canPublish'       => true,
+				'unlisted'         => false,
+				'canUpdate'        => true,
+				'canLiftEmbargo'   => false,
+				'audience'         => 'public',
+				'minimumAssurance' => 'substantial',
+			],
+			actual: $response->getData()
+		);
 	}
 
 	/** REQ-PLC-006: unlist stores the flag only, with the caller's rights; list again clears it; no depublication is sent. */
@@ -513,6 +524,38 @@ class PublicationStateControllerTest extends TestCase {
 		$response = $this->controller->visibility('p1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 		$this->assertSame(['state' => 'draft', 'canPublish' => false], array_intersect_key($response->getData(), ['state' => 1, 'canPublish' => 1]));
+	}
+
+	/**
+	 * REQ-PSG-002: a caller in a lift group with the update right is told it may lift the embargo.
+	 *
+	 * @return void
+	 */
+	public function testVisibilityTellsALiftGroupMemberItMayLift(): void {
+		$this->userGroups  = ['admin'];
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => (new \DateTimeImmutable('tomorrow 09:00'))->format(DATE_ATOM)];
+		$this->rights->method('mayUpdate')->willReturn(true);
+
+		$data = $this->controller->visibility(id: 'p1')->getData();
+
+		$this->assertSame(expected: 'scheduled', actual: $data['state']);
+		$this->assertTrue(condition: $data['canLiftEmbargo']);
+	}
+
+	/**
+	 * REQ-PSG-002: outside the lift groups, or without the update right, the page is told it may not lift.
+	 *
+	 * @return void
+	 */
+	public function testVisibilityTellsWhoMayNotLift(): void {
+		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => (new \DateTimeImmutable('tomorrow 09:00'))->format(DATE_ATOM)];
+		$this->rights->method('mayUpdate')->willReturnCallback(fn (): bool => $this->userGroups !== ['admin', 'readonly']);
+
+		$this->userGroups = ['editors'];
+		$this->assertFalse(condition: $this->controller->visibility(id: 'p1')->getData()['canLiftEmbargo']);
+
+		$this->userGroups = ['admin', 'readonly'];
+		$this->assertFalse(condition: $this->controller->visibility(id: 'p1')->getData()['canLiftEmbargo']);
 	}
 
 	/** REQ-OPR-003: an editor who may edit but not publish gets 403 naming the group, and nothing is saved. */

@@ -837,7 +837,10 @@ OC.L10N.register(
         "Publish without documents": "Objavi brez dokumentov",
         "Publish it without documents": "Objavi jo brez dokumentov",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "»{name}« nima dokumentov: ne datotek ne sklicev na dokumente. Bralci bodo našli objavo, a ničesar za odpiranje.",
-        "Automatic depublication on {date}": "Samodejni umik objave {date}"
+        "Automatic depublication on {date}": "Samodejni umik objave {date}",
+        "Lift embargo": "Odpravi embargo",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Objavim »{name}« zdaj, pred datumom objave? Odprava se zabeleži v revizijsko sled z vašim imenom in razlogom.",
+        "The embargo was lifted. The publication is public.": "Embargo je odpravljen. Objava je javna."
     },
     "nplurals=2; plural=(n != 1);"
 )

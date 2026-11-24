@@ -122,7 +122,7 @@ describe('PublicationVisibilityWidget loading', () => {
 describe('PublicationVisibilityWidget states', () => {
 	const CASES = {
 		draft: ['Not published yet.', ['publication-publish-now']],
-		scheduled: ['Scheduled: it becomes public on its publication date.', ['publication-publish-now', 'publication-withdraw']],
+		scheduled: ['Scheduled: it becomes public on its publication date.', ['publication-withdraw']],
 		public: ['Public.', ['publication-withdraw']],
 		withdrawn: ['Withdrawn: readers of the public site no longer see it.', ['publication-publish-again']],
 		archived: ['Archived: kept for retention, never shown publicly again.', []],

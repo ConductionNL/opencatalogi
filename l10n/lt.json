@@ -836,7 +836,10 @@
         "Publish without documents": "Skelbti be dokumentų",
         "Publish it without documents": "Skelbti ją be dokumentų",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "„{name}“ neturi dokumentų: nei failų, nei nuorodų į dokumentus. Skaitytojai ras leidinį, bet nieko, ką galėtų atidaryti.",
-        "Automatic depublication on {date}": "Automatinis paskelbimo atšaukimas {date}"
+        "Automatic depublication on {date}": "Automatinis paskelbimo atšaukimas {date}",
+        "Lift embargo": "Panaikinti embargą",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Paskelbti „{name}“ dabar, prieš paskelbimo datą? Panaikinimas įrašomas į audito žurnalą su jūsų vardu ir priežastimi.",
+        "The embargo was lifted. The publication is public.": "Embargas panaikintas. Leidinys yra viešas."
     },
     "plurals": {}
 }

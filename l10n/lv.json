@@ -836,7 +836,10 @@
         "Publish without documents": "Publicēt bez dokumentiem",
         "Publish it without documents": "Publicēt to bez dokumentiem",
         "\"{name}\" has no documents: no files and no document references. Readers will find the publication but nothing to open.": "“{name}” nav dokumentu: nav ne failu, ne dokumentu atsauču. Lasītāji atradīs publikāciju, bet neko, ko atvērt.",
-        "Automatic depublication on {date}": "Automātiska publikācijas atsaukšana {date}"
+        "Automatic depublication on {date}": "Automātiska publikācijas atsaukšana {date}",
+        "Lift embargo": "Atcelt embargo",
+        "Publish \"{name}\" now, before its publication date? The lift is recorded in the audit trail with your name and the reason.": "Publicēt “{name}” tagad, pirms publicēšanas datuma? Atcelšana tiek reģistrēta audita žurnālā ar jūsu vārdu un iemeslu.",
+        "The embargo was lifted. The publication is public.": "Embargo ir atcelts. Publikācija ir publiska."
     },
     "plurals": {}
 }
