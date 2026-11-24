@@ -47,7 +47,7 @@ export function requiredToPublishFields(schema) {
 /**
  * Whether a value counts as not filled in: absent, null, a blank string, an empty list or object.
  *
- * @param {*} value The value.
+ * @param {unknown} value The value.
  * @return {boolean} True when empty.
  */
 function isEmpty(value) {
@@ -74,7 +74,7 @@ export function missingToPublish(publication, schema = undefined) {
 /**
  * The message of a refused publish: OpenRegister's 422 text when it sent one, else the error's own.
  *
- * @param {*} error The rejected request's error.
+ * @param {unknown} error The rejected request's error.
  * @return {string} The message.
  * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
  */
