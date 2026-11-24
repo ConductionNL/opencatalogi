@@ -850,7 +850,10 @@
         "Title not written: the file is signed": "A cím nincs beírva: a fájl alá van írva",
         "Title not written: the file is encrypted": "A cím nincs beírva: a fájl titkosított",
         "Title not written: the file could not be read": "A cím nincs beírva: a fájl nem olvasható",
-        "Title not written: this file type has no title": "A cím nincs beírva: ennek a fájltípusnak nincs címe"
+        "Title not written: this file type has no title": "A cím nincs beírva: ennek a fájltípusnak nincs címe",
+        "Publish {count} of {total} publications": "{count} / {total} publikáció közzététele",
+        "These publications miss a field required to publish and will be skipped:": "Ezekből a publikációkból hiányzik egy közzétételhez szükséges mező, ezért kimaradnak:",
+        "Required to publish": "Közzétételhez kötelező"
     },
     "plurals": {}
 }

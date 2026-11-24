@@ -851,7 +851,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Насловот не е запишан: датотеката е потпишана",
         "Title not written: the file is encrypted": "Насловот не е запишан: датотеката е шифрирана",
         "Title not written: the file could not be read": "Насловот не е запишан: датотеката не можеше да се прочита",
-        "Title not written: this file type has no title": "Насловот не е запишан: овој тип датотека нема наслов"
+        "Title not written: this file type has no title": "Насловот не е запишан: овој тип датотека нема наслов",
+        "Publish {count} of {total} publications": "Објави {count} од {total} публикации",
+        "These publications miss a field required to publish and will be skipped:": "На овие публикации им недостасува поле задолжително за објавување и ќе бидат прескокнати:",
+        "Required to publish": "Задолжително за објавување"
     },
     "nplurals=2; plural=(n != 1);"
 )

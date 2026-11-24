@@ -851,7 +851,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Título no escrito: el archivo está firmado",
         "Title not written: the file is encrypted": "Título no escrito: el archivo está cifrado",
         "Title not written: the file could not be read": "Título no escrito: no se pudo leer el archivo",
-        "Title not written: this file type has no title": "Título no escrito: este tipo de archivo no tiene título"
+        "Title not written: this file type has no title": "Título no escrito: este tipo de archivo no tiene título",
+        "Publish {count} of {total} publications": "Publicar {count} de {total} publicaciones",
+        "These publications miss a field required to publish and will be skipped:": "A estas publicaciones les falta un campo obligatorio para publicar y se omitirán:",
+        "Required to publish": "Obligatorio para publicar"
     },
     "nplurals=2; plural=(n != 1);"
 )

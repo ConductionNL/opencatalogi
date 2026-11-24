@@ -850,7 +850,10 @@
         "Title not written: the file is signed": "Títol no escrit: el fitxer està signat",
         "Title not written: the file is encrypted": "Títol no escrit: el fitxer està xifrat",
         "Title not written: the file could not be read": "Títol no escrit: no s'ha pogut llegir el fitxer",
-        "Title not written: this file type has no title": "Títol no escrit: aquest tipus de fitxer no té títol"
+        "Title not written: this file type has no title": "Títol no escrit: aquest tipus de fitxer no té títol",
+        "Publish {count} of {total} publications": "Publica {count} de {total} publicacions",
+        "These publications miss a field required to publish and will be skipped:": "A aquestes publicacions els falta un camp obligatori per publicar i s'ometran:",
+        "Required to publish": "Obligatori per publicar"
     },
     "plurals": {}
 }

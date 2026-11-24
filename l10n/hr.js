@@ -851,7 +851,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Naslov nije upisan: datoteka je potpisana",
         "Title not written: the file is encrypted": "Naslov nije upisan: datoteka je šifrirana",
         "Title not written: the file could not be read": "Naslov nije upisan: datoteku nije moguće pročitati",
-        "Title not written: this file type has no title": "Naslov nije upisan: ova vrsta datoteke nema naslov"
+        "Title not written: this file type has no title": "Naslov nije upisan: ova vrsta datoteke nema naslov",
+        "Publish {count} of {total} publications": "Objavi {count} od {total} publikacija",
+        "These publications miss a field required to publish and will be skipped:": "Ovim publikacijama nedostaje polje obavezno za objavu i bit će preskočene:",
+        "Required to publish": "Obavezno za objavu"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -851,7 +851,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Titel betg scrit: la datoteca è suttascritta",
         "Title not written: the file is encrypted": "Titel betg scrit: la datoteca è criptada",
         "Title not written: the file could not be read": "Titel betg scrit: la datoteca na pudeva betg vegnir legida",
-        "Title not written: this file type has no title": "Titel betg scrit: quest tip da datoteca n'ha nagin titel"
+        "Title not written: this file type has no title": "Titel betg scrit: quest tip da datoteca n'ha nagin titel",
+        "Publish {count} of {total} publications": "Publitgar {count} da {total} publicaziuns",
+        "These publications miss a field required to publish and will be skipped:": "A questas publicaziuns manca in champ necessari per publitgar ed ellas vegnan sursiglidas:",
+        "Required to publish": "Necessari per publitgar"
     },
     "nplurals=2; plural=(n != 1);"
 )

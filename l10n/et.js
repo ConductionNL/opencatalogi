@@ -851,7 +851,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Pealkirja ei kirjutatud: fail on allkirjastatud",
         "Title not written: the file is encrypted": "Pealkirja ei kirjutatud: fail on krüpteeritud",
         "Title not written: the file could not be read": "Pealkirja ei kirjutatud: faili ei saanud lugeda",
-        "Title not written: this file type has no title": "Pealkirja ei kirjutatud: sellel failitüübil pole pealkirja"
+        "Title not written: this file type has no title": "Pealkirja ei kirjutatud: sellel failitüübil pole pealkirja",
+        "Publish {count} of {total} publications": "Avalda {count} väljaannet {total}-st",
+        "These publications miss a field required to publish and will be skipped:": "Nendel väljaannetel puudub avaldamiseks nõutav väli ja need jäetakse vahele:",
+        "Required to publish": "Avaldamiseks nõutav"
     },
     "nplurals=2; plural=(n != 1);"
 )

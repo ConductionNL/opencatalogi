@@ -851,7 +851,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Заглавието не е записано: файлът е подписан",
         "Title not written: the file is encrypted": "Заглавието не е записано: файлът е шифрован",
         "Title not written: the file could not be read": "Заглавието не е записано: файлът не можа да бъде прочетен",
-        "Title not written: this file type has no title": "Заглавието не е записано: този тип файл няма заглавие"
+        "Title not written: this file type has no title": "Заглавието не е записано: този тип файл няма заглавие",
+        "Publish {count} of {total} publications": "Публикуване на {count} от {total} публикации",
+        "These publications miss a field required to publish and will be skipped:": "На тези публикации липсва поле, задължително за публикуване, и те ще бъдат пропуснати:",
+        "Required to publish": "Задължително за публикуване"
     },
     "nplurals=2; plural=(n != 1);"
 )

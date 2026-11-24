@@ -850,7 +850,10 @@
         "Title not written: the file is signed": "Naslov ni zapisan: datoteka je podpisana",
         "Title not written: the file is encrypted": "Naslov ni zapisan: datoteka je šifrirana",
         "Title not written: the file could not be read": "Naslov ni zapisan: datoteke ni bilo mogoče prebrati",
-        "Title not written: this file type has no title": "Naslov ni zapisan: ta vrsta datoteke nima naslova"
+        "Title not written: this file type has no title": "Naslov ni zapisan: ta vrsta datoteke nima naslova",
+        "Publish {count} of {total} publications": "Objavi {count} od {total} objav",
+        "These publications miss a field required to publish and will be skipped:": "Tem objavam manjka polje, obvezno za objavo, zato bodo preskočene:",
+        "Required to publish": "Obvezno za objavo"
     },
     "plurals": {}
 }

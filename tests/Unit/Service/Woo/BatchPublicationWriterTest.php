@@ -27,6 +27,7 @@ use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate;
 use OCA\OpenCatalogi\Service\Publication\PdfTitleUpdate;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
+use OCA\OpenCatalogi\Service\Publication\RequiredToPublish;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCP\App\IAppManager;
 use OCP\Files\File;
@@ -47,8 +48,11 @@ class TitleFakeObjectService {
 	/** @var array<int, array<string, mixed>> */
 	public array $saved = [];
 
+	/** The stored state an earlier publication is found in. */
+	public string $foundStatus = 'published';
+
 	public function find(string $id, mixed ...$rest): mixed {
-		return ['id' => $id, 'title' => 'Eerder gemaakte publicatie', 'status' => 'published'];
+		return ['id' => $id, 'title' => 'Eerder gemaakte publicatie', 'status' => $this->foundStatus];
 	}//end find()
 
 	public function saveObject(array $object, mixed ...$rest): mixed {
@@ -106,6 +110,7 @@ class TitleFakeFileService {
  * @uses \OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate
  * @uses \OCA\OpenCatalogi\Service\Publication\TitleNotWritten
  * @uses \OCA\OpenCatalogi\Service\Publication\EmbeddedTitle
+ * @uses \OCA\OpenCatalogi\Service\Publication\RequiredToPublish
  */
 class BatchPublicationWriterTest extends TestCase {
 
@@ -219,10 +224,34 @@ class BatchPublicationWriterTest extends TestCase {
 		$this->assertSame(expected: 'Besluit parkeren.', actual: $payload['summary']);
 		$this->assertSame(expected: 'Besluit en openbaar gemaakte documenten: Besluit parkeren. Zaak Z-9.', actual: $payload['description']);
 		$this->assertSame(expected: 'org-uuid', actual: $payload['organization']);
-		foreach (['summary', 'description', 'organization'] as $field) {
-			$this->assertNotSame(expected: '', actual: trim((string)$payload[$field]), message: $field);
-		}
+		$this->assertSame(expected: [], actual: RequiredToPublish::missing(publication: $payload));
 	}//end testABatchPublicationPassesTheDeclaredRule()
+
+	/**
+	 * REQ-PRP-002: a batch publishes only through the lifecycle transition. A new publication is saved approved
+	 * without a date and moved by `publish`; an earlier one still approved is moved the same way without a second
+	 * save; one already published is not moved again. No save writes a publication date.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-publishing-refuses-a-publication-missing-a-required-field-req-prp-002
+	 */
+	public function testABatchPublicationGoesThroughTheTransition(): void {
+		$now = '2026-11-17T10:00:00+00:00';
+		$this->writer()->publication(batch: ['title' => 'Besluit', 'caseReference' => 'Z-9', '@self' => ['organisation' => 'org-uuid']], now: $now);
+
+		$this->objects->foundStatus = 'approved';
+		$this->writer()->publication(batch: ['title' => 'Besluit', 'wooPublication' => ['publication' => 'pub-0']], now: $now);
+
+		$this->objects->foundStatus = 'published';
+		$this->writer()->publication(batch: ['title' => 'Besluit', 'wooPublication' => ['publication' => 'pub-0']], now: $now);
+
+		$this->assertSame(expected: [['pub-1', 'approved', $now, true], ['pub-0', 'approved', $now, true]], actual: $this->publishes);
+		$this->assertCount(expectedCount: 1, haystack: $this->objects->saved);
+		foreach ($this->objects->saved as $saved) {
+			$this->assertArrayNotHasKey(key: 'publicationDate', array: $saved);
+		}
+	}//end testABatchPublicationGoesThroughTheTransition()
 
 	/**
 	 * The batch's own summary, description and organisation win; a long summary is cut to the schema's 255.

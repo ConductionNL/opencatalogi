@@ -851,7 +851,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Názov nezapísaný: súbor je podpísaný",
         "Title not written: the file is encrypted": "Názov nezapísaný: súbor je zašifrovaný",
         "Title not written: the file could not be read": "Názov nezapísaný: súbor sa nepodarilo prečítať",
-        "Title not written: this file type has no title": "Názov nezapísaný: tento typ súboru nemá názov"
+        "Title not written: this file type has no title": "Názov nezapísaný: tento typ súboru nemá názov",
+        "Publish {count} of {total} publications": "Publikovať {count} z {total} publikácií",
+        "These publications miss a field required to publish and will be skipped:": "Týmto publikáciám chýba pole povinné na publikovanie a budú preskočené:",
+        "Required to publish": "Povinné na publikovanie"
     },
     "nplurals=2; plural=(n != 1);"
 )

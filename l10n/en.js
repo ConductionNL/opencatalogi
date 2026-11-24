@@ -2214,7 +2214,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Title not written: the file is signed",
         "Title not written: the file is encrypted": "Title not written: the file is encrypted",
         "Title not written: the file could not be read": "Title not written: the file could not be read",
-        "Title not written: this file type has no title": "Title not written: this file type has no title"
+        "Title not written: this file type has no title": "Title not written: this file type has no title",
+        "Publish {count} of {total} publications": "Publish {count} of {total} publications",
+        "These publications miss a field required to publish and will be skipped:": "These publications miss a field required to publish and will be skipped:",
+        "Required to publish": "Required to publish"
     },
     "nplurals=2; plural=(n != 1);"
 )

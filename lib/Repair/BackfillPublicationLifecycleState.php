@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Repair;
 
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Service\Publication\RequiredToPublish;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\Migration\IOutput;
@@ -39,8 +40,11 @@ use Psr\Log\LoggerInterface;
  * publication that was public stays public; one without a date becomes `draft`. A stored state is never changed.
  * On an install where the schema import was skipped because the version did not move, the public read rule still
  * matches the dates only; it gets `status: published` added, after the states are written.
+ * It also counts the published publications that miss a field required to publish, so an administrator knows how
+ * many need a fix on their next edit; nothing is moved back to draft.
  *
  * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+ * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
  */
 class BackfillPublicationLifecycleState implements IRepairStep {
 
@@ -64,9 +68,9 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 	/**
 	 * The running counts of the run in progress.
 	 *
-	 * @var array{published: int, draft: int, kept: int, failed: int}
+	 * @var array{published: int, draft: int, kept: int, failed: int, incomplete: int}
 	 */
-	private array $counts = ['published' => 0, 'draft' => 0, 'kept' => 0, 'failed' => 0];
+	private array $counts = ['published' => 0, 'draft' => 0, 'kept' => 0, 'failed' => 0, 'incomplete' => 0];
 
 	/**
 	 * Constructor.
@@ -101,6 +105,7 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 	 * @return void
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public function run(IOutput $output): void {
 		$objects = $this->settings->getObjectService();
@@ -110,7 +115,7 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 		}
 
 		$this->objects = $objects;
-		$this->counts  = ['published' => 0, 'draft' => 0, 'kept' => 0, 'failed' => 0];
+		$this->counts  = ['published' => 0, 'draft' => 0, 'kept' => 0, 'failed' => 0, 'incomplete' => 0];
 		foreach ($this->publicationScopes() as [$register, $schema]) {
 			$this->backfillScope(scope: ['register' => $register, 'schema' => $schema]);
 		}
@@ -119,7 +124,9 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 		$output->info(
 			'BackfillPublicationLifecycleState: ' . $counts['published'] . ' publication(s) set to published, '
 			. $counts['draft'] . ' set to draft, ' . $counts['kept'] . ' kept their state, '
-			. $counts['failed'] . ' could not be saved.'
+			. $counts['failed'] . ' could not be saved; ' . $counts['incomplete']
+			. ' published publication(s) miss a field required to publish (' . implode(', ', RequiredToPublish::FIELDS)
+			. ') and need it on their next edit.'
 		);
 
 		// After the states: a rule that requires `published` before they are written hides every legacy publication.
@@ -177,9 +184,18 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 	 * @param array{register: string, schema: string} $scope       The register and schema.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @SuppressWarnings(PHPMD.StaticAccess) RequiredToPublish::missing() is a pure field check.
 	 */
 	private function backfillOne(array $publication, array $scope): void {
-		if (trim((string)($publication['status'] ?? '')) !== '') {
+		$stored = trim((string)($publication['status'] ?? ''));
+		$public = $stored === 'published' || ($stored === '' && trim((string)($publication['publicationDate'] ?? '')) !== '');
+		if ($public === true && RequiredToPublish::missing(publication: $publication) !== []) {
+			$this->counts['incomplete']++;
+		}
+
+		if ($stored !== '') {
 			$this->counts['kept']++;
 			return;
 		}

@@ -2169,7 +2169,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Titel niet geschreven: het bestand is ondertekend",
         "Title not written: the file is encrypted": "Titel niet geschreven: het bestand is versleuteld",
         "Title not written: the file could not be read": "Titel niet geschreven: het bestand kon niet worden gelezen",
-        "Title not written: this file type has no title": "Titel niet geschreven: dit bestandstype heeft geen titel"
+        "Title not written: this file type has no title": "Titel niet geschreven: dit bestandstype heeft geen titel",
+        "Publish {count} of {total} publications": "{count} van {total} publicaties publiceren",
+        "These publications miss a field required to publish and will be skipped:": "Deze publicaties missen een veld dat nodig is om te publiceren en worden overgeslagen:",
+        "Required to publish": "Verplicht om te publiceren"
     },
     "nplurals=2; plural=(n != 1);"
 )

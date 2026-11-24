@@ -851,7 +851,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Titill ekki skrifaður: skráin er undirrituð",
         "Title not written: the file is encrypted": "Titill ekki skrifaður: skráin er dulkóðuð",
         "Title not written: the file could not be read": "Titill ekki skrifaður: ekki tókst að lesa skrána",
-        "Title not written: this file type has no title": "Titill ekki skrifaður: þessi skráartegund hefur engan titil"
+        "Title not written: this file type has no title": "Titill ekki skrifaður: þessi skráartegund hefur engan titil",
+        "Publish {count} of {total} publications": "Birta {count} af {total} útgáfum",
+        "These publications miss a field required to publish and will be skipped:": "Þessar útgáfur vantar reit sem þarf til að birta og þeim verður sleppt:",
+        "Required to publish": "Nauðsynlegt til að birta"
     },
     "nplurals=2; plural=(n != 1);"
 )

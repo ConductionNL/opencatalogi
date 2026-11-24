@@ -850,7 +850,10 @@
         "Title not written: the file is signed": "Titel nicht geschrieben: Die Datei ist signiert",
         "Title not written: the file is encrypted": "Titel nicht geschrieben: Die Datei ist verschlüsselt",
         "Title not written: the file could not be read": "Titel nicht geschrieben: Die Datei konnte nicht gelesen werden",
-        "Title not written: this file type has no title": "Titel nicht geschrieben: Dieser Dateityp hat keinen Titel"
+        "Title not written: this file type has no title": "Titel nicht geschrieben: Dieser Dateityp hat keinen Titel",
+        "Publish {count} of {total} publications": "{count} von {total} Veröffentlichungen veröffentlichen",
+        "These publications miss a field required to publish and will be skipped:": "Diesen Veröffentlichungen fehlt ein für die Veröffentlichung erforderliches Feld; sie werden übersprungen:",
+        "Required to publish": "Für die Veröffentlichung erforderlich"
     },
     "plurals": {}
 }

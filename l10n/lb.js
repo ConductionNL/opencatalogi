@@ -851,7 +851,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Titel net geschriwwen: de Fichier ass ënnerschriwwen",
         "Title not written: the file is encrypted": "Titel net geschriwwen: de Fichier ass verschlësselt",
         "Title not written: the file could not be read": "Titel net geschriwwen: de Fichier konnt net gelies ginn",
-        "Title not written: this file type has no title": "Titel net geschriwwen: dësen Fichierstyp huet keen Titel"
+        "Title not written: this file type has no title": "Titel net geschriwwen: dësen Fichierstyp huet keen Titel",
+        "Publish {count} of {total} publications": "{count} vun {total} Publikatiounen publizéieren",
+        "These publications miss a field required to publish and will be skipped:": "Dëse Publikatiounen feelt e Feld, dat fir d'Publikatioun néideg ass; si ginn iwwersprongen:",
+        "Required to publish": "Néideg fir ze publizéieren"
     },
     "nplurals=2; plural=(n != 1);"
 )

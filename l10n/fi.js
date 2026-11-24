@@ -851,7 +851,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Otsikkoa ei kirjoitettu: tiedosto on allekirjoitettu",
         "Title not written: the file is encrypted": "Otsikkoa ei kirjoitettu: tiedosto on salattu",
         "Title not written: the file could not be read": "Otsikkoa ei kirjoitettu: tiedostoa ei voitu lukea",
-        "Title not written: this file type has no title": "Otsikkoa ei kirjoitettu: tällä tiedostotyypillä ei ole otsikkoa"
+        "Title not written: this file type has no title": "Otsikkoa ei kirjoitettu: tällä tiedostotyypillä ei ole otsikkoa",
+        "Publish {count} of {total} publications": "Julkaise {count}/{total} julkaisua",
+        "These publications miss a field required to publish and will be skipped:": "Näistä julkaisuista puuttuu julkaisemiseen vaadittu kenttä, ja ne ohitetaan:",
+        "Required to publish": "Pakollinen julkaisemiseen"
     },
     "nplurals=2; plural=(n != 1);"
 )

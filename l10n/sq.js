@@ -851,7 +851,10 @@ OC.L10N.register(
         "Title not written: the file is signed": "Titulli nuk u shkrua: skedari është i nënshkruar",
         "Title not written: the file is encrypted": "Titulli nuk u shkrua: skedari është i enkriptuar",
         "Title not written: the file could not be read": "Titulli nuk u shkrua: skedari nuk mund të lexohej",
-        "Title not written: this file type has no title": "Titulli nuk u shkrua: ky lloj skedari nuk ka titull"
+        "Title not written: this file type has no title": "Titulli nuk u shkrua: ky lloj skedari nuk ka titull",
+        "Publish {count} of {total} publications": "Publiko {count} nga {total} publikime",
+        "These publications miss a field required to publish and will be skipped:": "Këtyre publikimeve u mungon një fushë e detyrueshme për publikim dhe do të anashkalohen:",
+        "Required to publish": "E detyrueshme për publikim"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -850,7 +850,10 @@
         "Title not written: the file is signed": "Titel inte skriven: filen är signerad",
         "Title not written: the file is encrypted": "Titel inte skriven: filen är krypterad",
         "Title not written: the file could not be read": "Titel inte skriven: filen kunde inte läsas",
-        "Title not written: this file type has no title": "Titel inte skriven: den här filtypen har ingen titel"
+        "Title not written: this file type has no title": "Titel inte skriven: den här filtypen har ingen titel",
+        "Publish {count} of {total} publications": "Publicera {count} av {total} publikationer",
+        "These publications miss a field required to publish and will be skipped:": "Dessa publikationer saknar ett fält som krävs för att publicera och hoppas över:",
+        "Required to publish": "Krävs för att publicera"
     },
     "plurals": {}
 }
