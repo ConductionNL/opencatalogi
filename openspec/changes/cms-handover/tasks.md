@@ -1,5 +1,7 @@
 # Tasks: cms-handover
 
+> **Superseded, struck 24 Nov 2026.** #1421 (4 Sep 2026) removed pages and menus outright after the Portaliq migration (#1417) instead of keeping deprecated proxies, and kept the glossary as this app's ("`theme` and `glossary` are untouched. They are still this app's."). So there is no proxy to record a baseline for (task 1), no proxy to build (task 2), and the glossary is not removed (task 3). Not archived: syncing this delta spec would restore the proxy requirements #1421 overruled.
+
 > Hand the website CMS to Portaliq, leave a deprecated read path
 > (ADR-032 `kind: code`). Checkbox budget: 4 tasks × 2 = 8 unindented
 > `- [ ]` lines (cap 20).
@@ -13,8 +15,8 @@
   - Responses from `MenusController`, `PagesController` and `GlossaryController` are recorded from the CURRENT implementation, before any edit, covering two-level menus, ordered page content and glossary terms
   - The recordings are the assertion target for the proxy — comparing the proxy against the new implementation's expectations would prove only that two new things agree
   - Recordings come from a deployment with real data, not from fixtures written to match the schema
-- [ ] Implement
-- [ ] Test
+- [x] ~~Implement~~ Struck 24 Nov 2026: superseded, see the note at the top.
+- [x] ~~Test~~ Struck 24 Nov 2026: superseded, see the note at the top.
 
 ### Task 2: Reduce the controllers to deprecated proxies
 - **spec_ref**: `openspec/changes/cms-handover/specs/cms-handover/spec.md#requirement-the-read-path-must-stay-behaviour-identical-while-deprecated`
@@ -23,8 +25,8 @@
   - Each delegates to Portaliq's content API and matches its recorded baseline
   - Each is marked deprecated in the response and in its docblock
   - Portaliq unavailable reports the failure — it does NOT return an empty success, which a consumer reads as "no menus" and renders as a site with no navigation
-- [ ] Implement
-- [ ] Test
+- [x] ~~Implement~~ Struck 24 Nov 2026: superseded, see the note at the top.
+- [x] ~~Test~~ Struck 24 Nov 2026: superseded, see the note at the top.
 
 ### Task 3: Remove the CRUD UI and account for other glossary consumers
 - **spec_ref**: `openspec/changes/cms-handover/specs/cms-handover/spec.md#requirement-remaining-glossary-consumers-must-be-identified-before-removal`
@@ -34,8 +36,8 @@
   - Every glossary reference OUTSIDE the CMS UI — `ProvideManifestConfigStateListener`, `SettingsService`, `UiController`, `EntityDetailPage.vue`, `Modals.vue`, `navigation.ts` — is enumerated FIRST and each is migrated or documented as retained
   - No such consumer is discovered after deletion
   - Catalogues, publications, themes and directory federation are exercised and unchanged
-- [ ] Implement
-- [ ] Test
+- [x] ~~Implement~~ Struck 24 Nov 2026: superseded, see the note at the top.
+- [x] ~~Test~~ Struck 24 Nov 2026: superseded, see the note at the top.
 
 ### Task 4: Write the removal change now, not later
 - **spec_ref**: `openspec/changes/cms-handover/specs/cms-handover/spec.md#requirement-proxy-removal-must-be-scheduled-as-its-own-change`
@@ -44,4 +46,4 @@
   - The removal change exists with proposal and tasks, naming the three controllers and the release after which they go
   - It is written in this change, because a deprecation with no scheduled removal becomes permanent
 - [x] Implement (verified: openspec/changes/cms-proxy-removal/proposal.md and tasks.md name the three controllers and the release)
-- [ ] Test
+- [x] ~~Test~~ Struck 24 Nov 2026: superseded, see the note at the top.

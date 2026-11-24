@@ -1,5 +1,7 @@
 # Tasks: cms-proxy-removal
 
+> **Superseded, struck 24 Nov 2026.** #1421 (4 Sep 2026) already removed `MenusController` and `PagesController` with their routes, `openapi.json` paths and specs; `GlossaryController` stays as this app's own endpoint by the same decision. Nothing is left to remove. Not archived: syncing this delta spec would assert the glossary is removed, which #1421 decided against.
+
 > Removes the deprecated CMS proxies (ADR-032 `kind: code`). BLOCKED until the
 > preconditions in the proposal hold. Checkbox budget: 2 tasks × 2 = 4
 > unindented `- [ ]` lines (cap 20).
@@ -14,8 +16,8 @@
   - Access logs over a full release cycle show no callers, recorded per deployment rather than generalised from one
   - `tilburg-woo-ui` is confirmed to have stopped calling them
   - The record states what was checked and over what period, so a later reader can judge the evidence rather than trust the conclusion
-- [ ] Implement
-- [ ] Test
+- [x] ~~Implement~~ Struck 24 Nov 2026: superseded, see the note at the top.
+- [x] ~~Test~~ Struck 24 Nov 2026: superseded, see the note at the top.
 
 ### Task 2: Remove the controllers, routes, tests and specs together
 - **spec_ref**: `openspec/changes/cms-proxy-removal/specs/cms-handover/spec.md#requirement-the-proxied-endpoints-must-be-gone-not-silently-broken`
@@ -25,5 +27,5 @@
   - A request to any former endpoint returns 404
   - A repo search for the controller names finds no route, test, spec or manifest reference
   - Catalogues, publications, themes and directory federation are exercised and unchanged
-- [ ] Implement
-- [ ] Test
+- [x] ~~Implement~~ Struck 24 Nov 2026: superseded, see the note at the top.
+- [x] ~~Test~~ Struck 24 Nov 2026: superseded, see the note at the top.
