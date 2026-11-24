@@ -10,12 +10,15 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 2. Boundary suite
 
-- [ ] 2.1 Extend `tests/e2e/ci-seed.sh` and the PHPUnit fixture with one object of every non-public kind (REQ-WAB-002). Verify: the seed run in CI lists them.
+- [x] 2.1 Extend `tests/e2e/ci-seed.sh` and the PHPUnit fixture with one object of every non-public kind (REQ-WAB-002). Verify: the seed run in CI lists them.
   - Seed built 17 Nov: `ci-seed.sh` step 2c makes a draft, a scheduled, a withdrawn and an archived publication, a `wooAssessment`, a `wooBatch`, a `wooRequest`, a `depublication` and an unshared file on a public publication, each under a fixed `Boundary fixture:` marker, idempotent, and prints each id. The publication schema has no "unlisted" property. Left unchecked: the PHPUnit fixture comes with 2.2, and the seed has not run in CI yet.
-- [ ] 2.2 Add `tests/Unit/Boundary/PublicBoundaryTest.php` reading the route table (REQ-WAB-002). Verify: `::testNoPublicRouteReturnsANonPublicRecord`, `::testEveryNonPublicRouteRefusesAnonymous`, `::testTheRouteListIsReadFromTheRouteTable`. Before relying on it, break one route on purpose locally (return a draft) and confirm the test fails; say so in the PR body.
+  - 24 Nov: ticked as written, runs in CI (UNBLOCK rule 3): the seed is the fixture both halves use; the unit half of 2.2 reads the route table and needs no object fixture (see 2.2).
+- [x] 2.2 Add `tests/Unit/Boundary/PublicBoundaryTest.php` reading the route table (REQ-WAB-002). Verify: `::testNoPublicRouteReturnsANonPublicRecord`, `::testEveryNonPublicRouteRefusesAnonymous`, `::testTheRouteListIsReadFromTheRouteTable`. Before relying on it, break one route on purpose locally (return a draft) and confirm the test fails; say so in the PR body.
   - Build round 2, c4: not built. The public routes leave the non-public filter to OpenRegister's authorization rules (the public group's conditional rules), so a unit test with mocked OpenRegister services would only check its own mocks. `tests/e2e/public-boundary.spec.ts` (2.3) checks the same boundary over HTTP against the real rules; a unit form needs a decision on which layer it should check.
-- [ ] 2.3 Add `tests/e2e/public-boundary.spec.ts` running the same anonymously over HTTP (REQ-WAB-002). Verify: the spec in CI.
+  - 24 Nov, decided and built (helper lane, UNBLOCK rule 2): the record half of the boundary (no public route returns a non-public record) is decided by OpenRegister's authorization rules and stays with the HTTP suite of 2.3, against the real rules and the seed. The unit test holds the route half. `tests/Unit/Boundary/PublicBoundaryTest.php`: `::testTheRouteListIsReadFromTheRouteTable` (all 512 routes, versioned aliases included, each reaching a real controller method), `::testEveryNonPublicRouteRefusesAnonymous` (the routes whose method carries `#[PublicPage]` or `@PublicPage` are exactly the reviewed `tests/Unit/Boundary/public-routes.txt`, 219 today, so a route cannot become public, or stop being public, without that list changing in the same review), `::testTheMarkerDecidesWhatIsPublic`. Broken on purpose locally: marking `UnpublishedOverviewController::unpublished()` `#[PublicPage]` makes `::testEveryNonPublicRouteRefusesAnonymous` fail naming `GET /api/dashboard/unpublished`.
+- [x] 2.3 Add `tests/e2e/public-boundary.spec.ts` running the same anonymously over HTTP (REQ-WAB-002). Verify: the spec in CI.
   - Written 17 Nov: reads `appinfo/routes.php` and the controllers' `#[PublicPage]` / `@PublicPage` markers on every run (237 routes, 107 public), calls every public GET and the public POST search with each fixture id (and each catalog slug for `{catalogSlug}`) without credentials, and fails on a fixture id in a 2xx body or a fixture title or file name in any body; every non-public route must answer 401, 403 or the login redirect. Left unchecked until it has run in CI.
+  - 24 Nov: ticked as written, runs in CI and the nightly (UNBLOCK rule 3); not verified on a live instance.
 
 ## 3. Search indexes
 
@@ -31,8 +34,9 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 5. Docs
 
-- [ ] 5.1 Document the rights, the read log and the indexing switch for administrators in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+- [x] 5.1 Document the rights, the read log and the indexing switch for administrators in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
   - 17 Nov: the rights table's 16 strings are in `l10n/en.json` and `nl.json`, the `.js` catalogues rebuilt with `npm run l10n:build`; `check:l10n` reports the same 4 issues as development (none from this change), `check:l10n-js` is clean, no U+2014 in the new files. Left unchecked: strings for the boundary-suite and read-log screens follow when those screens exist.
+  - 24 Nov: `docs/Administrator/woo-rechten-en-leeslog.md` documents the rights per group, the read log and the search-engine switch for administrators (no U+2014); the strings of the only screen this change adds (the rights table) are in the catalogues. The boundary suite and the read log have no screen, so no further strings.
 
 ## 6. Verification
 
