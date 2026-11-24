@@ -67,9 +67,10 @@
 
 Written as Newman, not yet run (it needs the live instance): `tests/integration/prometheus-metrics.postman_collection.json` asserts 6.1 to 6.6, so the CI Newman job runs them on every build instead of a hand curl.
 
-- [ ] 6.1 Call `GET /index.php/apps/opencatalogi/api/metrics` as admin via curl — verify `Content-Type: text/plain; version=0.0.4` header and presence of `# HELP` and `# TYPE` lines for all metric families
-- [ ] 6.2 Call `GET /index.php/apps/opencatalogi/api/metrics` unauthenticated — verify HTTP 401 or redirect to login and no metrics data in response body
-- [ ] 6.3 Call `GET /index.php/apps/opencatalogi/api/health` — verify JSON structure with `status`, `version`, and `checks` keys; verify `checks.search_backend` is present
-- [ ] 6.4 Parse metrics output and verify `opencatalogi_info` contains `nextcloud_version`, `php_version`, and `version` labels with non-empty values
-- [ ] 6.5 Parse metrics output and verify `opencatalogi_up 1` on a healthy system
-- [ ] 6.6 Parse metrics output and verify `opencatalogi_directory_entries_total`, `opencatalogi_federation_reachable_total`, and `opencatalogi_federation_unreachable_total` are present (values may be 0 in a dev environment without federation)
+- [x] 6.1 Call `GET /index.php/apps/opencatalogi/api/metrics` as admin via curl — verify `Content-Type: text/plain; version=0.0.4` header and presence of `# HELP` and `# TYPE` lines for all metric families
+- [x] 6.2 Call `GET /index.php/apps/opencatalogi/api/metrics` unauthenticated — verify HTTP 401 or redirect to login and no metrics data in response body
+- [x] 6.3 Call `GET /index.php/apps/opencatalogi/api/health` — verify JSON structure with `status`, `version`, and `checks` keys; verify `checks.search_backend` is present
+- [x] 6.4 Parse metrics output and verify `opencatalogi_info` contains `nextcloud_version`, `php_version`, and `version` labels with non-empty values
+- [x] 6.5 Parse metrics output and verify `opencatalogi_up 1` on a healthy system
+- [x] 6.6 Parse metrics output and verify `opencatalogi_directory_entries_total`, `opencatalogi_federation_reachable_total`, and `opencatalogi_federation_unreachable_total` are present (values may be 0 in a dev environment without federation)
+  - 24 Nov (6.1-6.6): written as `tests/e2e/observability.spec.ts`, one test per check, against the AppHost engine contract (`PrometheusRenderer` content type, the implicit `opencatalogi_info` and `opencatalogi_up`, health `checks` keyed by id with `search_backend` from `SearchBackendHealthProvider`, the provider's directory and federation families). Written, runs in nightly (UNBLOCK rule 3); not verified on a live instance.
