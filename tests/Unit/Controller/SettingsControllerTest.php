@@ -202,7 +202,10 @@ class SettingsControllerTest extends TestCase {
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(500, $response->getStatus());
-		$this->assertSame(expected: ['error' => 'The server could not complete this request. The details are in the Nextcloud log.'], actual: $response->getData());
+		$this->assertSame(
+			expected: ['error' => 'The server could not complete this request. The details are in the Nextcloud log.'],
+			actual: $response->getData()
+		);
 	}
 
 	/**

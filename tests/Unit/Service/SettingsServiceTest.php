@@ -1072,16 +1072,16 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 			->method('error')
 			->with(
 				'OpenCatalogi settings: importing the configuration failed',
-				$this->callback(static fn (array $context): bool => $context['exception'] instanceof \Exception)
+				$this->callback(callback: static fn (array $context): bool => $context['exception'] instanceof \Exception)
 			);
 
 		$result = $this->service->manualImport(true);
 
-		// loadSettings will throw, caught by manualImport: logged, and the
+		// The loadSettings() call throws and manualImport() catches it: logged, and the
 		// caller gets a generic failure without the exception's text.
 		$this->assertFalse($result['success']);
-		$this->assertSame('Import failed. The details are in the Nextcloud log.', $result['error']);
-		$this->assertStringNotContainsString('App path not found', json_encode($result));
+		$this->assertSame(expected: 'Import failed. The details are in the Nextcloud log.', actual: $result['error']);
+		$this->assertStringNotContainsString(needle: 'App path not found', haystack: json_encode($result));
 
 	}//end testManualImportForced()
 

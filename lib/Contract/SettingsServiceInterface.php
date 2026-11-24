@@ -358,6 +358,8 @@ interface SettingsServiceInterface {
 	 * @return void
 	 *
 	 * @spec openspec/changes/admin-settings/specs/admin-settings.md#security
+	 *
+	 * @contract-shift internal-only — only SettingsService in this app implements this interface; no other app binds or doubles it.
 	 */
 	public function recordFailure(string $context, \Exception $exception): void;
 }//end interface
