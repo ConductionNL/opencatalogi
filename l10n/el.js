@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Το αντίγραφο του εγγράφου που φυλάσσεται με αυτή την έκδοση.",
         "The earlier public version could not be kept, so the change was not saved.": "Η προηγούμενη δημόσια έκδοση δεν μπόρεσε να διατηρηθεί, οπότε η αλλαγή δεν αποθηκεύτηκε.",
         "This version does not exist or is not public.": "Αυτή η έκδοση δεν υπάρχει ή δεν είναι δημόσια.",
-        "The earlier versions cannot be shown right now.": "Οι προηγούμενες εκδόσεις δεν μπορούν να εμφανιστούν αυτή τη στιγμή."
+        "The earlier versions cannot be shown right now.": "Οι προηγούμενες εκδόσεις δεν μπορούν να εμφανιστούν αυτή τη στιγμή.",
+        "Delete permanently": "Οριστική διαγραφή",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Οριστική διαγραφή του «{name}»; Η ενέργεια δεν μπορεί να αναιρεθεί.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Τα αρχεία της, οι αναφορές σε έγγραφα και οι εγγραφές που παραπέμπουν σε αυτήν διαγράφονται μαζί της. Δεν μπορεί να επαναφερθεί.",
+        "The publication was deleted permanently.": "Η δημοσίευση διαγράφηκε οριστικά."
     },
     "nplurals=2; plural=(n != 1);"
 )

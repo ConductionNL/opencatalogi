@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Kopja e dokumentit që ruhet me këtë version.",
         "The earlier public version could not be kept, so the change was not saved.": "Versioni i mëparshëm publik nuk mund të ruhej, prandaj ndryshimi nuk u ruajt.",
         "This version does not exist or is not public.": "Ky version nuk ekziston ose nuk është publik.",
-        "The earlier versions cannot be shown right now.": "Versionet e mëparshme nuk mund të shfaqen tani."
+        "The earlier versions cannot be shown right now.": "Versionet e mëparshme nuk mund të shfaqen tani.",
+        "Delete permanently": "Fshije përgjithmonë",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Të fshihet përgjithmonë \"{name}\"? Ky veprim nuk mund të zhbëhet.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Skedarët e saj, referencat e dokumenteve dhe të dhënat që tregojnë drejt saj fshihen bashkë me të. Nuk mund të rikthehet.",
+        "The publication was deleted permanently.": "Publikimi u fshi përgjithmonë."
     },
     "nplurals=2; plural=(n != 1);"
 )

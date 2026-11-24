@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Копијата на документот што се чува со оваа верзија.",
         "The earlier public version could not be kept, so the change was not saved.": "Претходната јавна верзија не можеше да се зачува, па промената не е зачувана.",
         "This version does not exist or is not public.": "Оваа верзија не постои или не е јавна.",
-        "The earlier versions cannot be shown right now.": "Претходните верзии моментално не можат да се прикажат."
+        "The earlier versions cannot be shown right now.": "Претходните верзии моментално не можат да се прикажат.",
+        "Delete permanently": "Трајно избриши",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Трајно да се избрише „{name}“? Ова не може да се врати.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Нејзините датотеки, референците кон документи и записите што упатуваат на неа се бришат заедно со неа. Не може да се врати.",
+        "The publication was deleted permanently.": "Публикацијата е трајно избришана."
     },
     "nplurals=2; plural=(n != 1);"
 )

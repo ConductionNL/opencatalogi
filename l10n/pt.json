@@ -828,7 +828,11 @@
         "The copy of the document kept on this version.": "A cópia do documento guardada com esta versão.",
         "The earlier public version could not be kept, so the change was not saved.": "Não foi possível manter a versão pública anterior, por isso a alteração não foi guardada.",
         "This version does not exist or is not public.": "Esta versão não existe ou não é pública.",
-        "The earlier versions cannot be shown right now.": "As versões anteriores não podem ser mostradas neste momento."
+        "The earlier versions cannot be shown right now.": "As versões anteriores não podem ser mostradas neste momento.",
+        "Delete permanently": "Eliminar definitivamente",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Eliminar definitivamente \"{name}\"? Esta ação não pode ser desfeita.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Os seus ficheiros, as referências a documentos e os registos que apontam para ela são eliminados com ela. Não pode ser restaurada.",
+        "The publication was deleted permanently.": "A publicação foi eliminada definitivamente."
     },
     "plurals": {}
 }

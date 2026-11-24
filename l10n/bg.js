@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Копието на документа, пазено с тази версия.",
         "The earlier public version could not be kept, so the change was not saved.": "Предишната публична версия не можа да бъде запазена, затова промяната не е записана.",
         "This version does not exist or is not public.": "Тази версия не съществува или не е публична.",
-        "The earlier versions cannot be shown right now.": "Предишните версии не могат да бъдат показани в момента."
+        "The earlier versions cannot be shown right now.": "Предишните версии не могат да бъдат показани в момента.",
+        "Delete permanently": "Изтриване завинаги",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Да се изтрие ли завинаги „{name}“? Това действие не може да бъде отменено.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Файловете ѝ, препратките към документи и записите, които сочат към нея, се изтриват заедно с нея. Тя не може да бъде възстановена.",
+        "The publication was deleted permanently.": "Публикацията е изтрита завинаги."
     },
     "nplurals=2; plural=(n != 1);"
 )

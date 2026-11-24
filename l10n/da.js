@@ -829,7 +829,11 @@ OC.L10N.register(
         "The copy of the document kept on this version.": "Kopien af dokumentet, der gemmes med denne version.",
         "The earlier public version could not be kept, so the change was not saved.": "Den tidligere offentlige version kunne ikke bevares, så ændringen blev ikke gemt.",
         "This version does not exist or is not public.": "Denne version findes ikke eller er ikke offentlig.",
-        "The earlier versions cannot be shown right now.": "De tidligere versioner kan ikke vises lige nu."
+        "The earlier versions cannot be shown right now.": "De tidligere versioner kan ikke vises lige nu.",
+        "Delete permanently": "Slet permanent",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Slet \"{name}\" permanent? Dette kan ikke fortrydes.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Dens filer, dokumenthenvisninger og de poster, der peger på den, slettes med. Den kan ikke gendannes.",
+        "The publication was deleted permanently.": "Publikationen er slettet permanent."
     },
     "nplurals=2; plural=(n != 1);"
 )

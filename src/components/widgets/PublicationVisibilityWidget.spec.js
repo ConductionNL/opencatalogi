@@ -132,7 +132,7 @@ describe('PublicationVisibilityWidget states', () => {
 	for (const [state, [label, shown]] of Object.entries(CASES)) {
 		it(`labels "${state}" and shows only its buttons`, async () => {
 			answerReads({
-				visibility: Promise.resolve({ data: { state } }),
+				visibility: Promise.resolve({ data: { state, canPublish: true } }),
 				files: Promise.resolve({ data: [] }),
 			})
 			const wrapper = await mountWidget()

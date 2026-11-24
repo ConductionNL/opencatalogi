@@ -75,6 +75,14 @@
 				@click="openWithdraw">
 				{{ t('opencatalogi', 'Withdraw') }}
 			</NcButton>
+			<NcButton
+				v-if="deletable"
+				variant="error"
+				:disabled="busy"
+				data-testid="publication-delete-permanently"
+				@click="openPurge">
+				{{ t('opencatalogi', 'Delete permanently') }}
+			</NcButton>
 		</div>
 
 		<section
@@ -129,6 +137,12 @@
 			:document="republishing"
 			@close="republishing = null"
 			@confirm="republish" />
+		<DeleteDraftPermanentlyDialog
+			:open="purgeOpen"
+			:busy="busy"
+			:title="publicationTitle"
+			@close="purgeOpen = false"
+			@confirm="purge" />
 	</div>
 </template>
 
@@ -136,10 +150,13 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
+import DeleteDraftPermanentlyDialog from '../../dialogs/publication/DeleteDraftPermanentlyDialog.vue'
 import RepublishDocumentDialog from '../../dialogs/publication/RepublishDocumentDialog.vue'
 import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublicationDialog.vue'
 import {
+	canDeletePermanently,
 	documentOptions,
+	draftPurgeMessage,
 	filesRouteParams,
 	listActions,
 	publishRefusalMessage,
@@ -206,7 +223,7 @@ function withdrawBody(answer) {
  */
 export default {
 	name: 'PublicationVisibilityWidget',
-	components: { NcButton, NcNoteCard, RepublishDocumentDialog, WithdrawPublicationDialog },
+	components: { DeleteDraftPermanentlyDialog, NcButton, NcNoteCard, RepublishDocumentDialog, WithdrawPublicationDialog },
 	inject: {
 		cnObjectContext: { default: null },
 		cnDetailObjectContext: { default: null },
@@ -233,6 +250,7 @@ export default {
 			republishing: null,
 			busy: false,
 			dialogOpen: false,
+			purgeOpen: false,
 			message: '',
 			messageType: 'success',
 		}
@@ -247,6 +265,22 @@ export default {
 		/** @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-public-publication-can-be-unlisted-and-put-back-req-plc-006 */
 		lists() {
 			return listActions(this.state, this.unlisted, this.canUpdate)
+		},
+
+		/** @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2 */
+		deletable() {
+			return canDeletePermanently(this.state, this.canUpdate)
+		},
+
+		/**
+		 * The publication's title, as the delete question names it.
+		 *
+		 * @return {string} The title, or an empty string when the page has none.
+		 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+		 */
+		publicationTitle() {
+			const object = this.ctx.object || this.content || {}
+			return String(object.title || object.name || '')
 		},
 
 		/** @spec exclude presentational widget adapter; resolves the object context from inject. */
@@ -469,6 +503,50 @@ export default {
 				this.message = this.t('opencatalogi', 'The list status could not be changed.')
 			} finally {
 				this.busy = false
+			}
+		},
+
+		/** @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2 */
+		openPurge() {
+			this.message = ''
+			this.purgeOpen = true
+		},
+
+		/**
+		 * Delete the draft permanently with everything on it, then leave the
+		 * page for the catalog's list, since the publication is gone. A refusal
+		 * or a stop part way is said in the server's words.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+		 */
+		async purge() {
+			this.busy = true
+			try {
+				await axios.delete(this.url('draft'))
+				this.purgeOpen = false
+				this.state = ''
+				this.messageType = 'success'
+				this.message = this.t('opencatalogi', 'The publication was deleted permanently.')
+				this.leaveDeletedPage()
+			} catch (error) {
+				this.purgeOpen = false
+				this.messageType = 'error'
+				this.message = draftPurgeMessage(error) || this.t('opencatalogi', 'That did not work. Try again.')
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * Go to the catalog's publications list when the page knows its catalog.
+		 *
+		 * @spec openspec/changes/publication-lifecycle-on-or-draft-purge/tasks.md#task-1.2
+		 */
+		leaveDeletedPage() {
+			const catalogSlug = this.$route && this.$route.params ? this.$route.params.catalogSlug : ''
+			if (this.$router && catalogSlug) {
+				this.$router.push({ name: 'Publications', params: { catalogSlug } }).catch(() => {})
 			}
 		},
 

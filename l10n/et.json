@@ -828,7 +828,11 @@
         "The copy of the document kept on this version.": "Dokumendi koopia, mida selle versiooniga hoitakse.",
         "The earlier public version could not be kept, so the change was not saved.": "Varasemat avalikku versiooni ei õnnestunud säilitada, seega muudatust ei salvestatud.",
         "This version does not exist or is not public.": "Seda versiooni ei ole olemas või see ei ole avalik.",
-        "The earlier versions cannot be shown right now.": "Varasemaid versioone ei saa praegu näidata."
+        "The earlier versions cannot be shown right now.": "Varasemaid versioone ei saa praegu näidata.",
+        "Delete permanently": "Kustuta jäädavalt",
+        "Delete \"{name}\" permanently? This cannot be undone.": "Kas kustutada „{name}” jäädavalt? Seda ei saa tagasi võtta.",
+        "Its files, its document references and the records that point at it go with it. It cannot be restored.": "Selle failid, dokumendiviited ja sellele viitavad kirjed kustutatakse koos sellega. Seda ei saa taastada.",
+        "The publication was deleted permanently.": "Väljaanne on jäädavalt kustutatud."
     },
     "plurals": {}
 }
