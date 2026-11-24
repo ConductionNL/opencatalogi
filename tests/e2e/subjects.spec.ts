@@ -14,9 +14,9 @@
  *   public publications filed under the subject, newest publication date
  *   first, and not the draft.
  *
- * NOT HERE YET. The Featured toggle on the theme form and the publication
- * list on the officer's theme page (task 4.1) are not built; their clicks join
- * this spec when they are.
+ * ON THE OFFICER'S THEME PAGE (task 4.1): the Theme card shows Featured and,
+ * once it is on, Featured order; the "Publications with this theme" list shows
+ * all four publications, the draft included.
  *
  * WHAT IT CREATES AND REMOVES. Two subjects and four publications, deleted in
  * afterAll.
@@ -24,13 +24,15 @@
  * @e2e openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#scenario-an-administrator-features-a-subject REQ-SUB-001
  * @e2e openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#scenario-a-subject-lists-what-is-filed-under-it REQ-SUB-003
  * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md
+ * @spec openspec/changes/subjects-as-first-class-records/tasks.md#task-4.1
  */
 
 import type { APIRequestContext } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
 
-const APP_API = '/index.php/apps/opencatalogi/api'
+const APP_BASE = '/index.php/apps/opencatalogi'
+const APP_API = `${APP_BASE}/api`
 const OBJECTS = '/index.php/apps/openregister/api/objects/publication'
 const RUN = Date.now().toString(36)
 
@@ -73,7 +75,7 @@ test.describe('Subjects', () => {
 		}
 	})
 
-	test('an administrator features a subject', async ({ request, playwright, baseURL }) => {
+	test('an administrator features a subject', async ({ request, playwright, baseURL, page }) => {
 		const second = await create(request, 'theme', { title: `E2E Zwembad ${RUN}`, slug: `e2e-zwembad-${RUN}`, description: 'Tweede.' })
 		const first = await create(request, 'theme', { title: `E2E Parkeren ${RUN}`, slug: `e2e-parkeren-${RUN}`, description: 'Eerste.' })
 
@@ -93,9 +95,14 @@ test.describe('Subjects', () => {
 		} finally {
 			await anonymous.dispose()
 		}
+
+		// The theme page offers the toggle and, with it on, the order.
+		await page.goto(`${APP_BASE}/themes/${first}`)
+		await expect(page.getByText('Featured', { exact: true }).first()).toBeVisible()
+		await expect(page.getByText('Featured order', { exact: true }).first()).toBeVisible()
 	})
 
-	test('a subject lists what is filed under it', async ({ request, playwright, baseURL }) => {
+	test('a subject lists what is filed under it', async ({ request, playwright, baseURL, page }) => {
 		const slug = `e2e-sporthal-${RUN}`
 		const subject = await create(request, 'theme', { title: `E2E Sporthal ${RUN}`, slug })
 
@@ -125,6 +132,13 @@ test.describe('Subjects', () => {
 			expect(ids).not.toContain(draft)
 		} finally {
 			await anonymous.dispose()
+		}
+
+		// The officer's theme page lists all four, the draft included.
+		await page.goto(`${APP_BASE}/themes/${subject}`)
+		await expect(page.getByText(`E2E Sporthal concept ${RUN}`)).toBeVisible()
+		for (const index of dates.keys()) {
+			await expect(page.getByText(`E2E Sporthal besluit ${index + 1} ${RUN}`)).toBeVisible()
 		}
 	})
 })
