@@ -184,8 +184,11 @@ class PublisherFileStamp {
 		foreach ($labels as $label) {
 			if (str_starts_with($label, $prefix) === true) {
 				$value = substr($label, strlen($prefix));
+				if ($value === '') {
+					return null;
+				}
 
-				return $value === '' ? null : $value;
+				return $value;
 			}
 		}
 
