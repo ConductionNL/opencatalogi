@@ -10073,7 +10073,8 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "options": "object:OCA\\OpenRegister\\Kernel\\Contracts\\Value\\ObjectFindOptions"
+                    "register": "cfg-publication_register",
+                    "schema": "cfg-publication_schema"
                 }
             }
         ]
@@ -10179,7 +10180,8 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "options": "object:OCA\\OpenRegister\\Kernel\\Contracts\\Value\\ObjectFindOptions"
+                    "register": "res-reg",
+                    "schema": "res-sch"
                 }
             }
         ]
@@ -10567,7 +10569,8 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "options": "object:OCA\\OpenRegister\\Kernel\\Contracts\\Value\\ObjectFindOptions"
+                    "register": "cfg-publication_register",
+                    "schema": "cfg-publication_schema"
                 }
             }
         ]
@@ -10673,7 +10676,8 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "options": "object:OCA\\OpenRegister\\Kernel\\Contracts\\Value\\ObjectFindOptions"
+                    "register": "res-reg",
+                    "schema": "res-sch"
                 }
             }
         ]
@@ -14235,7 +14239,8 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "options": "object:OCA\\OpenRegister\\Kernel\\Contracts\\Value\\ObjectFindOptions",
+                    "register": "res-reg",
+                    "schema": "res-sch",
                     "_multitenancy": false
                 }
             },
@@ -14305,7 +14310,8 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "options": "object:OCA\\OpenRegister\\Kernel\\Contracts\\Value\\ObjectFindOptions",
+                    "register": "cfg-theme_register",
+                    "schema": "cfg-theme_schema",
                     "_multitenancy": false
                 }
             },
@@ -14434,7 +14440,8 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "options": "object:OCA\\OpenRegister\\Kernel\\Contracts\\Value\\ObjectFindOptions",
+                    "register": "res-reg",
+                    "schema": "res-sch",
                     "_multitenancy": false
                 }
             },

@@ -42,6 +42,7 @@ use OCA\OpenCatalogi\Controller\PublicationStateController;
 use OCA\OpenCatalogi\Controller\ServiceCatalogueController;
 use OCA\OpenCatalogi\Controller\ThemesController;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Response;
@@ -571,8 +572,15 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			}
 
 			$double->method($name)->willReturnCallback(
-				function (mixed ...$args) use ($double, $method, $label, $depth, $searches, $name): mixed {
-					$this->log[] = [$label . '.' . $name => $this->arguments(method: $method, args: $args)];
+				function (mixed ...$args) use ($double, $method, $label, $depth, $searches, $name, $type): mixed {
+					$parameters = $method->getParameters();
+					if ($this->carriesOptionObject(args: $args) === true) {
+						// OpenRegister main's option objects, read back in the release's form the recording keeps.
+						$parameters = LegacyObjectArgs::parameters(class: $type, method: $name);
+						$args       = LegacyObjectArgs::positional(method: $name, args: $args);
+					}
+
+					$this->log[] = [$label . '.' . $name => $this->arguments(parameters: $parameters, args: $args)];
 					if ($searches === true && in_array($name, ['searchObjectsPaginated', 'searchObjects', 'findAll'], true) === true) {
 						return $this->searchAnswer(paginated: $name === 'searchObjectsPaginated');
 					}
@@ -641,16 +649,36 @@ class RegisterPlumbingGoldenTest extends TestCase {
 	}//end searchAnswer()
 
 	/**
+	 * Whether OpenRegister main's option objects are among the arguments.
+	 *
+	 * @param array<int, mixed> $args The arguments as PHPUnit passes them.
+	 *
+	 * @return bool
+	 */
+	private function carriesOptionObject(array $args): bool {
+		foreach ($args as $arg) {
+			if (is_object($arg) === true && str_starts_with(get_class($arg), 'OCA\\OpenRegister\\Kernel\\Contracts\\Value\\') === true) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end carriesOptionObject()
+
+	/**
 	 * The passed arguments by parameter name, defaults left out, so a parameter OpenRegister adds moves nothing.
 	 *
-	 * @param ReflectionMethod $method The method.
+	 * A default object (OpenRegister main's `SearchOptions`, say) counts as the
+	 * default when it carries the same values, since each call builds its own.
+	 *
+	 * @param array<int, \ReflectionParameter> $parameters The method's parameters.
 	 * @param array<int, mixed> $args The arguments as PHPUnit passes them.
 	 *
 	 * @return array<string, mixed> The arguments.
 	 */
-	private function arguments(ReflectionMethod $method, array $args): array {
+	private function arguments(array $parameters, array $args): array {
 		$named = [];
-		foreach ($method->getParameters() as $index => $parameter) {
+		foreach ($parameters as $index => $parameter) {
 			if (array_key_exists($index, $args) === false) {
 				break;
 			}
@@ -658,13 +686,14 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			$named[$parameter->getName()] = $args[$index];
 		}
 
-		foreach (array_reverse($method->getParameters()) as $parameter) {
+		foreach (array_reverse($parameters) as $parameter) {
 			$key = $parameter->getName();
-			if (array_key_exists($key, $named) === false) {
+			if (array_key_exists($key, $named) === false || $parameter->isDefaultValueAvailable() === false) {
 				continue;
 			}
 
-			if ($parameter->isDefaultValueAvailable() === true && $named[$key] === $parameter->getDefaultValue()) {
+			$default = $parameter->getDefaultValue();
+			if ($named[$key] === $default || (is_object($default) === true && $named[$key] == $default)) {
 				unset($named[$key]);
 			}
 		}
