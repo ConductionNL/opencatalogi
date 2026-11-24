@@ -24,7 +24,7 @@ Two things need a person, not an agent: settling the Woo refusal grounds against
 | [opencatalogi/officer-flow-accessibility](https://github.com/ConductionNL/opencatalogi/issues/1760) | 15.1, 15.5, 15.6 | nothing |
 | [opencatalogi/publication-detail-for-the-portal](https://github.com/ConductionNL/opencatalogi/issues/1761) | 6.25; supports 6.15, 6.16, 6.19, 6.36, 7.20 | nothing |
 | [opencatalogi/publication-lifecycle-on-or](https://github.com/ConductionNL/opencatalogi/issues/1754) | 5.9, 5.16, 5.17, 9.21 (5.14 moved to publication-lifecycle-on-or-draft-purge) | nothing |
-| [opencatalogi/publication-plain-language-and-translation](https://github.com/ConductionNL/opencatalogi/issues/1762) | 15.4; 14.7 gated on D10 | nothing |
+| [opencatalogi/publication-plain-language-and-translation](https://github.com/ConductionNL/opencatalogi/issues/1762) | 15.4 (14.7 delivered by publication-translations, D10) | nothing |
 | [opencatalogi/publication-tells-its-source](https://github.com/ConductionNL/opencatalogi/issues/1755) | 1.17, 1.20 | nothing |
 | [opencatalogi/published-file-carries-its-facts](https://github.com/ConductionNL/opencatalogi/issues/1763) | 2.20, 4.29 | nothing |
 | [opencatalogi/subjects-as-first-class-records](https://github.com/ConductionNL/opencatalogi/issues/1764) | 16.9; 6.28 (OpenCatalogi half) | nothing |
