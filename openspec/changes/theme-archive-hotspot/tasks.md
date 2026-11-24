@@ -33,9 +33,13 @@ Read `openspec/woo-build-rules.md` first. Start once `openregister/appraisal-inh
 
 ## 5. Verification
 
-- [ ] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
-- [ ] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran. gate-19 wants the `@e2e` references of 1.4 and 3.2.
-- [ ] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
+  - Run 24 Nov on development `f0b5ff84a` with `TMPDIR=/home/user/oc-tmp`: `Tests: 7220, Assertions: 30264, Errors: 4, Failures: 12`. None of them is a hotspot, theme or retention test; they come from other changes (`CatalogAccessEnforcementTest`, `RegisterPlumbingGoldenTest`, `AutoPublishEventsGoldenTest`, `SettingsWriteGoldenTest`, `DcatCatalogDocumentTest`, `FileServiceTest`, `PubliccodeHarvestServiceTest`, `PubliccodeMappingTest`).
+- [x] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran. gate-19 wants the `@e2e` references of 1.4 and 3.2.
+  - Run 24 Nov: 101 gates ran, 11 failed, none on a file of this change (the list is in `publication-withdrawal-aftercare` 5.2). gate-19 lists no scenario of this change: both `@e2e` references are in `tests/e2e/theme-archive-hotspot.spec.ts`.
+- [x] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+  - Run 24 Nov: no `check:strict` or lint finding from this change. psalm on `RetentionService`, `RetentionHotspotHold` and the three `ThemeHotspot*` listeners: no errors. The two inherited findings near it predate this change: phpmd `BooleanArgumentFlag` on `RetentionServiceInterface::evaluate()` (13 Nov) and psalm `UnusedReturnValue` on a private `RetentionService` method (30 Oct). `check:l10n` clean, `check:l10n-js` up to date, `check:manifest` PASS.
+- [x] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - Built in several PRs rather than one (#2872, #2873, #2874, #2875, #2881, #2971), each on `development`, squash-merged; none carries `Co-Authored-By`.
 
 Done when merged on `development` with CI green. Row 11.14 becomes `production` only once store releases ship this and the OpenRegister change.
