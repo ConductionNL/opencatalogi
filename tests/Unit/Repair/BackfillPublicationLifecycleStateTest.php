@@ -35,6 +35,7 @@ use Psr\Log\LoggerInterface;
 
 /**
  * @covers \OCA\OpenCatalogi\Repair\BackfillPublicationLifecycleState
+ * @uses \OCA\OpenCatalogi\Service\Publication\RequiredToPublish
  */
 class BackfillPublicationLifecycleStateTest extends TestCase {
 
