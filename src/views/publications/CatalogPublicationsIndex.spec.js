@@ -658,6 +658,35 @@ describe('CatalogPublicationsIndex', () => {
 
 			expect(indexPage(wrapper).vm.$attrs.bulkActions).toEqual([])
 		})
+
+		it('keeps an action\'s menu flag when it binds the handler', async () => {
+			objectStore.menuCatalogs = [catalog('woo', [19], [173])]
+			const { wrapper } = mountPage({
+				publicationPairConfig: {
+					bulkActions: [{ ...bulkActions[0], menu: true }],
+				},
+				handlers: { openSelectionDialog: jest.fn() },
+			})
+			await flushPromises()
+
+			const [lock] = indexPage(wrapper).vm.$attrs.bulkActions
+			expect(typeof lock.handler).toBe('function')
+			expect(lock.menu).toBe(true)
+		})
+
+		it('puts Lock, Unlock, Validate, Merge and Migrate under More in the manifest', () => {
+			const manifest = require('../../manifest.json')
+			const config = manifest.pages.find((p) => p.id === 'Publications').config
+			const underMore = config.publicationPairConfig.bulkActions
+				.filter((action) => action.menu === true)
+				.map((action) => action.id)
+			const asButtons = config.publicationPairConfig.bulkActions
+				.filter((action) => action.menu !== true)
+				.map((action) => action.id)
+
+			expect(underMore).toEqual(['lock', 'unlock', 'validate', 'merge', 'migrate'])
+			expect(asButtons).toEqual(['publish', 'depublish'])
+		})
 	})
 
 	describe('the single-delete dialog', () => {

@@ -603,6 +603,7 @@
 						{
 							"id": "lock",
 							"label": "Lock",
+							"menu": true,
 							"icon": "Lock",
 							"handler": "openSelectionDialog",
 							"props": {
@@ -612,6 +613,7 @@
 						{
 							"id": "unlock",
 							"label": "Unlock",
+							"menu": true,
 							"icon": "LockOpen",
 							"handler": "openSelectionDialog",
 							"props": {
@@ -621,6 +623,7 @@
 						{
 							"id": "validate",
 							"label": "Validate",
+							"menu": true,
 							"icon": "CheckDecagram",
 							"handler": "openSelectionDialog",
 							"props": {
@@ -630,12 +633,14 @@
 						{
 							"id": "merge",
 							"label": "Merge",
+							"menu": true,
 							"icon": "CallMerge",
 							"handler": "openPublicationMerge"
 						},
 						{
 							"id": "migrate",
 							"label": "Migrate",
+							"menu": true,
 							"icon": "DatabaseArrowRight",
 							"handler": "openPublicationMigration"
 						}
