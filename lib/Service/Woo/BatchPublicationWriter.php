@@ -371,6 +371,7 @@ class BatchPublicationWriter {
 	 * @return array<string, mixed>
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
+	 * @spec openspec/changes/publication-required-at-publish/tasks.md#task-1.1
 	 */
 	public function payload(array $batch, string $now): array {
 		$caseReference = (string)($batch['caseReference'] ?? '');
@@ -381,6 +382,8 @@ class BatchPublicationWriter {
 
 		$payload = [
 			'title' => $title,
+			'summary' => self::summaryOf(batch: $batch, title: $title),
+			'description' => self::descriptionOf(batch: $batch, title: $title, caseReference: $caseReference),
 			'wooCategory' => $this->category(batch: $batch),
 			'publicationKind' => 'actief',
 			'status' => 'approved',
@@ -389,8 +392,82 @@ class BatchPublicationWriter {
 			$payload['caseReference'] = $caseReference;
 		}
 
+		$organisation = self::organisationOf(batch: $batch);
+		if ($organisation !== '') {
+			$payload['organization'] = $organisation;
+		}
+
 		return $payload;
 	}//end payload()
+
+	/**
+	 * The summary the publication gets: the batch's own, else its title, cut to the schema's 255 characters.
+	 *
+	 * The publication schema requires a summary from `in_review` on (REQ-PRP-001), and a batch publication is
+	 * created `approved`, so it always carries one.
+	 *
+	 * @param array<string, mixed> $batch The batch.
+	 * @param string $title The publication's title.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/tasks.md#task-1.1
+	 */
+	private static function summaryOf(array $batch, string $title): string {
+		$summary = trim((string)($batch['summary'] ?? ''));
+		if ($summary === '') {
+			$summary = $title;
+		}
+
+		return mb_substr($summary, 0, 255);
+	}//end summaryOf()
+
+	/**
+	 * The description the publication gets: the batch's own, else one naming the decision and its case.
+	 *
+	 * Written in Dutch like the title fallback above: it is the public record's text, not the officer's interface.
+	 *
+	 * @param array<string, mixed> $batch The batch.
+	 * @param string $title The publication's title.
+	 * @param string $caseReference The batch's case reference, empty when it has none.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/tasks.md#task-1.1
+	 */
+	private static function descriptionOf(array $batch, string $title, string $caseReference): string {
+		$description = trim((string)($batch['description'] ?? ''));
+		if ($description !== '') {
+			return mb_substr($description, 0, 2555);
+		}
+
+		$description = 'Besluit en openbaar gemaakte documenten: ' . rtrim($title, '.') . '.';
+		if ($caseReference !== '') {
+			$description .= ' Zaak ' . $caseReference . '.';
+		}
+
+		return mb_substr($description, 0, 2555);
+	}//end descriptionOf()
+
+	/**
+	 * The organisation the publication names: the batch's own property, else the organisation OpenRegister
+	 * recorded on the batch. Empty when neither is known, so OpenRegister's refusal names the missing field.
+	 *
+	 * @param array<string, mixed> $batch The batch.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/tasks.md#task-1.1
+	 */
+	private static function organisationOf(array $batch): string {
+		foreach ([($batch['organization'] ?? null), ($batch['@self']['organisation'] ?? null)] as $candidate) {
+			if (is_string($candidate) === true && trim($candidate) !== '') {
+				return trim($candidate);
+			}
+		}
+
+		return '';
+	}//end organisationOf()
 
 	/**
 	 * The batch's information category, else the Woo request category.

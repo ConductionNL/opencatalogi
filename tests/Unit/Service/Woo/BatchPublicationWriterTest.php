@@ -204,6 +204,62 @@ class BatchPublicationWriterTest extends TestCase {
 		$this->assertSame([['pub-1', 'approved', '2026-11-17T10:00:00+00:00', true]], $this->publishes);
 	}//end testABatchCreatesAnApprovedPublicationAndPublishesIt()
 
+	/**
+	 * REQ-PRP-001: a batch publication carries the summary, description and organisation its approved state requires.
+	 *
+	 * @return void
+	 */
+	public function testABatchPublicationPassesTheDeclaredRule(): void {
+		$payload = $this->writer()->payload(
+			batch: ['title' => 'Besluit parkeren.', 'caseReference' => 'Z-9', '@self' => ['organisation' => 'org-uuid']],
+			now: '2026-11-17T10:00:00+00:00'
+		);
+
+		$this->assertSame('approved', $payload['status']);
+		$this->assertSame('Besluit parkeren.', $payload['summary']);
+		$this->assertSame('Besluit en openbaar gemaakte documenten: Besluit parkeren. Zaak Z-9.', $payload['description']);
+		$this->assertSame('org-uuid', $payload['organization']);
+		foreach (['summary', 'description', 'organization'] as $field) {
+			$this->assertNotSame('', trim((string)$payload[$field]), $field);
+		}
+	}//end testABatchPublicationPassesTheDeclaredRule()
+
+	/**
+	 * The batch's own summary, description and organisation win; a long summary is cut to the schema's 255.
+	 *
+	 * @return void
+	 */
+	public function testTheBatchsOwnTextAndOrganisationWin(): void {
+		$payload = $this->writer()->payload(
+			batch: [
+				'title' => 'Besluit',
+				'summary' => str_repeat('a', 300),
+				'description' => ' Eigen beschrijving ',
+				'organization' => 'own-org',
+				'@self' => ['organisation' => 'tenant-org'],
+			],
+			now: '2026-11-17T10:00:00+00:00'
+		);
+
+		$this->assertSame(255, mb_strlen($payload['summary']));
+		$this->assertSame('Eigen beschrijving', $payload['description']);
+		$this->assertSame('own-org', $payload['organization']);
+	}//end testTheBatchsOwnTextAndOrganisationWin()
+
+	/**
+	 * Without a title, case reference or organisation the payload still has text, and names no organisation,
+	 * so OpenRegister's refusal names the missing field.
+	 *
+	 * @return void
+	 */
+	public function testWithoutAnOrganisationNoneIsInvented(): void {
+		$payload = $this->writer()->payload(batch: ['@self' => ['organisation' => '  ']], now: '2026-11-17T10:00:00+00:00');
+
+		$this->assertSame('Woo-publicatie', $payload['summary']);
+		$this->assertSame('Besluit en openbaar gemaakte documenten: Woo-publicatie.', $payload['description']);
+		$this->assertArrayNotHasKey('organization', $payload);
+	}//end testWithoutAnOrganisationNoneIsInvented()
+
 	private function writer(bool $withTitles = true): BatchPublicationWriter {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
