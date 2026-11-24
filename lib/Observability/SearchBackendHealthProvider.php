@@ -27,7 +27,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/prometheus-metrics/tasks.md#2
+ * @spec openspec/changes/archive/2026-11-24-prometheus-metrics/tasks.md#2
  */
 
 declare(strict_types=1);
@@ -43,7 +43,7 @@ use Throwable;
 /**
  * The `search_backend` check of the health response.
  *
- * @spec openspec/changes/prometheus-metrics/tasks.md#2
+ * @spec openspec/changes/archive/2026-11-24-prometheus-metrics/tasks.md#2
  */
 class SearchBackendHealthProvider implements IHealthCheckProvider {
 
@@ -89,7 +89,7 @@ class SearchBackendHealthProvider implements IHealthCheckProvider {
 	 *
 	 * @return string `elasticsearch` or `database`.
 	 *
-	 * @spec openspec/changes/prometheus-metrics/tasks.md#2
+	 * @spec openspec/changes/archive/2026-11-24-prometheus-metrics/tasks.md#2
 	 */
 	public function backendType(): string {
 		$type = trim($this->appConfig->getValueString('opencatalogi', 'search_backend', self::DATABASE));
@@ -106,7 +106,7 @@ class SearchBackendHealthProvider implements IHealthCheckProvider {
 	 *
 	 * @return array<string, array{ok: bool, severity: string, message?: string}>
 	 *
-	 * @spec openspec/changes/prometheus-metrics/tasks.md#2
+	 * @spec openspec/changes/archive/2026-11-24-prometheus-metrics/tasks.md#2
 	 */
 	public function check(): array {
 		if ($this->backendType() === self::DATABASE) {

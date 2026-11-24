@@ -15,7 +15,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/prometheus-metrics/tasks.md#3
+ * @spec openspec/changes/archive/2026-11-24-prometheus-metrics/tasks.md#3
  */
 
 declare(strict_types=1);

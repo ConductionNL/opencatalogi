@@ -446,7 +446,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	 *
 	 * @return array<int,MetricSample> The reachable and unreachable gauges.
 	 *
-	 * @spec openspec/changes/prometheus-metrics/specs/prometheus-metrics/spec.md
+	 * @spec openspec/changes/archive/2026-11-24-prometheus-metrics/specs/prometheus-metrics/spec.md
 	 */
 	private function federationSamples(array $listings): array {
 		$reachable = 0;

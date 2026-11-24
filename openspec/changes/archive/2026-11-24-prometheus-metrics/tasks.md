@@ -14,7 +14,7 @@
 - [x] 1.3 Add `opencatalogi_directory_entries_total` gauge: query total directory entry count via DirectoryService (or direct DB query against the directory entries table); emit 0 when table is absent or service unavailable
 - [x] 1.4 Add `opencatalogi_federation_reachable_total` and `opencatalogi_federation_unreachable_total` gauges: split directory entries by last reachability status (reachable vs error/timeout); emit 0 for both when no entries exist
 - [x] 1.5 Verify all new label values pass through the existing `sanitizeLabel()` method — confirm backslash doubling, quote escaping, and newline-to-`\n` replacement apply to any federation-sourced strings
-- [x] 1.6 Add `@spec openspec/changes/prometheus-metrics/tasks.md#1` PHPDoc tag to `MetricsController` class header and to each modified method per ADR-003
+- [x] 1.6 Add `@spec openspec/changes/archive/2026-11-24-prometheus-metrics/tasks.md#1` PHPDoc tag to `MetricsController` class header and to each modified method per ADR-003
 
 ## 2. HealthController Enhancements
 
@@ -28,8 +28,8 @@
   - DB OK + filesystem OK → HTTP 200, `status: "ok"`
 - [x] 2.4 Add 3-second timeout to each individual check (database SELECT 1, filesystem write, search backend ping) using try/catch with timeout guard; ensure overall response is within 5 seconds even when all checks are slow
   - N/A — superseded: `/api/metrics` and `/api/health` are served by OpenRegister's AppHost engine (`GenericMetrics#index` / `GenericHealth#index`, see the `observability` block of `src/manifest.json`); the hand-written MetricsController and HealthController this task names were deleted on adoption. Per-check execution and timeouts are the engine's; the search-backend ping has its own 3-second connect and request timeout.
-- [x] 2.5 Add `@spec openspec/changes/prometheus-metrics/tasks.md#2` PHPDoc tag to `HealthController` class header and modified methods per ADR-003
-  - Done on the class that now carries the behaviour: `SearchBackendHealthProvider` and its methods have `@spec openspec/changes/prometheus-metrics/tasks.md#2`.
+- [x] 2.5 Add `@spec openspec/changes/archive/2026-11-24-prometheus-metrics/tasks.md#2` PHPDoc tag to `HealthController` class header and modified methods per ADR-003
+  - Done on the class that now carries the behaviour: `SearchBackendHealthProvider` and its methods have `@spec openspec/changes/archive/2026-11-24-prometheus-metrics/tasks.md#2`.
 
 ## 3. Unit Tests (ADR-008)
 
@@ -57,7 +57,8 @@
   - Example health check JSON for each status tier (ok, degraded, error)
   - Full metrics catalogue table: metric name, type, labels, description
   - Grafana integration notes for Dutch municipality Prometheus scrape config
-- [ ] 4.2 If screenshots of the metrics output are available from a running instance, include them in `docs/features/` alongside the documentation
+- [x] 4.2 If screenshots of the metrics output are available from a running instance, include them in `docs/features/` alongside the documentation
+  - 24 Nov, closed without screenshots: the task asks for them only "if available from a running instance", and none is; the documentation describes the output in text, and `tests/e2e/observability.spec.ts` checks it on every nightly.
 
 ## 5. Internationalization (ADR-007)
 
@@ -67,9 +68,10 @@
 
 Written as Newman, not yet run (it needs the live instance): `tests/integration/prometheus-metrics.postman_collection.json` asserts 6.1 to 6.6, so the CI Newman job runs them on every build instead of a hand curl.
 
-- [ ] 6.1 Call `GET /index.php/apps/opencatalogi/api/metrics` as admin via curl — verify `Content-Type: text/plain; version=0.0.4` header and presence of `# HELP` and `# TYPE` lines for all metric families
-- [ ] 6.2 Call `GET /index.php/apps/opencatalogi/api/metrics` unauthenticated — verify HTTP 401 or redirect to login and no metrics data in response body
-- [ ] 6.3 Call `GET /index.php/apps/opencatalogi/api/health` — verify JSON structure with `status`, `version`, and `checks` keys; verify `checks.search_backend` is present
-- [ ] 6.4 Parse metrics output and verify `opencatalogi_info` contains `nextcloud_version`, `php_version`, and `version` labels with non-empty values
-- [ ] 6.5 Parse metrics output and verify `opencatalogi_up 1` on a healthy system
-- [ ] 6.6 Parse metrics output and verify `opencatalogi_directory_entries_total`, `opencatalogi_federation_reachable_total`, and `opencatalogi_federation_unreachable_total` are present (values may be 0 in a dev environment without federation)
+- [x] 6.1 Call `GET /index.php/apps/opencatalogi/api/metrics` as admin via curl — verify `Content-Type: text/plain; version=0.0.4` header and presence of `# HELP` and `# TYPE` lines for all metric families
+- [x] 6.2 Call `GET /index.php/apps/opencatalogi/api/metrics` unauthenticated — verify HTTP 401 or redirect to login and no metrics data in response body
+- [x] 6.3 Call `GET /index.php/apps/opencatalogi/api/health` — verify JSON structure with `status`, `version`, and `checks` keys; verify `checks.search_backend` is present
+- [x] 6.4 Parse metrics output and verify `opencatalogi_info` contains `nextcloud_version`, `php_version`, and `version` labels with non-empty values
+- [x] 6.5 Parse metrics output and verify `opencatalogi_up 1` on a healthy system
+- [x] 6.6 Parse metrics output and verify `opencatalogi_directory_entries_total`, `opencatalogi_federation_reachable_total`, and `opencatalogi_federation_unreachable_total` are present (values may be 0 in a dev environment without federation)
+  - 24 Nov (6.1-6.6): written as `tests/e2e/observability.spec.ts`, one test per check, against the AppHost engine contract (`PrometheusRenderer` content type, the implicit `opencatalogi_info` and `opencatalogi_up`, health `checks` keyed by id with `search_backend` from `SearchBackendHealthProvider`, the provider's directory and federation families). Written, runs in nightly (UNBLOCK rule 3); not verified on a live instance.
