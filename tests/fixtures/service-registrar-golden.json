@@ -91,6 +91,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\AgentPublishingInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\AgentPublishing"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\DocumentReferenceUrlPolicyInterface",
         "OCA\\OpenCatalogi\\Service\\DocumentReferenceUrlPolicy"
     ],

@@ -15,6 +15,7 @@ namespace Unit\Mcp;
 
 use OCA\OpenCatalogi\Mcp\McpArgumentValidator;
 use OCA\OpenCatalogi\Mcp\PublicationAgentTools;
+use OCA\OpenCatalogi\Contract\AgentPublishingInterface;
 use OCA\OpenRegister\Mcp\Attribute\McpTool;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -57,7 +58,7 @@ class PublicationAgentToolsTest extends TestCase {
 	 *
 	 * @return PublicationAgentTools The tools.
 	 */
-	private function tools(string $configured = 'publication'): PublicationAgentTools {
+	private function tools(string $configured = 'publication', ?AgentPublishingInterface $publishing = null): PublicationAgentTools {
 		$config = $this->createConfiguredStub(
 			originalClassName: IAppConfig::class,
 			configuration: ['getValueString' => $configured]
@@ -66,7 +67,8 @@ class PublicationAgentToolsTest extends TestCase {
 		return new PublicationAgentTools(
 			container: new ObjectsContainer(objects: $this->objects),
 			config: $config,
-			validator: new McpArgumentValidator()
+			validator: new McpArgumentValidator(),
+			publishing: $publishing
 		);
 	}//end tools()
 
@@ -224,7 +226,7 @@ class PublicationAgentToolsTest extends TestCase {
 			}
 		}
 
-		$this->assertSame(expected: ['createDraftPublication'], actual: array_keys($tools));
+		$this->assertSame(expected: ['createDraftPublication', 'publishPublication'], actual: array_keys($tools));
 		$tool = $tools['createDraftPublication'];
 		$this->assertSame(expected: 'createDraftPublication', actual: $tool->name);
 		$this->assertSame(expected: 'create', actual: $tool->scope);
@@ -234,6 +236,72 @@ class PublicationAgentToolsTest extends TestCase {
 		$parameter = (new ReflectionMethod(objectOrMethod: PublicationAgentTools::class, method: 'createDraftPublication'))->getParameters()[0];
 		$this->assertSame(expected: 'publication', actual: $parameter->getName());
 	}//end testTheDraftToolDeclaresItsScopeAndReach()
+
+	/**
+	 * The publish tool declares update scope and external reach, and says the distribution cannot be undone.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-write-actions-are-curated-tools-with-allow-listed-properties-req-007
+	 */
+	public function testThePublishToolDeclaresExternalReach(): void {
+		$method = new ReflectionMethod(objectOrMethod: PublicationAgentTools::class, method: 'publishPublication');
+		$tool   = $method->getAttributes(name: McpTool::class)[0]->newInstance();
+
+		$this->assertSame(expected: 'publishPublication', actual: $tool->name);
+		$this->assertSame(expected: 'update', actual: $tool->scope);
+		$this->assertSame(expected: 'external', actual: $tool->reach);
+		$this->assertStringContainsString(needle: 'cannot be undone', haystack: $tool->description);
+		$this->assertStringContainsString(needle: 'approved', haystack: $tool->description);
+	}//end testThePublishToolDeclaresExternalReach()
+
+	/**
+	 * Bad ids are refused before anything is read; good ones are passed on deduplicated.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 */
+	public function testThePublishToolChecksItsIds(): void {
+		$publishing = $this->createMock(originalClassName: AgentPublishingInterface::class);
+		$publishing->expects($this->once())->method('publishApproved')->with(['a', 'b'])
+			->willReturn(['published' => ['a'], 'refused' => [['id' => 'b', 'code' => 'not_approved']]]);
+		$tools = $this->tools(publishing: $publishing);
+
+		$tooMany = array_map(static fn (int $i): string => 'id-' . $i, range(1, AgentPublishingInterface::MAX_ITEMS + 1));
+		foreach ([[], ['a' => 'x'], [''], [3], $tooMany] as $ids) {
+			$this->assertSame(expected: 'invalid_arguments', actual: $tools->publishPublication(ids: $ids)['error']['code']);
+		}
+
+		$answer = $tools->publishPublication(ids: ['a', ' b ', 'a']);
+		$this->assertSame(
+			expected: ['success' => false, 'published' => ['a'], 'refused' => [['id' => 'b', 'code' => 'not_approved']]],
+			actual: $answer
+		);
+	}//end testThePublishToolChecksItsIds()
+
+	/**
+	 * A caller who may not publish, an unconfigured register, or no publishing service is an error envelope.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-every-write-runs-the-existing-rbacd-path-as-the-granting-user-req-008
+	 */
+	public function testThePublishToolAnswersAWholeRefusal(): void {
+		foreach (['not_a_publisher', 'not_configured'] as $code) {
+			$publishing = $this->createMock(originalClassName: AgentPublishingInterface::class);
+			$publishing->method('publishApproved')->willReturn(['error' => $code]);
+			$answer = $this->tools(publishing: $publishing)->publishPublication(ids: ['a']);
+			$this->assertSame(expected: $code, actual: $answer['error']['code']);
+			$this->assertNotSame(expected: '', actual: $answer['error']['message']);
+		}
+
+		$this->assertSame(expected: 'not_configured', actual: $this->tools()->publishPublication(ids: ['a'])['error']['code']);
+
+		$all = $this->createMock(originalClassName: AgentPublishingInterface::class);
+		$all->method('publishApproved')->willReturn(['published' => ['a'], 'refused' => []]);
+		$this->assertTrue(condition: $this->tools(publishing: $all)->publishPublication(ids: ['a'])['success']);
+	}//end testThePublishToolAnswersAWholeRefusal()
 }//end class
 
 /**
