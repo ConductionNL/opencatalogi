@@ -21,15 +21,15 @@
  * WHAT IT CREATES AND REMOVES. Two subjects and four publications, deleted in
  * afterAll.
  *
- * @e2e openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#scenario-an-administrator-features-a-subject REQ-SUB-001
- * @e2e openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#scenario-a-subject-lists-what-is-filed-under-it REQ-SUB-003
- * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md
- * @spec openspec/changes/subjects-as-first-class-records/tasks.md#task-4.1
+ * @e2e openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#scenario-an-administrator-features-a-subject REQ-SUB-001
+ * @e2e openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#scenario-a-subject-lists-what-is-filed-under-it REQ-SUB-003
+ * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md
+ * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/tasks.md#task-4.1
  */
 
 import type { APIRequestContext } from '@playwright/test'
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from './authenticated-request.ts'
 
 const APP_BASE = '/index.php/apps/opencatalogi'
 const APP_API = `${APP_BASE}/api`
@@ -69,6 +69,21 @@ test.describe('Subjects', () => {
 		return id
 	}
 
+	/**
+	 * Take a draft publication through the review lifecycle to published; a new
+	 * object starts as a draft whatever its publication date says.
+	 *
+	 * @param request The administrator's request context.
+	 * @param id The publication id.
+	 * @return Resolves once it is published.
+	 */
+	async function publish(request: APIRequestContext, id: string): Promise<void> {
+		for (const status of ['in_review', 'approved', 'published']) {
+			const res = await request.patch(`${OBJECTS}/publication/${id}`, { data: { status } })
+			expect(res.ok(), `moving ${id} to ${status}: ${await res.text()}`).toBe(true)
+		}
+	}
+
 	test.afterAll(async ({ request }) => {
 		for (const { schema, id } of created.reverse()) {
 			await request.delete(`${OBJECTS}/${schema}/${id}`).catch(() => undefined)
@@ -76,8 +91,8 @@ test.describe('Subjects', () => {
 	})
 
 	test('an administrator features a subject', async ({ request, playwright, baseURL, page }) => {
-		const second = await create(request, 'theme', { title: `E2E Zwembad ${RUN}`, slug: `e2e-zwembad-${RUN}`, description: 'Tweede.' })
-		const first = await create(request, 'theme', { title: `E2E Parkeren ${RUN}`, slug: `e2e-parkeren-${RUN}`, description: 'Eerste.' })
+		const second = await create(request, 'theme', { title: `E2E Zwembad ${RUN}`, slug: `e2e-zwembad-${RUN}`, summary: 'Tweede onderwerp.', description: 'Tweede.' })
+		const first = await create(request, 'theme', { title: `E2E Parkeren ${RUN}`, slug: `e2e-parkeren-${RUN}`, summary: 'Eerste onderwerp.', description: 'Eerste.' })
 
 		for (const [id, order] of [[second, 2], [first, 1]] as const) {
 			const res = await request.patch(`${OBJECTS}/theme/${id}`, { data: { featured: true, featuredOrder: order } })
@@ -104,7 +119,7 @@ test.describe('Subjects', () => {
 
 	test('a subject lists what is filed under it', async ({ request, playwright, baseURL, page }) => {
 		const slug = `e2e-sporthal-${RUN}`
-		const subject = await create(request, 'theme', { title: `E2E Sporthal ${RUN}`, slug })
+		const subject = await create(request, 'theme', { title: `E2E Sporthal ${RUN}`, summary: 'Een onderwerp met publicaties.', slug })
 
 		const dates = ['2026-03-01T09:00:00+00:00', '2026-05-01T09:00:00+00:00', '2026-04-01T09:00:00+00:00']
 		const byDate: Record<string, string> = {}
@@ -115,6 +130,7 @@ test.describe('Subjects', () => {
 				themes: [subject],
 				publicationDate,
 			})
+			await publish(request, byDate[publicationDate])
 		}
 		const draft = await create(request, 'publication', {
 			title: `E2E Sporthal concept ${RUN}`,

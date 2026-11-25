@@ -232,7 +232,7 @@ class ThemesController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
-	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-lists-what-is-filed-under-it-req-sub-003
+	 * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-lists-what-is-filed-under-it-req-sub-003
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publications(string $id): JSONResponse {
@@ -264,7 +264,7 @@ class ThemesController extends Controller {
 	 *
 	 * @return array{results: array<int, array<string, mixed>>, total: int}
 	 *
-	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-the-featured-subjects-are-served-for-the-portal-req-sub-002
+	 * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-the-featured-subjects-are-served-for-the-portal-req-sub-002
 	 */
 	private function featuredSubjects(array $themeConfig): array {
 		$result = $this->getObjectService()->searchObjectsPaginated(
@@ -311,7 +311,7 @@ class ThemesController extends Controller {
 	 *
 	 * @return array<string, mixed>|null The subject.
 	 *
-	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-lists-what-is-filed-under-it-req-sub-003
+	 * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-lists-what-is-filed-under-it-req-sub-003
 	 */
 	private function findSubject(string|int $id, array $themeConfig): ?array {
 		// Scope the lookup to the theme register/schema. Without them, find() falls back

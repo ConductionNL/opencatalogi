@@ -20,7 +20,7 @@ import type { APIRequestContext, Page } from '@playwright/test'
 
 import { expect, test } from './authenticated-request.ts'
 
-const APP_BASE = '/apps/opencatalogi'
+const APP_BASE = '/index.php/apps/opencatalogi'
 const API_BASE = '/index.php/apps/opencatalogi/api'
 const ASSESSMENTS = '/index.php/apps/openregister/api/objects/publication/wooAssessment'
 

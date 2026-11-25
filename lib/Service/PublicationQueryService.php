@@ -317,7 +317,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @psalm-param   array<string, mixed> $queryParams
 	 * @phpstan-param array<string, mixed> $queryParams
 	 *
-	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+	 * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
 	 */
 	private function requestedResultType(array $queryParams): ?string {
 		$requested = ($queryParams['resultType'] ?? null);
@@ -340,7 +340,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @psalm-param   array<string, mixed> $queryParams
 	 * @phpstan-param array<string, mixed> $queryParams
 	 *
-	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+	 * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
 	 */
 	private function matchingSubjects(array $queryParams, object $objectService): array {
 		$term = ($queryParams['_search'] ?? '');
@@ -369,7 +369,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @return array<string, mixed> The envelope.
 	 *
-	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+	 * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
 	 */
 	private function withSubjects(array $envelope, array $subjects): array {
 		$counts = [self::RESULT_TYPE_PUBLICATION => 0, self::RESULT_TYPE_DOCUMENT => 0, SubjectSearch::RESULT_TYPE => count($subjects)];

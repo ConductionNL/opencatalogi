@@ -7,7 +7,7 @@
  * forms. The theme page lists the publications filed under the subject with
  * their state, newest first (REQ-SUB-003).
  *
- * @spec openspec/changes/subjects-as-first-class-records/tasks.md#task-4.1
+ * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/tasks.md#task-4.1
  */
 
 import { evaluateVisibleWhenLocal } from '@conduction/nextcloud-vue/src/utils/visibleWhen.js'

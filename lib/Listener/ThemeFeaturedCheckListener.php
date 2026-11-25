@@ -21,7 +21,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-can-be-featured-with-its-landing-data-req-sub-001
+ * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-can-be-featured-with-its-landing-data-req-sub-001
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ use OCP\IAppConfig;
 /**
  * Refuses a featured subject without a title.
  *
- * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-can-be-featured-with-its-landing-data-req-sub-001
+ * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-can-be-featured-with-its-landing-data-req-sub-001
  *
  * @template-implements IEventListener<Event>
  */
@@ -69,7 +69,7 @@ class ThemeFeaturedCheckListener implements IEventListener {
 	 *
 	 * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
 	 *
-	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-can-be-featured-with-its-landing-data-req-sub-001
+	 * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-can-be-featured-with-its-landing-data-req-sub-001
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatingEvent === true) {
