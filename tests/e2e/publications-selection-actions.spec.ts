@@ -16,7 +16,7 @@
  */
 import type { Locator, Page } from '@playwright/test'
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog, publicationScope } from './publication-catalog.ts'
 import { APP, dismissOverlays } from './spec-coverage/_nav.ts'
 
@@ -81,6 +81,27 @@ test.describe('Publications selection bar', () => {
 		await expect(row(page, titles[0])).toBeVisible({ timeout: 30_000 })
 	})
 
+	/**
+	 * Click a bulk action of the selection bar. Lock, Merge and Migrate are
+	 * declared with `menu: true` in the manifest, so they sit under the bar's
+	 * More menu; Publish and Depublish are inline buttons.
+	 *
+	 * @param page The page.
+	 * @param id The bulk action id.
+	 */
+	async function bulkAction(page: Page, id: string): Promise<void> {
+		const action = page.locator(`[data-testid="cn-bulk-action-${id}"]`).first()
+		if (!(await action.isVisible())) {
+			await page
+				.locator('[data-testid="cn-bulk-more"], [data-testid="cn-bulk-band-more"]')
+				.first()
+				.getByRole('button')
+				.first()
+				.click()
+		}
+		await action.click()
+	}
+
 	test('Publish opens the publish dialog on the two selected publications', async ({
 		page,
 	}) => {
@@ -97,7 +118,7 @@ test.describe('Publications selection bar', () => {
 		page,
 	}) => {
 		await select(page, titles)
-		await page.locator('[data-testid="cn-bulk-action-lock"]').first().click()
+		await bulkAction(page, 'lock')
 
 		const dialog = page.getByRole('dialog')
 		for (const title of titles) {
@@ -112,14 +133,14 @@ test.describe('Publications selection bar', () => {
 
 	test('Merge with three selected opens nothing', async ({ page }) => {
 		await select(page, titles)
-		await page.locator('[data-testid="cn-bulk-action-merge"]').first().click()
+		await bulkAction(page, 'merge')
 
 		await expect(page.getByRole('dialog')).toHaveCount(0)
 	})
 
 	test('Merge with two selected opens at Configure merge', async ({ page }) => {
 		await select(page, titles.slice(0, 2))
-		await page.locator('[data-testid="cn-bulk-action-merge"]').first().click()
+		await bulkAction(page, 'merge')
 
 		const dialog = page.getByRole('dialog')
 		await expect(dialog).toContainText(titles[0])
@@ -130,7 +151,7 @@ test.describe('Publications selection bar', () => {
 		page,
 	}) => {
 		await select(page, titles)
-		await page.locator('[data-testid="cn-bulk-action-migrate"]').first().click()
+		await bulkAction(page, 'migrate')
 
 		const dialog = page.getByRole('dialog')
 		for (const title of titles) {
