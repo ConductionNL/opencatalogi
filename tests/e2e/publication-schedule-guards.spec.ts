@@ -46,7 +46,7 @@
 
 import type { APIRequestContext } from '@playwright/test'
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from './authenticated-request.ts'
 import { randomBytes } from 'node:crypto'
 import { publicationCatalog } from './publication-catalog.ts'
 
@@ -91,6 +91,14 @@ test.describe('Publication schedule guards', () => {
 		expect(res.ok(), `creating ${name}: ${await res.text()}`).toBe(true)
 		const id = idOf(await res.json())
 		created.push(id)
+		// A publication date only takes effect once the publication is published, and a
+		// new one starts as a draft: take it through review to published.
+		if ('publicationDate' in extra) {
+			for (const status of ['in_review', 'approved', 'published']) {
+				const moved = await ctx.patch(`${OBJECTS}/${id}`, { data: { status } })
+				expect(moved.ok(), `${name} to ${status}: ${await moved.text()}`).toBe(true)
+			}
+		}
 		return id
 	}
 
