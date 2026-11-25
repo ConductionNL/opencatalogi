@@ -21,7 +21,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-1.2
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use Throwable;
 /**
  * Audits a saved change of a subject's archive hotspot marking.
  *
- * @spec openspec/changes/theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
  *
  * @template-implements IEventListener<Event>
  */
@@ -82,7 +82,7 @@ class ThemeHotspotAudit implements IEventListener {
 	 *
 	 * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatedEvent === true) {
@@ -104,7 +104,7 @@ class ThemeHotspotAudit implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
 	 */
 	private function audit(ObjectEntity $written, ?ObjectEntity $stored): void {
 		if ($this->change->changes(written: $written, stored: $stored) === false) {

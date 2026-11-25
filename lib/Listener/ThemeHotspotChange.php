@@ -20,7 +20,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-1.2
  */
 
 declare(strict_types=1);
@@ -33,7 +33,7 @@ use OCP\IAppConfig;
 /**
  * Says whether a save changes a subject's archive hotspot marking.
  *
- * @spec openspec/changes/theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
  */
 class ThemeHotspotChange {
 
@@ -58,7 +58,7 @@ class ThemeHotspotChange {
 	 *
 	 * @return bool True when the object is a subject and its marking changes.
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
 	 */
 	public function changes(ObjectEntity $written, ?ObjectEntity $stored): bool {
 		$schema = (string)$written->getSchema();
@@ -82,7 +82,7 @@ class ThemeHotspotChange {
 	 *
 	 * @return bool True when marked.
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-an-administrator-marks-a-subject-as-an-archive-hotspot-req-tha-001
 	 */
 	public function isMarked(ObjectEntity $entity): bool {
 		return (($entity->getObject() ?? [])['archiveHotspot'] ?? false) === true;

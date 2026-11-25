@@ -182,7 +182,7 @@ class SettingsController extends Controller {
 	 *
 	 * @return array<string, string> The values by key, empty without app config.
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
 	 */
 	private function linkSettings(): array {
 		$values = [];
@@ -203,7 +203,7 @@ class SettingsController extends Controller {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
 	 */
 	private function queueLinkRewrite(array $before, array $saved): void {
 		foreach (self::LINK_SETTINGS as $key) {

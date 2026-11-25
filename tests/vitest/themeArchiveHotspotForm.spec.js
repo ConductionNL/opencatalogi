@@ -9,7 +9,7 @@
  * for them, so an editor outside the admin group is not offered a field
  * ThemeHotspotGuard refuses.
  *
- * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-1.4
  */
 
 import { evaluateVisibleWhenLocal } from '@conduction/nextcloud-vue/src/utils/visibleWhen.js'

@@ -23,7 +23,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-the-source-system-is-told-through-an-openregister-webhook-req-pts-003
+ * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-the-source-system-is-told-through-an-openregister-webhook-req-pts-003
  */
 
 declare(strict_types=1);

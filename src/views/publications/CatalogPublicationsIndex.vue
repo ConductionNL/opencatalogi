@@ -364,7 +364,7 @@ export default {
 		 * deleted is a publication.
 		 *
 		 * @return {object} The config
-		 * @spec openspec/changes/publication-delete-says-what-it-removes/specs/publication-delete/spec.md#requirement-other-schemas-in-a-catalog-keep-the-generic-dialog-req-pdel-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-delete-says-what-it-removes/specs/publication-delete/spec.md#requirement-other-schemas-in-a-catalog-keep-the-generic-dialog-req-pdel-002
 		 */
 		publicationPairIndexConfig() {
 			const config = { ...this.publicationPairConfig }
@@ -390,7 +390,7 @@ export default {
 		 * library's generic words for a row of another schema. Called when an
 		 * index page mounts; a remount (new catalog) follows the new page.
 		 *
-		 * @spec openspec/changes/publication-delete-says-what-it-removes/specs/publication-delete/spec.md#requirement-deleting-a-publication-says-what-disappears-req-pdel-001
+		 * @spec openspec/changes/archive/2026-11-25-publication-delete-says-what-it-removes/specs/publication-delete/spec.md#requirement-deleting-a-publication-says-what-disappears-req-pdel-001
 		 */
 		followDeleteTarget() {
 			this.stopDeleteTargetWatch?.()

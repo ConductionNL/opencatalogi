@@ -690,7 +690,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	 *
 	 * @return string|null The slug, or null when no catalogue lists the schema.
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
 	 */
 	public function getCatalogSlugForSchema(string $schemaId): ?string {
 		if ($schemaId === '') {

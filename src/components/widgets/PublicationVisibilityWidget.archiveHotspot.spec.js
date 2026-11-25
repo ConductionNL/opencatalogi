@@ -6,7 +6,7 @@
  * the server names the archive-hotspot subject that keeps the publication, and
  * nothing otherwise (theme-archive-hotspot REQ-THA-003).
  *
- * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.2
  */
 
 import axios from '@nextcloud/axios'

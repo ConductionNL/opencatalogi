@@ -600,7 +600,7 @@ class RetentionServiceTest extends TestCase {
 	/**
 	 * A publication under an archive hotspot is not depublished, and nothing is written to it (REQ-THA-003).
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.1
 	 *
 	 * @return void
 	 */
@@ -634,7 +634,7 @@ class RetentionServiceTest extends TestCase {
 	/**
 	 * A publication whose subject cannot be read is held, not archived (REQ-THA-003).
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.1
 	 *
 	 * @return void
 	 */
@@ -654,7 +654,7 @@ class RetentionServiceTest extends TestCase {
 	/**
 	 * The report says a publication under a hotspot is kept permanently, naming the subject (REQ-THA-003).
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.1
 	 *
 	 * @return void
 	 */

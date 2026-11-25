@@ -5,7 +5,7 @@
  * The visibility answer names the archive-hotspot subject that keeps a
  * publication permanently (theme-archive-hotspot REQ-THA-003).
  *
- * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.2
  */
 
 import { archiveHotspotOf } from './publicationVisibility.js'
