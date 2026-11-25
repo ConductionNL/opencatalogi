@@ -57,6 +57,14 @@ use Throwable;
 class ErrorReportIntake implements ErrorReportIntakeInterface {
 
 	/**
+	 * OpenRegister's per-request grant for `reveal: explicit` properties.
+	 *
+	 * @var string
+	 */
+	private const EXPLICIT_REVEAL = 'OCA\\OpenRegister\\Service\\Rbac\\ExplicitRevealInterface';
+
+
+	/**
 	 * The longest message taken, in characters.
 	 */
 	public const MAX_MESSAGE = 2000;
@@ -179,17 +187,26 @@ class ErrorReportIntake implements ErrorReportIntakeInterface {
 	private function acceptingCatalog(object $objects, string $publicationId): ?array {
 		foreach ($this->catalogs->getCatalogSlugs() as $slug) {
 			$catalog = $this->catalogs->getCatalogBySlug((string) $slug);
-			if ($catalog === null || ($catalog['acceptErrorReports'] ?? false) !== true) {
+			if ($catalog === null) {
 				continue;
 			}
 
+			// Whether the catalogue takes reports, and who moderates them, is read on
+			// the server's own read of the catalogue: the visitor's read need not carry
+			// either (live, 25 Nov 2026: an anonymous read of an organisation's
+			// catalogue came back without acceptErrorReports).
 			$catalogId = (string) ($catalog['id'] ?? $catalog['@self']['id'] ?? '');
-			$moderators = $this->moderatorsOf(objects: $objects, catalogId: $catalogId);
+			$stored = $this->storedCatalog(objects: $objects, catalogId: $catalogId);
+			if (($stored['acceptErrorReports'] ?? false) !== true) {
+				continue;
+			}
+
+			$moderators = self::moderatorsIn(catalog: $stored);
 			if ($moderators === []) {
 				continue;
 			}
 
-			if ($this->isPublicIn(objects: $objects, catalog: $catalog, publicationId: $publicationId) === true) {
+			if ($this->isPublicIn(objects: $objects, catalog: array_replace($catalog, $stored), publicationId: $publicationId) === true) {
 				return ['catalog' => $catalogId, 'moderators' => $moderators];
 			}
 		}
@@ -233,36 +250,54 @@ class ErrorReportIntake implements ErrorReportIntakeInterface {
 	}//end isPublicIn()
 
 	/**
-	 * The catalogue's moderator groups, read past the property's read rule.
+	 * The catalogue as stored, read past the read rules of its properties.
 	 *
-	 * The groups are hidden from anonymous readers of the catalogue, so they are
-	 * read here with the catalogue register and schema and without RBAC.
+	 * The moderator groups are hidden from anonymous readers of the catalogue, so the
+	 * catalogue is read here with its register and schema, without RBAC and as trusted
+	 * server code (the groups are `reveal: explicit`).
 	 *
 	 * @param object $objects   OpenRegister's ObjectService.
 	 * @param string $catalogId The catalogue.
 	 *
-	 * @return list<string> The group ids; empty when none is named or the catalogue cannot be read.
+	 * @return array<string, mixed> The stored catalogue; empty when unconfigured or unreadable.
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
 	 */
-	private function moderatorsOf(object $objects, string $catalogId): array {
+	private function storedCatalog(object $objects, string $catalogId): array {
 		$register = trim($this->config->getValueString('opencatalogi', 'catalog_register', ''));
 		$schema = trim($this->config->getValueString('opencatalogi', 'catalog_schema', ''));
 		if ($catalogId === '' || $register === '' || $schema === '') {
 			return [];
 		}
 
-		$entity = $objects->find(
-			id: $catalogId,
-			options: new ObjectFindOptions(register: $register, schema: $schema),
-			_rbac: false,
-			_multitenancy: false
+		$entity = $this->trusted(
+			read: fn (): ?object => $objects->find(
+				id: $catalogId,
+				options: new ObjectFindOptions(register: $register, schema: $schema),
+				_rbac: false,
+				_multitenancy: false
+			)
 		);
-		$data = [];
 		if (is_object($entity) === true && method_exists($entity, 'getObject') === true) {
-			$data = $entity->getObject();
+			return (array) $entity->getObject();
 		}
 
+		return [];
+
+	}//end storedCatalog()
+
+	/**
+	 * The moderator groups a stored catalogue names.
+	 *
+	 * @param array<string, mixed> $catalog The stored catalogue.
+	 *
+	 * @return list<string> The group ids; empty when none is named.
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
+	 */
+	private static function moderatorsIn(array $catalog): array {
 		$groups = [];
-		foreach ((array) ($data['errorReportModerators'] ?? []) as $group) {
+		foreach ((array) ($catalog['errorReportModerators'] ?? []) as $group) {
 			if (is_string($group) === true && trim($group) !== '') {
 				$groups[] = trim($group);
 			}
@@ -270,7 +305,39 @@ class ErrorReportIntake implements ErrorReportIntakeInterface {
 
 		return array_values(array_unique($groups));
 
-	}//end moderatorsOf()
+	}//end moderatorsIn()
+
+	/**
+	 * Run a read as trusted server code, so OpenRegister does not mask the catalog's
+	 * moderators.
+	 *
+	 * `errorReportModerators` is readable by signed-in users only and `reveal: explicit`:
+	 * OpenRegister masks it on a read that is not trusted, `_rbac: false` included, and
+	 * a report comes from an anonymous visitor. Without this the catalog read back no
+	 * moderators and every report was refused 404 (live, 25 Nov 2026). The moderators
+	 * never leave the server: they are stored on the report only. An OpenRegister
+	 * without explicit reveal masks nothing, and the read runs as it is.
+	 *
+	 * @param callable $read The read.
+	 *
+	 * @return object|null What the read returns.
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
+	 */
+	private function trusted(callable $read): ?object {
+		try {
+			$reveal = $this->openRegister->installedService(self::EXPLICIT_REVEAL, 'OpenRegister explicit reveal is not available.');
+		} catch (Throwable $e) {
+			return $read();
+		}
+
+		if (is_object($reveal) === false || method_exists($reveal, 'trustedDuring') === false) {
+			return $read();
+		}
+
+		return $reveal->trustedDuring($read);
+
+	}//end trusted()
 
 	/**
 	 * The reference of a stored report: its uuid.

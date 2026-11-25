@@ -196,6 +196,13 @@ class PublicDocumentsTest extends TestCase {
 		$this->assertFalse(DocumentFacts::isLive(publication: ['@self' => ['published' => '2026-12-01']], now: $now));
 		$this->assertFalse(DocumentFacts::isLive(publication: ['@self' => ['published' => '2026-11-01', 'depublished' => '2026-11-10']], now: $now));
 		$this->assertFalse(DocumentFacts::isLive(publication: ['@self' => ['published' => 'not a date']], now: $now));
+
+		// On the lifecycle (REQ-PLC-002): the published state and its dates decide, not @self.
+		$this->assertTrue(DocumentFacts::isLive(publication: ['status' => 'published', 'publicationDate' => '2026-11-01', '@self' => ['published' => null]], now: $now));
+		$this->assertFalse(DocumentFacts::isLive(publication: ['status' => 'approved', 'publicationDate' => '2026-11-01', '@self' => ['published' => '2026-11-01']], now: $now));
+		$this->assertFalse(DocumentFacts::isLive(publication: ['status' => 'published', 'publicationDate' => '2026-12-01'], now: $now));
+		$this->assertFalse(DocumentFacts::isLive(publication: ['status' => 'published', 'publicationDate' => '2026-11-01', 'depublicationDate' => '2026-11-10'], now: $now));
+		$this->assertFalse(DocumentFacts::isLive(publication: ['status' => 'published'], now: $now));
 		$this->assertFalse(DocumentFacts::isLive(publication: [], now: $now));
 	}//end testOnlyAPublishedPublicationIsLive()
 }//end class
