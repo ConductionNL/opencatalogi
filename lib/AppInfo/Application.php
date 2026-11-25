@@ -160,7 +160,8 @@ class Application extends App implements IBootstrap {
 					appName: self::APP_ID,
 					request: $c->get('OCP\\IRequest'),
 					manifestLoader: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader'),
-					engine: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\MetricsEngine')
+					engine: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\MetricsEngine'),
+					accessGuard: self::metricsAccessGuard(container: $c)
 				);
 			}
 		);
@@ -271,6 +272,27 @@ class Application extends App implements IBootstrap {
 			}
 		);
 	}//end boot()
+
+	/**
+	 * OpenRegister's access decision for the metrics route. The generic refuses every
+	 * caller without one (403, administrators too), so it is always passed when the
+	 * installed OpenRegister has it.
+	 *
+	 * @param ContainerInterface $container The app container.
+	 *
+	 * @return object|null The MetricsAccessGuard, or null on an OpenRegister without it.
+	 *
+	 * @spec openspec/specs/prometheus-metrics/spec.md
+	 */
+	private static function metricsAccessGuard(ContainerInterface $container): ?object {
+		$guard = 'OCA\\OpenRegister\\AppHost\\Observability\\MetricsAccessGuard';
+		if (class_exists($guard) === false) {
+			return null;
+		}
+
+		return $container->get($guard);
+
+	}//end metricsAccessGuard()
 
 	/**
 	 * The controller to answer an AppHost route with when OpenRegister is too
