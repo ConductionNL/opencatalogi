@@ -7,7 +7,8 @@
  *
  * - An administrator (or a delegated OpenCatalogi administrator) reads a list
  *   with the organisation's choices and saves the choice about one entry (its
- *   explanation, order, own label, hidden). Those two routes carry no
+ *   explanation, order, own label, hidden), and sets the organisation type
+ *   whose categories are proposed for hiding. Those routes carry no
  *   NoAdminRequired, so Nextcloud refuses everyone else.
  * - Anyone, cross-origin, reads the visible information categories with
  *   their explanation: the contract a portal's category filter reads.
@@ -41,6 +42,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IL10N;
+use InvalidArgumentException;
 use Throwable;
 
 /**
@@ -155,6 +157,38 @@ class ValueListChoicesController extends Controller {
 		return $this->written(scheme: $scheme, write: fn () => $this->view->saveOrder(scheme: $scheme, entries: $entries));
 
 	}//end reorder()
+
+	/**
+	 * The organisation type, the types to choose from and the categories proposed for hiding, for an administrator.
+	 *
+	 * @return JSONResponse 200 with `{type, types, proposal}`.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function organisationType(): JSONResponse {
+		return new JSONResponse($this->view->organisationType());
+
+	}//end organisationType()
+
+	/**
+	 * Set the organisation type and answer its proposal, for an administrator; nothing is hidden here.
+	 *
+	 * @return JSONResponse 200 with `{type, types, proposal}`; 400 for an unknown type.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function setOrganisationType(): JSONResponse {
+		try {
+			$answer = $this->view->setOrganisationType(type: trim((string)$this->request->getParam('type', '')));
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(['error' => $this->l10n->t('Choose one of the listed organisation types.')], Http::STATUS_BAD_REQUEST);
+		}
+
+		return new JSONResponse($answer);
+
+	}//end setOrganisationType()
 
 	/**
 	 * Run a write and answer the list after it, or the refusal.

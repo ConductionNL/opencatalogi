@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Vlastní pořadí se nepodařilo načíst, proto je seznam zobrazen v původním pořadí.",
         "Where the transfer stands: requested, transferred or failed.": "Stav předání: vyžádáno, předáno nebo selhalo.",
         "When the transfer to the e-depot was requested.": "Kdy bylo vyžádáno předání do e-depozitáře.",
-        "When the transfer status last changed.": "Kdy se stav předání naposledy změnil."
+        "When the transfer status last changed.": "Kdy se stav předání naposledy změnil.",
+        "Organisation type": "Typ organizace",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Zvolte druh organizace, za kterou publikujete. Informační kategorie, na které se Woo pro tento typ nevztahuje, jsou navrženy ke skrytí.",
+        "Municipality": "Obec",
+        "Province": "Provincie",
+        "Water board": "Vodní správa",
+        "Joint arrangement": "Společné ujednání",
+        "Central government": "Ústřední vláda",
+        "Independent administrative body": "Samostatný správní orgán",
+        "Other": "Jiné",
+        "Proposed for hiding": "Navrženo ke skrytí",
+        "Hide the checked categories": "Skrýt zaškrtnuté kategorie",
+        "The checked categories are hidden.": "Zaškrtnuté kategorie jsou skryté.",
+        "Choose one of the listed organisation types.": "Zvolte jeden z uvedených typů organizace.",
+        "Legal basis": "Právní základ"
     },
     "plurals": {}
 }

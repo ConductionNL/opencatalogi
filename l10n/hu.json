@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "A saját sorrendet nem sikerült betölteni, ezért a lista az eredeti sorrendjében jelenik meg.",
         "Where the transfer stands: requested, transferred or failed.": "Az átadás állapota: kérve, átadva vagy sikertelen.",
         "When the transfer to the e-depot was requested.": "Mikor kérték az átadást az e-archívumba.",
-        "When the transfer status last changed.": "Mikor változott utoljára az átadás állapota."
+        "When the transfer status last changed.": "Mikor változott utoljára az átadás állapota.",
+        "Organisation type": "Szervezet típusa",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Válassza ki, milyen szervezet nevében publikál. Azokat az információs kategóriákat, amelyekre a Woo ennél a típusnál nem vonatkozik, elrejtésre javasoljuk.",
+        "Municipality": "Önkormányzat",
+        "Province": "Tartomány",
+        "Water board": "Vízügyi testület",
+        "Joint arrangement": "Közös megállapodás",
+        "Central government": "Központi kormányzat",
+        "Independent administrative body": "Önálló közigazgatási szerv",
+        "Other": "Egyéb",
+        "Proposed for hiding": "Elrejtésre javasolt",
+        "Hide the checked categories": "A bejelölt kategóriák elrejtése",
+        "The checked categories are hidden.": "A bejelölt kategóriák el vannak rejtve.",
+        "Choose one of the listed organisation types.": "Válasszon a felsorolt szervezettípusok közül.",
+        "Legal basis": "Jogalap"
     },
     "plurals": {}
 }

@@ -28,13 +28,17 @@ The admin settings page of OpenCatalogi has a **Category explanations** section 
 - **Move up / Move down.** Changes the place of a category. The buttons work from the keyboard, and a screen reader hears where the category is now. The order is saved immediately.
 - **Hide from pick lists.** An officer is no longer offered the category, and the public filter leaves it out. A category with publications filed under it cannot be hidden: the refusal says how many publications to move first. When those publications cannot be counted, the category is not hidden either.
 
+Above it, the **Organisation type** section asks what kind of organisation you publish for: gemeente, provincie, waterschap, gemeenschappelijke regeling, rijksoverheid, zelfstandig bestuursorgaan or other. Choosing a type hides nothing. It shows the categories the Woo does not apply to for that type, each with its legal basis: the article (Woo, article 3.3) and the scope the article gives the category, quoted as the national TOOI list records it. Every proposed category starts checked; uncheck the ones your organisation does publish, then press **Hide the checked categories**. Each is hidden as with the switch above, so a category with publications is refused and named, and the others are still hidden.
+
+The proposal comes from `lib/Settings/category-applicability.json`. A category is only proposed where the article names the bodies it covers and your type is not among them; nothing is proposed for "other". What you confirm is stored as your own choice, so an upgrade that changes the table does not undo it.
+
 When the choices cannot be read, the section says so and shows the categories in the list's own order. No category is hidden because of an error.
 
 ## Where the choices show
 
 - `GET /api/woo/categories` (signed-in users) lists the information categories that are not hidden, in the administrator's order. The pickers that read it, such as the catalogue's retention defaults, follow it.
 - `GET /api/woo/categories/public` (anyone, CORS) answers the categories that are not hidden, as `{code, uri, label, explanation, order}`, in the administrator's order, with `choicesUnavailable` when the choices could not be read. This is what a portal's category filter reads.
-- The sitemaps, `robots.txt` and the national-index registration are not affected by the order or by hiding: a hidden category keeps its sitemap index, which is empty because a category with publications cannot be hidden. Ordering and hiding decide what an officer is offered, never what is published.
+- The sitemaps, `robots.txt` and the national-index registration are not affected by the order or by hiding: a hidden category keeps its sitemap index and its `robots.txt` line. The index is empty, because a category with publications cannot be hidden: a `sitemapindex` element in the sitemaps.org namespace without `sitemap` entries, the same document every category without publications answers. The sitemaps.org `siteindex.xsd` asks for at least one `sitemap` entry, so an empty index is well formed but not schema-valid; that is true of every empty category, hidden or not. Ordering and hiding decide what an officer is offered, never what is published.
 
 ## For integrators
 
@@ -44,10 +48,12 @@ When the choices cannot be read, the section says so and shows the categories in
 | `PUT /api/woo/value-list-choices` | administrators | Save one choice: `{scheme, entry, choice: {order?, localLabel?, explanation?, hidden?}}`. |
 | `PUT /api/woo/value-list-choices/order` | administrators | Save an order: `{scheme, entries: [uri, ...]}`, first first. Only the entries whose place changed are written. |
 | `GET /api/woo/categories/public` | anyone | The visible information categories with their explanation. |
+| `GET /api/woo/organisation-type` | administrators | `{type, types, proposal}`: the type set (or null), the types to choose from, and the categories proposed for hiding for the type, each `{category, tooiUri, article, basis, reason}`. |
+| `PUT /api/woo/organisation-type` | administrators | Set the type: `{type}`. Answers as the `GET`; an unknown type answers `400`. Nothing is hidden by it. |
 
 A refused save answers `422` with the reason; a request that names an unknown list, no entry, or a field a choice does not have answers `400`.
 
 ## Not yet
 
 - The publication form's category, handling and document type pickers render the schema's own list and do not follow the order yet.
-- A proposal of which categories do not apply to an organisation type, and activating the organisations an installation publishes for, are planned in the same change (`woo-value-list-curation`).
+- Activating the organisations an installation publishes for is planned in the same change (`woo-value-list-curation`).

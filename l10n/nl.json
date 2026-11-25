@@ -2396,7 +2396,20 @@
         "WooAssessment": "Woo-beoordeling",
         "WooBatch": "Woo-batch",
         "e-Depot transfer": "Overdracht naar e-Depot",
-        "publiccode.yml version": "publiccode.yml-versie"
+        "publiccode.yml version": "publiccode.yml-versie",
+        "Organisation type": "Organisatietype",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Kies het soort organisatie waarvoor u publiceert. De informatiecategorieën waarop de Woo voor dat type niet van toepassing is, worden voorgesteld om te verbergen.",
+        "Municipality": "Gemeente",
+        "Province": "Provincie",
+        "Water board": "Waterschap",
+        "Joint arrangement": "Gemeenschappelijke regeling",
+        "Central government": "Rijksoverheid",
+        "Independent administrative body": "Zelfstandig bestuursorgaan",
+        "Other": "Overig",
+        "Proposed for hiding": "Voorgesteld om te verbergen",
+        "Hide the checked categories": "Aangevinkte categorieën verbergen",
+        "The checked categories are hidden.": "De aangevinkte categorieën zijn verborgen.",
+        "Choose one of the listed organisation types.": "Kies een van de genoemde organisatietypen."
     },
     "plurals": {}
 }

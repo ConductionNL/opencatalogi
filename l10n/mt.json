@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "L-ordni tiegħek ma setax jitgħabba, għalhekk il-lista tintwera fl-ordni oriġinali tagħha.",
         "Where the transfer stands: requested, transferred or failed.": "L-istat tat-trasferiment: mitlub, trasferit jew falla.",
         "When the transfer to the e-depot was requested.": "Meta ntalab it-trasferiment lejn l-e-depożitu.",
-        "When the transfer status last changed.": "Meta nbidel l-aħħar l-istatus tat-trasferiment."
+        "When the transfer status last changed.": "Meta nbidel l-aħħar l-istatus tat-trasferiment.",
+        "Organisation type": "Tip ta' organizzazzjoni",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Agħżel it-tip ta' organizzazzjoni li qed tippubblika għaliha. Il-kategoriji ta' informazzjoni li l-Woo ma tapplikax għalihom għal dan it-tip huma proposti biex jinħbew.",
+        "Municipality": "Muniċipalità",
+        "Province": "Provinċja",
+        "Water board": "Bord tal-ilma",
+        "Joint arrangement": "Arranġament konġunt",
+        "Central government": "Gvern ċentrali",
+        "Independent administrative body": "Korp amministrattiv indipendenti",
+        "Other": "Oħrajn",
+        "Proposed for hiding": "Proposti biex jinħbew",
+        "Hide the checked categories": "Aħbi l-kategoriji mmarkati",
+        "The checked categories are hidden.": "Il-kategoriji mmarkati huma moħbija.",
+        "Choose one of the listed organisation types.": "Agħżel wieħed mit-tipi ta' organizzazzjoni elenkati.",
+        "Legal basis": "Bażi legali"
     },
     "plurals": {}
 }

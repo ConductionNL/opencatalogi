@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Nie udało się wczytać Twojej kolejności, dlatego lista jest wyświetlana w swojej pierwotnej kolejności.",
         "Where the transfer stands: requested, transferred or failed.": "Stan przekazania: zlecone, przekazane lub nieudane.",
         "When the transfer to the e-depot was requested.": "Kiedy zlecono przekazanie do e-repozytorium.",
-        "When the transfer status last changed.": "Kiedy status przekazania ostatnio się zmienił."
+        "When the transfer status last changed.": "Kiedy status przekazania ostatnio się zmienił.",
+        "Organisation type": "Typ organizacji",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Wybierz rodzaj organizacji, w imieniu której publikujesz. Kategorie informacji, do których Woo nie ma zastosowania dla tego typu, są proponowane do ukrycia.",
+        "Municipality": "Gmina",
+        "Province": "Prowincja",
+        "Water board": "Zarząd wodny",
+        "Joint arrangement": "Wspólne porozumienie",
+        "Central government": "Administracja centralna",
+        "Independent administrative body": "Samodzielny organ administracji",
+        "Other": "Inne",
+        "Proposed for hiding": "Proponowane do ukrycia",
+        "Hide the checked categories": "Ukryj zaznaczone kategorie",
+        "The checked categories are hidden.": "Zaznaczone kategorie są ukryte.",
+        "Choose one of the listed organisation types.": "Wybierz jeden z wymienionych typów organizacji.",
+        "Legal basis": "Podstawa prawna"
     },
     "plurals": {}
 }

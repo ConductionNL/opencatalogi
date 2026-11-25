@@ -25,7 +25,6 @@ use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use OCA\OpenCatalogi\Service\ValueListsService;
 use OCA\OpenCatalogi\Service\Woo\RefusalGrounds;
 use OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore;
-use OCA\OpenCatalogi\Service\ValueList\ValueListMerge;
 use OCA\OpenCatalogi\Service\ValueList\ValueListView;
 use OCP\AppFramework\Http\Attribute\CORS;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -85,7 +84,12 @@ class PublicCategoriesTest extends TestCase {
 		}
 
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
-		$view = new ValueListView(lists: $lists, choices: $store, merge: new ValueListMerge(), logger: $logger);
+		$view = new ValueListView(
+			lists: $lists,
+			choices: $store,
+			logger: $logger,
+			applicability: $this->createMock(originalClassName: \OCA\OpenCatalogi\Service\ValueList\CategoryApplicability::class)
+		);
 
 		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);

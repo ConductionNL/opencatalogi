@@ -46,7 +46,7 @@ The Woo settings SHALL show each list (information categories, soort handeling, 
 
 ### Requirement: Categories that do not apply are hidden, and their sitemap stays valid (REQ-WVL-004)
 
-The Woo settings SHALL let an administrator set `woo_organisation_type` (gemeente, provincie, waterschap, gemeenschappelijke regeling, rijksoverheid, zelfstandig bestuursorgaan, overig). `lib/Settings/woo-category-applicability.json` SHALL propose, per type, the categories that do not apply, each with its legal basis in the Woo; an entry without a cited basis SHALL NOT be proposed. On choosing a type the page SHALL show the proposal for the administrator to confirm or change per category, writing `hidden`. A hidden category SHALL be absent from officer pick lists and from `GET /api/woo/categories/public`. Its sitemap index SHALL still be served, valid against the sitemap schema, with no entries. Hiding a category with publications filed under it SHALL be refused, naming the count.
+The Woo settings SHALL let an administrator set `woo_organisation_type` (gemeente, provincie, waterschap, gemeenschappelijke regeling, rijksoverheid, zelfstandig bestuursorgaan, overig). `lib/Settings/category-applicability.json` SHALL propose, per type, the categories that do not apply, each with its legal basis in the Woo; an entry without a cited basis SHALL NOT be proposed. On choosing a type the page SHALL show the proposal for the administrator to confirm or change per category, writing `hidden`. A hidden category SHALL be absent from officer pick lists and from `GET /api/woo/categories/public`. Its sitemap index SHALL still be served as a well-formed `sitemapindex` in the sitemaps.org namespace with no entries, the same document every category without publications answers. (The sitemaps.org `siteindex.xsd` requires at least one `sitemap` element, so no index without entries validates against it; the requirement is the well-formed empty index, not schema validity.) Hiding a category with publications filed under it SHALL be refused, naming the count.
 
 #### Scenario: A water board hides the categories it never publishes
 
@@ -54,12 +54,12 @@ The Woo settings SHALL let an administrator set `woo_organisation_type` (gemeent
 - **WHEN** they set the organisation type to waterschap and confirm the proposal
 - **THEN** the proposed categories are hidden from the officer picker
 
-#### Scenario: A hidden category's sitemap stays valid and empty
+#### Scenario: A hidden category's sitemap stays served and empty
 <!-- @e2e exclude Sitemap XML contract; proven by SitemapServiceTest::testAHiddenCategoryServesAnEmptyValidIndex, which fails on today's code because no category can be hidden. -->
 
 - **GIVEN** a hidden category with no publications
 - **WHEN** its sitemap index is requested
-- **THEN** it answers a valid, empty sitemap index
+- **THEN** it answers a well-formed sitemap index in the sitemaps.org namespace with no entries
 
 #### Scenario: A category in use cannot be hidden
 <!-- @e2e exclude Pre-save refusal; proven by ValueListChoiceListenerTest::testHidingACategoryInUseIsRefused. -->
@@ -89,7 +89,7 @@ The Woo settings SHALL let an administrator search the TOOI organisation scheme 
 
 ### Requirement: The information categories are data, not code (REQ-WIC-001)
 
-Adding an information category SHALL need no code change. `WooCategoryRegistry` SHALL serve the 18 members of the `scw_woo_informatiecategorieen` waardelijst together with every category stored as an `informationCategory` object, and the sitemap routes, the `robots.txt` lines, the national-index registration request and `GET /api/woo/categories` SHALL all be built from that one set. The sitemap file name of a category SHALL be `sitemapindex-diwoo-{code}.xml`, because the national harvester matches that name. Every category of the set, hidden or not, SHALL keep its sitemap index; a hidden category's index SHALL be valid and empty (REQ-WVL-004, decision D5). Officer pick lists and `GET /api/woo/categories/public` SHALL leave hidden categories out and follow the administrator's order (REQ-WVL-002).
+Adding an information category SHALL need no code change. `WooCategoryRegistry` SHALL serve the 18 members of the `scw_woo_informatiecategorieen` waardelijst together with every category stored as an `informationCategory` object, and the sitemap routes, the `robots.txt` lines, the national-index registration request and `GET /api/woo/categories` SHALL all be built from that one set. The sitemap file name of a category SHALL be `sitemapindex-diwoo-{code}.xml`, because the national harvester matches that name. Every category of the set, hidden or not, SHALL keep its sitemap index; a hidden category's index SHALL be well formed and empty (REQ-WVL-004, decision D5). Officer pick lists and `GET /api/woo/categories/public` SHALL leave hidden categories out and follow the administrator's order (REQ-WVL-002).
 
 #### Scenario: An operator adds a category of their own
 

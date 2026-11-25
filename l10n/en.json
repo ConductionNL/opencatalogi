@@ -2441,7 +2441,20 @@
         "WooAssessment": "WooAssessment",
         "WooBatch": "WooBatch",
         "e-Depot transfer": "e-Depot transfer",
-        "publiccode.yml version": "publiccode.yml version"
+        "publiccode.yml version": "publiccode.yml version",
+        "Organisation type": "Organisation type",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.",
+        "Municipality": "Municipality",
+        "Province": "Province",
+        "Water board": "Water board",
+        "Joint arrangement": "Joint arrangement",
+        "Central government": "Central government",
+        "Independent administrative body": "Independent administrative body",
+        "Other": "Other",
+        "Proposed for hiding": "Proposed for hiding",
+        "Hide the checked categories": "Hide the checked categories",
+        "The checked categories are hidden.": "The checked categories are hidden.",
+        "Choose one of the listed organisation types.": "Choose one of the listed organisation types."
     },
     "plurals": {}
 }

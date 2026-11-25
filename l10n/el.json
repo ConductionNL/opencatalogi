@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Η δική σας σειρά δεν ήταν δυνατό να φορτωθεί, οπότε η λίστα εμφανίζεται με τη δική της σειρά.",
         "Where the transfer stands: requested, transferred or failed.": "Κατάσταση της μεταφοράς: ζητήθηκε, μεταφέρθηκε ή απέτυχε.",
         "When the transfer to the e-depot was requested.": "Πότε ζητήθηκε η μεταφορά στο ηλεκτρονικό αρχείο.",
-        "When the transfer status last changed.": "Πότε άλλαξε τελευταία φορά η κατάσταση της μεταφοράς."
+        "When the transfer status last changed.": "Πότε άλλαξε τελευταία φορά η κατάσταση της μεταφοράς.",
+        "Organisation type": "Τύπος οργανισμού",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Επιλέξτε το είδος του οργανισμού για τον οποίο δημοσιεύετε. Οι κατηγορίες πληροφοριών στις οποίες ο Woo δεν εφαρμόζεται για αυτόν τον τύπο προτείνονται για απόκρυψη.",
+        "Municipality": "Δήμος",
+        "Province": "Επαρχία",
+        "Water board": "Συμβούλιο υδάτων",
+        "Joint arrangement": "Κοινή ρύθμιση",
+        "Central government": "Κεντρική κυβέρνηση",
+        "Independent administrative body": "Αυτοτελές διοικητικό όργανο",
+        "Other": "Άλλο",
+        "Proposed for hiding": "Προτείνονται για απόκρυψη",
+        "Hide the checked categories": "Απόκρυψη των επιλεγμένων κατηγοριών",
+        "The checked categories are hidden.": "Οι επιλεγμένες κατηγορίες αποκρύφθηκαν.",
+        "Choose one of the listed organisation types.": "Επιλέξτε έναν από τους αναφερόμενους τύπους οργανισμού.",
+        "Legal basis": "Νομική βάση"
     },
     "plurals": {}
 }

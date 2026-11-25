@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Níorbh fhéidir d’ord féin a lódáil, mar sin taispeántar an liosta ina ord féin.",
         "Where the transfer stands: requested, transferred or failed.": "Staid an aistrithe: iarrtha, aistrithe nó theip air.",
         "When the transfer to the e-depot was requested.": "Cathain a iarradh an t-aistriú chuig an r-thaisclann.",
-        "When the transfer status last changed.": "Cathain a athraíodh stádas an aistrithe go deireanach."
+        "When the transfer status last changed.": "Cathain a athraíodh stádas an aistrithe go deireanach.",
+        "Organisation type": "Cineál eagraíochta",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Roghnaigh an cineál eagraíochta a bhfoilsíonn tú di. Moltar na catagóirí faisnéise nach mbaineann an Woo leo don chineál sin a fholú.",
+        "Municipality": "Bardas",
+        "Province": "Cúige",
+        "Water board": "Bord uisce",
+        "Joint arrangement": "Socrú comhpháirteach",
+        "Central government": "Rialtas láir",
+        "Independent administrative body": "Comhlacht riaracháin neamhspleách",
+        "Other": "Eile",
+        "Proposed for hiding": "Molta le folú",
+        "Hide the checked categories": "Folaigh na catagóirí marcáilte",
+        "The checked categories are hidden.": "Tá na catagóirí marcáilte folaithe.",
+        "Choose one of the listed organisation types.": "Roghnaigh ceann de na cineálacha eagraíochta atá liostaithe.",
+        "Legal basis": "Bunús dlí"
     },
     "plurals": {}
 }

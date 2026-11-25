@@ -886,7 +886,21 @@ OC.L10N.register(
         "Your own order could not be loaded, so the list is shown in its own order.": "Voss agen urden n’ha betg pudì vegnir chargià, perquai vegn la glista mussada en ses agen urden.",
         "Where the transfer stands: requested, transferred or failed.": "Stadi dal transfer: dumandà, transferì u betg reussì.",
         "When the transfer to the e-depot was requested.": "Cura ch'il transfer a l'e-depot è vegnì dumandà.",
-        "When the transfer status last changed.": "Cura ch'il status dal transfer è sa midà l'ultima giada."
+        "When the transfer status last changed.": "Cura ch'il status dal transfer è sa midà l'ultima giada.",
+        "Organisation type": "Tip d'organisaziun",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Tscherni il tip d'organisaziun per la quala Vus publitgais. Las categorias d'infurmaziun per las qualas la Woo na vala betg per quest tip vegnan proponidas per zuppentar.",
+        "Municipality": "Vischnanca",
+        "Province": "Provinza",
+        "Water board": "Uffizi da las auas",
+        "Joint arrangement": "Regulaziun cuminaivla",
+        "Central government": "Administraziun centrala",
+        "Independent administrative body": "Organ administrativ autonom",
+        "Other": "Auter",
+        "Proposed for hiding": "Proponì per zuppentar",
+        "Hide the checked categories": "Zuppentar las categorias marcadas",
+        "The checked categories are hidden.": "Las categorias marcadas èn zuppentadas.",
+        "Choose one of the listed organisation types.": "Tscherni in dals tips d'organisaziun enumerads.",
+        "Legal basis": "Basa giuridica"
     },
     "nplurals=2; plural=(n != 1);"
 )

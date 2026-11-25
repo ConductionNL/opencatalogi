@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Jūsu secību neizdevās ielādēt, tāpēc saraksts tiek rādīts tā sākotnējā secībā.",
         "Where the transfer stands: requested, transferred or failed.": "Nodošanas stāvoklis: pieprasīta, nodota vai neizdevās.",
         "When the transfer to the e-depot was requested.": "Kad tika pieprasīta nodošana e-krātuvei.",
-        "When the transfer status last changed.": "Kad pēdējo reizi mainījās nodošanas statuss."
+        "When the transfer status last changed.": "Kad pēdējo reizi mainījās nodošanas statuss.",
+        "Organisation type": "Organizācijas veids",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Izvēlieties organizācijas veidu, kuras vārdā publicējat. Informācijas kategorijas, uz kurām Woo šim veidam neattiecas, tiek ieteiktas paslēpšanai.",
+        "Municipality": "Pašvaldība",
+        "Province": "Province",
+        "Water board": "Ūdens padome",
+        "Joint arrangement": "Kopīgs regulējums",
+        "Central government": "Centrālā valdība",
+        "Independent administrative body": "Patstāvīga pārvaldes iestāde",
+        "Other": "Cits",
+        "Proposed for hiding": "Ieteikts paslēpt",
+        "Hide the checked categories": "Paslēpt atzīmētās kategorijas",
+        "The checked categories are hidden.": "Atzīmētās kategorijas ir paslēptas.",
+        "Choose one of the listed organisation types.": "Izvēlieties vienu no norādītajiem organizācijas veidiem.",
+        "Legal basis": "Juridiskais pamats"
     },
     "plurals": {}
 }

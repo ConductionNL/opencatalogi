@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Omaa järjestystänne ei voitu ladata, joten luettelo näytetään sen omassa järjestyksessä.",
         "Where the transfer stands: requested, transferred or failed.": "Siirron tila: pyydetty, siirretty tai epäonnistunut.",
         "When the transfer to the e-depot was requested.": "Milloin siirtoa e-arkistoon pyydettiin.",
-        "When the transfer status last changed.": "Milloin siirron tila viimeksi muuttui."
+        "When the transfer status last changed.": "Milloin siirron tila viimeksi muuttui.",
+        "Organisation type": "Organisaation tyyppi",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Valitse organisaation tyyppi, jonka puolesta julkaiset. Tietoluokat, joihin Woo ei tälle tyypille sovellu, ehdotetaan piilotettaviksi.",
+        "Municipality": "Kunta",
+        "Province": "Maakunta",
+        "Water board": "Vesilautakunta",
+        "Joint arrangement": "Yhteinen järjestely",
+        "Central government": "Valtionhallinto",
+        "Independent administrative body": "Itsenäinen hallintoelin",
+        "Other": "Muu",
+        "Proposed for hiding": "Ehdotetaan piilotettaviksi",
+        "Hide the checked categories": "Piilota valitut luokat",
+        "The checked categories are hidden.": "Valitut luokat on piilotettu.",
+        "Choose one of the listed organisation types.": "Valitse jokin luetelluista organisaatiotyypeistä.",
+        "Legal basis": "Oikeusperusta"
     },
     "plurals": {}
 }

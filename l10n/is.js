@@ -886,7 +886,21 @@ OC.L10N.register(
         "Your own order could not be loaded, so the list is shown in its own order.": "Ekki tókst að hlaða ykkar eigin röð, svo listinn er sýndur í sinni eigin röð.",
         "Where the transfer stands: requested, transferred or failed.": "Staða flutningsins: beðið um, fluttur eða mistókst.",
         "When the transfer to the e-depot was requested.": "Hvenær beðið var um flutning í rafrænt safn.",
-        "When the transfer status last changed.": "Hvenær staða flutningsins breyttist síðast."
+        "When the transfer status last changed.": "Hvenær staða flutningsins breyttist síðast.",
+        "Organisation type": "Tegund stofnunar",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Veldu tegund stofnunarinnar sem þú birtir fyrir. Upplýsingaflokkar sem Woo á ekki við um fyrir þá tegund eru lagðir til að verði faldir.",
+        "Municipality": "Sveitarfélag",
+        "Province": "Hérað",
+        "Water board": "Vatnsráð",
+        "Joint arrangement": "Sameiginlegt fyrirkomulag",
+        "Central government": "Ríkisstjórn",
+        "Independent administrative body": "Sjálfstætt stjórnvald",
+        "Other": "Annað",
+        "Proposed for hiding": "Lagt til að fela",
+        "Hide the checked categories": "Fela merkta flokka",
+        "The checked categories are hidden.": "Merktu flokkarnir eru faldir.",
+        "Choose one of the listed organisation types.": "Veldu eina af tilgreindum tegundum stofnana.",
+        "Legal basis": "Lagagrundvöllur"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Teie enda järjestust ei õnnestunud laadida, seega kuvatakse loend selle enda järjestuses.",
         "Where the transfer stands: requested, transferred or failed.": "Ülekande seis: taotletud, üle antud või ebaõnnestunud.",
         "When the transfer to the e-depot was requested.": "Millal ülekannet e-hoidlasse taotleti.",
-        "When the transfer status last changed.": "Millal ülekande olek viimati muutus."
+        "When the transfer status last changed.": "Millal ülekande olek viimati muutus.",
+        "Organisation type": "Organisatsiooni tüüp",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Valige organisatsiooni tüüp, mille nimel avaldate. Teabekategooriad, millele Woo selle tüübi puhul ei kohaldu, pakutakse peitmiseks.",
+        "Municipality": "Omavalitsus",
+        "Province": "Provints",
+        "Water board": "Veenõukogu",
+        "Joint arrangement": "Ühiskorraldus",
+        "Central government": "Keskvalitsus",
+        "Independent administrative body": "Iseseisev haldusorgan",
+        "Other": "Muu",
+        "Proposed for hiding": "Pakutud peitmiseks",
+        "Hide the checked categories": "Peida märgitud kategooriad",
+        "The checked categories are hidden.": "Märgitud kategooriad on peidetud.",
+        "Choose one of the listed organisation types.": "Valige üks loetletud organisatsiooni tüüpidest.",
+        "Legal basis": "Õiguslik alus"
     },
     "plurals": {}
 }
