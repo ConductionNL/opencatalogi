@@ -2147,6 +2147,7 @@ OC.L10N.register(
         "The licence list could not be loaded.": "De licentielijst kon niet worden geladen.",
         "Licence of the datasets in the feed": "Licentie van de datasets in de feed",
         "The instance default licence": "De standaardlicentie van deze installatie",
+        "The catalogue or instance default licence": "De standaardlicentie van de catalogus of van deze installatie",
         "Default licence": "Standaardlicentie",
         "The licence the DCAT feed gives a catalogue that names none. Chosen from the EU licences list; with none chosen the feed carries no default licence.": "De licentie die de DCAT-feed geeft aan een catalogus die er zelf geen noemt. Gekozen uit de EU-licentielijst; zonder keuze heeft de feed geen standaardlicentie.",
         "The default licence could not be read.": "De standaardlicentie kon niet worden gelezen.",

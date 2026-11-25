@@ -2191,6 +2191,7 @@
         "The licence list could not be loaded.": "The licence list could not be loaded.",
         "Licence of the datasets in the feed": "Licence of the datasets in the feed",
         "The instance default licence": "The instance default licence",
+        "The catalogue or instance default licence": "The catalogue or instance default licence",
         "Default licence": "Default licence",
         "The licence the DCAT feed gives a catalogue that names none. Chosen from the EU licences list; with none chosen the feed carries no default licence.": "The licence the DCAT feed gives a catalogue that names none. Chosen from the EU licences list; with none chosen the feed carries no default licence.",
         "The default licence could not be read.": "The default licence could not be read.",

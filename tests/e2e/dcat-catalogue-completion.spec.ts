@@ -15,12 +15,16 @@
  * @e2e openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#scenario-an-editor-picks-a-licence REQ-DCC-001
  */
 import { expect, test } from './authenticated-request.ts'
+import { publicationScope } from './publication-catalog.ts'
 
 /** The admin settings page of the app. */
 const SETTINGS_PAGE = '/index.php/settings/admin/opencatalogi'
 
 /** The app's own API base path. */
 const API_BASE = '/index.php/apps/opencatalogi/api'
+
+/** OpenRegister's object API. */
+const OR_API = '/index.php/apps/openregister/api'
 
 /** The setting the default licence field writes. */
 const KEY = 'dcat_default_license'
@@ -59,6 +63,38 @@ test.describe('DCAT catalogue completion', () => {
 			expect((await kept.json())?.configuration?.[KEY]).toBe(chosen.iri)
 		} finally {
 			await admin.put(`${API_BASE}/settings`, { data: { [KEY]: original } })
+		}
+	})
+
+	/**
+	 * The publication's own licence (task 1.4): the schema declares `license` as a field
+	 * from the EU licences list, a listed licence is stored as its authority IRI, and a
+	 * value outside the list is refused on save, naming the field.
+	 */
+	test('a publication takes its licence from the list', async ({ request }) => {
+		const scope = await publicationScope(request)
+		const schema = await (await request.get(`${OR_API}/schemas/${scope.schema}`)).json()
+		expect(schema?.properties?.license?.['x-value-list']).toBe('licence')
+
+		const rows = ((await (await request.get(`${API_BASE}/dcat/licences`)).json())?.results ?? []) as Array<{ iri: string }>
+		expect(rows.length).toBeGreaterThan(0)
+
+		const objects = `${OR_API}/objects/${scope.register}/${scope.schema}`
+		const listed = await request.post(objects, {
+			data: { title: `dcc-${Date.now()} licensed`, status: 'draft', license: rows[0].iri },
+		})
+		expect(listed.ok(), `listed: ${await listed.text()}`).toBe(true)
+		const id = String((await listed.json()).id)
+
+		try {
+			const unlisted = await request.post(objects, {
+				data: { title: `dcc-${Date.now()} unlisted`, status: 'draft', license: 'vrij te gebruiken' },
+			})
+			expect(unlisted.ok()).toBe(false)
+			expect(await unlisted.text()).toMatch(/licen[cs]e/i)
+			expect((await (await request.get(`${objects}/${id}`)).json())?.license).toBe(rows[0].iri)
+		} finally {
+			await request.delete(`${objects}/${id}`).catch(() => undefined)
 		}
 	})
 })

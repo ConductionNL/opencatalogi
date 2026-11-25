@@ -1,0 +1,18 @@
+{
+	"_note": "dcat-catalogue-completion REQ-DCC-001 (task 1.4): the publication's own licence, chosen from the EU licences authority list. DcatMappingService already reads `license` and LicenceCheck refuses an unlisted new value; declaring it lets the publication form offer the picker (the form shows LicencePicker for a property whose x-value-list is `licence`) and documents it. Empty means the catalogue's or the instance's default licence applies. The schema version bump lives in woo-x-access-boundary-hardening.json, which sorts last and so wins the scalar merge.",
+	"components": {
+		"schemas": {
+			"publication": {
+				"properties": {
+					"license": {
+						"type": "string",
+						"format": "uri",
+						"title": "Licence",
+						"description": "The licence of this publication's data, from the EU licences list. Empty: the catalogue's or the instance's default licence applies.",
+						"x-value-list": "licence"
+					}
+				}
+			}
+		}
+	}
+}
