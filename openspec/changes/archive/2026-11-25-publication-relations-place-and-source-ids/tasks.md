@@ -34,9 +34,10 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 6. Verification
 
-- [ ] 6.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
-- [ ] 6.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran. gate-98 sees the repair step; gate-19 wants the `@e2e` reference of 1.4.
-- [ ] 6.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 6.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 6.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
+- [x] 6.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran. gate-98 sees the repair step; gate-19 wants the `@e2e` reference of 1.4.
+- [x] 6.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+- [x] 6.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - Done 25 Nov 2026 (b-opencatalogi), against `development` after the change's PRs landed, in a Nextcloud 34 tree with OpenRegister main: full PHPUnit 7300 tests, 4 errors, all `DirectoryServiceTest::testDoCronSync*` (inherited, not this change). Full hydra run: gate-98 repair-step-registration judges a diff and had none here; `MirrorCaseReferenceIntoSourceIdentifiers` is registered post-migration (2.2's test). The 1.4 scenario carries its `@e2e` reference; the four failing gates (7, 26, 119, 123) are inherited and outside this change's files (#3065). `npm run lint` errors only in `DashboardSideBar.vue`, not touched here.
 
 Done when merged on `development` with CI green. Rows 2.15 and 2.19 become `production` only once a store release ships it; 2.16 is struck by D10.
