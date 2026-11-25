@@ -3,10 +3,10 @@
 /**
  * OpenCatalogi Value List Choice Store.
  *
- * Reads the organisation's choices about value-list entries: the
- * `valueListChoice` objects in the publication register. It only reads; the
- * administrator writes choices through OpenRegister, where
- * {@see \OCA\OpenCatalogi\Listener\ValueListChoiceListener} guards the save.
+ * Reads and writes the organisation's choices about value-list entries: the
+ * `valueListChoice` objects in the publication register. Every write goes
+ * through OpenRegister's save, so
+ * {@see \OCA\OpenCatalogi\Listener\ValueListChoiceListener} guards it.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service\Woo
@@ -26,6 +26,8 @@ namespace OCA\OpenCatalogi\Service\Woo;
 
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -86,19 +88,78 @@ class ValueListChoiceStore {
 			throw new RuntimeException('OpenRegister is not available, so the value list choices cannot be read.');
 		}
 
-		$register = trim($this->config->getValueString('opencatalogi', 'publication_register', ''));
-		$schema = trim($this->config->getValueString('opencatalogi', self::SCHEMA_KEY, ''));
-		if ($register === '' || $schema === '') {
-			throw new RuntimeException('Register configuration is not set for publication_register / ' . self::SCHEMA_KEY . '.');
+		$choices = [];
+		foreach ($this->stored(scheme: $scheme) as $stored) {
+			$choices[(string)$stored['entry']] = self::choiceOf(stored: $stored);
 		}
 
+		return $choices;
+
+	}//end forScheme()
+
+	/**
+	 * Save the organisation's choice about one entry, merged onto the choice stored before.
+	 *
+	 * Written as the system after the caller's administrator check; the
+	 * pre-save guard still refuses a field a choice does not own.
+	 *
+	 * @param string               $scheme The list.
+	 * @param string               $entry  The entry's URI.
+	 * @param array<string, mixed> $fields The choice's own fields to change; any other key is passed on and refused by the guard.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When OpenRegister or the schema configuration is not there.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
+	 */
+	public function save(string $scheme, string $entry, array $fields): void {
+		if ($this->openRegister->isInstalled() === false) {
+			throw new RuntimeException('OpenRegister is not available, so the value list choice cannot be saved.');
+		}
+
+		$existing = null;
+		$object = ['scheme' => $scheme, 'entry' => $entry];
+		foreach ($this->stored(scheme: $scheme) as $stored) {
+			if ($stored['entry'] === $entry) {
+				$existing = (string)($stored['id'] ?? '');
+				$object = array_intersect_key($stored, array_flip(self::PROPERTIES));
+				break;
+			}
+		}
+
+		if ($existing === '') {
+			$existing = null;
+		}
+
+		[$register, $schema] = $this->target();
+		$this->openRegister->objectService()->saveObject(
+			object: array_merge($object, $fields, ['scheme' => $scheme, 'entry' => $entry]),
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: $schema), uuid: $existing),
+			_rbac: false,
+			_multitenancy: false
+		);
+
+	}//end save()
+
+	/**
+	 * The stored choices of one list, each with its `id` and a non-empty `entry`.
+	 *
+	 * @param string $scheme The list.
+	 *
+	 * @return list<array<string, mixed>>
+	 *
+	 * @throws RuntimeException When OpenRegister or the schema configuration is not there.
+	 */
+	private function stored(string $scheme): array {
+		[$register, $schema] = $this->target();
 		$result = $this->openRegister->objectService()->searchObjectsPaginated(
 			query: ['@self' => ['register' => $register, 'schema' => $schema], 'scheme' => $scheme, '_limit' => 1000],
 			_rbac: false,
 			_multitenancy: false
 		);
 
-		$choices = [];
+		$rows = [];
 		foreach ((array)($result['results'] ?? []) as $row) {
 			$stored = $this->asRecord(object: $row);
 			$entry = trim((string)($stored['entry'] ?? ''));
@@ -106,12 +167,31 @@ class ValueListChoiceStore {
 				continue;
 			}
 
-			$choices[$entry] = self::choiceOf(stored: $stored);
+			$stored['entry'] = $entry;
+			$rows[] = $stored;
 		}
 
-		return $choices;
+		return $rows;
 
-	}//end forScheme()
+	}//end stored()
+
+	/**
+	 * The publication register and the valueListChoice schema from the app config.
+	 *
+	 * @return array{0: string, 1: string}
+	 *
+	 * @throws RuntimeException When either is not configured.
+	 */
+	private function target(): array {
+		$register = trim($this->config->getValueString('opencatalogi', 'publication_register', ''));
+		$schema = trim($this->config->getValueString('opencatalogi', self::SCHEMA_KEY, ''));
+		if ($register === '' || $schema === '') {
+			throw new RuntimeException('Register configuration is not set for publication_register / ' . self::SCHEMA_KEY . '.');
+		}
+
+		return [$register, $schema];
+
+	}//end target()
 
 	/**
 	 * The choice a stored object holds, in a fixed shape.

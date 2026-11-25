@@ -259,6 +259,8 @@
 
 				<RefusalGroundsSource />
 
+				<WooCategoryExplanations />
+
 				<DonlHarvestStatus />
 
 				<DcatDefaultLicence />
@@ -754,6 +756,7 @@ import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
 import RecordHandover from './RecordHandover.vue'
 import RefusalGroundsSource from './RefusalGroundsSource.vue'
+import WooCategoryExplanations from './WooCategoryExplanations.vue'
 import WooIncidents from './WooIncidents.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
@@ -881,6 +884,7 @@ export default defineComponent({
 		PublishRightsLine,
 		RecordHandover,
 		RefusalGroundsSource,
+		WooCategoryExplanations,
 		WooIndexConnection,
 		WooIncidents,
 		DcatDefaultLicence,

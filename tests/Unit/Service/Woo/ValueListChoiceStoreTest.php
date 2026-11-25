@@ -21,6 +21,7 @@ namespace OCA\OpenCatalogi\Tests\Unit\Service\Woo;
 
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -38,6 +39,13 @@ class ValueListChoiceStoreTest extends TestCase {
 	 * @var list<array<string, mixed>>
 	 */
 	private array $queries = [];
+
+	/**
+	 * The saves sent to OpenRegister.
+	 *
+	 * @var list<array{object: array<string, mixed>, options: mixed}>
+	 */
+	private array $saves = [];
 
 	/**
 	 * The store over a configured register and an object service answering the rows.
@@ -77,6 +85,18 @@ class ValueListChoiceStoreTest extends TestCase {
 				$this->test->record(query: $query);
 				return ['results' => $this->rows];
 			}
+
+			/**
+			 * @param array<string, mixed> $object The object.
+			 * @param mixed $options The save options.
+			 * @param bool $_rbac Whether RBAC applies.
+			 * @param bool $_multitenancy Whether multitenancy applies.
+			 * @return array<string, mixed>
+			 */
+			public function saveObject(array $object, mixed $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				$this->test->recordSave(object: $object, options: $options);
+				return $object;
+			}
 		};
 
 		$openRegister = $this->createMock(originalClassName: OpenRegisterLookupInterface::class);
@@ -96,6 +116,53 @@ class ValueListChoiceStoreTest extends TestCase {
 	public function record(array $query): void {
 		$this->queries[] = $query;
 	}//end record()
+
+	/**
+	 * Record one save.
+	 *
+	 * @param array<string, mixed> $object  The object.
+	 * @param mixed                $options The save options.
+	 *
+	 * @return void
+	 */
+	public function recordSave(array $object, mixed $options): void {
+		$this->saves[] = ['object' => $object, 'options' => $options];
+	}//end recordSave()
+
+	/**
+	 * A new choice is created in the configured register and schema.
+	 *
+	 * @return void
+	 */
+	public function testANewChoiceIsCreated(): void {
+		$this->store(rows: [])->save(scheme: 'informatiecategorieen', entry: 'https://example.org/c1', fields: ['explanation' => 'Uitleg']);
+
+		$this->assertCount(expectedCount: 1, haystack: $this->saves);
+		$this->assertSame(
+			expected: ['scheme' => 'informatiecategorieen', 'entry' => 'https://example.org/c1', 'explanation' => 'Uitleg'],
+			actual: $this->saves[0]['object']
+		);
+		$this->assertInstanceOf(expected: ObjectSaveOptions::class, actual: $this->saves[0]['options']);
+		$this->assertNull(actual: $this->saves[0]['options']->uuid);
+		$this->assertSame(expected: '41', actual: $this->saves[0]['options']->target->schema);
+	}//end testANewChoiceIsCreated()
+
+	/**
+	 * Saving onto an existing choice updates it and keeps the fields not changed.
+	 *
+	 * @return void
+	 */
+	public function testAnExistingChoiceKeepsWhatIsNotChanged(): void {
+		$this->store(rows: [
+			['id' => 'choice-9', 'scheme' => 'informatiecategorieen', 'entry' => 'https://example.org/c1', 'order' => 3, 'localLabel' => 'Eigen', 'explanation' => 'Oud'],
+		])->save(scheme: 'informatiecategorieen', entry: 'https://example.org/c1', fields: ['explanation' => 'Nieuw']);
+
+		$this->assertSame(expected: 'choice-9', actual: $this->saves[0]['options']->uuid);
+		$this->assertSame(expected: 3, actual: $this->saves[0]['object']['order']);
+		$this->assertSame(expected: 'Eigen', actual: $this->saves[0]['object']['localLabel']);
+		$this->assertSame(expected: 'Nieuw', actual: $this->saves[0]['object']['explanation']);
+		$this->assertArrayNotHasKey(key: 'id', array: $this->saves[0]['object']);
+	}//end testAnExistingChoiceKeepsWhatIsNotChanged()
 
 	/**
 	 * The choices of a list are keyed by entry, in a fixed shape; rows of another list are left out.

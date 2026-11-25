@@ -80,6 +80,9 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'woo#categories', 'url' => '/api/woo/categories', 'verb' => 'GET'],
 		// The visible categories with the organisation's explanation, public, for a portal filter (woo-value-list-curation, REQ-WVL-003).
 		['name' => 'publicCategories#index', 'url' => '/api/woo/categories/public', 'verb' => 'GET'],
+		// An administrator curates a value list: the list with the organisation's choices, and one choice saved (REQ-WVL-003).
+		['name' => 'valueListChoices#index', 'url' => '/api/woo/value-list-choices', 'verb' => 'GET'],
+		['name' => 'valueListChoices#update', 'url' => '/api/woo/value-list-choices', 'verb' => 'PUT'],
 		// The annual report's availability (woo-annual-report, REQ-WAR-002).
 		['name' => 'annualReport#availability', 'url' => '/api/reports/annual', 'verb' => 'GET'],
 		// Every controlled-list entry, public: declared before `/api/{catalogSlug}`, which would match it.
