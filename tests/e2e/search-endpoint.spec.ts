@@ -30,17 +30,23 @@ test.describe('Search endpoint', () => {
 
 	test('GET /api/search answers 200 with results', async ({ request }) => {
 		await publicationCatalog(request, `search-${WORD}`)
+		// A publication starts in draft; it is made public through the lifecycle's
+		// own transitions, as an editor would.
 		const created = await request.post(OBJECTS, {
 			data: {
 				title: `E2E ${WORD}`,
 				summary: 'A public publication for the search check.',
-				status: 'published',
-				publicationDate: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
+				description: 'Created by the search endpoint e2e check.',
 			},
 		})
 		expect(created.ok(), await created.text()).toBe(true)
 		const body = await created.json()
 		publicationId = String(body?.id ?? body?.['@self']?.id ?? body?.uuid ?? '')
+		for (const action of ['submit', 'approve', 'publish']) {
+			const data = action === 'publish' ? { publicationDate: new Date(Date.now() - 24 * 3600 * 1000).toISOString() } : {}
+			const moved = await request.post(`/index.php/apps/openregister/api/objects/${publicationId}/transition`, { data: { action, data } })
+			expect(moved.ok(), `${action}: ${await moved.text()}`).toBe(true)
+		}
 
 		await expect.poll(async () => {
 			const res = await request.get(SEARCH, { params: { _search: WORD } })
