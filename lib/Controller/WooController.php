@@ -191,7 +191,7 @@ class WooController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function createBatch(): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'processWooBatch');
+		$refusal = $this->requireCapability(verb: 'processWooBatch');
 		if ($refusal !== null) {
 			return $refusal;
 		}
@@ -256,7 +256,7 @@ class WooController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function getBatch(string $batchId): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'processWooBatch');
+		$refusal = $this->requireCapability(verb: 'processWooBatch');
 		if ($refusal !== null) {
 			return $refusal;
 		}
@@ -289,7 +289,7 @@ class WooController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function updateAssessment(string $batchId, string $docId): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'processWooBatch');
+		$refusal = $this->requireCapability(verb: 'processWooBatch');
 		if ($refusal !== null) {
 			return $refusal;
 		}
@@ -355,7 +355,7 @@ class WooController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function markReadyForReview(string $batchId): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'processWooBatch');
+		$refusal = $this->requireCapability(verb: 'processWooBatch');
 		if ($refusal !== null) {
 			return $refusal;
 		}
@@ -385,7 +385,7 @@ class WooController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function inventarislijst(string $batchId): DataDownloadResponse|JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'processWooBatch');
+		$refusal = $this->requireCapability(verb: 'processWooBatch');
 		if ($refusal !== null) {
 			return $refusal;
 		}
@@ -429,7 +429,7 @@ class WooController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function publishBatch(string $batchId): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'publishWooBatch');
+		$refusal = $this->requireCapability(verb: 'publishWooBatch');
 		if ($refusal !== null) {
 			return $refusal;
 		}

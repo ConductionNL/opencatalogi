@@ -139,7 +139,7 @@ class DepublicationController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function depublish(): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'depublish');
+		$refusal = $this->requireCapability(verb: 'depublish');
 		if ($refusal !== null) {
 			return $refusal;
 		}
@@ -418,7 +418,7 @@ class DepublicationController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function acknowledgeWithdrawal(): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'depublish');
+		$refusal = $this->requireCapability(verb: 'depublish');
 		if ($refusal !== null) {
 			return $refusal;
 		}

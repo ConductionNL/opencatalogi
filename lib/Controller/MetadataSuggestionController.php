@@ -73,6 +73,9 @@ class MetadataSuggestionController extends Controller {
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) answer() hands every step the user id; the overview does not need it.
+	 *
+	 * @no-admin-idor-exempt Every step reads the publication through MetadataSuggestionDecisions, which finds it with
+	 *                       _rbac: true (404 when the caller cannot read it) and checks the update right before a write.
 	 */
 	#[NoAdminRequired]
 	public function index(string $id): JSONResponse {
@@ -87,6 +90,9 @@ class MetadataSuggestionController extends Controller {
 	 * @return JSONResponse `{suggestions}` the new ones, 400 for another source, 409 `hermiq-unavailable` without Hermiq.
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
+	 *
+	 * @no-admin-idor-exempt Every step reads the publication through MetadataSuggestionDecisions, which finds it with
+	 *                       _rbac: true (404 when the caller cannot read it) and checks the update right before a write.
 	 */
 	#[NoAdminRequired]
 	public function create(string $id): JSONResponse {
@@ -111,6 +117,9 @@ class MetadataSuggestionController extends Controller {
 	 * @return JSONResponse `{suggestion}`, 403 without the update right on its publication, 409 when already decided.
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
+	 *
+	 * @no-admin-idor-exempt The suggestion's publication is read through MetadataSuggestionDecisions with _rbac: true
+	 *                       (404 when the caller cannot read it) and the update right is checked before anything is written.
 	 */
 	#[NoAdminRequired]
 	public function accept(string $id): JSONResponse {
@@ -125,6 +134,9 @@ class MetadataSuggestionController extends Controller {
 	 * @return JSONResponse `{suggestion}`, 403 without the update right on its publication, 409 when already decided.
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
+	 *
+	 * @no-admin-idor-exempt The suggestion's publication is read through MetadataSuggestionDecisions with _rbac: true
+	 *                       (404 when the caller cannot read it) and the update right is checked before anything is written.
 	 */
 	#[NoAdminRequired]
 	public function reject(string $id): JSONResponse {

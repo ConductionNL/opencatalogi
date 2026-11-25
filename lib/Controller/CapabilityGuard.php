@@ -37,7 +37,10 @@ use OCP\IUserSession;
 trait CapabilityGuard {
 
 	/**
-	 * Null when the current user holds the right, else a 403 naming it.
+	 * Require the right: null when the current user holds it, else a 403 naming it.
+	 *
+	 * The caller returns the refusal at once, so a method that calls this first is authorised by
+	 * CapabilityRights::may() before it touches any object.
 	 *
 	 * @param string $verb The right, one of CapabilityRights::VERBS.
 	 *
@@ -45,7 +48,7 @@ trait CapabilityGuard {
 	 *
 	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
 	 */
-	private function capabilityRefusal(string $verb): ?JSONResponse {
+	private function requireCapability(string $verb): ?JSONResponse {
 		$userId = null;
 		if ($this->userSession instanceof IUserSession) {
 			$userId = $this->userSession->getUser()?->getUID();
@@ -63,5 +66,5 @@ trait CapabilityGuard {
 			Http::STATUS_FORBIDDEN
 		);
 
-	}//end capabilityRefusal()
+	}//end requireCapability()
 }//end trait

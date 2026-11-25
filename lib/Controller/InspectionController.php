@@ -116,7 +116,7 @@ class InspectionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function open(): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'openInspection');
+		$refusal = $this->requireCapability(verb: 'openInspection');
 		if ($refusal !== null) {
 			return $refusal;
 		}

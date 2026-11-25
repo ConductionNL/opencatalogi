@@ -171,7 +171,7 @@ class RetentionController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function decide(string $id): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'decideRetention');
+		$refusal = $this->requireCapability(verb: 'decideRetention');
 		if ($refusal !== null) {
 			return $refusal;
 		}
