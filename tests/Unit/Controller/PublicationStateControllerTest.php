@@ -406,8 +406,7 @@ class PublicationStateControllerTest extends TestCase {
 					config: $config,
 					logger: $this->createMock(originalClassName: LoggerInterface::class)
 				)
-			),
-			$freezer
+			)
 		);
 		$this->controller = ($this->build)(null);
 		$this->container = $container;

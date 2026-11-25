@@ -35,7 +35,6 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
-use OCA\OpenCatalogi\Service\Publication\PublicationFreezer;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
@@ -74,8 +73,6 @@ class PublicationStateController extends Controller {
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
 	 * @param PublishTransition $publisher Runs the lifecycle transition that publishes (REQ-PLC-003), says whether an embargo
 	 *                                     holds (REQ-PSG-001) and counts the documents (REQ-PSG-004).
-	 * @param PublicationFreezer|null $freezer Lifts a withdrawal's freeze when the publication is published again;
-	 *                                         without one a frozen publication cannot be published again.
 	 */
 	public function __construct(
 		$appName,
@@ -85,7 +82,6 @@ class PublicationStateController extends Controller {
 		private readonly PublicationRightsInterface $rights,
 		private readonly PublicationTransitions $registers,
 		private readonly PublishTransition $publisher,
-		private readonly ?PublicationFreezer $freezer=null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -305,7 +301,9 @@ class PublicationStateController extends Controller {
 			return $this->conflict(state: $state);
 		}
 
-		$guard = ($this->embargoHolds(properties: $properties) ?? $this->noDocuments(id: $id, publication: $publication) ?? $this->unfreezeWithdrawn(state: $state, properties: $properties));
+		$guard = ($this->embargoHolds(properties: $properties)
+			?? $this->noDocuments(id: $id, publication: $publication)
+			?? $this->unfreezeWithdrawn(state: $state, properties: $properties));
 		if ($guard !== null) {
 			return $guard;
 		}
@@ -337,16 +335,12 @@ class PublicationStateController extends Controller {
 			return null;
 		}
 
-		if ($this->freezer === null) {
-			return new JSONResponse(data: ['error' => 'frozen', 'detail' => 'No freezer is wired to lift the withdrawal\'s freeze.'], statusCode: Http::STATUS_CONFLICT);
-		}
-
 		$reason = trim((string)$this->request->getParam('reason', ''));
 		if ($reason === '') {
 			$reason = 'Published again';
 		}
 
-		$answer = $this->freezer->liftWithdrawalFreeze(publication: $properties, reason: $reason);
+		$answer = $this->registers->liftWithdrawalFreeze(publication: $properties, reason: $reason);
 		if ($answer['unfrozen'] === true) {
 			return null;
 		}
