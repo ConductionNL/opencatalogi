@@ -51,7 +51,7 @@ test.describe('Subjects', () => {
 	test.describe.configure({ mode: 'serial' })
 	test.setTimeout(120_000)
 
-	const created: Array<{ schema: string, id: string }> = []
+	const created: Array<{ schema: string; id: string }> = []
 
 	/**
 	 * Create an object as the administrator and remember it for cleanup.
@@ -61,7 +61,11 @@ test.describe('Subjects', () => {
 	 * @param data The object.
 	 * @return The id.
 	 */
-	async function create(request: APIRequestContext, schema: string, data: Record<string, unknown>): Promise<string> {
+	async function create(
+		request: APIRequestContext,
+		schema: string,
+		data: Record<string, unknown>,
+	): Promise<string> {
 		const res = await request.post(`${OBJECTS}/${schema}`, { data })
 		expect(res.ok(), `creating a ${schema}: ${await res.text()}`).toBe(true)
 		const id = idOf(await res.json())
@@ -79,8 +83,12 @@ test.describe('Subjects', () => {
 	 */
 	async function publish(request: APIRequestContext, id: string): Promise<void> {
 		for (const status of ['in_review', 'approved', 'published']) {
-			const res = await request.patch(`${OBJECTS}/publication/${id}`, { data: { status } })
-			expect(res.ok(), `moving ${id} to ${status}: ${await res.text()}`).toBe(true)
+			const res = await request.patch(`${OBJECTS}/publication/${id}`, {
+				data: { status },
+			})
+			expect(res.ok(), `moving ${id} to ${status}: ${await res.text()}`).toBe(
+				true,
+			)
 		}
 	}
 
@@ -90,38 +98,82 @@ test.describe('Subjects', () => {
 		}
 	})
 
-	test('an administrator features a subject', async ({ request, playwright, baseURL, page }) => {
-		const second = await create(request, 'theme', { title: `E2E Zwembad ${RUN}`, slug: `e2e-zwembad-${RUN}`, summary: 'Tweede onderwerp.', description: 'Tweede.' })
-		const first = await create(request, 'theme', { title: `E2E Parkeren ${RUN}`, slug: `e2e-parkeren-${RUN}`, summary: 'Eerste onderwerp.', description: 'Eerste.' })
+	test('an administrator features a subject', async ({
+		request,
+		playwright,
+		baseURL,
+		page,
+	}) => {
+		const second = await create(request, 'theme', {
+			title: `E2E Zwembad ${RUN}`,
+			slug: `e2e-zwembad-${RUN}`,
+			summary: 'Tweede onderwerp.',
+			description: 'Tweede.',
+		})
+		const first = await create(request, 'theme', {
+			title: `E2E Parkeren ${RUN}`,
+			slug: `e2e-parkeren-${RUN}`,
+			summary: 'Eerste onderwerp.',
+			description: 'Eerste.',
+		})
 
-		for (const [id, order] of [[second, 2], [first, 1]] as const) {
-			const res = await request.patch(`${OBJECTS}/theme/${id}`, { data: { featured: true, featuredOrder: order } })
+		for (const [id, order] of [
+			[second, 2],
+			[first, 1],
+		] as const) {
+			const res = await request.patch(`${OBJECTS}/theme/${id}`, {
+				data: { featured: true, featuredOrder: order },
+			})
 			expect(res.ok(), `featuring ${id}: ${await res.text()}`).toBe(true)
 		}
 
-		const anonymous = await playwright.request.newContext({ baseURL, storageState: { cookies: [], origins: [] } })
+		const anonymous = await playwright.request.newContext({
+			baseURL,
+			storageState: { cookies: [], origins: [] },
+		})
 		try {
 			const res = await anonymous.get(`${APP_API}/themes?featured=true`)
 			expect(res.ok(), await res.text()).toBe(true)
-			const ids = (((await res.json())?.results ?? []) as Array<{ id?: string }>).map((subject) => String(subject.id))
+			const ids = (
+				((await res.json())?.results ?? []) as Array<{ id?: string }>
+			).map((subject) => String(subject.id))
 			expect(ids).toContain(first)
 			expect(ids).toContain(second)
-			expect(ids.indexOf(first), 'order 1 comes before order 2').toBeLessThan(ids.indexOf(second))
+			expect(ids.indexOf(first), 'order 1 comes before order 2').toBeLessThan(
+				ids.indexOf(second),
+			)
 		} finally {
 			await anonymous.dispose()
 		}
 
 		// The theme page offers the toggle and, with it on, the order.
 		await page.goto(`${APP_BASE}/themes/${first}`)
-		await expect(page.getByText('Featured', { exact: true }).first()).toBeVisible()
-		await expect(page.getByText('Featured order', { exact: true }).first()).toBeVisible()
+		await expect(
+			page.getByText('Featured', { exact: true }).first(),
+		).toBeVisible()
+		await expect(
+			page.getByText('Featured order', { exact: true }).first(),
+		).toBeVisible()
 	})
 
-	test('a subject lists what is filed under it', async ({ request, playwright, baseURL, page }) => {
+	test('a subject lists what is filed under it', async ({
+		request,
+		playwright,
+		baseURL,
+		page,
+	}) => {
 		const slug = `e2e-sporthal-${RUN}`
-		const subject = await create(request, 'theme', { title: `E2E Sporthal ${RUN}`, summary: 'Een onderwerp met publicaties.', slug })
+		const subject = await create(request, 'theme', {
+			title: `E2E Sporthal ${RUN}`,
+			summary: 'Een onderwerp met publicaties.',
+			slug,
+		})
 
-		const dates = ['2026-03-01T09:00:00+00:00', '2026-05-01T09:00:00+00:00', '2026-04-01T09:00:00+00:00']
+		const dates = [
+			'2026-03-01T09:00:00+00:00',
+			'2026-05-01T09:00:00+00:00',
+			'2026-04-01T09:00:00+00:00',
+		]
 		const byDate: Record<string, string> = {}
 		for (const [index, publicationDate] of dates.entries()) {
 			byDate[publicationDate] = await create(request, 'publication', {
@@ -138,12 +190,20 @@ test.describe('Subjects', () => {
 			themes: [subject],
 		})
 
-		const anonymous = await playwright.request.newContext({ baseURL, storageState: { cookies: [], origins: [] } })
+		const anonymous = await playwright.request.newContext({
+			baseURL,
+			storageState: { cookies: [], origins: [] },
+		})
 		try {
 			const res = await anonymous.get(`${APP_API}/themes/${slug}/publications`)
 			expect(res.ok(), await res.text()).toBe(true)
-			const ids = (((await res.json())?.results ?? []) as Array<Record<string, unknown>>).map((row) => idOf(row))
-			const newestFirst = [...dates].sort().reverse().map((date) => byDate[date])
+			const ids = (
+				((await res.json())?.results ?? []) as Array<Record<string, unknown>>
+			).map((row) => idOf(row))
+			const newestFirst = [...dates]
+				.sort()
+				.reverse()
+				.map((date) => byDate[date])
 			expect(ids).toEqual(newestFirst)
 			expect(ids).not.toContain(draft)
 		} finally {
@@ -154,7 +214,9 @@ test.describe('Subjects', () => {
 		await page.goto(`${APP_BASE}/themes/${subject}`)
 		await expect(page.getByText(`E2E Sporthal concept ${RUN}`)).toBeVisible()
 		for (const index of dates.keys()) {
-			await expect(page.getByText(`E2E Sporthal besluit ${index + 1} ${RUN}`)).toBeVisible()
+			await expect(
+				page.getByText(`E2E Sporthal besluit ${index + 1} ${RUN}`),
+			).toBeVisible()
 		}
 	})
 })
