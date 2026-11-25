@@ -11,8 +11,8 @@
  */
 
 import axios from '@nextcloud/axios'
-import ValueListOrder from './ValueListOrder.vue'
 import { CHOICES_URL, ORDER_URL } from './CategoryExplanations.vue'
+import ValueListOrder from './ValueListOrder.vue'
 
 jest.mock('@nextcloud/axios', () => ({
 	__esModule: true,

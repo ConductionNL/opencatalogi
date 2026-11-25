@@ -3,20 +3,14 @@
   - SPDX-License-Identifier: EUPL-1.2
 -->
 <template>
-	<div class="value-list-order" :data-testid="'value-list-order-' + scheme">
+	<section class="value-list-order" :data-testid="'value-list-order-' + scheme">
 		<h3 class="value-list-order__heading">
 			{{ heading }}
 		</h3>
-		<NcNoteCard
-			v-if="error"
-			type="error"
-			:data-testid="'value-list-order-error-' + scheme">
+		<NcNoteCard v-if="error" type="error">
 			{{ error }}
 		</NcNoteCard>
-		<NcNoteCard
-			v-if="choicesUnavailable"
-			type="warning"
-			:data-testid="'value-list-order-unavailable-' + scheme">
+		<NcNoteCard v-if="choicesUnavailable" type="warning">
 			{{
 				t(
 					'opencatalogi',
@@ -24,56 +18,38 @@
 				)
 			}}
 		</NcNoteCard>
-		<p
-			class="hidden-visually"
-			aria-live="polite"
-			:data-testid="'value-list-order-announcement-' + scheme">
+		<p class="hidden-visually" aria-live="polite">
 			{{ announcement }}
 		</p>
 		<ol class="value-list-order__list">
 			<li
 				v-for="(entry, index) in entries"
 				:key="entry.uri"
-				class="value-list-order__row"
-				:data-testid="'value-list-entry-' + scheme + '-' + index">
+				class="value-list-order__row">
 				<span class="value-list-order__label">{{ entry.label }}</span>
-				<NcButton
-					:aria-label="
-						t('opencatalogi', 'Move {label} up', { label: entry.label })
-					"
-					:disabled="reordering || index === 0"
-					:data-testid="'value-list-move-up-' + scheme + '-' + index"
-					@click="move(index, -1)">
-					{{ t('opencatalogi', 'Move up') }}
-				</NcButton>
-				<NcButton
-					:aria-label="
-						t('opencatalogi', 'Move {label} down', {
-							label: entry.label,
-						})
-					"
-					:disabled="reordering || index === entries.length - 1"
-					:data-testid="'value-list-move-down-' + scheme + '-' + index"
-					@click="move(index, 1)">
-					{{ t('opencatalogi', 'Move down') }}
-				</NcButton>
+				<ValueListMoveButtons
+					:label="entry.label"
+					:index="index"
+					:count="entries.length"
+					:disabled="reordering"
+					testidPrefix="value-list"
+					:testidKey="scheme + '-' + index"
+					@move="move(index, $event)" />
 			</li>
 		</ol>
-	</div>
+	</section>
 </template>
 
 <script>
-import axios from '@nextcloud/axios'
-import { translate as t } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
-import { NcButton, NcNoteCard } from '@nextcloud/vue'
-import { CHOICES_URL, ORDER_URL, moveEntry } from './CategoryExplanations.vue'
+import { NcNoteCard } from '@nextcloud/vue'
+import ValueListMoveButtons from './ValueListMoveButtons.vue'
+import { fetchList, saveMove } from './valueListOrder.js'
 
 /**
  * Move up and Move down for one value list in the Woo settings (REQ-WVL-002).
  *
  * The information categories have their own section with explanations
- * ({@link CategoryExplanations}); this section orders any other list, such as
+ * (CategoryExplanations); this section orders any other list, such as
  * soort handeling and documentsoorten, through the same value-list choices:
  * the order is the organisation's own choice beside the national entry.
  *
@@ -82,23 +58,13 @@ import { CHOICES_URL, ORDER_URL, moveEntry } from './CategoryExplanations.vue'
 export default {
 	name: 'ValueListOrder',
 
-	components: { NcButton, NcNoteCard },
+	components: { NcNoteCard, ValueListMoveButtons },
 
 	props: {
-		/**
-		 * The list, one of the value-list schemes (e.g. `soortHandeling`).
-		 */
-		scheme: {
-			type: String,
-			required: true,
-		},
-		/**
-		 * The section heading, already translated.
-		 */
-		heading: {
-			type: String,
-			required: true,
-		},
+		/** The list, one of the value-list schemes (e.g. `soortHandeling`). */
+		scheme: { type: String, required: true },
+		/** The section heading, already translated. */
+		heading: { type: String, required: true },
 	},
 
 	data() {
@@ -125,10 +91,7 @@ export default {
 		async load() {
 			this.error = null
 			try {
-				const { data } = await axios.get(generateUrl(CHOICES_URL), {
-					params: { scheme: this.scheme },
-				})
-				this.apply(data)
+				this.apply(await fetchList(this.scheme))
 			} catch (err) {
 				this.entries = []
 				this.error = err.response?.data?.error || err.message
@@ -136,10 +99,7 @@ export default {
 		},
 
 		/**
-		 * Move an entry one place up (-1) or down (1) and save the new order.
-		 *
-		 * The live region says where the entry is now, so the move is
-		 * announced to a keyboard or screen-reader user.
+		 * Move an entry one place up (-1) or down (1), save, and announce its new place.
 		 *
 		 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrators-order-drives-every-pick-list-req-wvl-002
 		 * @param {number} index The entry's place.
@@ -147,27 +107,14 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async move(index, delta) {
-			const moved = moveEntry(this.entries, index, delta)
-			if (moved === null) {
-				return
-			}
 			this.error = null
 			this.reordering = true
-			const entry = this.entries[index]
 			try {
-				const { data } = await axios.put(generateUrl(ORDER_URL), {
-					scheme: this.scheme,
-					entries: moved.map((item) => item.uri),
-				})
-				this.apply(data)
-				this.announcement = t(
-					'opencatalogi',
-					'{label} is now at position {position}.',
-					{
-						label: entry.label,
-						position: index + delta + 1,
-					},
-				)
+				const saved = await saveMove(this.scheme, this.entries, index, delta)
+				if (saved !== null) {
+					this.apply(saved.data)
+					this.announcement = saved.announcement
+				}
 			} catch (err) {
 				this.error = err.response?.data?.error || err.message
 			} finally {
