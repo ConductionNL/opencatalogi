@@ -11,9 +11,9 @@
  * The specs mount it against the app's real pinia stores; only the network, `@vueuse/core` browser primitives and the NC components are stubbed.
  */
 
+import axios from '@nextcloud/axios'
 import { flushPromises, mount } from '@vue/test-utils'
 import { __fileDialog } from '@vueuse/core'
-import axios from '@nextcloud/axios'
 import { nextTick } from 'vue'
 import UploadFiles from './UploadFiles.vue'
 import { navigationStore, objectStore } from '../../store/store.js'
