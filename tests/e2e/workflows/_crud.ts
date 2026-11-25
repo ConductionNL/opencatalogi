@@ -46,11 +46,17 @@ export function dialog(page: Page) {
 /**
  * Open the Add CTA, fill the schema form's Title field (and any extra fields),
  * and confirm. Returns once the dialog has closed.
+ *
+ * @param page The page.
+ * @param title The value for the title field.
+ * @param extra Further fields by label.
+ * @param titleLabel The label the form shows for the `title` property.
  */
 export async function createViaForm(
 	page: Page,
 	title: string,
 	extra: Record<string, string> = {},
+	titleLabel = 'Title',
 ): Promise<void> {
 	await page.locator('[data-testid="cn-cta-primary"]').first().click()
 	const modal = page
@@ -59,7 +65,9 @@ export async function createViaForm(
 		.first()
 	await expect(modal).toBeVisible({ timeout: 10000 })
 
-	await fillField(modal, 'Title', title)
+	// The form labels a field by its schema title, so a schema may call its
+	// `title` property something else (the glossary calls it "Term").
+	await fillField(modal, titleLabel, title)
 	for (const [label, value] of Object.entries(extra)) {
 		await fillField(modal, label, value).catch(() => {})
 	}

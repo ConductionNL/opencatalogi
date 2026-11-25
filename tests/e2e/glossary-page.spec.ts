@@ -16,6 +16,8 @@
  * @e2e openspec/changes/archive/2026-11-24-capability-rows-close-gaps/specs/content-management/spec.md#scenario-an-editor-adds-a-term
  * @e2e openspec/changes/archive/2026-11-24-capability-rows-close-gaps/specs/content-management/spec.md#scenario-an-editor-corrects-a-term
  */
+import type { APIRequestContext, Page } from '@playwright/test'
+
 import { expect, test } from './authenticated-request.ts'
 import { dismissOverlays } from './spec-coverage/_nav.ts'
 import { createViaForm, dialog, fillField, rowAction, rowByTitle, waitIndexBody } from './workflows/_crud.ts'
@@ -34,7 +36,7 @@ const CORRECTED = 'Een verzoek om publieke informatie bij een bestuursorgaan.'
  * @param request The request context.
  * @return The term.
  */
-async function publicTerm(request): Promise<Record<string, unknown> | undefined> {
+async function publicTerm(request: APIRequestContext): Promise<Record<string, unknown> | undefined> {
 	const response = await request.get(`${API}?_search=${encodeURIComponent(RUN)}`, {
 		headers: { Accept: 'application/json' },
 	})
@@ -42,6 +44,20 @@ async function publicTerm(request): Promise<Record<string, unknown> | undefined>
 	const body = await response.json()
 	const results = (body.results ?? body) as Array<Record<string, unknown>>
 	return results.find((term) => term.title === TERM)
+}
+
+/**
+ * Open the term's own page (the index opens no detail on a row click: rowClickToView is false).
+ *
+ * @param page The page.
+ * @param request The API context, to find the term's id.
+ */
+async function openTerm(page: Page, request: APIRequestContext): Promise<void> {
+	const term = await publicTerm(request)
+	expect(term, 'the term exists').toBeDefined()
+	await page.goto(`${APP}/glossary/${String(term?.id ?? (term?.['@self'] as Record<string, unknown>)?.id)}`)
+	await dismissOverlays(page)
+	await expect(page.getByRole('heading', { name: TERM })).toBeVisible({ timeout: 15000 })
 }
 
 test.describe.serial('Glossary page', () => {
@@ -58,7 +74,7 @@ test.describe.serial('Glossary page', () => {
 		await dismissOverlays(page)
 		await waitIndexBody(page)
 
-		await createViaForm(page, TERM, { Summary: SUMMARY })
+		await createViaForm(page, TERM, { Summary: SUMMARY }, 'Term')
 
 		await expect(rowByTitle(page, TERM)).toBeVisible({ timeout: 15000 })
 		await expect.poll(async () => (await publicTerm(request))?.title, { timeout: 15000 }).toBe(TERM)
@@ -69,7 +85,9 @@ test.describe.serial('Glossary page', () => {
 		await dismissOverlays(page)
 		await waitIndexBody(page)
 
-		await rowAction(page, TERM, 'edit')
+		// The index offers no row actions (showEditAction: false); a term is edited on its page.
+		await openTerm(page, request)
+		await page.locator('[data-testid="cn-detail-page-edit"]').first().click()
 		const form = dialog(page)
 		await expect(form).toBeVisible({ timeout: 10000 })
 		await fillField(form, 'Summary', CORRECTED)
@@ -84,6 +102,7 @@ test.describe.serial('Glossary page', () => {
 		await dismissOverlays(page)
 		await waitIndexBody(page)
 
+		// The index row offers Delete (REQ-CRG-002: staff can delete a term).
 		await rowAction(page, TERM, 'delete')
 		const confirm = dialog(page)
 		await expect(confirm).toBeVisible({ timeout: 10000 })
