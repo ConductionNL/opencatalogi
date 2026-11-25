@@ -12,7 +12,7 @@
  * @spec openspec/changes/archive/2026-11-24-search/tasks.md
  */
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog } from './publication-catalog.ts'
 
 const SEARCH = '/index.php/apps/opencatalogi/api/search'

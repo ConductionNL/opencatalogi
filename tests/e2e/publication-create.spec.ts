@@ -17,7 +17,7 @@
  * @e2e openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publications/spec.md#scenario-a-publication-without-a-title-is-not-saved
  * @spec openspec/changes/archive/2026-11-24-capability-rows-get-requirements/specs/publications/spec.md
  */
-import { expect, test } from '@playwright/test'
+import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog, publicationScope } from './publication-catalog.ts'
 import { APP, dismissOverlays } from './spec-coverage/_nav.ts'
 import { dialog, fillField, waitIndexBody } from './workflows/_crud.ts'
