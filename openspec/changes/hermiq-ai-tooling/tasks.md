@@ -50,8 +50,18 @@
     `embargo_holds`, `no_documents`, `not_found`, `not_published`); an embargo is judged with nobody allowed to lift
     it, so an agent never releases one early. Tests:
     `tests/Unit/Service/Publication/AgentPublishingTest.php`, `tests/Unit/Mcp/PublicationAgentToolsTest.php`.
-    Left: `depublishPublication` and `archivePublication` as an OpenRegister approval task a publisher completes,
-    and the completion that withdraws or archives.
+    25 Nov 2026 (b-opencatalogi, the staging half): `depublishPublication` and `archivePublication`
+    (`lib/Mcp/PublicationAgentTools.php` over `lib/Service/Publication/AgentWithdrawal.php`) write nothing about
+    the publication. Each item is read with RBAC as the session user and refused by name when it cannot take the
+    action (`not_found`, `forbidden`, `not_public` for a withdrawal, `already_archived`, `not_staged`); every other
+    one gets an OpenRegister task through `TaskManagerInterface::create()` as that user (`OpenRegisterTasks`):
+    kind `approval`, on the publication (`objectUuid`), offered to `opencatalogi-publishers`, the reason as its
+    description, and `metadata` {action, publication, reason, requestedBy, tool}. A reason is required (at most
+    2000 characters). Tests: `tests/Unit/Service/Publication/AgentWithdrawalTest.php` (including OpenRegister's own
+    `TaskBuilder` accepting the payload as an `available` task for the group), `tests/Unit/Mcp/PublicationAgentToolsTest.php`.
+    Left: the completion that withdraws or archives (a `TaskTerminalEvent` listener that, for a committed task with
+    this metadata and an approving outcome, takes the action as the completing publisher through the withdraw
+    button's path; that path lives in `PublicationStateController::withdrawWithReason()` and is extracted first).
 
 ### Task 4: Agent-principal attribution (must / MVP)
 - **spec_ref**: `openspec/specs/mcp-tool-surface/spec.md#requirement-every-agent-write-is-attributed-to-the-agent-principal-in-the-audit-trail-req-010`
