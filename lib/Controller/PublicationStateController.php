@@ -42,6 +42,7 @@ use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenCatalogi\Service\Publication\SourceAbsence;
+use OCA\OpenCatalogi\Service\Publication\WithdrawalReason;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -457,9 +458,7 @@ class PublicationStateController extends Controller {
 				request: new PublicationTakeDownRequest(
 					id: $id,
 					properties: $properties,
-					reason: $this->reason(),
-					actor: $this->actor(),
-					tombstone: $tombstone
+					why: new WithdrawalReason(reason: $this->reason(), actor: $this->actor(), tombstone: $tombstone)
 				)
 			);
 		} catch (PublicationTakeDownRefused $e) {
@@ -850,20 +849,7 @@ class PublicationStateController extends Controller {
 	 * @return void
 	 */
 	private function save(string $id, array $record): void {
-		$configuration = $this->resolveRegisterConfiguration(
-			registerKey: 'publication_register',
-			schemaKey: 'publication_schema'
-		);
-		unset($record['id']);
-
-		$this->registers->getObjectService()->saveObject(
-			object: $record,
-			options: new ObjectSaveOptions(
-				target: new ObjectFindTarget(register: $configuration['register'], schema: $configuration['schema']),
-				uuid: $id
-			),
-			_rbac: true
-		);
+		$this->takeDowns()->save(id: $id, record: $record);
 
 	}//end save()
 

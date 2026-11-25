@@ -106,18 +106,9 @@ class ListenerRegistrar {
 		$context->registerEventListener(event: ObjectUpdatedEvent::class, listener: WooReadinessTriggerListener::class);
 
 		// Register catalog cache event listeners.
-		$context->registerEventListener(
-			event: ObjectCreatedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectDeletedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
+		foreach ([ObjectCreatedEvent::class, ObjectUpdatedEvent::class, ObjectDeletedEvent::class] as $cacheEvent) {
+			$context->registerEventListener($cacheEvent, CatalogCacheEventListener::class);
+		}
 
 		// Register catalog rewrite event listeners on the *pre-save* events so the
 		// listener can mutate the in-flight payload via `setModifiedData(...)` instead

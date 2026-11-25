@@ -96,8 +96,7 @@ class AgentTaskCompletion {
 			request: new PublicationTakeDownRequest(
 				id: $done->publication,
 				properties: $this->asArray(object: $publication),
-				reason: $done->reason,
-				actor: $actor
+				why: new WithdrawalReason(reason: $done->reason, actor: $actor)
 			)
 		);
 	}//end complete()

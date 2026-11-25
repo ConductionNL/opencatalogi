@@ -89,7 +89,10 @@ class AgentTaskCompletionListenerTest extends TestCase {
 	private function listener(string $outcome, int $calls): AgentTaskCompletionListener {
 		$completion = $this->createMock(originalClassName: AgentTaskCompletion::class);
 		$completion->expects($this->exactly(count: $calls))->method('complete')->willReturnCallback(
-			static fn (AgentTaskCompleted $done): string => ($done->publication === 'pub-1' ? $outcome : 'wrong publication')
+			static fn (AgentTaskCompleted $done): string => match ($done->publication) {
+				'pub-1' => $outcome,
+				default => 'wrong publication',
+			}
 		);
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$logger->method('info')->willReturnCallback(function (string $line): void {

@@ -80,7 +80,7 @@ class PublicationTakeDown {
 		}
 
 		try {
-			$this->saveWithdrawn(request: $request);
+			$this->save(id: $request->id, record: $this->registers->withdrawnRecord(publication: $request->properties));
 		} catch (Throwable $e) {
 			throw new PublicationTakeDownRefused(reason: PublicationTakeDownRefused::NOT_SAVED, state: $state, previous: $e);
 		}
@@ -88,13 +88,13 @@ class PublicationTakeDown {
 		$depublication = $this->registers->depublish(
 			withdrawal: [
 				'publication' => array_replace($request->properties, ['id' => $request->id]),
-				'reason' => $request->reason,
-				'depublishedBy' => $request->actor,
+				'reason' => $request->why->reason,
+				'depublishedBy' => $request->why->actor,
 				'channels' => $this->channelsFor(state: $state, properties: $request->properties),
 			]
 		);
 
-		return $this->store(depublication: $depublication + array_filter($request->tombstone));
+		return $this->store(depublication: $depublication + array_filter($request->why->tombstone));
 	}//end withdraw()
 
 	/**
@@ -139,26 +139,28 @@ class PublicationTakeDown {
 	}//end store()
 
 	/**
-	 * Save the publication's withdrawn record with RBAC on, as the signed-in user.
+	 * Save a publication's record with RBAC on, as the signed-in user.
 	 *
-	 * @param PublicationTakeDownRequest $request The publication and its properties.
+	 * @param string               $id     The publication id.
+	 * @param array<string, mixed> $record The properties to save.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
 	 */
-	private function saveWithdrawn(PublicationTakeDownRequest $request): void {
+	public function save(string $id, array $record): void {
 		$configuration = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
-		$record = $this->registers->withdrawnRecord(publication: $request->properties);
 		unset($record['id']);
 
 		$this->registers->getObjectService()->saveObject(
 			object: $record,
 			options: new ObjectSaveOptions(
 				target: new ObjectFindTarget(register: $configuration['register'], schema: $configuration['schema']),
-				uuid: $request->id
+				uuid: $id
 			),
 			_rbac: true
 		);
-	}//end saveWithdrawn()
+	}//end save()
 
 	/**
 	 * The channels to tell: those a public publication reached, none for a scheduled one.

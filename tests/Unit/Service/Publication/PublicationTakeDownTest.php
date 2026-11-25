@@ -27,6 +27,7 @@ use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Service\Publication\PublicationTakeDown;
 use OCA\OpenCatalogi\Service\Publication\PublicationTakeDownRefused;
 use OCA\OpenCatalogi\Service\Publication\PublicationTakeDownRequest;
+use OCA\OpenCatalogi\Service\Publication\WithdrawalReason;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -39,6 +40,7 @@ use RuntimeException;
 #[CoversClass(PublicationTakeDown::class)]
 #[CoversClass(PublicationTakeDownRequest::class)]
 #[CoversClass(PublicationTakeDownRefused::class)]
+#[CoversClass(WithdrawalReason::class)]
 class PublicationTakeDownTest extends TestCase {
 
 	/**
@@ -125,9 +127,7 @@ class PublicationTakeDownTest extends TestCase {
 		return new PublicationTakeDownRequest(
 			id: 'pub-1',
 			properties: ['id' => 'pub-1', 'title' => 'Besluit', 'status' => 'published'],
-			reason: 'Rechterlijke uitspraak',
-			actor: 'publisher1',
-			tombstone: $tombstone
+			why: new WithdrawalReason(reason: 'Rechterlijke uitspraak', actor: 'publisher1', tombstone: $tombstone)
 		);
 	}//end request()
 

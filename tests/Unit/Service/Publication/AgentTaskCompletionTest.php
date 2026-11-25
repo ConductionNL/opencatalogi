@@ -169,10 +169,13 @@ class AgentTaskCompletionTest extends TestCase {
 			}
 		);
 
+		$signedIn = null;
+		if ($user !== null) {
+			$signedIn = $this->createConfiguredStub(originalClassName: IUser::class, configuration: ['getUID' => $user]);
+		}
+
 		$session = $this->createMock(originalClassName: IUserSession::class);
-		$session->method('getUser')->willReturn(
-			$user === null ? null : $this->createConfiguredStub(originalClassName: IUser::class, configuration: ['getUID' => $user])
-		);
+		$session->method('getUser')->willReturn($signedIn);
 
 		return new AgentTaskCompletion(
 			openRegister: $openRegister,
@@ -191,7 +194,10 @@ class AgentTaskCompletionTest extends TestCase {
 	 */
 	public function testOnlyACompletedStagedTaskReads(): void {
 		$done = AgentTaskCompleted::fromTask(task: self::task());
-		$this->assertSame(expected: ['depublish', 'pub-1', 'Rechterlijke uitspraak', 'publisher1'], actual: [$done?->action, $done?->publication, $done?->reason, $done?->completedBy]);
+		$this->assertSame(
+			expected: ['depublish', 'pub-1', 'Rechterlijke uitspraak', 'publisher1'],
+			actual: [$done?->action, $done?->publication, $done?->reason, $done?->completedBy]
+		);
 		$this->assertNotNull(actual: AgentTaskCompleted::fromTask(task: self::task(override: ['outcome' => 'approved'])));
 
 		$others = [
@@ -221,8 +227,8 @@ class AgentTaskCompletionTest extends TestCase {
 		$this->assertSame(expected: 'withdrawn', actual: $outcome);
 		$this->assertCount(expectedCount: 1, haystack: $this->withdrawals);
 		$this->assertSame(expected: 'pub-1', actual: $this->withdrawals[0]->id);
-		$this->assertSame(expected: 'Rechterlijke uitspraak', actual: $this->withdrawals[0]->reason);
-		$this->assertSame(expected: 'publisher1', actual: $this->withdrawals[0]->actor);
+		$this->assertSame(expected: 'Rechterlijke uitspraak', actual: $this->withdrawals[0]->why->reason);
+		$this->assertSame(expected: 'publisher1', actual: $this->withdrawals[0]->why->actor);
 		$this->assertSame(expected: 'published', actual: $this->withdrawals[0]->properties['status']);
 	}//end testThePublishersCompletionWithdraws()
 

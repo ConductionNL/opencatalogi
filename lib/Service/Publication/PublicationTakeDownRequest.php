@@ -36,18 +36,14 @@ final class PublicationTakeDownRequest {
 	 *
 	 * @param string               $id         The publication id.
 	 * @param array<string, mixed> $properties The publication's properties as read with RBAC.
-	 * @param string               $reason     Why it is withdrawn.
-	 * @param string               $actor      Who withdraws it, for the record.
-	 * @param array<string, mixed> $tombstone  `publicReason` and `tombstoneShowsTitle` as chosen; empty values keep the schema's default.
+	 * @param WithdrawalReason     $why        Why, who, and what the tombstone says.
 	 *
 	 * @spec exclude value object constructor.
 	 */
 	public function __construct(
 		public readonly string $id,
 		public readonly array $properties,
-		public readonly string $reason,
-		public readonly string $actor,
-		public readonly array $tombstone = [],
+		public readonly WithdrawalReason $why,
 	) {
 	}//end __construct()
 }//end class
