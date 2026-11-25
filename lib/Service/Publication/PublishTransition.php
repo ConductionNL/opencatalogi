@@ -172,6 +172,35 @@ class PublishTransition {
 	}//end publish()
 
 	/**
+	 * Record a review that happened elsewhere (a Woo batch's approval chain) on the publication's
+	 * own lifecycle: `submit` from draft and `approve` from in review, as the system. A publication
+	 * starts in draft (OpenRegister refuses any other initial state), so a writer that already holds
+	 * the approval moves it here before it publishes.
+	 *
+	 * @param string $id     The publication uuid.
+	 * @param string $stored The stored `status`.
+	 *
+	 * @return string The state the publication is in afterwards.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 */
+	public function approveAsSystem(string $id, string $stored): string {
+		$engine = $this->container->get(self::ENGINE);
+		$state  = self::storedState(stored: $stored);
+		if ($state === 'draft') {
+			$engine->transitionAsSystem($id, 'submit', 'opencatalogi', []);
+			$state = 'in_review';
+		}
+
+		if ($state === 'in_review') {
+			$engine->transitionAsSystem($id, 'approve', 'opencatalogi', []);
+			$state = 'approved';
+		}
+
+		return $state;
+	}//end approveAsSystem()
+
+	/**
 	 * Publish now as opencatalogi itself, for a publish no caller makes (a reviewed Woo batch).
 	 *
 	 * @param string $id              The publication uuid.

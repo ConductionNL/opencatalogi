@@ -175,6 +175,9 @@ class BatchPublicationWriterTest extends TestCase {
 	/** @var array<int, array{0: string, 1: string, 2: string, 3: bool}> Every publish the writer ran: id, stored state, date, as system. */
 	private array $publishes = [];
 
+	/** @var array<int, array{0: string, 1: string}> Every review the writer recorded on a publication: id, stored state. */
+	private array $approvals = [];
+
 	/**
 	 * A PublishTransition double recording each publish.
 	 *
@@ -191,11 +194,19 @@ class BatchPublicationWriterTest extends TestCase {
 			);
 		}
 
+		$publisher->method('approveAsSystem')->willReturnCallback(
+			function (string $id, string $stored): string {
+				$this->approvals[] = [$id, $stored];
+				return 'approved';
+			}
+		);
+
 		return $publisher;
 	}//end publisher()
 
 	/**
-	 * REQ-PLC-003: a batch creates its publication approved, without a date, and publishes it through `publish` as the system.
+	 * REQ-PLC-003: a batch creates its publication in draft (OpenRegister refuses any other initial state),
+	 * records the batch review on it as the system, and publishes it through `publish` as the system.
 	 *
 	 * @return void
 	 */
@@ -204,7 +215,8 @@ class BatchPublicationWriterTest extends TestCase {
 
 		$this->assertSame('pub-1', $result['id']);
 		$this->assertCount(1, $this->objects->saved);
-		$this->assertSame('approved', $this->objects->saved[0]['status']);
+		$this->assertArrayNotHasKey('status', $this->objects->saved[0]);
+		$this->assertSame([['pub-1', 'draft']], $this->approvals);
 		$this->assertArrayNotHasKey('publicationDate', $this->objects->saved[0]);
 		$this->assertSame([['pub-1', 'approved', '2026-11-17T10:00:00+00:00', true]], $this->publishes);
 	}//end testABatchCreatesAnApprovedPublicationAndPublishesIt()
@@ -220,7 +232,7 @@ class BatchPublicationWriterTest extends TestCase {
 			now: '2026-11-17T10:00:00+00:00'
 		);
 
-		$this->assertSame(expected: 'approved', actual: $payload['status']);
+		$this->assertArrayNotHasKey(key: 'status', array: $payload);
 		$this->assertSame(expected: 'Besluit parkeren.', actual: $payload['summary']);
 		$this->assertSame(expected: 'Besluit en openbaar gemaakte documenten: Besluit parkeren. Zaak Z-9.', actual: $payload['description']);
 		$this->assertSame(expected: 'org-uuid', actual: $payload['organization']);

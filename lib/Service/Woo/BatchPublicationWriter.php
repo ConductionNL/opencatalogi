@@ -320,8 +320,9 @@ class BatchPublicationWriter {
 	}//end publication()
 
 	/**
-	 * Publish the batch's publication through its lifecycle: the batch review is its approval, so it is created
-	 * `approved` and runs `publish` with the date in the same call (REQ-PLC-003). One already published stays.
+	 * Publish the batch's publication through its lifecycle: the batch review is its approval, so a publication
+	 * still in draft or in review is moved to `approved` as the system, then `publish` runs with the date
+	 * (REQ-PLC-003). OpenRegister creates every publication in draft. One already published stays.
 	 *
 	 * @param mixed  $entity The publication as saved or found.
 	 * @param string $id     The publication uuid.
@@ -338,7 +339,9 @@ class BatchPublicationWriter {
 			return $entity;
 		}
 
-		$this->container->get(PublishTransition::class)->publishAsSystem(id: $id, stored: $stored, publicationDate: $now);
+		$transition = $this->container->get(PublishTransition::class);
+		$stored     = $transition->approveAsSystem(id: $id, stored: $stored);
+		$transition->publishAsSystem(id: $id, stored: $stored, publicationDate: $now);
 
 		return $entity;
 	}//end published()
@@ -386,7 +389,6 @@ class BatchPublicationWriter {
 			'description' => self::descriptionOf(batch: $batch, title: $title, caseReference: $caseReference),
 			'wooCategory' => $this->category(batch: $batch),
 			'publicationKind' => 'actief',
-			'status' => 'approved',
 		];
 		if ($caseReference !== '') {
 			$payload['caseReference'] = $caseReference;
