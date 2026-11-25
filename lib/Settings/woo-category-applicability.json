@@ -1,0 +1,60 @@
+{
+	"description": "Per organisation type, the Woo information categories that do not apply to it, each with its legal basis. The basis is the scope the Woo article gives the category, as the TOOI list scw_woo_informatiecategorieen (version 4) records it in skos:definition. A category is only proposed where that text names the bodies it covers and the type is not among them; an entry that cannot be cited is left out. The administrator confirms or changes the proposal per category (REQ-WVL-004).",
+	"types": [
+		"gemeente",
+		"provincie",
+		"waterschap",
+		"gemeenschappelijke-regeling",
+		"rijksoverheid",
+		"zelfstandig-bestuursorgaan",
+		"overig"
+	],
+	"entries": [
+		{
+			"category": "infocat006",
+			"tooiUri": "https://identifier.overheid.nl/tooi/def/thes/kern/c_8c840238",
+			"notApplicableTo": [
+				"gemeenschappelijke-regeling",
+				"zelfstandig-bestuursorgaan"
+			],
+			"article": "Wet open overheid, artikel 3.3",
+			"basis": "bij de Kamers en de verenigde vergadering der Staten-Generaal, provinciale staten, gemeenteraden en algemene besturen van waterschappen ter behandeling ingekomen stukken, tenzij deze betrekking hebben op door de regering vertrouwelijk aan de Staten-Generaal verstrekte informatie of tenzij deze betrekking hebben op individuele gevallen",
+			"reason": "The article names the Kamers of the Staten-Generaal, provinciale staten, gemeenteraden and the algemene besturen of waterschappen only; the bodies of a gemeenschappelijke regeling and a zelfstandig bestuursorgaan are not among them."
+		},
+		{
+			"category": "infocat007",
+			"tooiUri": "https://identifier.overheid.nl/tooi/def/thes/kern/c_c76862ab",
+			"notApplicableTo": [
+				"gemeente",
+				"provincie",
+				"waterschap",
+				"gemeenschappelijke-regeling",
+				"zelfstandig-bestuursorgaan"
+			],
+			"article": "Wet open overheid, artikel 3.3",
+			"basis": "vergaderstukken en verslagen van de Kamers en de verenigde vergadering der Staten-Generaal en hun commissies, tenzij deze betrekking hebben op door de regering vertrouwelijk aan de Staten-Generaal verstrekte informatie",
+			"reason": "The article names the Kamers of the Staten-Generaal and their committees only."
+		},
+		{
+			"category": "infocat008",
+			"tooiUri": "https://identifier.overheid.nl/tooi/def/thes/kern/c_db4862c3",
+			"notApplicableTo": [
+				"rijksoverheid",
+				"zelfstandig-bestuursorgaan"
+			],
+			"article": "Wet open overheid, artikel 3.3",
+			"basis": "vergaderstukken en verslagen van provinciale staten, gemeenteraden en algemene besturen van waterschappen, algemene besturen van openbare lichamen, besturen van bedrijfsvoeringsorganisaties en gemeenschappelijke organen als bedoeld in de Wet gemeenschappelijke regelingen en hun commissies",
+			"reason": "The article names provinciale staten, gemeenteraden, the algemene besturen of waterschappen and the bodies under the Wet gemeenschappelijke regelingen only."
+		},
+		{
+			"category": "infocat009",
+			"tooiUri": "https://identifier.overheid.nl/tooi/def/thes/kern/c_3a248e3a",
+			"notApplicableTo": [
+				"zelfstandig-bestuursorgaan"
+			],
+			"article": "Wet open overheid, artikel 3.3",
+			"basis": "agenda’s en besluitenlijsten van vergaderingen van de ministerraad, gedeputeerde staten, colleges van burgemeester en wethouders en dagelijkse besturen van waterschappen en dagelijkse besturen van openbare lichamen als bedoeld in de Wet gemeenschappelijke regelingen",
+			"reason": "The article names the ministerraad, gedeputeerde staten, colleges van burgemeester en wethouders and the dagelijkse besturen of waterschappen and of openbare lichamen under the Wet gemeenschappelijke regelingen only."
+		}
+	]
+}
