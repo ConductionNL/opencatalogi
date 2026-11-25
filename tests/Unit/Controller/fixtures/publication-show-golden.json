@@ -8,7 +8,10 @@
         },
         "headers": {
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Type": "application/json; charset=utf-8"
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
         },
         "log": []
     },
@@ -22,7 +25,10 @@
         },
         "headers": {
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Type": "application/json; charset=utf-8"
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
         },
         "log": [
             {
@@ -877,7 +883,10 @@
         },
         "headers": {
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Type": "application/json; charset=utf-8"
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
         },
         "log": [
             {
@@ -1020,7 +1029,10 @@
         },
         "headers": {
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Type": "application/json; charset=utf-8"
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
         },
         "log": [
             {
@@ -1188,7 +1200,10 @@
         },
         "headers": {
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Type": "application/json; charset=utf-8"
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
         },
         "log": [
             {
@@ -2260,7 +2275,10 @@
         },
         "headers": {
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Type": "application/json; charset=utf-8"
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
         },
         "log": [
             {
@@ -2297,7 +2315,10 @@
         },
         "headers": {
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Type": "application/json; charset=utf-8"
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
         },
         "log": [
             {
@@ -2359,7 +2380,10 @@
         },
         "headers": {
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Content-Type": "application/json; charset=utf-8"
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
         },
         "log": [
             {

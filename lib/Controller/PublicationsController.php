@@ -262,6 +262,28 @@ class PublicationsController extends Controller {
 	}//end allowedOriginsSetting()
 
 	/**
+	 * Add the CORS headers to an answer of a public publication endpoint, whatever its status.
+	 *
+	 * A browser on another origin drops a 404, 410 or 500 without
+	 * `Access-Control-Allow-Origin` as a network error, so the portal could not
+	 * tell "not found" from "unreachable". The headers are set by name, so an
+	 * answer that already carries them is unchanged.
+	 *
+	 * @param T $response The answer.
+	 *
+	 * @return T The same answer, with the CORS headers.
+	 *
+	 * @template T of Response
+	 *
+	 * @spec openspec/changes/publications/specs/publications/spec.md#req-pub-010-all-public-endpoints-include-cors-headers
+	 */
+	private function withCors(Response $response): Response {
+		$this->addCorsHeaders(response: $response);
+		return $response;
+
+	}//end withCors()
+
+	/**
 	 * Add standard CORS headers to a response.
 	 *
 	 * @param Response $response The response to add headers to.
@@ -588,7 +610,7 @@ class PublicationsController extends Controller {
 			$this->negotiateLanguage();
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
 			if ($catalog === null) {
-				return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+				return $this->withCors(response: new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404));
 			}
 
 			// WOO-580: keep a schema without `authorization.read` rules out of the
@@ -605,10 +627,10 @@ class PublicationsController extends Controller {
 			// unset scope would make OpenRegister search every magic table, so the
 			// empty envelope is answered instead of falling through.
 			if (CatalogScopeIds::forCatalog(catalog: $catalog)['schemas'] === []) {
-				return $this->emptyCatalogEnvelope(catalog: $catalog, catalogSlug: $catalogSlug);
+				return $this->withCors(response: $this->emptyCatalogEnvelope(catalog: $catalog, catalogSlug: $catalogSlug));
 			}
 
-			return $this->catalogPublications(catalog: $catalog, catalogSlug: $catalogSlug);
+			return $this->withCors(response: $this->catalogPublications(catalog: $catalog, catalogSlug: $catalogSlug));
 		} catch (\Exception $e) {
 			// Public endpoint — log exception details server-side only and return a
 			// generic error body to the caller (#735); never leak raw $e->getMessage().
@@ -616,7 +638,7 @@ class PublicationsController extends Controller {
 				'[PublicationsController::index] Failed to retrieve publications',
 				['catalogSlug' => $catalogSlug, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]
 			);
-			return new JSONResponse(['error' => $this->l10n->t('Internal server error')], 500);
+			return $this->withCors(response: new JSONResponse(['error' => $this->l10n->t('Internal server error')], 500));
 		}//end try
 
 	}//end index()
@@ -929,7 +951,7 @@ class PublicationsController extends Controller {
 			$this->negotiateLanguage();
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
 			if ($catalog === null) {
-				return $this->catalogNotFound(catalogSlug: $catalogSlug);
+				return $this->withCors(response: $this->catalogNotFound(catalogSlug: $catalogSlug));
 			}
 
 			// WOO-580: keep a schema without `authorization.read` rules out of the
@@ -943,7 +965,7 @@ class PublicationsController extends Controller {
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 			$dereferenced = $this->dereferencedDataset(catalog: $catalog, catalogSlug: $catalogSlug, id: $id);
 			if ($dereferenced !== null) {
-				return $dereferenced;
+				return $this->withCors(response: $dereferenced);
 			}
 
 			$query = new CatalogSlugQuery(
@@ -953,16 +975,16 @@ class PublicationsController extends Controller {
 				schemas: $this->normaliseIdList(raw: $catalog['schemas'] ?? [])
 			);
 
-			return $this->showPublication(
+			return $this->withCors(response: $this->showPublication(
 				read: new PublicationRead(
 					catalog: $catalog,
 					query: $query,
 					objectService: $this->getObjectService(),
 					extend: $this->publicExtendFromRequest()
 				)
-			);
+			));
 		} catch (\Exception $e) {
-			return $this->showFailed(exception: $e, context: ['id' => $id, 'catalogSlug' => $catalogSlug]);
+			return $this->withCors(response: $this->showFailed(exception: $e, context: ['id' => $id, 'catalogSlug' => $catalogSlug]));
 		}//end try
 
 	}//end show()
@@ -1674,19 +1696,19 @@ class PublicationsController extends Controller {
 		try {
 			$refusal = $this->refuseFileRead(catalogSlug: $catalogSlug, id: $id);
 			if ($refusal !== null) {
-				return $refusal;
+				return $this->withCors(response: $refusal);
 			}
 
-			return $this->cacheableForCaller(response: $this->describedAttachments(catalogSlug: $catalogSlug, id: $id));
+			return $this->withCors(response: $this->cacheableForCaller(response: $this->describedAttachments(catalogSlug: $catalogSlug, id: $id)));
 		} catch (\Exception $e) {
-			return $this->fileReadFailed(
+			return $this->withCors(response: $this->fileReadFailed(
 				exception: $e,
 				context: [
 					'id' => $id,
 					'catalogSlug' => $catalogSlug,
 					'log' => '[PublicationsController::attachments] Failed to retrieve attachments',
 				]
-			);
+			));
 		}//end try
 
 	}//end attachments()
@@ -1836,7 +1858,7 @@ class PublicationsController extends Controller {
 		try {
 			$refusal = $this->refuseFileRead(catalogSlug: $catalogSlug, id: $id);
 			if ($refusal !== null) {
-				return $refusal;
+				return $this->withCors(response: $refusal);
 			}
 
 			$downloadResponse = $this->publicationService->download(id: $id);
@@ -1849,16 +1871,16 @@ class PublicationsController extends Controller {
 				$this->countReach(publicationId: $id, kind: UsageCounterServiceInterface::KIND_DOWNLOAD, catalogSlug: $catalogSlug);
 			}
 
-			return $downloadResponse;
+			return $this->withCors(response: $downloadResponse);
 		} catch (\Exception $e) {
-			return $this->fileReadFailed(
+			return $this->withCors(response: $this->fileReadFailed(
 				exception: $e,
 				context: [
 					'id' => $id,
 					'catalogSlug' => $catalogSlug,
 					'log' => '[PublicationsController::download] Failed to download publication',
 				]
-			);
+			));
 		}//end try
 
 	}//end download()
@@ -1888,7 +1910,7 @@ class PublicationsController extends Controller {
 
 			$refusal = $this->placePublicRoot(objectService: $objectService, catalogSlug: $catalogSlug, id: $id);
 			if ($refusal !== null) {
-				return $refusal;
+				return $this->withCors(response: $refusal);
 			}
 
 			$queryParams = $this->request->getParams();
@@ -1909,12 +1931,12 @@ class PublicationsController extends Controller {
 			);
 			$result = $this->queryService->applyReadRuleGuardToRows(result: $result, page: $page);
 
-			return $this->relationsAnswer(result: $result);
+			return $this->withCors(response: $this->relationsAnswer(result: $result));
 		} catch (\Exception $e) {
-			return $this->relationReadFailed(
+			return $this->withCors(response: $this->relationReadFailed(
 				exception: $e,
 				context: ['id' => $id, 'log' => '[PublicationsController::uses] Failed to retrieve publication uses']
-			);
+			));
 		}//end try
 
 	}//end uses()
@@ -1944,7 +1966,7 @@ class PublicationsController extends Controller {
 
 			$refusal = $this->placePublicRoot(objectService: $objectService, catalogSlug: $catalogSlug, id: $id);
 			if ($refusal !== null) {
-				return $refusal;
+				return $this->withCors(response: $refusal);
 			}
 
 			$queryParams = $this->request->getParams();
@@ -1962,12 +1984,12 @@ class PublicationsController extends Controller {
 			// block as open. Same read-rule guard on the rows (WOO-581 review round 2).
 			$result = $this->queryService->applyReadRuleGuardToRows(result: $result);
 
-			return $this->relationsAnswer(result: $result);
+			return $this->withCors(response: $this->relationsAnswer(result: $result));
 		} catch (\Exception $e) {
-			return $this->relationReadFailed(
+			return $this->withCors(response: $this->relationReadFailed(
 				exception: $e,
 				context: ['id' => $id, 'log' => '[PublicationsController::used] Failed to retrieve publication used']
-			);
+			));
 		}//end try
 
 	}//end used()
