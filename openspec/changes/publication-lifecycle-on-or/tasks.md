@@ -10,7 +10,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy the `env
   - Done: `PublicationReviewPolicy` (true unless the stored text is `false`), `Lifecycle\ReviewNotRequiredGuard` as the transition's `requires`, the option in the publishing options (default true) and a toggle in the publishing options section, strings in all 37 locales.
 - [x] 1.3 Add `GET /api/publications/lifecycle` returning the transition table read from the shipped schema, not a copy (REQ-PLC-001). Verify: `tests/Unit/Controller/PublicationLifecycleControllerTest.php::testTheTransitionTableIsPublished`, and a route-table test asserting the route exists.
   - Done: `PublicationLifecycleController::index()` over `PublicationLifecycleTable`, which reads the merged shipped schema through `SettingsService::shippedSchema()`; the route is declared before the catalogue wildcard, and `testTheRouteIsDeclaredBeforeTheCatalogueWildcard` pins it.
-- [ ] 1.4 Through OpenRegister's transition route on the dev instance, run an illegal move and a list-form skip, and paste the two answers in the PR body (REQ-PLC-001). Verify: `PublicationLifecycleTest::testAnIllegalMoveIsRefusedByName`, `::testAListFormEditThatSkipsReviewIsRefused`, `::testAvailableActionsFollowTheState`, plus the pasted live answers. (live pass, decision 139)
+- [x] 1.4 Through OpenRegister's transition route on the dev instance, run an illegal move and a list-form skip, and paste the two answers in the PR body (REQ-PLC-001). Verify: `PublicationLifecycleTest::testAnIllegalMoveIsRefusedByName`, `::testAListFormEditThatSkipsReviewIsRefused`, `::testAvailableActionsFollowTheState`, plus the pasted live answers. (live pass, decision 139)
 
 ## 2. One state
 
