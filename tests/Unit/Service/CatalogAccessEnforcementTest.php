@@ -158,7 +158,7 @@ class CatalogAccessEnforcementTest extends TestCase {
 
 		// OpenRegister main bundles the caller lookups in ConditionUserResolvers;
 		// releases before it take them as separate arguments.
-		if (class_exists(\OCA\OpenRegister\Service\ConditionUserResolvers::class) === true) {
+		if (class_exists(class: \OCA\OpenRegister\Service\ConditionUserResolvers::class) === true) {
 			$matcher = new ConditionMatcher(
 				users: new \OCA\OpenRegister\Service\ConditionUserResolvers(userSession: $session, groupManager: $groups),
 				container: $container,
