@@ -25,7 +25,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 5. Cross-app contract
 
-- [ ] 5.1 Write the response shapes of REQ-SUB-002 and REQ-SUB-004 into `docs/` (API for the portal) and link that page from the issue of `portaliq/home-and-theme-landing-pages` and `portaliq/search-filter-by-kind`, stating they must test against these keys. Verify: the links in the PR body; a grep for U+2014 on the doc returns nothing.
+- [x] 5.1 Write the response shapes of REQ-SUB-002 and REQ-SUB-004 into `docs/` (API for the portal) and link that page from the issue of `portaliq/home-and-theme-landing-pages` and `portaliq/search-filter-by-kind`, stating they must test against these keys. Verify: the links in the PR body; a grep for U+2014 on the doc returns nothing.
+  - Done: `docs/Developers/subjects-api.md` (no U+2014), linked with the keys and the test duty from ConductionNL/portaliq#1219 (comment 7159940188) and ConductionNL/portaliq#1222 (comment 7159941260).
 
 ## 6. Verification
 
