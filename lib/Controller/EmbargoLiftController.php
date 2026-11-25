@@ -132,7 +132,6 @@ class EmbargoLiftController extends Controller {
 		$answer = ['publicationDate' => $moment, 'previousPublicationDate' => $previous];
 		try {
 			$this->lifts->log(
-				before: $publication,
 				after: $lifted,
 				context: ['user' => $caller->getUID(), 'reason' => $reason, 'previousPublicationDate' => $previous, 'publicationDate' => $moment]
 			);
