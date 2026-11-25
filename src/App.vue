@@ -40,6 +40,7 @@ import StagingBanner from './components/StagingBanner.vue'
 import Dialogs from './dialogs/Dialogs.vue'
 import Modals from './modals/Modals.vue'
 import CatalogNavigation from './navigation/CatalogNavigation.vue'
+import { afterPageSettles } from './services/afterPageSettles.js'
 import { PUBLICATION_FORMATTERS } from './services/publicationState.js'
 import { objectStore } from './store/store.js'
 
@@ -126,8 +127,10 @@ export default {
 	/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-2 */
 	async created() {
 		// The publication modals read the catalog collection, and loading it
-		// also fills the navigation's per-catalog entries (menuCatalogs).
-		await objectStore.preloadCollections()
+		// also fills the navigation's per-catalog entries (menuCatalogs). The
+		// other collections wait until the page has settled: on boot they were
+		// nine list requests the page itself does not show.
+		await objectStore.preloadCollections({ later: afterPageSettles })
 	},
 
 	methods: {
