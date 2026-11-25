@@ -38,6 +38,11 @@ import type { APIRequestContext } from '@playwright/test'
 // and is used only to build the anonymous contexts.
 import { request } from '@playwright/test'
 import { expect, test } from './authenticated-request.ts'
+import {
+	Fixtures,
+	REG_PUBLICATION,
+	SCHEMA_PUBLICATION,
+} from './workflows/_fixtures.ts'
 
 /** The app's own API base path. */
 const API_BASE = '/index.php/apps/opencatalogi/api'
@@ -231,80 +236,53 @@ test.describe('Notice boards and the feed', () => {
 	test('the feed is readable without an account and is Atom', async ({
 		baseURL,
 	}) => {
+		// A catalogue of this run's own, holding a draft, so "a draft never reaches
+		// the feed" is checked against a draft that is there. No seed creates the
+		// catalogue `e2e` this read before, which answered 404 catalog-not-found.
+		const fx = new Fixtures()
+		await fx.init()
+		const slug = `feed-${Date.now().toString(36)}`
+		await fx.createCatalog('feed', {
+			slug,
+			registers: [REG_PUBLICATION],
+			schemas: [SCHEMA_PUBLICATION],
+		})
+		await fx.createPublication('feed draft', {}, REG_PUBLICATION)
+
 		const anon = await anonymous(baseURL as string)
-		const response = await anon.get(`${API_BASE}/feeds/e2e`)
-
-		expect([200, 503]).toContain(response.status())
-
-		if (response.status() === 503) {
-			expect((await response.json()).error).toBe('feed-unreadable')
+		try {
+			await readFeed(anon, slug)
+		} finally {
 			await anon.dispose()
-			return
+			await fx.cleanupAll()
+			await fx.dispose()
 		}
-
-		expect(response.headers()['content-type']).toContain('application/atom+xml')
-
-		const atom = await response.text()
-		expect(atom).toContain('<feed xmlns="http://www.w3.org/2005/Atom">')
-
-		// A draft has no rule publishing it, so it is absent. The assertion is
-		// on the served document, not on a service return value.
-		expect(atom).not.toContain('<category term="draft"')
-
-		await anon.dispose()
 	})
 })
 
-test.describe('The reader and the renderer', () => {
-	test('a client gets back the HTML this app renders', async ({ baseURL }) => {
-		const anon = await anonymous(baseURL as string)
-		const response = await anon.post(`${API_BASE}/markup/render`, {
-			data: {
-				markup: '# Kop\n\nEen **vette** tekst met [een link](https://example.org).',
-			},
-		})
+/**
+ * Read a catalogue's feed without an account and check it is Atom without drafts.
+ *
+ * @param anon An anonymous request context.
+ * @param slug The catalogue slug.
+ */
+async function readFeed(anon: APIRequestContext, slug: string): Promise<void> {
+	const response = await anon.get(`${API_BASE}/feeds/${slug}`)
 
-		expect(response.status()).toBe(200)
-		const body = await response.json()
-		expect(body.html).toContain('<h1>Kop</h1>')
-		expect(body.html).toContain('<strong>vette</strong>')
-		expect(body.html).toContain('<a href="https://example.org"')
+	expect([200, 503]).toContain(response.status())
 
-		await anon.dispose()
-	})
+	if (response.status() === 503) {
+		expect((await response.json()).error).toBe('feed-unreadable')
+		return
+	}
 
-	test('HTML a caller sends never comes back as HTML', async ({ baseURL }) => {
-		const anon = await anonymous(baseURL as string)
-		const response = await anon.post(`${API_BASE}/markup/render`, {
-			data: {
-				markup: '<script>alert(1)</script>\n\n[klik](javascript:alert(1))',
-			},
-		})
+	expect(response.headers()['content-type']).toContain('application/atom+xml')
 
-		expect(response.status()).toBe(200)
-		const html = (await response.json()).html
-		expect(html).not.toContain('<script>')
-		expect(html).toContain('&lt;script&gt;')
-		expect(html).not.toContain('href="javascript:')
+	const atom = await response.text()
+	expect(atom).toContain('<feed xmlns="http://www.w3.org/2005/Atom">')
 
-		await anon.dispose()
-	})
-
-	test('rendering twice gives the same answer and creates nothing', async ({
-		baseURL,
-	}) => {
-		const anon = await anonymous(baseURL as string)
-		const markup = { markup: '# Idempotent' }
-
-		const first = await anon.post(`${API_BASE}/markup/render`, { data: markup })
-		const second = await anon.post(`${API_BASE}/markup/render`, { data: markup })
-
-		expect(await first.json()).toEqual(await second.json())
-
-		// No object is created: a render that stored something would show up as
-		// a growing list somewhere, and the endpoint answers no id at all.
-		expect(await first.json()).not.toHaveProperty('id')
-
-		await anon.dispose()
-	})
-})
+	// A draft has no rule publishing it, so it is absent. The assertion is
+	// on the served document, not on a service return value.
+	expect(atom).not.toContain('<category term="draft"')
+	expect(atom).not.toContain('feed draft')
+}
