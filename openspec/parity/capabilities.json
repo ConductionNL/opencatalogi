@@ -7166,8 +7166,8 @@
 				"change": "publication-required-at-publish",
 				"readOn": "2026-10-07",
 				"requirement": [
-					"openspec/changes/publication-required-at-publish/specs/publications :: A draft needs only a title (REQ-PRP-001)",
-					"openspec/changes/publication-required-at-publish/specs/publications :: Publishing refuses a publication missing a required field (REQ-PRP-002)"
+					"openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications :: A draft needs only a title (REQ-PRP-001)",
+					"openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications :: Publishing refuses a publication missing a required field (REQ-PRP-002)"
 				]
 			},
 			"reachedOn": "nothing",

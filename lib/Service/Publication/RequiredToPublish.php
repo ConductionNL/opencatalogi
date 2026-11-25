@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
+ * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
  */
 
 declare(strict_types=1);
@@ -30,7 +30,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
  * The same three names the publication schema's lifecycle declares for `in_review`, `approved` and `published`.
  * OpenRegister stays the authority on a save; this only reads a record, for counts and hints.
  *
- * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
+ * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
  */
 final class RequiredToPublish {
 
@@ -63,7 +63,7 @@ final class RequiredToPublish {
 	 *
 	 * @return array<int, string> The missing field names, in the order of FIELDS.
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
 	 */
 	public static function missing(array $publication): array {
 		$missing = [];
@@ -90,7 +90,7 @@ final class RequiredToPublish {
 	 *
 	 * @return array<string, mixed> The record to save.
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public static function recordGaps(array $publication): array {
 		$state = trim((string)($publication['status'] ?? ''));

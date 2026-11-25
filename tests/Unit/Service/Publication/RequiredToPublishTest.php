@@ -15,7 +15,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
+ * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
  */
 
 declare(strict_types=1);
@@ -71,7 +71,7 @@ class RequiredToPublishTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public function testAPublishedRecordGetsItsGapsRecordedAsNotSupplied(): void {
 		$saved = RequiredToPublish::recordGaps(
@@ -92,7 +92,7 @@ class RequiredToPublishTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public function testOnlyAStateWithTheRuleIsMarked(): void {
 		$draft = ['title' => 'Concept', 'status' => 'draft'];
@@ -109,7 +109,7 @@ class RequiredToPublishTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public function testAnExistingRecordKeepsItsEntries(): void {
 		$saved = RequiredToPublish::recordGaps(publication: [

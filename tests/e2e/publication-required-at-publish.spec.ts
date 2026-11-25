@@ -15,7 +15,7 @@
  * (publication-required-at-publish task 1.1) the dialog has nothing to list,
  * so the test is skipped with that reason instead of failing on it.
  *
- * @e2e openspec/changes/publication-required-at-publish/specs/publications/spec.md#scenario-two-selected-one-incomplete REQ-PRP-003
+ * @e2e openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#scenario-two-selected-one-incomplete REQ-PRP-003
  */
 import type { Page } from '@playwright/test'
 
