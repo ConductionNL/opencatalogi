@@ -15,7 +15,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-required-at-publish/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/tasks.md#task-1.2
  */
 
 declare(strict_types=1);
@@ -150,7 +150,7 @@ final class PublicationRequiredAtPublishTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
 	 */
 	public function testADraftWithOnlyATitleIsSaved(): void {
 		$event = new ObjectCreatingEvent(self::publication(data: ['title' => 'Raadsstukken 15 oktober', 'status' => 'draft']));
@@ -166,7 +166,7 @@ final class PublicationRequiredAtPublishTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
 	 */
 	public function testPublishingWithoutSummaryIsRefusedByName(): void {
 		$old = self::publication(data: ['title' => 'Raadsstukken 15 oktober', 'status' => 'draft']);
@@ -187,7 +187,7 @@ final class PublicationRequiredAtPublishTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public function testALegacyPublicationTheUpgradeResavesIsAccepted(): void {
 		$legacy = ['title' => 'Besluit 2019', 'status' => 'published', 'summary' => '', 'audience' => 'public'];

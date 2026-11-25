@@ -7,7 +7,7 @@
  * never from a list kept here. OpenRegister stays the authority: its 422 on
  * the transition is what refuses a publish; this only tells the editor first.
  *
- * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+ * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
  */
 import { resolveSchema } from './schemaHelpers.js'
 
@@ -31,7 +31,7 @@ function lifecycleOf(schema) {
  *
  * @param {object|null} schema The schema.
  * @return {string[]} The field names; empty when the schema declares none.
- * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+ * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
  */
 export function requiredToPublishFields(schema) {
 	const rules = lifecycleOf(schema)?.states?.published?.fields?.required
@@ -72,7 +72,7 @@ function isEmpty(value) {
  * @param {object} publication The publication.
  * @param {object|null} [schema] The schema; resolved from the publication when omitted.
  * @return {string[]} The missing field names.
- * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+ * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
  */
 export function missingToPublish(publication, schema = undefined) {
 	const fields = requiredToPublishFields(
@@ -86,7 +86,7 @@ export function missingToPublish(publication, schema = undefined) {
  *
  * @param {unknown} error The rejected request's error.
  * @return {string} The message.
- * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+ * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
  */
 export function refusalMessage(error) {
 	const data = error?.response?.data
@@ -104,7 +104,7 @@ export function refusalMessage(error) {
  *
  * @param {object} body The publication body about to be saved.
  * @return {object} The body to send.
- * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+ * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
  */
 export function clearAnsweredGaps(body) {
 	const record = body?.['@notSupplied']

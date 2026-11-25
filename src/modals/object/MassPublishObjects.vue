@@ -234,7 +234,7 @@ export default {
 		 * The selected publications this publish would move but that miss a field
 		 * the schema's lifecycle requires to publish, each with those fields.
 		 *
-		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
 		 */
 		incompleteObjects() {
 			if (this.mode === 'retroactive') return []
@@ -256,7 +256,7 @@ export default {
 		/**
 		 * How many selected publications this publish actually moves.
 		 *
-		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
 		 */
 		publishableCount() {
 			return (
@@ -272,7 +272,7 @@ export default {
 		/**
 		 * The confirm button: "Publish", or "Publish 1 of 2 publications" when incomplete ones are left out.
 		 *
-		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
 		 */
 		confirmLabel() {
 			if (this.incompleteObjects.length === 0) {
@@ -287,7 +287,7 @@ export default {
 		/**
 		 * The note above the list of incomplete publications.
 		 *
-		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
 		 */
 		incompleteWarning() {
 			return t(
@@ -554,7 +554,7 @@ export default {
 		 * @param {object} obj The selected object.
 		 * @param {object[]} incomplete The selected objects missing a required field.
 		 * @return {boolean} True when the object is skipped.
-		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
 		 */
 		skipsPublish(obj, incomplete) {
 			if (!schemaHasPublicationDateFields(obj)) return true
