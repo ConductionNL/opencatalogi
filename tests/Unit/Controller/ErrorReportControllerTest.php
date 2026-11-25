@@ -320,12 +320,12 @@ class ErrorReportControllerTest extends TestCase {
 	 */
 	public function testAPublicationOnTheLifecycleTakesAReport(): void {
 		$this->catalogue(
-			['acceptErrorReports' => true],
-			['id' => 'pub-1', 'status' => 'published', 'publicationDate' => '2026-01-05T09:00:00+00:00', '@self' => ['published' => null]]
+			catalog: ['acceptErrorReports' => true],
+			publication: ['id' => 'pub-1', 'status' => 'published', 'publicationDate' => '2026-01-05T09:00:00+00:00', '@self' => ['published' => null]]
 		);
 		$this->posted = ['message' => 'Fout'];
 
-		$this->assertSame(201, $this->controller->create(id: 'pub-1')->getStatus());
+		$this->assertSame(expected: 201, actual: $this->controller->create(id: 'pub-1')->getStatus());
 	}//end testAPublicationOnTheLifecycleTakesAReport()
 
 	/**
@@ -337,11 +337,11 @@ class ErrorReportControllerTest extends TestCase {
 	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
 	 */
 	public function testTheCatalogueIsReadAsTrustedServerCode(): void {
-		$this->catalogue(['acceptErrorReports' => true]);
+		$this->catalogue(catalog: ['acceptErrorReports' => true]);
 		$this->posted = ['message' => 'Fout'];
 
-		$this->assertSame(201, $this->controller->create(id: 'pub-1')->getStatus());
-		$this->assertSame(1, $this->reveal->trustedReads);
+		$this->assertSame(expected: 201, actual: $this->controller->create(id: 'pub-1')->getStatus());
+		$this->assertSame(expected: 1, actual: $this->reveal->trustedReads);
 	}//end testTheCatalogueIsReadAsTrustedServerCode()
 
 	/**
