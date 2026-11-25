@@ -899,7 +899,16 @@
         "Hide the checked categories": "Απόκρυψη των επιλεγμένων κατηγοριών",
         "The checked categories are hidden.": "Οι επιλεγμένες κατηγορίες αποκρύφθηκαν.",
         "Choose one of the listed organisation types.": "Επιλέξτε έναν από τους αναφερόμενους τύπους οργανισμού.",
-        "Legal basis": "Νομική βάση"
+        "Legal basis": "Νομική βάση",
+        "Organisations you publish for": "Οργανισμοί για τους οποίους δημοσιεύετε",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Ενεργοποιήστε από το εθνικό μητρώο TOOI τους οργανισμούς για τους οποίους δημοσιεύει αυτή η εγκατάσταση. Μόλις ενεργοποιηθεί ένας, ο χάρτης ιστότοπου αναφέρει ως εκδότη ή υπεύθυνο οργανισμό μόνο ενεργοποιημένους οργανισμούς.",
+        "Search by name or code": "Αναζήτηση με όνομα ή κωδικό",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Δεν έχει ενεργοποιηθεί ακόμη κανένας οργανισμός, οπότε ο χάρτης ιστότοπου αναφέρει κάθε οργανισμό.",
+        "No organisation in the TOOI register matches this search.": "Κανένας οργανισμός του μητρώου TOOI δεν ταιριάζει με αυτή την αναζήτηση.",
+        "Name the organisation and whether it is active.": "Αναφέρετε τον οργανισμό και αν είναι ενεργός.",
+        "This organisation cannot be activated: %s": "Αυτός ο οργανισμός δεν μπορεί να ενεργοποιηθεί: %s",
+        "The organisation could not be saved: %s": "Ο οργανισμός δεν ήταν δυνατό να αποθηκευτεί: %s",
+        "The organisation registers could not be read: %s": "Τα μητρώα οργανισμών δεν ήταν δυνατό να διαβαστούν: %s"
     },
     "plurals": {}
 }

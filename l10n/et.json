@@ -899,7 +899,16 @@
         "Hide the checked categories": "Peida märgitud kategooriad",
         "The checked categories are hidden.": "Märgitud kategooriad on peidetud.",
         "Choose one of the listed organisation types.": "Valige üks loetletud organisatsiooni tüüpidest.",
-        "Legal basis": "Õiguslik alus"
+        "Legal basis": "Õiguslik alus",
+        "Organisations you publish for": "Organisatsioonid, kelle nimel avaldate",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Aktiveerige riiklikust TOOI registrist organisatsioonid, kelle nimel see paigaldus avaldab. Kui üks on aktiveeritud, nimetab saidikaart avaldaja või vastutava organisatsioonina ainult aktiveeritud organisatsioone.",
+        "Search by name or code": "Otsi nime või koodi järgi",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Ühtegi organisatsiooni pole veel aktiveeritud, seega nimetatakse saidikaardis iga organisatsiooni.",
+        "No organisation in the TOOI register matches this search.": "Ükski TOOI registri organisatsioon ei vasta sellele otsingule.",
+        "Name the organisation and whether it is active.": "Nimetage organisatsioon ja kas see on aktiivne.",
+        "This organisation cannot be activated: %s": "Seda organisatsiooni ei saa aktiveerida: %s",
+        "The organisation could not be saved: %s": "Organisatsiooni ei saanud salvestada: %s",
+        "The organisation registers could not be read: %s": "Organisatsioonide registreid ei saanud lugeda: %s"
     },
     "plurals": {}
 }

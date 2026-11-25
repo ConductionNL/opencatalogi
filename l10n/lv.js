@@ -900,7 +900,16 @@ OC.L10N.register(
         "Hide the checked categories": "Paslēpt atzīmētās kategorijas",
         "The checked categories are hidden.": "Atzīmētās kategorijas ir paslēptas.",
         "Choose one of the listed organisation types.": "Izvēlieties vienu no norādītajiem organizācijas veidiem.",
-        "Legal basis": "Juridiskais pamats"
+        "Legal basis": "Juridiskais pamats",
+        "Organisations you publish for": "Organizācijas, kuru vārdā jūs publicējat",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Aktivizējiet no nacionālā TOOI reģistra organizācijas, kuru vārdā šī instalācija publicē. Tiklīdz viena ir aktivizēta, vietnes karte kā izdevēju vai atbildīgo organizāciju nosauc tikai aktivizētas organizācijas.",
+        "Search by name or code": "Meklēt pēc nosaukuma vai koda",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Neviena organizācija vēl nav aktivizēta, tāpēc vietnes kartē tiek nosauktas visas organizācijas.",
+        "No organisation in the TOOI register matches this search.": "Neviena TOOI reģistra organizācija neatbilst šim meklējumam.",
+        "Name the organisation and whether it is active.": "Norādiet organizāciju un vai tā ir aktīva.",
+        "This organisation cannot be activated: %s": "Šo organizāciju nevar aktivizēt: %s",
+        "The organisation could not be saved: %s": "Organizāciju neizdevās saglabāt: %s",
+        "The organisation registers could not be read: %s": "Organizāciju reģistrus neizdevās nolasīt: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

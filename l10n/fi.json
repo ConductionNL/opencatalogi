@@ -899,7 +899,16 @@
         "Hide the checked categories": "Piilota valitut luokat",
         "The checked categories are hidden.": "Valitut luokat on piilotettu.",
         "Choose one of the listed organisation types.": "Valitse jokin luetelluista organisaatiotyypeistä.",
-        "Legal basis": "Oikeusperusta"
+        "Legal basis": "Oikeusperusta",
+        "Organisations you publish for": "Organisaatiot, joiden puolesta julkaiset",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Aktivoi kansallisesta TOOI-rekisteristä organisaatiot, joiden puolesta tämä asennus julkaisee. Kun yksikin on aktivoitu, sivustokartta nimeää julkaisijaksi tai vastuuorganisaatioksi vain aktivoituja organisaatioita.",
+        "Search by name or code": "Hae nimellä tai koodilla",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Yhtään organisaatiota ei ole vielä aktivoitu, joten sivustokartta nimeää jokaisen organisaation.",
+        "No organisation in the TOOI register matches this search.": "Mikään TOOI-rekisterin organisaatio ei vastaa tätä hakua.",
+        "Name the organisation and whether it is active.": "Nimeä organisaatio ja kerro, onko se aktiivinen.",
+        "This organisation cannot be activated: %s": "Tätä organisaatiota ei voi aktivoida: %s",
+        "The organisation could not be saved: %s": "Organisaatiota ei voitu tallentaa: %s",
+        "The organisation registers could not be read: %s": "Organisaatiorekistereitä ei voitu lukea: %s"
     },
     "plurals": {}
 }

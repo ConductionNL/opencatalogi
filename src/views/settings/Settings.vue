@@ -263,6 +263,8 @@
 
 				<OrganisationTypeProposal @hidden="$refs.categoryExplanations && $refs.categoryExplanations.load()" />
 
+				<ActivatedOrganisations />
+
 				<CategoryExplanations ref="categoryExplanations" />
 
 				<ValueListOrder
@@ -766,6 +768,7 @@ import DcatFeedValidation from './DcatFeedValidation.vue'
 import DonlHarvestStatus from './DonlHarvestStatus.vue'
 import InstanceModeSection from './InstanceModeSection.vue'
 import OrganisationTypeProposal from './OrganisationTypeProposal.vue'
+import ActivatedOrganisations from './ActivatedOrganisations.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
 import RecordHandover from './RecordHandover.vue'
@@ -902,6 +905,7 @@ export default defineComponent({
 		RefusalGroundsSource,
 		CategoryExplanations,
 		OrganisationTypeProposal,
+		ActivatedOrganisations,
 		ValueListOrder,
 		WooIndexConnection,
 		WooIncidents,

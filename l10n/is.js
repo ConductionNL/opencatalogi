@@ -900,7 +900,16 @@ OC.L10N.register(
         "Hide the checked categories": "Fela merkta flokka",
         "The checked categories are hidden.": "Merktu flokkarnir eru faldir.",
         "Choose one of the listed organisation types.": "Veldu eina af tilgreindum tegundum stofnana.",
-        "Legal basis": "Lagagrundvöllur"
+        "Legal basis": "Lagagrundvöllur",
+        "Organisations you publish for": "Stofnanir sem þú birtir fyrir",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Virkjaðu stofnanirnar sem þessi uppsetning birtir fyrir, úr landsskránni TOOI. Þegar ein er virkjuð nefnir veftréð aðeins virkjaðar stofnanir sem útgefanda eða ábyrga stofnun.",
+        "Search by name or code": "Leita eftir nafni eða kóða",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Engin stofnun er virkjuð enn, svo allar stofnanir eru nefndar í veftrénu.",
+        "No organisation in the TOOI register matches this search.": "Engin stofnun í TOOI-skránni passar við þessa leit.",
+        "Name the organisation and whether it is active.": "Tilgreindu stofnunina og hvort hún sé virk.",
+        "This organisation cannot be activated: %s": "Ekki er hægt að virkja þessa stofnun: %s",
+        "The organisation could not be saved: %s": "Ekki tókst að vista stofnunina: %s",
+        "The organisation registers could not be read: %s": "Ekki tókst að lesa stofnanaskrárnar: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -900,7 +900,16 @@ OC.L10N.register(
         "Hide the checked categories": "Aħbi l-kategoriji mmarkati",
         "The checked categories are hidden.": "Il-kategoriji mmarkati huma moħbija.",
         "Choose one of the listed organisation types.": "Agħżel wieħed mit-tipi ta' organizzazzjoni elenkati.",
-        "Legal basis": "Bażi legali"
+        "Legal basis": "Bażi legali",
+        "Organisations you publish for": "Organizzazzjonijiet li tippubblika għalihom",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Attiva mir-reġistru nazzjonali TOOI l-organizzazzjonijiet li din l-installazzjoni tippubblika għalihom. Ladarba waħda tkun attivata, il-mappa tas-sit issemmi biss organizzazzjonijiet attivati bħala pubblikatur jew organizzazzjoni responsabbli.",
+        "Search by name or code": "Fittex bl-isem jew bil-kodiċi",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "L-ebda organizzazzjoni għadha mhix attivata, għalhekk il-mappa tas-sit issemmi kull organizzazzjoni.",
+        "No organisation in the TOOI register matches this search.": "L-ebda organizzazzjoni fir-reġistru TOOI ma taqbel ma’ din it-tfittxija.",
+        "Name the organisation and whether it is active.": "Semmi l-organizzazzjoni u jekk hijiex attiva.",
+        "This organisation cannot be activated: %s": "Din l-organizzazzjoni ma tistax tiġi attivata: %s",
+        "The organisation could not be saved: %s": "L-organizzazzjoni ma setgħetx tiġi ssejvjata: %s",
+        "The organisation registers could not be read: %s": "Ir-reġistri tal-organizzazzjonijiet ma setgħux jinqraw: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -899,7 +899,16 @@
         "Hide the checked categories": "A bejelölt kategóriák elrejtése",
         "The checked categories are hidden.": "A bejelölt kategóriák el vannak rejtve.",
         "Choose one of the listed organisation types.": "Válasszon a felsorolt szervezettípusok közül.",
-        "Legal basis": "Jogalap"
+        "Legal basis": "Jogalap",
+        "Organisations you publish for": "Szervezetek, amelyek nevében közzétesz",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Aktiválja a nemzeti TOOI-nyilvántartásból azokat a szervezeteket, amelyek nevében ez a telepítés közzétesz. Ha legalább egy aktív, a webhelytérkép kiadóként vagy felelős szervezetként csak aktivált szervezeteket nevez meg.",
+        "Search by name or code": "Keresés név vagy kód szerint",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Még nincs aktivált szervezet, ezért a webhelytérkép minden szervezetet megnevez.",
+        "No organisation in the TOOI register matches this search.": "A TOOI-nyilvántartás egyik szervezete sem felel meg ennek a keresésnek.",
+        "Name the organisation and whether it is active.": "Adja meg a szervezetet, és hogy aktív-e.",
+        "This organisation cannot be activated: %s": "Ez a szervezet nem aktiválható: %s",
+        "The organisation could not be saved: %s": "A szervezetet nem sikerült menteni: %s",
+        "The organisation registers could not be read: %s": "A szervezeti nyilvántartásokat nem sikerült beolvasni: %s"
     },
     "plurals": {}
 }

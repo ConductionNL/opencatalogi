@@ -899,7 +899,16 @@
         "Hide the checked categories": "Amaga les categories marcades",
         "The checked categories are hidden.": "Les categories marcades estan amagades.",
         "Choose one of the listed organisation types.": "Trieu un dels tipus d'organització indicats.",
-        "Legal basis": "Base jurídica"
+        "Legal basis": "Base jurídica",
+        "Organisations you publish for": "Organitzacions per a les quals publiqueu",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Activeu, del registre nacional TOOI, les organitzacions per a les quals publica aquesta instal·lació. Quan n’hi ha una d’activada, el mapa del lloc només esmenta organitzacions activades com a editora o organització responsable.",
+        "Search by name or code": "Cerca per nom o codi",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Encara no hi ha cap organització activada, així que el mapa del lloc esmenta totes les organitzacions.",
+        "No organisation in the TOOI register matches this search.": "Cap organització del registre TOOI no coincideix amb aquesta cerca.",
+        "Name the organisation and whether it is active.": "Indiqueu l’organització i si està activa.",
+        "This organisation cannot be activated: %s": "Aquesta organització no es pot activar: %s",
+        "The organisation could not be saved: %s": "No s’ha pogut desar l’organització: %s",
+        "The organisation registers could not be read: %s": "No s’han pogut llegir els registres d’organitzacions: %s"
     },
     "plurals": {}
 }
