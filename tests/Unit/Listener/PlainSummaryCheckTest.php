@@ -55,6 +55,13 @@ class PlainSummaryCheckTest extends TestCase {
 		$this->provenance = new PlainSummaryProvenance($session, $time);
 	}
 
+	/**
+	 * The listener, with the request of the save when one is given.
+	 *
+	 * @param IRequest|null $request The request.
+	 *
+	 * @return PlainSummaryCheck The listener.
+	 */
 	private function listener(?IRequest $request = null): PlainSummaryCheck {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
@@ -84,14 +91,14 @@ class PlainSummaryCheckTest extends TestCase {
 	 */
 	public function testAnEmptyLevelInTheRequestIsRefusedThoughTheDefaultFilledIt(): void {
 		$event = new ObjectUpdatingEvent(
-			$this->entity(['title' => 'Besluit', 'plainSummary' => self::SUMMARY, 'plainSummaryLevel' => 'B1']),
-			$this->entity(['title' => 'Besluit'])
+			$this->entity(data: ['title' => 'Besluit', 'plainSummary' => self::SUMMARY, 'plainSummaryLevel' => 'B1']),
+			$this->entity(data: ['title' => 'Besluit'])
 		);
 
 		$this->listener(request: $this->requestWith(params: ['plainSummary' => self::SUMMARY, 'plainSummaryLevel' => '']))->handle($event);
 
-		$this->assertTrue($event->isPropagationStopped());
-		$this->assertSame('plainSummaryLevel', $event->getErrors()['property']);
+		$this->assertTrue(condition: $event->isPropagationStopped());
+		$this->assertSame(expected: 'plainSummaryLevel', actual: $event->getErrors()['property']);
 	}
 
 	/**
@@ -103,13 +110,13 @@ class PlainSummaryCheckTest extends TestCase {
 	 */
 	public function testARequestThatDoesNotNameTheLevelKeepsTheDefault(): void {
 		$event = new ObjectUpdatingEvent(
-			$this->entity(['title' => 'Besluit', 'plainSummary' => self::SUMMARY, 'plainSummaryLevel' => 'B1']),
-			$this->entity(['title' => 'Besluit'])
+			$this->entity(data: ['title' => 'Besluit', 'plainSummary' => self::SUMMARY, 'plainSummaryLevel' => 'B1']),
+			$this->entity(data: ['title' => 'Besluit'])
 		);
 
 		$this->listener(request: $this->requestWith(params: ['plainSummary' => self::SUMMARY]))->handle($event);
 
-		$this->assertFalse($event->isPropagationStopped());
+		$this->assertFalse(condition: $event->isPropagationStopped());
 	}
 
 	private function entity(array $data): ObjectEntity {
