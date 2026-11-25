@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Mcp;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
-use OCA\OpenCatalogi\Service\Publication\AgentPublishing;
+use OCA\OpenCatalogi\Contract\AgentPublishingInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Mcp\Attribute\McpTool;
@@ -58,13 +58,13 @@ class PublicationAgentTools {
 	 * @param ContainerInterface   $container The container OpenRegister's object service comes from.
 	 * @param IAppConfig           $config    Where the publication register and schema are configured.
 	 * @param McpArgumentValidator $validator The draft allow-list and the publish ids.
-	 * @param AgentPublishing|null $publishing Publishes approved publications; without it the publish tool refuses.
+	 * @param AgentPublishingInterface|null $publishing Publishes approved publications; without it the publish tool refuses.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $config,
 		private readonly McpArgumentValidator $validator,
-		private readonly ?AgentPublishing $publishing = null,
+		private readonly ?AgentPublishingInterface $publishing = null,
 	) {
 	}//end __construct()
 
@@ -136,7 +136,7 @@ class PublicationAgentTools {
 	 * off. The publish runs the publish button's checks and lifecycle
 	 * transition as the person the agent acts for, item by item.
 	 *
-	 * @param array<array-key, mixed> $ids The publication ids, at most AgentPublishing::MAX_ITEMS.
+	 * @param array<array-key, mixed> $ids The publication ids, at most AgentPublishingInterface::MAX_ITEMS.
 	 *
 	 * @return array<string, mixed> `published` and `refused` (each `{id, code}`), or an `error` envelope.
 	 *
@@ -159,7 +159,7 @@ class PublicationAgentTools {
 		reach: 'external',
 	)]
 	public function publishPublication(array $ids): array {
-		$checked = $this->validator->publicationIds(ids: $ids, max: AgentPublishing::MAX_ITEMS);
+		$checked = $this->validator->publicationIds(ids: $ids, max: AgentPublishingInterface::MAX_ITEMS);
 		if (isset($checked['error']) === true) {
 			return $checked;
 		}

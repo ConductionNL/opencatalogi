@@ -19,16 +19,13 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Service\Publication;
 
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\AgentPublishing;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
-use OCP\IAppConfig;
-use OCP\IUser;
-use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Psr\Container\ContainerInterface;
 use RuntimeException;
 
 /**
@@ -52,6 +49,13 @@ class AgentPublishingTest extends TestCase {
 	 * @var list<array{id: string, stored: string, date: string}>
 	 */
 	private array $published = [];
+
+	/**
+	 * The callers the embargo check was asked about.
+	 *
+	 * @var list<mixed>
+	 */
+	private array $embargoCallers = [];
 
 	/**
 	 * The find calls, with their RBAC flag.
@@ -90,11 +94,13 @@ class AgentPublishingTest extends TestCase {
 				return $this->test->found(id: $id, rbac: $_rbac);
 			}
 		};
-		$container = $this->createMock(originalClassName: ContainerInterface::class);
-		$container->method('get')->willReturn($objects);
-
-		$config = $this->createConfiguredStub(originalClassName: IAppConfig::class, configuration: ['getValueString' => $configured]);
-		$session = $this->createConfiguredStub(originalClassName: IUserSession::class, configuration: ['getUser' => $this->createStub(IUser::class)]);
+		$openRegister = $this->createMock(originalClassName: OpenRegisterLookupInterface::class);
+		$openRegister->method('objectService')->willReturn($objects);
+		if ($configured === 'throws') {
+			$openRegister->method('registerConfiguration')->willThrowException(new RuntimeException('publication_register is not set'));
+		} else {
+			$openRegister->method('registerConfiguration')->willReturn(['register' => $configured, 'schema' => $configured]);
+		}
 
 		$rights = $this->createMock(originalClassName: PublicationRightsInterface::class);
 		$rights->method('mayPublish')->willReturn($mayPublish);
@@ -107,7 +113,14 @@ class AgentPublishingTest extends TestCase {
 
 		$publisher = $this->createMock(originalClassName: PublishTransition::class);
 		$publisher->method('embargoVeto')->willReturnCallback(
-			static fn (array $stored): ?array => (($stored['_embargo'] ?? false) === true) ? ['code' => 'embargo-holds', 'property' => 'publicationDate', 'embargoUntil' => null] : null
+			function (array $stored, array $record, mixed $caller): ?array {
+				$this->embargoCallers[] = $caller;
+				if (($stored['_embargo'] ?? false) !== true) {
+					return null;
+				}
+
+				return ['code' => 'embargo-holds', 'property' => 'publicationDate', 'embargoUntil' => null];
+			}
 		);
 		$publisher->method('documentCount')->willReturnCallback(static fn (string $id, ?object $publication): int => (int)($publication->_documents ?? 1));
 		$publisher->method('publish')->willReturnCallback(
@@ -121,7 +134,7 @@ class AgentPublishingTest extends TestCase {
 			}
 		);
 
-		return new AgentPublishing(container: $container, config: $config, userSession: $session, rights: $rights, states: $states, publisher: $publisher);
+		return new AgentPublishing(openRegister: $openRegister, rights: $rights, states: $states, publisher: $publisher);
 	}//end service()
 
 	/**
@@ -198,6 +211,7 @@ class AgentPublishingTest extends TestCase {
 			actual: $answer['refused']
 		);
 		$this->assertSame(expected: [], actual: $this->published);
+		$this->assertSame(expected: [null], actual: array_unique($this->embargoCallers), message: 'nobody lifts an embargo through an agent');
 	}//end testThePublishButtonsChecksRefuseItemByItem()
 
 	/**
@@ -210,6 +224,7 @@ class AgentPublishingTest extends TestCase {
 
 		$this->assertSame(expected: ['error' => 'not_a_publisher'], actual: $this->service(mayPublish: false)->publishApproved(ids: ['approved']));
 		$this->assertSame(expected: ['error' => 'not_configured'], actual: $this->service(configured: '')->publishApproved(ids: ['approved']));
+		$this->assertSame(expected: ['error' => 'not_configured'], actual: $this->service(configured: 'throws')->publishApproved(ids: ['approved']));
 		$this->assertSame(expected: [], actual: $this->finds);
 		$this->assertSame(expected: [], actual: $this->published);
 	}//end testACallerWhoMayNotPublishIsRefusedAsAWhole()

@@ -47,7 +47,8 @@
     token; REQ-009 is amended to say so. Built: `publishPublication` (`lib/Mcp/PublicationAgentTools.php` over
     `lib/Service/Publication/AgentPublishing.php`) publishes only `approved` publications, through the publish
     button's checks and `PublishTransition` as the session user, each refusal named (`not_approved`, `forbidden`,
-    `embargo_holds`, `no_documents`, `not_found`, `not_published`). Tests:
+    `embargo_holds`, `no_documents`, `not_found`, `not_published`); an embargo is judged with nobody allowed to lift
+    it, so an agent never releases one early. Tests:
     `tests/Unit/Service/Publication/AgentPublishingTest.php`, `tests/Unit/Mcp/PublicationAgentToolsTest.php`.
     Left: `depublishPublication` and `archivePublication` as an OpenRegister approval task a publisher completes,
     and the completion that withdraws or archives.

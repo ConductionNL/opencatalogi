@@ -28,13 +28,11 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
-use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\AgentPublishingInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
-use OCP\IAppConfig;
-use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Throwable;
 
 /**
@@ -44,43 +42,27 @@ use Throwable;
  * moved it to `approved` in the screen. The agent cannot approve, so a draft or
  * a publication still in review is refused even where review is switched off.
  * Every other check is the publish button's: the publish right, the update
- * right on the item, an embargo the caller may not lift, and a publication
- * without documents (the agent cannot confirm that one).
+ * right on the item, an embargo, and a publication without documents (the
+ * agent cannot confirm that one). An embargo is judged with nobody allowed to
+ * lift it: an agent never releases an embargoed publication early, even for a
+ * person who may; that person lifts it in the screen.
  *
  * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
  */
-class AgentPublishing {
-
-	/**
-	 * The most publications one call publishes.
-	 *
-	 * @var int
-	 */
-	public const MAX_ITEMS = 50;
-
-	/**
-	 * The OpenRegister object service.
-	 *
-	 * @var string
-	 */
-	private const OBJECTS = 'OCA\OpenRegister\Service\ObjectService';
+class AgentPublishing implements AgentPublishingInterface {
 
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface               $container   OpenRegister's object service.
-	 * @param IAppConfig                       $config      The publication register and schema.
-	 * @param IUserSession                     $userSession The person the agent acts for.
-	 * @param PublicationRightsInterface       $rights      The publish right, and the update right on one publication.
-	 * @param PublicationStateServiceInterface $states      The record a publish now stores.
-	 * @param PublishTransition                $publisher   The lifecycle transition, the embargo check and the document count.
+	 * @param OpenRegisterLookupInterface      $openRegister OpenRegister's object service and the publication register and schema.
+	 * @param PublicationRightsInterface       $rights       The publish right, and the update right on one publication.
+	 * @param PublicationStateServiceInterface $states       The record a publish now stores.
+	 * @param PublishTransition                $publisher    The lifecycle transition, the embargo check and the document count.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
-		private readonly IAppConfig $config,
-		private readonly IUserSession $userSession,
+		private readonly OpenRegisterLookupInterface $openRegister,
 		private readonly PublicationRightsInterface $rights,
 		private readonly PublicationStateServiceInterface $states,
 		private readonly PublishTransition $publisher,
@@ -103,8 +85,14 @@ class AgentPublishing {
 			return ['error' => 'not_a_publisher'];
 		}
 
-		$register = $this->config->getValueString(AppIdentity::APP_ID, 'publication_register', '');
-		$schema   = $this->config->getValueString(AppIdentity::APP_ID, 'publication_schema', '');
+		try {
+			$target = $this->openRegister->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
+		} catch (Throwable) {
+			return ['error' => 'not_configured'];
+		}
+
+		$register = (string)($target['register'] ?? '');
+		$schema   = (string)($target['schema'] ?? '');
 		if ($register === '' || $schema === '') {
 			return ['error' => 'not_configured'];
 		}
@@ -134,7 +122,7 @@ class AgentPublishing {
 	 */
 	private function publishOne(string $id, ObjectFindOptions $options): ?string {
 		try {
-			$publication = $this->container->get(self::OBJECTS)->find(id: $id, options: $options, _rbac: true);
+			$publication = $this->openRegister->objectService()->find(id: $id, options: $options, _rbac: true);
 		} catch (Throwable) {
 			$publication = null;
 		}
@@ -172,14 +160,14 @@ class AgentPublishing {
 		}
 
 		$properties = self::propertiesOf(publication: $publication);
-		if (PublishTransition::storedState(stored: (string)($properties['status'] ?? '')) !== 'approved') {
+		if (trim((string)($properties['status'] ?? '')) !== 'approved') {
 			return 'not_approved';
 		}
 
 		$veto = $this->publisher->embargoVeto(
 			stored: $properties,
 			record: $this->states->publishedRecord(publication: $properties),
-			caller: $this->userSession->getUser()
+			caller: null
 		);
 		if ($veto !== null) {
 			return 'embargo_holds';
