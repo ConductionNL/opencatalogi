@@ -116,6 +116,52 @@ describe('MetadataSuggestionsWidget', () => {
 		).toBe('Accepted: the value is on the publication.')
 	})
 
+	it('hands the publication, read again, to the page after an accept', async () => {
+		const setObject = jest.fn()
+		const context = { objectId: 'pub-1', register: '26', schema: '40', setObject }
+		const wrapper = await mountWidget(
+			{ suggestions: SUGGESTIONS, hermiq: false, canDecide: true },
+			context,
+		)
+		axios.post.mockResolvedValue({
+			data: { suggestion: { id: 's-1', status: 'accepted' } },
+		})
+		const fresh = { id: 'pub-1', summary: 'Accepted value' }
+		axios.get.mockImplementation((url) =>
+			Promise.resolve({
+				data: url.startsWith('/apps/openregister/')
+					? fresh
+					: { suggestions: [], hermiq: false, canDecide: true },
+			}),
+		)
+
+		await wrapper
+			.find('[data-testid="metadata-suggestion-accept-s-1"]')
+			.trigger('click')
+		await flushPromises()
+
+		expect(axios.get).toHaveBeenCalledWith('/apps/openregister/api/objects/26/40/pub-1')
+		expect(setObject).toHaveBeenCalledWith(fresh)
+	})
+
+	it('leaves the page alone after a rejection', async () => {
+		const setObject = jest.fn()
+		const wrapper = await mountWidget(
+			{ suggestions: SUGGESTIONS, hermiq: false, canDecide: true },
+			{ objectId: 'pub-1', register: '26', schema: '40', setObject },
+		)
+		axios.post.mockResolvedValue({
+			data: { suggestion: { id: 's-1', status: 'rejected' } },
+		})
+
+		await wrapper
+			.find('[data-testid="metadata-suggestion-reject-s-1"]')
+			.trigger('click')
+		await flushPromises()
+
+		expect(setObject).not.toHaveBeenCalled()
+	})
+
 	it('says why a rejection was refused, in the server words', async () => {
 		const wrapper = await mountWidget({
 			suggestions: SUGGESTIONS,

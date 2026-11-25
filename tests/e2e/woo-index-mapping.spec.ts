@@ -20,6 +20,7 @@
  * @e2e openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#scenario-the-settings-page-names-the-source
  */
 import { expect, test } from './authenticated-request.ts'
+import { Fixtures } from './workflows/_fixtures.ts'
 
 /** The app's own API base path. */
 const API_BASE = '/index.php/apps/opencatalogi/api'
@@ -31,6 +32,20 @@ const LINES = {
 }
 
 test.describe('Woo-index fields: where they come from', () => {
+	const fx = new Fixtures()
+
+	// The readiness check runs only while a catalogue is Woo-enabled (WOO-HR-004:
+	// otherwise 409 not-configured); a fresh instance has none, so bring one.
+	test.beforeAll(async () => {
+		await fx.init()
+		await fx.createCatalog('woo-index-mapping', { hasWooSitemap: true })
+	})
+
+	test.afterAll(async () => {
+		await fx.cleanupAll()
+		await fx.dispose()
+	})
+
 	test('the readiness report names the mapping source', async ({ request: admin }) => {
 		const response = await admin.post(`${API_BASE}/woo/readiness/run`)
 		expect(response.ok(), await response.text()).toBe(true)

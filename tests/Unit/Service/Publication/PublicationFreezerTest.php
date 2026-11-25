@@ -155,6 +155,105 @@ final class PublicationFreezerTest extends TestCase {
 	}//end testAnUnresolvableHandlerIsReportedNotThrown()
 
 	/**
+	 * A handler that records the unfreeze it was asked for.
+	 *
+	 * @return object The double.
+	 */
+	private function unfreezer(): object {
+		return new class() {
+			/**
+			 * The request it got.
+			 *
+			 * @var ObjectStateRequest|null
+			 */
+			public ?ObjectStateRequest $asked = null;
+
+			/**
+			 * OpenRegister's ArchiveHandlerInterface::unfreezeWith() signature.
+			 *
+			 * @param ObjectStateRequest $request The object and why.
+			 *
+			 * @return array{uuid: string, frozen: null} The cleared marker.
+			 */
+			public function unfreezeWith(ObjectStateRequest $request): array {
+				$this->asked = $request;
+				return ['uuid' => $request->identifier, 'frozen' => null];
+			}
+		};
+	}//end unfreezer()
+
+	/**
+	 * The withdrawal's own freeze is lifted with the reason.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 */
+	public function testTheWithdrawalFreezeIsLiftedWithTheReason(): void {
+		$handler = $this->unfreezer();
+		$answer = $this->freezer(handler: $handler)->liftWithdrawalFreeze(
+			publication: ['depublicationDate' => '2026-09-29T09:00:00+00:00', '@self' => ['id' => 'pub-1', 'frozen' => ['at' => '2026-09-29T09:00:01+00:00']]],
+			reason: 'Annex corrected'
+		);
+
+		self::assertSame(expected: ['unfrozen' => true], actual: $answer);
+		self::assertSame(expected: 'pub-1', actual: $handler->asked->identifier);
+		self::assertSame(expected: 'Annex corrected', actual: $handler->asked->reason);
+	}//end testTheWithdrawalFreezeIsLiftedWithTheReason()
+
+	/**
+	 * A freeze set long after the withdrawal stays, and OpenRegister is not asked.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 */
+	public function testALaterFreezeIsNotLifted(): void {
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->expects($this->never())->method('get');
+		$freezer = new PublicationFreezer(container: $container, logger: $this->createMock(originalClassName: LoggerInterface::class));
+
+		$answer = $freezer->liftWithdrawalFreeze(
+			publication: ['depublicationDate' => '2026-09-29T09:00:00+00:00', '@self' => ['id' => 'pub-1', 'frozen' => ['at' => '2026-10-15T12:00:00+00:00']]],
+			reason: 'x'
+		);
+
+		self::assertFalse(condition: $answer['unfrozen']);
+		self::assertStringContainsString(needle: 'another reason', haystack: $answer['unfrozenError']);
+	}//end testALaterFreezeIsNotLifted()
+
+	/**
+	 * A publication that is not frozen needs nothing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 */
+	public function testANotFrozenPublicationNeedsNothing(): void {
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->expects($this->never())->method('get');
+		$freezer = new PublicationFreezer(container: $container, logger: $this->createMock(originalClassName: LoggerInterface::class));
+
+		self::assertSame(expected: ['unfrozen' => true], actual: $freezer->liftWithdrawalFreeze(publication: ['@self' => ['id' => 'pub-1']], reason: 'x'));
+	}//end testANotFrozenPublicationNeedsNothing()
+
+	/**
+	 * An unfreeze OpenRegister refuses is reported, never thrown.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 */
+	public function testARefusedUnfreezeIsReported(): void {
+		$answer = $this->freezer(handler: null)->liftWithdrawalFreeze(
+			publication: ['depublicationDate' => '2026-09-29T09:00:00+00:00', '@self' => ['id' => 'pub-1', 'frozen' => ['at' => '2026-09-29T09:00:00+00:00']]],
+			reason: 'x'
+		);
+
+		self::assertSame(expected: ['unfrozen' => false, 'unfrozenError' => 'ArchiveHandler is not registered'], actual: $answer);
+	}//end testARefusedUnfreezeIsReported()
+
+	/**
 	 * A withdrawal that names no publication freezes nothing.
 	 *
 	 * @return void

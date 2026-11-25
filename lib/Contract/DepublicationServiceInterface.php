@@ -127,4 +127,16 @@ interface DepublicationServiceInterface {
 		string $answer,
 		?DateTimeInterface $now = null,
 	): array;
+
+	/**
+	 * Lift the freeze a withdrawal put on a publication, before it is published again.
+	 *
+	 * @param array<string, mixed> $publication The publication as stored, with its `@self`.
+	 * @param string               $reason      Why it is unfrozen.
+	 *
+	 * @return array{unfrozen: bool, unfrozenError?: string} Whether it is (now) not frozen, and why not.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 */
+	public function liftWithdrawalFreeze(array $publication, string $reason): array;
 }//end interface

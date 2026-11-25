@@ -255,6 +255,42 @@ class ApplicationTest extends TestCase {
 
 	}//end testWithTheAppHostEngineTheGenericIsBuiltAsBefore()
 
+	/**
+	 * The metrics generic gets OpenRegister's access guard: without one it answers 403 to everyone,
+	 * administrators included (live, 25 Nov 2026).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/prometheus-metrics/spec.md
+	 */
+	public function testTheMetricsGenericGetsTheAccessGuard(): void {
+		$generic = 'OCA\\OpenRegister\\AppHost\\Controller\\GenericMetricsController';
+		$guardClass = 'OCA\\OpenRegister\\AppHost\\Observability\\MetricsAccessGuard';
+		if (class_exists($generic) === false || class_exists($guardClass) === false) {
+			$this->markTestSkipped(message: 'OpenRegister with the AppHost metrics guard is not beside the app.');
+		}
+
+		$registered = $this->registered();
+		$guard = $this->createMock(originalClassName: $guardClass);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			fn (string $id): mixed => match ($id) {
+				OpenRegisterCompatibility::class => new OpenRegisterCompatibility(markerClass: \stdClass::class),
+				LoggerInterface::class => $this->createMock(originalClassName: LoggerInterface::class),
+				'OCP\\IRequest' => $this->createMock(originalClassName: IRequest::class),
+				$guardClass => $guard,
+				default => $this->createMock(originalClassName: $id),
+			}
+		);
+
+		$controller = $registered['services']['OCA\\OpenCatalogi\\AppHost\\Controller\\GenericMetricsController']($container);
+
+		$this->assertInstanceOf(expected: $generic, actual: $controller);
+		$property = new \ReflectionProperty($generic, 'accessGuard');
+		$this->assertSame(expected: $guard, actual: $property->getValue($controller));
+
+	}//end testTheMetricsGenericGetsTheAccessGuard()
+
 	public function testTheProbeLooksForTheAppHostDashboardController(): void {
 		$this->assertSame('OCA\\OpenRegister\\AppHost\\Controller\\GenericDashboardController', (new OpenRegisterCompatibility())->markerClass());
 		$this->assertTrue((new OpenRegisterCompatibility(markerClass: \stdClass::class))->appHostAvailable());

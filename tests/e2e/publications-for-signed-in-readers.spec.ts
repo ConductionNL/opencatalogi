@@ -17,12 +17,14 @@
  * @e2e openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md#scenario-an-editor-limits-a-publication-to-signed-in-readers
  * @spec openspec/changes/publications-for-signed-in-readers/specs/publications/spec.md
  */
+import type { Locator, Page } from '@playwright/test'
+
 import { request as playwrightRequest } from '@playwright/test'
 import { expect, test } from './authenticated-request.ts'
 import {
 	BASE,
 	Fixtures,
-	REG_OPENCATALOGI,
+	REG_PUBLICATION,
 	SCHEMA_PUBLICATION,
 } from './workflows/_fixtures.ts'
 
@@ -39,6 +41,23 @@ const API_BASE = '/index.php/apps/opencatalogi/api'
  */
 function objectPath(register: number | string, schema: number | string, id: string): string {
 	return `/index.php/apps/openregister/api/objects/${register}/${schema}/${id}`
+}
+
+/**
+ * Scroll the detail page until a widget below the fold has mounted and shows.
+ *
+ * The detail grid mounts a widget when it scrolls into view.
+ *
+ * @param page   The page.
+ * @param target The widget's element.
+ */
+async function scrollTo(page: Page, target: Locator): Promise<void> {
+	await expect(page.locator('[gs-id]').first()).toBeAttached({ timeout: 30_000 })
+	await page.mouse.move(800, 400)
+	await expect(async () => {
+		await page.mouse.wheel(0, 400)
+		await expect(target).toBeVisible({ timeout: 500 })
+	}).toPass({ timeout: 30_000 })
 }
 
 test.describe('Publications for signed-in readers (REQ-PSR-001)', () => {
@@ -60,39 +79,40 @@ test.describe('Publications for signed-in readers (REQ-PSR-001)', () => {
 		const slug = `psr-${Date.now().toString(36)}`
 		await fx.createCatalog('signed-in-readers', {
 			slug,
-			registers: [REG_OPENCATALOGI],
+			registers: [REG_PUBLICATION],
 			schemas: [SCHEMA_PUBLICATION],
 		})
 		const publication = await fx.createPublication(
 			'signed-in-readers',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
-			REG_OPENCATALOGI,
+			// Published, so the anonymous 404 below is the audience at work.
+			{ status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
+			REG_PUBLICATION,
 		)
 
 		// The Visibility card starts as Everyone.
 		await page.goto(`/index.php/apps/opencatalogi/publications/${slug}/${publication.id}`)
 		const audience = page.getByTestId('publication-visibility-audience')
-		await expect(audience).toBeVisible({ timeout: 20_000 })
+		await scrollTo(page, audience)
 		await expect(audience).toContainText('Everyone')
 
 		// The editor's save: audience and level on the publication.
-		const saved = await admin.put(
-			objectPath(REG_OPENCATALOGI, SCHEMA_PUBLICATION, publication.id),
+		const saved = await admin.patch(
+			objectPath(REG_PUBLICATION, SCHEMA_PUBLICATION, publication.id),
 			{
 				data: {
-					...publication.raw,
 					audience: 'signedIn',
 					minimumAssurance: 'substantial',
 				},
 			},
 		)
-		expect(saved.ok(), `save answered ${saved.status()}`).toBe(true)
-		const stored = await fx.fetch(REG_OPENCATALOGI, SCHEMA_PUBLICATION, publication.id)
+		expect(saved.ok(), `save answered ${saved.status()} ${await saved.text()}`).toBe(true)
+		const stored = await fx.fetch(REG_PUBLICATION, SCHEMA_PUBLICATION, publication.id)
 		expect(stored?.audience).toBe('signedIn')
 		expect(stored?.minimumAssurance).toBe('substantial')
 
 		// The card reads who can read it, and that the link needs a login.
 		await page.reload()
+		await scrollTo(page, audience)
 		await expect(audience).toContainText(
 			'Readers who log in with DigiD or eHerkenning, level Substantial',
 			{ timeout: 20_000 },

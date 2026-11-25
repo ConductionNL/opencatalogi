@@ -183,17 +183,18 @@ class BatchPublicationWriter {
 			return null;
 		}
 
-		try {
-			$node = null;
-			if (preg_match('/^\d+$/', $reference) === 1) {
-				$node = $this->rootFolder->getFirstNodeById((int)$reference);
-			} elseif (str_starts_with($reference, '/') === true) {
-				$node = $this->rootFolder->get($reference);
-			} elseif ($owner !== '') {
-				$node = $this->rootFolder->getUserFolder($owner)->get($reference);
-			}
-		} catch (Throwable) {
-			return null;
+		$node = null;
+		if (preg_match('/^\d+$/', $reference) === 1) {
+			$node = $this->nodeOrNull(find: fn () => $this->rootFolder->getFirstNodeById((int)$reference));
+		} elseif (str_starts_with($reference, '/') === true) {
+			$node = $this->nodeOrNull(find: fn () => $this->rootFolder->get($reference));
+		}
+
+		// A path as the owner sees it ("/Woo/besluit.pdf", or without the leading
+		// slash) names a file in the owner's files, not at the storage root, where
+		// those live under "/<uid>/files/" (live, 25 Nov 2026: no reviewer link).
+		if (($node instanceof File) === false && $owner !== '' && preg_match('/^\d+$/', $reference) !== 1) {
+			$node = $this->nodeOrNull(find: fn () => $this->rootFolder->getUserFolder($owner)->get(ltrim($reference, '/')));
 		}
 
 		if ($node instanceof File) {
@@ -202,6 +203,23 @@ class BatchPublicationWriter {
 
 		return null;
 	}//end resolve()
+
+	/**
+	 * The node a lookup finds, or null when it throws (not found, no access).
+	 *
+	 * @param callable $find The lookup.
+	 *
+	 * @return mixed The node, or null.
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 */
+	private function nodeOrNull(callable $find): mixed {
+		try {
+			return $find();
+		} catch (Throwable) {
+			return null;
+		}
+	}//end nodeOrNull()
 
 	/**
 	 * Create the batch's publication and attach its documents.
