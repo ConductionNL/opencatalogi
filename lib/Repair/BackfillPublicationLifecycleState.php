@@ -209,8 +209,10 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 			$publication['firstReleasedAt'] = $date;
 		}
 
+		// The state written below is the one the required-to-publish rule reads.
+		$publication = RequiredToPublish::recordGaps(publication: ['status' => $state] + $publication);
+
 		$publication['status'] = $state;
-		$publication = RequiredToPublish::recordGaps(publication: $publication);
 		try {
 			$this->objects->saveObject(
 				object: $publication,
