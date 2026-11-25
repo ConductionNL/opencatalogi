@@ -2,6 +2,110 @@
   - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
   - SPDX-License-Identifier: EUPL-1.2
 -->
+<script>
+import axios from '@nextcloud/axios'
+import {
+	NcActionButton,
+	NcAppSidebar,
+	NcAppSidebarTab,
+	NcButton,
+	NcListItem,
+	NcLoadingIcon,
+	NcNoteCard,
+	NcSelect,
+	NcTextField,
+} from '@nextcloud/vue'
+import { ref } from 'vue'
+import Delete from 'vue-material-design-icons/Delete.vue'
+import FileOutline from 'vue-material-design-icons/FileOutline.vue'
+import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
+import Magnify from 'vue-material-design-icons/Magnify.vue'
+import Pencil from 'vue-material-design-icons/Pencil.vue'
+import Plus from 'vue-material-design-icons/Plus.vue'
+import Publish from 'vue-material-design-icons/Publish.vue'
+import { useFileSelection } from '../../composables/UseFileSelection.js'
+import { Publication } from '../../entities/index.js'
+import { openForObject } from '../../services/openForObject.js'
+import { listedCatalogSlug } from '../../services/publicationCatalogSlug.js'
+
+const dropZoneRef = ref()
+const { files, reset } = useFileSelection({
+	allowMultiple: false,
+	dropzone: dropZoneRef,
+})
+
+/**
+ * A fresh, empty quick-publication form.
+ *
+ * @return {object} The form fields, all empty.
+ */
+function emptyPublicationItem() {
+	return {
+		title: '',
+		summary: '',
+		reference: '',
+		category: '',
+		portal: '',
+		license: '',
+	}
+}
+
+/**
+ * DashboardSideBar — sidebar accompanying the dashboard overview.
+ *
+ * @spec openspec/specs/dashboard/spec.md
+ */
+
+/**
+ * A publication type as an option of the publication type dropdown.
+ *
+ * @param {object} publicationType The publication type.
+ * @return {{id: (string|number), source: string, label: string}} The option.
+ */
+function toPublicationTypeOption(publicationType) {
+	return {
+		id: publicationType.id,
+		source: publicationType.source,
+		label: publicationType.title,
+	}
+}
+
+/**
+ * Upload the selected file as an attachment of `publicationItem`.
+ *
+ * @param {object} publicationItem The publication.
+ * @return {Promise<object>} The upload response.
+ */
+function postAttachment(publicationItem) {
+	return axios.post(
+		'/index.php/apps/opencatalogi/api/attachments',
+		{
+			published: null,
+			summary: '',
+			license: '',
+			_file: files.value ? files.value[0] : '',
+		},
+		{ headers: attachmentHeaders(publicationItem) },
+	)
+}
+
+/**
+ * The upload headers: multipart, plus the publication the file belongs to.
+ *
+ * @param {object} publicationItem The publication.
+ * @return {object} The headers.
+ */
+function attachmentHeaders(publicationItem) {
+	return {
+		'Content-Type': 'multipart/form-data',
+		// These headers are used to pass along some publication info to use as name for a Folder,
+		// to store (attachments/) files in for that specific publication,
+		'Publication-Id': publicationItem.id,
+		'Publication-Title': publicationItem.title,
+	}
+}
+</script>
+
 <script setup>
 import { objectStore } from '../../store/store.js'
 defineOptions({
@@ -540,109 +644,6 @@ defineOptions({
 	</NcAppSidebar>
 </template>
 
-<script>
-import axios from '@nextcloud/axios'
-import {
-	NcActionButton,
-	NcAppSidebar,
-	NcAppSidebarTab,
-	NcButton,
-	NcListItem,
-	NcLoadingIcon,
-	NcNoteCard,
-	NcSelect,
-	NcTextField,
-} from '@nextcloud/vue'
-import { ref } from 'vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
-import FileOutline from 'vue-material-design-icons/FileOutline.vue'
-import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
-import Magnify from 'vue-material-design-icons/Magnify.vue'
-import Pencil from 'vue-material-design-icons/Pencil.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
-import Publish from 'vue-material-design-icons/Publish.vue'
-import { useFileSelection } from '../../composables/UseFileSelection.js'
-import { Publication } from '../../entities/index.js'
-import { openForObject } from '../../services/openForObject.js'
-import { listedCatalogSlug } from '../../services/publicationCatalogSlug.js'
-
-const dropZoneRef = ref()
-const { files, reset } = useFileSelection({
-	allowMultiple: false,
-	dropzone: dropZoneRef,
-})
-
-/**
- * A fresh, empty quick-publication form.
- *
- * @return {object} The form fields, all empty.
- */
-function emptyPublicationItem() {
-	return {
-		title: '',
-		summary: '',
-		reference: '',
-		category: '',
-		portal: '',
-		license: '',
-	}
-}
-
-/**
- * DashboardSideBar — sidebar accompanying the dashboard overview.
- *
- * @spec openspec/specs/dashboard/spec.md
- */
-
-/**
- * A publication type as an option of the publication type dropdown.
- *
- * @param {object} publicationType The publication type.
- * @return {{id: (string|number), source: string, label: string}} The option.
- */
-function toPublicationTypeOption(publicationType) {
-	return {
-		id: publicationType.id,
-		source: publicationType.source,
-		label: publicationType.title,
-	}
-}
-
-/**
- * Upload the selected file as an attachment of `publicationItem`.
- *
- * @param {object} publicationItem The publication.
- * @return {Promise<object>} The upload response.
- */
-function postAttachment(publicationItem) {
-	return axios.post(
-		'/index.php/apps/opencatalogi/api/attachments',
-		{
-			published: null,
-			summary: '',
-			license: '',
-			_file: files.value ? files.value[0] : '',
-		},
-		{ headers: attachmentHeaders(publicationItem) },
-	)
-}
-
-/**
- * The upload headers: multipart, plus the publication the file belongs to.
- *
- * @param {object} publicationItem The publication.
- * @return {object} The headers.
- */
-function attachmentHeaders(publicationItem) {
-	return {
-		'Content-Type': 'multipart/form-data',
-		// These headers are used to pass along some publication info to use as name for a Folder,
-		// to store (attachments/) files in for that specific publication,
-		'Publication-Id': publicationItem.id,
-		'Publication-Title': publicationItem.title,
-	}
-}
-</script>
 
 <style lang="css">
 .dashboardSidebar .addFileContainer {

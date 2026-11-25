@@ -46,8 +46,8 @@
 
 import type { APIRequestContext } from '@playwright/test'
 
-import { expect, test } from './authenticated-request.ts'
 import { randomBytes } from 'node:crypto'
+import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog } from './publication-catalog.ts'
 
 const APP_BASE = '/index.php/apps/opencatalogi'
