@@ -155,7 +155,10 @@ class FederationController extends Controller {
 		$this->usageCounter = $usageCounter;
 
 		$queryService = self::optional(container: $container, class: PublicationQueryServiceInterface::class);
-		$this->queryService = $queryService instanceof PublicationQueryServiceInterface ? $queryService : null;
+		$this->queryService = null;
+		if ($queryService instanceof PublicationQueryServiceInterface) {
+			$this->queryService = $queryService;
+		}
 
 	}//end __construct()
 
