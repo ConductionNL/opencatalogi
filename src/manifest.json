@@ -1984,6 +1984,12 @@
 								}
 							]
 						}
+					},
+					{
+						"id": "pub-annual-report",
+						"title": "Woo annual report",
+						"type": "woo-annual-report",
+						"content": {}
 					}
 				],
 				"layout": [
@@ -2048,6 +2054,15 @@
 						"gridY": 6,
 						"gridWidth": 12,
 						"gridHeight": 4,
+						"showTitle": true
+					},
+					{
+						"id": "8",
+						"widgetId": "pub-annual-report",
+						"gridX": 0,
+						"gridY": 10,
+						"gridWidth": 12,
+						"gridHeight": 3,
 						"showTitle": true
 					}
 				]

@@ -36,6 +36,7 @@ import PublicationQualityWidget from './components/widgets/PublicationQualityWid
 import PublicationTablesWidget from './components/widgets/PublicationTablesWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
+import WooAnnualReportWidget from './components/widgets/WooAnnualReportWidget.vue'
 import appIcons from './icons.js'
 import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
@@ -145,6 +146,17 @@ registerDashboardWidget('publication-quality', {
 	displayName: 'Metadata quality',
 	icon: 'ChartBar',
 	surfaces: ['detail-page'],
+})
+// Generate annual report on the publications report (woo-annual-report,
+// REQ-WAR-002): renders OpenRegister's woo-jaarverslag template, offered only
+// when OpenRegister can generate it (GET /api/woo/annual-report).
+registerDashboardWidget('woo-annual-report', {
+	renderer: WooAnnualReportWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Woo annual report',
+	icon: 'FileChart',
+	surfaces: ['app-dashboard'],
 })
 // The publication's attachments with Add attachment, which opens the app's
 // upload dialog (publication-attachment-upload-dialog, board OcBijlageToevoegen).
