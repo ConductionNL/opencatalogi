@@ -209,6 +209,9 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 			$publication['firstReleasedAt'] = $date;
 		}
 
+		// The state written below is the one the required-to-publish rule reads.
+		$publication = RequiredToPublish::recordGaps(publication: ['status' => $state] + $publication);
+
 		$publication['status'] = $state;
 		// An empty state has no transition out of it, so the lifecycle would refuse
 		// this write from a user. It is the system writing the state the declaration

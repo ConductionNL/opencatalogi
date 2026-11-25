@@ -38,6 +38,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Service\Publication\RequiredToPublish;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
@@ -211,10 +212,15 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	/**
 	 * Move one publication's summary when it is exactly a document type and no type is stored.
 	 *
+	 * The emptied summary of a published publication is recorded as not supplied, since the rule requires one.
+	 *
 	 * @param array<string, mixed> $publication The publication.
 	 * @param array{register: string, schema: string} $scope The register and schema.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @SuppressWarnings(PHPMD.StaticAccess) RequiredToPublish::recordGaps() is a pure record transform.
 	 */
 	private function moveOne(array $publication, array $scope): void {
 		$summary = trim((string)($publication['summary'] ?? ''));
@@ -233,6 +239,7 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 		unset($publication['@self']);
 		$publication['documentsoort'] = $member['uri'];
 		$publication['summary'] = '';
+		$publication = RequiredToPublish::recordGaps(publication: $publication);
 		try {
 			$this->objects->saveObject(
 				object: $publication,

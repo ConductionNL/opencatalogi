@@ -151,6 +151,25 @@ class MirrorCaseReferenceIntoSourceIdentifiersTest extends TestCase {
 	}//end testEveryCaseReferenceIsMirroredOnce()
 
 	/**
+	 * A published publication without a summary is saved with that gap recorded as not supplied, so the
+	 * required-to-publish rule lets the system save through.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 */
+	public function testALegacyPublicationIsSavedWithItsGapsRecorded(): void {
+		$store = self::store(publications: [
+			['id' => 'p1', 'caseReference' => 'Z-1', 'status' => 'published', 'description' => 'Lang', 'organization' => 'org-1'],
+		]);
+
+		$this->step(store: $store)->run($this->createMock(originalClassName: IOutput::class));
+
+		$this->assertSame(expected: ['summary' => 'published-before-required'], actual: $store->saves[0]['object']['@notSupplied']);
+		$this->assertSame(expected: 'Z-1', actual: $store->saves[0]['object']['sourceIdentifiers'][0]['identifier']);
+	}//end testALegacyPublicationIsSavedWithItsGapsRecorded()
+
+	/**
 	 * A publication whose save throws is counted and warned about; the others are still written.
 	 *
 	 * @return void
