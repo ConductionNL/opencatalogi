@@ -7,7 +7,9 @@
  * The page list is read from src/manifest.json when the suite loads, so a new
  * page is covered by default. A page with route parameters is opened on an
  * object the instance holds (the CI seed), found through OpenRegister's
- * objects API. Each page runs axe-core (the app's own dependency, injected
+ * objects API. FederatedPublication shows a record another instance holds, so
+ * no local object can fill it: it is opened on an id no peer answers, and its
+ * not-available state is what axe checks. Each page runs axe-core (the app's own dependency, injected
  * from node_modules) with the tags wcag2a, wcag2aa, wcag21a, wcag21aa and
  * wcag22aa, scoped to the app's content root. A serious or critical violation
  * that is not in tests/e2e/a11y-allowlist.json fails the page; an allowlist
@@ -33,6 +35,8 @@ const ALLOWLIST: AllowEntry[] = JSON.parse(fs.readFileSync(path.join(__dirname, 
 const AXE_SOURCE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8')
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 const OBJECTS = '/index.php/apps/openregister/api/objects/publication'
+/** An id no federation peer holds, for the one page whose record lives elsewhere. */
+const REMOTE_PLACEHOLDER = '00000000-0000-4000-8000-000000000000'
 
 /** The first object of a schema in the publication register, with its register and schema ids. */
 async function first(request: APIRequestContext, schema: string): Promise<Record<string, any> | null> {
@@ -62,6 +66,16 @@ async function concretePath(request: APIRequestContext, page: ManifestPage): Pro
 	}
 	case 'ThemeDetail':
 		values.id = String((await first(request, 'theme'))?.id ?? '')
+		break
+	case 'WooBatchDetail':
+		values.id = String((await first(request, 'wooBatch'))?.id ?? '')
+		break
+	case 'WooRedaction':
+		values.id = String((await first(request, 'wooBatch'))?.id ?? '')
+		values.docId = String((await first(request, 'wooAssessment'))?.id ?? '')
+		break
+	case 'FederatedPublication':
+		values.id = REMOTE_PLACEHOLDER
 		break
 	case 'GlossaryDetail':
 		values.id = String((await first(request, 'glossary'))?.id ?? '')
