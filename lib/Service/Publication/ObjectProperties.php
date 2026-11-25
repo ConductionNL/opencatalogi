@@ -40,14 +40,16 @@ final class ObjectProperties {
 	 *
 	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
 	 */
-	public static function of(object $object): array {
+	public static function fromObject(object $object): array {
+		$serialised = null;
 		if (method_exists($object, 'jsonSerialize') === true) {
-			$data = $object->jsonSerialize();
-			if (is_array($data) === true) {
-				return $data;
-			}
+			$serialised = $object->jsonSerialize();
+		}
+
+		if (is_array($serialised) === true) {
+			return $serialised;
 		}
 
 		return get_object_vars($object);
-	}//end of()
+	}//end fromObject()
 }//end class

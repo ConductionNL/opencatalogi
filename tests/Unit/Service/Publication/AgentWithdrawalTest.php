@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Service\Publication;
 
+use OCA\OpenCatalogi\Contract\AgentWithdrawalCall;
 use OCA\OpenCatalogi\Contract\AgentWithdrawalInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
@@ -235,11 +236,11 @@ class AgentWithdrawalTest extends TestCase {
 			'pub-4' => ['title' => '', '_state' => PublicationStateServiceInterface::STATE_SCHEDULED],
 		];
 
-		$answer = $this->service()->stage(
+		$answer = $this->service()->stage(call: new AgentWithdrawalCall(
 			action: AgentWithdrawalInterface::DEPUBLISH,
 			ids: ['pub-1', 'pub-2', 'pub-3', 'pub-4', 'pub-9'],
 			reason: 'Rechterlijke uitspraak'
-		);
+		));
 
 		$this->assertSame(
 			expected: [
@@ -288,7 +289,11 @@ class AgentWithdrawalTest extends TestCase {
 			'pub-2' => ['title' => 'Oud', '_state' => PublicationStateServiceInterface::STATE_ARCHIVED],
 		];
 
-		$answer = $this->service()->stage(action: AgentWithdrawalInterface::ARCHIVE, ids: ['pub-1', 'pub-2'], reason: 'Bewaartermijn verstreken');
+		$answer = $this->service()->stage(call: new AgentWithdrawalCall(
+			action: AgentWithdrawalInterface::ARCHIVE,
+			ids: ['pub-1', 'pub-2'],
+			reason: 'Bewaartermijn verstreken'
+		));
 
 		$this->assertSame(expected: [['id' => 'pub-1', 'task' => 'task-pub-1']], actual: $answer['staged']);
 		$this->assertSame(expected: [['id' => 'pub-2', 'code' => 'already_archived']], actual: $answer['refused']);
@@ -311,7 +316,11 @@ class AgentWithdrawalTest extends TestCase {
 		];
 		$this->failing = ['pub-1'];
 
-		$answer = $this->service()->stage(action: AgentWithdrawalInterface::DEPUBLISH, ids: ['pub-1', 'pub-2', 'pub-3'], reason: 'R');
+		$answer = $this->service()->stage(call: new AgentWithdrawalCall(
+			action: AgentWithdrawalInterface::DEPUBLISH,
+			ids: ['pub-1', 'pub-2', 'pub-3'],
+			reason: 'R'
+		));
 
 		$this->assertSame(expected: [['id' => 'pub-1', 'code' => 'not_staged'], ['id' => 'pub-3', 'code' => 'not_staged']], actual: $answer['refused']);
 		$this->assertSame(expected: [['id' => 'pub-2', 'task' => 'task-pub-2']], actual: $answer['staged']);
@@ -329,20 +338,32 @@ class AgentWithdrawalTest extends TestCase {
 
 		$this->assertSame(
 			expected: ['error' => 'tasks_unavailable'],
-			actual: $this->service(tasks: false)->stage(action: AgentWithdrawalInterface::DEPUBLISH, ids: ['pub-1'], reason: 'R')
+			actual: $this->service(tasks: false)->stage(call: new AgentWithdrawalCall(
+				action: AgentWithdrawalInterface::DEPUBLISH,
+				ids: ['pub-1'],
+				reason: 'R'
+			))
 		);
 		$this->assertSame(
 			expected: ['error' => 'tasks_unavailable'],
-			actual: $this->service(signedIn: false)->stage(action: AgentWithdrawalInterface::DEPUBLISH, ids: ['pub-1'], reason: 'R')
+			actual: $this->service(signedIn: false)->stage(call: new AgentWithdrawalCall(
+				action: AgentWithdrawalInterface::DEPUBLISH,
+				ids: ['pub-1'],
+				reason: 'R'
+			))
 		);
 		$this->assertSame(
 			expected: ['error' => 'tasks_unavailable'],
-			actual: $this->service()->stage(action: 'publish', ids: ['pub-1'], reason: 'R')
+			actual: $this->service()->stage(call: new AgentWithdrawalCall(action: 'publish', ids: ['pub-1'], reason: 'R'))
 		);
 		foreach (['', 'throws'] as $configured) {
 			$this->assertSame(
 				expected: ['error' => 'not_configured'],
-				actual: $this->service(configured: $configured)->stage(action: AgentWithdrawalInterface::ARCHIVE, ids: ['pub-1'], reason: 'R')
+				actual: $this->service(configured: $configured)->stage(call: new AgentWithdrawalCall(
+					action: AgentWithdrawalInterface::ARCHIVE,
+					ids: ['pub-1'],
+					reason: 'R'
+				))
 			);
 		}
 

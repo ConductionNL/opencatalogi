@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
+use OCA\OpenCatalogi\Contract\AgentWithdrawalCall;
 use OCA\OpenCatalogi\Contract\AgentWithdrawalInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
@@ -75,9 +76,7 @@ class AgentWithdrawal implements AgentWithdrawalInterface {
 	/**
 	 * Stage one approval task per publication; every publication that cannot take the action is refused.
 	 *
-	 * @param string       $action DEPUBLISH or ARCHIVE.
-	 * @param list<string> $ids    The publication ids, at most MAX_ITEMS.
-	 * @param string       $reason Why, as the agent's user states it.
+	 * @param AgentWithdrawalCall $call The action, the publication ids (at most MAX_ITEMS) and the reason.
 	 *
 	 * @return array{staged: list<array{id: string, task: string}>, refused: list<array{id: string, code: string}>}|array{error: string}
 	 *         Per item; `error` when tasks are not available or the register is not configured.
@@ -85,9 +84,9 @@ class AgentWithdrawal implements AgentWithdrawalInterface {
 	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
 	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-every-write-runs-the-existing-rbacd-path-as-the-granting-user-req-008
 	 */
-	public function stage(string $action, array $ids, string $reason): array {
+	public function stage(AgentWithdrawalCall $call): array {
 		$actor = $this->tasks->actor();
-		if ($actor === null || in_array($action, [self::DEPUBLISH, self::ARCHIVE], true) === false) {
+		if ($actor === null || in_array($call->action, [self::DEPUBLISH, self::ARCHIVE], true) === false) {
 			return ['error' => 'tasks_unavailable'];
 		}
 
@@ -97,8 +96,8 @@ class AgentWithdrawal implements AgentWithdrawalInterface {
 		}
 
 		$answer = ['staged' => [], 'refused' => []];
-		foreach ($ids as $id) {
-			$request = new AgentWithdrawalRequest(action: $action, id: $id, reason: $reason, actor: $actor);
+		foreach ($call->ids as $id) {
+			$request = new AgentWithdrawalRequest(action: $call->action, id: $id, reason: $call->reason, actor: $actor);
 			$staged  = $this->stageOne(request: $request, options: $options);
 			if (isset($staged['task']) === true) {
 				$answer['staged'][] = ['id' => $id, 'task' => $staged['task']];
@@ -141,7 +140,7 @@ class AgentWithdrawal implements AgentWithdrawalInterface {
 	 * @return array{task: string}|array{code: string} The task id, or `not_found`, `forbidden`, `not_public`,
 	 *                                                 `already_archived` or `not_staged`.
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) ObjectProperties::of() is a pure read of the answer.
+	 * @SuppressWarnings(PHPMD.StaticAccess) ObjectProperties::fromObject() is a pure read of the answer.
 	 */
 	private function stageOne(AgentWithdrawalRequest $request, ObjectFindOptions $options): array {
 		try {
@@ -158,7 +157,7 @@ class AgentWithdrawal implements AgentWithdrawalInterface {
 			return ['code' => 'forbidden'];
 		}
 
-		$properties = ObjectProperties::of(object: $publication);
+		$properties = ObjectProperties::fromObject(object: $publication);
 		$refusal    = $this->stateRefusal(action: $request->action, properties: $properties);
 		if ($refusal !== null) {
 			return ['code' => $refusal];

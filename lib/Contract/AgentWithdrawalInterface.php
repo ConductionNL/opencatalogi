@@ -55,14 +55,13 @@ interface AgentWithdrawalInterface {
 	 *
 	 * Nothing about a publication is written: the task asks a member of the publishers group to take the action.
 	 *
-	 * @param string       $action DEPUBLISH or ARCHIVE.
-	 * @param list<string> $ids    The publication ids, at most MAX_ITEMS.
-	 * @param string       $reason Why, as the agent's user states it; it travels on the task.
+	 * @param AgentWithdrawalCall $call The action (DEPUBLISH or ARCHIVE), the publication ids (at most MAX_ITEMS)
+	 *                                  and the reason, which travels on the task.
 	 *
 	 * @return array{staged: list<array{id: string, task: string}>, refused: list<array{id: string, code: string}>}|array{error: string}
 	 *         Per item; `error` when tasks are not available or the register is not configured.
 	 *
 	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
 	 */
-	public function stage(string $action, array $ids, string $reason): array;
+	public function stage(AgentWithdrawalCall $call): array;
 }//end interface

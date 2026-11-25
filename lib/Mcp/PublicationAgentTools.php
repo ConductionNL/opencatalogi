@@ -26,6 +26,7 @@ namespace OCA\OpenCatalogi\Mcp;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\AgentPublishingInterface;
+use OCA\OpenCatalogi\Contract\AgentWithdrawalCall;
 use OCA\OpenCatalogi\Contract\AgentWithdrawalInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -207,7 +208,7 @@ class PublicationAgentTools {
 		reach: 'external',
 	)]
 	public function depublishPublication(array $ids, string $reason): array {
-		return $this->stageThroughTask(action: AgentWithdrawalInterface::DEPUBLISH, ids: $ids, reason: $reason);
+		return $this->stageThroughTask(action: AgentWithdrawalInterface::DEPUBLISH, arguments: ['ids' => $ids, 'reason' => $reason]);
 	}//end depublishPublication()
 
 	/**
@@ -239,27 +240,26 @@ class PublicationAgentTools {
 		reach: 'instance',
 	)]
 	public function archivePublication(array $ids, string $reason): array {
-		return $this->stageThroughTask(action: AgentWithdrawalInterface::ARCHIVE, ids: $ids, reason: $reason);
+		return $this->stageThroughTask(action: AgentWithdrawalInterface::ARCHIVE, arguments: ['ids' => $ids, 'reason' => $reason]);
 	}//end archivePublication()
 
 	/**
 	 * Validate the call and stage one publisher task per publication.
 	 *
-	 * @param string                  $action AgentWithdrawalInterface::DEPUBLISH or ::ARCHIVE.
-	 * @param array<array-key, mixed> $ids    The publication ids.
-	 * @param mixed                   $reason The reason argument.
+	 * @param string                                $action    AgentWithdrawalInterface::DEPUBLISH or ::ARCHIVE.
+	 * @param array{ids: array<array-key, mixed>, reason: string} $arguments The tool's ids and reason.
 	 *
 	 * @return array<string, mixed> `staged` and `refused`, or an `error` envelope.
 	 *
 	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
 	 */
-	private function stageThroughTask(string $action, array $ids, mixed $reason): array {
-		$checked = $this->validator->publicationIds(ids: $ids, max: AgentWithdrawalInterface::MAX_ITEMS);
+	private function stageThroughTask(string $action, array $arguments): array {
+		$checked = $this->validator->publicationIds(ids: $arguments['ids'], max: AgentWithdrawalInterface::MAX_ITEMS);
 		if (isset($checked['error']) === true) {
 			return $checked;
 		}
 
-		$why = $this->validator->reason(reason: $reason);
+		$why = $this->validator->reason(reason: $arguments['reason']);
 		if (isset($why['error']) === true) {
 			return $why;
 		}
@@ -269,7 +269,7 @@ class PublicationAgentTools {
 			return self::error(code: 'not_configured', message: 'Publisher tasks are not available on this instance.');
 		}
 
-		$answer = $withdrawal->stage(action: $action, ids: $checked['ids'], reason: $why['reason']);
+		$answer = $withdrawal->stage(call: new AgentWithdrawalCall(action: $action, ids: $checked['ids'], reason: $why['reason']));
 		if (isset($answer['error']) === true) {
 			return self::stageError(code: (string)$answer['error']);
 		}

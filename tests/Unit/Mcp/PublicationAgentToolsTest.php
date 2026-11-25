@@ -16,6 +16,7 @@ namespace Unit\Mcp;
 use OCA\OpenCatalogi\Mcp\McpArgumentValidator;
 use OCA\OpenCatalogi\Mcp\PublicationAgentTools;
 use OCA\OpenCatalogi\Contract\AgentPublishingInterface;
+use OCA\OpenCatalogi\Contract\AgentWithdrawalCall;
 use OCA\OpenCatalogi\Contract\AgentWithdrawalInterface;
 use OCA\OpenRegister\Mcp\Attribute\McpTool;
 use OCP\IAppConfig;
@@ -345,9 +346,9 @@ class PublicationAgentToolsTest extends TestCase {
 	public function testTheStagingToolsCheckIdsAndReason(): void {
 		$withdrawal = $this->createMock(originalClassName: AgentWithdrawalInterface::class);
 		$withdrawal->expects($this->exactly(count: 2))->method('stage')->willReturnCallback(
-			static fn (string $action, array $ids, string $reason): array => [
-				'staged'  => [['id' => $ids[0], 'task' => 'task-' . $action]],
-				'refused' => [['id' => $ids[1], 'code' => 'not_public']],
+			static fn (AgentWithdrawalCall $call): array => [
+				'staged'  => [['id' => $call->ids[0], 'task' => 'task-' . $call->action . '-' . $call->reason]],
+				'refused' => [['id' => $call->ids[1], 'code' => 'not_public']],
 			]
 		);
 		$tools = $this->tools(withdrawal: $withdrawal);
@@ -364,13 +365,13 @@ class PublicationAgentToolsTest extends TestCase {
 		$this->assertSame(
 			expected: [
 				'success' => false,
-				'staged'  => [['id' => 'a', 'task' => 'task-depublish']],
+				'staged'  => [['id' => 'a', 'task' => 'task-depublish-Rechterlijke uitspraak']],
 				'refused' => [['id' => 'b', 'code' => 'not_public']],
 			],
 			actual: $tools->depublishPublication(ids: ['a', ' b ', 'a'], reason: ' Rechterlijke uitspraak ')
 		);
 		$this->assertSame(
-			expected: [['id' => 'a', 'task' => 'task-archive']],
+			expected: [['id' => 'a', 'task' => 'task-archive-Bewaartermijn verstreken']],
 			actual: $tools->archivePublication(ids: ['a', 'b'], reason: 'Bewaartermijn verstreken')['staged']
 		);
 	}//end testTheStagingToolsCheckIdsAndReason()

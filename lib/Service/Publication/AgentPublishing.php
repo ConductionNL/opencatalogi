@@ -120,7 +120,7 @@ class AgentPublishing implements AgentPublishingInterface {
 	 * @return string|null Null when published; else `not_found`, `forbidden`, `not_approved`,
 	 *                     `embargo_holds`, `no_documents` or `not_published`.
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) ObjectProperties::of() is a pure read of the answer.
+	 * @SuppressWarnings(PHPMD.StaticAccess) ObjectProperties::fromObject() is a pure read of the answer.
 	 */
 	private function publishOne(string $id, ObjectFindOptions $options): ?string {
 		try {
@@ -139,7 +139,7 @@ class AgentPublishing implements AgentPublishingInterface {
 		}
 
 		try {
-			$record = $this->states->publishedRecord(publication: ObjectProperties::of(object: $publication));
+			$record = $this->states->publishedRecord(publication: ObjectProperties::fromObject(object: $publication));
 			$this->publisher->publish(id: $id, stored: 'approved', publicationDate: (string)$record['publicationDate']);
 		} catch (Throwable) {
 			return 'not_published';
@@ -156,14 +156,14 @@ class AgentPublishing implements AgentPublishingInterface {
 	 *
 	 * @return string|null The refusal code, or null.
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) ObjectProperties::of() is a pure read of the answer.
+	 * @SuppressWarnings(PHPMD.StaticAccess) ObjectProperties::fromObject() is a pure read of the answer.
 	 */
 	private function refusal(string $id, object $publication): ?string {
 		if ($this->rights->mayUpdate(publication: $publication) === false) {
 			return 'forbidden';
 		}
 
-		$properties = ObjectProperties::of(object: $publication);
+		$properties = ObjectProperties::fromObject(object: $publication);
 		if (trim((string)($properties['status'] ?? '')) !== 'approved') {
 			return 'not_approved';
 		}
