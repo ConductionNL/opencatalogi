@@ -28,12 +28,26 @@ const fx = new Fixtures()
 const seeded: SeededObject[] = []
 
 const GENERATE = /^\s*(Generate annual report|Jaarverslag maken)\s*$/
-const NEEDS_NEWER = /(The Woo annual report needs a newer OpenRegister\.|Het Woo-jaarverslag vraagt een nieuwere OpenRegister\.)/
+const NEEDS_NEWER =
+	/(The Woo annual report needs a newer OpenRegister\.|Het Woo-jaarverslag vraagt een nieuwere OpenRegister\.)/
 
 test.beforeAll(async () => {
 	await fx.init()
-	seeded.push(await fx.createPublication('annual 2025', { status: 'published', publicationDate: '2025-06-01T10:00:00+00:00', wooCategory: 'infocat012', creationDate: '2025-05-20' }))
-	seeded.push(await fx.createPublication('annual 2026', { status: 'published', publicationDate: '2026-03-01T10:00:00+00:00', wooCategory: 'infocat016' }))
+	seeded.push(
+		await fx.createPublication('annual 2025', {
+			status: 'published',
+			publicationDate: '2025-06-01T10:00:00+00:00',
+			wooCategory: 'infocat012',
+			creationDate: '2025-05-20',
+		}),
+	)
+	seeded.push(
+		await fx.createPublication('annual 2026', {
+			status: 'published',
+			publicationDate: '2026-03-01T10:00:00+00:00',
+			wooCategory: 'infocat016',
+		}),
+	)
 })
 
 test.afterAll(async () => {
@@ -49,10 +63,14 @@ test.describe('Woo annual report @e2e REQ-WAR-002', () => {
 		const widget = page.locator('[data-testid="woo-annual-report"]')
 		await expect(widget).toBeVisible({ timeout: 20000 })
 
-		const unavailable = widget.locator('[data-testid="woo-annual-report-unavailable"]')
+		const unavailable = widget.locator(
+			'[data-testid="woo-annual-report-unavailable"]',
+		)
 		if (await unavailable.isVisible()) {
 			await expect(unavailable).toHaveText(NEEDS_NEWER)
-			await expect(widget.getByRole('button', { name: GENERATE })).toHaveCount(0)
+			await expect(widget.getByRole('button', { name: GENERATE })).toHaveCount(
+				0,
+			)
 			return
 		}
 
@@ -61,6 +79,8 @@ test.describe('Woo annual report @e2e REQ-WAR-002', () => {
 		const file = await download
 
 		expect(file.suggestedFilename()).toMatch(/2026.*\.pdf$/)
-		await expect(widget.locator('[data-testid="woo-annual-report-failed"]')).toHaveCount(0)
+		await expect(
+			widget.locator('[data-testid="woo-annual-report-failed"]'),
+		).toHaveCount(0)
 	})
 })

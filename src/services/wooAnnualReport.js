@@ -13,7 +13,9 @@ import { generateUrl } from '@nextcloud/router'
  * @spec openspec/changes/woo-annual-report/specs/woo-compliance/spec.md#requirement-an-officer-generates-the-annual-report-from-the-publications-report-req-war-002
  */
 export async function fetchAnnualReportAvailability() {
-	const { data } = await axios.get(generateUrl('/apps/opencatalogi/api/woo/annual-report'))
+	const { data } = await axios.get(
+		generateUrl('/apps/opencatalogi/api/woo/annual-report'),
+	)
 	return {
 		available: data?.available === true,
 		templateId: data?.templateId ?? null,
@@ -47,13 +49,18 @@ export function reportYears(now = new Date()) {
  *
  * @spec openspec/changes/woo-annual-report/specs/woo-compliance/spec.md#requirement-an-officer-generates-the-annual-report-from-the-publications-report-req-war-002
  */
-export async function generateAnnualReport({ templateId, year, format }, save = saveBlob) {
+export async function generateAnnualReport(
+	{ templateId, year, format },
+	save = saveBlob,
+) {
 	const response = await axios.post(
 		generateUrl('/apps/openregister/api/reports/generate'),
 		{ templateId, year: String(year), format },
 		{ responseType: 'blob' },
 	)
-	const filename = filenameFrom(response.headers?.['content-disposition']) || `woo-jaarverslag-${year}.${format}`
+	const filename =
+		filenameFrom(response.headers?.['content-disposition'])
+		|| `woo-jaarverslag-${year}.${format}`
 	save(response.data, filename)
 	return filename
 }

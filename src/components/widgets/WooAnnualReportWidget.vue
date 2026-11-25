@@ -5,12 +5,27 @@
 <template>
 	<div class="woo-annual-report" data-testid="woo-annual-report">
 		<NcLoadingIcon v-if="loading" :size="20" />
-		<NcNoteCard v-else-if="!available" type="info" data-testid="woo-annual-report-unavailable">
-			<p>{{ t('opencatalogi', 'The Woo annual report needs a newer OpenRegister.') }}</p>
+		<NcNoteCard
+			v-else-if="!available"
+			type="info"
+			data-testid="woo-annual-report-unavailable">
+			<p>
+				{{
+					t(
+						'opencatalogi',
+						'The Woo annual report needs a newer OpenRegister.',
+					)
+				}}
+			</p>
 		</NcNoteCard>
 		<template v-else>
 			<p>
-				{{ t('opencatalogi', 'The published figures of a year beside the year before. Woo requests are reported in dossiq.') }}
+				{{
+					t(
+						'opencatalogi',
+						'The published figures of a year beside the year before. Woo requests are reported in dossiq.',
+					)
+				}}
 			</p>
 			<div class="woo-annual-report__fields">
 				<NcSelect
@@ -36,8 +51,18 @@
 				</template>
 				{{ t('opencatalogi', 'Generate annual report') }}
 			</NcButton>
-			<NcNoteCard v-if="failed" type="error" data-testid="woo-annual-report-failed">
-				<p>{{ t('opencatalogi', 'The annual report could not be generated.') }}</p>
+			<NcNoteCard
+				v-if="failed"
+				type="error"
+				data-testid="woo-annual-report-failed">
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'The annual report could not be generated.',
+						)
+					}}
+				</p>
 			</NcNoteCard>
 		</template>
 	</div>
@@ -46,7 +71,11 @@
 <script>
 import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcLoadingIcon, NcNoteCard, NcSelect } from '@nextcloud/vue'
-import { fetchAnnualReportAvailability, generateAnnualReport, reportYears } from '../../services/wooAnnualReport.js'
+import {
+	fetchAnnualReportAvailability,
+	generateAnnualReport,
+	reportYears,
+} from '../../services/wooAnnualReport.js'
 
 /**
  * WooAnnualReportWidget: Generate annual report on the publications report,
@@ -112,7 +141,11 @@ export default {
 			this.generating = true
 			this.failed = false
 			try {
-				await generateAnnualReport({ templateId: this.templateId, year: this.year, format: this.format })
+				await generateAnnualReport({
+					templateId: this.templateId,
+					year: this.year,
+					format: this.format,
+				})
 			} catch {
 				this.failed = true
 			} finally {
