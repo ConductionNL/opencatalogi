@@ -835,7 +835,13 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param string $categoryCode The DIWOO category code (e.g. `infocat014`).
 	 * @param integer $page The 1-based page number.
 	 *
-	 * @return array<string, mixed> The report: catalogSlug, categoryCode, valid, violations, and
+	 * @return array{
+	 *     catalogSlug: string,
+	 *     categoryCode: string,
+	 *     error?: string,
+	 *     valid: bool,
+	 *     violations: array<int, array<string, string>>
+	 * } The report: catalogSlug, categoryCode, valid, violations, and
 	 *                              unreachableReferences when there are any (or error).
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md

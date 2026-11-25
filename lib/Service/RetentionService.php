@@ -889,22 +889,20 @@ class RetentionService implements RetentionServiceInterface {
 	 * @param RetentionRun $run The evaluation run.
 	 * @param array<string, mixed> $data The publication.
 	 *
-	 * @return string The count it adds to.
+	 * @return void
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
 	 */
-	private function actOnExpiry(RetentionRun $run, array $data): string {
+	private function actOnExpiry(RetentionRun $run, array $data): void {
 		$action = (string)($data['retentionAction'] ?? 'review');
 		$counted = ['depublish' => 'depublished', 'archive' => 'archived'];
 		if (isset($counted[$action]) === false) {
 			$run->stampEvaluated(data: $data);
-			return 'reviewRequired';
+			return;
 		}
 
 		$data = (new RetentionRules(now: $run->now))->expiredWithdrawal(data: $data, action: $action);
 		$run->save(data: $this->recordDecision(data: $data, decision: 'auto-' . $action, note: 'retention term expired'));
-
-		return $counted[$action];
 	}//end actOnExpiry()
 
 	/**

@@ -7,6 +7,7 @@
     findUnusedBaselineEntry="true"
     findUnusedCode="true"
     findUnusedVariablesAndParams="true"
+    ensureOverrideAttribute="false"
     errorBaseline="psalm-baseline.xml"
 >
     <projectFiles>
@@ -29,6 +30,8 @@
         <file name="tests/Stubs/OpenRegister/Exception/SchemaNotFoundException.php" />
         <file name="tests/Stubs/OpenRegister/Exception/HookStoppedException.php" />
         <file name="tests/Stubs/OpenRegister/Exception/ValidationException.php" />
+        <!-- OpenRegister's #[McpTool] attribute on the agent tools; the same stub PHPStan scans. -->
+        <file name="tests/Stubs/OpenRegister/Mcp/Attribute/McpTool.php" />
     </stubs>
     <issueHandlers>
         <UndefinedDocblockClass errorLevel="suppress"/>
@@ -127,6 +130,30 @@
                 <referencedClass name="OCA\OpenRegister\AppHost\Controller\GenericPreferencesController"/>
                 <!-- OpenRegister events not yet in the base suppression list -->
                 <referencedClass name="OCA\OpenRegister\Event\ToolRegistrationEvent"/>
+                <!-- OpenRegister classes psalm 7 resolves where psalm 5 crashed first (same cross-app, runtime-only situation). -->
+                <referencedClass name="OCA\OpenRegister\AppHost\IHealthCheckProvider"/>
+                <referencedClass name="OCA\OpenRegister\Db\FlowTimer\TimerSubject"/>
+                <referencedClass name="OCA\OpenRegister\Db\ProcessingLogReadScope"/>
+                <referencedClass name="OCA\OpenRegister\Db\Verwerkingsactiviteit"/>
+                <referencedClass name="OCA\OpenRegister\Event\CustomScopeEvaluatingEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\PermissionsDeclaringEvent"/>
+                <referencedClass name="OCA\OpenRegister\Event\TaskTerminalEvent"/>
+                <referencedClass name="OCA\OpenRegister\Files\Db\PublicationWindow"/>
+                <referencedClass name="OCA\OpenRegister\Kernel\Contracts\ListQuery"/>
+                <referencedClass name="OCA\OpenRegister\Kernel\Contracts\TimerChange"/>
+                <referencedClass name="OCA\OpenRegister\Kernel\Contracts\TimerSubjectRef"/>
+                <referencedClass name="OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion"/>
+                <referencedClass name="OCA\OpenRegister\Kernel\Contracts\Value\SaveActor"/>
+                <referencedClass name="OCA\OpenRegister\Kernel\Contracts\Value\SavePolicy"/>
+                <referencedClass name="OCA\OpenRegister\Lifecycle\LifecycleActionInterface"/>
+                <referencedClass name="OCA\OpenRegister\Lifecycle\LifecycleGuardInterface"/>
+                <referencedClass name="OCA\OpenRegister\Mcp\IMcpScannableServices"/>
+                <referencedClass name="OCA\OpenRegister\Notifications\Service\Notification\RecipientResolverInterface"/>
+                <referencedClass name="OCA\OpenRegister\Search\Service\Aggregation\AggregationQuery"/>
+                <referencedClass name="OCA\OpenRegister\Service\Aggregation\AggregationRunnerInterface"/>
+                <referencedClass name="OCA\OpenRegister\Service\Flow\Timer\SlaAddition"/>
+                <referencedClass name="OCA\OpenRegister\Service\Import\ImportCommit"/>
+                <referencedClass name="OCA\OpenRegister\Service\Rbac\OwnedRecord"/>
                 <!-- Additional OCP infrastructure types used across the fleet -->
                 <referencedClass name="OCP\AppFramework\Bootstrap\IBootContext"/>
                 <referencedClass name="OCP\AppFramework\Bootstrap\IRegistrationContext"/>

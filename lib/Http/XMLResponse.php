@@ -192,7 +192,12 @@ class XMLResponse extends Response {
 		$xmlOutput = str_replace('&#13;', '&#xD;', $xmlOutput);
 
 		// Format empty tags to have a space before the closing bracket.
-		return preg_replace('/<([^>]*)\/>/', '<$1 />', $xmlOutput);
+		$formatted = preg_replace('/<([^>]*)\/>/', '<$1 />', $xmlOutput);
+		if ($formatted === null) {
+			return $xmlOutput;
+		}
+
+		return $formatted;
 	}//end serialise()
 
 	/**

@@ -1,2 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="5.26.1@d747f6500b38ac4f7dfc5edbcae6e4b637d7add0"/>
+<files psalm-version="7.20.0@8cc234628b340e2acf0bad250d955981e5d98424">
+  <file src="lib/Service/BroadcastService.php">
+    <TaintedSSRF>
+      <code><![CDATA[$url]]></code>
+    </TaintedSSRF>
+  </file>
+  <file src="lib/Service/Community/MarkupRenderService.php">
+    <TaintedUrlScheme>
+      <code><![CDATA[$this->escape(text: $href)]]></code>
+    </TaintedUrlScheme>
+  </file>
+  <file src="lib/Service/DirectoryService.php">
+    <TaintedSSRF>
+      <code><![CDATA[$current]]></code>
+      <code><![CDATA[$directoryUrl]]></code>
+    </TaintedSSRF>
+  </file>
+</files>

@@ -73,6 +73,7 @@ class MetadataSuggestionController extends Controller {
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) answer() hands every step the user id; the overview does not need it.
+	 * @psalm-suppress UnusedClosureParam The same reason: the step's signature is answer()'s.
 	 *
 	 * @no-admin-idor-exempt Every step reads the publication through MetadataSuggestionDecisions, which finds it with
 	 *                       _rbac: true (404 when the caller cannot read it) and checks the update right before a write.
