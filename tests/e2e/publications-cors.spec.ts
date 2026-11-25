@@ -17,7 +17,8 @@
  * @e2e openspec/changes/publications/specs/publications/spec.md
  */
 
-import { expect, request as playwrightRequest, test } from '@playwright/test'
+import { request as playwrightRequest } from '@playwright/test'
+import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog } from './publication-catalog.ts'
 
 const API = '/index.php/apps/opencatalogi/api'
@@ -76,7 +77,6 @@ test.describe('CORS on the public publication endpoints', () => {
 			data: {
 				title: `E2E CORS ${RUN}`,
 				summary: 'A public publication for the CORS check.',
-				status: 'published',
 				publicationDate: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
 			},
 		})
@@ -84,6 +84,11 @@ test.describe('CORS on the public publication endpoints', () => {
 		const body = await created.json()
 		publicationId = String(body?.id ?? body?.['@self']?.id ?? body?.uuid ?? '')
 		expect(publicationId, 'the publication has an id').not.toBe('')
+		// A new publication starts as a draft: take it through review to published.
+		for (const status of ['in_review', 'approved', 'published']) {
+			const moved = await request.patch(`${OBJECTS}/${publicationId}`, { data: { status } })
+			expect(moved.ok(), `to ${status}: ${await moved.text()}`).toBe(true)
+		}
 
 		const browser = await playwrightRequest.newContext({
 			baseURL,
