@@ -107,7 +107,6 @@ async function audit(page: Page): Promise<Finding[]> {
 	await page.addScriptTag({ content: AXE_SOURCE })
 	return page.evaluate(async (tags: string[]) => {
 		const root = document.querySelector('#content-vue') ?? document.querySelector('#content') ?? document.body
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const result = await (window as any).axe.run(root, { runOnly: { type: 'tag', values: tags } })
 		return result.violations
 			.filter((violation: { impact: string }) => violation.impact === 'serious' || violation.impact === 'critical')
