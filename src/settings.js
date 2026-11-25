@@ -2,27 +2,18 @@
  * SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  */
-import VueMarkdownEditor from '@kangc/v-md-editor'
 import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
-import githubTheme from '@kangc/v-md-editor/lib/theme/github.js'
 import { translatePlural as n, translate as t } from '@nextcloud/l10n'
-import hljs from 'highlight.js'
 /**
- * Admin settings bundle entry-point — mounts Settings.vue on #settings and
- * registers the markdown editor.
+ * Admin settings bundle entry-point — mounts Settings.vue on #settings. The
+ * markdown editor loads on demand (components/markdownEditorSetup.js).
  *
  * @spec openspec/specs/admin-settings/spec.md
  */
 import { createApp } from 'vue'
 import AdminSettings from './views/settings/Settings.vue'
 
-import '@kangc/v-md-editor/lib/style/base-editor.css'
-import '@kangc/v-md-editor/lib/theme/style/github.css'
 
-VueMarkdownEditor.use(githubTheme, {
-	Hljs: hljs,
-})
-VueMarkdownEditor.lang.use('en-US', enUS)
 
 const app = createApp(AdminSettings)
 
@@ -34,7 +25,6 @@ app.config.globalProperties.$vMdEditorLang = 'en-US'
 app.config.globalProperties.$vMdEditorLangConfig = { 'en-US': enUS }
 
 app.mixin({ methods: { t, n } })
-app.use(VueMarkdownEditor)
 
 // ⚠️ Mount host renamed from `#settings` to `#opencatalogi-settings` (see
 // `templates/settings/admin.php`). Vue 2's `$mount()` REPLACED the matched

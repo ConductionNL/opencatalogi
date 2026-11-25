@@ -9,11 +9,17 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
+
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
 	name: 'MarkdownEditor',
+	components: {
+		// Loaded when a markdown field renders, not on every page boot.
+		VMdEditor: defineAsyncComponent(() => import(/* webpackChunkName: "markdown-editor" */ './markdownEditorSetup.js')),
+	},
 	props: {
 		modelValue: {
 			type: String,

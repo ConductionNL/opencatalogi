@@ -8,6 +8,7 @@ const webpack = require('webpack')
 const webpackConfig = require('@nextcloud/webpack-vue-config')
 const { VueLoaderPlugin } = require('vue-loader')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
+const { withLeanBundles } = require('@conduction/nextcloud-vue/webpack')
 
 const buildMode = process.env.NODE_ENV
 const isDev = buildMode === 'development'
@@ -254,4 +255,7 @@ webpackConfig.optimization = {
 	},
 }
 
-module.exports = webpackConfig
+// css-loader maps off (they doubled the 1.4 MB library stylesheet inside the
+// JS) and every cache group above narrowed to initial chunks, so the
+// library's lazy chunks stay lazy. See nextcloud-vue docs/tooling/lean-bundles.md.
+module.exports = withLeanBundles(webpackConfig)
