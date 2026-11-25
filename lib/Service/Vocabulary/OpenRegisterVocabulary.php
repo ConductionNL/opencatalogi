@@ -32,6 +32,8 @@ use Throwable;
 /**
  * Resolves OpenRegister's importer and concept repository by name, so the app
  * loads without OpenRegister and an absent register is a refusal, not a crash.
+ *
+ * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-each-scheme-is-refreshed-from-its-national-source-daily-req-wvc-002
  */
 class OpenRegisterVocabulary implements VocabularyRegisterInterface {
 
@@ -48,6 +50,13 @@ class OpenRegisterVocabulary implements VocabularyRegisterInterface {
 	 * @var string
 	 */
 	public const CONCEPTS = 'OCA\\OpenRegister\\Service\\Vocabulary\\ConceptRepository';
+
+	/**
+	 * OpenRegister's scope for app-initiated work without a user session.
+	 *
+	 * @var string
+	 */
+	public const SYSTEM_SCOPE = 'OCA\\OpenRegister\\Service\\SystemOperationContext';
 
 	/**
 	 * Constructor.
@@ -71,7 +80,8 @@ class OpenRegisterVocabulary implements VocabularyRegisterInterface {
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-each-scheme-is-refreshed-from-its-national-source-daily-req-wvc-002
 	 */
 	public function activeConceptUris(string $schemeUri): array {
-		$concepts = $this->service(name: self::CONCEPTS)->conceptsOf(schemeUri: $schemeUri);
+		$repository = $this->service(name: self::CONCEPTS);
+		$concepts = $this->asSystem(operation: static fn (): array => $repository->conceptsOf(schemeUri: $schemeUri));
 
 		$uris = [];
 		foreach ($concepts as $uri => $concept) {
@@ -96,13 +106,35 @@ class OpenRegisterVocabulary implements VocabularyRegisterInterface {
 	 */
 	public function import(array $jsonLd): array {
 		try {
-			return $this->service(name: self::IMPORTER)->importJsonLd(jsonLd: $jsonLd);
+			$importer = $this->service(name: self::IMPORTER);
+			return $this->asSystem(operation: static fn (): array => $importer->importJsonLd(jsonLd: $jsonLd));
 		} catch (RuntimeException $e) {
 			throw $e;
 		} catch (Throwable $e) {
 			throw new RuntimeException('The vocabulary import failed: ' . $e->getMessage(), 0, $e);
 		}
 	}//end import()
+
+	/**
+	 * Run an operation in OpenRegister's system scope.
+	 *
+	 * The refresh runs from cron, where there is no user: OpenRegister's RBAC
+	 * refuses an anonymous write, and its read answers an empty scheme, which
+	 * would blind the mass-deprecation guard. The scope is the one OpenRegister
+	 * itself uses to seed this register, entered from code only and ended with
+	 * the call.
+	 *
+	 * @param callable(): array<mixed> $operation The read or the import.
+	 *
+	 * @return array<mixed> Its answer.
+	 */
+	private function asSystem(callable $operation): array {
+		if (class_exists(self::SYSTEM_SCOPE) === false) {
+			return $operation();
+		}
+
+		return (self::SYSTEM_SCOPE)::run($operation);
+	}//end asSystem()
 
 	/**
 	 * One of OpenRegister's services, or a refusal naming it.

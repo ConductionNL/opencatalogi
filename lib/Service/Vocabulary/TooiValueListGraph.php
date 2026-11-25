@@ -37,6 +37,8 @@ use InvalidArgumentException;
  * thesaurus, and the list node itself is what groups them, so that node
  * becomes the scheme. Grouping concepts (`Groeperingsconcept`) only structure
  * the TOOI page and are left out.
+ *
+ * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-each-scheme-is-refreshed-from-its-national-source-daily-req-wvc-002
  */
 class TooiValueListGraph {
 
@@ -60,6 +62,20 @@ class TooiValueListGraph {
 	 * @var string
 	 */
 	private const GROUPING = 'Groeperingsconcept';
+
+	/**
+	 * The OWL version predicate OpenRegister stores as the scheme's version.
+	 *
+	 * @var string
+	 */
+	private const VERSION_INFO = 'http://www.w3.org/2002/07/owl#versionInfo';
+
+	/**
+	 * The longest version OpenRegister's scheme column holds.
+	 *
+	 * @var integer
+	 */
+	private const VERSION_MAX = 100;
 
 	/**
 	 * The import document and the concept uris of one download.
@@ -164,11 +180,41 @@ class TooiValueListGraph {
 	 * @return array<string, mixed> The scheme node.
 	 */
 	private function asScheme(array $node, string $schemeUri): array {
+		$node[self::VERSION_INFO] = $this->versionOf(node: $node);
+		if ($node[self::VERSION_INFO] === []) {
+			unset($node[self::VERSION_INFO]);
+		}
+
 		$node['@id'] = $schemeUri;
 		$node['@type'] = self::SKOS . 'ConceptScheme';
 
 		return $node;
 	}//end asScheme()
+
+	/**
+	 * The scheme's version: its `owl:versionInfo` when that is a version, else the list's number.
+	 *
+	 * TOOI writes a change note into `owl:versionInfo` on some lists ("Vereenvoudigde
+	 * structuur, ..."); the version itself is the last segment of the list's id
+	 * (`.../ccw_plooi_documenthandelingen/2`).
+	 *
+	 * @param array<string, mixed> $node The scheme or value-list node.
+	 *
+	 * @return array<int, array{"@value": string}> The literal, or none.
+	 */
+	private function versionOf(array $node): array {
+		$info = ($node[self::VERSION_INFO][0]['@value'] ?? null);
+		if (is_string($info) === true && $info !== '' && mb_strlen($info) <= self::VERSION_MAX) {
+			return [['@value' => $info]];
+		}
+
+		$last = substr((string)strrchr('/' . (string)$node['@id'], '/'), 1);
+		if (ctype_digit($last) === true) {
+			return [['@value' => $last]];
+		}
+
+		return [];
+	}//end versionOf()
 
 	/**
 	 * Whether a node is a concept of the list (not a grouping concept).

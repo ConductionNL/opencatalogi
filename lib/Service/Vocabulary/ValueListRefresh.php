@@ -44,6 +44,8 @@ use Throwable;
  * deprecate more than a third of the scheme's active concepts: a truncated answer
  * must not empty a list that publications point at. Both keep the scheme as it is,
  * store the reason and raise a pipeline incident.
+ *
+ * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-each-scheme-is-refreshed-from-its-national-source-daily-req-wvc-002
  */
 class ValueListRefresh {
 

@@ -87,6 +87,11 @@ class TooiValueListGraphTest extends TestCase {
 			schemeUri: 'https://identifier.overheid.nl/tooi/set/ccw_plooi_documenthandelingen'
 		);
 		$this->assertCount(3, $handelingen['conceptUris'], 'ontvangst, vaststelling, ondertekening');
+		$this->assertSame(
+			[['@value' => '2']],
+			$handelingen['jsonLd']['@graph'][0]['http://www.w3.org/2002/07/owl#versionInfo'],
+			'a change note in versionInfo is not a version: the list number is'
+		);
 	}//end testACollectionBasedListBecomesAScheme()
 
 	/**
