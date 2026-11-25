@@ -150,20 +150,7 @@ class Application extends App implements IBootstrap {
 		);
 		$context->registerService(
 			'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericMetricsController',
-			static function ($c) {
-				$standIn = self::standIn(container: $c, health: false);
-				if ($standIn !== null) {
-					return $standIn;
-				}
-
-				return new GenericMetricsController(
-					appName: self::APP_ID,
-					request: $c->get('OCP\\IRequest'),
-					manifestLoader: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader'),
-					engine: $c->get('OCA\\OpenRegister\\AppHost\\Observability\\MetricsEngine'),
-					accessGuard: self::metricsAccessGuard(container: $c)
-				);
-			}
+			static fn ($c) => self::metricsController(container: $c)
 		);
 
 		// AppHost boilerplate adoption (ADR-040). The Dashboard (SPA page +
@@ -272,6 +259,32 @@ class Application extends App implements IBootstrap {
 			}
 		);
 	}//end boot()
+
+	/**
+	 * The metrics route's controller: OpenRegister's generic with its access guard, or the
+	 * stand-in on an OpenRegister without the AppHost engine.
+	 *
+	 * @param ContainerInterface $container The app container.
+	 *
+	 * @return object The controller (OpenRegister's generic, or the stand-in).
+	 *
+	 * @spec openspec/specs/prometheus-metrics/spec.md
+	 */
+	private static function metricsController(ContainerInterface $container): object {
+		$standIn = self::standIn(container: $container, health: false);
+		if ($standIn !== null) {
+			return $standIn;
+		}
+
+		return new GenericMetricsController(
+			appName: self::APP_ID,
+			request: $container->get('OCP\\IRequest'),
+			manifestLoader: $container->get('OCA\\OpenRegister\\AppHost\\Observability\\ManifestLoader'),
+			engine: $container->get('OCA\\OpenRegister\\AppHost\\Observability\\MetricsEngine'),
+			accessGuard: self::metricsAccessGuard(container: $container)
+		);
+
+	}//end metricsController()
 
 	/**
 	 * OpenRegister's access decision for the metrics route. The generic refuses every

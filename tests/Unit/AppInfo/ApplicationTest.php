@@ -267,19 +267,19 @@ class ApplicationTest extends TestCase {
 		$generic = 'OCA\\OpenRegister\\AppHost\\Controller\\GenericMetricsController';
 		$guardClass = 'OCA\\OpenRegister\\AppHost\\Observability\\MetricsAccessGuard';
 		if (class_exists($generic) === false || class_exists($guardClass) === false) {
-			$this->markTestSkipped('OpenRegister with the AppHost metrics guard is not beside the app.');
+			$this->markTestSkipped(message: 'OpenRegister with the AppHost metrics guard is not beside the app.');
 		}
 
 		$registered = $this->registered();
-		$guard = $this->createMock($guardClass);
-		$container = $this->createMock(ContainerInterface::class);
+		$guard = $this->createMock(originalClassName: $guardClass);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			fn (string $id): mixed => match ($id) {
 				OpenRegisterCompatibility::class => new OpenRegisterCompatibility(markerClass: \stdClass::class),
-				LoggerInterface::class => $this->createMock(LoggerInterface::class),
-				'OCP\\IRequest' => $this->createMock(IRequest::class),
+				LoggerInterface::class => $this->createMock(originalClassName: LoggerInterface::class),
+				'OCP\\IRequest' => $this->createMock(originalClassName: IRequest::class),
 				$guardClass => $guard,
-				default => $this->createMock($id),
+				default => $this->createMock(originalClassName: $id),
 			}
 		);
 
