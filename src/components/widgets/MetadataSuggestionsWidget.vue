@@ -229,6 +229,9 @@ export default {
 								'opencatalogi',
 								'Rejected: the publication is unchanged.',
 							)
+				if (decision === 'accept') {
+					await this.showAcceptedValue()
+				}
 			} catch (error) {
 				this.messageType = 'error'
 				this.message = refusalMessage(error, this.t)
@@ -236,6 +239,30 @@ export default {
 				this.busy = false
 			}
 			await this.load()
+		},
+
+		/**
+		 * Hand the publication, read again, to the page it sits on, so the field the
+		 * accepted suggestion filled shows its value there and not the old one. Pages
+		 * that give no way to hand an object back are left as they are.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
+		 */
+		async showAcceptedValue() {
+			const { register, schema, setObject } = this.ctx
+			if (typeof setObject !== 'function' || !register || !schema || !this.resolvedObjectId) {
+				return
+			}
+			try {
+				const path = [register, schema, this.resolvedObjectId].map(encodeURIComponent).join('/')
+				const { data } = await axios.get(generateUrl(`/apps/openregister/api/objects/${path}`))
+				if (data && typeof data === 'object') {
+					setObject(data)
+				}
+			} catch {
+				// The value is stored either way; the page shows it on its next load.
+			}
 		},
 
 		/**

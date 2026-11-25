@@ -77,6 +77,13 @@ class ErrorReportControllerTest extends TestCase {
 	/** @var array<string, mixed> The catalogue object as stored, past its read rules. */
 	private array $storedCatalog = ['id' => 'cat-1', 'errorReportModerators' => ['woo-redactie']];
 
+	/**
+	 * OpenRegister's explicit-reveal service double: counts the trusted reads.
+	 *
+	 * @var object
+	 */
+	private object $reveal;
+
 	/** @var array<string, mixed> The posted parameters. */
 	private array $posted = [];
 
@@ -145,6 +152,26 @@ class ErrorReportControllerTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
+		$this->reveal = new class() {
+			/**
+			 * How many reads ran trusted.
+			 *
+			 * @var int
+			 */
+			public int $trustedReads = 0;
+
+			/**
+			 * Run a read as trusted server code.
+			 *
+			 * @param callable $read The read.
+			 *
+			 * @return mixed What the read returns.
+			 */
+			public function trustedDuring(callable $read): mixed {
+				$this->trustedReads++;
+				return $read();
+			}
+		};
 		$this->catalogs = $this->createMock(CatalogiServiceInterface::class);
 		$this->catalogs->method('getCatalogSlugs')->willReturn(['woo']);
 		$this->query = $this->createMock(PublicationQueryServiceInterface::class);
@@ -169,6 +196,7 @@ class ErrorReportControllerTest extends TestCase {
 		);
 		$lookup = $this->createMock(OpenRegisterLookup::class);
 		$lookup->method('installedObjectService')->willReturn($this->objects);
+		$lookup->method('installedService')->willReturnCallback(fn (): object => $this->reveal);
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
 			static fn (string $app, string $key, string $default = ''): string => match ($key) {
@@ -215,7 +243,10 @@ class ErrorReportControllerTest extends TestCase {
 	 * @return void
 	 */
 	private function catalogue(array $catalog, array $publication = self::PUBLICATION): void {
-		$this->catalogs->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'registers' => [5], 'schemas' => [9]] + $catalog);
+		// The visitor's read of the catalogue need not carry its report settings; the
+		// intake takes them from the stored catalogue (live, 25 Nov 2026).
+		$this->catalogs->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'registers' => [5], 'schemas' => [9]]);
+		$this->storedCatalog = $catalog + $this->storedCatalog;
 		$this->query->method('findObjectInCatalog')->willReturnCallback(
 			static fn (array $catalogue, string $id): ?object => ($id === 'pub-1' ? self::entity($publication) : null)
 		);
@@ -280,13 +311,47 @@ class ErrorReportControllerTest extends TestCase {
 	}//end testWithoutOptInTheRouteIs404()
 
 	/**
+	 * A publication on the lifecycle (stored `published`, its date passed) takes a report
+	 * though OpenRegister's `@self.published` marker is not set (REQ-PLC-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 */
+	public function testAPublicationOnTheLifecycleTakesAReport(): void {
+		$this->catalogue(
+			catalog: ['acceptErrorReports' => true],
+			publication: ['id' => 'pub-1', 'status' => 'published', 'publicationDate' => '2026-01-05T09:00:00+00:00', '@self' => ['published' => null]]
+		);
+		$this->posted = ['message' => 'Fout'];
+
+		$this->assertSame(expected: 201, actual: $this->controller->create(id: 'pub-1')->getStatus());
+	}//end testAPublicationOnTheLifecycleTakesAReport()
+
+	/**
+	 * The stored catalogue is read as trusted server code, so OpenRegister does not mask
+	 * its `reveal: explicit` moderator groups (live, 25 Nov 2026).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/specs/publications/spec.md#requirement-a-catalogue-may-take-error-reports-from-anyone-throttled-and-moderated-req-pdp-005
+	 */
+	public function testTheCatalogueIsReadAsTrustedServerCode(): void {
+		$this->catalogue(catalog: ['acceptErrorReports' => true]);
+		$this->posted = ['message' => 'Fout'];
+
+		$this->assertSame(expected: 201, actual: $this->controller->create(id: 'pub-1')->getStatus());
+		$this->assertSame(expected: 1, actual: $this->reveal->trustedReads);
+	}//end testTheCatalogueIsReadAsTrustedServerCode()
+
+	/**
 	 * An opted-in catalogue without a moderator takes nothing.
 	 *
 	 * @return void
 	 */
 	public function testWithoutAModeratorTheRouteIs404(): void {
 		$this->catalogue(['acceptErrorReports' => true]);
-		$this->storedCatalog = ['id' => 'cat-1', 'errorReportModerators' => ['', 7]];
+		$this->storedCatalog = ['id' => 'cat-1', 'acceptErrorReports' => true, 'errorReportModerators' => ['', 7]];
 		$this->posted = ['message' => 'Fout'];
 
 		$this->assertSame(404, $this->controller->create(id: 'pub-1')->getStatus());
