@@ -863,7 +863,16 @@
         "The annual report could not be generated.": "Níorbh fhéidir an tuarascáil bhliantúil a chruthú.",
         "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Na figiúirí foilsithe do bhliain taobh le figiúirí na bliana roimhe. Tuairiscítear iarratais Woo in dossiq.",
         "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Baineann an réimse %s leis an liosta luachanna náisiúnta agus ní féidir é a athrú anseo; athraigh é ag an bhfoinse.",
-        "A value list choice has no field %s.": "Níl réimse %s ag rogha liosta luachanna."
+        "A value list choice has no field %s.": "Níl réimse %s ag rogha liosta luachanna.",
+        "Category explanations": "Mínithe catagóirí",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Mínigh catagóir faisnéise i d’fhocail féin. Taispeánann an tairseach an míniú san áit a roghnaíonn saoránach an scagaire catagóire.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Níorbh fhéidir do roghanna féin a lódáil, mar sin taispeántar na catagóirí in ord an liosta féin.",
+        "Save explanation": "Sábháil an míniú",
+        "Explanation saved": "Míniú sábháilte",
+        "Unknown value list.": "Liosta luachanna anaithnid.",
+        "Name the entry the choice is about.": "Ainmnigh an iontráil a bhaineann leis an rogha.",
+        "An explanation is at most %s characters.": "Tá %s carachtar ar a mhéad i míniú.",
+        "The choice could not be saved: %s": "Níorbh fhéidir an rogha a shábháil: %s"
     },
     "plurals": {}
 }

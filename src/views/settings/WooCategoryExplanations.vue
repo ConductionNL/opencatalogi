@@ -15,11 +15,22 @@
 				)
 			}}
 		</p>
-		<NcNoteCard v-if="error" type="error" data-testid="woo-category-explanations-error">
+		<NcNoteCard
+			v-if="error"
+			type="error"
+			data-testid="woo-category-explanations-error">
 			{{ error }}
 		</NcNoteCard>
-		<NcNoteCard v-if="choicesUnavailable" type="warning" data-testid="woo-category-explanations-unavailable">
-			{{ t('opencatalogi', 'Your own choices could not be loaded, so the categories are shown in the order of the list itself.') }}
+		<NcNoteCard
+			v-if="choicesUnavailable"
+			type="warning"
+			data-testid="woo-category-explanations-unavailable">
+			{{
+				t(
+					'opencatalogi',
+					'Your own choices could not be loaded, so the categories are shown in the order of the list itself.',
+				)
+			}}
 		</NcNoteCard>
 		<ul class="woo-category-explanations__list">
 			<li
@@ -35,7 +46,9 @@
 					rows="2"
 					@update:modelValue="setDraft(entry, $event)" />
 				<NcButton
-					:disabled="saving === entry.uri || draftOf(entry) === entry.explanation"
+					:disabled="
+						saving === entry.uri || draftOf(entry) === entry.explanation
+					"
 					@click="save(entry)">
 					{{ t('opencatalogi', 'Save explanation') }}
 				</NcButton>
@@ -99,7 +112,9 @@ export default {
 		async load() {
 			this.error = null
 			try {
-				const { data } = await axios.get(generateUrl(CHOICES_URL), { params: { scheme: SCHEME } })
+				const { data } = await axios.get(generateUrl(CHOICES_URL), {
+					params: { scheme: SCHEME },
+				})
 				this.apply(data)
 			} catch (err) {
 				this.entries = []
@@ -175,7 +190,9 @@ export default {
  * @return {string} The text.
  */
 export function draftOf(drafts, entry) {
-	return Object.hasOwn(drafts, entry.uri) ? drafts[entry.uri] : (entry.explanation || '')
+	return Object.hasOwn(drafts, entry.uri)
+		? drafts[entry.uri]
+		: entry.explanation || ''
 }
 </script>
 

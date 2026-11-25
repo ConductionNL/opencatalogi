@@ -864,7 +864,16 @@ OC.L10N.register(
         "The annual report could not be generated.": "Årsrapporten kunne ikke oprettes.",
         "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "De offentliggjorte tal for et år ved siden af året før. Woo-anmodninger rapporteres i dossiq.",
         "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Feltet %s hører til den nationale værdiliste og kan ikke ændres her; ret det ved kilden.",
-        "A value list choice has no field %s.": "Et valg i en værdiliste har intet felt %s."
+        "A value list choice has no field %s.": "Et valg i en værdiliste har intet felt %s.",
+        "Category explanations": "Forklaringer til kategorier",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Forklar en informationskategori med dine egne ord. Portalen viser forklaringen, hvor en borger vælger kategorifilteret.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Dine egne valg kunne ikke indlæses, så kategorierne vises i listens egen rækkefølge.",
+        "Save explanation": "Gem forklaring",
+        "Explanation saved": "Forklaring gemt",
+        "Unknown value list.": "Ukendt værdiliste.",
+        "Name the entry the choice is about.": "Angiv det element, valget handler om.",
+        "An explanation is at most %s characters.": "En forklaring er højst %s tegn.",
+        "The choice could not be saved: %s": "Valget kunne ikke gemmes: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

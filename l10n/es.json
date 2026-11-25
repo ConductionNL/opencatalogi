@@ -863,7 +863,16 @@
         "The annual report could not be generated.": "No se pudo generar el informe anual.",
         "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Las cifras publicadas de un año junto a las del año anterior. Las solicitudes Woo se informan en dossiq.",
         "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "El campo %s pertenece a la lista de valores nacional y no se puede cambiar aquí; cámbielo en el origen.",
-        "A value list choice has no field %s.": "Una elección de lista de valores no tiene el campo %s."
+        "A value list choice has no field %s.": "Una elección de lista de valores no tiene el campo %s.",
+        "Category explanations": "Explicaciones de categorías",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Explique una categoría de información con sus propias palabras. El portal muestra la explicación donde un ciudadano elige el filtro de categoría.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "No se pudieron cargar sus propias elecciones, por lo que las categorías se muestran en el orden de la propia lista.",
+        "Save explanation": "Guardar explicación",
+        "Explanation saved": "Explicación guardada",
+        "Unknown value list.": "Lista de valores desconocida.",
+        "Name the entry the choice is about.": "Indique la entrada a la que se refiere la elección.",
+        "An explanation is at most %s characters.": "Una explicación tiene como máximo %s caracteres.",
+        "The choice could not be saved: %s": "No se pudo guardar la elección: %s"
     },
     "plurals": {}
 }

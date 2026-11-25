@@ -864,7 +864,16 @@ OC.L10N.register(
         "The annual report could not be generated.": "Godišnje izvješće nije moguće izraditi.",
         "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Objavljeni podaci za godinu uz podatke prethodne godine. O zahtjevima Woo izvješćuje se u dossiqu.",
         "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Polje %s pripada nacionalnom popisu vrijednosti i ne može se ovdje promijeniti; promijenite ga na izvoru.",
-        "A value list choice has no field %s.": "Odabir s popisa vrijednosti nema polje %s."
+        "A value list choice has no field %s.": "Odabir s popisa vrijednosti nema polje %s.",
+        "Category explanations": "Objašnjenja kategorija",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Objasnite kategoriju informacija vlastitim riječima. Portal prikazuje objašnjenje gdje građanin bira filtar kategorije.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Vaši odabiri nisu se mogli učitati, pa su kategorije prikazane redoslijedom samog popisa.",
+        "Save explanation": "Spremi objašnjenje",
+        "Explanation saved": "Objašnjenje spremljeno",
+        "Unknown value list.": "Nepoznat popis vrijednosti.",
+        "Name the entry the choice is about.": "Navedite stavku na koju se odabir odnosi.",
+        "An explanation is at most %s characters.": "Objašnjenje ima najviše %s znakova.",
+        "The choice could not be saved: %s": "Odabir nije spremljen: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

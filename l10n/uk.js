@@ -864,7 +864,16 @@ OC.L10N.register(
         "The annual report could not be generated.": "Не вдалося створити річний звіт.",
         "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Опубліковані дані за рік поруч із даними за попередній рік. Про запити Woo звітують у dossiq.",
         "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Поле %s належить до національного списку значень і не може бути змінене тут; змініть його в джерелі.",
-        "A value list choice has no field %s.": "Вибір зі списку значень не має поля %s."
+        "A value list choice has no field %s.": "Вибір зі списку значень не має поля %s.",
+        "Category explanations": "Пояснення до категорій",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Поясніть інформаційну категорію своїми словами. Портал показує пояснення там, де мешканець обирає фільтр категорій.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Не вдалося завантажити ваш власний вибір, тому категорії показано в порядку самого списку.",
+        "Save explanation": "Зберегти пояснення",
+        "Explanation saved": "Пояснення збережено",
+        "Unknown value list.": "Невідомий список значень.",
+        "Name the entry the choice is about.": "Укажіть елемент, якого стосується вибір.",
+        "An explanation is at most %s characters.": "Пояснення — не більше %s символів.",
+        "The choice could not be saved: %s": "Не вдалося зберегти вибір: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

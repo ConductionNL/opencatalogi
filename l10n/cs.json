@@ -863,7 +863,16 @@
         "The annual report could not be generated.": "Výroční zprávu se nepodařilo vytvořit.",
         "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Zveřejněné údaje za rok vedle údajů za předchozí rok. Žádosti Woo se vykazují v dossiq.",
         "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Pole %s patří k národnímu seznamu hodnot a nelze je zde změnit; změňte je ve zdroji.",
-        "A value list choice has no field %s.": "Volba v seznamu hodnot nemá pole %s."
+        "A value list choice has no field %s.": "Volba v seznamu hodnot nemá pole %s.",
+        "Category explanations": "Vysvětlení kategorií",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Vysvětlete kategorii informací vlastními slovy. Portál zobrazí vysvětlení tam, kde občan volí filtr kategorie.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Vaše vlastní volby se nepodařilo načíst, proto jsou kategorie zobrazeny v pořadí samotného seznamu.",
+        "Save explanation": "Uložit vysvětlení",
+        "Explanation saved": "Vysvětlení uloženo",
+        "Unknown value list.": "Neznámý seznam hodnot.",
+        "Name the entry the choice is about.": "Uveďte položku, které se volba týká.",
+        "An explanation is at most %s characters.": "Vysvětlení má nejvýše %s znaků.",
+        "The choice could not be saved: %s": "Volbu se nepodařilo uložit: %s"
     },
     "plurals": {}
 }

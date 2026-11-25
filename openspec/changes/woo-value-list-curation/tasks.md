@@ -13,7 +13,7 @@ Read `openspec/woo-build-rules.md` first. Start once `woo-value-lists-on-the-con
 
 ## 3. Explanation
 
-- [ ] 3.1 Add the explanation field to the Woo settings and `GET /api/woo/categories/public` with CORS (REQ-WVL-003). Verify: `tests/Unit/Controller/PublicCategoriesTest.php::testTheExplanationIsServedAndHiddenCategoriesAreNot` (fails today); a route-table and `OpenApiParityTest` case. Link the response shape from the portaliq filter's issue.
+- [x] 3.1 Add the explanation field to the Woo settings and `GET /api/woo/categories/public` with CORS (REQ-WVL-003). Verify: `tests/Unit/Controller/PublicCategoriesTest.php::testTheExplanationIsServedAndHiddenCategoriesAreNot` (fails today); a route-table and `OpenApiParityTest` case. Link the response shape from the portaliq filter's issue.
 
 ## 4. Hide by organisation type
 

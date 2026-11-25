@@ -864,7 +864,16 @@ OC.L10N.register(
         "The annual report could not be generated.": "Az éves jelentést nem sikerült elkészíteni.",
         "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Egy év közzétett adatai az előző év adatai mellett. A Woo-kérelmekről a dossiq számol be.",
         "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "A(z) %s mező az országos értéklistához tartozik, és itt nem módosítható; módosítsa a forrásnál.",
-        "A value list choice has no field %s.": "Egy értéklista-választásnak nincs %s mezője."
+        "A value list choice has no field %s.": "Egy értéklista-választásnak nincs %s mezője.",
+        "Category explanations": "Kategóriák magyarázata",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Magyarázza el egy információs kategóriát a saját szavaival. A portál ott mutatja a magyarázatot, ahol az állampolgár a kategóriaszűrőt választja.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "A saját választásait nem sikerült betölteni, ezért a kategóriák a lista saját sorrendjében jelennek meg.",
+        "Save explanation": "Magyarázat mentése",
+        "Explanation saved": "Magyarázat mentve",
+        "Unknown value list.": "Ismeretlen értéklista.",
+        "Name the entry the choice is about.": "Nevezze meg a tételt, amelyre a választás vonatkozik.",
+        "An explanation is at most %s characters.": "Egy magyarázat legfeljebb %s karakter.",
+        "The choice could not be saved: %s": "A választást nem sikerült menteni: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

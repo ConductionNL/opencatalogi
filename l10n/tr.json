@@ -863,7 +863,16 @@
         "The annual report could not be generated.": "Yıllık rapor oluşturulamadı.",
         "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Bir yılın yayımlanan rakamları bir önceki yılın yanında. Woo talepleri dossiq'te raporlanır.",
         "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "%s alanı ulusal değer listesine aittir ve burada değiştirilemez; kaynağında değiştirin.",
-        "A value list choice has no field %s.": "Bir değer listesi seçiminin %s alanı yok."
+        "A value list choice has no field %s.": "Bir değer listesi seçiminin %s alanı yok.",
+        "Category explanations": "Kategori açıklamaları",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Bir bilgi kategorisini kendi sözlerinizle açıklayın. Portal, açıklamayı vatandaşın kategori filtresini seçtiği yerde gösterir.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Kendi seçimleriniz yüklenemedi, bu nedenle kategoriler listenin kendi sırasıyla gösteriliyor.",
+        "Save explanation": "Açıklamayı kaydet",
+        "Explanation saved": "Açıklama kaydedildi",
+        "Unknown value list.": "Bilinmeyen değer listesi.",
+        "Name the entry the choice is about.": "Seçimin ilgili olduğu öğeyi belirtin.",
+        "An explanation is at most %s characters.": "Bir açıklama en fazla %s karakterdir.",
+        "The choice could not be saved: %s": "Seçim kaydedilemedi: %s"
     },
     "plurals": {}
 }

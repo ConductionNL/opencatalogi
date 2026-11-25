@@ -864,7 +864,16 @@ OC.L10N.register(
         "The annual report could not be generated.": "Raporti vjetor nuk mund të krijohej.",
         "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Shifrat e publikuara të një viti pranë atyre të vitit të kaluar. Kërkesat Woo raportohen në dossiq.",
         "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Fusha %s i përket listës kombëtare të vlerave dhe nuk mund të ndryshohet këtu; ndryshojeni te burimi.",
-        "A value list choice has no field %s.": "Një zgjedhje e listës së vlerave nuk ka fushën %s."
+        "A value list choice has no field %s.": "Një zgjedhje e listës së vlerave nuk ka fushën %s.",
+        "Category explanations": "Shpjegimet e kategorive",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Shpjegoni një kategori informacioni me fjalët tuaja. Portali e shfaq shpjegimin aty ku qytetari zgjedh filtrin e kategorisë.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Zgjedhjet tuaja nuk mund të ngarkoheshin, prandaj kategoritë shfaqen sipas renditjes së vetë listës.",
+        "Save explanation": "Ruaj shpjegimin",
+        "Explanation saved": "Shpjegimi u ruajt",
+        "Unknown value list.": "Listë vlerash e panjohur.",
+        "Name the entry the choice is about.": "Emërtoni zërin që lidhet me zgjedhjen.",
+        "An explanation is at most %s characters.": "Një shpjegim ka më së shumti %s karaktere.",
+        "The choice could not be saved: %s": "Zgjedhja nuk mund të ruhej: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

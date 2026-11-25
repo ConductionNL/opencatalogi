@@ -864,7 +864,16 @@ OC.L10N.register(
         "The annual report could not be generated.": "Nie udało się utworzyć raportu rocznego.",
         "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Opublikowane dane z roku obok danych z roku poprzedniego. Wnioski Woo są raportowane w dossiq.",
         "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Pole %s należy do krajowej listy wartości i nie można go tutaj zmienić; zmień je u źródła.",
-        "A value list choice has no field %s.": "Wybór z listy wartości nie ma pola %s."
+        "A value list choice has no field %s.": "Wybór z listy wartości nie ma pola %s.",
+        "Category explanations": "Objaśnienia kategorii",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Objaśnij kategorię informacji własnymi słowami. Portal pokazuje objaśnienie tam, gdzie mieszkaniec wybiera filtr kategorii.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Nie udało się wczytać Twoich wyborów, więc kategorie są wyświetlane w kolejności samej listy.",
+        "Save explanation": "Zapisz objaśnienie",
+        "Explanation saved": "Objaśnienie zapisane",
+        "Unknown value list.": "Nieznana lista wartości.",
+        "Name the entry the choice is about.": "Wskaż pozycję, której dotyczy wybór.",
+        "An explanation is at most %s characters.": "Objaśnienie może mieć najwyżej %s znaków.",
+        "The choice could not be saved: %s": "Nie udało się zapisać wyboru: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

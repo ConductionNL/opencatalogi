@@ -864,7 +864,16 @@ OC.L10N.register(
         "The annual report could not be generated.": "Il rapport annual n'ha betg pudì vegnir creà.",
         "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Las cifras publitgadas d'in onn sper quellas da l'onn precedent. Dumondas Woo vegnan rapportadas en dossiq.",
         "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Il champ %s appartegna a la glista naziunala da valurs e na po betg vegnir midà qua; midai el a la funtauna.",
-        "A value list choice has no field %s.": "Ina tscherna d'ina glista da valurs n'ha nagin champ %s."
+        "A value list choice has no field %s.": "Ina tscherna d'ina glista da valurs n'ha nagin champ %s.",
+        "Category explanations": "Explicaziuns da las categorias",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Explitgai ina categoria d’infurmaziun cun Voss agens pleds. Il portal mussa l’explicaziun là nua ch’in burgais tscherna il filter da categorias.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Vossas atgnas tschernas n’han betg pudì vegnir chargiadas, perquai vegnan las categorias mussadas en la successiun da la glista sezza.",
+        "Save explanation": "Memorisar l’explicaziun",
+        "Explanation saved": "Explicaziun memorisada",
+        "Unknown value list.": "Glista da valurs nunenconuschenta.",
+        "Name the entry the choice is about.": "Numnai l’endataziun che la tscherna pertutga.",
+        "An explanation is at most %s characters.": "Ina explicaziun ha maximalmain %s caracters.",
+        "The choice could not be saved: %s": "La tscherna n’ha betg pudì vegnir memorisada: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -8,14 +8,26 @@
  */
 
 import axios from '@nextcloud/axios'
-import WooCategoryExplanations, { CHOICES_URL, draftOf, SCHEME } from './WooCategoryExplanations.vue'
+import WooCategoryExplanations, {
+	CHOICES_URL,
+	draftOf,
+	SCHEME,
+} from './WooCategoryExplanations.vue'
 
-jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: { get: jest.fn(), put: jest.fn() } }))
+jest.mock('@nextcloud/axios', () => ({
+	__esModule: true,
+	default: { get: jest.fn(), put: jest.fn() },
+}))
 jest.mock('@nextcloud/router', () => ({ generateUrl: (path) => path }))
 jest.mock('@nextcloud/dialogs', () => ({ showSuccess: jest.fn() }))
 jest.mock('@nextcloud/vue', () => ({ NcButton: {}, NcNoteCard: {}, NcTextArea: {} }))
 
-const COVENANTS = { code: 'infocat011', uri: 'https://identifier.overheid.nl/tooi/def/thes/kern/c_8fc2335c', label: 'Convenanten', explanation: '' }
+const COVENANTS = {
+	code: 'infocat011',
+	uri: 'https://identifier.overheid.nl/tooi/def/thes/kern/c_8fc2335c',
+	label: 'Convenanten',
+	explanation: '',
+}
 
 /**
  * A fresh component state.
@@ -23,7 +35,10 @@ const COVENANTS = { code: 'infocat011', uri: 'https://identifier.overheid.nl/too
  * @return {object} The state.
  */
 function state() {
-	const fresh = { ...WooCategoryExplanations.methods, ...WooCategoryExplanations.data() }
+	const fresh = {
+		...WooCategoryExplanations.methods,
+		...WooCategoryExplanations.data(),
+	}
 	return fresh
 }
 
@@ -33,11 +48,15 @@ describe('WooCategoryExplanations', () => {
 		axios.put.mockReset()
 	})
 
-	it('loads the categories with the organisation\'s choices', async () => {
-		axios.get.mockResolvedValue({ data: { entries: [COVENANTS], choicesUnavailable: true } })
+	it("loads the categories with the organisation's choices", async () => {
+		axios.get.mockResolvedValue({
+			data: { entries: [COVENANTS], choicesUnavailable: true },
+		})
 		const s = state()
 		await s.load()
-		expect(axios.get).toHaveBeenCalledWith(CHOICES_URL, { params: { scheme: SCHEME } })
+		expect(axios.get).toHaveBeenCalledWith(CHOICES_URL, {
+			params: { scheme: SCHEME },
+		})
 		expect(s.entries).toEqual([COVENANTS])
 		expect(s.choicesUnavailable).toBe(true)
 		expect(s.error).toBeNull()
@@ -45,7 +64,9 @@ describe('WooCategoryExplanations', () => {
 
 	it('saves the explanation as a choice about the entry', async () => {
 		const saved = { ...COVENANTS, explanation: 'Afspraken met andere partijen.' }
-		axios.put.mockResolvedValue({ data: { entries: [saved], choicesUnavailable: false } })
+		axios.put.mockResolvedValue({
+			data: { entries: [saved], choicesUnavailable: false },
+		})
 		const s = state()
 		s.entries = [COVENANTS]
 		s.setDraft(COVENANTS, 'Afspraken met andere partijen.')
@@ -61,7 +82,11 @@ describe('WooCategoryExplanations', () => {
 	})
 
 	it('shows the reason when a save is refused', async () => {
-		axios.put.mockRejectedValue({ response: { data: { error: 'An explanation is at most 1000 characters.' } } })
+		axios.put.mockRejectedValue({
+			response: {
+				data: { error: 'An explanation is at most 1000 characters.' },
+			},
+		})
 		const s = state()
 		await s.save(COVENANTS)
 		expect(s.error).toBe('An explanation is at most 1000 characters.')
