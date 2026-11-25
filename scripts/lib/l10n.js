@@ -293,7 +293,7 @@ function listJsLocaleFiles(l10nDir) {
  * en.json's, with en.js's entries on top. App name and plural form come from
  * en.js, as before.
  *
- * @spec openspec/specs/l10n (PERF-HANDOFF all apps: drop English identity entries at build time)
+ * @spec openspec/specs/frontend-performance/spec.md (PERF-HANDOFF all apps: drop English identity entries at build time)
  */
 function loadSourceCatalogue(l10nDir) {
 	const english = loadJsTranslations(path.join(l10nDir, 'en.js'))

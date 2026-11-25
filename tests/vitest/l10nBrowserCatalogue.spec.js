@@ -7,7 +7,7 @@
  * entries only cost every page ~200 KB. en.json stays complete, and the
  * l10n checks read their key set from en.json completed by en.js.
  *
- * @spec openspec/specs/l10n (PERF-HANDOFF all apps: drop English identity entries at build time)
+ * @spec openspec/specs/frontend-performance/spec.md (PERF-HANDOFF all apps: drop English identity entries at build time)
  */
 
 import fs from 'node:fs'

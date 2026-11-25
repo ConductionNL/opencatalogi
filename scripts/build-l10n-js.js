@@ -116,7 +116,7 @@ function renderJs(id, translations, pluralForm) {
  * t() falls back to the key, so it renders the same and costs bytes on
  * every page. Every other locale keeps all its entries.
  *
- * @spec openspec/specs/l10n (PERF-HANDOFF all apps: drop English identity entries at build time)
+ * @spec openspec/specs/frontend-performance/spec.md (PERF-HANDOFF all apps: drop English identity entries at build time)
  * @param {string} locale - the catalogue's locale, e.g. `en`, `en_GB`, `nl`
  * @param {object} translations - key -> translation, as in the .json
  * @return {object} key -> translation for the .js
