@@ -78,9 +78,15 @@ async function openPublication(page: Page): Promise<void> {
 		page,
 		`/publications/${encodeURIComponent(slug)}/${publication.id}`,
 	)
-	await expect(
-		page.locator(`[data-testid="publication-table-${tableId}"]`),
-	).toBeVisible({ timeout: 15000 })
+	// The Tables section sits below the fold, and the detail grid mounts a
+	// widget when it scrolls into view.
+	const table = page.locator(`[data-testid="publication-table-${tableId}"]`)
+	await expect(page.locator('[gs-id]').first()).toBeAttached({ timeout: 30_000 })
+	await page.mouse.move(800, 400)
+	await expect(async () => {
+		await page.mouse.wheel(0, 400)
+		await expect(table).toBeVisible({ timeout: 500 })
+	}).toPass({ timeout: 30_000 })
 }
 
 test.beforeAll(async ({ request }) => {
