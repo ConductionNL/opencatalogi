@@ -998,6 +998,7 @@ import {
 	requestReadAgain,
 } from '../../services/attachmentReading.js'
 import { fileSizeLabel } from '../../services/fileSizeLabel.js'
+import { focusFirstTab } from '../../services/focusAfterCreate.js'
 import { formValue } from '../../services/formValue.js'
 import {
 	hasTranslatableFields,
@@ -2223,6 +2224,10 @@ export default {
 
 			const result = await this.sendSave(this.saveRequest(isCreating))
 			this.applySavedObject(result)
+			if (isCreating) {
+				// The create form gives way to the edit tabs; keep focus in the dialog.
+				this.$nextTick(() => focusFirstTab(document))
+			}
 
 			// Close modal for edit mode, keep open for create mode (which transitions to edit mode)
 			if (!isCreating) {
