@@ -12,13 +12,15 @@
  * @spec ADR-124 (speed budget: page usable <= 300 ms warm)
  */
 
-import { readFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import os from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 const require = createRequire(import.meta.url)
-const { browserEntries } = require('../../scripts/build-l10n-js.js')
+const { browserEntries, renderJs } = require('../../scripts/build-l10n-js.js')
 const {
 	loadJsTranslations,
 	loadSourceCatalogue,
@@ -93,5 +95,35 @@ describe('the committed catalogues', () => {
 		expect(Object.keys(translations).sort()).toEqual(
 			Object.keys(jsonTranslations('en')).sort(),
 		)
+	})
+})
+
+describe('renderJs', () => {
+	it('renders an empty catalogue as a register call without a blank line', () => {
+		const code = renderJs('opencatalogi', {}, 'nplurals=2; plural=(n != 1);')
+		expect(code).toContain('    {\n    },')
+	})
+})
+
+describe('check-l10n-parity reads the English frontend keys from en.json too', () => {
+	it('a locale .js that misses an en.json key fails, though en.js no longer lists it', () => {
+		const dir = mkdtempSync(path.join(os.tmpdir(), 'l10n-parity-'))
+		try {
+			mkdirSync(path.join(dir, 'l10n'))
+			const write = (file, body) => writeFileSync(path.join(dir, 'l10n', file), body)
+			write('en.json', JSON.stringify({ translations: { Save: 'Save' } }))
+			write('en.js', renderJs('opencatalogi', {}, 'nplurals=2; plural=(n != 1);'))
+			write('de.json', JSON.stringify({ translations: { Save: 'Speichern' } }))
+			write('de.js', renderJs('opencatalogi', {}, 'nplurals=2; plural=(n != 1);'))
+			const run = spawnSync(
+				process.execPath,
+				[path.resolve(__dirname, '../l10n/check-l10n-parity.js')],
+				{ cwd: dir, encoding: 'utf8', env: { ...process.env, L10N_REQUIRED_LOCALES: 'de' } },
+			)
+			expect(run.status).toBe(1)
+			expect(run.stderr + run.stdout).toMatch(/frontend \(\.js\) de: 1 missing key/)
+		} finally {
+			rmSync(dir, { recursive: true, force: true })
+		}
 	})
 })

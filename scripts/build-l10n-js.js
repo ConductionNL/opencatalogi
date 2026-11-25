@@ -93,7 +93,9 @@ function renderJs(id, translations, pluralForm) {
 		'OC.L10N.register(',
 		`    ${JSON.stringify(id)},`,
 		'    {',
-		body,
+		// An empty catalogue (en.js once every English entry equals its key)
+		// renders as `{}` over two lines, without a blank line inside.
+		...(body === '' ? [] : [body]),
 		'    },',
 		`    ${JSON.stringify(pluralForm)}`,
 		')',

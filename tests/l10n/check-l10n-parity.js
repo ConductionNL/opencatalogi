@@ -98,12 +98,23 @@ function isEmpty (v) {
 	return typeof v !== 'string' || v.trim() === ''
 }
 
+/**
+ * The frontend English source: en.js leaves out the entries that map a string
+ * to itself (scripts/build-l10n-js.js), so its keys are en.json's plus en.js's.
+ * Read from en.js alone, every locale .js would be checked against one key.
+ */
+function loadFrontendSource (file) {
+	const json = path.join(L10N_DIR, 'en.json')
+	return { ...(fs.existsSync(json) ? loadJsonSet(json) : {}), ...loadJs(file) }
+}
+
 const sets = [
 	{
 		kind: 'frontend (.js)',
 		enFile: path.join(L10N_DIR, 'en.js'),
 		file: (loc) => path.join(L10N_DIR, `${loc}.js`),
 		load: loadJs,
+		loadSource: loadFrontendSource,
 	},
 	{
 		kind: 'backend (.json)',
@@ -121,7 +132,7 @@ for (const set of sets) {
 		continue // this app does not ship this translation set
 	}
 	checkedSets++
-	const enKeys = Object.keys(set.load(set.enFile))
+	const enKeys = Object.keys((set.loadSource || set.load)(set.enFile))
 	for (const loc of REQUIRED) {
 		const locFile = set.file(loc)
 		if (!fs.existsSync(locFile)) {
