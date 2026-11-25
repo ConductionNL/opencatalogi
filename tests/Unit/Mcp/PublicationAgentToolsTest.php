@@ -431,7 +431,9 @@ class PublicationAgentToolsTest extends TestCase {
 			validator: new McpArgumentValidator()
 		);
 
+		$this->objects->answer = ['id' => 'pub-new', 'title' => 'Raadsbesluit'];
 		$draft = $tools->createDraftPublication(publication: ['title' => 'Raadsbesluit']);
+		$this->assertSame(expected: 'pub-new', actual: $draft['publication']['id']);
 		$publish = $tools->publishPublication(ids: ['a']);
 		$depublish = $tools->depublishPublication(ids: [], reason: 'R');
 		$archive = $tools->archivePublication(ids: ['a'], reason: 'R');
