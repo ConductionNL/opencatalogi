@@ -37,23 +37,20 @@ use OCP\BackgroundJob\TimedJob;
 class TooiSchemeRefresh extends TimedJob {
 
 	/**
-	 * Constructor.
+	 * Daily, without parallel runs: a list changes at most a few times a year.
 	 *
 	 * @param ITimeFactory     $time    The clock.
 	 * @param ValueListRefresh $refresh Downloads and imports the lists.
 	 */
-	public function __construct(
-		ITimeFactory $time,
-		private readonly ValueListRefresh $refresh,
-	) {
+	public function __construct(ITimeFactory $time, private readonly ValueListRefresh $refresh) {
 		parent::__construct(time: $time);
-		$this->setInterval(seconds: 86400);
-		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
 		$this->setAllowParallelRuns(allow: false);
+		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);
+		$this->setInterval(seconds: 86400);
 	}//end __construct()
 
 	/**
-	 * Refresh every list.
+	 * Refresh every list; the job takes no argument.
 	 *
 	 * @param mixed $argument Unused.
 	 *
@@ -61,7 +58,7 @@ class TooiSchemeRefresh extends TimedJob {
 	 *
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-each-scheme-is-refreshed-from-its-national-source-daily-req-wvc-002
 	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The job signature; the job takes no argument.
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The TimedJob signature.
 	 */
 	protected function run($argument): void {
 		$this->refresh->refreshAll();

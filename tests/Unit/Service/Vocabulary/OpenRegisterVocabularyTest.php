@@ -79,7 +79,7 @@ class OpenRegisterVocabularyTest extends TestCase {
 		};
 
 		$uris = $this->adapter(services: [OpenRegisterVocabulary::CONCEPTS => $repository])->activeConceptUris(schemeUri: 'https://x.test/s');
-		$this->assertSame(['https://x.test/a', 'https://x.test/c'], $uris);
+		$this->assertSame(expected: ['https://x.test/a', 'https://x.test/c'], actual: $uris);
 	}//end testOnlyConceptsThatAreNotDeprecatedAreActive()
 
 	/**
@@ -106,10 +106,10 @@ class OpenRegisterVocabularyTest extends TestCase {
 		};
 		$adapter = $this->adapter(services: [OpenRegisterVocabulary::IMPORTER => $importer]);
 
-		$this->assertSame(2, $adapter->import(jsonLd: ['@graph' => [['@id' => 's']]])['created']);
+		$this->assertSame(expected: 2, actual: $adapter->import(jsonLd: ['@graph' => [['@id' => 's']]])['created']);
 
 		$this->expectException(RuntimeException::class);
-		$this->expectExceptionMessage('The vocabulary import failed: no scheme');
+		$this->expectExceptionMessage(message: 'The vocabulary import failed: no scheme');
 		$adapter->import(jsonLd: []);
 	}//end testTheImportAnswersTheCountsAndWrapsAFailure()
 
@@ -122,13 +122,13 @@ class OpenRegisterVocabularyTest extends TestCase {
 		$adapter = $this->adapter(services: []);
 		try {
 			$adapter->activeConceptUris(schemeUri: 'https://x.test/s');
-			$this->fail('the read did not refuse');
+			$this->fail(message: 'the read did not refuse');
 		} catch (RuntimeException $e) {
-			$this->assertStringContainsString('ConceptRepository', $e->getMessage());
+			$this->assertStringContainsString(needle: 'ConceptRepository', haystack: $e->getMessage());
 		}
 
 		$this->expectException(RuntimeException::class);
-		$this->expectExceptionMessage('VocabularyImporterInterface');
+		$this->expectExceptionMessage(message: 'VocabularyImporterInterface');
 		$adapter->import(jsonLd: ['@graph' => []]);
 	}//end testWithoutOpenRegisterBothCallsRefuse()
 }//end class

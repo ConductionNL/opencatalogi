@@ -24,15 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Vocabulary;
 
-use DateTimeInterface;
-use DateTimeZone;
-use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\VocabularyRegisterInterface;
 use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
-use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\Http\Client\IClientService;
-use OCP\IAppConfig;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
 
@@ -106,31 +99,18 @@ class ValueListRefresh {
 	];
 
 	/**
-	 * The download timeout, in seconds.
-	 *
-	 * @var integer
-	 */
-	private const TIMEOUT = 30;
-
-	/**
 	 * Constructor.
 	 *
-	 * @param IClientService              $clients    Downloads the lists.
+	 * @param ValueListDownload           $download   Fetches a list as an import document.
 	 * @param VocabularyRegisterInterface $vocabulary OpenRegister's vocabulary register.
-	 * @param TooiValueListGraph          $graph      Turns a download into an import document.
-	 * @param IAppConfig                  $config     Holds the sources and the results.
+	 * @param ValueListRefreshState       $state      The sources, the results and the clock.
 	 * @param PipelineIncidents           $incidents  Tells the incident group about a refusal.
-	 * @param ITimeFactory                $time       The clock.
-	 * @param LoggerInterface             $logger     The logger.
 	 */
 	public function __construct(
-		private readonly IClientService $clients,
+		private readonly ValueListDownload $download,
 		private readonly VocabularyRegisterInterface $vocabulary,
-		private readonly TooiValueListGraph $graph,
-		private readonly IAppConfig $config,
+		private readonly ValueListRefreshState $state,
 		private readonly PipelineIncidents $incidents,
-		private readonly ITimeFactory $time,
-		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()
 
@@ -142,18 +122,14 @@ class ValueListRefresh {
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-each-scheme-is-refreshed-from-its-national-source-daily-req-wvc-002
 	 */
 	public function refreshAll(): array {
-		$state = $this->state();
+		$results = $this->state->results();
 		foreach ($this->sources() as $source) {
-			$state[$source['key']] = $this->refresh(source: $source);
+			$results[$source['key']] = $this->refresh(source: $source);
 		}
 
-		$this->config->setValueString(
-			app: AppIdentity::APP_ID,
-			key: self::STATE_KEY,
-			value: (string)json_encode($state, JSON_UNESCAPED_SLASHES)
-		);
+		$this->state->store(results: $results);
 
-		return $state;
+		return $results;
 	}//end refreshAll()
 
 	/**
@@ -164,7 +140,7 @@ class ValueListRefresh {
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-each-scheme-is-refreshed-from-its-national-source-daily-req-wvc-002
 	 */
 	public function sources(): array {
-		$configured = json_decode($this->config->getValueString(app: AppIdentity::APP_ID, key: self::SOURCES_KEY, default: ''), true);
+		$configured = $this->state->configuredSources();
 		if (is_array($configured) === false || $configured === []) {
 			return self::DEFAULT_SOURCES;
 		}
@@ -195,10 +171,10 @@ class ValueListRefresh {
 	 * @return array{lastRefreshAt: string, created: int, updated: int, deprecated: int, error: string|null} The result.
 	 */
 	private function refresh(array $source): array {
-		$result = ['lastRefreshAt' => $this->now(), 'created' => 0, 'updated' => 0, 'deprecated' => 0, 'error' => null];
+		$result = ['lastRefreshAt' => $this->state->now(), 'created' => 0, 'updated' => 0, 'deprecated' => 0, 'error' => null];
 
 		try {
-			$built = $this->graph->build(decoded: $this->download(url: $source['url']), schemeUri: $source['scheme']);
+			$built = $this->download->fetch(url: $source['url'], schemeUri: $source['scheme']);
 			$this->guardMassDeprecation(schemeUri: $source['scheme'], incoming: $built['conceptUris']);
 			$counts = $this->vocabulary->import(jsonLd: $built['jsonLd']);
 		} catch (Throwable $e) {
@@ -208,7 +184,6 @@ class ValueListRefresh {
 				subject: $source['key'],
 				message: 'The value list ' . $source['key'] . ' was not refreshed and stays as it was: ' . $e->getMessage()
 			);
-			$this->logger->warning('[ValueListRefresh] ' . $source['key'] . ' kept: ' . $e->getMessage());
 			return $result;
 		}
 
@@ -238,51 +213,4 @@ class ValueListRefresh {
 			);
 		}
 	}//end guardMassDeprecation()
-
-	/**
-	 * The decoded download.
-	 *
-	 * @param string $url The source.
-	 *
-	 * @return mixed The decoded JSON.
-	 *
-	 * @throws RuntimeException When it cannot be fetched or does not parse.
-	 */
-	private function download(string $url): mixed {
-		try {
-			$body = (string)$this->clients->newClient()->get($url, ['timeout' => self::TIMEOUT])->getBody();
-		} catch (Throwable $e) {
-			throw new RuntimeException('the download failed: ' . $e->getMessage(), 0, $e);
-		}
-
-		$decoded = json_decode($body, true);
-		if ($decoded === null) {
-			throw new RuntimeException('the download is not JSON');
-		}
-
-		return $decoded;
-	}//end download()
-
-	/**
-	 * The stored results, so a scheme not refreshed this run keeps its last one.
-	 *
-	 * @return array<string, mixed> The results.
-	 */
-	private function state(): array {
-		$state = json_decode($this->config->getValueString(app: AppIdentity::APP_ID, key: self::STATE_KEY, default: ''), true);
-		if (is_array($state) === false) {
-			return [];
-		}
-
-		return $state;
-	}//end state()
-
-	/**
-	 * The current moment as ISO 8601.
-	 *
-	 * @return string
-	 */
-	private function now(): string {
-		return $this->time->getDateTime('now', new DateTimeZone('UTC'))->format(DateTimeInterface::ATOM);
-	}//end now()
 }//end class

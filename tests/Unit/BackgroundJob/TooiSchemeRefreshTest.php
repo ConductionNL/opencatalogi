@@ -25,7 +25,9 @@ namespace Unit\BackgroundJob;
 use OCA\OpenCatalogi\BackgroundJob\TooiSchemeRefresh;
 use OCA\OpenCatalogi\Contract\VocabularyRegisterInterface;
 use OCA\OpenCatalogi\Service\Vocabulary\TooiValueListGraph;
+use OCA\OpenCatalogi\Service\Vocabulary\ValueListDownload;
 use OCA\OpenCatalogi\Service\Vocabulary\ValueListRefresh;
+use OCA\OpenCatalogi\Service\Vocabulary\ValueListRefreshState;
 use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Http\Client\IClient;
@@ -34,7 +36,6 @@ use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -44,6 +45,8 @@ use RuntimeException;
  */
 #[CoversClass(TooiSchemeRefresh::class)]
 #[CoversClass(ValueListRefresh::class)]
+#[CoversClass(ValueListDownload::class)]
+#[CoversClass(ValueListRefreshState::class)]
 class TooiSchemeRefreshTest extends TestCase {
 
 	/**
@@ -144,13 +147,10 @@ class TooiSchemeRefreshTest extends TestCase {
 		$time->method('getDateTime')->willReturn(new \DateTime('2026-11-25T03:00:00+00:00'));
 
 		return new ValueListRefresh(
-			clients: $clients,
+			download: new ValueListDownload(clients: $clients, graph: new TooiValueListGraph()),
 			vocabulary: $vocabulary,
-			graph: new TooiValueListGraph(),
-			config: $config,
+			state: new ValueListRefreshState(config: $config, time: $time),
 			incidents: $incidents,
-			time: $time,
-			logger: $this->createMock(LoggerInterface::class),
 		);
 	}//end refresh()
 
@@ -179,18 +179,18 @@ class TooiSchemeRefreshTest extends TestCase {
 	public function testANewConceptFromTheSourceIsImported(): void {
 		$state = $this->refresh(active: self::seventeen(), download: self::recorded())->refreshAll();
 
-		$this->assertCount(1, $this->imported);
+		$this->assertCount(expectedCount: 1, haystack: $this->imported);
 		$graph = $this->imported[0]['@graph'];
 		$this->assertSame(self::SCHEME, $graph[0]['@id']);
-		$this->assertSame('http://www.w3.org/2004/02/skos/core#ConceptScheme', $graph[0]['@type']);
+		$this->assertSame(expected: 'http://www.w3.org/2004/02/skos/core#ConceptScheme', actual: $graph[0]['@type']);
 		$this->assertContains(self::NEW_CONCEPT, array_column($graph, '@id'));
-		$this->assertCount(19, $graph, 'the scheme and its 18 concepts');
+		$this->assertCount(expectedCount: 19, haystack: $graph, message: 'the scheme and its 18 concepts');
 
-		$this->assertNull($state['informatiecategorieen']['error']);
-		$this->assertSame(1, $state['informatiecategorieen']['created']);
-		$this->assertSame('2026-11-25T03:00:00+00:00', $state['informatiecategorieen']['lastRefreshAt']);
-		$this->assertSame($state, json_decode($this->stored[ValueListRefresh::STATE_KEY], true));
-		$this->assertSame([], $this->raised);
+		$this->assertNull(actual: $state['informatiecategorieen']['error']);
+		$this->assertSame(expected: 1, actual: $state['informatiecategorieen']['created']);
+		$this->assertSame(expected: '2026-11-25T03:00:00+00:00', actual: $state['informatiecategorieen']['lastRefreshAt']);
+		$this->assertSame(expected: $state, actual: json_decode($this->stored[ValueListRefresh::STATE_KEY], true));
+		$this->assertSame(expected: [], actual: $this->raised);
 	}//end testANewConceptFromTheSourceIsImported()
 
 	/**
@@ -215,11 +215,11 @@ class TooiSchemeRefreshTest extends TestCase {
 		$active = array_merge([$concepts[0]['@id'], $concepts[1]['@id']], array_map(static fn (int $i): string => 'https://example.test/c_' . $i, range(1, 38)));
 		$state = $this->refresh(active: $active, download: (string)json_encode($short))->refreshAll();
 
-		$this->assertSame([], $this->imported, 'nothing is imported, so the 40 concepts stay active');
-		$this->assertStringContainsString('38 of 40', (string)$state['informatiecategorieen']['error']);
-		$this->assertCount(1, $this->raised);
+		$this->assertSame(expected: [], actual: $this->imported, message: 'nothing is imported, so the 40 concepts stay active');
+		$this->assertStringContainsString(needle: '38 of 40', haystack: (string)$state['informatiecategorieen']['error']);
+		$this->assertCount(expectedCount: 1, haystack: $this->raised);
 		$this->assertSame(ValueListRefresh::INCIDENT_KIND, $this->raised[0]['kind']);
-		$this->assertSame('informatiecategorieen', $this->raised[0]['subject']);
+		$this->assertSame(expected: 'informatiecategorieen', actual: $this->raised[0]['subject']);
 	}//end testAMassDeprecationIsRefused()
 
 	/**
@@ -231,7 +231,7 @@ class TooiSchemeRefreshTest extends TestCase {
 		$active = array_merge(self::seventeen(), array_map(static fn (int $i): string => 'https://example.test/c_' . $i, range(1, 8)));
 		$this->refresh(active: $active, download: self::recorded())->refreshAll();
 
-		$this->assertCount(1, $this->imported, '8 of 25 missing is under a third');
+		$this->assertCount(expectedCount: 1, haystack: $this->imported, message: '8 of 25 missing is under a third');
 	}//end testAThirdDeprecatedIsStillImported()
 
 	/**
@@ -242,15 +242,15 @@ class TooiSchemeRefreshTest extends TestCase {
 	public function testAFailedDownloadKeepsTheScheme(): void {
 		$state = $this->refresh(active: self::seventeen(), download: new RuntimeException('connection reset'))->refreshAll();
 
-		$this->assertSame([], $this->imported);
-		$this->assertStringContainsString('connection reset', (string)$state['informatiecategorieen']['error']);
-		$this->assertCount(1, $this->raised);
+		$this->assertSame(expected: [], actual: $this->imported);
+		$this->assertStringContainsString(needle: 'connection reset', haystack: (string)$state['informatiecategorieen']['error']);
+		$this->assertCount(expectedCount: 1, haystack: $this->raised);
 
 		$this->raised = [];
 		$state = $this->refresh(active: self::seventeen(), download: '<html>maintenance</html>')->refreshAll();
-		$this->assertSame([], $this->imported);
-		$this->assertStringContainsString('not JSON', (string)$state['informatiecategorieen']['error']);
-		$this->assertCount(1, $this->raised);
+		$this->assertSame(expected: [], actual: $this->imported);
+		$this->assertStringContainsString(needle: 'not JSON', haystack: (string)$state['informatiecategorieen']['error']);
+		$this->assertCount(expectedCount: 1, haystack: $this->raised);
 	}//end testAFailedDownloadKeepsTheScheme()
 
 	/**
@@ -264,10 +264,10 @@ class TooiSchemeRefreshTest extends TestCase {
 
 		$sources = $refresh->sources();
 		$this->assertSame(ValueListRefresh::DEFAULT_SOURCES, $sources);
-		$this->assertSame(['informatiecategorieen', 'documentsoorten', 'soortHandeling', 'talen'], array_column($sources, 'key'));
+		$this->assertSame(expected: ['informatiecategorieen', 'documentsoorten', 'soortHandeling', 'talen'], actual: array_column($sources, 'key'));
 		foreach ($sources as $source) {
-			$this->assertStringStartsWith('https://repository.officiele-overheidspublicaties.nl/waardelijsten/', $source['url']);
-			$this->assertFileExists(__DIR__ . '/../../fixtures/tooi/' . basename($source['url']), 'each seeded source has its recorded answer');
+			$this->assertStringStartsWith(prefix: 'https://repository.officiele-overheidspublicaties.nl/waardelijsten/', string: $source['url']);
+			$this->assertFileExists(filename: __DIR__ . '/../../fixtures/tooi/' . basename($source['url']), message: 'each seeded source has its recorded answer');
 		}
 	}//end testTheSeededSourcesAreTheTooiDownloads()
 
@@ -278,12 +278,12 @@ class TooiSchemeRefreshTest extends TestCase {
 	 */
 	public function testTheJobIsRegistered(): void {
 		$infoXml = (string)file_get_contents(__DIR__ . '/../../../appinfo/info.xml');
-		$this->assertStringContainsString('<job>OCA\\OpenCatalogi\\BackgroundJob\\TooiSchemeRefresh</job>', $infoXml);
+		$this->assertStringContainsString(needle: '<job>OCA\\OpenCatalogi\\BackgroundJob\\TooiSchemeRefresh</job>', haystack: $infoXml);
 
 		$refresh = $this->createMock(ValueListRefresh::class);
 		$refresh->expects($this->once())->method('refreshAll')->willReturn([]);
 		$job = new TooiSchemeRefresh(time: $this->createMock(ITimeFactory::class), refresh: $refresh);
-		$this->assertSame(86400, $job->getInterval());
+		$this->assertSame(expected: 86400, actual: $job->getInterval());
 
 		$run = new \ReflectionMethod($job, 'run');
 		$run->invoke($job, null);

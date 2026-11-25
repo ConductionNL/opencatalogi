@@ -56,12 +56,12 @@ class TooiValueListGraphTest extends TestCase {
 		$built = (new TooiValueListGraph())->build(decoded: self::recorded(file: 'scw_talen_1.json'), schemeUri: $scheme);
 
 		$graph = $built['jsonLd']['@graph'];
-		$this->assertSame($scheme, $graph[0]['@id']);
-		$this->assertSame('http://www.w3.org/2004/02/skos/core#ConceptScheme', $graph[0]['@type']);
-		$this->assertCount(27, $built['conceptUris']);
+		$this->assertSame(expected: $scheme, actual: $graph[0]['@id']);
+		$this->assertSame(expected: 'http://www.w3.org/2004/02/skos/core#ConceptScheme', actual: $graph[0]['@type']);
+		$this->assertCount(expectedCount: 27, haystack: $built['conceptUris']);
 		foreach (array_slice($graph, 1) as $node) {
-			$this->assertSame('http://www.w3.org/2004/02/skos/core#Concept', $node['@type']);
-			$this->assertSame([['@id' => $scheme]], $node['http://www.w3.org/2004/02/skos/core#inScheme']);
+			$this->assertSame(expected: 'http://www.w3.org/2004/02/skos/core#Concept', actual: $node['@type']);
+			$this->assertSame(expected: [['@id' => $scheme]], actual: $node['http://www.w3.org/2004/02/skos/core#inScheme']);
 		}
 	}//end testASchemeBasedListKeepsItsScheme()
 
@@ -75,22 +75,22 @@ class TooiValueListGraphTest extends TestCase {
 		$built = (new TooiValueListGraph())->build(decoded: self::recorded(file: 'ccw_plooi_documentsoorten_7.json'), schemeUri: $scheme);
 
 		$graph = $built['jsonLd']['@graph'];
-		$this->assertSame($scheme, $graph[0]['@id']);
-		$this->assertSame('http://www.w3.org/2004/02/skos/core#ConceptScheme', $graph[0]['@type']);
-		$this->assertCount(91, $built['conceptUris']);
+		$this->assertSame(expected: $scheme, actual: $graph[0]['@id']);
+		$this->assertSame(expected: 'http://www.w3.org/2004/02/skos/core#ConceptScheme', actual: $graph[0]['@type']);
+		$this->assertCount(expectedCount: 91, haystack: $built['conceptUris']);
 		foreach ($built['conceptUris'] as $uri) {
-			$this->assertStringStartsWith('https://identifier.overheid.nl/tooi/def/thes/kern/c_', $uri, 'no grouping concept');
+			$this->assertStringStartsWith(prefix: 'https://identifier.overheid.nl/tooi/def/thes/kern/c_', string: $uri, message: 'no grouping concept');
 		}
 
 		$handelingen = (new TooiValueListGraph())->build(
 			decoded: self::recorded(file: 'ccw_plooi_documenthandelingen_2.json'),
 			schemeUri: 'https://identifier.overheid.nl/tooi/set/ccw_plooi_documenthandelingen'
 		);
-		$this->assertCount(3, $handelingen['conceptUris'], 'ontvangst, vaststelling, ondertekening');
+		$this->assertCount(expectedCount: 3, haystack: $handelingen['conceptUris'], message: 'ontvangst, vaststelling, ondertekening');
 		$this->assertSame(
-			[['@value' => '2']],
-			$handelingen['jsonLd']['@graph'][0]['http://www.w3.org/2002/07/owl#versionInfo'],
-			'a change note in versionInfo is not a version: the list number is'
+			expected: [['@value' => '2']],
+			actual: $handelingen['jsonLd']['@graph'][0]['http://www.w3.org/2002/07/owl#versionInfo'],
+			message: 'a change note in versionInfo is not a version: the list number is'
 		);
 	}//end testACollectionBasedListBecomesAScheme()
 
@@ -102,7 +102,7 @@ class TooiValueListGraphTest extends TestCase {
 	public function testOpenRegistersReaderSeesTheSchemeAndTheConcepts(): void {
 		$reader = 'OCA\\OpenRegister\\Service\\SkosNodeReader';
 		if (class_exists($reader) === false) {
-			$this->markTestSkipped('OpenRegister is not beside the app, so its SkosNodeReader cannot be loaded.');
+			$this->markTestSkipped(message: 'OpenRegister is not beside the app, so its SkosNodeReader cannot be loaded.');
 		}
 
 		$built = (new TooiValueListGraph())->build(
@@ -111,10 +111,10 @@ class TooiValueListGraphTest extends TestCase {
 		);
 		$skos = new $reader();
 		$types = array_map(static fn (array $node): string => $skos->localName(iriOrPrefixed: (string)$node['@type']), $built['jsonLd']['@graph']);
-		$this->assertSame(['ConceptScheme'], array_values(array_unique(array_slice($types, 0, 1))));
-		$this->assertSame(['Concept'], array_values(array_unique(array_slice($types, 1))));
+		$this->assertSame(expected: ['ConceptScheme'], actual: array_values(array_unique(array_slice($types, 0, 1))));
+		$this->assertSame(expected: ['Concept'], actual: array_values(array_unique(array_slice($types, 1))));
 		$labels = $skos->langMap(value: $skos->findPredicate(node: $this->nodeOf(graph: $built['jsonLd']['@graph'], id: 'c_99a836c7'), localName: 'prefLabel'));
-		$this->assertSame('advies', $labels['nl'], 'the Dutch label reads through the expanded literal');
+		$this->assertSame(expected: 'advies', actual: $labels['nl'], message: 'the Dutch label reads through the expanded literal');
 	}//end testOpenRegistersReaderSeesTheSchemeAndTheConcepts()
 
 	/**
@@ -152,6 +152,6 @@ class TooiValueListGraphTest extends TestCase {
 			}
 		}
 
-		$this->fail('no node ' . $id);
+		$this->fail(message: 'no node ' . $id);
 	}//end nodeOf()
 }//end class
