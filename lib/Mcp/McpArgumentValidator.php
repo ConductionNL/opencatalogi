@@ -74,9 +74,31 @@ class McpArgumentValidator {
 			}
 		}
 
+		$draft = $this->collect(fields: $fields);
+		if (isset($draft['error']) === true) {
+			return $draft;
+		}
+
+		if (isset($draft['title']) === false) {
+			return self::error(message: 'Field "title" is required.');
+		}
+
+		return ['fields' => $draft];
+	}//end draftFields()
+
+	/**
+	 * The non-empty allow-listed fields of a draft, or the refusal of a mistyped one.
+	 *
+	 * @param array<array-key, mixed> $fields The draft the agent sent, already free of refused names.
+	 *
+	 * @return array<string, mixed> The fields, or an `error` envelope.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-write-actions-are-curated-tools-with-allow-listed-properties-req-007
+	 */
+	private function collect(array $fields): array {
 		$draft = [];
 		foreach (self::DRAFT_FIELDS as $name => $isList) {
-			if (array_key_exists($name, $fields) === false || $fields[$name] === null) {
+			if (isset($fields[$name]) === false) {
 				continue;
 			}
 
@@ -90,12 +112,8 @@ class McpArgumentValidator {
 			}
 		}
 
-		if (isset($draft['title']) === false) {
-			return self::error(message: 'Field "title" is required.');
-		}
-
-		return ['fields' => $draft];
-	}//end draftFields()
+		return $draft;
+	}//end collect()
 
 	/**
 	 * The refusal of a field with the wrong type.
