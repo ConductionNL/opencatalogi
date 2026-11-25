@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\CatalogAccessService;
+use OCA\OpenCatalogi\Service\PermissionQuestion;
 use OCA\OpenRegister\Db\MagicMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Db\Schema;
@@ -155,13 +156,24 @@ class CatalogAccessEnforcementTest extends TestCase {
 		$appConfig->method('getValueBool')->willReturnArgument(2);
 		$appConfig->method('getValueString')->willReturnArgument(2);
 
-		$matcher = new ConditionMatcher(
-			userSession: $session,
-			container: $container,
-			operatorEvaluator: new OperatorEvaluator(logger: $logger),
-			logger: $logger,
-			groupManager: $groups,
-		);
+		// OpenRegister main bundles the caller lookups in ConditionUserResolvers;
+		// releases before it take them as separate arguments.
+		if (class_exists(\OCA\OpenRegister\Service\ConditionUserResolvers::class) === true) {
+			$matcher = new ConditionMatcher(
+				users: new \OCA\OpenRegister\Service\ConditionUserResolvers(userSession: $session, groupManager: $groups),
+				container: $container,
+				operatorEvaluator: new OperatorEvaluator(logger: $logger),
+				logger: $logger,
+			);
+		} else {
+			$matcher = new ConditionMatcher(
+				userSession: $session,
+				container: $container,
+				operatorEvaluator: new OperatorEvaluator(logger: $logger),
+				logger: $logger,
+				groupManager: $groups,
+			);
+		}
 
 		return new PermissionHandler(
 			new PermissionCallerServices(userSession: $session, userManager: $users, groupManager: $groups, appConfig: $appConfig),
@@ -204,13 +216,11 @@ class CatalogAccessEnforcementTest extends TestCase {
 	 * @return bool The verdict.
 	 */
 	private function allowed(Schema $schema, string $action, string $userId, ObjectEntity $object): bool {
-		return $this->openRegister()->hasPermission(
-			schema: $schema,
-			action: $action,
-			userId: $userId,
-			objectOwner: $object->getOwner(),
-			object: $object
-		);
+		// Asked in the shape the installed OpenRegister takes (PermissionAsk on main).
+		return (new PermissionQuestion(schema: $schema, action: $action))
+			->askedBy(userId: $userId, objectOwner: $object->getOwner())
+			->about(object: $object)
+			->answerOf(handler: $this->openRegister());
 	}//end allowed()
 
 	/**

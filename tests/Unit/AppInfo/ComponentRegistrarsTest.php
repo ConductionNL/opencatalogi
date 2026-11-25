@@ -49,6 +49,7 @@ use OCA\OpenCatalogi\Listener\LicenceCheck;
 use OCA\OpenCatalogi\Listener\PublicationVersionListener;
 use OCA\OpenCatalogi\Listener\PlainSummaryCheck;
 use OCA\OpenCatalogi\Listener\ThemeHotspotAudit;
+use OCA\OpenCatalogi\Listener\ValueListChoiceListener;
 use OCA\OpenCatalogi\Listener\ThemeHotspotGuard;
 use OCA\OpenCatalogi\Listener\PublicationAudienceCheck;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
@@ -167,6 +168,8 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', ThemeHotspotGuard::class],
 				[$e . 'ObjectCreatedEvent', ThemeHotspotAudit::class],
 				[$e . 'ObjectUpdatedEvent', ThemeHotspotAudit::class],
+				[$e . 'ObjectCreatingEvent', ValueListChoiceListener::class],
+				[$e . 'ObjectUpdatingEvent', ValueListChoiceListener::class],
 				[\OCP\Files\Events\Node\NodeWrittenEvent::class, PublishedTableReimportListener::class],
 				[$e . 'FileVersionRestoredEvent', PublishedTableReimportListener::class],
 				[$e . 'ObjectCreatingEvent', PublicationRelationsListener::class],

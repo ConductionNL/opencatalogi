@@ -243,13 +243,22 @@ class FileServiceTest extends \PHPUnit\Framework\TestCase {
 		// then asked to share that absolute path.
 		$this->wireShareNode($userFolder, '/admin/files/Publicaties/folder/file.pdf');
 
+		// The path is passed by name: the first parameter on OpenRegister releases,
+		// the fourth on main (ShareLinkRequest first), so the double reads it from either.
+		$arguments = [];
 		$orFileService = $this->setupOrFileService();
 		$orFileService->expects($this->once())
 			->method('createShareLink')
-			->with('/admin/files/Publicaties/folder/file.pdf')
-			->willReturn('https://example.com/index.php/s/token');
+			->willReturnCallback(
+				static function (...$args) use (&$arguments): string {
+					$arguments = $args;
+					return 'https://example.com/index.php/s/token';
+				}
+			);
 
 		$this->fileService->createPublicShareLink('/Publicaties/folder/file.pdf/');
+
+		$this->assertContains(needle: '/admin/files/Publicaties/folder/file.pdf', haystack: $arguments);
 
 	}//end testCreatePublicShareLinkTrimsLeadingSlash()
 
