@@ -56,6 +56,8 @@ An axis that cannot resolve to an official URI is never written as free text: it
 
 The 18 members of the TOOI waardelijst, one sitemap file each. A category an administrator adds locally gets its own file too.
 
+The order the categories are offered in, and an explanation per category for the portal's filter, are the organisation's own choices: see [Curating the national value lists](value-list-curation.md).
+
 | Code | Sitemap file | Category |
 | --- | --- | --- |
 | `infocat001` | `sitemapindex-diwoo-infocat001.xml` | Wetten en algemeen verbindende voorschriften |

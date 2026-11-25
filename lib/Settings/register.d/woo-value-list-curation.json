@@ -1,0 +1,98 @@
+{
+	"_note": "Register fragment for woo-value-list-curation (REQ-WVL-001). valueListChoice holds what the organisation owns about one entry of a national value list: its order, its own label, its explanation, and whether it is hidden or active. The normative fields (code, URI, the source's label) stay with the list and are refreshed from the source; ValueListChoiceListener refuses a choice that sets one, and ValueListView merges the two.",
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"valueListChoice"
+				],
+				"configuration": {
+					"schemas": {
+						"valueListChoice": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "The organisation's choices about one value-list entry. A refresh of the list never reads or writes it"
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"valueListChoice": {
+				"slug": "valueListChoice",
+				"title": "Value list choice",
+				"version": "0.1.0",
+				"published": "2026-11-25T00:00:00+00:00",
+				"summary": "How this organisation uses one entry of a national value list",
+				"description": "The national value lists are the same for every organisation; how an organisation uses them is not. A choice holds, for one entry of one list, the order it is offered in, the organisation's own label and explanation, and whether it is hidden or active. The code, the URI and the source's label are not here: they come from the list and are refreshed from it, and a choice that tries to set one is refused.",
+				"icon": "FormatListNumbered",
+				"type": "object",
+				"additionalProperties": false,
+				"required": [
+					"scheme",
+					"entry"
+				],
+				"authorization": {
+					"read": [
+						"authenticated"
+					],
+					"create": [
+						"admin"
+					],
+					"update": [
+						"admin"
+					],
+					"delete": [
+						"admin"
+					]
+				},
+				"properties": {
+					"scheme": {
+						"type": "string",
+						"title": "List",
+						"description": "The value list the entry belongs to, by the name the value-lists page uses, e.g. informatiecategorieen.",
+						"maxLength": 255,
+						"facetable": true
+					},
+					"entry": {
+						"type": "string",
+						"title": "Entry",
+						"description": "The URI of the list entry this choice is about.",
+						"maxLength": 512,
+						"facetable": true
+					},
+					"order": {
+						"type": "integer",
+						"title": "Order",
+						"description": "Where the entry is offered in pick lists, lowest first. Entries without an order follow in the list's own order.",
+						"minimum": 0
+					},
+					"localLabel": {
+						"type": "string",
+						"title": "Own label",
+						"description": "The label this organisation shows instead of the source's. Left empty, the source's label is shown.",
+						"maxLength": 255
+					},
+					"explanation": {
+						"type": "string",
+						"title": "Explanation",
+						"description": "What the entry means, in this organisation's words, for a citizen choosing a filter.",
+						"maxLength": 1000
+					},
+					"hidden": {
+						"type": "boolean",
+						"title": "Hidden",
+						"description": "Leave the entry out of pick lists and the public filter.",
+						"default": false
+					},
+					"active": {
+						"type": "boolean",
+						"title": "Active",
+						"description": "For the organisation list: this installation publishes for this organisation.",
+						"default": false
+					}
+				}
+			}
+		}
+	}
+}

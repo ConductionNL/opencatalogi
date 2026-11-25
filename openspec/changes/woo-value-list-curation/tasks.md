@@ -4,16 +4,17 @@ Read `openspec/woo-build-rules.md` first. Start once `woo-value-lists-on-the-con
 
 ## 1. Overlay
 
-- [ ] 1.1 Add the `valueListChoice` schema with `slug`, version and admin-only writes, and `ValueListView::entries()` (REQ-WVL-001). Verify: `tests/Unit/Service/Woo/ValueListViewTest.php::testARefreshChangesTheSourceLabelAndKeepsTheLocalOne` (fails today), `::testUnreadableChoicesFallBackToSourceOrderAndSaySo`; `tests/Unit/Listener/ValueListChoiceListenerTest.php::testANormativeFieldIsRefused`, on the REAL event; an `ApplicationRegisterInvariantTest` case.
+- [x] 1.1 Add the `valueListChoice` schema with `slug`, version and admin-only writes, and `ValueListView::entries()` (REQ-WVL-001). Verify: `tests/Unit/Service/Woo/ValueListViewTest.php::testARefreshChangesTheSourceLabelAndKeepsTheLocalOne` (fails today), `::testUnreadableChoicesFallBackToSourceOrderAndSaySo`; `tests/Unit/Listener/ValueListChoiceListenerTest.php::testANormativeFieldIsRefused`, on the REAL event; an `ApplicationRegisterInvariantTest` case.
 - [ ] 1.2 Assert `TooiSchemeRefresh` never touches `valueListChoice` (REQ-WVL-001). Verify: `tests/Unit/BackgroundJob/TooiSchemeRefreshTest.php::testTheRefreshWritesNoChoice`.
 
 ## 2. Order
 
 - [ ] 2.1 Read the order in `WooCategoryRegistry`, `GET /api/woo/categories` and the publication form pickers; add Move up and Move down to the Woo settings lists (REQ-WVL-002). Verify: `tests/Unit/Service/Woo/WooCategoryRegistryTest.php::testTheAdministratorsOrderWins` and `tests/e2e/value-list-curation.spec.ts` "an administrator puts the most used category first", carrying `@e2e` REQ-WVL-002.
+  - Built (#2999): `CuratedCategoryRegistry` orders `InformationCategoryRegistryInterface::all()` (so `GET /api/woo/categories` and its pickers), `PUT /api/woo/value-list-choices/order`, Move up/Move down with a live region for the information categories, `CuratedCategoryRegistryTest::testTheAdministratorsOrderWins`, and `tests/e2e/value-list-curation.spec.ts` (written, runs in nightly). Left: the publication form's category, handling and document type pickers render the schema enum through the nextcloud-vue data widget, which cannot read its options from an endpoint yet; and the soort handeling and documentsoorten lists in the Woo settings.
 
 ## 3. Explanation
 
-- [ ] 3.1 Add the explanation field to the Woo settings and `GET /api/woo/categories/public` with CORS (REQ-WVL-003). Verify: `tests/Unit/Controller/PublicCategoriesTest.php::testTheExplanationIsServedAndHiddenCategoriesAreNot` (fails today); a route-table and `OpenApiParityTest` case. Link the response shape from the portaliq filter's issue.
+- [x] 3.1 Add the explanation field to the Woo settings and `GET /api/woo/categories/public` with CORS (REQ-WVL-003). Verify: `tests/Unit/Controller/PublicCategoriesTest.php::testTheExplanationIsServedAndHiddenCategoriesAreNot` (fails today); a route-table and `OpenApiParityTest` case. Link the response shape from the portaliq filter's issue.
 
 ## 4. Hide by organisation type
 
@@ -28,6 +29,7 @@ Read `openspec/woo-build-rules.md` first. Start once `woo-value-lists-on-the-con
 ## 6. Docs
 
 - [ ] 6.1 Document curation for administrators in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+  - Written for what is built (`docs/features/value-list-curation.md`: choices, explanations, order, the routes); the strings of the built parts are in `l10n/` for all locales. Left open until hiding (4.x) and activation (5.x) are built and documented.
 
 ## 7. Verification
 

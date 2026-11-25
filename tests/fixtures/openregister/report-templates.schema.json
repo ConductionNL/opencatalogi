@@ -1,0 +1,192 @@
+{
+  "$comment": "Copy of the report-templates schema OpenRegister ships in lib/Settings/report_templates_register.json (openregister rapportage-bi-export, ConductionNL/openregister#11115), version 1.0.0. WooAnnualReportTemplateTest validates the shipped seed against it; refresh it when OpenRegister bumps that schema.",
+  "type": "object",
+  "required": [
+    "name",
+    "sections"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name",
+      "description": "The report's name, used in its title and file name.",
+      "maxLength": 255,
+      "facetable": true
+    },
+    "slug": {
+      "type": "string",
+      "title": "Slug",
+      "description": "A stable identifier an app uses to find its own template.",
+      "maxLength": 128,
+      "facetable": true
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "description": "What the report is for; printed under its title."
+    },
+    "app": {
+      "type": "string",
+      "title": "App",
+      "description": "The app that ships the template, empty for one an administrator made.",
+      "maxLength": 64,
+      "facetable": true
+    },
+    "dataSource": {
+      "type": "object",
+      "title": "Data source",
+      "description": "The register, schema and filters every section counts in unless it names its own.",
+      "properties": {
+        "register": {
+          "type": "string",
+          "title": "Register",
+          "description": "Register slug, uuid or id."
+        },
+        "schema": {
+          "type": "string",
+          "title": "Schema",
+          "description": "Schema slug, uuid or id."
+        },
+        "filters": {
+          "type": "object",
+          "title": "Filters",
+          "description": "Property filters, as the aggregation API takes them."
+        }
+      }
+    },
+    "dateField": {
+      "type": "string",
+      "title": "Date property",
+      "description": "The date property a period narrows; _created when empty.",
+      "maxLength": 128
+    },
+    "sections": {
+      "type": "array",
+      "title": "Sections",
+      "description": "The report's sections, in order.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "type"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "A stable identifier of the section."
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "The section's heading in the report."
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "total, grouped or series.",
+            "enum": [
+              "total",
+              "grouped",
+              "series"
+            ]
+          },
+          "register": {
+            "type": "string",
+            "title": "Register",
+            "description": "This section's register, when not the template's."
+          },
+          "schema": {
+            "type": "string",
+            "title": "Schema",
+            "description": "This section's schema, when not the template's."
+          },
+          "filters": {
+            "type": "object",
+            "title": "Filters",
+            "description": "Filters on top of the template's; a section naming its own register or schema does not take the template's filters."
+          },
+          "dateField": {
+            "type": "string",
+            "title": "Date property",
+            "description": "This section's date property, when not the template's."
+          },
+          "groupBy": {
+            "type": "string",
+            "title": "Group by",
+            "description": "The property a grouped section counts per value of."
+          },
+          "metric": {
+            "type": "string",
+            "title": "Metric",
+            "description": "count, sum, avg, min or max; count when empty.",
+            "enum": [
+              "count",
+              "sum",
+              "avg",
+              "min",
+              "max"
+            ]
+          },
+          "field": {
+            "type": "string",
+            "title": "Field",
+            "description": "The numeric property sum, avg, min and max read."
+          },
+          "interval": {
+            "type": "string",
+            "title": "Interval",
+            "description": "The bucket of a series section.",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "quarter",
+              "year"
+            ]
+          },
+          "rows": {
+            "type": "array",
+            "title": "Rows",
+            "description": "The keys a grouped section always shows, 0 included, in this order.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "compareWithPreviousYear": {
+            "type": "boolean",
+            "title": "Compare with the previous year",
+            "description": "Add the same section over the period one year earlier."
+          }
+        }
+      }
+    },
+    "formats": {
+      "type": "array",
+      "title": "Formats",
+      "description": "The formats the template is meant to be generated in.",
+      "items": {
+        "type": "string",
+        "enum": [
+          "pdf",
+          "ods",
+          "xlsx",
+          "csv",
+          "html"
+        ]
+      }
+    },
+    "branding": {
+      "type": "object",
+      "title": "Branding",
+      "description": "The organisation name printed on the report.",
+      "properties": {
+        "organisation": {
+          "type": "string",
+          "title": "Organisation"
+        }
+      }
+    }
+  }
+}

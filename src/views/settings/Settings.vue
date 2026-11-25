@@ -259,6 +259,8 @@
 
 				<RefusalGroundsSource />
 
+				<CategoryExplanations />
+
 				<DonlHarvestStatus />
 
 				<DcatDefaultLicence />
@@ -745,6 +747,7 @@ import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
 import CapabilityRightsSection from './CapabilityRightsSection.vue'
+import CategoryExplanations from './CategoryExplanations.vue'
 import CouncilHarvest from './CouncilHarvest.vue'
 import DcatDefaultLicence from './DcatDefaultLicence.vue'
 import DcatFeedValidation from './DcatFeedValidation.vue'
@@ -881,6 +884,7 @@ export default defineComponent({
 		PublishRightsLine,
 		RecordHandover,
 		RefusalGroundsSource,
+		CategoryExplanations,
 		WooIndexConnection,
 		WooIncidents,
 		DcatDefaultLicence,

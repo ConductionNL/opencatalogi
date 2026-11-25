@@ -35,7 +35,7 @@ final class PdfReadBack {
 	 *
 	 * @param string $bytes The PDF.
 	 *
-	 * @return array{title: string, xmpTitle: string, xmpIdentifier: string, prev: int, stream: bool, info: string}
+	 * @return array{title: string, xmpTitle: string, xmpIdentifier: string, xmpPublisher: ?string, xmpRsin: ?string, xmp: string, prev: int, stream: bool, info: string}
 	 */
 	public static function read(string $bytes): array {
 		[$offsets, $trailer, $stream] = self::crossReference($bytes, self::lastStartxref($bytes));
@@ -45,12 +45,17 @@ final class PdfReadBack {
 		preg_match('/\/Title\s*<FEFF([0-9A-F]*)>/', $info, $title);
 		preg_match('/<rdf:li xml:lang="x-default">([^<]*)</', $xmp, $xmpTitle);
 		preg_match('/<dc:identifier>([^<]*)</', $xmp, $xmpIdentifier);
+		preg_match('/<dc:publisher><rdf:Bag><rdf:li>([^<]*)</', $xmp, $xmpPublisher);
+		preg_match('/<oc:rsin>([^<]*)</', $xmp, $xmpRsin);
 		preg_match('/\/Prev\s+(\d+)/', $trailer, $prev);
 
 		return [
 			'title' => mb_convert_encoding((string)hex2bin($title[1] ?? ''), 'UTF-8', 'UTF-16BE'),
 			'xmpTitle' => html_entity_decode($xmpTitle[1] ?? '', ENT_XML1),
 			'xmpIdentifier' => html_entity_decode($xmpIdentifier[1] ?? '', ENT_XML1),
+			'xmpPublisher' => isset($xmpPublisher[1]) ? html_entity_decode($xmpPublisher[1], ENT_XML1) : null,
+			'xmpRsin' => ($xmpRsin[1] ?? null),
+			'xmp' => $xmp,
 			'prev' => (int)($prev[1] ?? -1),
 			'stream' => $stream,
 			'info' => $info,

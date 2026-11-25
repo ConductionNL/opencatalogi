@@ -26,6 +26,7 @@ import hljs from 'highlight.js'
 import { createApp, h } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
+import AnnualReportWidget from './components/widgets/AnnualReportWidget.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import MetadataSuggestionsWidget from './components/widgets/MetadataSuggestionsWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
@@ -145,6 +146,17 @@ registerDashboardWidget('publication-quality', {
 	displayName: 'Metadata quality',
 	icon: 'ChartBar',
 	surfaces: ['detail-page'],
+})
+// Generate annual report on the publications report (woo-annual-report,
+// REQ-WAR-002): renders OpenRegister's woo-jaarverslag template, offered only
+// when OpenRegister can generate it (GET /api/reports/annual).
+registerDashboardWidget('annual-report', {
+	renderer: AnnualReportWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Woo annual report',
+	icon: 'FileChart',
+	surfaces: ['app-dashboard'],
 })
 // The publication's attachments with Add attachment, which opens the app's
 // upload dialog (publication-attachment-upload-dialog, board OcBijlageToevoegen).

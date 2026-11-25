@@ -23,6 +23,8 @@ namespace OCA\OpenCatalogi\Tests\Unit\Service\Publication;
 
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
+use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
+use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\Publication\PublisherFileStamp;
 use OCA\OpenCatalogi\Service\Publication\PublisherIdentity;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
@@ -43,6 +45,8 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
  *
  * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2
+ * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2b
+ * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c
  */
 final class PublisherIdentityTest extends TestCase {
 
@@ -54,6 +58,25 @@ final class PublisherIdentityTest extends TestCase {
 	 * @var list<array<string, mixed>>
 	 */
 	private array $finds = [];
+
+	/**
+	 * The publication store the writer reads and saves through.
+	 *
+	 * @var RecordFakeObjectService
+	 */
+	private RecordFakeObjectService $publications;
+
+	/**
+	 * A fresh publication store for each test.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		parent::setUp();
+		$this->publications = new RecordFakeObjectService(
+			stored: ['id' => 'pub-1', 'title' => 'Besluit', 'status' => 'published', 'organization' => self::ORGANISATION, '@self' => ['id' => 'pub-1']]
+		);
+	}//end setUp()
 
 	/**
 	 * An organisation whose RSIN passes the 11-proef is resolved with its name and TOOI identifier.
@@ -265,18 +288,150 @@ final class PublisherIdentityTest extends TestCase {
 	}//end testTheLabelsNameOnlyWhatIsKnown()
 
 	/**
+	 * Attaching a document stores the stamped RSIN on the publication as `publisherRsin`,
+	 * read fresh so the write keeps the publication's current state (REQ-PRO-002).
+	 *
+	 * @return void
+	 */
+	public function testThePublicationHoldsTheRsinAfterAttach(): void {
+		$files = new StampFakeFileService();
+		$this->writer(files: $files, stamp: $this->validStamp())->attach(publication: $this->publication(), file: $this->document());
+
+		self::assertCount(expectedCount: 1, haystack: $this->publications->saves);
+		$save = $this->publications->saves[0];
+		self::assertSame(expected: 'pub-1', actual: $save['options']->uuid);
+		self::assertSame(expected: 'publication', actual: $save['options']->target->register);
+		self::assertSame(expected: 'publication', actual: $save['options']->target->schema);
+		self::assertSame(
+			expected: ['title' => 'Besluit', 'status' => 'published', 'organization' => self::ORGANISATION, 'publisherRsin' => '002220647'],
+			actual: $save['object']
+		);
+		self::assertFalse(condition: $save['_rbac']);
+		self::assertSame(expected: ['pub-1'], actual: $this->publications->finds);
+		self::assertSame(expected: 'publishFile 200', actual: $files->log[2]);
+	}//end testThePublicationHoldsTheRsinAfterAttach()
+
+	/**
+	 * An RSIN that fails the 11-proef never reaches the publication.
+	 *
+	 * @return void
+	 */
+	public function testAnInvalidRsinIsNotStoredOnThePublication(): void {
+		$stamp = new PublisherFileStamp(identity: $this->identity(organisation: ['rsin' => '123456789']));
+		$this->writer(files: new StampFakeFileService(), stamp: $stamp)->attach(publication: $this->publication(), file: $this->document());
+
+		self::assertSame(expected: [], actual: $this->publications->saves);
+		self::assertSame(expected: [], actual: $this->publications->finds);
+	}//end testAnInvalidRsinIsNotStoredOnThePublication()
+
+	/**
+	 * A publication that already holds the RSIN is not written again by the next document.
+	 *
+	 * @return void
+	 */
+	public function testASecondDocumentDoesNotWriteTheRsinAgain(): void {
+		$this->publications->stored['publisherRsin'] = '002220647';
+		$this->writer(files: new StampFakeFileService(), stamp: $this->validStamp())->attach(publication: $this->publication(), file: $this->document());
+
+		self::assertSame(expected: [], actual: $this->publications->saves);
+		self::assertSame(expected: ['pub-1'], actual: $this->publications->finds);
+	}//end testASecondDocumentDoesNotWriteTheRsinAgain()
+
+	/**
+	 * A publication whose save fails still gets its document published; the stamp answers null.
+	 *
+	 * @return void
+	 */
+	public function testAFailingSaveDoesNotStopThePublish(): void {
+		$this->publications->failSave = true;
+		$files = new StampFakeFileService();
+		$this->writer(files: $files, stamp: $this->validStamp())->attach(publication: $this->publication(), file: $this->document());
+
+		self::assertSame(expected: ['addFile besluit.pdf', 'changeFileMetadata 200', 'publishFile 200'], actual: $files->log);
+		self::assertNull(
+			actual: $this->validStamp()->record(
+				objects: $this->publications,
+				publicationId: 'pub-1',
+				labels: ['rsin:002220647'],
+				register: 'publication',
+				schema: 'publication'
+			)
+		);
+	}//end testAFailingSaveDoesNotStopThePublish()
+
+	/**
+	 * The RSIN is read from the `rsin:` label only; labels without one, a missing publication or no id store nothing.
+	 *
+	 * @return void
+	 */
+	public function testOnlyAnRsinLabelIsStored(): void {
+		self::assertSame(expected: '002220647', actual: PublisherFileStamp::rsinOf(labels: ['publisherName:X', 'rsin:002220647']));
+		self::assertNull(actual: PublisherFileStamp::rsinOf(labels: ['rsinStatus:missing', 'rsinReason:none']));
+		self::assertNull(actual: PublisherFileStamp::rsinOf(labels: ['rsin:']));
+
+		$stamp = $this->validStamp();
+		self::assertNull(actual: $stamp->record(objects: $this->publications, publicationId: '', labels: ['rsin:002220647'], register: 'r', schema: 's'));
+		$this->publications->stored = [];
+		self::assertNull(actual: $stamp->record(objects: $this->publications, publicationId: 'pub-1', labels: ['rsin:002220647'], register: 'r', schema: 's'));
+		self::assertSame(expected: [], actual: $this->publications->saves);
+	}//end testOnlyAnRsinLabelIsStored()
+
+	/**
+	 * The attached copy's embedded metadata gets the publisher's name and RSIN beside the title,
+	 * and an RSIN that fails the 11-proef gives neither (REQ-PRO-002).
+	 *
+	 * @return void
+	 */
+	public function testTheTitleWriterGetsThePublisherAndTheRsin(): void {
+		$facts  = [];
+		$titles = $this->createMock(originalClassName: EmbeddedTitleWriter::class);
+		$titles->method('write')->willReturnCallback(
+			static function (File $file, EmbeddedTitle $given) use (&$facts): array {
+				$facts[] = $given;
+
+				return ['status' => EmbeddedTitleWriter::WRITTEN, 'hashBefore' => 'a', 'hashAfter' => 'b'];
+			}
+		);
+		$created = $this->createMock(originalClassName: File::class);
+		$created->method('getId')->willReturn(200);
+		$files = new StampFakeFileService(answer: $created);
+
+		$this->writer(files: $files, stamp: $this->validStamp(), titles: $titles)->attach(publication: $this->publication(), file: $this->document());
+		$invalid = new PublisherFileStamp(identity: $this->identity(organisation: ['name' => 'Gemeente Zuiddrecht', 'rsin' => '123456789']));
+		$this->writer(files: $files, stamp: $invalid, titles: $titles)->attach(publication: $this->publication(), file: $this->document());
+
+		self::assertSame(expected: ['Besluit', 'pub-1', 'Gemeente Zuiddrecht', '002220647'], actual: [$facts[0]->title, $facts[0]->identifier, $facts[0]->publisher, $facts[0]->rsin]);
+		self::assertSame(expected: [null, null], actual: [$facts[1]->publisher, $facts[1]->rsin]);
+	}//end testTheTitleWriterGetsThePublisherAndTheRsin()
+
+	/**
+	 * A stamp over an organisation with a valid RSIN.
+	 *
+	 * @return PublisherFileStamp The stamp.
+	 */
+	private function validStamp(): PublisherFileStamp {
+		return new PublisherFileStamp(
+			identity: $this->identity(organisation: ['name' => 'Gemeente Zuiddrecht', 'tooi' => 'gm9999', 'rsin' => '002220647']),
+			logger: new NullLogger()
+		);
+	}//end validStamp()
+
+	/**
 	 * A batch publication writer whose container answers this file service and this stamp.
 	 *
 	 * @param StampFakeFileService $files The file service double.
 	 * @param object|null          $stamp What the container answers for the stamp; null throws.
+	 * @param EmbeddedTitleWriter|null $titles The title writer, none by default.
 	 *
 	 * @return BatchPublicationWriter The writer.
 	 */
-	private function writer(StampFakeFileService $files, ?object $stamp): BatchPublicationWriter {
+	private function writer(StampFakeFileService $files, ?object $stamp, ?EmbeddedTitleWriter $titles=null): BatchPublicationWriter {
 		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$publications = $this->publications;
 		$container->method('get')->willReturnCallback(
 			static fn (string $id): object => match ($id) {
 				'OCA\OpenRegister\Service\FileService' => $files,
+				'OCA\OpenRegister\Service\ObjectService' => $publications,
 				PublisherFileStamp::class => ($stamp ?? throw new RuntimeException(message: 'not registered: ' . $id)),
 				default => throw new RuntimeException(message: 'not registered: ' . $id),
 			}
@@ -290,7 +445,7 @@ final class PublisherIdentityTest extends TestCase {
 			linker: $this->createMock(originalClassName: PublicationLinker::class),
 			l10n: $this->createMock(originalClassName: IL10N::class),
 			appManager: $apps,
-			titles: null
+			titles: $titles
 		);
 	}//end writer()
 
@@ -407,6 +562,14 @@ class StampFakeFileService {
 	private int $attached = 0;
 
 	/**
+	 * Constructor.
+	 *
+	 * @param File|null $answer The file addFile() answers, instead of a plain object with an id.
+	 */
+	public function __construct(private readonly ?File $answer=null) {
+	}//end __construct()
+
+	/**
 	 * Attach a file and answer it.
 	 *
 	 * @param mixed  $objectEntity The publication.
@@ -420,6 +583,9 @@ class StampFakeFileService {
 		$this->log[] = 'addFile ' . $fileName;
 		$id = (200 + $this->attached);
 		$this->attached++;
+		if ($this->answer !== null) {
+			return $this->answer;
+		}
 
 		return new class($id) {
 			/**
@@ -468,4 +634,75 @@ class StampFakeFileService {
 
 		return new \stdClass();
 	}//end publishFile()
+}//end class
+
+/**
+ * Double of OpenRegister's ObjectService for the publication: answers one stored publication and records saves.
+ */
+class RecordFakeObjectService {
+
+	/**
+	 * The ids read.
+	 *
+	 * @var list<string>
+	 */
+	public array $finds = [];
+
+	/**
+	 * The saves received.
+	 *
+	 * @var list<array<string, mixed>>
+	 */
+	public array $saves = [];
+
+	/**
+	 * Whether a save throws.
+	 *
+	 * @var bool
+	 */
+	public bool $failSave = false;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param array<string, mixed> $stored The publication as stored.
+	 */
+	public function __construct(public array $stored) {
+	}//end __construct()
+
+	/**
+	 * Answer the stored publication.
+	 *
+	 * @param string $id            The id.
+	 * @param mixed  $options       The find options.
+	 * @param bool   $_rbac         Whether RBAC applies.
+	 * @param bool   $_multitenancy Whether multitenancy applies.
+	 *
+	 * @return array<string, mixed>|null The publication.
+	 */
+	public function find(string $id, mixed $options=null, bool $_rbac=true, bool $_multitenancy=true): ?array {
+		$this->finds[] = $id;
+
+		return $this->stored === [] ? null : $this->stored;
+	}//end find()
+
+	/**
+	 * Record a save.
+	 *
+	 * @param array<string, mixed> $object        The properties.
+	 * @param mixed                $options       The save options.
+	 * @param bool                 $_rbac         Whether RBAC applies.
+	 * @param bool                 $_multitenancy Whether multitenancy applies.
+	 *
+	 * @return array<string, mixed> The saved properties.
+	 */
+	public function saveObject(array $object, mixed $options=null, bool $_rbac=true, bool $_multitenancy=true): array {
+		if ($this->failSave === true) {
+			throw new RuntimeException(message: 'save refused');
+		}
+
+		$this->saves[] = ['object' => $object, 'options' => $options, '_rbac' => $_rbac, '_multitenancy' => $_multitenancy];
+
+		return $object;
+	}//end saveObject()
 }//end class

@@ -163,7 +163,7 @@ use OCA\OpenCatalogi\Service\Publication\PublishedRecordView;
 use OCA\OpenCatalogi\Service\Publication\PublicationVersionService;
 use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
-use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
+use OCA\OpenCatalogi\Service\ValueList\CuratedCategoryRegistry;
 use OCA\OpenCatalogi\Service\Woo\WooRequestIntake;
 use OCA\OpenCatalogi\Service\Woo\WooRequestService;
 use OCA\OpenCatalogi\Service\Woo\WooRequestStore;
@@ -228,7 +228,7 @@ final class ServiceBindings {
 		ObligationReadServiceInterface::class => ObligationReadService::class,
 		AttachmentMigrationServiceInterface::class => AttachmentMigrationService::class,
 		ServiceCatalogueServiceInterface::class => ServiceCatalogueService::class,
-		InformationCategoryRegistryInterface::class => WooCategoryRegistry::class,
+		InformationCategoryRegistryInterface::class => CuratedCategoryRegistry::class,
 		DocumentTypeVocabularyInterface::class => TooiVocabularyService::class,
 		DiwooCompletenessInterface::class => SitemapDocumentMapper::class,
 		CmsMigrationServiceInterface::class => CmsMigrationService::class,

@@ -14,6 +14,11 @@
   - GIVEN the new PHP WHEN `composer check:strict` runs THEN it is clean
 - [ ] Implement
 - [ ] Test
+  - 25 Nov 2026: `createDraftPublication` built in `lib/Mcp/PublicationAgentTools.php` with its allow-list in
+    `lib/Mcp/McpArgumentValidator.php` and registered in `OpenCatalogiScannableServices`; tests in
+    `tests/Unit/Mcp/PublicationAgentToolsTest.php`. The tool takes one `publication` object, because
+    OpenRegister drops undeclared arguments before the call: a forbidden field can only be refused when the
+    tool can see it. The three publish-side tools wait for the approval decision under Task 3.
 
 ### Task 2: Delegation through the RBAC'd service path (must / MVP) — BLOCKS Task 3
 - **spec_ref**: `openspec/specs/mcp-tool-surface/spec.md#requirement-every-write-runs-the-existing-rbacd-path-as-the-granting-user-req-008`
@@ -24,6 +29,9 @@
   - GIVEN the phase-2 publish write WHEN executed THEN it writes `publicationDate` and no other property (assert the object diff key set)
 - [ ] Implement
 - [ ] Test
+  - 25 Nov 2026: the draft write goes through OpenRegister's `saveObject` with `_rbac: true, _multitenancy: true`
+    as the session user, and a refused save answers a fixed `not_saved` error (tested). The publish-side writes
+    follow with Task 3.
 
 ### Task 3: Two-phase batch approval, server-enforced (must / MVP)
 - **spec_ref**: `openspec/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009`

@@ -212,7 +212,7 @@
     [
         "alias",
         "OCA\\OpenCatalogi\\Contract\\InformationCategoryRegistryInterface",
-        "OCA\\OpenCatalogi\\Service\\Woo\\WooCategoryRegistry"
+        "OCA\\OpenCatalogi\\Service\\ValueList\\CuratedCategoryRegistry"
     ],
     [
         "alias",
@@ -383,6 +383,11 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\PublishedRecordViewInterface",
         "OCA\\OpenCatalogi\\Service\\Publication\\PublishedRecordView"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublicationVersionServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublicationVersionService"
     ],
     [
         "alias",

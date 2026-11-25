@@ -26,7 +26,8 @@ namespace OCA\OpenCatalogi\Service\Publication;
 
 /**
  * Writes a new Info dictionary with `/Title`, an XMP stream with `dc:title`
- * and `dc:identifier`, a new revision of the catalog pointing at that stream,
+ * and `dc:identifier` (and `dc:publisher` and `oc:rsin` when the publisher is
+ * known), a new revision of the catalog pointing at that stream,
  * and a cross-reference section with `/Prev` after the last byte of the file.
  * No earlier byte changes, so the input is an exact prefix of the output.
  *
@@ -51,6 +52,11 @@ class PdfTitleUpdate {
 	 * The reason a PDF whose structure this writer cannot follow is left alone.
 	 */
 	public const UNPARSEABLE = 'unparseable';
+
+	/**
+	 * The XMP namespace of the publisher's RSIN, which Dublin Core has no element for.
+	 */
+	public const XMP_NAMESPACE = 'https://opencatalogi.nl/ns/publication/1.0/';
 
 	/**
 	 * Constructor.
@@ -354,19 +360,33 @@ class PdfTitleUpdate {
 	}//end textString()
 
 	/**
-	 * The XMP packet with the title and the identifier.
+	 * The XMP packet with the title and the identifier, and the publisher's
+	 * name as `dc:publisher` and RSIN as `oc:rsin` when they are known.
 	 *
 	 * @param EmbeddedTitle $facts The official title and the publication identifier.
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c
 	 */
 	private static function xmp(EmbeddedTitle $facts): string {
 		$escape = static fn (string $text): string => htmlspecialchars($text, (ENT_XML1 | ENT_QUOTES), 'UTF-8');
+		$publisher = '';
+		if ($facts->publisher !== null && $facts->publisher !== '') {
+			$publisher = '<dc:publisher><rdf:Bag><rdf:li>' . $escape($facts->publisher) . '</rdf:li></rdf:Bag></dc:publisher>';
+		}
+
+		$rsin = '';
+		if ($facts->rsin !== null && $facts->rsin !== '') {
+			$rsin = '<oc:rsin>' . $escape($facts->rsin) . '</oc:rsin>';
+		}
+
 		return '<?xpacket begin="' . "\u{FEFF}" . '" id="W5M0MpCehiHzreSzNTczkc9d"?>' . "\n"
 			. '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">'
-			. '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/">'
+			. '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:oc="' . self::XMP_NAMESPACE . '">'
 			. '<dc:title><rdf:Alt><rdf:li xml:lang="x-default">' . $escape($facts->title) . '</rdf:li></rdf:Alt></dc:title>'
 			. '<dc:identifier>' . $escape($facts->identifier) . '</dc:identifier>'
+			. $publisher . $rsin
 			. '</rdf:Description></rdf:RDF></x:xmpmeta>' . "\n"
 			. '<?xpacket end="w"?>';
 	}//end xmp()
