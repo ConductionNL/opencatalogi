@@ -861,7 +861,18 @@
         "Generate annual report": "Joresbericht erstellen",
         "The Woo annual report needs a newer OpenRegister.": "De Woo-Joresbericht brauch eng méi nei Versioun vun OpenRegister.",
         "The annual report could not be generated.": "De Joresbericht konnt net erstallt ginn.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Déi publizéiert Zuele vun engem Joer nieft deene vum Joer virdrun. Woo-Ufroen ginn an dossiq gemellt."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Déi publizéiert Zuele vun engem Joer nieft deene vum Joer virdrun. Woo-Ufroen ginn an dossiq gemellt.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "D'Feld %s gehéiert zur nationaler Wäertlëscht a kann hei net geännert ginn; ännert et bei der Quell.",
+        "A value list choice has no field %s.": "Eng Auswiel an enger Wäertlëscht huet kee Feld %s.",
+        "Category explanations": "Erklärunge vun de Kategorien",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Erkläert eng Informatiounskategorie mat Ären eegene Wierder. De Portal weist d’Erklärung do, wou e Bierger de Kategoriefilter wielt.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Är eege Choixe konnten net geluede ginn, dofir ginn d’Kategorien an der Reiefolleg vun der Lëscht selwer gewisen.",
+        "Save explanation": "Erklärung späicheren",
+        "Explanation saved": "Erklärung gespäichert",
+        "Unknown value list.": "Onbekannt Wäertlëscht.",
+        "Name the entry the choice is about.": "Nennt den Antrag, ëm deen et beim Choix geet.",
+        "An explanation is at most %s characters.": "Eng Erklärung huet héchstens %s Zeechen.",
+        "The choice could not be saved: %s": "De Choix konnt net gespäichert ginn: %s"
     },
     "plurals": {}
 }

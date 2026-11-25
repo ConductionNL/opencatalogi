@@ -207,6 +207,7 @@ class SettingsService implements SettingsServiceInterface {
 			'register' => null,
 			'schemas' => [
 				'attachment_reading_schema' => 'attachmentReading',
+				'value_list_choice_schema' => 'valueListChoice',
 			],
 		],
 		[

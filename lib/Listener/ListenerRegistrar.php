@@ -242,11 +242,14 @@ class ListenerRegistrar {
 	 * Only an administrator marks a subject as an archive hotspot, with a
 	 * reason; the marking sets the subject's appraisal and is audited after the
 	 * save (theme-archive-hotspot, REQ-THA-001).
+	 * A value-list choice cannot set a normative field of the national list
+	 * (woo-value-list-curation, REQ-WVL-001).
 	 *
 	 * @param IRegistrationContext $context The registration context.
 	 *
 	 * @return void
 	 *
+	 * @spec openspec/changes/woo-value-list-curation/tasks.md#task-1.1
 	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-with-nothing-left-to-migrate-the-request-schema-is-read-only-req-whd-004
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.1
 	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
@@ -266,6 +269,8 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectUpdatingEvent::class, ThemeHotspotGuard::class);
 		$context->registerEventListener(ObjectCreatedEvent::class, ThemeHotspotAudit::class);
 		$context->registerEventListener(ObjectUpdatedEvent::class, ThemeHotspotAudit::class);
+		$context->registerEventListener(ObjectCreatingEvent::class, ValueListChoiceListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, ValueListChoiceListener::class);
 	}//end registerWriteGuards()
 
 	/**

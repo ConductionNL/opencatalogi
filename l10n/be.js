@@ -862,7 +862,18 @@ OC.L10N.register(
         "Generate annual report": "Стварыць гадавую справаздачу",
         "The Woo annual report needs a newer OpenRegister.": "Для гадавой справаздачы Woo патрэбна навейшая версія OpenRegister.",
         "The annual report could not be generated.": "Не ўдалося стварыць гадавую справаздачу.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Апублікаваныя даныя за год побач з данымі за папярэдні год. Пра запыты Woo справаздачаюцца ў dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Апублікаваныя даныя за год побач з данымі за папярэдні год. Пра запыты Woo справаздачаюцца ў dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Поле %s належыць да нацыянальнага спіса значэнняў і не можа быць зменена тут; змяніце яго ў крыніцы.",
+        "A value list choice has no field %s.": "Выбар са спіса значэнняў не мае поля %s.",
+        "Category explanations": "Тлумачэнні катэгорый",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Растлумачце інфармацыйную катэгорыю сваімі словамі. Партал паказвае тлумачэнне там, дзе жыхар выбірае фільтр катэгорый.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Не ўдалося загрузіць ваш уласны выбар, таму катэгорыі паказаны ў парадку самога спіса.",
+        "Save explanation": "Захаваць тлумачэнне",
+        "Explanation saved": "Тлумачэнне захавана",
+        "Unknown value list.": "Невядомы спіс значэнняў.",
+        "Name the entry the choice is about.": "Пазначце элемент, да якога адносіцца выбар.",
+        "An explanation is at most %s characters.": "Тлумачэнне — не больш за %s сімвалаў.",
+        "The choice could not be saved: %s": "Не ўдалося захаваць выбар: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

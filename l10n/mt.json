@@ -861,7 +861,18 @@
         "Generate annual report": "Oħloq ir-rapport annwali",
         "The Woo annual report needs a newer OpenRegister.": "Ir-rapport annwali Woo jeħtieġ verżjoni aktar ġdida ta' OpenRegister.",
         "The annual report could not be generated.": "Ir-rapport annwali ma setax jinħoloq.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Iċ-ċifri ppubblikati ta' sena ħdejn dawk tas-sena ta' qabel. It-talbiet Woo jiġu rrappurtati f'dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Iċ-ċifri ppubblikati ta' sena ħdejn dawk tas-sena ta' qabel. It-talbiet Woo jiġu rrappurtati f'dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Il-qasam %s jappartjeni għal-lista nazzjonali tal-valuri u ma jistax jinbidel hawn; ibdlu fis-sors.",
+        "A value list choice has no field %s.": "Għażla tal-lista tal-valuri m'għandhiex il-qasam %s.",
+        "Category explanations": "Spjegazzjonijiet tal-kategoriji",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Spjega kategorija ta’ informazzjoni bi kliemek. Il-portal juri l-ispjegazzjoni fejn ċittadin jagħżel il-filtru tal-kategorija.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "L-għażliet tiegħek ma setgħux jitgħabbew, għalhekk il-kategoriji jintwerew fl-ordni tal-lista nnifisha.",
+        "Save explanation": "Issejvja l-ispjegazzjoni",
+        "Explanation saved": "L-ispjegazzjoni ġiet issejvjata",
+        "Unknown value list.": "Lista tal-valuri mhux magħrufa.",
+        "Name the entry the choice is about.": "Semmi l-entrata li tikkonċerna l-għażla.",
+        "An explanation is at most %s characters.": "Spjegazzjoni hija ta’ mhux aktar minn %s karattru.",
+        "The choice could not be saved: %s": "L-għażla ma setgħetx tiġi ssejvjata: %s"
     },
     "plurals": {}
 }

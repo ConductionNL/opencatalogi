@@ -861,7 +861,18 @@
         "Generate annual report": "Generează raportul anual",
         "The Woo annual report needs a newer OpenRegister.": "Raportul anual Woo necesită o versiune mai nouă de OpenRegister.",
         "The annual report could not be generated.": "Raportul anual nu a putut fi generat.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Cifrele publicate ale unui an alături de cele ale anului precedent. Cererile Woo sunt raportate în dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Cifrele publicate ale unui an alături de cele ale anului precedent. Cererile Woo sunt raportate în dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Câmpul %s aparține listei naționale de valori și nu poate fi modificat aici; modificați-l la sursă.",
+        "A value list choice has no field %s.": "O alegere din lista de valori nu are câmpul %s.",
+        "Category explanations": "Explicațiile categoriilor",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Explicați o categorie de informații cu propriile cuvinte. Portalul afișează explicația acolo unde cetățeanul alege filtrul de categorie.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Alegerile dvs. nu au putut fi încărcate, așa că categoriile sunt afișate în ordinea listei înseși.",
+        "Save explanation": "Salvați explicația",
+        "Explanation saved": "Explicația a fost salvată",
+        "Unknown value list.": "Listă de valori necunoscută.",
+        "Name the entry the choice is about.": "Indicați intrarea la care se referă alegerea.",
+        "An explanation is at most %s characters.": "O explicație are cel mult %s caractere.",
+        "The choice could not be saved: %s": "Alegerea nu a putut fi salvată: %s"
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

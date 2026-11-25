@@ -442,6 +442,31 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	}//end testTheThemeHotspotListenerIsRegisteredBeforeAndAfterTheSave()
 
 	/**
+	 * register() subscribes the value-list choice guard on both pre-save events (REQ-WVL-001).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/tasks.md#task-1.1
+	 */
+	public function testTheValueListChoiceGuardListensOnBothPreSaveEvents(): void {
+		$listeners = [];
+		$context = $this->createMock(originalClassName: \OCP\AppFramework\Bootstrap\IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$listeners): void {
+				$listeners[$listener][] = $event;
+			}
+		);
+
+		$application = (new \ReflectionClass(objectOrClass: \OCA\OpenCatalogi\AppInfo\Application::class))->newInstanceWithoutConstructor();
+		$application->register(context: $context);
+
+		$this->assertSame(
+			expected: ['OCA\\OpenRegister\\Event\\ObjectCreatingEvent', 'OCA\\OpenRegister\\Event\\ObjectUpdatingEvent'],
+			actual: ($listeners[\OCA\OpenCatalogi\Listener\ValueListChoiceListener::class] ?? [])
+		);
+	}//end testTheValueListChoiceGuardListensOnBothPreSaveEvents()
+
+	/**
 	 * register() subscribes the publication version listener before an update is written (REQ-PWA-001).
 	 *
 	 * @return void

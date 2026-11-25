@@ -862,7 +862,18 @@ OC.L10N.register(
         "Generate annual report": "Générer le rapport annuel",
         "The Woo annual report needs a newer OpenRegister.": "Le rapport annuel Woo nécessite une version plus récente d'OpenRegister.",
         "The annual report could not be generated.": "Le rapport annuel n'a pas pu être généré.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Les chiffres publiés d'une année à côté de ceux de l'année précédente. Les demandes Woo sont rapportées dans dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Les chiffres publiés d'une année à côté de ceux de l'année précédente. Les demandes Woo sont rapportées dans dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Le champ %s appartient à la liste de valeurs nationale et ne peut pas être modifié ici ; modifiez-le à la source.",
+        "A value list choice has no field %s.": "Un choix de liste de valeurs n'a pas de champ %s.",
+        "Category explanations": "Explications des catégories",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Expliquez une catégorie d'information avec vos propres mots. Le portail affiche l'explication là où un citoyen choisit le filtre de catégorie.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Vos propres choix n'ont pas pu être chargés ; les catégories sont donc affichées dans l'ordre de la liste elle-même.",
+        "Save explanation": "Enregistrer l'explication",
+        "Explanation saved": "Explication enregistrée",
+        "Unknown value list.": "Liste de valeurs inconnue.",
+        "Name the entry the choice is about.": "Indiquez l'entrée concernée par le choix.",
+        "An explanation is at most %s characters.": "Une explication comporte au plus %s caractères.",
+        "The choice could not be saved: %s": "Le choix n'a pas pu être enregistré : %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

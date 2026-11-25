@@ -862,7 +862,18 @@ OC.L10N.register(
         "Generate annual report": "Lag årsrapport",
         "The Woo annual report needs a newer OpenRegister.": "Woo-årsrapporten krever en nyere OpenRegister.",
         "The annual report could not be generated.": "Årsrapporten kunne ikke lages.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "De publiserte tallene for et år ved siden av året før. Woo-forespørsler rapporteres i dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "De publiserte tallene for et år ved siden av året før. Woo-forespørsler rapporteres i dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Feltet %s hører til den nasjonale verdilisten og kan ikke endres her; endre det ved kilden.",
+        "A value list choice has no field %s.": "Et valg i en verdiliste har ikke feltet %s.",
+        "Category explanations": "Forklaringer av kategorier",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Forklar en informasjonskategori med dine egne ord. Portalen viser forklaringen der en innbygger velger kategorifilteret.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Dine egne valg kunne ikke lastes inn, så kategoriene vises i listens egen rekkefølge.",
+        "Save explanation": "Lagre forklaring",
+        "Explanation saved": "Forklaring lagret",
+        "Unknown value list.": "Ukjent verdiliste.",
+        "Name the entry the choice is about.": "Angi oppføringen valget gjelder.",
+        "An explanation is at most %s characters.": "En forklaring er på høyst %s tegn.",
+        "The choice could not be saved: %s": "Valget kunne ikke lagres: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

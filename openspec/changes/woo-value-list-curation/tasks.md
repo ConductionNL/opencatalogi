@@ -4,7 +4,7 @@ Read `openspec/woo-build-rules.md` first. Start once `woo-value-lists-on-the-con
 
 ## 1. Overlay
 
-- [ ] 1.1 Add the `valueListChoice` schema with `slug`, version and admin-only writes, and `ValueListView::entries()` (REQ-WVL-001). Verify: `tests/Unit/Service/Woo/ValueListViewTest.php::testARefreshChangesTheSourceLabelAndKeepsTheLocalOne` (fails today), `::testUnreadableChoicesFallBackToSourceOrderAndSaySo`; `tests/Unit/Listener/ValueListChoiceListenerTest.php::testANormativeFieldIsRefused`, on the REAL event; an `ApplicationRegisterInvariantTest` case.
+- [x] 1.1 Add the `valueListChoice` schema with `slug`, version and admin-only writes, and `ValueListView::entries()` (REQ-WVL-001). Verify: `tests/Unit/Service/Woo/ValueListViewTest.php::testARefreshChangesTheSourceLabelAndKeepsTheLocalOne` (fails today), `::testUnreadableChoicesFallBackToSourceOrderAndSaySo`; `tests/Unit/Listener/ValueListChoiceListenerTest.php::testANormativeFieldIsRefused`, on the REAL event; an `ApplicationRegisterInvariantTest` case.
 - [ ] 1.2 Assert `TooiSchemeRefresh` never touches `valueListChoice` (REQ-WVL-001). Verify: `tests/Unit/BackgroundJob/TooiSchemeRefreshTest.php::testTheRefreshWritesNoChoice`.
 
 ## 2. Order
@@ -13,7 +13,7 @@ Read `openspec/woo-build-rules.md` first. Start once `woo-value-lists-on-the-con
 
 ## 3. Explanation
 
-- [ ] 3.1 Add the explanation field to the Woo settings and `GET /api/woo/categories/public` with CORS (REQ-WVL-003). Verify: `tests/Unit/Controller/PublicCategoriesTest.php::testTheExplanationIsServedAndHiddenCategoriesAreNot` (fails today); a route-table and `OpenApiParityTest` case. Link the response shape from the portaliq filter's issue.
+- [x] 3.1 Add the explanation field to the Woo settings and `GET /api/woo/categories/public` with CORS (REQ-WVL-003). Verify: `tests/Unit/Controller/PublicCategoriesTest.php::testTheExplanationIsServedAndHiddenCategoriesAreNot` (fails today); a route-table and `OpenApiParityTest` case. Link the response shape from the portaliq filter's issue.
 
 ## 4. Hide by organisation type
 

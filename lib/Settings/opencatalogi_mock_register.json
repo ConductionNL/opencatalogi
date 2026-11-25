@@ -2063,6 +2063,43 @@
       {
         "@self": {
           "register": "publication",
+          "schema": "valueListChoice",
+          "slug": "valuelistchoice-covenants"
+        },
+        "scheme": "informatiecategorieen",
+        "entry": "https://identifier.overheid.nl/tooi/def/thes/kern/c_8fc2335c",
+        "explanation": "Afspraken die de gemeente schriftelijk maakt met andere overheden, bedrijven of organisaties, zoals een convenant over jeugdhulp in de regio.",
+        "hidden": false,
+        "active": false
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "valueListChoice",
+          "slug": "valuelistchoice-subsidies"
+        },
+        "scheme": "informatiecategorieen",
+        "entry": "https://identifier.overheid.nl/tooi/def/thes/kern/c_cf268088",
+        "order": 0,
+        "localLabel": "Subsidies",
+        "explanation": "Subsidies die de gemeente verstrekt zonder aparte beschikking, bijvoorbeeld via een subsidieregeling voor verenigingen.",
+        "hidden": false,
+        "active": false
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "valueListChoice",
+          "slug": "valuelistchoice-states-general"
+        },
+        "scheme": "informatiecategorieen",
+        "entry": "https://identifier.overheid.nl/tooi/def/thes/kern/c_c76862ab",
+        "hidden": true,
+        "active": false
+      },
+      {
+        "@self": {
+          "register": "publication",
           "schema": "attachmentReading",
           "slug": "attachmentreading-1"
         },

@@ -888,6 +888,68 @@
     }
   },
   "paths": {
+    "/woo/categories/public": {
+      "get": {
+        "operationId": "woo-categories-public",
+        "summary": "The visible Woo information categories, with the organisation's explanation",
+        "description": "Every information category this organisation has not hidden, as code, TOOI URI, label, the organisation's own explanation and its order, in the order the administrator set. This is what a portal's category filter reads. When the organisation's choices cannot be read, every category is answered in the list's own order and `choicesUnavailable` is true.",
+        "tags": [
+          "Portal"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "uri": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "explanation": {
+                            "type": "string"
+                          },
+                          "order": {
+                            "type": "integer",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "choicesUnavailable": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/value-lists": {
       "get": {
         "operationId": "value-lists-index",

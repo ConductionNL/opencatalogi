@@ -862,7 +862,18 @@ OC.L10N.register(
         "Generate annual report": "Направи годишњи извештај",
         "The Woo annual report needs a newer OpenRegister.": "Годишњи извештај Woo захтева новији OpenRegister.",
         "The annual report could not be generated.": "Годишњи извештај није могуће направити.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Објављени подаци за годину поред података претходне године. О захтевима Woo извештава се у dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Објављени подаци за годину поред података претходне године. О захтевима Woo извештава се у dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Поље %s припада националној листи вредности и не може се овде променити; промените га на извору.",
+        "A value list choice has no field %s.": "Избор са листе вредности нема поље %s.",
+        "Category explanations": "Објашњења категорија",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Објасните категорију информација својим речима. Портал приказује објашњење где грађанин бира филтер категорије.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Ваши избори нису могли да се учитају, па су категорије приказане редоследом саме листе.",
+        "Save explanation": "Сачувај објашњење",
+        "Explanation saved": "Објашњење сачувано",
+        "Unknown value list.": "Непозната листа вредности.",
+        "Name the entry the choice is about.": "Наведите ставку на коју се избор односи.",
+        "An explanation is at most %s characters.": "Објашњење има највише %s знакова.",
+        "The choice could not be saved: %s": "Избор није сачуван: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

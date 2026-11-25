@@ -862,7 +862,18 @@ OC.L10N.register(
         "Generate annual report": "Създай годишен доклад",
         "The Woo annual report needs a newer OpenRegister.": "Годишният доклад Woo изисква по-нов OpenRegister.",
         "The annual report could not be generated.": "Годишният доклад не можа да бъде създаден.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Публикуваните данни за годината до тези за предходната година. Исканията по Woo се отчитат в dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Публикуваните данни за годината до тези за предходната година. Исканията по Woo се отчитат в dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Полето %s принадлежи на националния списък със стойности и не може да се променя тук; променете го при източника.",
+        "A value list choice has no field %s.": "Изборът от списък със стойности няма поле %s.",
+        "Category explanations": "Обяснения на категориите",
+        "Explain an information category in your own words. The portal shows the explanation where a citizen chooses the category filter.": "Обяснете информационна категория със свои думи. Порталът показва обяснението там, където гражданинът избира филтъра по категория.",
+        "Your own choices could not be loaded, so the categories are shown in the order of the list itself.": "Вашите избори не можаха да се заредят, затова категориите са показани в реда на самия списък.",
+        "Save explanation": "Запазване на обяснението",
+        "Explanation saved": "Обяснението е запазено",
+        "Unknown value list.": "Неизвестен списък със стойности.",
+        "Name the entry the choice is about.": "Посочете елемента, за който се отнася изборът.",
+        "An explanation is at most %s characters.": "Обяснението е най-много %s знака.",
+        "The choice could not be saved: %s": "Изборът не можа да бъде запазен: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )
