@@ -54,6 +54,8 @@ function open(component) {
 		global: {
 			mocks: { t: translate },
 			stubs: {
+				// The shared shell renders the title, the result cards and the buttons.
+				MassObjectActionDialog: false,
 				NcDialog: { props: ['name'], template: '<div><h2>{{ name }}</h2><slot /><slot name="actions" /></div>' },
 				NcNoteCard: { props: ['type'], template: '<div :class="\'note-\' + type"><slot /></div>' },
 			},

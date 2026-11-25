@@ -229,7 +229,7 @@ describe('Settings loadSettings', () => {
 		ctx.autoSelectOpenCatalogiRegister = () => order.push('auto')
 		await ctx.loadSettings()
 		expect(ctx.settings).toBe(main)
-		expect(ctx.publishingOptions).toEqual({ autoPublishAttachments: true, autoPublishObjects: false, useOldStylePublishingView: true })
+		expect(ctx.publishingOptions).toEqual({ autoPublishAttachments: true, autoPublishObjects: false, useOldStylePublishingView: true, publicationReviewRequired: true })
 		expect(order).toEqual(['init', 'auto'])
 		expect(ctx.channelSources).toEqual({ x: 'y', a: 'b' })
 		expect(ctx.publicCacheSeconds).toBe('0')

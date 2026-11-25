@@ -13,6 +13,9 @@ exports[`NationalAnnounceWidget.announce lists every channel after a full announ
     [
       "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
     ],
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
   ],
   "posts": [
     [
@@ -64,6 +67,9 @@ exports[`NationalAnnounceWidget.announce lists every channel after a partial ann
     [
       "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
     ],
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
   ],
   "posts": [
     [
@@ -103,6 +109,9 @@ exports[`NationalAnnounceWidget.announce shows the error when the announcement f
     [
       "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
     ],
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
   ],
   "posts": [
     [
@@ -132,6 +141,12 @@ exports[`NationalAnnounceWidget.announce shows the error when the announcement f
   },
   "error": "The decision could not be announced. Try again.",
   "gets": [
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
     [
       "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
     ],
@@ -182,6 +197,9 @@ exports[`NationalAnnounceWidget.announce shows the error when the publication ca
     [
       "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
     ],
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
   ],
   "posts": [],
   "results": [],
@@ -191,6 +209,9 @@ exports[`NationalAnnounceWidget.announce shows the error when the publication ca
 exports[`NationalAnnounceWidget.announce shows the error when the publication cannot be read, and without a type sends none 2`] = `
 [
   [
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
     [
       "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
     ],

@@ -54,6 +54,7 @@ afterEach(() => console.warn.mockRestore())
 describe('Dashboard publication KPIs', () => {
 	it('reads every count from the aggregation totals', () => {
 		expect(kpis({ publicationTotal: 1500, statusCounts: { total: 1500, concept: 300, published: 1000, depublished: 200 } })).toEqual({
+			attachmentCount: 0,
 			catalogCount: 0,
 			publicationCount: 1500,
 			conceptPublicationCount: 300,
