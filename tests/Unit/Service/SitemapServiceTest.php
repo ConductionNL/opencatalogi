@@ -1051,6 +1051,43 @@ class SitemapServiceTest extends TestCase {
 		$this->assertInstanceOf(XMLResponse::class, $result);
 	}
 
+	/**
+	 * A hidden category keeps its sitemap index: served, well formed, in the sitemaps.org namespace, with no entries.
+	 *
+	 * Hiding only takes a category out of the officer's pick lists and the public
+	 * filter; the registry the sitemaps read still serves it, and a category with
+	 * publications cannot be hidden, so its index lists nothing.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+	 */
+	public function testAHiddenCategoryServesAnEmptyValidIndex(): void {
+		$store = $this->createMock(\OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore::class);
+		$store->method('forScheme')->willReturn(['https://identifier.overheid.nl/tooi/def/thes/kern/c_c76862ab' => ['hidden' => true, 'order' => null]]);
+		$curated = new \OCA\OpenCatalogi\Service\ValueList\CuratedCategoryRegistry(registry: $this->wooCategories, choices: $store);
+		$this->assertTrue(condition: $curated->all()['infocat007']['hidden'], message: 'the administrator hid it');
+		$this->assertArrayHasKey(key: 'sitemapindex-diwoo-infocat007.xml', array: $curated->sitemapFiles(), message: 'its sitemap stays');
+
+		$this->settingsService->method('getSettings')->willReturn([
+			'availableRegisters' => [['title' => 'Woo', 'id' => 'reg-woo', 'schemas' => [['id' => 'sch-7', 'title' => 'Vergaderstukken Staten-Generaal']]]],
+			'configuration' => ['catalog_register' => 'cat-reg', 'catalog_schema' => 'cat-sch'],
+		]);
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturnCallback(
+			fn (array $query = []) => isset($query['slug']) === true ? ['results' => [$this->createCatalogObj(['sch-7'])]] : ['results' => [], 'total' => 0]
+		);
+		$this->setupAppManagerAndContainer($objectService);
+		$this->urlGenerator->method('getBaseUrl')->willReturn('https://example.com');
+
+		$result = $this->service->buildSitemapIndex('my-catalog', 'sitemapindex-diwoo-infocat007.xml');
+
+		$this->assertSame(expected: 200, actual: $result->getStatus());
+		$dom = new \DOMDocument();
+		$this->assertTrue(condition: $dom->loadXML($result->render()), message: 'well formed');
+		$this->assertSame(expected: 'sitemapindex', actual: $dom->documentElement->localName);
+		$this->assertSame(expected: 'http://www.sitemaps.org/schemas/sitemap/0.9', actual: $dom->documentElement->namespaceURI);
+		$this->assertSame(expected: 0, actual: $dom->getElementsByTagNameNS('http://www.sitemaps.org/schemas/sitemap/0.9', 'sitemap')->length);
+	}//end testAHiddenCategoryServesAnEmptyValidIndex()
+
 	public function testBuildSitemapIndexValidRequest(): void {
 		$this->setupValidSitemapContext('reg-woo', 'sch-1');
 

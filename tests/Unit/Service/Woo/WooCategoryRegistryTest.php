@@ -124,6 +124,54 @@ class WooCategoryRegistryTest extends TestCase {
 	}
 
 	/**
+	 * A hidden category keeps its sitemap file and its robots.txt line; only the officer's list leaves it out.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+	 */
+	public function testAHiddenCategoryKeepsItsSitemapIndexAndRobotsLine(): void {
+		$store = $this->createMock(\OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore::class);
+		$store->method('forScheme')->willReturn(
+			[TooiVocabularyService::KERN_BASE . 'c_c76862ab' => ['hidden' => true, 'order' => null]]
+		);
+		$curated = new \OCA\OpenCatalogi\Service\ValueList\CuratedCategoryRegistry(registry: $this->registry(), choices: $store);
+
+		$this->assertTrue(condition: $curated->all()['infocat007']['hidden']);
+		$this->assertArrayHasKey(key: 'sitemapindex-diwoo-infocat007.xml', array: $curated->sitemapFiles());
+		$this->assertSame(expected: 'infocat007', actual: $curated->findBySitemapFile(sitemapFile: 'sitemapindex-diwoo-infocat007.xml')['code'] ?? null);
+
+		$catalog = new class {
+			/**
+			 * The catalogue slug.
+			 *
+			 * @return string
+			 */
+			public function getSlug(): string {
+				return 'woo';
+			}
+
+			/**
+			 * The catalogue publishes a Woo sitemap.
+			 *
+			 * @return array<string, bool>
+			 */
+			public function getObject(): array {
+				return ['hasWooSitemap' => true];
+			}
+		};
+		$directives = new \OCA\OpenCatalogi\Controller\SitemapDirectives(
+			openRegister: $this->createMock(\OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface::class),
+			categories: $curated
+		);
+
+		$this->assertStringContainsString(
+			needle: "Sitemap: https://example.com/apps/opencatalogi/api/woo/sitemaps/sitemapindex-diwoo-infocat007.xml\n",
+			haystack: $directives->sitemapLines(catalog: $catalog, baseUrl: 'https://example.com')
+		);
+	}//end testAHiddenCategoryKeepsItsSitemapIndexAndRobotsLine()
+
+	/**
 	 * A registry over a given settings service.
 	 *
 	 * @param SettingsService $settings The settings service.
