@@ -33,6 +33,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\Publication\UnlistedPublications;
+use OCA\OpenCatalogi\Http\TombstoneResponse;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\DcatDereferenceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
@@ -1203,7 +1204,7 @@ class PublicationsController extends Controller {
 			return null;
 		}
 
-		return new JSONResponse(data: $tombstone, statusCode: Http::STATUS_GONE);
+		return new TombstoneResponse(tombstone: $tombstone);
 	}//end tombstoneRead()
 
 	/**

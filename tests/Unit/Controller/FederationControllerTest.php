@@ -13,6 +13,7 @@ use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Controller\CatalogSlugQuery;
 use OCA\OpenCatalogi\Controller\FederationController;
 use OCA\OpenCatalogi\Controller\PublicationTombstone;
+use OCA\OpenCatalogi\Http\TombstoneResponse;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
@@ -313,6 +314,7 @@ class FederationControllerTest extends TestCase {
 
 		$response = $this->controller->publication('pub-1');
 
+		$this->assertInstanceOf(TombstoneResponse::class, $response);
 		$this->assertSame(410, $response->getStatus());
 		$this->assertSame($tombstone, $response->getData());
 		$this->assertStringNotContainsString('public', (string)($response->getHeaders()['Cache-Control'] ?? ''));

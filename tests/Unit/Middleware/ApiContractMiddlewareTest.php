@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Middleware;
 
+use OCA\OpenCatalogi\Http\TombstoneResponse;
 use OCA\OpenCatalogi\Middleware\ApiContractMiddleware;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\DataDisplayResponse;
@@ -139,6 +140,23 @@ class ApiContractMiddlewareTest extends TestCase {
 		$list = $this->decorate(path: '/apps/opencatalogi/api/things', response: new JSONResponse(data: ['a', 'b'], statusCode: 400));
 		$this->assertSame(expected: ['a', 'b'], actual: $list->getData());
 	}//end testConflictingOrListBodiesAreLeftAlone()
+
+	/**
+	 * A tombstone keeps exactly its body: no problem `title` where the officer showed none (REQ-PWA-002).
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
+	 *
+	 * @return void
+	 */
+	public function testATombstoneKeepsExactlyItsBody(): void {
+		$tombstone = ['id' => 'pub-1', 'withdrawnAt' => '2026-11-24T10:00:00+00:00', 'publicReason' => 'Gepubliceerd in strijd met de AVG'];
+		$response = $this->decorate(path: '/apps/opencatalogi/api/publications/pub-1', response: new TombstoneResponse(tombstone: $tombstone));
+
+		$this->assertSame(expected: 410, actual: $response->getStatus());
+		$this->assertSame(expected: $tombstone, actual: $response->getData());
+		$this->assertSame(expected: 'application/json; charset=utf-8', actual: $this->headersOf(response: $response)['Content-Type']);
+		$this->assertSame(expected: '1.2.3', actual: $this->headersOf(response: $response)['API-Version']);
+	}//end testATombstoneKeepsExactlyItsBody()
 
 	/**
 	 * A body that already is problem details is kept, and an empty body gets the members.

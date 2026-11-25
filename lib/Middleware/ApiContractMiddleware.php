@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Middleware;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Http\TombstoneResponse;
 use OCA\OpenCatalogi\Middleware\Support\ApiPathAliases;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -218,9 +219,12 @@ class ApiContractMiddleware extends Middleware {
 	 * @return void
 	 *
 	 * @spec openspec/specs/api-documentation/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
 	 */
 	private function decorateError(JSONResponse $response): void {
-		if ($response->getStatus() < 400) {
+		// A tombstone is the withdrawn publication's representation, not an
+		// error: a problem `title` would read as the title the officer withheld.
+		if ($response->getStatus() < 400 || $response instanceof TombstoneResponse) {
 			return;
 		}
 

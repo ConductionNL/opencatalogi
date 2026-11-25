@@ -37,9 +37,9 @@ use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicDocumentsInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Http\TombstoneResponse;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -315,7 +315,7 @@ class FederationController extends Controller {
 			}
 
 			if ($tombstone !== null) {
-				$result = ['data' => $tombstone, 'status' => Http::STATUS_GONE];
+				return $this->withSearchCorsHeaders(response: new TombstoneResponse(tombstone: $tombstone));
 			}
 
 			// The same cache headers publications#show sends: the portal reads a

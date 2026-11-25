@@ -51,12 +51,12 @@ test.describe('Publication withdrawal aftercare', () => {
 		const catalog = await publicationCatalog(admin, 'e2e-tombstone')
 		const shown = await fx.createPublication(
 			'tombstone-shown',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			{ status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
 			REG_PUBLICATION,
 		)
 		const hidden = await fx.createPublication(
 			'tombstone-hidden',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			{ status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
 			REG_PUBLICATION,
 		)
 
@@ -92,6 +92,14 @@ test.describe('Publication withdrawal aftercare', () => {
 			storageState: { cookies: [], origins: [] },
 		})
 		try {
+			// The public read rule ends at `depublicationDate $gte $now`, so the
+			// withdrawal's own second still reads; the tombstone follows after it.
+			await expect
+				.poll(
+					async () => (await anonymous.get(`${API_BASE}/${encodeURIComponent(catalog.slug)}/${hidden.id}`)).status(),
+					{ timeout: 5000 },
+				)
+				.toBe(410)
 			const tombstone = await anonymous.get(
 				`${API_BASE}/${encodeURIComponent(catalog.slug)}/${shown.id}`,
 			)
@@ -129,7 +137,7 @@ test.describe('Publication withdrawal aftercare', () => {
 		const catalog = await publicationCatalog(admin, 'e2e-frozen-page')
 		const publication = await fx.createPublication(
 			'frozen-page',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			{ status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
 			REG_PUBLICATION,
 		)
 
