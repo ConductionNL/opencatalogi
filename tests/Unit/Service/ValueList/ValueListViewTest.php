@@ -216,6 +216,19 @@ class ValueListViewTest extends TestCase {
 	}//end testASaveGoesToTheChoiceStore()
 
 	/**
+	 * An order goes to the choice store unchanged.
+	 *
+	 * @return void
+	 */
+	public function testAnOrderGoesToTheChoiceStore(): void {
+		$store = $this->createMock(originalClassName: ValueListChoiceStore::class);
+		$store->expects($this->once())->method('saveOrder')->with('informatiecategorieen', [self::SUBSIDIES, self::CONTACT])->willReturn(2);
+
+		$view = $this->view(lists: $this->lists(), store: $store);
+		$this->assertSame(expected: 2, actual: $view->saveOrder(scheme: 'informatiecategorieen', entries: [self::SUBSIDIES, self::CONTACT]));
+	}//end testAnOrderGoesToTheChoiceStore()
+
+	/**
 	 * Entries with an order come first, lowest first; the rest follow in source order.
 	 *
 	 * @return void

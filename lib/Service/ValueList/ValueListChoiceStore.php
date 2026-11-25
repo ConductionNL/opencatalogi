@@ -126,6 +126,37 @@ class ValueListChoiceStore {
 	}//end save()
 
 	/**
+	 * Save the order of a list: each entry named gets its position, lowest first.
+	 *
+	 * Only an entry whose stored order differs is written, so a move of one
+	 * entry writes the entries between its old and new place.
+	 *
+	 * @param string       $scheme  The list.
+	 * @param list<string> $entries The entry URIs in the order the administrator set.
+	 *
+	 * @return int How many choices were written.
+	 *
+	 * @throws RuntimeException When OpenRegister or the schema configuration is not there.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrators-order-drives-every-pick-list-req-wvl-002
+	 */
+	public function saveOrder(string $scheme, array $entries): int {
+		$current = $this->forScheme(scheme: $scheme);
+		$written = 0;
+		foreach (array_values($entries) as $position => $entry) {
+			if (($current[$entry]['order'] ?? null) === $position) {
+				continue;
+			}
+
+			$this->save(choice: ['scheme' => $scheme, 'entry' => $entry, 'order' => $position]);
+			$written++;
+		}
+
+		return $written;
+
+	}//end saveOrder()
+
+	/**
 	 * The stored choices of one list, each with its `id` and a non-empty `entry`.
 	 *
 	 * @param string $scheme The list.

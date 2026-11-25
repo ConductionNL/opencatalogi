@@ -212,7 +212,7 @@
     [
         "alias",
         "OCA\\OpenCatalogi\\Contract\\InformationCategoryRegistryInterface",
-        "OCA\\OpenCatalogi\\Service\\Woo\\WooCategoryRegistry"
+        "OCA\\OpenCatalogi\\Service\\ValueList\\CuratedCategoryRegistry"
     ],
     [
         "alias",

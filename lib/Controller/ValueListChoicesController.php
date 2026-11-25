@@ -141,6 +141,34 @@ class ValueListChoicesController extends Controller {
 	}//end update()
 
 	/**
+	 * Save the order of a list, for an administrator: `entries` names every entry URI, first first.
+	 *
+	 * @return JSONResponse 200 with the list after the save; 400 for a bad request; 422 when the save is refused.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrators-order-drives-every-pick-list-req-wvl-002
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function reorder(): JSONResponse {
+		$scheme = (string)$this->request->getParam('scheme', '');
+		$entries = array_values(array_filter(array_map('strval', (array)$this->request->getParam('entries', [])), 'strlen'));
+		if (in_array($scheme, ValueListsService::SCHEMES, true) === false || $entries === []) {
+			return new JSONResponse(['error' => $this->l10n->t('Name the list and its entries in their new order.')], Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$this->view->saveOrder(scheme: $scheme, entries: $entries);
+		} catch (Throwable $e) {
+			return new JSONResponse(
+				['error' => $this->l10n->t('The choice could not be saved: %s', [$e->getMessage()])],
+				Http::STATUS_UNPROCESSABLE_ENTITY
+			);
+		}
+
+		return new JSONResponse($this->view->entries(scheme: $scheme));
+
+	}//end reorder()
+
+	/**
 	 * Every visible information category as `{code, uri, label, explanation, order}`, in the organisation's order.
 	 *
 	 * @return JSONResponse 200 with `{results, total, choicesUnavailable}`.

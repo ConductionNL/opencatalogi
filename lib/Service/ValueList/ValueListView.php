@@ -110,4 +110,21 @@ class ValueListView {
 
 	}//end save()
 
+	/**
+	 * Save the order of a list, as the entry URIs in the order the administrator set.
+	 *
+	 * @param string       $scheme  The list.
+	 * @param list<string> $entries The entry URIs, first first.
+	 *
+	 * @return int How many choices were written.
+	 *
+	 * @throws \RuntimeException When the order cannot be saved.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrators-order-drives-every-pick-list-req-wvl-002
+	 */
+	public function saveOrder(string $scheme, array $entries): int {
+		return $this->choices->saveOrder(scheme: $scheme, entries: $entries);
+
+	}//end saveOrder()
+
 }//end class

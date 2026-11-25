@@ -78,6 +78,10 @@ class ValueListChoicesControllerTest extends TestCase {
 
 			$this->saves[] = $choice;
 		});
+		$view->method('saveOrder')->willReturnCallback(function (string $scheme, array $entries): int {
+			$this->saves[] = ['order' => $entries, 'scheme' => $scheme];
+			return count($entries);
+		});
 
 		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnCallback(
@@ -164,12 +168,27 @@ class ValueListChoicesControllerTest extends TestCase {
 	}//end testARefusedSaveSaysWhy()
 
 	/**
-	 * Both routes are for administrators only.
+	 * An order is saved as the entry URIs, first first; a request without entries is refused.
+	 *
+	 * @return void
+	 */
+	public function testAnOrderIsSaved(): void {
+		$response = $this->controller(params: ['scheme' => 'informatiecategorieen', 'entries' => [self::COVENANTS, '', 'https://example.org/b']])->reorder();
+
+		$this->assertSame(expected: 200, actual: $response->getStatus());
+		$this->assertSame(expected: [['order' => [self::COVENANTS, 'https://example.org/b'], 'scheme' => 'informatiecategorieen']], actual: $this->saves);
+
+		$this->assertSame(expected: 400, actual: $this->controller(params: ['scheme' => 'informatiecategorieen', 'entries' => []])->reorder()->getStatus());
+		$this->assertSame(expected: 400, actual: $this->controller(params: ['scheme' => 'nope', 'entries' => [self::COVENANTS]])->reorder()->getStatus());
+	}//end testAnOrderIsSaved()
+
+	/**
+	 * The curation routes are for administrators only.
 	 *
 	 * @return void
 	 */
 	public function testTheRoutesAreForAdministratorsOnly(): void {
-		foreach (['index', 'update'] as $name) {
+		foreach (['index', 'update', 'reorder'] as $name) {
 			$method = new ReflectionMethod(objectOrMethod: ValueListChoicesController::class, method: $name);
 			$this->assertSame(expected: [], actual: $method->getAttributes(name: NoAdminRequired::class), message: $name);
 			$this->assertSame(expected: [], actual: $method->getAttributes(name: PublicPage::class), message: $name);
