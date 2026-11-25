@@ -76,7 +76,7 @@
         "symfony/process": "^6.4.33",
         "symfony/twig-bundle": "^6.4",
         "symfony/uid": "^6.4",
-        "twig/twig": "^3.27.0"
+        "twig/twig": "^3.31.1"
     },
     "require-dev": {
         "conduction/coding-standard": "^1.0",
