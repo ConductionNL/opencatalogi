@@ -219,7 +219,7 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
 	 * @SuppressWarnings(PHPMD.StaticAccess) RequiredToPublish::recordGaps() is a pure record transform.
 	 */
 	private function moveOne(array $publication, array $scope): void {

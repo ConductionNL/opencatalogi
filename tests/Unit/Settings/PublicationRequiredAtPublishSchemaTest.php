@@ -12,7 +12,7 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  * @link https://www.OpenCatalogi.nl
- * @spec openspec/changes/publication-required-at-publish/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/tasks.md#task-1.1
  */
 
 declare(strict_types=1);
