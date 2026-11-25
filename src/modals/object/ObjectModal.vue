@@ -394,6 +394,9 @@ function optionOf(entry) {
 	return { id: entry.id, label: entry.title }
 }
 
+// Loaded when a licence field renders, so the form does not fetch the list for schemas without one.
+const LicencePicker = defineAsyncComponent(() => import('../../components/LicencePicker.vue'))
+
 /**
  * Whether the navigation transfer data opens the modal to create an object.
  *
@@ -487,8 +490,7 @@ export default {
 		AppTabs,
 		AppTab,
 		CodeMirror,
-		// Loaded when a licence field renders, so the form does not fetch the list for schemas without one.
-		LicencePicker: defineAsyncComponent(() => import('../../components/LicencePicker.vue')),
+		LicencePicker,
 		// Icons
 		ContentSaveOutline,
 		Cancel,
