@@ -277,7 +277,7 @@ class AgentWithdrawalTest extends TestCase {
 	}//end testAWithdrawalWaitsForAPublisher()
 
 	/**
-	 * An archive request stages a task for any publication that is not archived yet, and refuses an archived one.
+	 * An archive request stages a task for a published (here withdrawn) publication, and refuses an archived one and a draft.
 	 *
 	 * @return void
 	 *
@@ -287,16 +287,20 @@ class AgentWithdrawalTest extends TestCase {
 		$this->stored = [
 			'pub-1' => ['title' => 'Jaarverslag 2019', '_state' => PublicationStateServiceInterface::STATE_WITHDRAWN],
 			'pub-2' => ['title' => 'Oud', '_state' => PublicationStateServiceInterface::STATE_ARCHIVED],
+			'pub-3' => ['title' => 'Concept', '_state' => 'draft'],
 		];
 
 		$answer = $this->service()->stage(call: new AgentWithdrawalCall(
 			action: AgentWithdrawalInterface::ARCHIVE,
-			ids: ['pub-1', 'pub-2'],
+			ids: ['pub-1', 'pub-2', 'pub-3'],
 			reason: 'Bewaartermijn verstreken'
 		));
 
 		$this->assertSame(expected: [['id' => 'pub-1', 'task' => 'task-pub-1']], actual: $answer['staged']);
-		$this->assertSame(expected: [['id' => 'pub-2', 'code' => 'already_archived']], actual: $answer['refused']);
+		$this->assertSame(
+			expected: [['id' => 'pub-2', 'code' => 'already_archived'], ['id' => 'pub-3', 'code' => 'not_published']],
+			actual: $answer['refused']
+		);
 		$this->assertSame(expected: 'Archive publication "Jaarverslag 2019"', actual: $this->created[0]['data']['title']);
 		$this->assertSame(expected: 'opencatalogi.archivePublication', actual: $this->created[0]['data']['metadata']['tool']);
 	}//end testAnArchiveRequestWaitsForAPublisher()

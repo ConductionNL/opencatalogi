@@ -138,7 +138,7 @@ class AgentWithdrawal implements AgentWithdrawalInterface {
 	 * @param ObjectFindOptions      $options The publication register and schema.
 	 *
 	 * @return array{task: string}|array{code: string} The task id, or `not_found`, `forbidden`, `not_public`,
-	 *                                                 `already_archived` or `not_staged`.
+	 *                                                 `already_archived`, `not_published` or `not_staged`.
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) ObjectProperties::fromObject() is a pure read of the answer.
 	 */
@@ -179,7 +179,8 @@ class AgentWithdrawal implements AgentWithdrawalInterface {
 	 * @param array<string, mixed> $properties The publication's properties.
 	 *
 	 * @return string|null `not_public` for a withdrawal of a publication that is not public or scheduled,
-	 *                     `already_archived` for an archived one, else null.
+	 *                     `already_archived` for an archived one, `not_published` for an archive of one that
+	 *                     was never published (the lifecycle archives only from published), else null.
 	 */
 	private function stateRefusal(string $action, array $properties): ?string {
 		$state = $this->states->stateOf(publication: $properties);
@@ -190,6 +191,11 @@ class AgentWithdrawal implements AgentWithdrawalInterface {
 
 		if ($action === self::ARCHIVE && $state === PublicationStateServiceInterface::STATE_ARCHIVED) {
 			return 'already_archived';
+		}
+
+		// The lifecycle archives only from `published` (public, scheduled or withdrawn).
+		if ($action === self::ARCHIVE && in_array($state, [...$public, PublicationStateServiceInterface::STATE_WITHDRAWN], true) === false) {
+			return 'not_published';
 		}
 
 		return null;
