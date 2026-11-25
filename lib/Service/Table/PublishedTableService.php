@@ -560,6 +560,30 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	}//end rows()
 
 	/**
+	 * Run a read over a table's rows the way rows() reads them: without the
+	 * caller's read rule and organisation, in OpenRegister's system context.
+	 *
+	 * An anonymous reader of a public table otherwise gets an empty chart:
+	 * OpenRegister's ad-hoc aggregation skips the read rule for an internal
+	 * caller but still narrows to the caller's organisation, and an anonymous
+	 * caller has none. rows() reads the same rows with `_multitenancy: false`.
+	 *
+	 * @param callable $read The read.
+	 *
+	 * @return mixed What the read returns.
+	 *
+	 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-anyone-reads-a-view-s-data-while-the-publication-is-public-req-dsv-002
+	 */
+	public function overAllRows(callable $read): mixed {
+		$objects = $this->registers->objectService();
+		if (is_object($objects) === false || method_exists($objects, 'runAsSystem') === false) {
+			return $read();
+		}
+
+		return $objects->runAsSystem($read);
+	}//end overAllRows()
+
+	/**
 	 * Publish a CSV attachment of a publication as a table (REQ-ODT-001).
 	 *
 	 * The caller has checked that the user may update the publication. The file

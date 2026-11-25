@@ -124,11 +124,14 @@ class DatasetViewData {
 
 		$query ??= AggregationQuery::create(metric: $aggregate, field: $field, groupBy: $groupBy);
 
-		$result = $this->aggregation->runAdhocByRef(
-			registerRef: PublishedTableService::ROWS_REGISTER,
-			schemaRef: (string)$table['schema'],
-			query: $query,
-			bypassRbac: true
+		// Over every row of the table, as rows() reads them; an anonymous reader has no organisation.
+		$result = $this->tables->overAllRows(
+			read: fn (): array => $this->aggregation->runAdhocByRef(
+				registerRef: PublishedTableService::ROWS_REGISTER,
+				schemaRef: (string)$table['schema'],
+				query: $query,
+				bypassRbac: true
+			)
 		);
 
 		$points = array_map(

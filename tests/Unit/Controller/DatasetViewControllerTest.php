@@ -82,6 +82,7 @@ class DatasetViewControllerTest extends TestCase {
 		$this->catalogs->method('getCatalogBySlug')->willReturnCallback(static fn (string $slug): ?array => $slug === 'c' ? ['id' => 'c'] : null);
 		$this->tables = $this->createMock(PublishedTableServiceInterface::class);
 		$this->tables->method('findTable')->willReturnCallback(static fn (string $id): ?array => $id === 't1' ? self::TABLE : null);
+		$this->tables->method('overAllRows')->willReturnCallback(static fn (callable $read): mixed => $read());
 		$this->objects = $this->createMock(ObjectService::class);
 		$registers = $this->createMock(OpenRegisterLookupInterface::class);
 		$registers->method('objectService')->willReturn($this->objects);
@@ -187,6 +188,38 @@ class DatasetViewControllerTest extends TestCase {
 			$response->getData()
 		);
 	}//end testABarViewAnswersOneValuePerGroup()
+
+	/**
+	 * The chart's aggregation runs over every row of the table, as the rows endpoint
+	 * reads them: an anonymous reader has no organisation, and inside the caller's
+	 * organisation OpenRegister found nothing (an empty chart on a public page).
+	 *
+	 * @return void
+	 */
+	public function testABarViewAggregatesOverEveryRowOfTheTable(): void {
+		$tables = $this->createMock(PublishedTableServiceInterface::class);
+		$tables->method('findTable')->willReturnCallback(static fn (string $id): ?array => $id === 't1' ? self::TABLE : null);
+		$tables->method('canReadPublication')->willReturn(true);
+		$inside = false;
+		$tables->expects($this->once())->method('overAllRows')->willReturnCallback(
+			static function (callable $read) use (&$inside): mixed {
+				$inside = true;
+				$answer = $read();
+				$inside = false;
+				return $answer;
+			}
+		);
+		$this->aggregation->expects($this->once())->method('runAdhocByRef')->willReturnCallback(
+			static function () use (&$inside): array {
+				return ['groups' => $inside === true ? [['key' => 'Noord', 'value' => 7]] : []];
+			}
+		);
+		$data = new \OCA\OpenCatalogi\Service\Table\DatasetViewData(tables: $tables, aggregation: $this->aggregation);
+
+		$answer = $data->chart(view: ['kind' => 'bar', 'x' => 'wijk', 'aggregate' => 'count'], table: self::TABLE);
+
+		$this->assertSame([['x' => 'Noord', 'value' => 7]], $answer['points']);
+	}//end testABarViewAggregatesOverEveryRowOfTheTable()
 
 	/**
 	 * More than 200 groups answers the first 200 and says it truncated.
