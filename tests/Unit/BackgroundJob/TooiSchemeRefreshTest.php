@@ -275,6 +275,43 @@ class TooiSchemeRefreshTest extends TestCase {
 	}//end testTheSeededSourcesAreTheTooiDownloads()
 
 	/**
+	 * The refresh writes the national concepts only, never an administrator's choice (REQ-WVL-001).
+	 *
+	 * The choices live in `valueListChoice` objects beside the concepts; a refresh that
+	 * reached them would overwrite a local label, order or hide on every daily run.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-organisations-own-text-sits-beside-the-normative-entry-req-wvl-001
+	 */
+	public function testTheRefreshWritesNoChoice(): void {
+		$this->refresh(active: self::seventeen(), download: self::recorded())->refreshAll();
+
+		$this->assertCount(expectedCount: 1, haystack: $this->imported);
+		foreach ($this->imported[0]['@graph'] as $node) {
+			$types = (array)($node['@type'] ?? []);
+			$skos = ['http://www.w3.org/2004/02/skos/core#ConceptScheme', 'http://www.w3.org/2004/02/skos/core#Concept'];
+			$this->assertNotSame(expected: [], actual: array_intersect($types, $skos), message: 'only the scheme and its concepts are imported');
+			$this->assertStringNotContainsStringIgnoringCase(needle: 'valueListChoice', haystack: (string)json_encode($node));
+		}
+
+		$written = array_keys($this->stored);
+		$expected = [ValueListRefresh::SOURCES_KEY, ValueListRefresh::STATE_KEY];
+		sort($written);
+		sort($expected);
+		$this->assertSame(expected: $expected, actual: $written, message: 'the refresh stores its own state and nothing else');
+
+		$constructor = new \ReflectionMethod(ValueListRefresh::class, '__construct');
+		foreach ($constructor->getParameters() as $parameter) {
+			$type = (string)$parameter->getType();
+			$this->assertStringNotContainsString(needle: 'ValueListChoice', haystack: $type, message: 'the refresh has no way to reach the choices');
+		}
+
+		$source = (string)file_get_contents(__DIR__ . '/../../../lib/Service/Vocabulary/ValueListRefresh.php');
+		$this->assertStringNotContainsStringIgnoringCase(needle: 'valueListChoice', haystack: $source);
+	}//end testTheRefreshWritesNoChoice()
+
+	/**
 	 * The job is in info.xml, runs daily and calls the refresh.
 	 *
 	 * @return void

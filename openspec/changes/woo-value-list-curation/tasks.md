@@ -5,7 +5,7 @@ Read `openspec/woo-build-rules.md` first. Start once `woo-value-lists-on-the-con
 ## 1. Overlay
 
 - [x] 1.1 Add the `valueListChoice` schema with `slug`, version and admin-only writes, and `ValueListView::entries()` (REQ-WVL-001). Verify: `tests/Unit/Service/Woo/ValueListViewTest.php::testARefreshChangesTheSourceLabelAndKeepsTheLocalOne` (fails today), `::testUnreadableChoicesFallBackToSourceOrderAndSaySo`; `tests/Unit/Listener/ValueListChoiceListenerTest.php::testANormativeFieldIsRefused`, on the REAL event; an `ApplicationRegisterInvariantTest` case.
-- [ ] 1.2 Assert `TooiSchemeRefresh` never touches `valueListChoice` (REQ-WVL-001). Verify: `tests/Unit/BackgroundJob/TooiSchemeRefreshTest.php::testTheRefreshWritesNoChoice`.
+- [x] 1.2 Assert `TooiSchemeRefresh` never touches `valueListChoice` (REQ-WVL-001). Verify: `tests/Unit/BackgroundJob/TooiSchemeRefreshTest.php::testTheRefreshWritesNoChoice`.
 
 ## 2. Order
 
