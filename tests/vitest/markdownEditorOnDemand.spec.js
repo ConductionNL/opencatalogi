@@ -10,7 +10,7 @@
  */
 import fs from 'fs'
 import path from 'path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 const root = path.resolve(__dirname, '../..')
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8')
@@ -33,5 +33,38 @@ describe('markdown editor on demand', () => {
 		expect(source).toMatch(/VueMarkdownEditor\.use\(githubTheme, \{ Hljs: hljs \}\)/)
 		expect(source).toMatch(/VueMarkdownEditor\.lang\.use\('en-US', enUS\)/)
 		expect(source).toMatch(/export default VueMarkdownEditor/)
+	})
+})
+
+describe('modals on demand', () => {
+	// Each modal that renders only while open is an async component, so its
+	// CodeMirror / editor / picker code is not parsed on every page boot.
+	const source = read('src/modals/Modals.vue')
+	const lazy = ['ObjectModal', 'ViewObject', 'UploadObject', 'DownloadObject', 'MergeObject', 'MigrationObject', 'EditAttachmentModal', 'UploadFilesModal']
+
+	it.each(lazy)('%s is loaded with defineAsyncComponent', (name) => {
+		expect(source).toMatch(new RegExp('const ' + name + ' = defineAsyncComponent\\(\\(\\) => import\\('))
+		expect(source).not.toMatch(new RegExp('^import ' + name + ' ', 'm'))
+	})
+
+	it.each(lazy)('%s renders only while its modal is open', (name) => {
+		expect(source).toMatch(new RegExp('<' + name + '\\s+v-if="navigationStore\\.(modal|dialog) === '))
+	})
+})
+
+describe('markdownEditorSetup.js', () => {
+	it('configures the editor once and returns it', async () => {
+		vi.resetModules()
+		const editor = { use: vi.fn(), lang: { use: vi.fn() } }
+		vi.doMock('@kangc/v-md-editor', () => ({ default: editor }))
+		vi.doMock('@kangc/v-md-editor/lib/lang/en-US.js', () => ({ default: { lang: 'en-US' } }))
+		vi.doMock('@kangc/v-md-editor/lib/theme/github.js', () => ({ default: { theme: 'github' } }))
+		vi.doMock('highlight.js', () => ({ default: { hljs: true } }))
+		vi.doMock('@kangc/v-md-editor/lib/style/base-editor.css', () => ({}))
+		vi.doMock('@kangc/v-md-editor/lib/theme/style/github.css', () => ({}))
+		const module = await import('../../src/components/markdownEditorSetup.js')
+		expect(module.default).toBe(editor)
+		expect(editor.use).toHaveBeenCalledExactlyOnceWith({ theme: 'github' }, { Hljs: { hljs: true } })
+		expect(editor.lang.use).toHaveBeenCalledExactlyOnceWith('en-US', { lang: 'en-US' })
 	})
 })
