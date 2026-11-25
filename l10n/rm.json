@@ -882,7 +882,10 @@
         "Install dossiq from the app store": "Installar dossiq da la butia d'apps",
         "Order of the kinds of handling": "Urden da las sorts d’acziun",
         "Order of the document types": "Urden da las sorts da documents",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Voss agen urden n’ha betg pudì vegnir chargià, perquai vegn la glista mussada en ses agen urden."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Voss agen urden n’ha betg pudì vegnir chargià, perquai vegn la glista mussada en ses agen urden.",
+        "Where the transfer stands: requested, transferred or failed.": "Stadi dal transfer: dumandà, transferì u betg reussì.",
+        "When the transfer to the e-depot was requested.": "Cura ch'il transfer a l'e-depot è vegnì dumandà.",
+        "When the transfer status last changed.": "Cura ch'il status dal transfer è sa midà l'ultima giada."
     },
     "plurals": {}
 }

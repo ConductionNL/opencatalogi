@@ -882,7 +882,10 @@
         "Install dossiq from the app store": "Instalar o dossiq a partir da loja de aplicações",
         "Order of the kinds of handling": "Ordem dos tipos de ação",
         "Order of the document types": "Ordem dos tipos de documento",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Não foi possível carregar a sua própria ordem, por isso a lista é apresentada na sua ordem original."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Não foi possível carregar a sua própria ordem, por isso a lista é apresentada na sua ordem original.",
+        "Where the transfer stands: requested, transferred or failed.": "Estado da transferência: pedida, transferida ou falhada.",
+        "When the transfer to the e-depot was requested.": "Quando foi pedida a transferência para o e-depósito.",
+        "When the transfer status last changed.": "Quando o estado da transferência mudou pela última vez."
     },
     "plurals": {}
 }

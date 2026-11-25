@@ -883,7 +883,10 @@ OC.L10N.register(
         "Install dossiq from the app store": "Įdiekite dossiq iš programėlių parduotuvės",
         "Order of the kinds of handling": "Veiksmų rūšių tvarka",
         "Order of the document types": "Dokumentų rūšių tvarka",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Nepavyko įkelti jūsų tvarkos, todėl sąrašas rodomas jo paties tvarka."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Nepavyko įkelti jūsų tvarkos, todėl sąrašas rodomas jo paties tvarka.",
+        "Where the transfer stands: requested, transferred or failed.": "Perdavimo būsena: paprašyta, perduota arba nepavyko.",
+        "When the transfer to the e-depot was requested.": "Kada buvo paprašyta perduoti į e. saugyklą.",
+        "When the transfer status last changed.": "Kada paskutinį kartą pasikeitė perdavimo būsena."
     },
     "nplurals=2; plural=(n != 1);"
 )

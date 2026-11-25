@@ -883,7 +883,10 @@ OC.L10N.register(
         "Install dossiq from the app store": "Paigalda dossiq rakenduste poest",
         "Order of the kinds of handling": "Toimingu liikide järjestus",
         "Order of the document types": "Dokumendiliikide järjestus",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Teie enda järjestust ei õnnestunud laadida, seega kuvatakse loend selle enda järjestuses."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Teie enda järjestust ei õnnestunud laadida, seega kuvatakse loend selle enda järjestuses.",
+        "Where the transfer stands: requested, transferred or failed.": "Ülekande seis: taotletud, üle antud või ebaõnnestunud.",
+        "When the transfer to the e-depot was requested.": "Millal ülekannet e-hoidlasse taotleti.",
+        "When the transfer status last changed.": "Millal ülekande olek viimati muutus."
     },
     "nplurals=2; plural=(n != 1);"
 )

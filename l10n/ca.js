@@ -883,7 +883,10 @@ OC.L10N.register(
         "Install dossiq from the app store": "Instal·la dossiq des de la botiga d'aplicacions",
         "Order of the kinds of handling": "Ordre dels tipus d’actuació",
         "Order of the document types": "Ordre dels tipus de document",
-        "Your own order could not be loaded, so the list is shown in its own order.": "No s’ha pogut carregar el vostre ordre, per això la llista es mostra en el seu ordre original."
+        "Your own order could not be loaded, so the list is shown in its own order.": "No s’ha pogut carregar el vostre ordre, per això la llista es mostra en el seu ordre original.",
+        "Where the transfer stands: requested, transferred or failed.": "Estat de la transferència: sol·licitada, transferida o fallida.",
+        "When the transfer to the e-depot was requested.": "Quan es va sol·licitar la transferència a l'e-dipòsit.",
+        "When the transfer status last changed.": "Quan va canviar per última vegada l'estat de la transferència."
     },
     "nplurals=2; plural=(n != 1);"
 )

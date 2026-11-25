@@ -882,7 +882,10 @@
         "Install dossiq from the app store": "dossiq aus dem App Store installéieren",
         "Order of the kinds of handling": "Reiefolleg vun den Handlungsaarten",
         "Order of the document types": "Reiefolleg vun den Dokumentaarten",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Är eege Reiefolleg konnt net geluede ginn, dofir gëtt d’Lëscht an hirer eegener Reiefolleg gewisen."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Är eege Reiefolleg konnt net geluede ginn, dofir gëtt d’Lëscht an hirer eegener Reiefolleg gewisen.",
+        "Where the transfer stands: requested, transferred or failed.": "Stand vum Transfert: ugefrot, iwwerdroen oder feelgeschloen.",
+        "When the transfer to the e-depot was requested.": "Wéini den Transfert an den E-Depot ugefrot gouf.",
+        "When the transfer status last changed.": "Wéini de Status vum Transfert fir d'lescht geännert huet."
     },
     "plurals": {}
 }
