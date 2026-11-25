@@ -3,7 +3,38 @@
   - SPDX-License-Identifier: EUPL-1.2
 -->
 <script setup>
+/**
+ * Component that contains all modals used in the application
+ */
+import { defineAsyncComponent } from 'vue'
+import CatalogModal from './catalog/CatalogModal.vue'
+import AddDirectoryModal from './directory/AddDirectoryModal.vue'
+import ViewDirectoryModal from './directory/ViewDirectoryModal.vue'
+import ViewGlossaryModal from './glossary/ViewGlossaryModal.vue'
+import LockObject from './object/LockObject.vue'
+import ViewThemeModal from './theme/ViewThemeModal.vue'
 import { navigationStore } from './../store/store.js'
+
+// Modals that render only while open load on demand: they carry CodeMirror,
+// the markdown editor and the file pickers, which every page used to parse at
+// boot although most visits never open one.
+const EditAttachmentModal = defineAsyncComponent(() => import('./attachment/EditAttachmentModal.vue'))
+const EditListingModal = defineAsyncComponent(() => import('./directory/EditListingModal.vue'))
+const UploadFilesModal = defineAsyncComponent(() => import('./generic/UploadFiles.vue'))
+const ObjectModal = defineAsyncComponent(() => import('./object/ObjectModal.vue'))
+const ViewObject = defineAsyncComponent(() => import('./object/ViewObject.vue'))
+const MergeObject = defineAsyncComponent(() => import('./object/MergeObject.vue'))
+const UploadObject = defineAsyncComponent(() => import('./object/UploadObject.vue'))
+const DownloadObject = defineAsyncComponent(() => import('./object/DownloadObject.vue'))
+const MigrationObject = defineAsyncComponent(() => import('./object/MigrationObject.vue'))
+const MassDeleteObject = defineAsyncComponent(() => import('./object/MassDeleteObject.vue'))
+const MassPublishObjects = defineAsyncComponent(() => import('./object/MassPublishObjects.vue'))
+const MassDepublishObjects = defineAsyncComponent(() => import('./object/MassDepublishObjects.vue'))
+const MassValidateObjects = defineAsyncComponent(() => import('./object/MassValidateObjects.vue'))
+const MassLockObjects = defineAsyncComponent(() => import('./object/MassLockObjects.vue'))
+const MassUnlockObjects = defineAsyncComponent(() => import('./object/MassUnlockObjects.vue'))
+const MassAttachmentModal = defineAsyncComponent(() => import('../dialogs/attachment/MassAttachmentModal.vue'))
+const AddPublicationThemeModal = defineAsyncComponent(() => import('./theme/AddPublicationThemeModal.vue'))
 </script>
 
 <template>
@@ -29,7 +60,7 @@ import { navigationStore } from './../store/store.js'
 
 		<MergeObject v-if="navigationStore.modal === 'mergeObject'" />
 		<UploadObject v-if="navigationStore.modal === 'uploadObject'" />
-		<DownloadObject />
+		<DownloadObject v-if="navigationStore.modal === 'downloadObject'" />
 		<LockObject />
 		<MigrationObject v-if="navigationStore.modal === 'migrationObject'" />
 		<!-- Mass Action Modals -->
@@ -44,67 +75,3 @@ import { navigationStore } from './../store/store.js'
 		<MassAttachmentModal v-if="navigationStore.dialog === 'massAttachment'" />
 	</div>
 </template>
-
-<script>
-import MassAttachmentModal from '../dialogs/attachment/MassAttachmentModal.vue'
-// Specific
-import EditAttachmentModal from './attachment/EditAttachmentModal.vue'
-// Generic
-import CatalogModal from './catalog/CatalogModal.vue'
-import AddDirectoryModal from './directory/AddDirectoryModal.vue'
-import EditListingModal from './directory/EditListingModal.vue'
-// View Modals
-import ViewDirectoryModal from './directory/ViewDirectoryModal.vue'
-import UploadFilesModal from './generic/UploadFiles.vue'
-import ViewGlossaryModal from './glossary/ViewGlossaryModal.vue'
-import DownloadObject from './object/DownloadObject.vue'
-import LockObject from './object/LockObject.vue'
-import MassDeleteObject from './object/MassDeleteObject.vue'
-import MassDepublishObjects from './object/MassDepublishObjects.vue'
-import MassLockObjects from './object/MassLockObjects.vue'
-import MassPublishObjects from './object/MassPublishObjects.vue'
-import MassUnlockObjects from './object/MassUnlockObjects.vue'
-import MassValidateObjects from './object/MassValidateObjects.vue'
-import MergeObject from './object/MergeObject.vue'
-import MigrationObject from './object/MigrationObject.vue'
-import ObjectModal from './object/ObjectModal.vue'
-import UploadObject from './object/UploadObject.vue'
-// Object Modals
-import ViewObject from './object/ViewObject.vue'
-// Publication
-import AddPublicationThemeModal from './theme/AddPublicationThemeModal.vue'
-import ViewThemeModal from './theme/ViewThemeModal.vue'
-/**
- * Component that contains all modals used in the application
- */
-export default {
-	name: 'Modals',
-	components: {
-		EditAttachmentModal,
-		CatalogModal,
-		AddDirectoryModal,
-		EditListingModal,
-		// View Modals
-		ViewDirectoryModal,
-		ViewGlossaryModal,
-		ViewThemeModal,
-		UploadFilesModal,
-		ObjectModal,
-		// Object Modals
-		ViewObject,
-		MergeObject,
-		UploadObject,
-		DownloadObject,
-		LockObject,
-		MigrationObject,
-		MassDeleteObject,
-		MassPublishObjects,
-		MassDepublishObjects,
-		MassValidateObjects,
-		MassLockObjects,
-		MassUnlockObjects,
-		AddPublicationThemeModal,
-		MassAttachmentModal,
-	},
-}
-</script>

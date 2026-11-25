@@ -13,16 +13,13 @@ import {
 	registerIcons,
 	registerTranslations,
 } from '@conduction/nextcloud-vue'
-import VueMarkdownEditor from '@kangc/v-md-editor'
 import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
-import githubTheme from '@kangc/v-md-editor/lib/theme/github.js'
 import {
 	loadTranslations,
 	translatePlural as n,
 	translate as t,
 } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import hljs from 'highlight.js'
 import { createApp, h } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
@@ -51,8 +48,6 @@ import { translateActionLabels } from './services/translateActionLabels.js'
 import 'gridstack/dist/gridstack.min.css'
 // Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
 import '@conduction/nextcloud-vue/css/index.css'
-import '@kangc/v-md-editor/lib/style/base-editor.css'
-import '@kangc/v-md-editor/lib/theme/style/github.css'
 // The runtime public path is now set by webpack itself (`output.publicPath:
 // 'auto'` in webpack.config.js), which derives it from the loading script's own
 // URL. That covers ALL SEVEN entry points; the previous
@@ -224,8 +219,6 @@ registerDashboardWidget('file-manager', {
 	surfaces: ['detail-page'],
 })
 
-VueMarkdownEditor.use(githubTheme, { Hljs: hljs })
-VueMarkdownEditor.lang.use('en-US', enUS)
 
 // Register library-side icon set + lib translations once at bootstrap.
 registerIcons(appIcons)
@@ -397,7 +390,6 @@ app.config.globalProperties.$vMdEditorLang = 'en-US'
 app.config.globalProperties.$vMdEditorLangConfig = { 'en-US': enUS }
 
 app.mixin({ methods: { t, n } })
-app.use(VueMarkdownEditor)
 app.use(pinia)
 app.use(router)
 

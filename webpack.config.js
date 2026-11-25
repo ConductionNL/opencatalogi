@@ -2,6 +2,7 @@
  * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  */
+const { withLeanBundles } = require('@conduction/nextcloud-vue/webpack')
 const path = require('path')
 const fs = require('fs')
 const webpack = require('webpack')
@@ -254,4 +255,7 @@ webpackConfig.optimization = {
 	},
 }
 
-module.exports = webpackConfig
+// css-loader maps off (they doubled the 1.4 MB library stylesheet inside the
+// JS) and every cache group above narrowed to initial chunks, so the
+// library's lazy chunks stay lazy. See nextcloud-vue docs/tooling/lean-bundles.md.
+module.exports = withLeanBundles(webpackConfig)
