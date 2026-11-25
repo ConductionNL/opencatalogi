@@ -274,7 +274,14 @@ class PublicationStateControllerTest extends TestCase {
 						 *
 						 * @return array<string, mixed> The uuid and the marker.
 						 */
-						// OpenRegister's ArchiveHandlerInterface::freeze() signature.
+						/**
+						 * OpenRegister's ArchiveHandlerInterface::freeze() signature.
+						 *
+						 * @param \OCA\OpenRegister\Service\Object\ObjectStateRequest $request The object and why.
+						 * @param string|null                                         $state   The declaring state.
+						 *
+						 * @return array{uuid: string, frozen: array} The marker.
+						 */
 						public function freeze(\OCA\OpenRegister\Service\Object\ObjectStateRequest $request, ?string $state = null): array {
 							$this->freezes[] = ['identifier' => $request->identifier, 'reason' => $request->reason];
 							return ['uuid' => $request->identifier, 'frozen' => ['by' => 'redacteur', 'reason' => $request->reason]];

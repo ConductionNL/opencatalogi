@@ -87,7 +87,14 @@ final class PublicationFreezerTest extends TestCase {
 			 */
 			public ?ObjectStateRequest $asked = null;
 
-			// OpenRegister's ArchiveHandlerInterface::freeze() signature.
+			/**
+			 * OpenRegister's ArchiveHandlerInterface::freeze() signature.
+			 *
+			 * @param ObjectStateRequest $request The object and why.
+			 * @param string|null        $state   The declaring state.
+			 *
+			 * @return array{uuid: string, frozen: array|null} The marker.
+			 */
 			public function freeze(ObjectStateRequest $request, ?string $state = null): array {
 				$this->asked = $request;
 				return ['uuid' => $request->identifier, 'frozen' => $this->marker];
