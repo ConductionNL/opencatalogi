@@ -31,7 +31,9 @@ Read `openspec/woo-build-rules.md` first. Mock `OCP\TaskProcessing\IManager` aga
 
 - [x] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
 - [x] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
-- [ ] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+  - Done 25 Nov 2026 (b-opencatalogi) on `development` 4c7a8688e after this change's PRs landed, in a Nextcloud 34 tree on PostgreSQL with OpenRegister main beside it: `composer lint` passes; `phpcs` 0 errors (#3086); `phpstan` no errors (#3087); PHPUnit 7315 tests, 4 errors, all `DirectoryServiceTest::testDoCronSync*` (directory cron, inherited, not this change); `npm run lint` 0 errors (#3079); `check:l10n`, `check:l10n-js`, `check:manifest` pass; `check:schema-l10n` passes at 138 uncovered (#3085). Inherited on `development`, not this change: phpmd 100 findings outside the baseline (coupling and complexity in other classes), psalm 5.26 crash, `format` (Prettier, 318 files). The coverage guard is CI's and was not measured here.
+- [x] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - Done: the change shipped in its own PRs on `development` (merged, development merged in, no `Co-Authored-By`); this archive is its last PR.
 
 Done when merged on `development` with CI green. Row 15.4 becomes `production` only once a store release ships it; 14.7 rides on `publication-translations`.
