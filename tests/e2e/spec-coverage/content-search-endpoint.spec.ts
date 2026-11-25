@@ -117,7 +117,9 @@ test.describe('content-search-endpoint', () => {
 
 		// The publication MUST be created with an explicit `slug`. OpenRegister
 		// does not derive one, and an empty slug has broken this test before.
+		// A publication starts in draft; the fixture walks it to published.
 		const pub = await fx.createPublication('Content Search Publication', {
+			status: 'published',
 			publicationDate: pastPublicatiedatum,
 			slug: `e2e-${fx.runId}-content-search-pub`,
 		})
