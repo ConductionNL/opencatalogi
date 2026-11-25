@@ -220,8 +220,8 @@ class PublicationAgentToolsTest extends TestCase {
 	 */
 	public function testTheScannableServicesNamePublicationService(): void {
 		$this->assertSame(
-			[PublicationService::class, PublicationAgentTools::class],
-			(new OpenCatalogiScannableServices())->getScannableServiceClasses()
+			expected: [PublicationService::class, PublicationAgentTools::class],
+			actual: (new OpenCatalogiScannableServices())->getScannableServiceClasses()
 		);
 	}
 }
