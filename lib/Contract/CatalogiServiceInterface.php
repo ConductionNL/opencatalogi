@@ -248,7 +248,7 @@ interface CatalogiServiceInterface {
 	 *
 	 * @return array<string, mixed> The paginated search result.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-3
 	 */
 	public function listCatalogs(array $requestParams, array $catalogConfig): array;
 }//end interface

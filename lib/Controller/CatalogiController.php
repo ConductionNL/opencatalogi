@@ -106,7 +106,7 @@ class CatalogiController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
-	 * @spec openspec/changes/catalogs/tasks.md#task-5
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-5
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -127,7 +127,7 @@ class CatalogiController extends Controller {
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
-	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-3
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -168,7 +168,7 @@ class CatalogiController extends Controller {
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/archive/2026-11-24-publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
-	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-4
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]

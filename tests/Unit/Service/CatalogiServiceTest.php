@@ -95,7 +95,7 @@ class CatalogiServiceTest extends TestCase {
 	 * register and schema on both the routing keys and `@self`, keeps a non-scope
 	 * `@self` filter, and searches with RBAC on and deleted objects left out.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-3
 	 */
 	public function testListCatalogsPinsTheConfiguredScopeOverTheCallers(): void {
 		$caller = [
@@ -134,7 +134,7 @@ class CatalogiServiceTest extends TestCase {
 	 * An empty configured register or schema pins nothing for that key; the query
 	 * from buildSearchQuery() reaches the search unchanged.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-3
 	 */
 	public function testListCatalogsPinsNothingForAnEmptyConfiguredKey(): void {
 		$objectService = $this->createMock(ObjectService::class);
@@ -154,7 +154,7 @@ class CatalogiServiceTest extends TestCase {
 	/**
 	 * Without OpenRegister installed the list cannot be read and says so.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-3
 	 */
 	public function testListCatalogsThrowsWithoutOpenRegister(): void {
 		$this->appManager->method('getInstalledApps')->willReturn([]);
@@ -2201,7 +2201,7 @@ class CatalogiServiceTest extends TestCase {
 	/**
 	 * A catalogue id that matches no catalogue answers 404 with a static message, and no publication search runs.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-4
 	 */
 	public function testIndexAnswers404ForAnUnknownCatalogId(): void {
 		$this->request->method('getParams')->willReturn([]);
@@ -2227,7 +2227,7 @@ class CatalogiServiceTest extends TestCase {
 	/**
 	 * Without a catalogue id, no catalogues at all is still an empty list, not a 404.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-4
 	 */
 	public function testIndexWithoutAnIdAndNoCatalogsIsAnEmptyList(): void {
 		$this->request->method('getParams')->willReturn([]);

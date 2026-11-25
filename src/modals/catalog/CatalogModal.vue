@@ -373,7 +373,7 @@ export default {
 		 * #form slot's own, validated by the Catalogi entity (inputValidation).
 		 *
 		 * @return {object} The dialog schema.
-		 * @spec openspec/changes/catalogs/tasks.md#task-9
+		 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-9
 		 */
 		dialogSchema() {
 			return { title: t('opencatalogi', 'Catalog'), properties: {} }
@@ -514,7 +514,7 @@ export default {
 		 *
 		 * @param {object} result `{ success: true }` or `{ error: string }`.
 		 * @return {void}
-		 * @spec openspec/changes/catalogs/tasks.md#task-9
+		 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-9
 		 */
 		showResult(result) {
 			this.$refs.formDialog?.setResult(result)
@@ -525,7 +525,7 @@ export default {
 		 *
 		 * @param {Error|undefined} error The rejection.
 		 * @return {string} The message.
-		 * @spec openspec/changes/catalogs/tasks.md#task-9
+		 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-9
 		 */
 		saveErrorMessage(error) {
 			if (error?.message) {
@@ -659,7 +659,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/catalogs/spec.md
-		 * @spec openspec/changes/catalogs/tasks.md#task-9
+		 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-9
 		 */
 		saveCatalog() {
 			if (this.isEdit && this.editLanguage !== SOURCE_LANGUAGE) {

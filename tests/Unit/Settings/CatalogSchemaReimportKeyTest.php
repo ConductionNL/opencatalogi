@@ -23,7 +23,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/catalogs/specs/catalogs/spec.md#requirement-cat-003-catalogs-stored-as-openregister-objects
+ * @spec openspec/changes/archive/2026-11-25-catalogs/specs/catalogs/spec.md#requirement-cat-003-catalogs-stored-as-openregister-objects
  */
 
 declare(strict_types=1);
@@ -45,7 +45,7 @@ class CatalogSchemaReimportKeyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/catalogs/specs/catalogs/spec.md#requirement-cat-003-catalogs-stored-as-openregister-objects
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/specs/catalogs/spec.md#requirement-cat-003-catalogs-stored-as-openregister-objects
 	 */
 	public function testExactlyOneSchemaCarriesTheCatalogSlug(): void {
 		$schemas = $this->effectiveRegister()['components']['schemas'] ?? [];
@@ -68,7 +68,7 @@ class CatalogSchemaReimportKeyTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/catalogs/specs/catalogs/spec.md#requirement-cat-003-catalogs-stored-as-openregister-objects
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/specs/catalogs/spec.md#requirement-cat-003-catalogs-stored-as-openregister-objects
 	 */
 	public function testThePublicationRegisterLinksTheCatalogSchema(): void {
 		$register = $this->effectiveRegister()['components']['registers']['publication'] ?? [];

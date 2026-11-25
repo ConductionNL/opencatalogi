@@ -6,7 +6,7 @@ Start a new OpenSpec change named `$ARGUMENTS` (kebab-case, describing what the 
 
 1. Read `openspec/config.yaml` for the rules on proposal, specs, design and tasks.
 2. Check `openspec/specs/` for the capability the change touches, and `openspec/changes/` for an open change that already covers it.
-3. Create `openspec/changes/<name>/` with, following an existing change such as `openspec/changes/catalogs/`:
+3. Create `openspec/changes/<name>/` with, following an existing change such as `openspec/changes/archive/2026-11-25-catalogs/`:
    - `proposal.md`: Summary, Motivation, Scope (in and out), Risks.
    - `design.md`: how it is built and which existing services it reuses (optional for small changes).
    - `tasks.md`: numbered tasks with spec references, files and acceptance criteria checkboxes.

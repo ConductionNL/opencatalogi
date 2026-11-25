@@ -243,7 +243,7 @@ export default {
 		/**
 		 * The label/value rows of the catalog's detail card; the description only when set.
 		 *
-		 * @spec openspec/changes/catalogs/tasks.md#task-9
+		 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-9
 		 * @return {Array<{label: string, value: string|number}>} The rows.
 		 */
 		catalogDetails() {

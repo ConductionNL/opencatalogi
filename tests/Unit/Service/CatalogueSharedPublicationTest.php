@@ -255,7 +255,7 @@ class CatalogueSharedPublicationTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/catalogs/specs/catalogs/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/specs/catalogs/spec.md
 	 */
 	public function testAnUnknownCatalogueListsNothing(): void {
 		$response = $this->service->index(catalogId: 'onbekend');
