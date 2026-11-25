@@ -8,7 +8,7 @@
  * after a confirmation, and the OpenRegister webhooks and integriq
  * synchronisations OpenCatalogi does not stop (instance-staging-mode REQ-STG-001).
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  */
 import { translate as t } from '@nextcloud/l10n'
 import { NcCheckboxRadioSwitch, NcNoteCard } from '@nextcloud/vue'

@@ -738,7 +738,7 @@ class NationalIndexService implements NationalIndexServiceInterface {
 	 *
 	 * @return array{answer: string, dryRun: true, reason: string}
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
 	 */
 	private static function dryRunAnswer(array $held): array {
 		return ['answer' => '', 'dryRun' => true, 'reason' => (string)($held['reason'] ?? '')];

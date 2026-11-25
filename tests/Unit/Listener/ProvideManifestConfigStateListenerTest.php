@@ -87,7 +87,7 @@ class ProvideManifestConfigStateListenerTest extends TestCase {
 	/**
 	 * A production instance tells the pages so, and they show no staging banner.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	public function testProvidesTheInstanceMode(): void {
 		$this->appConfig->method('getValueString')->willReturnCallback(

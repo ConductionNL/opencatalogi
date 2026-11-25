@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -36,7 +36,7 @@ use Throwable;
  * (a CriticalActionPerformedEvent, which the admin_audit app writes out).
  * Switching back to production replays nothing: dry runs stay as they are.
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  */
 class InstanceModeSwitch implements InstanceModeSwitchInterface {
 
@@ -52,7 +52,7 @@ class InstanceModeSwitch implements InstanceModeSwitchInterface {
 	 * @param IEventDispatcher $dispatcher Dispatches the audit event.
 	 * @param OutsideReach     $outside    Lists what can still leave outside OpenCatalogi.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -66,7 +66,7 @@ class InstanceModeSwitch implements InstanceModeSwitchInterface {
 	 *
 	 * @return array{mode: string, outside: array{webhooks: list<string>, synchronisations: list<string>}}
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	public function current(): array {
 		return ['mode' => $this->stored(), 'outside' => $this->outside->list()];
@@ -83,7 +83,7 @@ class InstanceModeSwitch implements InstanceModeSwitchInterface {
 	 *
 	 * @throws InvalidArgumentException When the mode is unknown or the change was not confirmed.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	public function change(string $mode, bool $confirmed, string $userId): array {
 		if (in_array($mode, self::MODES, true) === false) {

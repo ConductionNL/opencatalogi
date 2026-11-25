@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/instance-staging-mode/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/tasks.md#task-1.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -34,7 +34,7 @@ use RuntimeException;
 /**
  * OpenRegister's webhook mapper and object service are the boundaries.
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  */
 #[CoversClass(OutsideReach::class)]
 #[UsesClass(OpenRegisterLookup::class)]

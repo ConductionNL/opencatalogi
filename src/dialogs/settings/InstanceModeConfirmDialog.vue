@@ -7,7 +7,7 @@
  * Asks the administrator to confirm a change of instance mode before it is
  * saved, saying what the new mode does (instance-staging-mode REQ-STG-001).
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  */
 import { translate as t } from '@nextcloud/l10n'
 import { NcButton, NcDialog } from '@nextcloud/vue'

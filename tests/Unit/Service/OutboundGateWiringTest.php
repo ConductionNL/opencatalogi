@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/instance-staging-mode/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/tasks.md#task-2.2
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -66,7 +66,7 @@ use RuntimeException;
 /**
  * In staging a channel stores a dry run and sends nothing; in production it sends.
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
  */
 #[CoversClass(DryRunRecorder::class)]
 #[CoversClass(BroadcastService::class)]

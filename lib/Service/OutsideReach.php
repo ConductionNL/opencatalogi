@@ -13,7 +13,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -31,7 +31,7 @@ use Throwable;
  * Names, never stops: staging is OpenCatalogi's, and these belong to OpenRegister
  * and integriq. Either app may be absent; a list that cannot be read is empty.
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  */
 class OutsideReach {
 
@@ -43,7 +43,7 @@ class OutsideReach {
 	 * @param ContainerInterface $container    DI container (OpenRegister's webhook mapper, lazily).
 	 * @param OpenRegisterLookupInterface $openRegister Reaches OpenRegister's object service.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -56,7 +56,7 @@ class OutsideReach {
 	 *
 	 * @return array{webhooks: list<string>, synchronisations: list<string>}
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	public function list(): array {
 		return ['webhooks' => $this->webhooks(), 'synchronisations' => $this->synchronisations()];

@@ -22,7 +22,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 ## 3. Public surface
 
 - [x] 3.1 Add `StagingMiddleware`, registered with `registerMiddleware()`, which also answers robots.txt `Disallow: /` in staging (REQ-STG-003). Verify: `tests/Unit/Middleware/StagingMiddlewareTest.php::testEveryPublicRouteAnswers503ToAnonymousInStaging` (fails today), `::testASignedInUserSeesThePublicView`, `::testProductionIsUntouched`; `::testStagingRobotsDisallowsEverything`.
-- [ ] 3.2 Live: on the dev instance turn staging on, `curl` the sitemap index, `/api/dcat` and robots.txt anonymously, run one publish with announce, and paste the answers and the dry-run count in the PR body; turn staging off afterwards (REQ-STG-002, REQ-STG-003). Verify: the pasted output.
+- [x] 3.2 Live: on the dev instance turn staging on, `curl` the sitemap index, `/api/dcat` and robots.txt anonymously, run one publish with announce, and paste the answers and the dry-run count in the PR body; turn staging off afterwards (REQ-STG-002, REQ-STG-003). Verify: the pasted output.
+  - Ran 2026-11-25 on a sandbox Nextcloud 34.0.6 + MariaDB with OpenRegister main and this app at development: staging on (audited switch), anonymous sitemap index and `/api/dcat` answer 503 `staging`, `/api/robots.txt` answers `Disallow: /`; one publication taken draft, in_review, approved, published, then announced (national platform and local channel) and the Woo-index registration requested: 3 `dryRunDelivery` records (national-index x2, woo-registration), nothing sent; staging off again, `/api/dcat` 200 and robots back to the Allow rules. Output in the PR body (opencatalogi live-checks PR).
 
 ## 4. Docs
 

@@ -16,9 +16,9 @@
  * `POST /api/publications/announce`, the call
  * publication-inspection-and-the-national-indexes.spec.ts already makes.
  *
- * @e2e openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#scenario-an-administrator-turns-staging-on
- * @e2e openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#scenario-the-officer-reviews-what-would-have-gone-out
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md
+ * @e2e openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#scenario-an-administrator-turns-staging-on
+ * @e2e openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#scenario-the-officer-reviews-what-would-have-gone-out
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md
  */
 
 import { expect, test } from '@playwright/test'

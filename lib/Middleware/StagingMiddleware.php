@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/instance-staging-mode
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -43,7 +43,7 @@ use RuntimeException;
  * every caller `Disallow: /` in staging, so nothing is harvested whatever the
  * catalogues say.
  *
- * @spec openspec/changes/instance-staging-mode
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode
  */
 class StagingMiddleware extends Middleware {
 
@@ -79,7 +79,7 @@ class StagingMiddleware extends Middleware {
 	 *
 	 * @throws RuntimeException The staging marker, answered by afterException().
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-the-public-surface-is-closed-to-anonymous-callers-in-staging-req-stg-003
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-the-public-surface-is-closed-to-anonymous-callers-in-staging-req-stg-003
 	 */
 	public function beforeController($controller, $methodName): void {
 		if ($controller instanceof RobotsController) {
@@ -112,7 +112,7 @@ class StagingMiddleware extends Middleware {
 	 *
 	 * @throws \Exception Anything that is not the staging marker.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-the-public-surface-is-closed-to-anonymous-callers-in-staging-req-stg-003
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-the-public-surface-is-closed-to-anonymous-callers-in-staging-req-stg-003
 	 */
 	public function afterException($controller, $methodName, \Exception $exception): Response {
 		if (($exception instanceof RuntimeException) === false) {

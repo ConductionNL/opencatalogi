@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/instance-staging-mode
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -27,7 +27,7 @@ namespace OCA\OpenCatalogi\Service;
  * when the mode cannot be read, it answers no, and the channel records a
  * `dryRunDelivery` instead of sending, with `reason()` as its reason.
  *
- * @spec openspec/changes/instance-staging-mode
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode
  */
 class OutboundGate {
 
@@ -53,7 +53,7 @@ class OutboundGate {
 	 *
 	 * @return bool False in staging or when the mode cannot be read.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
 	 */
 	public function allow(string $channel): bool {
 		return $this->reason(channel: $channel) === null;
@@ -66,7 +66,7 @@ class OutboundGate {
 	 *
 	 * @return string|null The reason a dry run records.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
 	 */
 	public function reason(string $channel): ?string {
 		$staging = $this->mode->stagingReason();

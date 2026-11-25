@@ -33,7 +33,7 @@ interface InstanceModeInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-the-public-surface-is-closed-to-anonymous-callers-in-staging-req-stg-003
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-the-public-surface-is-closed-to-anonymous-callers-in-staging-req-stg-003
 	 */
 	public function isStaging(): bool;
 }//end interface
