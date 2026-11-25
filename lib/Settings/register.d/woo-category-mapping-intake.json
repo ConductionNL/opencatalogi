@@ -19,6 +19,7 @@
 		"schemas": {
 			"wooCategoryMapping": {
 				"slug": "wooCategoryMapping",
+				"x-openregister-demo-data": "The app ships its real per-type mapping rows as seed objects; a sample row would give every object of one type in another app a Woo category nobody chose.",
 				"title": "Woo category mapping",
 				"version": "0.1.0",
 				"published": "2026-11-14T00:00:00+00:00",
