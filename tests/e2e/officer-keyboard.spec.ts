@@ -48,10 +48,10 @@ async function focusState(page: Page): Promise<Focus> {
 	return page.evaluate(() => {
 		const indicatorOf = (element: Element): string => {
 			// The element and the wrappers a component draws its focus on (a
-			// switch's track, a select's toggle), up to three levels up.
+			// switch's track, a select's toggle), up to four levels up.
 			const parts: string[] = []
 			let node: Element | null = element
-			for (let level = 0; node && level < 4; level++, node = node.parentElement) {
+			for (let level = 0; node && level < 5; level++, node = node.parentElement) {
 				const style = getComputedStyle(node)
 				const outline = style.outlineStyle === 'none' ? 'none' : [style.outlineStyle, style.outlineWidth, style.outlineColor].join(' ')
 				parts.push(`${outline} | ${style.boxShadow}`)
