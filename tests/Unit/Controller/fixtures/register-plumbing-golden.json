@@ -6063,6 +6063,10 @@
             "status": 200,
             "data": null,
             "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
@@ -6098,6 +6102,13 @@
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
             }
         ]
     },
@@ -6107,6 +6118,10 @@
             "status": 200,
             "data": null,
             "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
@@ -6147,6 +6162,13 @@
                     "register": "cfg-listing_register",
                     "schema": "cfg-listing_schema"
                 }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
             }
         ]
     },
@@ -6242,6 +6264,10 @@
             "status": 200,
             "data": null,
             "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
                 "Content-Type": "application/json; charset=utf-8",
@@ -6277,6 +6303,13 @@
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
             }
         ]
     },
