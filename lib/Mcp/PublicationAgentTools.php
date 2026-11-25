@@ -349,8 +349,14 @@ class PublicationAgentTools {
 			return $result;
 		}
 
+		// OpenRegister points the row at the answer's top-level `id`; a created draft carries it under `publication`.
+		$recordedResult = $result;
+		if (isset($result['publication']['id']) === true) {
+			$recordedResult['id'] = $result['publication']['id'];
+		}
+
 		if (is_object($recorder) === true && method_exists($recorder, 'record') === true) {
-			$recorder->record(AppIdentity::APP_ID . '.' . $tool, $arguments, $result);
+			$recorder->record(AppIdentity::APP_ID . '.' . $tool, $arguments, $recordedResult);
 		}
 
 		return $result;

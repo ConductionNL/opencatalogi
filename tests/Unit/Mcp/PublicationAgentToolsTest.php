@@ -447,7 +447,8 @@ class PublicationAgentToolsTest extends TestCase {
 		);
 		$this->assertSame(expected: ['publication' => ['title' => 'Raadsbesluit']], actual: $recorder->calls[0][1]);
 		$this->assertSame(expected: ['ids' => [], 'reason' => 'R'], actual: $recorder->calls[2][1]);
-		$this->assertSame(expected: [$draft, $publish, $depublish, $archive], actual: array_column($recorder->calls, 2));
+		$this->assertSame(expected: $draft + ['id' => $draft['publication']['id']], actual: $recorder->calls[0][2]);
+		$this->assertSame(expected: [$publish, $depublish, $archive], actual: array_slice(array_column($recorder->calls, 2), 1));
 		$this->assertSame(expected: 'invalid_arguments', actual: $depublish['error']['code']);
 	}//end testEveryToolCallIsRecorded()
 }//end class
