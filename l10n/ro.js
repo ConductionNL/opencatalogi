@@ -856,7 +856,13 @@ OC.L10N.register(
         "These publications miss a field required to publish and will be skipped:": "Acestor publicații le lipsește un câmp obligatoriu pentru publicare și vor fi omise:",
         "Required to publish": "Obligatoriu pentru publicare",
         "Publisher RSIN": "RSIN-ul editorului",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN-ul organizației care publică, salvat atunci când este atașat un document."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN-ul organizației care publică, salvat atunci când este atașat un document.",
+        "Woo annual report": "Raport anual Woo",
+        "Year": "An",
+        "Generate annual report": "Generează raportul anual",
+        "The Woo annual report needs a newer OpenRegister.": "Raportul anual Woo necesită o versiune mai nouă de OpenRegister.",
+        "The annual report could not be generated.": "Raportul anual nu a putut fi generat.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Cifrele publicate ale unui an alături de cele ale anului precedent. Cererile Woo sunt raportate în dossiq."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

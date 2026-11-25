@@ -856,7 +856,13 @@ OC.L10N.register(
         "These publications miss a field required to publish and will be skipped:": "Disse publikasjonene mangler et felt som kreves for å publisere, og hoppes over:",
         "Required to publish": "Påkrevd for å publisere",
         "Publisher RSIN": "Utgiverens RSIN",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN for den publiserende organisasjonen, lagret når et dokument legges ved."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN for den publiserende organisasjonen, lagret når et dokument legges ved.",
+        "Woo annual report": "Woo-årsrapport",
+        "Year": "År",
+        "Generate annual report": "Lag årsrapport",
+        "The Woo annual report needs a newer OpenRegister.": "Woo-årsrapporten krever en nyere OpenRegister.",
+        "The annual report could not be generated.": "Årsrapporten kunne ikke lages.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "De publiserte tallene for et år ved siden av året før. Woo-forespørsler rapporteres i dossiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

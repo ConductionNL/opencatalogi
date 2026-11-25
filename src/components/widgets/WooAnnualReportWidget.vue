@@ -10,7 +10,7 @@
 		</NcNoteCard>
 		<template v-else>
 			<p>
-				{{ t('opencatalogi', 'The published publications of a year per category and per month, the publications without a creation date and the withdrawals, with the year before beside them. Woo requests are reported in dossiq.') }}
+				{{ t('opencatalogi', 'The published figures of a year beside the year before. Woo requests are reported in dossiq.') }}
 			</p>
 			<div class="woo-annual-report__fields">
 				<NcSelect
@@ -57,10 +57,7 @@ import { fetchAnnualReportAvailability, generateAnnualReport, reportYears } from
 export default {
 	name: 'WooAnnualReportWidget',
 	components: { NcButton, NcLoadingIcon, NcNoteCard, NcSelect },
-
-	props: {
-		content: { type: Object, default: () => ({}) },
-	},
+	inheritAttrs: false,
 
 	data() {
 		const years = reportYears()

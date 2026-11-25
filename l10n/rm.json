@@ -855,7 +855,13 @@
         "These publications miss a field required to publish and will be skipped:": "A questas publicaziuns manca in champ necessari per publitgar ed ellas vegnan sursiglidas:",
         "Required to publish": "Necessari per publitgar",
         "Publisher RSIN": "RSIN da l'editur",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "Il RSIN da l'organisaziun che publitgescha, memorisà cura ch'in document vegn agiuntà."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Il RSIN da l'organisaziun che publitgescha, memorisà cura ch'in document vegn agiuntà.",
+        "Woo annual report": "Rapport annual Woo",
+        "Year": "Onn",
+        "Generate annual report": "Crear il rapport annual",
+        "The Woo annual report needs a newer OpenRegister.": "Il rapport annual Woo dovra in OpenRegister pli nov.",
+        "The annual report could not be generated.": "Il rapport annual n'ha betg pudì vegnir creà.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Las cifras publitgadas d'in onn sper quellas da l'onn precedent. Dumondas Woo vegnan rapportadas en dossiq."
     },
     "plurals": {}
 }

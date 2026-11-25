@@ -856,7 +856,13 @@ OC.L10N.register(
         "These publications miss a field required to publish and will be skipped:": "Гэтым публікацыям не хапае поля, патрэбнага для публікацыі, і яны будуць прапушчаны:",
         "Required to publish": "Патрэбна для публікацыі",
         "Publisher RSIN": "RSIN выдаўца",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN арганізацыі-выдаўца, захоўваецца пры далучэнні дакумента."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN арганізацыі-выдаўца, захоўваецца пры далучэнні дакумента.",
+        "Woo annual report": "Гадавая справаздача Woo",
+        "Year": "Год",
+        "Generate annual report": "Стварыць гадавую справаздачу",
+        "The Woo annual report needs a newer OpenRegister.": "Для гадавой справаздачы Woo патрэбна навейшая версія OpenRegister.",
+        "The annual report could not be generated.": "Не ўдалося стварыць гадавую справаздачу.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Апублікаваныя даныя за год побач з данымі за папярэдні год. Пра запыты Woo справаздачаюцца ў dossiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

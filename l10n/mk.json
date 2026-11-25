@@ -855,7 +855,13 @@
         "These publications miss a field required to publish and will be skipped:": "На овие публикации им недостасува поле задолжително за објавување и ќе бидат прескокнати:",
         "Required to publish": "Задолжително за објавување",
         "Publisher RSIN": "RSIN на издавачот",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN на организацијата издавач, зачуван кога ќе се прикачи документ."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN на организацијата издавач, зачуван кога ќе се прикачи документ.",
+        "Woo annual report": "Годишен извештај Woo",
+        "Year": "Година",
+        "Generate annual report": "Направи годишен извештај",
+        "The Woo annual report needs a newer OpenRegister.": "Годишниот извештај Woo бара понов OpenRegister.",
+        "The annual report could not be generated.": "Годишниот извештај не можеше да се направи.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Објавените бројки за годината покрај оние од претходната година. Барањата Woo се известуваат во dossiq."
     },
     "plurals": {}
 }

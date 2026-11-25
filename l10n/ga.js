@@ -856,7 +856,13 @@ OC.L10N.register(
         "These publications miss a field required to publish and will be skipped:": "Tá réimse atá riachtanach le foilsiú in easnamh ar na foilseacháin seo agus scipeálfar iad:",
         "Required to publish": "Riachtanach le foilsiú",
         "Publisher RSIN": "RSIN an fhoilsitheora",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN na heagraíochta foilsitheoireachta, stóráilte nuair a cheanglaítear doiciméad."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN na heagraíochta foilsitheoireachta, stóráilte nuair a cheanglaítear doiciméad.",
+        "Woo annual report": "Tuarascáil bhliantúil Woo",
+        "Year": "Bliain",
+        "Generate annual report": "Cruthaigh tuarascáil bhliantúil",
+        "The Woo annual report needs a newer OpenRegister.": "Teastaíonn leagan níos nuaí de OpenRegister don tuarascáil bhliantúil Woo.",
+        "The annual report could not be generated.": "Níorbh fhéidir an tuarascáil bhliantúil a chruthú.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Na figiúirí foilsithe do bhliain taobh le figiúirí na bliana roimhe. Tuairiscítear iarratais Woo in dossiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

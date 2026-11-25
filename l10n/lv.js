@@ -856,7 +856,13 @@ OC.L10N.register(
         "These publications miss a field required to publish and will be skipped:": "Šīm publikācijām trūkst publicēšanai obligāta lauka, un tās tiks izlaistas:",
         "Required to publish": "Obligāts publicēšanai",
         "Publisher RSIN": "Izdevēja RSIN",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "Publicējošās organizācijas RSIN, saglabāts, kad tiek pievienots dokuments."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Publicējošās organizācijas RSIN, saglabāts, kad tiek pievienots dokuments.",
+        "Woo annual report": "Woo gada pārskats",
+        "Year": "Gads",
+        "Generate annual report": "Izveidot gada pārskatu",
+        "The Woo annual report needs a newer OpenRegister.": "Woo gada pārskatam nepieciešama jaunāka OpenRegister versija.",
+        "The annual report could not be generated.": "Gada pārskatu neizdevās izveidot.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Gada publicētie skaitļi blakus iepriekšējā gada skaitļiem. Par Woo pieprasījumiem ziņo dossiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

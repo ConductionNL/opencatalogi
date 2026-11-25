@@ -856,7 +856,13 @@ OC.L10N.register(
         "These publications miss a field required to publish and will be skipped:": "На тези публикации липсва поле, задължително за публикуване, и те ще бъдат пропуснати:",
         "Required to publish": "Задължително за публикуване",
         "Publisher RSIN": "RSIN на издателя",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN на публикуващата организация, записан при прикачване на документ."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN на публикуващата организация, записан при прикачване на документ.",
+        "Woo annual report": "Годишен доклад Woo",
+        "Year": "Година",
+        "Generate annual report": "Създай годишен доклад",
+        "The Woo annual report needs a newer OpenRegister.": "Годишният доклад Woo изисква по-нов OpenRegister.",
+        "The annual report could not be generated.": "Годишният доклад не можа да бъде създаден.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Публикуваните данни за годината до тези за предходната година. Исканията по Woo се отчитат в dossiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

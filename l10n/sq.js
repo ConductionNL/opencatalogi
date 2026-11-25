@@ -856,7 +856,13 @@ OC.L10N.register(
         "These publications miss a field required to publish and will be skipped:": "Këtyre publikimeve u mungon një fushë e detyrueshme për publikim dhe do të anashkalohen:",
         "Required to publish": "E detyrueshme për publikim",
         "Publisher RSIN": "RSIN i botuesit",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN i organizatës botuese, i ruajtur kur bashkëngjitet një dokument."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN i organizatës botuese, i ruajtur kur bashkëngjitet një dokument.",
+        "Woo annual report": "Raporti vjetor Woo",
+        "Year": "Viti",
+        "Generate annual report": "Krijo raportin vjetor",
+        "The Woo annual report needs a newer OpenRegister.": "Raporti vjetor Woo kërkon një OpenRegister më të ri.",
+        "The annual report could not be generated.": "Raporti vjetor nuk mund të krijohej.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Shifrat e publikuara të një viti pranë atyre të vitit të kaluar. Kërkesat Woo raportohen në dossiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

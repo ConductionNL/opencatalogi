@@ -855,7 +855,13 @@
         "These publications miss a field required to publish and will be skipped:": "Šioms publikacijoms trūksta laukelio, privalomo skelbimui, todėl jos bus praleistos:",
         "Required to publish": "Privaloma skelbimui",
         "Publisher RSIN": "Leidėjo RSIN",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "Skelbiančios organizacijos RSIN, išsaugomas pridedant dokumentą."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Skelbiančios organizacijos RSIN, išsaugomas pridedant dokumentą.",
+        "Woo annual report": "Woo metinė ataskaita",
+        "Year": "Metai",
+        "Generate annual report": "Sukurti metinę ataskaitą",
+        "The Woo annual report needs a newer OpenRegister.": "Woo metinei ataskaitai reikia naujesnės OpenRegister versijos.",
+        "The annual report could not be generated.": "Nepavyko sukurti metinės ataskaitos.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Paskelbti metų skaičiai šalia praėjusių metų. Apie Woo prašymus pranešama dossiq."
     },
     "plurals": {}
 }
