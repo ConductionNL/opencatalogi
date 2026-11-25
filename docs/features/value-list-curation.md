@@ -30,7 +30,7 @@ The admin settings page of OpenCatalogi has a **Category explanations** section 
 
 Above it, the **Organisation type** section asks what kind of organisation you publish for: gemeente, provincie, waterschap, gemeenschappelijke regeling, rijksoverheid, zelfstandig bestuursorgaan or other. Choosing a type hides nothing. It shows the categories the Woo does not apply to for that type, each with its legal basis: the article (Woo, article 3.3) and the scope the article gives the category, quoted as the national TOOI list records it. Every proposed category starts checked; uncheck the ones your organisation does publish, then press **Hide the checked categories**. Each is hidden as with the switch above, so a category with publications is refused and named, and the others are still hidden.
 
-The proposal comes from `lib/Settings/woo-category-applicability.json`. A category is only proposed where the article names the bodies it covers and your type is not among them; nothing is proposed for "other". What you confirm is stored as your own choice, so an upgrade that changes the table does not undo it.
+The proposal comes from `lib/Settings/category-applicability.json`. A category is only proposed where the article names the bodies it covers and your type is not among them; nothing is proposed for "other". What you confirm is stored as your own choice, so an upgrade that changes the table does not undo it.
 
 When the choices cannot be read, the section says so and shows the categories in the list's own order. No category is hidden because of an error.
 

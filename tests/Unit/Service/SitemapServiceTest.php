@@ -1058,10 +1058,12 @@ class SitemapServiceTest extends TestCase {
 	 * filter; the registry the sitemaps read still serves it, and a category with
 	 * publications cannot be hidden, so its index lists nothing.
 	 *
+	 * @return void
+	 *
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
 	 */
 	public function testAHiddenCategoryServesAnEmptyValidIndex(): void {
-		$store = $this->createMock(\OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore::class);
+		$store = $this->createMock(originalClassName: \OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore::class);
 		$store->method('forScheme')->willReturn(['https://identifier.overheid.nl/tooi/def/thes/kern/c_c76862ab' => ['hidden' => true, 'order' => null]]);
 		$curated = new \OCA\OpenCatalogi\Service\ValueList\CuratedCategoryRegistry(registry: $this->wooCategories, choices: $store);
 		$this->assertTrue(condition: $curated->all()['infocat007']['hidden'], message: 'the administrator hid it');
@@ -1071,11 +1073,18 @@ class SitemapServiceTest extends TestCase {
 			'availableRegisters' => [['title' => 'Woo', 'id' => 'reg-woo', 'schemas' => [['id' => 'sch-7', 'title' => 'Vergaderstukken Staten-Generaal']]]],
 			'configuration' => ['catalog_register' => 'cat-reg', 'catalog_schema' => 'cat-sch'],
 		]);
-		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$catalog = ['results' => [$this->createCatalogObj(schemas: ['sch-7'])]];
+		$objectService = $this->createMock(originalClassName: \OCA\OpenRegister\Service\ObjectService::class);
 		$objectService->method('searchObjectsPaginated')->willReturnCallback(
-			fn (array $query = []) => isset($query['slug']) === true ? ['results' => [$this->createCatalogObj(['sch-7'])]] : ['results' => [], 'total' => 0]
+			static function (array $query = []) use ($catalog): array {
+				if (isset($query['slug']) === true) {
+					return $catalog;
+				}
+
+				return ['results' => [], 'total' => 0];
+			}
 		);
-		$this->setupAppManagerAndContainer($objectService);
+		$this->setupAppManagerAndContainer(objectService: $objectService);
 		$this->urlGenerator->method('getBaseUrl')->willReturn('https://example.com');
 
 		$result = $this->service->buildSitemapIndex('my-catalog', 'sitemapindex-diwoo-infocat007.xml');

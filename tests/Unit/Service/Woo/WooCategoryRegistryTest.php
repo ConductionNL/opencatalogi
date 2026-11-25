@@ -131,7 +131,7 @@ class WooCategoryRegistryTest extends TestCase {
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
 	 */
 	public function testAHiddenCategoryKeepsItsSitemapIndexAndRobotsLine(): void {
-		$store = $this->createMock(\OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore::class);
+		$store = $this->createMock(originalClassName: \OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore::class);
 		$store->method('forScheme')->willReturn(
 			[TooiVocabularyService::KERN_BASE . 'c_c76862ab' => ['hidden' => true, 'order' => null]]
 		);
@@ -161,7 +161,7 @@ class WooCategoryRegistryTest extends TestCase {
 			}
 		};
 		$directives = new \OCA\OpenCatalogi\Controller\SitemapDirectives(
-			openRegister: $this->createMock(\OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface::class),
+			openRegister: $this->createMock(originalClassName: \OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface::class),
 			categories: $curated
 		);
 

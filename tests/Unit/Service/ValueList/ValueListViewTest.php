@@ -20,8 +20,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Service\ValueList;
 
 use OCA\OpenCatalogi\Service\ValueListsService;
+use OCA\OpenCatalogi\Service\ValueList\CategoryApplicability;
 use OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore;
-use OCA\OpenCatalogi\Service\ValueList\ValueListMerge;
 use OCA\OpenCatalogi\Service\ValueList\ValueListView;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -118,7 +118,12 @@ class ValueListViewTest extends TestCase {
 			$this->warned[] = $message;
 		});
 
-		return new ValueListView(lists: $lists, choices: $store, merge: new ValueListMerge(), logger: $logger);
+		return new ValueListView(
+			lists: $lists,
+			choices: $store,
+			logger: $logger,
+			applicability: $this->createMock(originalClassName: CategoryApplicability::class)
+		);
 	}//end view()
 
 	/**
@@ -246,4 +251,43 @@ class ValueListViewTest extends TestCase {
 		$this->assertSame(expected: 'Afspraken met andere partijen.', actual: $covenants['explanation']);
 		$this->assertTrue(condition: $covenants['hidden']);
 	}//end testTheOrganisationsOrderComesFirstThenTheSourceOrder()
+
+	/**
+	 * The view answers the organisation type with its proposal, and none before a type is set.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+	 */
+	public function testTheOrganisationTypeComesWithItsProposal(): void {
+		$stored = [];
+		$config = $this->createMock(originalClassName: \OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$stored): string {
+				return ($stored[$key] ?? $default);
+			}
+		);
+		$config->method('setValueString')->willReturnCallback(
+			static function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+		$view = new ValueListView(
+			lists: $this->lists(),
+			choices: $this->store(choices: []),
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			applicability: new CategoryApplicability(config: $config)
+		);
+
+		$before = $view->organisationType();
+		$this->assertNull(actual: $before['type']);
+		$this->assertSame(expected: [], actual: $before['proposal']);
+		$this->assertContains(needle: 'zelfstandig-bestuursorgaan', haystack: $before['types']);
+
+		$after = $view->setOrganisationType(type: 'zelfstandig-bestuursorgaan');
+		$this->assertSame(expected: 'zelfstandig-bestuursorgaan', actual: $after['type']);
+		$this->assertSame(expected: ['infocat006', 'infocat007', 'infocat008', 'infocat009'], actual: array_column($after['proposal'], 'category'));
+		$this->assertSame(expected: $after, actual: $view->organisationType());
+	}//end testTheOrganisationTypeComesWithItsProposal()
 }//end class

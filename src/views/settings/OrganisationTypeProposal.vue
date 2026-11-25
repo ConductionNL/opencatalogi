@@ -55,27 +55,24 @@
 					</p>
 				</li>
 			</ul>
-			<NcButton
-				variant="primary"
-				:disabled="busy || checked.length === 0"
-				data-testid="organisation-type-hide"
-				@click="hideChecked">
-				{{ t('opencatalogi', 'Hide the checked categories') }}
-			</NcButton>
+			<p class="organisation-type__actions">
+				<NcButton
+					variant="primary"
+					:disabled="busy || checked.length === 0"
+					data-testid="organisation-type-hide"
+					@click="hideChecked">
+					{{ t('opencatalogi', 'Hide the checked categories') }}
+				</NcButton>
+			</p>
 		</div>
 	</div>
 </template>
 
 <script>
 import axios from '@nextcloud/axios'
-import { translate as t } from '@nextcloud/l10n'
+import { t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import {
-	NcButton,
-	NcCheckboxRadioSwitch,
-	NcNoteCard,
-	NcSelect,
-} from '@nextcloud/vue'
+import { NcButton, NcCheckboxRadioSwitch, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import { CHOICES_URL } from './valueListOrder.js'
 
 /**
@@ -91,6 +88,7 @@ export const SCHEME = 'informatiecategorieen'
 /**
  * The label of each organisation type the server offers.
  *
+ * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
  * @return {object} Labels by type.
  */
 export function typeLabels() {
@@ -146,6 +144,7 @@ export default {
 		/**
 		 * The organisation types as select options.
 		 *
+		 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
 		 * @return {Array<object>} The options.
 		 */
 		typeOptions() {
@@ -156,6 +155,7 @@ export default {
 		/**
 		 * The option of the type set, or null.
 		 *
+		 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
 		 * @return {object|null} The option.
 		 */
 		selectedOption() {

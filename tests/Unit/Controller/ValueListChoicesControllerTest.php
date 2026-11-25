@@ -78,6 +78,15 @@ class ValueListChoicesControllerTest extends TestCase {
 
 			$this->saves[] = $choice;
 		});
+		$view->method('organisationType')->willReturn(['type' => null, 'types' => ['waterschap'], 'proposal' => []]);
+		$view->method('setOrganisationType')->willReturnCallback(function (string $type): array {
+			if ($type !== 'waterschap') {
+				throw new \InvalidArgumentException('Unknown organisation type: ' . $type);
+			}
+
+			$this->saves[] = ['organisationType' => $type];
+			return ['type' => $type, 'types' => ['waterschap'], 'proposal' => [['category' => 'infocat007']]];
+		});
 		$view->method('saveOrder')->willReturnCallback(function (string $scheme, array $entries): int {
 			$this->saves[] = ['order' => $entries, 'scheme' => $scheme];
 			return count($entries);
@@ -189,7 +198,7 @@ class ValueListChoicesControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheRoutesAreForAdministratorsOnly(): void {
-		foreach (['index', 'update', 'reorder'] as $name) {
+		foreach (['index', 'update', 'reorder', 'organisationType', 'setOrganisationType'] as $name) {
 			$method = new ReflectionMethod(objectOrMethod: ValueListChoicesController::class, method: $name);
 			$this->assertSame(expected: [], actual: $method->getAttributes(name: NoAdminRequired::class), message: $name);
 			$this->assertSame(expected: [], actual: $method->getAttributes(name: PublicPage::class), message: $name);
@@ -197,4 +206,25 @@ class ValueListChoicesControllerTest extends TestCase {
 			$this->assertStringNotContainsString(needle: '@NoAdminRequired', haystack: (string)$method->getDocComment());
 		}
 	}//end testTheRoutesAreForAdministratorsOnly()
+
+	/**
+	 * The organisation type is read and set through the view; an unknown type is refused before anything is stored.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+	 */
+	public function testTheOrganisationTypeIsReadAndSet(): void {
+		$this->assertNull(actual: $this->controller(params: [])->organisationType()->getData()['type']);
+
+		$response = $this->controller(params: ['type' => ' waterschap '])->setOrganisationType();
+		$this->assertSame(expected: 200, actual: $response->getStatus());
+		$this->assertSame(expected: ['infocat007'], actual: array_column($response->getData()['proposal'], 'category'));
+		$this->assertSame(expected: [['organisationType' => 'waterschap']], actual: $this->saves);
+
+		$refused = $this->controller(params: ['type' => 'kerkgenootschap'])->setOrganisationType();
+		$this->assertSame(expected: 400, actual: $refused->getStatus());
+		$this->assertSame(expected: 'Choose one of the listed organisation types.', actual: $refused->getData()['error']);
+		$this->assertCount(expectedCount: 1, haystack: $this->saves);
+	}//end testTheOrganisationTypeIsReadAndSet()
 }//end class

@@ -42,21 +42,29 @@ use Throwable;
 class ValueListView {
 
 	/**
+	 * Applies the choices to a list and orders it; stateless, so the view owns one.
+	 *
+	 * @var ValueListMerge
+	 */
+	private readonly ValueListMerge $merge;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param ValueListsService    $lists   The national lists, each through the service that owns it.
-	 * @param ValueListChoiceStore $choices The organisation's choices.
-	 * @param ValueListMerge       $merge   Applies the choices to the list and orders it.
-	 * @param LoggerInterface      $logger  Records a choice read that failed.
+	 * @param ValueListsService     $lists         The national lists, each through the service that owns it.
+	 * @param ValueListChoiceStore  $choices       The organisation's choices.
+	 * @param LoggerInterface       $logger        Records a choice read that failed.
+	 * @param CategoryApplicability $applicability The organisation type and the categories proposed for hiding for it.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
 		private readonly ValueListsService $lists,
 		private readonly ValueListChoiceStore $choices,
-		private readonly ValueListMerge $merge,
 		private readonly LoggerInterface $logger,
+		private readonly CategoryApplicability $applicability,
 	) {
+		$this->merge = new ValueListMerge();
 
 	}//end __construct()
 
@@ -127,4 +135,42 @@ class ValueListView {
 
 	}//end saveOrder()
 
+
+	/**
+	 * The organisation type, the types to choose from and the categories proposed for hiding for the type set.
+	 *
+	 * Reading or setting the type hides nothing: the administrator confirms
+	 * or changes the proposal per category through {@see save()}.
+	 *
+	 * @return array{type: string|null, types: list<string>, proposal: list<array<string, string>>}
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+	 */
+	public function organisationType(): array {
+		$type = $this->applicability->organisationType();
+		$proposal = [];
+		if ($type !== null) {
+			$proposal = $this->applicability->proposalFor(type: $type);
+		}
+
+		return ['type' => $type, 'types' => $this->applicability->types(), 'proposal' => $proposal];
+
+	}//end organisationType()
+
+	/**
+	 * Set the organisation type and answer it with its proposal.
+	 *
+	 * @param string $type One of the types the table offers.
+	 *
+	 * @return array{type: string|null, types: list<string>, proposal: list<array<string, string>>}
+	 *
+	 * @throws \InvalidArgumentException For an unknown type.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+	 */
+	public function setOrganisationType(string $type): array {
+		$this->applicability->setOrganisationType(type: $type);
+		return $this->organisationType();
+
+	}//end setOrganisationType()
 }//end class

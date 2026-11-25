@@ -27,11 +27,11 @@ use OCA\OpenCatalogi\Service\ValueList\CategoryApplicability;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every entry of `lib/Settings/woo-category-applicability.json` cites the Woo and quotes the scope it rests on.
+ * Every entry of `lib/Settings/category-applicability.json` cites the Woo and quotes the scope it rests on.
  *
  * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
  */
-class WooCategoryApplicabilityTest extends TestCase {
+class CategoryApplicabilityTableTest extends TestCase {
 
 	/**
 	 * The shipped table.

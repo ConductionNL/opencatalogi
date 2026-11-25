@@ -128,7 +128,7 @@ class CategoryApplicabilityTest extends TestCase {
 		$this->stored[CategoryApplicability::TYPE_KEY] = 'kerkgenootschap';
 		$this->assertNull(actual: $applicability->organisationType());
 
-		$this->expectException(InvalidArgumentException::class);
+		$this->expectException(exception: InvalidArgumentException::class);
 		$applicability->setOrganisationType(type: 'kerkgenootschap');
 	}//end testTheTypeIsStoredAndAnUnknownOneRefused()
 
@@ -139,7 +139,7 @@ class CategoryApplicabilityTest extends TestCase {
 	 */
 	public function testAnEntryWithoutACitedBasisIsNotProposed(): void {
 		$file = $this->tableFile(
-			(string)json_encode(
+			json: (string)json_encode(
 				[
 					'types' => ['gemeente'],
 					'entries' => [
@@ -160,7 +160,7 @@ class CategoryApplicabilityTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnUnreadableTableProposesNothing(): void {
-		$applicability = $this->applicability(file: $this->tableFile('not json'));
+		$applicability = $this->applicability(file: $this->tableFile(json: 'not json'));
 
 		$this->assertSame(expected: [], actual: $applicability->types());
 		$this->assertSame(expected: [], actual: $applicability->proposalFor(type: 'gemeente'));

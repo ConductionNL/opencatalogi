@@ -5,7 +5,7 @@
  *
  * The organisation type an installation publishes as, and the information
  * categories the Woo does not apply to for that type. The table is shipped in
- * `lib/Settings/woo-category-applicability.json`, each entry citing the scope
+ * `lib/Settings/category-applicability.json`, each entry citing the scope
  * the Woo article gives the category. It is only a proposal: the administrator
  * confirms or changes it per category, and what they confirm is written as
  * `hidden` on the category's value-list choice, never into the shipped file, so
@@ -49,7 +49,7 @@ class CategoryApplicability {
 	 *
 	 * @var string
 	 */
-	public const TABLE = __DIR__ . '/../../Settings/woo-category-applicability.json';
+	public const TABLE = __DIR__ . '/../../Settings/category-applicability.json';
 
 	/**
 	 * The table, read once.
@@ -179,7 +179,11 @@ class CategoryApplicability {
 			return $this->table;
 		}
 
-		$raw = is_readable($this->file) === true ? json_decode((string)file_get_contents($this->file), true) : null;
+		$raw = null;
+		if (is_readable($this->file) === true) {
+			$raw = json_decode((string)file_get_contents($this->file), true);
+		}
+
 		$types = array_values(array_map('strval', (array)($raw['types'] ?? [])));
 		$entries = array_values(array_filter((array)($raw['entries'] ?? []), 'is_array'));
 		$this->table = ['types' => $types, 'entries' => $entries];

@@ -20,7 +20,7 @@ jest.mock('@nextcloud/axios', () => ({
 	__esModule: true,
 	default: { get: jest.fn(), put: jest.fn() },
 }))
-jest.mock('@nextcloud/l10n', () => ({ translate: (app, text) => text }))
+jest.mock('@nextcloud/l10n', () => ({ t: (app, text) => text }))
 jest.mock('@nextcloud/router', () => ({ generateUrl: (path) => path }))
 jest.mock('@nextcloud/vue', () => ({
 	NcButton: {},
