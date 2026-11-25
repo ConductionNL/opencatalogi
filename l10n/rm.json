@@ -876,7 +876,10 @@
         "Move {label} up": "Spustar {label} ensi",
         "Move {label} down": "Spustar {label} engiu",
         "{label} is now at position {position}.": "{label} è ussa sin la posiziun {position}.",
-        "Name the list and its entries in their new order.": "Numnai la glista e sias endataziuns en la nova successiun."
+        "Name the list and its entries in their new order.": "Numnai la glista e sias endataziuns en la nova successiun.",
+        "Hide from pick lists": "Zuppentar en las glistas da tscherna",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "I na po betg vegnir controllà sch’i dat publicaziuns en questa categoria, perquai na vegn ella betg zuppentada.",
+        "Move the %s publications filed under this category before hiding it.": "Spustai las %s publicaziuns da questa categoria avant che la zuppentar."
     },
     "plurals": {}
 }

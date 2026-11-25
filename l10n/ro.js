@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Mută {label} în sus",
         "Move {label} down": "Mută {label} în jos",
         "{label} is now at position {position}.": "{label} este acum pe poziția {position}.",
-        "Name the list and its entries in their new order.": "Indicați lista și intrările ei în noua ordine."
+        "Name the list and its entries in their new order.": "Indicați lista și intrările ei în noua ordine.",
+        "Hide from pick lists": "Ascunde în listele de selecție",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Nu se poate verifica dacă există publicații în această categorie, așa că nu este ascunsă.",
+        "Move the %s publications filed under this category before hiding it.": "Mutați cele %s publicații din această categorie înainte de a o ascunde."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

@@ -876,7 +876,10 @@
         "Move {label} up": "Przenieś {label} w górę",
         "Move {label} down": "Przenieś {label} w dół",
         "{label} is now at position {position}.": "{label} jest teraz na pozycji {position}.",
-        "Name the list and its entries in their new order.": "Wskaż listę i jej pozycje w nowej kolejności."
+        "Name the list and its entries in their new order.": "Wskaż listę i jej pozycje w nowej kolejności.",
+        "Hide from pick lists": "Ukryj na listach wyboru",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Nie można sprawdzić, czy w tej kategorii są publikacje, więc nie zostanie ukryta.",
+        "Move the %s publications filed under this category before hiding it.": "Przenieś %s publikacji z tej kategorii, zanim ją ukryjesz."
     },
     "plurals": {}
 }

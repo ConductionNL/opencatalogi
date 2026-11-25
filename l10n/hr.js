@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Pomakni {label} gore",
         "Move {label} down": "Pomakni {label} dolje",
         "{label} is now at position {position}.": "{label} je sada na mjestu {position}.",
-        "Name the list and its entries in their new order.": "Navedite popis i njegove stavke novim redoslijedom."
+        "Name the list and its entries in their new order.": "Navedite popis i njegove stavke novim redoslijedom.",
+        "Hide from pick lists": "Sakrij na popisima za odabir",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ne može se provjeriti ima li publikacija u ovoj kategoriji, pa se ne skriva.",
+        "Move the %s publications filed under this category before hiding it.": "Premjestite %s publikacija iz ove kategorije prije nego što je sakrijete."
     },
     "nplurals=2; plural=(n != 1);"
 )

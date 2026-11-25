@@ -876,7 +876,10 @@
         "Move {label} up": "Flytt {label} opp",
         "Move {label} down": "Flytt {label} ned",
         "{label} is now at position {position}.": "{label} er nå på plass {position}.",
-        "Name the list and its entries in their new order.": "Angi listen og oppføringene i den nye rekkefølgen."
+        "Name the list and its entries in their new order.": "Angi listen og oppføringene i den nye rekkefølgen.",
+        "Hide from pick lists": "Skjul i valglister",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Det kan ikke kontrolleres om det finnes publikasjoner i denne kategorien, så den skjules ikke.",
+        "Move the %s publications filed under this category before hiding it.": "Flytt de %s publikasjonene i denne kategorien før du skjuler den."
     },
     "plurals": {}
 }

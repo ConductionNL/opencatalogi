@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Перамясціць {label} уверх",
         "Move {label} down": "Перамясціць {label} уніз",
         "{label} is now at position {position}.": "{label} цяпер на пазіцыі {position}.",
-        "Name the list and its entries in their new order.": "Пазначце спіс і яго элементы ў новым парадку."
+        "Name the list and its entries in their new order.": "Пазначце спіс і яго элементы ў новым парадку.",
+        "Hide from pick lists": "Схаваць у спісах выбару",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Немагчыма праверыць, ці ёсць публікацыі ў гэтай катэгорыі, таму яна не схавана.",
+        "Move the %s publications filed under this category before hiding it.": "Перанясіце %s публікацый з гэтай катэгорыі, перш чым яе схаваць."
     },
     "nplurals=2; plural=(n != 1);"
 )

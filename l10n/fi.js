@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Siirrä {label} ylös",
         "Move {label} down": "Siirrä {label} alas",
         "{label} is now at position {position}.": "{label} on nyt sijalla {position}.",
-        "Name the list and its entries in their new order.": "Nimeä luettelo ja sen kohteet uudessa järjestyksessä."
+        "Name the list and its entries in their new order.": "Nimeä luettelo ja sen kohteet uudessa järjestyksessä.",
+        "Hide from pick lists": "Piilota valintaluetteloista",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ei voida tarkistaa, onko tässä luokassa julkaisuja, joten sitä ei piiloteta.",
+        "Move the %s publications filed under this category before hiding it.": "Siirrä tämän luokan %s julkaisua ennen sen piilottamista."
     },
     "nplurals=2; plural=(n != 1);"
 )

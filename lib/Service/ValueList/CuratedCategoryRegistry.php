@@ -9,8 +9,12 @@
  * what {@see all()} answers by the `order` of each member's value-list choice:
  * ordered members first, lowest first, then the rest in the set's own order.
  * A local category follows the member it publishes under. Everything else is
- * the wrapped registry's answer, unchanged: ordering decides what an officer
- * sees first, never what is published.
+ * the wrapped registry's answer, unchanged: the sitemaps, robots.txt and the
+ * national index keep every category, so a hidden category's sitemap index is
+ * still served (empty, since a category with publications cannot be hidden).
+ * Each record says whether the administrator hid it (`hidden`), so the
+ * officer's list can leave it out while the sitemaps keep it.
+ * Ordering and hiding decide what an officer is offered, never what is published.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service\ValueList
@@ -69,7 +73,10 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 	}//end __construct()
 
 	/**
-	 * Every category, keyed by code, in the administrator's order.
+	 * Every category, keyed by code, in the administrator's order, each with `hidden`.
+	 *
+	 * A hidden category stays in the set: the sitemaps and the completeness
+	 * checks keep reading it. Only the officer's list leaves it out.
 	 *
 	 * When the choices cannot be read the set is answered in its own order:
 	 * an unreadable order never hides or drops a category.
@@ -177,7 +184,7 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 	}//end resolveForDocument()
 
 	/**
-	 * The set in the order of the choices: ordered first, lowest first, then the set's own order.
+	 * The set in the order of the choices (ordered first, lowest first, then the set's own order), each record marked `hidden`.
 	 *
 	 * @param array<string, array<string, mixed>>  $set     The categories, keyed by code.
 	 * @param array<string, array<string, mixed>> $choices The choices by entry URI.
@@ -188,7 +195,9 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 		$keys = [];
 		$position = 0;
 		foreach ($set as $code => $record) {
-			$order = ($choices[(string)($record['tooiUri'] ?? '')]['order'] ?? null);
+			$choice = ($choices[(string)($record['tooiUri'] ?? '')] ?? []);
+			$set[$code]['hidden'] = (($choice['hidden'] ?? false) === true);
+			$order = ($choice['order'] ?? null);
 			$unordered = (int)($order === null);
 			$keys[$code] = [$unordered, (int)$order, $position];
 			$position++;

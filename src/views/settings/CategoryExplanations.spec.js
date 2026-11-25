@@ -28,7 +28,12 @@ jest.mock('@nextcloud/l10n', () => ({
 }))
 jest.mock('@nextcloud/router', () => ({ generateUrl: (path) => path }))
 jest.mock('@nextcloud/dialogs', () => ({ showSuccess: jest.fn() }))
-jest.mock('@nextcloud/vue', () => ({ NcButton: {}, NcNoteCard: {}, NcTextArea: {} }))
+jest.mock('@nextcloud/vue', () => ({
+	NcButton: {},
+	NcCheckboxRadioSwitch: {},
+	NcNoteCard: {},
+	NcTextArea: {},
+}))
 
 const COVENANTS = {
 	code: 'infocat011',
@@ -152,5 +157,33 @@ describe('CategoryExplanations', () => {
 		expect(s.error).toBe('The choice could not be saved: nope')
 		await s.move(0, -1)
 		expect(axios.put).toHaveBeenCalledTimes(1)
+	})
+
+	it('hides a category, and shows the refusal when publications are filed under it', async () => {
+		axios.put.mockResolvedValueOnce({
+			data: {
+				entries: [{ ...COVENANTS, hidden: true }],
+				choicesUnavailable: false,
+			},
+		})
+		const s = state()
+		await s.hide(COVENANTS, true)
+		expect(axios.put).toHaveBeenCalledWith(CHOICES_URL, {
+			scheme: SCHEME,
+			entry: COVENANTS.uri,
+			choice: { hidden: true },
+		})
+		expect(s.entries[0].hidden).toBe(true)
+
+		axios.put.mockRejectedValueOnce({
+			response: {
+				data: {
+					error: 'The choice could not be saved: Move the 3 publications filed under this category before hiding it.',
+				},
+			},
+		})
+		await s.hide(COVENANTS, true)
+		expect(s.error).toContain('3 publications')
+		expect(s.saving).toBeNull()
 	})
 })

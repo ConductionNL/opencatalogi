@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "{label} öğesini yukarı taşı",
         "Move {label} down": "{label} öğesini aşağı taşı",
         "{label} is now at position {position}.": "{label} şimdi {position}. sırada.",
-        "Name the list and its entries in their new order.": "Listeyi ve öğelerini yeni sıralarıyla belirtin."
+        "Name the list and its entries in their new order.": "Listeyi ve öğelerini yeni sıralarıyla belirtin.",
+        "Hide from pick lists": "Seçim listelerinde gizle",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Bu kategoride yayın olup olmadığı denetlenemiyor, bu nedenle gizlenmiyor.",
+        "Move the %s publications filed under this category before hiding it.": "Gizlemeden önce bu kategorideki %s yayını taşıyın."
     },
     "nplurals=2; plural=(n != 1);"
 )

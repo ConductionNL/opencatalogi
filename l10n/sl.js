@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Premakni {label} gor",
         "Move {label} down": "Premakni {label} dol",
         "{label} is now at position {position}.": "{label} je zdaj na mestu {position}.",
-        "Name the list and its entries in their new order.": "Navedite seznam in njegove vnose v novem vrstnem redu."
+        "Name the list and its entries in their new order.": "Navedite seznam in njegove vnose v novem vrstnem redu.",
+        "Hide from pick lists": "Skrij na izbirnih seznamih",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ni mogoče preveriti, ali so v tej kategoriji objave, zato ni skrita.",
+        "Move the %s publications filed under this category before hiding it.": "Premaknite %s objav iz te kategorije, preden jo skrijete."
     },
     "nplurals=2; plural=(n != 1);"
 )

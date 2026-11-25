@@ -876,7 +876,10 @@
         "Move {label} up": "{label} no uewen réckelen",
         "Move {label} down": "{label} no ënne réckelen",
         "{label} is now at position {position}.": "{label} ass elo op der Plaz {position}.",
-        "Name the list and its entries in their new order.": "Nennt d’Lëscht an hir Antréeën an der neier Reiefolleg."
+        "Name the list and its entries in their new order.": "Nennt d’Lëscht an hir Antréeën an der neier Reiefolleg.",
+        "Hide from pick lists": "An de Wiellëschten verstoppen",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Et kann net gepréift ginn, ob Publikatiounen ënner dëser Kategorie sinn, dofir gëtt se net verstoppt.",
+        "Move the %s publications filed under this category before hiding it.": "Réckelt déi %s Publikatiounen ënner dëser Kategorie, ier Dir se verstoppt."
     },
     "plurals": {}
 }

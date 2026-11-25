@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Bog {label} suas",
         "Move {label} down": "Bog {label} síos",
         "{label} is now at position {position}.": "Tá {label} anois in áit {position}.",
-        "Name the list and its entries in their new order.": "Ainmnigh an liosta agus a iontrálacha san ord nua."
+        "Name the list and its entries in their new order.": "Ainmnigh an liosta agus a iontrálacha san ord nua.",
+        "Hide from pick lists": "Folaigh sna liostaí roghnaithe",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ní féidir a sheiceáil an bhfuil foilseacháin faoin gcatagóir seo, mar sin níl sí folaithe.",
+        "Move the %s publications filed under this category before hiding it.": "Bog na %s foilseachán faoin gcatagóir seo sula bhfolaíonn tú í."
     },
     "nplurals=2; plural=(n != 1);"
 )

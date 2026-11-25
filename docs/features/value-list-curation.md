@@ -26,14 +26,15 @@ The admin settings page of OpenCatalogi has a **Category explanations** section 
 
 - **Explanation.** Write the text and press **Save explanation**. The portal shows it where a citizen chooses the category filter.
 - **Move up / Move down.** Changes the place of a category. The buttons work from the keyboard, and a screen reader hears where the category is now. The order is saved immediately.
+- **Hide from pick lists.** An officer is no longer offered the category, and the public filter leaves it out. A category with publications filed under it cannot be hidden: the refusal says how many publications to move first. When those publications cannot be counted, the category is not hidden either.
 
 When the choices cannot be read, the section says so and shows the categories in the list's own order. No category is hidden because of an error.
 
 ## Where the choices show
 
-- `GET /api/woo/categories` (signed-in users) lists the information categories in the administrator's order. The pickers that read it, such as the catalogue's retention defaults, follow that order.
+- `GET /api/woo/categories` (signed-in users) lists the information categories that are not hidden, in the administrator's order. The pickers that read it, such as the catalogue's retention defaults, follow it.
 - `GET /api/woo/categories/public` (anyone, CORS) answers the categories that are not hidden, as `{code, uri, label, explanation, order}`, in the administrator's order, with `choicesUnavailable` when the choices could not be read. This is what a portal's category filter reads.
-- The sitemaps, `robots.txt` and the national-index registration are not affected by the order: ordering decides what an officer sees first, never what is published.
+- The sitemaps, `robots.txt` and the national-index registration are not affected by the order or by hiding: a hidden category keeps its sitemap index, which is empty because a category with publications cannot be hidden. Ordering and hiding decide what an officer is offered, never what is published.
 
 ## For integrators
 
@@ -49,4 +50,4 @@ A refused save answers `422` with the reason; a request that names an unknown li
 ## Not yet
 
 - The publication form's category, handling and document type pickers render the schema's own list and do not follow the order yet.
-- Hiding a category by organisation type, and activating the organisations an installation publishes for, are planned in the same change (`woo-value-list-curation`).
+- A proposal of which categories do not apply to an organisation type, and activating the organisations an installation publishes for, are planned in the same change (`woo-value-list-curation`).

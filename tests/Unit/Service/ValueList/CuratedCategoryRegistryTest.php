@@ -92,7 +92,7 @@ class CuratedCategoryRegistryTest extends TestCase {
 		])->all();
 
 		$this->assertSame(expected: ['infocat013', 'subsidieregeling', 'infocat011', 'infocat001'], actual: array_keys($all));
-		$this->assertSame(expected: self::set()['infocat001'], actual: $all['infocat001']);
+		$this->assertSame(expected: self::set()['infocat001'] + ['hidden' => false], actual: $all['infocat001']);
 	}//end testTheAdministratorsOrderWins()
 
 	/**
@@ -139,4 +139,30 @@ class CuratedCategoryRegistryTest extends TestCase {
 		$this->assertSame(expected: ['code' => 'infocat001'], actual: $registry->findBySitemapFile(sitemapFile: 'sitemapindex-diwoo-infocat001.xml'));
 		$this->assertSame(expected: 'Wetten', actual: $registry->resolveForDocument(value: 'infocat001')['label']);
 	}//end testEveryOtherAnswerIsTheWrappedRegistrys()
+	/**
+	 * A hidden category, and the local category under it, stay in the set marked hidden; the sitemaps are untouched.
+	 *
+	 * @return void
+	 */
+	public function testAHiddenCategoryStaysInTheSetMarkedHidden(): void {
+		$registry = $this->registry(choices: [self::KERN . 'c_cf268088' => ['order' => null, 'hidden' => true]]);
+		$all = $registry->all();
+
+		$this->assertSame(expected: array_keys(self::set()), actual: array_keys($all));
+		$this->assertTrue(condition: $all['infocat013']['hidden']);
+		$this->assertTrue(condition: $all['subsidieregeling']['hidden']);
+		$this->assertFalse(condition: $all['infocat011']['hidden']);
+		$this->assertSame(expected: ['sitemapindex-diwoo-infocat001.xml' => 'Wetten'], actual: $registry->sitemapFiles());
+	}//end testAHiddenCategoryStaysInTheSetMarkedHidden()
+
+	/**
+	 * Unreadable choices hide nothing.
+	 *
+	 * @return void
+	 */
+	public function testUnreadableChoicesHideNothing(): void {
+		$all = $this->registry(choices: null)->all();
+
+		$this->assertSame(expected: [], actual: array_filter(array_column($all, 'hidden')));
+	}//end testUnreadableChoicesHideNothing()
 }//end class

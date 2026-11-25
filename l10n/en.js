@@ -2253,7 +2253,10 @@ OC.L10N.register(
         "Move {label} up": "Move {label} up",
         "Move {label} down": "Move {label} down",
         "{label} is now at position {position}.": "{label} is now at position {position}.",
-        "Name the list and its entries in their new order.": "Name the list and its entries in their new order."
+        "Name the list and its entries in their new order.": "Name the list and its entries in their new order.",
+        "Hide from pick lists": "Hide from pick lists",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Whether publications are filed under this category cannot be checked, so it is not hidden.",
+        "Move the %s publications filed under this category before hiding it.": "Move the %s publications filed under this category before hiding it."
     },
     "nplurals=2; plural=(n != 1);"
 )

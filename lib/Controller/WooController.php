@@ -134,6 +134,7 @@ class WooController extends Controller {
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-editor-is-offered-the-17-categories-req-wpc-003
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
 	 *
 	 * @no-admin-idor-exempt Returns the information categories, the same rows for
 	 *   every caller: a controlled vocabulary plus this instance's own additions,
@@ -147,7 +148,9 @@ class WooController extends Controller {
 
 		$rows = [];
 		foreach ($this->categories->all() as $code => $category) {
-			$rows[] = $this->categoryRow(code: $code, category: $category);
+			if (($category['hidden'] ?? false) !== true) {
+				$rows[] = $this->categoryRow(code: $code, category: $category);
+			}
 		}
 
 		return new JSONResponse(['results' => $rows, 'total' => count($rows)]);

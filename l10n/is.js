@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Færa {label} upp",
         "Move {label} down": "Færa {label} niður",
         "{label} is now at position {position}.": "{label} er nú í sæti {position}.",
-        "Name the list and its entries in their new order.": "Tilgreindu listann og færslur hans í nýju röðinni."
+        "Name the list and its entries in their new order.": "Tilgreindu listann og færslur hans í nýju röðinni.",
+        "Hide from pick lists": "Fela í vallistum",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ekki er hægt að athuga hvort útgáfur séu skráðar í þennan flokk, svo hann er ekki falinn.",
+        "Move the %s publications filed under this category before hiding it.": "Færðu þær %s útgáfur sem eru í þessum flokki áður en þú felur hann."
     },
     "nplurals=2; plural=(n != 1);"
 )

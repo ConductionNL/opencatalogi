@@ -393,4 +393,55 @@ class WooControllerTest extends TestCase {
 		$attributes = (new \ReflectionMethod(WooController::class, 'verifyRedaction'))->getAttributes(\OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting::class);
 		$this->assertCount(1, $attributes, 'the same right as updateAssessment');
 	}//end testVerifyRedactionOfAMissingAssessmentIs400AndTheRouteIsAPost()
+
+	/**
+	 * A category the administrator hid is not offered to an officer (REQ-WVL-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/tasks.md#task-4.2
+	 */
+	public function testAHiddenCategoryIsNotOffered(): void {
+		$this->authenticate();
+		$registry = $this->createMock(originalClassName: \OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface::class);
+		$registry->method('all')->willReturn([
+			'infocat007' => self::categoryRecord(code: 'infocat007', label: 'Vergaderstukken Staten-Generaal', hidden: true),
+			'infocat011' => self::categoryRecord(code: 'infocat011', label: 'Convenanten', hidden: false),
+		]);
+		$l10n = $this->createMock(originalClassName: IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
+		$controller = new WooController(
+			appName: 'opencatalogi',
+			request: $this->request,
+			wooService: $this->wooService,
+			l10n: $l10n,
+			userSession: $this->userSession,
+			categories: $registry
+		);
+
+		$rows = $controller->categories()->getData()['results'];
+
+		$this->assertSame(expected: ['infocat011'], actual: array_column($rows, 'code'));
+	}//end testAHiddenCategoryIsNotOffered()
+
+	/**
+	 * One category record as the registry answers it.
+	 *
+	 * @param string $code   The code.
+	 * @param string $label  The label.
+	 * @param bool   $hidden Whether the administrator hid it.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function categoryRecord(string $code, string $label, bool $hidden): array {
+		return [
+			'label' => $label,
+			'labelEn' => $label,
+			'tooiUri' => 'https://identifier.overheid.nl/tooi/def/thes/kern/' . $code,
+			'mapsTo' => $code,
+			'origin' => 'waardelijst',
+			'sitemapFile' => 'sitemapindex-diwoo-' . $code . '.xml',
+			'hidden' => $hidden,
+		];
+	}//end categoryRecord()
 }//end class

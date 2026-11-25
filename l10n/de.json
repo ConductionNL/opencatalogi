@@ -876,7 +876,10 @@
         "Move {label} up": "{label} nach oben verschieben",
         "Move {label} down": "{label} nach unten verschieben",
         "{label} is now at position {position}.": "{label} steht jetzt an Position {position}.",
-        "Name the list and its entries in their new order.": "Nennen Sie die Liste und ihre Einträge in der neuen Reihenfolge."
+        "Name the list and its entries in their new order.": "Nennen Sie die Liste und ihre Einträge in der neuen Reihenfolge.",
+        "Hide from pick lists": "In Auswahllisten ausblenden",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ob Veröffentlichungen unter dieser Kategorie abgelegt sind, kann nicht geprüft werden, daher wird sie nicht ausgeblendet.",
+        "Move the %s publications filed under this category before hiding it.": "Verschieben Sie die %s Veröffentlichungen unter dieser Kategorie, bevor Sie sie ausblenden."
     },
     "plurals": {}
 }

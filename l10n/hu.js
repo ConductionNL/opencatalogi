@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "{label} feljebb helyezése",
         "Move {label} down": "{label} lejjebb helyezése",
         "{label} is now at position {position}.": "{label} most a(z) {position}. helyen áll.",
-        "Name the list and its entries in their new order.": "Adja meg a listát és tételeit az új sorrendben."
+        "Name the list and its entries in their new order.": "Adja meg a listát és tételeit az új sorrendben.",
+        "Hide from pick lists": "Elrejtés a választólistákban",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Nem ellenőrizhető, vannak-e kiadványok ebben a kategóriában, ezért nem rejtjük el.",
+        "Move the %s publications filed under this category before hiding it.": "Helyezze át a kategória %s kiadványát, mielőtt elrejti."
     },
     "nplurals=2; plural=(n != 1);"
 )
