@@ -53,7 +53,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+ * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
  */
 class Application extends App implements IBootstrap {
 	public const APP_ID = AppIdentity::APP_ID;
@@ -85,7 +85,7 @@ class Application extends App implements IBootstrap {
 	 * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
-	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
 	 */
 	public function register(IRegistrationContext $context): void {
 		include_once __DIR__ . '/../../vendor/autoload.php';
@@ -235,7 +235,7 @@ class Application extends App implements IBootstrap {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-setup-wizard-gates-the-shell-on-required-publishing-configuration-onb-001
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-setup-wizard-gates-the-shell-on-required-publishing-configuration-onb-001
 	 */
 	public function boot(IBootContext $context): void {
 		// ONB-001: a clean `app:install` / `app:enable` runs no <post-migration>
@@ -284,7 +284,7 @@ class Application extends App implements IBootstrap {
 	 *
 	 * @return Controller|null The stand-in, or null when OpenRegister is new enough.
 	 *
-	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
 	 */
 	private static function standIn(ContainerInterface $container, bool $health): ?Controller {
 		$compatibility = $container->get(OpenRegisterCompatibility::class);

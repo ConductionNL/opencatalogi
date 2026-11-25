@@ -293,3 +293,88 @@ openspec/
   literal thing that matters (is the engine class loadable), at the cost of
   coupling to one class name — accepted, since that class is the stable
   public entry point of the AppHost engine OpenCatalogi already consumes.
+
+
+## Moved from the spec delta (2026-11-25)
+
+These sections sat outside the requirements of `specs/first-time-onboarding/spec.md`, where archive would drop them; `openspec validate --strict` asked for them to move here.
+
+**Status**: in-progress
+**Scope**: opencatalogi
+**OpenSpec changes**:
+- first-time-onboarding
+- setup-wizard-server-contract
+- robust-first-run-setup
+
+## Purpose
+
+Close three first-run robustness gaps left open after `setup-wizard-server-contract`:
+(1) the register/schema auto-wiring that `config-check` (ONB-005) already
+assumes is "set on install by `InitializeSettings`" does not actually run on
+a clean `app:install`/`app:enable`, because `InitializeSettings` is only
+registered as a `<post-migration>` repair step; (2) the optional,
+never-blocking nature of the `connect-federation` step (ONB-007) needs to be
+an explicit, tested contract rather than an implicit property of the current
+implementation; and (3) OpenCatalogi's AppHost controller wiring (ADR-040)
+constructs OpenRegister classes that exist only in OpenRegister >= 2.0.0, so
+on an older OpenRegister every page fatal-500s — a runtime compatibility
+guard must degrade gracefully instead.
+
+### Non-Functional Requirements
+
+- **Performance:** `GET /api/setup/status` MUST complete in well under a second —
+  it reads a handful of app-config keys plus a bounded object-existence check; it
+  MUST NOT perform the federation sync (that is an explicit `run-action`). The
+  boot-time settings fallback MUST cost no more than a single app-config read on
+  requests after it has succeeded once.
+- **Accessibility:** The wizard chrome is provided by the shared `CnSetupWizard`
+  engine (WCAG 2.1 AA); this change adds no new client UI of its own.
+- **Internationalization:** Dutch and English MUST be supported; new manifest
+  step strings are authored as English literal source strings (ADR-007).
+
+### Acceptance Criteria
+
+- `SetupController` implements `GET /api/setup/status`, `POST /api/setup/config`,
+  `POST /api/setup/action/{actionId}` with admin/CSRF posture matching each verb.
+- `GET /api/setup/status` live-returns `200` + `{version,completed,steps}` on
+  :8080 (not the catalog-wildcard error).
+- The `config-check` step auto-passes on an auto-wired instance and only gates a
+  genuinely unconfigured one.
+- A clean `occ app:enable` (OpenRegister already enabled) leaves
+  `config-check` reporting `done` on the very first `GET /api/setup/status`
+  call with no operator or user action in between.
+- The boot-time fallback runs its settings-loading call at most once per
+  install (verified via the guard flag) and is a no-op on every subsequent
+  request once successful.
+- `create-first-catalog` and `connect-federation` actions work end to end and
+  flip their steps to `done`.
+- `completed` and `onboarding_completed_version` are provably independent of
+  `connect-federation`'s outcome, covered by an automated regression test.
+- The default directory URL is defined once and all 8 prior call sites resolve to it.
+- On an OpenRegister older than 2.0 (missing the AppHost generic controller
+  class), `/apps/opencatalogi/` loads without a fatal 500, logs a warning, and
+  shows an "OpenRegister >= 2.0 required" admin notice; on OpenRegister >= 2.0
+  the AppHost wiring is unchanged.
+- PHPUnit covers status derivation, config persistence, each action, the
+  boot-time fallback (first-run, no-op-when-set, no-op-when-OpenRegister-absent,
+  retry-after-failure), the connect-federation-optionality regression case, and
+  the AppHost compat guard (class-present wires; class-absent skips + notices,
+  no fatal).
+- `validate-manifest` passes after the setup block rework.
+
+### Notes
+
+- ADR-042 §4 (server-side setup contract — privileged `_rbac:false` action path,
+  admin/CSRF) is the governing decision; ADR-040 (health check reused by the
+  `done` summary), ADR-022 (catalog creation via OpenRegister abstraction).
+- Depends on `first-time-onboarding`, which introduced the `manifest.setup` block
+  this change wires to a backend and which deferred exactly this server contract.
+- `robust-first-run-setup` closes the gap between ONB-001/ONB-005's stated
+  assumption ("set on install by `InitializeSettings`") and the actual
+  Nextcloud repair-step lifecycle, and converts ONB-007's already-correct
+  runtime behaviour into an explicit, regression-tested contract.
+- ONB-009's compat guard is the runtime substitute for a declarable
+  app-to-app minimum-version constraint that Nextcloud `info.xml` lacks; it
+  keys off the ADR-040 AppHost engine's marker class. Live production incident
+  driving it: `directory.opencatalogi.nl` running OpenCatalogi 1.1.0-beta.4
+  against OpenRegister 1.1.1 fatal-500s on every page.

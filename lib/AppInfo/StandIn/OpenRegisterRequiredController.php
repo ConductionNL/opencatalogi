@@ -26,7 +26,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+ * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
  */
 
 declare(strict_types=1);
@@ -49,7 +49,7 @@ use OCP\IRequest;
  * Each method keeps the authentication posture of the generic it stands in for:
  * the page and preferences for any signed-in user, metrics for administrators.
  *
- * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+ * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
  */
 class OpenRegisterRequiredController extends Controller {
 
@@ -74,7 +74,7 @@ class OpenRegisterRequiredController extends Controller {
 	 *
 	 * @return DataDisplayResponse The notice, HTTP 503.
 	 *
-	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
@@ -96,7 +96,7 @@ class OpenRegisterRequiredController extends Controller {
 	 *
 	 * @return DataDisplayResponse The notice, HTTP 503.
 	 *
-	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
@@ -112,7 +112,7 @@ class OpenRegisterRequiredController extends Controller {
 	 *
 	 * @return JSONResponse HTTP 503.
 	 *
-	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
 	 *
 	 * @no-admin-idor-exempt Reads and stores nothing: it answers 503 for every caller and key while OpenRegister is too old, so no object is reached.
 	 */
@@ -130,7 +130,7 @@ class OpenRegisterRequiredController extends Controller {
 	 *
 	 * @return JSONResponse HTTP 503.
 	 *
-	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
 	 *
 	 * @no-admin-idor-exempt Reads and stores nothing: it answers 503 for every caller and key while OpenRegister is too old, so no object is reached.
 	 */
@@ -145,7 +145,7 @@ class OpenRegisterRequiredController extends Controller {
 	 *
 	 * @return JSONResponse HTTP 503.
 	 *
-	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
 	 */
 	#[NoCSRFRequired]
 	public function index(): JSONResponse {
