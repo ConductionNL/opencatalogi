@@ -55,6 +55,13 @@ class PublicationAgentTools {
 	private const OBJECTS = 'OCA\OpenRegister\Service\ObjectService';
 
 	/**
+	 * OpenRegister's recorder of app tool invocations on its audit trail.
+	 *
+	 * @var string
+	 */
+	public const RECORDER = 'OCA\OpenRegister\Contract\ToolInvocationRecorderInterface';
+
+	/**
 	 * Build the tools.
 	 *
 	 * @param ContainerInterface   $container The container OpenRegister's object service comes from.
@@ -100,6 +107,23 @@ class PublicationAgentTools {
 		reach: 'instance',
 	)]
 	public function createDraftPublication(array $publication): array {
+		return $this->recorded(
+			tool: 'createDraftPublication',
+			arguments: ['publication' => $publication],
+			result: $this->createDraft(publication: $publication)
+		);
+	}//end createDraftPublication()
+
+	/**
+	 * Validate and save a draft publication through OpenRegister's RBAC'd save path.
+	 *
+	 * @param array<array-key, mixed> $publication The draft fields.
+	 *
+	 * @return array<string, mixed> The created draft, or an `error` envelope.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-every-write-runs-the-existing-rbacd-path-as-the-granting-user-req-008
+	 */
+	private function createDraft(array $publication): array {
 		$checked = $this->validator->draftFields(fields: $publication);
 		if (isset($checked['error']) === true) {
 			return $checked;
@@ -127,7 +151,7 @@ class PublicationAgentTools {
 		}
 
 		return self::draftAnswer(saved: $saved);
-	}//end createDraftPublication()
+	}//end createDraft()
 
 	/**
 	 * Agent tool: publish publications a human has approved.
@@ -161,6 +185,19 @@ class PublicationAgentTools {
 		reach: 'external',
 	)]
 	public function publishPublication(array $ids): array {
+		return $this->recorded(tool: 'publishPublication', arguments: ['ids' => $ids], result: $this->publishIds(ids: $ids));
+	}//end publishPublication()
+
+	/**
+	 * Validate the ids and publish each approved publication.
+	 *
+	 * @param array<array-key, mixed> $ids The publication ids.
+	 *
+	 * @return array<string, mixed> `published` and `refused`, or an `error` envelope.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 */
+	private function publishIds(array $ids): array {
 		$checked = $this->validator->publicationIds(ids: $ids, max: AgentPublishingInterface::MAX_ITEMS);
 		if (isset($checked['error']) === true) {
 			return $checked;
@@ -176,7 +213,7 @@ class PublicationAgentTools {
 		}
 
 		return ['success' => $answer['refused'] === [], 'published' => $answer['published'], 'refused' => $answer['refused']];
-	}//end publishPublication()
+	}//end publishIds()
 
 	/**
 	 * Agent tool: ask a publisher to withdraw publications from the public.
@@ -208,7 +245,13 @@ class PublicationAgentTools {
 		reach: 'external',
 	)]
 	public function depublishPublication(array $ids, string $reason): array {
-		return $this->stageThroughTask(action: AgentWithdrawalInterface::DEPUBLISH, arguments: ['ids' => $ids, 'reason' => $reason]);
+		$arguments = ['ids' => $ids, 'reason' => $reason];
+
+		return $this->recorded(
+			tool: 'depublishPublication',
+			arguments: $arguments,
+			result: $this->stageThroughTask(action: AgentWithdrawalInterface::DEPUBLISH, arguments: $arguments)
+		);
 	}//end depublishPublication()
 
 	/**
@@ -240,7 +283,13 @@ class PublicationAgentTools {
 		reach: 'instance',
 	)]
 	public function archivePublication(array $ids, string $reason): array {
-		return $this->stageThroughTask(action: AgentWithdrawalInterface::ARCHIVE, arguments: ['ids' => $ids, 'reason' => $reason]);
+		$arguments = ['ids' => $ids, 'reason' => $reason];
+
+		return $this->recorded(
+			tool: 'archivePublication',
+			arguments: $arguments,
+			result: $this->stageThroughTask(action: AgentWithdrawalInterface::ARCHIVE, arguments: $arguments)
+		);
 	}//end archivePublication()
 
 	/**
@@ -276,6 +325,36 @@ class PublicationAgentTools {
 
 		return ['success' => $answer['refused'] === [], 'staged' => $answer['staged'], 'refused' => $answer['refused']];
 	}//end stageThroughTask()
+
+	/**
+	 * Record the invocation on OpenRegister's hash-chained audit trail, then hand the answer back.
+	 *
+	 * OpenRegister's recorder writes `mcp.<tool>` as the signed-in user (the person the agent acts for)
+	 * with the tool id, a digest of the arguments and a summary of the answer, never the raw arguments.
+	 * Without OpenRegister's recorder the answer is returned unrecorded; a failed write is OpenRegister's
+	 * to log and never changes the answer.
+	 *
+	 * @param string               $tool      The tool's name, without the app prefix.
+	 * @param array<string, mixed> $arguments The arguments as the agent sent them.
+	 * @param array<string, mixed> $result    The tool's answer.
+	 *
+	 * @return array<string, mixed> The answer, unchanged.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-every-agent-write-is-attributed-to-the-agent-principal-in-the-audit-trail-req-010
+	 */
+	private function recorded(string $tool, array $arguments, array $result): array {
+		try {
+			$recorder = $this->container->get(self::RECORDER);
+		} catch (\Throwable) {
+			return $result;
+		}
+
+		if (is_object($recorder) === true && method_exists($recorder, 'record') === true) {
+			$recorder->record(AppIdentity::APP_ID . '.' . $tool, $arguments, $result);
+		}
+
+		return $result;
+	}//end recorded()
 
 	/**
 	 * The staging service, from the container; null when it cannot be built.

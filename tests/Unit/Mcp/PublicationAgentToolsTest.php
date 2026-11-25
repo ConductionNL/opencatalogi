@@ -396,6 +396,60 @@ class PublicationAgentToolsTest extends TestCase {
 
 		$this->assertSame(expected: [], actual: $this->objects->saves);
 	}//end testTheStagingToolsAnswerAWholeRefusal()
+
+	/**
+	 * Every tool call is recorded on OpenRegister's audit trail as `opencatalogi.<tool>`, with the arguments and the
+	 * answer the agent got, refusals included; the answer itself is unchanged.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-every-agent-write-is-attributed-to-the-agent-principal-in-the-audit-trail-req-010
+	 */
+	public function testEveryToolCallIsRecorded(): void {
+		$recorder = new class {
+			/**
+			 * The recorded calls.
+			 *
+			 * @var list<array{0: string, 1: array<string, mixed>, 2: array<string, mixed>}>
+			 */
+			public array $calls = [];
+
+			/**
+			 * @param string               $toolId    The tool id.
+			 * @param array<string, mixed> $arguments The arguments.
+			 * @param array<string, mixed> $result    The answer.
+			 *
+			 * @return void
+			 */
+			public function record(string $toolId, array $arguments, array $result): void {
+				$this->calls[] = [$toolId, $arguments, $result];
+			}
+		};
+		$tools = new PublicationAgentTools(
+			container: new ObjectsContainer(objects: $this->objects, recorder: $recorder),
+			config: $this->createConfiguredStub(originalClassName: IAppConfig::class, configuration: ['getValueString' => 'publication']),
+			validator: new McpArgumentValidator()
+		);
+
+		$draft = $tools->createDraftPublication(publication: ['title' => 'Raadsbesluit']);
+		$publish = $tools->publishPublication(ids: ['a']);
+		$depublish = $tools->depublishPublication(ids: [], reason: 'R');
+		$archive = $tools->archivePublication(ids: ['a'], reason: 'R');
+
+		$this->assertSame(
+			expected: [
+				'opencatalogi.createDraftPublication',
+				'opencatalogi.publishPublication',
+				'opencatalogi.depublishPublication',
+				'opencatalogi.archivePublication',
+			],
+			actual: array_column($recorder->calls, 0)
+		);
+		$this->assertSame(expected: ['publication' => ['title' => 'Raadsbesluit']], actual: $recorder->calls[0][1]);
+		$this->assertSame(expected: ['ids' => [], 'reason' => 'R'], actual: $recorder->calls[2][1]);
+		$this->assertSame(expected: [$draft, $publish, $depublish, $archive], actual: array_column($recorder->calls, 2));
+		$this->assertSame(expected: 'invalid_arguments', actual: $depublish['error']['code']);
+	}//end testEveryToolCallIsRecorded()
 }//end class
 
 /**
@@ -408,10 +462,12 @@ class ObjectsContainer implements ContainerInterface {
 	 *
 	 * @param RecordingObjects              $objects    The object service double.
 	 * @param AgentWithdrawalInterface|null $withdrawal The staging service double, if any.
+	 * @param object|null                   $recorder   The tool invocation recorder double, if any.
 	 */
 	public function __construct(
 		private readonly RecordingObjects $objects,
-		private readonly ?AgentWithdrawalInterface $withdrawal = null
+		private readonly ?AgentWithdrawalInterface $withdrawal = null,
+		private readonly ?object $recorder = null
 	) {
 	}//end __construct()
 
@@ -425,6 +481,10 @@ class ObjectsContainer implements ContainerInterface {
 	public function get(string $id): mixed {
 		if ($id === AgentWithdrawalInterface::class && $this->withdrawal !== null) {
 			return $this->withdrawal;
+		}
+
+		if ($id === PublicationAgentTools::RECORDER && $this->recorder !== null) {
+			return $this->recorder;
 		}
 
 		if ($id !== 'OCA\OpenRegister\Service\ObjectService') {
