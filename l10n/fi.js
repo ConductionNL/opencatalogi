@@ -878,7 +878,9 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Nimeä luettelo ja sen kohteet uudessa järjestyksessä.",
         "Hide from pick lists": "Piilota valintaluetteloista",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ei voida tarkistaa, onko tässä luokassa julkaisuja, joten sitä ei piiloteta.",
-        "Move the %s publications filed under this category before hiding it.": "Siirrä tämän luokan %s julkaisua ennen sen piilottamista."
+        "Move the %s publications filed under this category before hiding it.": "Siirrä tämän luokan %s julkaisua ennen sen piilottamista.",
+        "Woo requests are handled by dossiq, which is not installed.": "Woo-pyynnöt käsitellään dossiqissa, jota ei ole asennettu.",
+        "Install dossiq from the app store": "Asenna dossiq sovelluskaupasta"
     },
     "nplurals=2; plural=(n != 1);"
 )

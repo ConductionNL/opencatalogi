@@ -259,6 +259,8 @@
 
 				<RefusalGroundsSource />
 
+				<WooRequestHandover />
+
 				<CategoryExplanations />
 
 				<DonlHarvestStatus />
@@ -759,6 +761,7 @@ import RecordHandover from './RecordHandover.vue'
 import RefusalGroundsSource from './RefusalGroundsSource.vue'
 import WooIncidents from './WooIncidents.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
+import WooRequestHandover from './WooRequestHandover.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
 	corsOriginLines,
@@ -886,6 +889,7 @@ export default defineComponent({
 		RefusalGroundsSource,
 		CategoryExplanations,
 		WooIndexConnection,
+		WooRequestHandover,
 		WooIncidents,
 		DcatDefaultLicence,
 		DcatFeedValidation,

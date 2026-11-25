@@ -878,7 +878,9 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Semmi l-lista u l-entrati tagħha fl-ordni l-ġdida.",
         "Hide from pick lists": "Aħbi fil-listi tal-għażla",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ma jistax jiġi ċċekkjat jekk hemmx pubblikazzjonijiet taħt din il-kategorija, għalhekk ma tinħebiex.",
-        "Move the %s publications filed under this category before hiding it.": "Mexxi l-%s pubblikazzjonijiet taħt din il-kategorija qabel ma taħbiha."
+        "Move the %s publications filed under this category before hiding it.": "Mexxi l-%s pubblikazzjonijiet taħt din il-kategorija qabel ma taħbiha.",
+        "Woo requests are handled by dossiq, which is not installed.": "It-talbiet Woo jiġu ttrattati minn dossiq, li mhuwiex installat.",
+        "Install dossiq from the app store": "Installa dossiq mill-ħanut tal-apps"
     },
     "nplurals=2; plural=(n != 1);"
 )

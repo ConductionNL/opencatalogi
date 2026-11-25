@@ -878,7 +878,9 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Navedite popis i njegove stavke novim redoslijedom.",
         "Hide from pick lists": "Sakrij na popisima za odabir",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ne može se provjeriti ima li publikacija u ovoj kategoriji, pa se ne skriva.",
-        "Move the %s publications filed under this category before hiding it.": "Premjestite %s publikacija iz ove kategorije prije nego što je sakrijete."
+        "Move the %s publications filed under this category before hiding it.": "Premjestite %s publikacija iz ove kategorije prije nego što je sakrijete.",
+        "Woo requests are handled by dossiq, which is not installed.": "Woo zahtjeve obrađuje dossiq, koji nije instaliran.",
+        "Install dossiq from the app store": "Instalirajte dossiq iz trgovine aplikacija"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -878,7 +878,9 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Indica l'elenco e le sue voci nel nuovo ordine.",
         "Hide from pick lists": "Nascondi negli elenchi di scelta",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Non è possibile verificare se ci sono pubblicazioni in questa categoria, quindi non viene nascosta.",
-        "Move the %s publications filed under this category before hiding it.": "Sposta le %s pubblicazioni di questa categoria prima di nasconderla."
+        "Move the %s publications filed under this category before hiding it.": "Sposta le %s pubblicazioni di questa categoria prima di nasconderla.",
+        "Woo requests are handled by dossiq, which is not installed.": "Le richieste Woo sono gestite da dossiq, che non è installato.",
+        "Install dossiq from the app store": "Installa dossiq dall'app store"
     },
     "nplurals=2; plural=(n != 1);"
 )

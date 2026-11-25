@@ -877,7 +877,9 @@
         "Name the list and its entries in their new order.": "Ainmnigh an liosta agus a iontrálacha san ord nua.",
         "Hide from pick lists": "Folaigh sna liostaí roghnaithe",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ní féidir a sheiceáil an bhfuil foilseacháin faoin gcatagóir seo, mar sin níl sí folaithe.",
-        "Move the %s publications filed under this category before hiding it.": "Bog na %s foilseachán faoin gcatagóir seo sula bhfolaíonn tú í."
+        "Move the %s publications filed under this category before hiding it.": "Bog na %s foilseachán faoin gcatagóir seo sula bhfolaíonn tú í.",
+        "Woo requests are handled by dossiq, which is not installed.": "Is é dossiq a láimhseálann iarratais Woo, agus níl sé suiteáilte.",
+        "Install dossiq from the app store": "Suiteáil dossiq ón siopa aipeanna"
     },
     "plurals": {}
 }

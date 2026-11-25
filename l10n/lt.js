@@ -878,7 +878,9 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Nurodykite sąrašą ir jo įrašus nauja tvarka.",
         "Hide from pick lists": "Slėpti pasirinkimo sąrašuose",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Negalima patikrinti, ar šioje kategorijoje yra leidinių, todėl ji neslepiama.",
-        "Move the %s publications filed under this category before hiding it.": "Prieš slėpdami šią kategoriją, perkelkite jos %s leidinius."
+        "Move the %s publications filed under this category before hiding it.": "Prieš slėpdami šią kategoriją, perkelkite jos %s leidinius.",
+        "Woo requests are handled by dossiq, which is not installed.": "Woo prašymus tvarko dossiq, kuri neįdiegta.",
+        "Install dossiq from the app store": "Įdiekite dossiq iš programėlių parduotuvės"
     },
     "nplurals=2; plural=(n != 1);"
 )
