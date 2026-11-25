@@ -66,7 +66,7 @@ test.describe('app chrome (ADR-114)', () => {
 		await dismissSetupWizard(page)
 	})
 
-	test('the footer reads Documentation, Store, Features & roadmap, then Restart tutorial', async ({
+	test('the footer reads Documentation, Marketplace, Features & roadmap, then Restart tutorial', async ({
 		page,
 	}) => {
 		const footer = page.locator(
@@ -85,11 +85,12 @@ test.describe('app chrome (ADR-114)', () => {
 		// at the END: it is a re-entry into the walkthrough rather than a
 		// destination, so it does not belong among the three.
 		const seen = texts.filter((t) =>
-			/Documentation|Store|Reports|roadmap|tutorial/i.test(t),
+			/Documentation|Store|Marketplace|Reports|roadmap|tutorial/i.test(t),
 		)
 		expect(seen.length).toBe(4)
 		expect(seen[0]).toMatch(/Documentation/i)
-		expect(seen[1]).toMatch(/Store/i)
+		// The manifest labels the Store route "Marketplace".
+		expect(seen[1]).toMatch(/Store|Marketplace/i)
 		expect(seen[2]).toMatch(/roadmap/i)
 		expect(seen[3]).toMatch(/tutorial/i)
 
@@ -218,14 +219,14 @@ test.describe('app chrome (ADR-114)', () => {
 		).toBeVisible({ timeout: 30_000 })
 	})
 
-	test('Store opens the hosted store surface, which this app writes no backend for', async ({
+	test('Marketplace opens the hosted store surface, which this app writes no backend for', async ({
 		page,
 	}) => {
 		const footer = page.locator(
 			'[data-testid="cn-nav"] .cn-app-nav__footer-list',
 		)
 		await footer
-			.getByRole('link', { name: /^Store$/ })
+			.getByRole('link', { name: /^(Store|Marketplace)$/ })
 			.first()
 			.click()
 
