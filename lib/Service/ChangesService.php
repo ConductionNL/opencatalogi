@@ -441,9 +441,10 @@ class ChangesService implements ChangesServiceInterface {
 	/**
 	 * Publications of the catalogue withdrawn at or after the moment, by id and date only.
 	 *
-	 * A publication is listed only when a depublication record names it, so a
-	 * draft that was never public is never named. The records and the
-	 * catalogue check are system reads, and nothing but the id and the date
+	 * A publication is listed only when it was once public: a depublication
+	 * record names it, or the lifecycle archived it after its first release
+	 * (`firstReleasedAt` is stored), so a draft that was never public is never
+	 * named. The reads are system reads, and nothing but the id and the date
 	 * leaves this method. A record about a single document, or about a
 	 * publication outside this catalogue or no longer stored, is skipped.
 	 *
@@ -459,19 +460,63 @@ class ChangesService implements ChangesServiceInterface {
 			return [];
 		}
 
-		$latest = $this->depublishedSince(objectService: $objectService, since: $read['since']);
-		if ($latest === []) {
-			return [];
+		$latest    = $this->depublishedSince(objectService: $objectService, since: $read['since']);
+		$inCatalog = [];
+		if ($latest !== []) {
+			// Which of them are publications in this catalogue's scope.
+			$ids       = array_map('strval', array_keys($latest));
+			$query     = CallerScope::writeScope(query: ['_limit' => count($ids)], registers: $read['scope']['registers'], schemas: $read['scope']['schemas']);
+			$args      = ['query' => $query, '_rbac' => false, '_multitenancy' => false] + SearchSelection::byIds(ids: $ids);
+			$inCatalog = self::foundIds(result: $objectService->searchObjectsPaginated(...$args), ids: $ids);
 		}
 
-		// Which of them are publications in this catalogue's scope.
-		$ids    = array_map('strval', array_keys($latest));
-		$query  = CallerScope::writeScope(query: ['_limit' => count($ids)], registers: $read['scope']['registers'], schemas: $read['scope']['schemas']);
-		$args   = ['query' => $query, '_rbac' => false, '_multitenancy' => false] + SearchSelection::byIds(ids: $ids);
-		$result = $objectService->searchObjectsPaginated(...$args);
+		foreach ($this->archivedSince(objectService: $objectService, read: $read) as $id => $moment) {
+			$latest[$id]    = max($moment, ($latest[$id] ?? $moment));
+			$inCatalog[$id] = true;
+		}
 
-		return self::withdrawnEntries(latest: $latest, inCatalog: self::foundIds(result: $result, ids: $ids));
+		return self::withdrawnEntries(latest: $latest, inCatalog: $inCatalog);
 	}//end withdrawnSince()
+
+	/**
+	 * Publications of the catalogue the lifecycle archived at or after the moment after their first release.
+	 *
+	 * The archive move writes no depublication record, so an archived publication is
+	 * read from the catalogue itself: stored state `archived`, a stored `firstReleasedAt`
+	 * (it was once public) and its last change at or after the moment, which is when it
+	 * was archived. A system read in the catalogue's scope; only the id and the moment
+	 * leave this method.
+	 *
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param array<string, mixed> $read The read: its catalogue `scope` and the moment `since`.
+	 *
+	 * @return array<string, DateTimeImmutable> Publication id to the moment it was archived.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-withdrawn-record-is-reported-not-shown-oai-007
+	 */
+	private function archivedSince(object $objectService, array $read): array {
+		$query  = CallerScope::writeScope(
+			query: ['_limit' => self::WITHDRAWN_LIMIT, 'status' => 'archived'],
+			registers: $read['scope']['registers'],
+			schemas: $read['scope']['schemas']
+		);
+		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: false, _multitenancy: false);
+
+		$archived = [];
+		foreach (array_map(self::toArray(...), (array)($result['results'] ?? [])) as $row) {
+			if (($row['status'] ?? null) !== 'archived' || self::moment(value: ($row['firstReleasedAt'] ?? null)) === null) {
+				continue;
+			}
+
+			$moment = self::updatedAt(row: $row);
+			$id     = self::rowId(row: $row);
+			if ($moment !== null && $moment >= $read['since'] && $id !== '') {
+				$archived[$id] = $moment;
+			}
+		}
+
+		return $archived;
+	}//end archivedSince()
 
 	/**
 	 * The withdrawal entries of the depublished publications that are in the catalog, oldest first.
