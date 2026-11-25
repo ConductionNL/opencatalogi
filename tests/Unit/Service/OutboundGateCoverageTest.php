@@ -73,6 +73,7 @@ final class OutboundGateCoverageTest extends TestCase {
 		'Service/DocumentReferenceProbe.php' => 'checks whether a document reference URL still answers (HEAD or a one-byte GET)',
 		'Service/DonlRegistrationService.php' => 'reads how many of the feed\'s datasets data.overheid.nl lists',
 		'Service/StandardsVersionService.php' => 'reads the published versions of the standards',
+		'Service/Vocabulary/ValueListDownload.php' => 'downloads the national value lists (TOOI) the vocabulary register is refreshed from',
 		'Service/WooReadinessService.php' => 'reads the catalogue\'s own public sitemap for the readiness check',
 	];
 
