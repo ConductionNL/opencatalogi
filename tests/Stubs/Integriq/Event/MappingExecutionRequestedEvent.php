@@ -21,7 +21,7 @@
  *
  * @link https://www.Integriq.nl
  *
- * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-sibling-app-runs-a-mapping-by-slug-through-a-typed-event-req-woom-001
+ * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use OCP\EventDispatcher\Event;
  * mapping's callableBy does not list the requesting app) and `failed` (the
  * mapping ran and threw).
  *
- * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-sibling-app-runs-a-mapping-by-slug-through-a-typed-event-req-woom-001
+ * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
  */
 class MappingExecutionRequestedEvent extends Event {
 
@@ -65,7 +65,7 @@ class MappingExecutionRequestedEvent extends Event {
 	 * @param string $sourceApp The app id asking, checked against callableBy.
 	 * @param string $correlationId The requester's id for this run, echoed in logs.
 	 *
-	 * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-sibling-app-runs-a-mapping-by-slug-through-a-typed-event-req-woom-001
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	public function __construct(
 		private readonly string $mappingSlug,
@@ -81,7 +81,7 @@ class MappingExecutionRequestedEvent extends Event {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-sibling-app-runs-a-mapping-by-slug-through-a-typed-event-req-woom-001
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	public function getMappingSlug(): string {
 		return $this->mappingSlug;
@@ -92,7 +92,7 @@ class MappingExecutionRequestedEvent extends Event {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-sibling-app-runs-a-mapping-by-slug-through-a-typed-event-req-woom-001
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	public function getInput(): array {
 		return $this->input;
@@ -103,7 +103,7 @@ class MappingExecutionRequestedEvent extends Event {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-sibling-app-runs-a-mapping-by-slug-through-a-typed-event-req-woom-001
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	public function getSourceApp(): string {
 		return $this->sourceApp;
@@ -114,7 +114,7 @@ class MappingExecutionRequestedEvent extends Event {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-sibling-app-runs-a-mapping-by-slug-through-a-typed-event-req-woom-001
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	public function getCorrelationId(): string {
 		return $this->correlationId;
@@ -127,7 +127,7 @@ class MappingExecutionRequestedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-sibling-app-runs-a-mapping-by-slug-through-a-typed-event-req-woom-001
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	public function setOutput(array $output): void {
 		$this->output = $output;
@@ -138,7 +138,7 @@ class MappingExecutionRequestedEvent extends Event {
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-sibling-app-runs-a-mapping-by-slug-through-a-typed-event-req-woom-001
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	public function getOutput(): ?array {
 		return $this->output;
@@ -149,7 +149,7 @@ class MappingExecutionRequestedEvent extends Event {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-sibling-app-runs-a-mapping-by-slug-through-a-typed-event-req-woom-001
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	public function isHandled(): bool {
 		return $this->output !== null;
@@ -163,7 +163,7 @@ class MappingExecutionRequestedEvent extends Event {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-mapping-names-the-apps-allowed-to-run-it-by-event-req-woom-002
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	public function refuse(string $reason, string $code): void {
 		$this->refusal = ['code' => $code, 'reason' => $reason];
@@ -174,7 +174,7 @@ class MappingExecutionRequestedEvent extends Event {
 	 *
 	 * @return array{code: string, reason: string}|null
 	 *
-	 * @spec openspec/specs/woo-index-mapping/spec.md#requirement-a-sibling-app-runs-a-mapping-by-slug-through-a-typed-event-req-woom-001
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	public function getRefusal(): ?array {
 		return $this->refusal;

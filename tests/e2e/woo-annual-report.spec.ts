@@ -16,7 +16,7 @@
  *
  * Base URL and credentials come from the environment (playwright.config.ts).
  *
- * @e2e openspec/changes/annual-report/specs/woo-compliance/spec.md#scenario-an-officer-generates-the-2026-annual-report
+ * @e2e openspec/changes/woo-annual-report/specs/woo-compliance/spec.md#scenario-an-officer-generates-the-2026-woo-annual-report
  */
 import type { SeededObject } from './workflows/_fixtures.ts'
 

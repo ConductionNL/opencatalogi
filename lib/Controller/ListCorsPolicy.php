@@ -81,7 +81,7 @@ final class ListCorsPolicy {
 	 *
 	 * @return string The allowlist as configured.
 	 *
-	 * @spec openspec/specs/cors-allowlist/spec.md
+	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-one-rule-decides-the-allowed-origin-req-sco-002
 	 */
 	public function allowedOriginsSetting(string $appName): string {
 		return ($this->config?->getValueString($appName, 'cors_allowed_origins', '*') ?? '*');

@@ -42,7 +42,9 @@ import Folder from 'vue-material-design-icons/Folder.vue'
 import FolderMultiple from 'vue-material-design-icons/FolderMultiple.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import FormatListBulleted from 'vue-material-design-icons/FormatListBulleted.vue'
+import FormatListNumbered from 'vue-material-design-icons/FormatListNumbered.vue'
 import History from 'vue-material-design-icons/History.vue'
+import KeyChain from 'vue-material-design-icons/KeyChain.vue'
 import LightbulbOnOutline from 'vue-material-design-icons/LightbulbOnOutline.vue'
 import LinkVariant from 'vue-material-design-icons/LinkVariant.vue'
 import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
@@ -63,7 +65,9 @@ import Sitemap from 'vue-material-design-icons/Sitemap.vue'
 import StorefrontOutline from 'vue-material-design-icons/StorefrontOutline.vue'
 import StoreOutline from 'vue-material-design-icons/StoreOutline.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import Table from 'vue-material-design-icons/Table.vue'
 import TableColumn from 'vue-material-design-icons/TableColumn.vue'
+import TagArrowRight from 'vue-material-design-icons/TagArrowRight.vue'
 import TagOutline from 'vue-material-design-icons/TagOutline.vue'
 import Translate from 'vue-material-design-icons/Translate.vue'
 import Tune from 'vue-material-design-icons/Tune.vue'
@@ -101,7 +105,9 @@ export default {
 	FolderMultiple,
 	FolderOutline,
 	FormatListBulleted,
+	FormatListNumbered,
 	History,
+	KeyChain,
 	LightbulbOnOutline,
 	LinkVariant,
 	ListBoxOutline,
@@ -122,7 +128,9 @@ export default {
 	StorefrontOutline,
 	StoreOutline,
 	Sync,
+	Table,
 	TableColumn,
+	TagArrowRight,
 	TagOutline,
 	Translate,
 	Tune,

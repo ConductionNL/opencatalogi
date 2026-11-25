@@ -33,6 +33,7 @@
 							:options="options"
 							:inputId="`capability-right-${row.verb}`"
 							:labelOutside="true"
+							:ariaLabelCombobox="row.label"
 							:multiple="true"
 							:keepOpen="true"
 							:placeholder="t('opencatalogi', 'Administrators only')"
