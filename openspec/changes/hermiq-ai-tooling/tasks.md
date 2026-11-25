@@ -41,8 +41,8 @@
   - GIVEN phase 2 WHEN invoked without a token, with an expired token, with a token minted for the acting agent, or with a token bound to a different batch THEN it is refused and nothing is written
   - GIVEN phase 2 WHEN invoked with a valid human-approver token bound to the batch THEN each item's allow-listed property is written via Task 2's path
   - GIVEN `createDraftPublication` WHEN invoked THEN it is single-phase (no token concept)
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
   - 25 Nov 2026 (decision 25 Nov 13:50, Ruben): the approval is the publication lifecycle's own review, not a
     token; REQ-009 is amended to say so. Built: `publishPublication` (`lib/Mcp/PublicationAgentTools.php` over
     `lib/Service/Publication/AgentPublishing.php`) publishes only `approved` publications, through the publish
@@ -59,9 +59,23 @@
     description, and `metadata` {action, publication, reason, requestedBy, tool}. A reason is required (at most
     2000 characters). Tests: `tests/Unit/Service/Publication/AgentWithdrawalTest.php` (including OpenRegister's own
     `TaskBuilder` accepting the payload as an `available` task for the group), `tests/Unit/Mcp/PublicationAgentToolsTest.php`.
-    Left: the completion that withdraws or archives (a `TaskTerminalEvent` listener that, for a committed task with
-    this metadata and an approving outcome, takes the action as the completing publisher through the withdraw
-    button's path; that path lives in `PublicationStateController::withdrawWithReason()` and is extracted first).
+    25 Nov 2026 (b-opencatalogi, the completion half): the withdraw button's path moved out of
+    `PublicationStateController` into `lib/Service/Publication/PublicationTakeDown.php` (the controller delegates
+    and answers exactly as before; its tests and the withdraw golden recording are unchanged). `AgentTaskCompletionListener`
+    on OpenRegister's `TaskTerminalEvent`, after commit, reads a task this app staged (`AgentTaskCompleted`: appId,
+    kind `approval`, state `completed`, outcome empty/`done`/`approved`) and `AgentTaskCompletion` takes its action
+    only in the session of the person who completed it, with that person's publish and update rights and RBAC:
+    withdraw through `PublicationTakeDown` (reason from the task, the completer as `depublishedBy`), archive through
+    the lifecycle's `archive` transition (`PublishTransition::archive()`). Every outcome is logged with the task and
+    the publication. Tests: `AgentTaskCompletionTest` (5), `PublicationTakeDownTest` (3),
+    `AgentTaskCompletionListenerTest` (3, on OpenRegister's real `Task` and `TaskTerminalEvent`).
+    Live 25 Nov 2026 (sandbox Nextcloud 34.0.6 + PostgreSQL 16, OpenRegister main): `depublishPublication` staged
+    task "Withdraw publication \"Legacy A\"" (available, opencatalogi-publishers, the publication stayed public);
+    admin (a publisher) claimed and completed it through `/api/flow-tasks/{uuid}/complete`; the publication was
+    withdrawn (visibility `withdrawn`, out of the public list, tombstone on the public route) and the depublication
+    record holds the agent's reason with `depublishedBy` admin. `archivePublication` then completed the same way left
+    Legacy B `archived`. A completion on a row the required-to-publish rule refuses ends `not-saved`, exactly as the
+    withdraw button does on that row. Not built: Task 4's agent attribution on the audit trail.
 
 ### Task 4: Agent-principal attribution (must / MVP)
 - **spec_ref**: `openspec/specs/mcp-tool-surface/spec.md#requirement-every-agent-write-is-attributed-to-the-agent-principal-in-the-audit-trail-req-010`
