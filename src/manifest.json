@@ -1127,7 +1127,7 @@
 						"id": "12",
 						"widgetId": "pub-visibility",
 						"gridX": 0,
-						"gridY": 35,
+						"gridY": 38,
 						"gridWidth": 12,
 						"gridHeight": 3
 					},
@@ -1135,23 +1135,23 @@
 						"id": "14",
 						"widgetId": "pub-plain-summary",
 						"gridX": 0,
-						"gridY": 38,
+						"gridY": 46,
 						"gridWidth": 12,
 						"gridHeight": 4
 					},
 					{
-						"id": "15",
+						"id": "18",
 						"widgetId": "pub-quality",
 						"gridX": 0,
-						"gridY": 33,
+						"gridY": 35,
 						"gridWidth": 12,
 						"gridHeight": 3
 					},
 					{
-						"id": "16",
+						"id": "19",
 						"widgetId": "pub-versions",
 						"gridX": 0,
-						"gridY": 36,
+						"gridY": 41,
 						"gridWidth": 12,
 						"gridHeight": 5
 					},
@@ -1159,7 +1159,7 @@
 						"id": "13",
 						"widgetId": "pub-calendar",
 						"gridX": 0,
-						"gridY": 42,
+						"gridY": 50,
 						"gridWidth": 12,
 						"gridHeight": 4
 					},
@@ -1172,10 +1172,10 @@
 						"gridHeight": 4
 					},
 					{
-						"id": "16",
+						"id": "20",
 						"widgetId": "pub-languages",
 						"gridX": 0,
-						"gridY": 42,
+						"gridY": 54,
 						"gridWidth": 12,
 						"gridHeight": 4
 					},
