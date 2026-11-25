@@ -8,7 +8,7 @@
  * OpenCatalogi does not stop, and change the mode once confirmed
  * (instance-staging-mode REQ-STG-001).
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  */
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'

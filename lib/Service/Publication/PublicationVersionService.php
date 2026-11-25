@@ -22,7 +22,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-1.2
  */
 
 declare(strict_types=1);
@@ -44,7 +44,7 @@ use Throwable;
 /**
  * Stores the old public projection of a publication before a correction replaces it.
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
  */
 class PublicationVersionService implements PublicationVersionServiceInterface {
 
@@ -85,7 +85,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @return bool True when the old version has to be kept.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function replacesPublicVersion(ObjectEntity $old, ObjectEntity $new): bool {
 		$before = $this->publicFields(publication: $old);
@@ -112,7 +112,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @throws RuntimeException When the version schema is not configured or the version cannot be stored.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function snapshot(ObjectEntity $old, ?DateTimeInterface $now = null): ?array {
 		$fields = $this->publicFields(publication: $old);
@@ -161,7 +161,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @throws RuntimeException When the version schema is not configured.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function versionsOf(string $publication): array {
 		try {
@@ -180,7 +180,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @return list<array<string, mixed>> The versions.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function storedVersions(string $publication): array {
 		$target = $this->versionTarget();
@@ -216,7 +216,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @return object|null The file node.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function documentOf(array $version, int $fileId): ?object {
 		$listed = array_map(
@@ -247,7 +247,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @return string|null The uuid.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function publicUuidOf(array $record): ?string {
 		if (array_key_exists('status', $record) === true
@@ -272,7 +272,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @return array<string, mixed> The version.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function versionRow(mixed $item): array {
 		if ($item instanceof ObjectEntity) {
@@ -290,7 +290,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @return array<string, mixed>|null The public projection without its metadata.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function publicFields(ObjectEntity $publication): ?array {
 		$properties = ($publication->getObject() ?? []);
@@ -316,7 +316,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @return list<int> The file ids.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function publicFileIds(ObjectEntity $publication): array {
 		$ids = array_map(static fn (object $file): int => (int)$file->getId(), $this->publicFiles(publication: $publication));
@@ -333,7 +333,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @return list<object> The files, as Nextcloud nodes.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function publicFiles(ObjectEntity $publication): array {
 		$files = $this->fileService()->getFiles(object: $publication, sharedFilesOnly: true);
@@ -350,7 +350,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @return list<array{title: string, format: string, fileId: int}> The copied documents.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function copyPublicFiles(ObjectEntity $source, ObjectEntity $target): array {
 		$documents = [];
@@ -376,7 +376,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @return bool True when they are equal.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private static function sameContent(mixed $left, mixed $right): bool {
 		if (is_array($left) === false || is_array($right) === false) {
@@ -405,7 +405,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @throws RuntimeException When the version schema is not configured.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function versionTarget(): ObjectFindTarget {
 		$config = $this->openRegister->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_version_schema');
@@ -424,7 +424,7 @@ class PublicationVersionService implements PublicationVersionServiceInterface {
 	 *
 	 * @return object The file service.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function fileService(): object {
 		return $this->openRegister->installedService(self::FILE_SERVICE, 'OpenRegister FileService is not available.');

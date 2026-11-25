@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/instance-staging-mode
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -39,7 +39,7 @@ use Throwable;
  * it does not, `hold()` stores a `dryRunDelivery` (channel, payload, at,
  * user, reason) and answers the dry run, and the channel sends nothing.
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
  */
 class DryRunRecorder {
 
@@ -72,7 +72,7 @@ class DryRunRecorder {
 	 *
 	 * @return array{dryRun: true, channel: string, reason: string, stored: bool}|null
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
 	 */
 	public function hold(string $channel, array $payload): ?array {
 		$reason = $this->gate->reason(channel: $channel);
@@ -98,7 +98,7 @@ class DryRunRecorder {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/instance-staging-mode/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/tasks.md#task-2.2
 	 */
 	private function store(array $record): bool {
 		try {

@@ -19,7 +19,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use OCP\IUserSession;
 /**
  * The instance mode endpoints of the admin settings (/api/settings/instance-mode).
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  */
 class InstanceModeController extends Controller {
 	/**
@@ -52,7 +52,7 @@ class InstanceModeController extends Controller {
 	 * @param IUserSession $userSession The user session.
 	 * @param InstanceModeSwitchInterface|null $instanceModes Reads and changes the instance mode; null refuses both endpoints.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	public function __construct(
 		$appName,
@@ -71,7 +71,7 @@ class InstanceModeController extends Controller {
 	 *
 	 * @return JSONResponse `{mode, outside: {webhooks, synchronisations}}`.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function getInstanceMode(): JSONResponse {
@@ -90,7 +90,7 @@ class InstanceModeController extends Controller {
 	 *
 	 * @return JSONResponse The new and previous mode; 400 for an unknown mode or a missing confirmation.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function updateInstanceMode(): JSONResponse {

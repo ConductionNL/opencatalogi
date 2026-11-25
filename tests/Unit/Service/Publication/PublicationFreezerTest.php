@@ -18,7 +18,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.2
  */
 
 declare(strict_types=1);
@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Service\Publication;
 
 use OCA\OpenCatalogi\Service\Publication\PublicationFreezer;
+use OCA\OpenRegister\Service\Object\ObjectStateRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -84,8 +85,19 @@ final class PublicationFreezerTest extends TestCase {
 			 *
 			 * @return array{uuid: string, frozen: array<string, mixed>|null} The answer.
 			 */
-			public function freeze(string $identifier, ?string $reason = null): array {
-				return ['uuid' => $identifier, 'frozen' => $this->marker];
+			public ?ObjectStateRequest $asked = null;
+
+			/**
+			 * OpenRegister's ArchiveHandlerInterface::freeze() signature.
+			 *
+			 * @param ObjectStateRequest $request The object and why.
+			 * @param string|null        $state   The declaring state.
+			 *
+			 * @return array{uuid: string, frozen: array|null} The marker.
+			 */
+			public function freeze(ObjectStateRequest $request, ?string $state = null): array {
+				$this->asked = $request;
+				return ['uuid' => $request->identifier, 'frozen' => $this->marker];
 			}
 		};
 	}//end handler()
@@ -106,6 +118,24 @@ final class PublicationFreezerTest extends TestCase {
 	 *
 	 * @return void
 	 */
+	/**
+	 * The freeze names the publication and the reason in OpenRegister's request,
+	 * unscoped to a register or schema; the old named-argument call failed live
+	 * with "Unknown named parameter $identifier".
+	 *
+	 * @return void
+	 */
+	public function testTheFreezeAsksOpenRegisterWithAStateRequest(): void {
+		$handler = $this->handler(marker: ['reason' => 'Persoonsgegevens']);
+		$this->freezer(handler: $handler)->freeze(publicationId: 'pub-1', reason: 'Persoonsgegevens');
+
+		self::assertInstanceOf(expected: ObjectStateRequest::class, actual: $handler->asked);
+		self::assertSame(expected: 'pub-1', actual: $handler->asked->identifier);
+		self::assertSame(expected: 'Persoonsgegevens', actual: $handler->asked->reason);
+		self::assertNull(actual: $handler->asked->register);
+		self::assertNull(actual: $handler->asked->schema);
+	}//end testTheFreezeAsksOpenRegisterWithAStateRequest()
+
 	public function testAnAnswerWithoutAMarkerIsNotFrozen(): void {
 		$answer = $this->freezer(handler: $this->handler(marker: null))->freeze(publicationId: 'pub-1', reason: 'x');
 

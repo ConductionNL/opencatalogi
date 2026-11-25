@@ -156,7 +156,7 @@ class NationalIndexServiceTest extends TestCase {
 	 * REQ-DWP-001: without an effective date from the editor, the notice takes the stored
 	 * validFrom; the editor's own date still wins, and without either it is the publication date.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-publication-stores-its-diwoo-metadata-req-dwp-001
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-publication-stores-its-diwoo-metadata-req-dwp-001
 	 */
 	public function testTheNoticeTakesTheStoredValidFromAsItsEffectiveDate(): void {
 		$service = $this->service([]);

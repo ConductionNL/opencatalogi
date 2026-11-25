@@ -156,7 +156,7 @@ class ProvideManifestConfigStateListener implements IEventListener {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	private function instanceMode(): string {
 		$reason = (new InstanceMode(appConfig: $this->appConfig))->stagingReason();

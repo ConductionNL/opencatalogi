@@ -15,7 +15,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
  */
 
 declare(strict_types=1);
@@ -43,7 +43,7 @@ use RuntimeException;
  * `EventServiceTest::testPublishObjectAttachmentsOfAFrozenPublicationSharesNothing`
  * and `PublicationStateControllerTest::testAFileWithdrawalOnAFrozenPublicationIsRefused`.
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-is-frozen-with-the-withdrawal-reason-req-pwa-003
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-is-frozen-with-the-withdrawal-reason-req-pwa-003
  */
 #[CoversClass(FrozenRecord::class)]
 class FrozenPublicationDocumentWriteTest extends TestCase {

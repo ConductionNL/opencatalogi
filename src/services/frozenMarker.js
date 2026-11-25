@@ -13,7 +13,7 @@
  *
  * @param {object|null|undefined} record The publication as the page read it.
  * @return {{by: string, at: string, reason: string, state: string}|null} The marker, or null when the record is not frozen.
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.4
  */
 export function frozenMarker(record) {
 	if (!record || typeof record !== 'object') {
@@ -43,7 +43,7 @@ export function frozenMarker(record) {
  * header actions and the inline editors are off. Kept here so the manifest
  * and its test name one condition.
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.4
  */
 export const FROZEN_READ_ONLY_WHEN = Object.freeze({
 	field: '@self.frozen',

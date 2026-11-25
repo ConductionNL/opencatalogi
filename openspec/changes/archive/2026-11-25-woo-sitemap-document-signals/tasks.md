@@ -16,5 +16,6 @@
 
 ## 4. Seed data, docs and strings
 
-- [ ] 4.1 Upload a decision and two annexes to a test publication, label the decision `main-document`, and read the sitemap page (REQ-WSD-003). Verify: a named manual check with `curl` on the category sitemap page, output pasted in the PR.
+- [x] 4.1 Upload a decision and two annexes to a test publication, label the decision `main-document`, and read the sitemap page (REQ-WSD-003). Verify: a named manual check with `curl` on the category sitemap page, output pasted in the PR.
+  - Ran 2026-11-25 on a sandbox Nextcloud 34 + MariaDB: a Woo publication (infocat002) with `besluit.pdf` labelled `main-document` and two annexes, taken through review to published. The anonymous category sitemap page lists three documents: the decision carries `diwoo:hasParts` naming both annexes, each annex carries `diwoo:isPartOf` pointing at the decision (REQ-WSD-002, REQ-WSD-003). Output in the PR body. Note: the page holds back any document whose publisher TOOI is not a real organisation code (the XSD checks the TOOI list), so a fictitious code such as `gm9999` empties it.
 - [x] 4.2 Document the `main-document` label for editors in `docs/`. Verify: `npm run lint`.

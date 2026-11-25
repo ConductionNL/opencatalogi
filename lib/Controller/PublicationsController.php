@@ -1136,7 +1136,7 @@ class PublicationsController extends Controller {
 	 * @return JSONResponse The publication, the tombstone, or the 404.
 	 *
 	 * @spec openspec/specs/publications/spec.md
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-2.2
 	 */
 	private function showPublication(PublicationRead $read): JSONResponse {
 		$this->logger->debug(
@@ -1185,7 +1185,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @return JSONResponse|null The 410 answer, or null.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-2.2
 	 */
 	private function tombstoneRead(PublicationRead $read): ?JSONResponse {
 		try {

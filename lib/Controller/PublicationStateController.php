@@ -438,7 +438,7 @@ class PublicationStateController extends Controller {
 	 *
 	 * @return JSONResponse The stored depublication, or the refusal.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-2.1
 	 */
 	private function withdrawWithReason(string $id, array $properties): JSONResponse {
 		$state = $this->takeDown(id: $id, properties: $properties);
@@ -531,8 +531,8 @@ class PublicationStateController extends Controller {
 	 * @return JSONResponse The stored depublication naming the document.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-one-document-comes-down-without-its-publication-req-ppw-004
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	#[NoAdminRequired]
 	public function withdrawFile(string $id, string $fileId): JSONResponse {

@@ -20,7 +20,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+ * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ use OCP\IUserSession;
 /**
  * The DiWoo documentsoorten value list.
  *
- * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+ * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
  */
 class DocumentsoortenController extends Controller {
 	/**
@@ -73,7 +73,7 @@ class DocumentsoortenController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
 	 *
 	 * @no-admin-idor-exempt Returns the national documentsoorten value list bundled
 	 *   with the app, the same rows for every caller. The endpoint takes no

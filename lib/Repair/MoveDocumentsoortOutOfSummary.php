@@ -26,7 +26,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-documentsoort-written-into-the-summary-is-moved-to-its-field-req-dwp-005
+ * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-documentsoort-written-into-the-summary-is-moved-to-its-field-req-dwp-005
  */
 
 declare(strict_types=1);
@@ -48,7 +48,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Moves a documentsoort written into the summary to its own field (REQ-DWP-005).
  *
- * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-documentsoort-written-into-the-summary-is-moved-to-its-field-req-dwp-005
+ * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-documentsoort-written-into-the-summary-is-moved-to-its-field-req-dwp-005
  */
 class MoveDocumentsoortOutOfSummary implements IRepairStep {
 
@@ -102,7 +102,7 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	 *
 	 * @return string The name.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-documentsoort-written-into-the-summary-is-moved-to-its-field-req-dwp-005
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-documentsoort-written-into-the-summary-is-moved-to-its-field-req-dwp-005
 	 */
 	public function getName(): string {
 		return 'Move a document type written into the summary of a publication to its own field';
@@ -115,7 +115,7 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-documentsoort-written-into-the-summary-is-moved-to-its-field-req-dwp-005
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-documentsoort-written-into-the-summary-is-moved-to-its-field-req-dwp-005
 	 */
 	public function run(IOutput $output): void {
 		$this->recordIntroduction();

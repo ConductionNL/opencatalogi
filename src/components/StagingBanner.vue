@@ -27,7 +27,7 @@ import { NcNoteCard } from '@nextcloud/vue'
  * Whether the page was served by an instance in staging.
  *
  * @return {boolean}
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
  */
 export function isStaging() {
 	return loadState('opencatalogi', 'instance_mode', 'production') !== 'production'

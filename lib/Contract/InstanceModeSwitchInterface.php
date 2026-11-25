@@ -36,7 +36,7 @@ interface InstanceModeSwitchInterface {
 	 *
 	 * @return array{mode: string, outside: array{webhooks: list<string>, synchronisations: list<string>}}
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	public function current(): array;
 
@@ -51,7 +51,7 @@ interface InstanceModeSwitchInterface {
 	 *
 	 * @throws InvalidArgumentException When the mode is unknown or the change was not confirmed.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
 	 */
 	public function change(string $mode, bool $confirmed, string $userId): array;
 }//end interface

@@ -1405,7 +1405,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 *
 	 * @throws RuntimeException When OpenRegister refuses the publication.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
 	 */
 	private function unlessRefused(callable $publish): mixed {
 		try {
@@ -1422,7 +1422,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 *
 	 * @return string The message.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
 	 */
 	private function refusedPublication(\OCA\OpenRegister\Exception\HookStoppedException $refusal): string {
 		$fields = array_keys((array)($refusal->getErrors()['fields'] ?? []));

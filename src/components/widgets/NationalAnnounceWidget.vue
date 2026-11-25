@@ -207,7 +207,7 @@ export default {
 		 * A publication that cannot be read leaves the field empty.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-publication-stores-its-diwoo-metadata-req-dwp-001
+		 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-publication-stores-its-diwoo-metadata-req-dwp-001
 		 */
 		async prefillEffectiveDate() {
 			if (!this.isAdmin || !this.resolvedObjectId) {

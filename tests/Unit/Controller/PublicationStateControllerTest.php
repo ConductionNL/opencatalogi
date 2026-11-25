@@ -274,9 +274,17 @@ class PublicationStateControllerTest extends TestCase {
 						 *
 						 * @return array<string, mixed> The uuid and the marker.
 						 */
-						public function freeze(string $identifier, ?string $reason = null): array {
-							$this->freezes[] = ['identifier' => $identifier, 'reason' => $reason];
-							return ['uuid' => $identifier, 'frozen' => ['by' => 'redacteur', 'reason' => $reason]];
+						/**
+						 * OpenRegister's ArchiveHandlerInterface::freeze() signature.
+						 *
+						 * @param \OCA\OpenRegister\Service\Object\ObjectStateRequest $request The object and why.
+						 * @param string|null                                         $state   The declaring state.
+						 *
+						 * @return array{uuid: string, frozen: array} The marker.
+						 */
+						public function freeze(\OCA\OpenRegister\Service\Object\ObjectStateRequest $request, ?string $state = null): array {
+							$this->freezes[] = ['identifier' => $request->identifier, 'reason' => $request->reason];
+							return ['uuid' => $request->identifier, 'frozen' => ['by' => 'redacteur', 'reason' => $request->reason]];
 						}
 					};
 				}
@@ -716,7 +724,7 @@ class PublicationStateControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	public function testAFileWithdrawalOnAFrozenPublicationIsRefused(): void {
 		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
@@ -791,7 +799,7 @@ class PublicationStateControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
 	public function testTheWithdrawRouteFreezesThePublication(): void {
 		$controller = ($this->build)(
@@ -815,7 +823,7 @@ class PublicationStateControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
 	public function testAFileWithdrawalDoesNotFreezeThePublication(): void {
 		$controller = ($this->build)(

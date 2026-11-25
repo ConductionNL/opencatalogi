@@ -18,9 +18,9 @@
  * WHAT IT CREATES AND REMOVES. One catalogue holding the declared pair and one
  * draft publication in it, both deleted in afterAll.
  *
- * @e2e openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#scenario-a-woo-publication-without-a-category-is-not-made-public
- * @e2e openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#scenario-a-draft-may-be-incomplete
- * @spec openspec/changes/diwoo-metadata-on-the-publication/tasks.md#4.4
+ * @e2e openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#scenario-a-woo-publication-without-a-category-is-not-made-public
+ * @e2e openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#scenario-a-draft-may-be-incomplete
+ * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/tasks.md#4.4
  */
 import type { APIRequestContext } from '@playwright/test'
 

@@ -76,7 +76,7 @@ class DepublicationService implements DepublicationServiceInterface {
 	 * @throws DomainException When no reason is given.
 	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
 	public function depublish(
 		array $publication,
@@ -111,7 +111,7 @@ class DepublicationService implements DepublicationServiceInterface {
 	 *
 	 * @throws DomainException When no reason is given.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
 	public function depublishDocument(array $publication, string $reason, string $depublishedBy): array {
 		$run = $this->run(publication: $publication, reason: $reason, depublishedBy: $depublishedBy, now: null);
@@ -128,7 +128,7 @@ class DepublicationService implements DepublicationServiceInterface {
 	 *
 	 * @return string|null The frozen refusal, or null.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	public function documentWriteRefusal(mixed $publication): ?string {
 		return (new FrozenRecord())->refusal(record: $publication);

@@ -159,7 +159,7 @@ class SitemapControllerTest extends TestCase {
 	 * REQ-DWP-004: the validate route answers the report of a held-back document,
 	 * with its location, the publisher field and the reason.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function testTheValidateRouteReportsAHeldBackDocument(): void {
 		$routes = (string)file_get_contents(__DIR__ . '/../../../appinfo/routes.php');

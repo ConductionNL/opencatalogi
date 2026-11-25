@@ -1001,7 +1001,6 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/manifest.json:1050-1051 and :1075-1076 Organizations and OrganizationDetail on @resolve:organization_register / organization_schema; lib/Service/SettingsService.php:103,1834-1835 resolve them to OR's nc-organisation projection (tests/Unit/Service/SettingsServiceTest.php:1994); manifest.json:1081-1094 org-data shows name, summary, oin, tooi, rsin, pki in two columns (tests/vitest/organisationsPage.spec.js); docs/Administrator/organisaties.md where staff enter the identifiers; CatalogModal.vue:114 organisation picker",
-
 				"change": [
 					"organisations-page-edits-the-shared-organisation",
 					"publications-name-their-responsible-organisation",
@@ -6923,13 +6922,14 @@
 			"name": "Mark a document as changed in the sitemap when its metadata changes, so the Woo-index harvests it again.",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
-			"opencatalogi": "partial",
+			"opencatalogi": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the sitemap index sorts by @self.updated and sets each page's lastmod to the newest updated time on it (lib/Service/SitemapService.php:202,230-239,280-286), so a metadata change does move the page entry. But each document's own <lastmod> is the file's published time, falling back to the publication's updated time only when the file has none (lib/Service/SitemapService.php:510-512,526), so a metadata-only change leaves the document's lastmod unchanged and the Woo-index has no per-document signal.",
+				"evidence": "SitemapDocumentMapper::mapDiwooDocument() sets each document's lastmod to the latest of the file's modified and published times and the publication's @self.updated (REQ-WSD-001, SitemapServiceTest), so a metadata-only change moves the document's lastmod.",
 				"change": "woo-sitemap-document-signals",
-				"requirement": "openspec/changes/woo-sitemap-document-signals/specs/woo-compliance :: A document's lastmod follows its metadata as well as its file (REQ-WSD-001)"
+				"requirement": "openspec/specs/woo-compliance :: A document's lastmod follows its metadata as well as its file (REQ-WSD-001)",
+				"plan": "openspec/changes/archive/2026-11-25-woo-sitemap-document-signals"
 			},
 			"reachedOn": "/api/{catalogSlug}/sitemaps/{categoryCode} and /api/{catalogSlug}/sitemaps/{categoryCode}/publications",
 			"provider": "opencatalogi",
@@ -6962,16 +6962,17 @@
 			"name": "Tell the Woo-index which documents belong together, such as a decision and its annexes, through hasPart and isPartOf in the sitemap.",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
-			"opencatalogi": "no",
+			"opencatalogi": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): buildSitemap maps every attached file to a separate diwoo:Document (lib/Service/SitemapService.php:343-349, 'Map each file to a separate DIWOO Document'), and mapDiwooDocument emits loc, lastmod, creatiedatum, publisher, format, informatiecategorie and documenthandeling only (:508-590). grep hasPart, isPartOf (any case) in lib, src and in the portaliq and openregister workspace checkouts finds nothing, so a decision and its annexes are not linked in the sitemap.",
+				"evidence": "SitemapDocumentRelations gives every document of a multi-file publication isPartOf (the publication, or the file labelled main-document), and the main document hasParts naming the others; the validator reports two main-document labels (REQ-WSD-002, REQ-WSD-003, SitemapServiceTest). Verified live 25 Nov 2026 on a sandbox instance: a decision labelled main-document with two annexes gives hasParts on the decision and isPartOf on both annexes.",
 				"change": "woo-sitemap-document-signals",
 				"requirement": [
-					"openspec/changes/woo-sitemap-document-signals/specs/woo-compliance :: Documents of one publication say they belong together (REQ-WSD-002)",
-					"openspec/changes/woo-sitemap-document-signals/specs/woo-compliance :: A main document lists its parts (REQ-WSD-003)"
-				]
+					"openspec/specs/woo-compliance :: Documents of one publication say they belong together (REQ-WSD-002)",
+					"openspec/specs/woo-compliance :: A main document lists its parts (REQ-WSD-003)"
+				],
+				"plan": "openspec/changes/archive/2026-11-25-woo-sitemap-document-signals"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -7518,18 +7519,19 @@
 			"area": "operations",
 			"name": "Rehearse the whole publishing flow in a staging mode where nothing is sent to the national indexes or federation partners.",
 			"origin": "openspec-change",
-			"opencatalogi": "no",
+			"opencatalogi": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "Not built: no staging switch exists; every national hand-over (Woo-index, PLOOI, federation) is sent for real. Added 12 Nov 2026 from the untracked open change instance-staging-mode (decision 395).",
+				"evidence": "Instance mode in the admin settings (InstanceModeSwitch, audited, confirmation required), StagingBanner on every page, OutboundGate + DryRunRecorder first in every outbound channel (national index, PLOOI, Woo-index registration, broadcast, directory announce) storing a dryRunDelivery instead of sending, the Dry runs page, and StagingMiddleware answering 503 to anonymous public routes and robots.txt Disallow: /. Verified live 25 Nov 2026 on a sandbox Nextcloud 34 + MariaDB: sitemap index and /api/dcat 503, robots Disallow, publish + announce + registration request gave 3 dryRunDelivery records and nothing sent.",
 				"change": "instance-staging-mode",
-				"plan": "openspec/changes/instance-staging-mode",
+				"plan": "openspec/changes/archive/2026-11-25-instance-staging-mode",
 				"requirement": [
-					"openspec/changes/instance-staging-mode/specs/admin-settings :: An administrator puts the instance in staging (REQ-STG-001)",
-					"openspec/changes/instance-staging-mode/specs/admin-settings :: Nothing leaves the instance in staging (REQ-STG-002)",
-					"openspec/changes/instance-staging-mode/specs/admin-settings :: The public surface is closed to anonymous callers in staging (REQ-STG-003)"
-				]
+					"openspec/specs/admin-settings :: An administrator puts the instance in staging (REQ-STG-001)",
+					"openspec/specs/admin-settings :: Nothing leaves the instance in staging (REQ-STG-002)",
+					"openspec/specs/admin-settings :: The public surface is closed to anonymous callers in staging (REQ-STG-003)"
+				],
+				"spec": "openspec/specs/admin-settings"
 			},
 			"screen": {
 				"board": "OcInstellingen"

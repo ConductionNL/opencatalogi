@@ -12,7 +12,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/instance-staging-mode
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use Throwable;
  * but an explicit `production`, including a read that throws, counts as
  * staging: sending is the unsafe side.
  *
- * @spec openspec/changes/instance-staging-mode
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode
  */
 class InstanceMode implements InstanceModeInterface {
 
@@ -57,7 +57,7 @@ class InstanceMode implements InstanceModeInterface {
 	 *
 	 * @return string|null `staging`, `unreadable: <message>`, or null in production.
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
 	 */
 	public function stagingReason(): ?string {
 		try {
@@ -78,7 +78,7 @@ class InstanceMode implements InstanceModeInterface {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-the-public-surface-is-closed-to-anonymous-callers-in-staging-req-stg-003
+	 * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-the-public-surface-is-closed-to-anonymous-callers-in-staging-req-stg-003
 	 */
 	public function isStaging(): bool {
 		return $this->stagingReason() !== null;

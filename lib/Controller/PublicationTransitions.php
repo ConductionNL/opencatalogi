@@ -150,7 +150,7 @@ class PublicationTransitions {
 	 *
 	 * @return array The depublication.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
 	public function depublishDocument(array $withdrawal): array {
 		return $this->depublisher->depublishDocument(
@@ -167,7 +167,7 @@ class PublicationTransitions {
 	 *
 	 * @return string|null The frozen refusal, or null.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	public function documentWriteRefusal(mixed $publication): ?string {
 		return $this->depublisher->documentWriteRefusal(publication: $publication);

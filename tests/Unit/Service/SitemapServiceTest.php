@@ -943,7 +943,7 @@ class SitemapServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-2.3
 	 */
 	public function testAWithdrawnPublicationIsNotInTheSitemap(): void {
 		$this->setupValidSitemapContext(registerId: 'reg-woo', schemaId: 'sch-1');
@@ -1417,7 +1417,7 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * REQ-DWP-004: the document carries the title, type, language, creation date and validity the publication stores.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function testTheDocumentCarriesTheStoredDiwooValues(): void {
 		$xml = $this->storedValuesPage(
@@ -1555,7 +1555,7 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * REQ-DWP-004: a record created before the DiWoo fields gets the creation day it was saved and nl.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function testALegacyRecordFallsBackToTheDerivation(): void {
 		$xml = $this->storedValuesPage(
@@ -1572,7 +1572,7 @@ class SitemapServiceTest extends TestCase {
 	 * REQ-DWP-004: a record created after the DiWoo fields gets no fallback: without its
 	 * creation date it is held back and reported, not dated from the moment it was saved.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function testARecordCreatedAfterTheMigrationGetsNoFallback(): void {
 		$publications = [
@@ -1594,7 +1594,7 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * REQ-DWP-002: one file's own document type wins over the publication's.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
 	 */
 	public function testAFileOverrideGivesThatDocumentItsOwnType(): void {
 		$xml = $this->storedValuesPage([
@@ -1614,7 +1614,7 @@ class SitemapServiceTest extends TestCase {
 	 * REQ-DWP-004: a legacy document whose organisation has no TOOI identifier is held
 	 * back from the page and reported by the validator; the complete one is served.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function testADocumentMissingAMandatoryFieldIsOmittedAndReported(): void {
 		$publications = [
@@ -1634,7 +1634,7 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * REQ-DWP-004: a page carrying every stored DiWoo field validates against the declared DiWoo XSD.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function testARenderedPageValidatesAgainstTheDeclaredXsd(): void {
 		$xml = $this->storedValuesPage([
@@ -1990,7 +1990,7 @@ class SitemapServiceTest extends TestCase {
 	 * REQ-WSD-001: a document's lastmod is the latest of the file's modified and
 	 * published times and the publication's update.
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-documents-lastmod-follows-its-metadata-as-well-as-its-file-req-wsd-001
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-documents-lastmod-follows-its-metadata-as-well-as-its-file-req-wsd-001
 	 */
 	public function testADocumentsLastmodFollowsItsMetadataAndItsFile(): void {
 		$method = $this->getPrivateMethod('mapDiwooDocument');
@@ -2011,7 +2011,7 @@ class SitemapServiceTest extends TestCase {
 	 * its part and the annex points at it, and the page still validates against
 	 * the official DiWoo XSD.
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
 	 */
 	public function testAMainDocumentListsItsPartsAndThePageValidates(): void {
 		$calls = [];
@@ -2039,7 +2039,7 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * REQ-WSD-003: two files marked as the main document are reported once, naming the publication.
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
 	 */
 	public function testValidatorReportsTwoMainDocuments(): void {
 		$main = ['labels' => ['main-document']];

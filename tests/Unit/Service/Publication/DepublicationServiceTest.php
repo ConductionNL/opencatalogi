@@ -18,7 +18,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.2
  */
 
 declare(strict_types=1);
@@ -28,6 +28,7 @@ namespace OCA\OpenCatalogi\Tests\Unit\Service\Publication;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublicationFreezer;
+use OCA\OpenRegister\Service\Object\ObjectStateRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -65,30 +66,21 @@ final class DepublicationServiceTest extends TestCase {
 			}
 
 			/**
-			 * Records the freeze, with ArchiveHandler::freeze()'s signature and answer.
+			 * Records the freeze, with ArchiveHandlerInterface::freeze()'s signature and answer.
 			 *
-			 * @param string $identifier The object.
-			 * @param string|null $reason Why.
+			 * @param ObjectStateRequest $request The object and why.
 			 * @param string|null $state The declaring state.
-			 * @param string|null $register The register.
-			 * @param string|null $schema The schema.
 			 *
 			 * @return array{uuid: string, frozen: array<string, mixed>} The marker.
 			 */
-			public function freeze(
-				string $identifier,
-				?string $reason = null,
-				?string $state = null,
-				?string $register = null,
-				?string $schema = null,
-			): array {
+			public function freeze(ObjectStateRequest $request, ?string $state = null): array {
 				if ($this->failure !== null) {
 					throw $this->failure;
 				}
 
-				$this->freezes[] = ['identifier' => $identifier, 'reason' => $reason];
+				$this->freezes[] = ['identifier' => $request->identifier, 'reason' => $request->reason];
 
-				return ['uuid' => $identifier, 'frozen' => ['by' => 'editor', 'reason' => $reason]];
+				return ['uuid' => $request->identifier, 'frozen' => ['by' => 'editor', 'reason' => $request->reason]];
 			}
 		};
 
@@ -189,7 +181,7 @@ final class DepublicationServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	public function testADocumentWriteOnAFrozenPublicationIsRefused(): void {
 		$service = $this->service();

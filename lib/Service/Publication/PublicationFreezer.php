@@ -15,7 +15,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.2
  */
 
 declare(strict_types=1);
@@ -24,6 +24,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -34,7 +35,7 @@ use Throwable;
  * without it answers "not frozen" with the reason instead of failing the
  * withdrawal that asked for the freeze.
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-is-frozen-with-the-withdrawal-reason-req-pwa-003
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-is-frozen-with-the-withdrawal-reason-req-pwa-003
  */
 class PublicationFreezer {
 
@@ -44,6 +45,11 @@ class PublicationFreezer {
 	 * @var string
 	 */
 	public const ARCHIVE_HANDLER = 'OCA\OpenRegister\Service\Object\ArchiveHandler';
+
+	/**
+	 * OpenRegister's request naming the object to freeze and why.
+	 */
+	public const STATE_REQUEST = 'OCA\OpenRegister\Service\Object\ObjectStateRequest';
 
 	/**
 	 * Constructor.
@@ -66,7 +72,7 @@ class PublicationFreezer {
 	 *
 	 * @return array{frozen: bool, frozenError?: string} Whether it is frozen, and why not.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.2
 	 */
 	public function freeze(string $publicationId, string $reason): array {
 		if ($publicationId === '') {
@@ -74,7 +80,7 @@ class PublicationFreezer {
 		}
 
 		try {
-			$answer = $this->container->get(self::ARCHIVE_HANDLER)->freeze(identifier: $publicationId, reason: $reason);
+			$answer = $this->container->get(self::ARCHIVE_HANDLER)->freeze(self::stateRequest(publicationId: $publicationId, reason: $reason));
 		} catch (Throwable $e) {
 			// The withdrawal stands either way: the publication is already off
 			// the public side. Only the freeze is reported as not done.
@@ -91,4 +97,26 @@ class PublicationFreezer {
 
 		return ['frozen' => true];
 	}//end freeze()
+
+	/**
+	 * The request OpenRegister's freeze takes: the publication and the reason,
+	 * with no register or schema scope (the handler resolves the object itself).
+	 *
+	 * @param string $publicationId The publication's uuid.
+	 * @param string $reason        The internal reason of the withdrawal.
+	 *
+	 * @return object The ObjectStateRequest.
+	 *
+	 * @throws RuntimeException When the installed OpenRegister has no such request.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.2
+	 */
+	private static function stateRequest(string $publicationId, string $reason): object {
+		$class = self::STATE_REQUEST;
+		if (class_exists($class) === false) {
+			throw new RuntimeException('The installed OpenRegister offers no object freeze request.');
+		}
+
+		return new $class(identifier: $publicationId, reason: $reason, register: null, schema: null);
+	}//end stateRequest()
 }//end class

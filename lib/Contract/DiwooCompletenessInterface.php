@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
+ * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ interface DiwooCompletenessInterface {
 	 *
 	 * @return array<string, string> The missing fields and why, empty when complete.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
 	 */
 	public function mandatoryGaps(array $publication): array;
 }//end interface

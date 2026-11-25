@@ -13,7 +13,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/instance-staging-mode/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/tasks.md#task-2.3
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -32,7 +32,7 @@ use RecursiveIteratorIterator;
  * Reads lib/ as text: a new HTTP client or gateway delivery outside the list fails here
  * until it asks the outbound gate or is named as a reader.
  *
- * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
+ * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md#requirement-nothing-leaves-the-instance-in-staging-req-stg-002
  */
 #[CoversNothing]
 final class OutboundGateCoverageTest extends TestCase {

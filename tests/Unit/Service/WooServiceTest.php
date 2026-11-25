@@ -1220,7 +1220,7 @@ class WooServiceTest extends TestCase {
 	 * REQ-DWP-003: a batch whose publication OpenRegister refuses for missing DiWoo
 	 * metadata is not marked published, and the refusal names the fields.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
 	 */
 	public function testABatchWithAnIncompleteWooPublicationIsNotMarkedPublished(): void {
 		$this->approvedBatch();

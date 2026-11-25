@@ -6,7 +6,7 @@
  * when, by whom and why it was frozen, and offers no Republish for a
  * withdrawn document, because OpenRegister refuses that file write.
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.4
  */
 
 import axios from '@nextcloud/axios'
