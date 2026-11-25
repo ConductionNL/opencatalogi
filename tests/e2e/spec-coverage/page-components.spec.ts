@@ -311,7 +311,8 @@ test.describe('page component — WooBatchDetail', () => {
 			},
 			data: {
 				caseReference,
-				status: 'draft',
+				// A wooBatch starts in its lifecycle's initial state
+				// ("in_progress"); OpenRegister refuses any other status on create.
 				deckAvailable: false,
 			},
 		})
@@ -341,7 +342,7 @@ test.describe('page component — WooBatchDetail', () => {
 	 * generated, so the assertion cannot be satisfied by a stale fixture, by
 	 * another run's data, or by any other screen in the app.
 	 */
-	test('WooBatchDetail renders the batch heading, the four assessment counts and the Deck queue section', async ({
+	test('WooBatchDetail renders the batch heading and the document queue with its four assessment columns', async ({
 		page,
 	}) => {
 		await bootApp(page)
@@ -355,18 +356,14 @@ test.describe('page component — WooBatchDetail', () => {
 			timeout: 15000,
 		})
 
-		// The four WOO assessment buckets — structure only this component draws.
-		const counts = root.locator('.woo-batch__counts li')
-		await expect(counts).toHaveCount(4)
-		await expect(root.locator('.woo-batch__counts')).toContainText(
-			'Te beoordelen',
-		)
-		await expect(root.locator('.woo-batch__counts')).toContainText(
-			'Niet openbaar',
-		)
-
-		// The Deck-board queue section.
-		await expect(root.locator('.woo-batch__deck')).toBeVisible()
+		// The document queue: one column per WOO assessment bucket, each with
+		// its count, structure only this component draws.
+		const queue = root.locator('.woo-batch__queue')
+		await expect(queue).toBeVisible()
+		const columns = queue.locator('.woo-batch__column')
+		await expect(columns).toHaveCount(4)
+		await expect(queue).toContainText(/To assess|Te beoordelen/)
+		await expect(queue).toContainText(/Not public|Niet openbaar/)
 	})
 
 	/**
