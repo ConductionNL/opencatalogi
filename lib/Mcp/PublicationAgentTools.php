@@ -143,8 +143,11 @@ class PublicationAgentTools {
 		}
 
 		$self = $saved['@self'] ?? [];
-		$id   = is_array($self) === true ? ($self['id'] ?? ($self['uuid'] ?? null)) : null;
-		$id   = $id ?? ($saved['id'] ?? ($saved['uuid'] ?? null));
+		if (is_array($self) === false) {
+			$self = [];
+		}
+
+		$id = ($self['id'] ?? ($self['uuid'] ?? ($saved['id'] ?? ($saved['uuid'] ?? null))));
 		if (is_string($id) === false || $id === '') {
 			return self::error(code: 'not_saved', message: 'The draft was not saved.');
 		}

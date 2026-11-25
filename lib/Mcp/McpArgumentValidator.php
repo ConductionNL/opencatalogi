@@ -82,7 +82,7 @@ class McpArgumentValidator {
 
 			$value = $this->fieldValue(value: $fields[$name], isList: $isList);
 			if ($value === null) {
-				return self::error(message: 'Field "' . $name . '" must be ' . ($isList === true ? 'a list of ids.' : 'text.'));
+				return self::typeRefusal(name: $name, isList: $isList);
 			}
 
 			if ($value !== '' && $value !== []) {
@@ -96,6 +96,24 @@ class McpArgumentValidator {
 
 		return ['fields' => $draft];
 	}//end draftFields()
+
+	/**
+	 * The refusal of a field with the wrong type.
+	 *
+	 * @param string $name   The field name.
+	 * @param bool   $isList Whether the field is a list of ids.
+	 *
+	 * @return array{error: array{code: string, message: string}} The refusal.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-write-actions-are-curated-tools-with-allow-listed-properties-req-007
+	 */
+	private static function typeRefusal(string $name, bool $isList): array {
+		if ($isList === true) {
+			return self::error(message: 'Field "' . $name . '" must be a list of ids.');
+		}
+
+		return self::error(message: 'Field "' . $name . '" must be text.');
+	}//end typeRefusal()
 
 	/**
 	 * The refusal of one field name, or null when the draft may carry it.
