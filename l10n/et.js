@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Taust",
         "Catalog": "Kataloog",
         "Catalog edit": "Kataloogi muutmine",
-        "Catalog is being added...": "Kataloogi lisatakse...",
-        "Catalog is being edited...": "Kataloogi muudetakse...",
         "Catalog successfully added": "Kataloog edukalt lisatud",
         "Catalog successfully edited": "Kataloog edukalt muudetud",
         "Catalog:": "Kataloog:",

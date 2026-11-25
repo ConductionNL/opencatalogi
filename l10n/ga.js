@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Cúlra",
         "Catalog": "Catalóg",
         "Catalog edit": "Eagarthóireacht catalóige",
-        "Catalog is being added...": "Tá an chatalóg á cur leis...",
-        "Catalog is being edited...": "Tá an chatalóg á heagarthóireacht...",
         "Catalog successfully added": "Cuireadh an chatalóg leis go rathúil",
         "Catalog successfully edited": "Rinneadh eagarthóireacht ar an gcatalóg go rathúil",
         "Catalog:": "Catalóg:",

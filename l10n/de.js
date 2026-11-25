@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Hintergrund",
         "Catalog": "Katalog",
         "Catalog edit": "Katalog bearbeiten",
-        "Catalog is being added...": "Katalog wird hinzugefügt...",
-        "Catalog is being edited...": "Katalog wird bearbeitet...",
         "Catalog successfully added": "Katalog erfolgreich hinzugefügt",
         "Catalog successfully edited": "Katalog erfolgreich bearbeitet",
         "Catalog:": "Katalog:",

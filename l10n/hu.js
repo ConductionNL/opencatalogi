@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Háttér",
         "Catalog": "Katalógus",
         "Catalog edit": "Katalógus szerkesztése",
-        "Catalog is being added...": "A katalógus hozzáadása folyamatban...",
-        "Catalog is being edited...": "A katalógus szerkesztése folyamatban...",
         "Catalog successfully added": "A katalógus sikeresen hozzáadva",
         "Catalog successfully edited": "A katalógus sikeresen szerkesztve",
         "Catalog:": "Katalógus:",

@@ -43,7 +43,7 @@ use Psr\Log\LoggerInterface;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/catalogs/tasks.md#task-7
+ * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-7
  */
 class CatalogCacheEventListener implements IEventListener {
 	/**

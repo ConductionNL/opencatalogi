@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Sfondi",
         "Catalog": "Katalog",
         "Catalog edit": "Redaktimi i katalogut",
-        "Catalog is being added...": "Katalogu po shtohet...",
-        "Catalog is being edited...": "Katalogu po redaktohet...",
         "Catalog successfully added": "Katalogu u shtua me sukses",
         "Catalog successfully edited": "Katalogu u redaktua me sukses",
         "Catalog:": "Katalogu:",

@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Fonas",
         "Catalog": "Katalogas",
         "Catalog edit": "Katalogo redagavimas",
-        "Catalog is being added...": "Katalogas pridedamas...",
-        "Catalog is being edited...": "Katalogas redaguojamas...",
         "Catalog successfully added": "Katalogas sėkmingai pridėtas",
         "Catalog successfully edited": "Katalogas sėkmingai suredaguotas",
         "Catalog:": "Katalogas:",

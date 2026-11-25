@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Fons",
         "Catalog": "Catàleg",
         "Catalog edit": "Edició del catàleg",
-        "Catalog is being added...": "S'està afegint el catàleg...",
-        "Catalog is being edited...": "S'està editant el catàleg...",
         "Catalog successfully added": "El catàleg s'ha afegit correctament",
         "Catalog successfully edited": "El catàleg s'ha editat correctament",
         "Catalog:": "Catàleg:",

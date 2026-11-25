@@ -267,6 +267,80 @@ const CnStatusBadge = {
 	},
 }
 
+/**
+ * A stand-in for CnFormDialog with its host contract: the `#form` slot while no
+ * result is shown, the result as a note, Cancel/Close and the confirm button,
+ * `setResult()` (a success emits `close` after two seconds, as the library does)
+ * and `setValidationErrors()` (keeps the form, shows the message).
+ */
+const CnFormDialog = {
+	name: 'CnFormDialog',
+	props: {
+		item: { type: Object, default: null },
+		schema: { type: Object, default: () => ({}) },
+		dialogTitle: { type: String, default: '' },
+		successText: { type: String, default: '' },
+		confirmLabel: { type: String, default: '' },
+		cancelLabel: { type: String, default: 'Cancel' },
+		closeLabel: { type: String, default: 'Close' },
+		confirmDisabled: { type: Boolean, default: false },
+		feedback: { type: Boolean, default: true },
+		cancelIcon: { type: String, default: '' },
+	},
+	emits: ['confirm', 'close'],
+	data() {
+		return { result: null, loading: false, formError: null }
+	},
+	methods: {
+		setResult(result) {
+			this.loading = false
+			this.result = result
+			if (result && result.success) {
+				setTimeout(() => this.$emit('close'), 2000)
+			}
+		},
+		setValidationErrors(fieldErrors = {}, message = null) {
+			void fieldErrors
+			this.loading = false
+			this.formError = message
+		},
+		confirm() {
+			this.loading = true
+			this.$emit('confirm', {})
+		},
+	},
+	render() {
+		const body = []
+		if (this.result !== null) {
+			if (this.result.success) {
+				body.push(h('div', { class: 'cn-form-dialog-result', 'data-type': 'success' }, this.successText))
+			}
+			if (this.result.error) {
+				body.push(h('div', { class: 'cn-form-dialog-result', 'data-type': 'error' }, this.result.error))
+			}
+		} else {
+			if (this.formError) {
+				body.push(h('div', { class: 'cn-form-dialog-error' }, this.formError))
+			}
+			body.push(this.$slots.form?.())
+		}
+		const actions = [
+			h('button', { class: 'cn-form-dialog-dismiss', onClick: () => this.$emit('close') }, this.result !== null ? this.closeLabel : this.cancelLabel),
+		]
+		if (this.result === null) {
+			actions.push(h('button', {
+				class: 'cn-form-dialog-confirm',
+				disabled: this.loading || this.confirmDisabled,
+				onClick: () => this.confirm(),
+			}, this.confirmLabel))
+		}
+		return h('div', { class: 'cn-form-dialog-stub', 'data-name': this.dialogTitle }, [
+			...body,
+			h('div', { class: 'cn-form-dialog-actions' }, actions),
+		])
+	},
+}
+
 module.exports = {
 	// The real barrel ends in `export * from '@nextcloud/vue'`, so an Nc* component
 	// imported from '@conduction/nextcloud-vue' resolves to the same stub here.
@@ -278,6 +352,7 @@ module.exports = {
 	useObjectStore: createObjectStore('conduction-objects'),
 	CnAppNav,
 	CnIndexPage,
+	CnFormDialog,
 	dispatchObjectsChanged,
 	isNewTabHandled,
 	openRowTarget,

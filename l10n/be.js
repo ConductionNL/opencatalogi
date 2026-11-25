@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Фон",
         "Catalog": "Каталог",
         "Catalog edit": "Рэдагаванне каталога",
-        "Catalog is being added...": "Каталог дадаецца...",
-        "Catalog is being edited...": "Каталог рэдагуецца...",
         "Catalog successfully added": "Каталог паспяхова дададзены",
         "Catalog successfully edited": "Каталог паспяхова адрэдагаваны",
         "Catalog:": "Каталог:",

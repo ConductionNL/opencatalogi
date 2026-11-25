@@ -108,7 +108,7 @@ class CatalogiControllerTest extends TestCase {
 	 * The list hands the request parameters and the resolved catalog scope to the
 	 * service and answers its result as JSON.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-3
 	 */
 	public function testIndexReturnsJsonResponse(): void {
 		$this->resolveCatalogScope();
@@ -128,7 +128,7 @@ class CatalogiControllerTest extends TestCase {
 	/**
 	 * A cross-origin list answer carries the CORS headers.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-3
 	 */
 	public function testIndexWithCatalogConfiguration(): void {
 		$this->resolveCatalogScope();
@@ -163,7 +163,7 @@ class CatalogiControllerTest extends TestCase {
 	/**
 	 * An unconfigured catalog scope answers 503 without reaching the service.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-3
 	 */
 	public function testIndexDoesNotSearchWithoutAResolvedScope(): void {
 		$this->appManager->method('getInstalledApps')->willReturn([]);
@@ -416,7 +416,7 @@ class CatalogiControllerTest extends TestCase {
 	/**
 	 * The 503 for an unconfigured catalogue register carries the CORS headers, so a cross-origin caller can read it.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-3
 	 */
 	public function testThe503CarriesTheCorsHeaders(): void {
 		$this->appManager->method('getInstalledApps')->willReturn([]);
@@ -438,7 +438,7 @@ class CatalogiControllerTest extends TestCase {
 	/**
 	 * The preflight answers 200 with the origin, methods and headers a browser checks.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-5
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-5
 	 */
 	public function testThePreflightAnswers200WithTheCorsHeaders(): void {
 		$this->request->method('getHeader')->willReturn('');
@@ -455,7 +455,7 @@ class CatalogiControllerTest extends TestCase {
 	/**
 	 * The public catalogue routes declare their posture as attributes: public, without CSRF, without admin.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-3
 	 */
 	public function testThePublicRoutesDeclareTheirAuthPosture(): void {
 		$expected = [

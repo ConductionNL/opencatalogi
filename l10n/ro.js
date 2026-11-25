@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Fundal",
         "Catalog": "Catalog",
         "Catalog edit": "Editare catalog",
-        "Catalog is being added...": "Catalogul se adaugă...",
-        "Catalog is being edited...": "Catalogul se editează...",
         "Catalog successfully added": "Catalog adăugat cu succes",
         "Catalog successfully edited": "Catalog editat cu succes",
         "Catalog:": "Catalog:",

@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Arrière-plan",
         "Catalog": "Catalogue",
         "Catalog edit": "Modification du catalogue",
-        "Catalog is being added...": "Le catalogue est en cours d'ajout...",
-        "Catalog is being edited...": "Le catalogue est en cours de modification...",
         "Catalog successfully added": "Catalogue ajouté avec succès",
         "Catalog successfully edited": "Catalogue modifié avec succès",
         "Catalog:": "Catalogue :",

@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Bakgrunnur",
         "Catalog": "Skrá",
         "Catalog edit": "Skrá breyta",
-        "Catalog is being added...": "Skrá er verið að bæta við...",
-        "Catalog is being edited...": "Skrá er verið að breyta...",
         "Catalog successfully added": "Skrá bætt við með góðum árangri",
         "Catalog successfully edited": "Skrá breytt með góðum árangri",
         "Catalog:": "Skrá:",

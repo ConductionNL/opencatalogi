@@ -1045,7 +1045,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
-	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-4
 	 */
 	public function index(null|string|int $catalogId = null): JSONResponse {
 		// Get config and fetch objects.
@@ -1104,7 +1104,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-3
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-3
 	 */
 	public function listCatalogs(array $requestParams, array $catalogConfig): array {
 		$objectService = $this->getObjectService();
@@ -1138,7 +1138,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	 *
 	 * @return JSONResponse A 404 with a `message` field.
 	 *
-	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 * @spec openspec/changes/archive/2026-11-25-catalogs/tasks.md#task-4
 	 */
 	private function catalogNotFound(): JSONResponse {
 		return new JSONResponse(['message' => 'Catalog not found'], Http::STATUS_NOT_FOUND);

@@ -8,7 +8,7 @@
  * administrator only.
  */
 
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import CatalogModal from './CatalogModal.vue'
 import { adminForTest as admin } from '../../composables/useIsAdmin.js'
 import { objectStore } from '../../store/store.js'
@@ -47,11 +47,12 @@ jest.mock('../../store/store.js', () => ({
 			return this.loading
 		},
 		setState: jest.fn(),
+		createObject: jest.fn(() => Promise.resolve()),
+		updateObject: jest.fn(() => Promise.resolve()),
 	},
 }))
 
 const stubs = {
-	NcModal: { props: ['name'], template: '<div class="modal" :data-name="name"><slot /></div>' },
 	NcNoteCard: { props: ['type'], template: '<div class="note" :data-type="type"><slot /></div>' },
 	CatalogStaffAccessFields: { template: '<div class="staff-access" />' },
 }
@@ -70,74 +71,111 @@ function mountModal({ success = null, error = null, loading = false, active = nu
 }
 
 /**
- * The notes shown, as type and text.
+ * The results the dialog shows, as type and text.
  *
  * @param {object} wrapper The wrapper.
  * @return {Array<Array<string>>}
  */
-function notes(wrapper) {
-	return wrapper.findAll('.note').map((note) => [note.attributes('data-type'), note.text()])
+function results(wrapper) {
+	return wrapper.findAll('.cn-form-dialog-result').map((note) => [note.attributes('data-type'), note.text()])
 }
+
+/**
+ * The dialog's button labels.
+ *
+ * @param {object} wrapper The wrapper.
+ * @return {Array<string>}
+ */
+function buttons(wrapper) {
+	return wrapper.findAll('.cn-form-dialog-actions button').map((button) => button.text())
+}
+
+/**
+ * Fill the form so it validates.
+ *
+ * @param {object} vm The modal.
+ * @return {void}
+ */
+function fillValid(vm) {
+	vm.catalogi.title = 'Woo'
+	vm.catalogi.slug = 'woo'
+	vm.$data.selectedRegisters = [{ id: 1, label: 'Register A' }]
+	vm.$data.selectedSchemas = [{ id: 10, label: 'Ten (Register A)' }]
+}
+
+const ACTIVE = { id: 'c1', title: 'Woo', registers: [], schemas: [] }
 
 beforeEach(() => {
 	admin.value = false
+	objectStore.createObject.mockReset().mockImplementation(() => Promise.resolve())
+	objectStore.updateObject.mockReset().mockImplementation(() => Promise.resolve())
 })
 
 describe('CatalogModal feedback', () => {
-	it('says a new catalogue was added and hides the form and the save button', () => {
-		const wrapper = mountModal({ success: true })
+	it('says a new catalogue was added and hides the form and the save button', async () => {
+		const wrapper = mountModal()
+		await wrapper.vm.saveCatalog()
+		await flushPromises()
 
-		expect(notes(wrapper)).toEqual([['success', 'Catalog successfully added']])
+		expect(results(wrapper)).toEqual([['success', 'Catalog successfully added']])
 		expect(wrapper.find('.form-group').exists()).toBe(false)
-		expect(wrapper.findAll('.modalActions button').map((button) => button.text())).toEqual(['Cancel'])
+		expect(buttons(wrapper)).toEqual(['Close'])
 	})
 
-	it('says an edited catalogue was saved, under the edit title, with Close', () => {
-		const wrapper = mountModal({ success: true, active: { id: 'c1', title: 'Woo', registers: [], schemas: [] } })
+	it('says an edited catalogue was saved, under the edit title, with Close', async () => {
+		const wrapper = mountModal({ active: ACTIVE })
+		await wrapper.vm.saveCatalog()
+		await flushPromises()
 
-		expect(wrapper.find('.modal').attributes('data-name')).toBe('Catalog edit')
-		expect(notes(wrapper)).toEqual([['success', 'Catalog successfully edited']])
-		expect(wrapper.findAll('.modalActions button').map((button) => button.text())).toEqual(['Close'])
+		expect(wrapper.find('.cn-form-dialog-stub').attributes('data-name')).toBe('Catalog edit')
+		expect(results(wrapper)).toEqual([['success', 'Catalog successfully edited']])
+		expect(buttons(wrapper)).toEqual(['Close'])
 	})
 
-	it('says adding failed and shows the error the store holds', () => {
-		const wrapper = mountModal({ success: false, error: 'Title already taken' })
+	it('says adding failed with the error the store rejects with', async () => {
+		objectStore.createObject.mockImplementation(() => Promise.reject(new Error('Title already taken')))
+		const wrapper = mountModal()
+		await wrapper.vm.saveCatalog()
+		await flushPromises()
 
-		expect(notes(wrapper)).toEqual([
-			['error', 'Something went wrong while adding the catalog'],
-			['error', 'Title already taken'],
-		])
+		expect(results(wrapper)).toEqual([['error', 'Title already taken']])
 	})
 
-	it('says editing failed', () => {
-		const wrapper = mountModal({ success: false, active: { id: 'c1', title: 'Woo', registers: [], schemas: [] } })
+	it('says editing failed when the store gives no message', async () => {
+		objectStore.updateObject.mockImplementation(() => Promise.reject(new Error('')))
+		const wrapper = mountModal({ active: ACTIVE })
+		await wrapper.vm.saveCatalog()
+		await flushPromises()
 
-		expect(notes(wrapper)).toEqual([['error', 'Something went wrong while editing the catalog']])
+		expect(results(wrapper)).toEqual([['error', 'Something went wrong while editing the catalog']])
 	})
 
-	it('shows no note and the form before a save', () => {
+	it('shows no result and the form before a save', () => {
 		const wrapper = mountModal()
 
-		expect(wrapper.find('.modal').attributes('data-name')).toBe('Add Catalog')
-		expect(notes(wrapper)).toEqual([])
+		expect(wrapper.find('.cn-form-dialog-stub').attributes('data-name')).toBe('Add Catalog')
+		expect(results(wrapper)).toEqual([])
 		expect(wrapper.find('.form-group').exists()).toBe(true)
-		expect(wrapper.find('.loading-status').exists()).toBe(false)
+		expect(buttons(wrapper)).toEqual(['Cancel', 'Add'])
 	})
 })
 
-describe('CatalogModal while saving', () => {
-	it('hides the form and the save button and says it is adding', () => {
-		const wrapper = mountModal({ loading: true })
+describe('CatalogModal confirm button', () => {
+	it('stays disabled until the form validates, then saves on a click', async () => {
+		const wrapper = mountModal()
+		expect(wrapper.find('.cn-form-dialog-confirm').attributes('disabled')).toBeDefined()
 
-		expect(wrapper.find('.form-group').exists()).toBe(false)
-		expect(wrapper.find('.loading-status').text()).toBe('Catalog is being added...')
-		expect(wrapper.findAll('.modalActions button').map((button) => button.text())).toEqual(['Cancel'])
+		fillValid(wrapper.vm)
+		await wrapper.vm.$nextTick()
+		expect(wrapper.find('.cn-form-dialog-confirm').attributes('disabled')).toBeUndefined()
+
+		await wrapper.find('.cn-form-dialog-confirm').trigger('click')
+		await flushPromises()
+		expect(objectStore.createObject).toHaveBeenCalledTimes(1)
 	})
 
-	it('says it is editing for a catalogue being edited', () => {
-		const wrapper = mountModal({ loading: true, active: { id: 'c1', title: 'Woo', registers: [], schemas: [] } })
-
-		expect(wrapper.find('.loading-status').text()).toBe('Catalog is being edited...')
+	it('labels the buttons Close and Save for a catalogue being edited', () => {
+		expect(buttons(mountModal({ active: ACTIVE }))).toEqual(['Close', 'Save'])
 	})
 })
 

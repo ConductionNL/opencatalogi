@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Fund",
         "Catalog": "Catalog",
         "Catalog edit": "Modifitgar il catalog",
-        "Catalog is being added...": "Il catalog vegn agiuntà...",
-        "Catalog is being edited...": "Il catalog vegn modifitgà...",
         "Catalog successfully added": "Catalog agiuntà cun success",
         "Catalog successfully edited": "Catalog modifitgà cun success",
         "Catalog:": "Catalog:",
