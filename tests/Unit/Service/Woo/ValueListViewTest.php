@@ -207,9 +207,9 @@ class ValueListViewTest extends TestCase {
 	 */
 	public function testASaveGoesToTheChoiceStore(): void {
 		$store = $this->createMock(originalClassName: ValueListChoiceStore::class);
-		$store->expects($this->once())->method('save')->with('informatiecategorieen', self::COVENANTS, ['hidden' => true]);
+		$store->expects($this->once())->method('save')->with(['scheme' => 'informatiecategorieen', 'entry' => self::COVENANTS, 'hidden' => true]);
 
-		$this->view(lists: $this->lists(), store: $store)->save(scheme: 'informatiecategorieen', entry: self::COVENANTS, fields: ['hidden' => true]);
+		$this->view(lists: $this->lists(), store: $store)->save(choice: ['scheme' => 'informatiecategorieen', 'entry' => self::COVENANTS, 'hidden' => true]);
 	}//end testASaveGoesToTheChoiceStore()
 
 	/**

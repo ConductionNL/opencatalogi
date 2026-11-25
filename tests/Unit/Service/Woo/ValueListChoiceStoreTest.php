@@ -134,7 +134,7 @@ class ValueListChoiceStoreTest extends TestCase {
 	 * @return void
 	 */
 	public function testANewChoiceIsCreated(): void {
-		$this->store(rows: [])->save(scheme: 'informatiecategorieen', entry: 'https://example.org/c1', fields: ['explanation' => 'Uitleg']);
+		$this->store(rows: [])->save(choice: ['explanation' => 'Uitleg', 'scheme' => 'informatiecategorieen', 'entry' => 'https://example.org/c1']);
 
 		$this->assertCount(expectedCount: 1, haystack: $this->saves);
 		$this->assertSame(
@@ -161,7 +161,7 @@ class ValueListChoiceStoreTest extends TestCase {
 				'localLabel' => 'Eigen',
 				'explanation' => 'Oud',
 			],
-		])->save(scheme: 'informatiecategorieen', entry: 'https://example.org/c1', fields: ['explanation' => 'Nieuw']);
+		])->save(choice: ['explanation' => 'Nieuw', 'scheme' => 'informatiecategorieen', 'entry' => 'https://example.org/c1']);
 
 		$this->assertSame(expected: 'choice-9', actual: $this->saves[0]['options']->uuid);
 		$this->assertSame(expected: 3, actual: $this->saves[0]['object']['order']);

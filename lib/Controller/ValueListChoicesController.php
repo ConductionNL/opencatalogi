@@ -115,16 +115,16 @@ class ValueListChoicesController extends Controller {
 	 */
 	public function update(): JSONResponse {
 		$scheme = (string)$this->request->getParam('scheme', '');
-		$entry = trim((string)$this->request->getParam('entry', ''));
 		$fields = (array)$this->request->getParam('choice', []);
+		$choice = array_merge($fields, ['scheme' => $scheme, 'entry' => trim((string)$this->request->getParam('entry', ''))]);
 
-		$problem = $this->problem(scheme: $scheme, entry: $entry, fields: $fields);
+		$problem = $this->problem(choice: $choice, fields: $fields);
 		if ($problem !== null) {
 			return new JSONResponse(['error' => $problem], Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
-			$this->view->save(scheme: $scheme, entry: $entry, fields: $fields);
+			$this->view->save(choice: $choice);
 		} catch (Throwable $e) {
 			return new JSONResponse(
 				['error' => $this->l10n->t('The choice could not be saved: %s', [$e->getMessage()])],
@@ -163,18 +163,17 @@ class ValueListChoicesController extends Controller {
 	/**
 	 * What is wrong with a save request, or null when nothing is.
 	 *
-	 * @param string               $scheme The list.
-	 * @param string               $entry  The entry's URI.
-	 * @param array<string, mixed> $fields The fields to set.
+	 * @param array<string, mixed> $choice The choice with its `scheme` and `entry`.
+	 * @param array<string, mixed> $fields The fields the request sets.
 	 *
 	 * @return string|null The problem, translated.
 	 */
-	private function problem(string $scheme, string $entry, array $fields): ?string {
-		if (in_array($scheme, ValueListsService::SCHEMES, true) === false) {
+	private function problem(array $choice, array $fields): ?string {
+		if (in_array($choice['scheme'], ValueListsService::SCHEMES, true) === false) {
 			return $this->l10n->t('Unknown value list.');
 		}
 
-		if ($entry === '') {
+		if ($choice['entry'] === '') {
 			return $this->l10n->t('Name the entry the choice is about.');
 		}
 

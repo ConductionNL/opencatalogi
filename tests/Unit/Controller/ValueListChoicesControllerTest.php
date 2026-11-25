@@ -70,12 +70,12 @@ class ValueListChoicesControllerTest extends TestCase {
 				'scheme' => $scheme,
 			]
 		);
-		$view->method('save')->willReturnCallback(function (string $scheme, string $entry, array $fields) use ($saveFails): void {
+		$view->method('save')->willReturnCallback(function (array $choice) use ($saveFails): void {
 			if ($saveFails === true) {
 				throw new RuntimeException('The field code belongs to the national value list.');
 			}
 
-			$this->saves[] = ['scheme' => $scheme, 'entry' => $entry, 'fields' => $fields];
+			$this->saves[] = $choice;
 		});
 
 		$l10n = $this->createMock(originalClassName: IL10N::class);
@@ -116,7 +116,7 @@ class ValueListChoicesControllerTest extends TestCase {
 
 		$this->assertSame(expected: 200, actual: $response->getStatus());
 		$this->assertSame(
-			expected: [['scheme' => 'informatiecategorieen', 'entry' => self::COVENANTS, 'fields' => ['explanation' => 'Afspraken met andere partijen.']]],
+			expected: [['explanation' => 'Afspraken met andere partijen.', 'scheme' => 'informatiecategorieen', 'entry' => self::COVENANTS]],
 			actual: $this->saves
 		);
 		$this->assertSame(expected: self::COVENANTS, actual: $response->getData()['entries'][0]['uri']);

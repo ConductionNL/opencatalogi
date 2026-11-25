@@ -101,9 +101,7 @@ class ValueListView {
 	/**
 	 * Save the organisation's choice about one entry of a list.
 	 *
-	 * @param string               $scheme The list.
-	 * @param string               $entry  The entry's URI.
-	 * @param array<string, mixed> $fields The choice's own fields to change.
+	 * @param array<string, mixed> $choice The choice: `scheme`, `entry` and the fields to change.
 	 *
 	 * @return void
 	 *
@@ -111,8 +109,8 @@ class ValueListView {
 	 *
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
 	 */
-	public function save(string $scheme, string $entry, array $fields): void {
-		$this->choices->save(scheme: $scheme, entry: $entry, fields: $fields);
+	public function save(array $choice): void {
+		$this->choices->save(choice: $choice);
 
 	}//end save()
 

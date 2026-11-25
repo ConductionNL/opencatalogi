@@ -96,9 +96,7 @@ class ValueListChoiceStore {
 	 * Written as the system after the caller's administrator check; the
 	 * pre-save guard still refuses a field a choice does not own.
 	 *
-	 * @param string               $scheme The list.
-	 * @param string               $entry  The entry's URI.
-	 * @param array<string, mixed> $fields The choice's fields to change.
+	 * @param array<string, mixed> $choice The choice: `scheme` and `entry` name the entry, the other keys are the fields to change.
 	 *
 	 * @return void
 	 *
@@ -106,7 +104,9 @@ class ValueListChoiceStore {
 	 *
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
 	 */
-	public function save(string $scheme, string $entry, array $fields): void {
+	public function save(array $choice): void {
+		$scheme = (string)($choice['scheme'] ?? '');
+		$entry = (string)($choice['entry'] ?? '');
 		$existing = null;
 		$object = [];
 		foreach ($this->stored(scheme: $scheme) as $stored) {
@@ -123,7 +123,7 @@ class ValueListChoiceStore {
 
 		$target = $this->target();
 		$this->openRegister->objectService()->saveObject(
-			object: array_merge($object, $fields, ['scheme' => $scheme, 'entry' => $entry]),
+			object: array_merge($object, $choice),
 			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $target['register'], schema: $target['schema']), uuid: $existing),
 			_rbac: false,
 			_multitenancy: false
