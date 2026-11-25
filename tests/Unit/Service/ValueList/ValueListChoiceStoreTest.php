@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * @category Tests
- * @package  OCA\OpenCatalogi\Tests\Unit\Service\Woo
+ * @package  OCA\OpenCatalogi\Tests\Unit\Service\ValueList
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
@@ -17,10 +17,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Tests\Unit\Service\Woo;
+namespace OCA\OpenCatalogi\Tests\Unit\Service\ValueList;
 
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
-use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
+use OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -28,7 +28,7 @@ use RuntimeException;
 /**
  * OpenRegister's object service is a recording double.
  *
- * @covers \OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore
+ * @covers \OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore
  */
 class ValueListChoiceStoreTest extends TestCase {
 

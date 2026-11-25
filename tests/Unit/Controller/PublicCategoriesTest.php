@@ -24,8 +24,9 @@ use OCA\OpenCatalogi\Service\DcatVocabularyService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use OCA\OpenCatalogi\Service\ValueListsService;
 use OCA\OpenCatalogi\Service\Woo\RefusalGrounds;
-use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
-use OCA\OpenCatalogi\Service\Woo\ValueListView;
+use OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore;
+use OCA\OpenCatalogi\Service\ValueList\ValueListMerge;
+use OCA\OpenCatalogi\Service\ValueList\ValueListView;
 use OCP\AppFramework\Http\Attribute\CORS;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\IAppConfig;
@@ -40,7 +41,8 @@ use RuntimeException;
  * The real bundled category list and the real view; the choice store is a double.
  *
  * @covers \OCA\OpenCatalogi\Controller\ValueListChoicesController
- * @uses   \OCA\OpenCatalogi\Service\Woo\ValueListView
+ * @uses   \OCA\OpenCatalogi\Service\ValueList\ValueListView
+ * @uses   \OCA\OpenCatalogi\Service\ValueList\ValueListMerge
  * @uses   \OCA\OpenCatalogi\Service\ValueListsService
  * @uses   \OCA\OpenCatalogi\Service\TooiVocabularyService
  * @uses   \OCA\OpenCatalogi\Service\DcatVocabularyService
@@ -82,7 +84,8 @@ class PublicCategoriesTest extends TestCase {
 			$store->method('forScheme')->with(ValueListChoicesController::CATEGORIES)->willReturn($choices);
 		}
 
-		$view = new ValueListView(lists: $lists, choices: $store, logger: $this->createMock(originalClassName: LoggerInterface::class));
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
+		$view = new ValueListView(lists: $lists, choices: $store, merge: new ValueListMerge(), logger: $logger);
 
 		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);

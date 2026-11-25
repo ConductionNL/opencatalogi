@@ -20,7 +20,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\ValueListChoicesController;
-use OCA\OpenCatalogi\Service\Woo\ValueListView;
+use OCA\OpenCatalogi\Service\ValueList\ValueListView;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;

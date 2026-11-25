@@ -15,7 +15,7 @@
  * source label and leaves the organisation's label as it was.
  *
  * @category Service
- * @package  OCA\OpenCatalogi\Service\Woo
+ * @package  OCA\OpenCatalogi\Service\ValueList
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
@@ -28,7 +28,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\ValueList;
 
 use OCA\OpenCatalogi\Service\ValueListsService;
 use Psr\Log\LoggerInterface;
@@ -46,6 +46,7 @@ class ValueListView {
 	 *
 	 * @param ValueListsService    $lists   The national lists, each through the service that owns it.
 	 * @param ValueListChoiceStore $choices The organisation's choices.
+	 * @param ValueListMerge       $merge   Applies the choices to the list and orders it.
 	 * @param LoggerInterface      $logger  Records a choice read that failed.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
@@ -53,6 +54,7 @@ class ValueListView {
 	public function __construct(
 		private readonly ValueListsService $lists,
 		private readonly ValueListChoiceStore $choices,
+		private readonly ValueListMerge $merge,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -88,13 +90,7 @@ class ValueListView {
 			$unavailable = true;
 		}
 
-		$entries = [];
-		foreach (array_values($source) as $row) {
-			$uri = (string)($row['uri'] ?? '');
-			$entries[] = self::merged(row: (array)$row, choice: ($choices[$uri] ?? null));
-		}
-
-		return ['entries' => self::ordered(entries: $entries), 'choicesUnavailable' => $unavailable];
+		return ['entries' => $this->merge->merge(source: $source, choices: $choices), 'choicesUnavailable' => $unavailable];
 
 	}//end entries()
 
@@ -114,70 +110,4 @@ class ValueListView {
 
 	}//end save()
 
-	/**
-	 * One source entry with its choice applied.
-	 *
-	 * @param array<string, mixed>      $row    The source entry.
-	 * @param array<string, mixed>|null $choice The choice (`order`, `localLabel`, `explanation`, `hidden`, `active`), or null.
-	 *
-	 * @return array<string, mixed> The entry: `{code, uri, sourceLabel, label, explanation, order, hidden, active, status}`.
-	 */
-	private static function merged(array $row, ?array $choice): array {
-		$sourceLabel = (string)($row['label'] ?? '');
-		$label = $sourceLabel;
-		if ($choice !== null && $choice['localLabel'] !== '') {
-			$label = $choice['localLabel'];
-		}
-
-		return [
-			'code' => (string)($row['code'] ?? ''),
-			'uri' => (string)($row['uri'] ?? ''),
-			'sourceLabel' => $sourceLabel,
-			'label' => $label,
-			'explanation' => ($choice['explanation'] ?? ''),
-			'order' => ($choice['order'] ?? null),
-			'hidden' => ($choice['hidden'] ?? false),
-			'active' => ($choice['active'] ?? false),
-			'status' => (string)($row['status'] ?? 'active'),
-		];
-
-	}//end merged()
-
-	/**
-	 * The entries by order, then by source order; an entry without an order follows the ordered ones.
-	 *
-	 * @param list<array<string, mixed>> $entries The merged entries, in source order.
-	 *
-	 * @return list<array<string, mixed>>
-	 */
-	private static function ordered(array $entries): array {
-		$keyed = [];
-		foreach ($entries as $position => $entry) {
-			$keyed[] = ['entry' => $entry, 'position' => $position];
-		}
-
-		usort(
-			$keyed,
-			static function (array $left, array $right): int {
-				$a = $left['entry']['order'];
-				$b = $right['entry']['order'];
-				if ($a !== $b) {
-					if ($a === null) {
-						return 1;
-					}
-
-					if ($b === null) {
-						return -1;
-					}
-
-					return $a <=> $b;
-				}
-
-				return $left['position'] <=> $right['position'];
-			}
-		);
-
-		return array_column($keyed, 'entry');
-
-	}//end ordered()
 }//end class

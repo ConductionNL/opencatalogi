@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * @category Tests
- * @package  OCA\OpenCatalogi\Tests\Unit\Service\Woo
+ * @package  OCA\OpenCatalogi\Tests\Unit\Service\ValueList
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
@@ -17,11 +17,12 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Tests\Unit\Service\Woo;
+namespace OCA\OpenCatalogi\Tests\Unit\Service\ValueList;
 
 use OCA\OpenCatalogi\Service\ValueListsService;
-use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
-use OCA\OpenCatalogi\Service\Woo\ValueListView;
+use OCA\OpenCatalogi\Service\ValueList\ValueListChoiceStore;
+use OCA\OpenCatalogi\Service\ValueList\ValueListMerge;
+use OCA\OpenCatalogi\Service\ValueList\ValueListView;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -29,7 +30,8 @@ use RuntimeException;
 /**
  * The list is a double answering what a refresh would leave behind; the merge is real.
  *
- * @covers \OCA\OpenCatalogi\Service\Woo\ValueListView
+ * @covers \OCA\OpenCatalogi\Service\ValueList\ValueListView
+ * @covers \OCA\OpenCatalogi\Service\ValueList\ValueListMerge
  */
 class ValueListViewTest extends TestCase {
 
@@ -116,7 +118,7 @@ class ValueListViewTest extends TestCase {
 			$this->warned[] = $message;
 		});
 
-		return new ValueListView(lists: $lists, choices: $store, logger: $logger);
+		return new ValueListView(lists: $lists, choices: $store, merge: new ValueListMerge(), logger: $logger);
 	}//end view()
 
 	/**

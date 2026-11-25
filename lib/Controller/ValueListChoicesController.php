@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\Woo\ValueListView;
+use OCA\OpenCatalogi\Service\ValueList\ValueListView;
 use OCA\OpenCatalogi\Service\ValueListsService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;

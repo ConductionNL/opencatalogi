@@ -9,7 +9,7 @@
  * {@see \OCA\OpenCatalogi\Listener\ValueListChoiceListener} guards it.
  *
  * @category Service
- * @package  OCA\OpenCatalogi\Service\Woo
+ * @package  OCA\OpenCatalogi\Service\ValueList
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\ValueList;
 
 use RuntimeException;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
