@@ -269,11 +269,11 @@ class PublicationsController extends Controller {
 	 * tell "not found" from "unreachable". The headers are set by name, so an
 	 * answer that already carries them is unchanged.
 	 *
-	 * @template T of Response
-	 *
 	 * @param T $response The answer.
 	 *
 	 * @return T The same answer, with the CORS headers.
+	 *
+	 * @template T of Response
 	 *
 	 * @spec openspec/changes/publications/specs/publications/spec.md#req-pub-010-all-public-endpoints-include-cors-headers
 	 */
