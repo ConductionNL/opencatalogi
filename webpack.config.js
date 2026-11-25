@@ -2,13 +2,13 @@
  * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  */
+const { withLeanBundles } = require('@conduction/nextcloud-vue/webpack')
 const path = require('path')
 const fs = require('fs')
 const webpack = require('webpack')
 const webpackConfig = require('@nextcloud/webpack-vue-config')
 const { VueLoaderPlugin } = require('vue-loader')
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin')
-const { withLeanBundles } = require('@conduction/nextcloud-vue/webpack')
 
 const buildMode = process.env.NODE_ENV
 const isDev = buildMode === 'development'

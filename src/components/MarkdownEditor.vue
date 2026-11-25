@@ -4,7 +4,7 @@
 -->
 <template>
 	<div class="markdown-editor-wrapper">
-		<v-md-editor v-model="content" :height="height" :disabled="disabled" />
+		<VMdEditor v-model="content" :height="height" :disabled="disabled" />
 	</div>
 </template>
 
@@ -20,6 +20,7 @@ export default {
 		// Loaded when a markdown field renders, not on every page boot.
 		VMdEditor: defineAsyncComponent(() => import(/* webpackChunkName: "markdown-editor" */ './markdownEditorSetup.js')),
 	},
+
 	props: {
 		modelValue: {
 			type: String,
