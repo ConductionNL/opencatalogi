@@ -138,6 +138,23 @@ describe('CatalogModal form', () => {
 		expect([navigationStore.setModal.mock.calls, objectStore.setState.mock.calls, formState(vm)]).toMatchSnapshot()
 	})
 
+	// @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-6.2
+	it('saves the DCAT switch on the catalog, so the per-catalogue feed is enabled (DCAT-010)', async () => {
+		const wrapper = mountModal()
+		const vm = wrapper.vm
+		fill(vm, { id: 'beta', label: 'Beta' })
+		expect(vm.catalogi.hasDcat).toBe(false)
+		expect(wrapper.find('[data-testid="catalog-dcat-licence"]').exists()).toBe(false)
+		vm.catalogi.hasDcat = true
+		await flushPromises()
+		expect(wrapper.find('[data-testid="catalog-dcat-licence"]').exists()).toBe(true)
+		vm.saveCatalog()
+		await flushPromises()
+		const [schema, saved] = objectStore.createObject.mock.calls[0]
+		expect(schema).toBe('catalog')
+		expect(saved.hasDcat).toBe(true)
+	})
+
 	it('fills itself once from the active catalog and saves it as an edit', async () => {
 		jest.useFakeTimers()
 		objectStore.active = {

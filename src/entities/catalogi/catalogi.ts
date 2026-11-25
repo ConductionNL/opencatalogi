@@ -39,6 +39,8 @@ export class Catalogi implements TCatalogi {
 	public slug!: string
 	public hasWooSitemap!: boolean
 	public hasOoapi!: boolean
+	public hasDcat!: boolean
+	public dcatLicense!: string
 	public showWithheld!: boolean
 	public staffAccess?: TCatalogStaffAccess
 
@@ -97,6 +99,9 @@ export class Catalogi implements TCatalogi {
 		this.listed = data?.listed || false
 		this.hasWooSitemap = data?.hasWooSitemap || false
 		this.hasOoapi = data?.hasOoapi || false
+		// DCAT-010: the per-catalogue feed switch and its licence (dcat-catalogue-completion 6.2).
+		this.hasDcat = data?.hasDcat === true
+		this.dcatLicense = data?.dcatLicense || ''
 		this.showWithheld = data?.showWithheld === true
 	}
 
@@ -143,6 +148,8 @@ export class Catalogi implements TCatalogi {
 				),
 			hasWooSitemap: z.boolean(),
 			hasOoapi: z.boolean(),
+			hasDcat: z.boolean(),
+			dcatLicense: z.string(),
 			showWithheld: z.boolean(),
 			staffAccess: z
 				.object({

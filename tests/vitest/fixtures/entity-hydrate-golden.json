@@ -110,8 +110,10 @@
 		"versionOf": ""
 	},
 	"catalogi empty": {
+		"dcatLicense": "",
 		"description": "",
 		"filters": {},
+		"hasDcat": false,
 		"hasOoapi": false,
 		"hasWooSitemap": false,
 		"id": "",
@@ -127,8 +129,10 @@
 		"title": ""
 	},
 	"catalogi falsy": {
+		"dcatLicense": "",
 		"description": "",
 		"filters": {},
+		"hasDcat": false,
 		"hasOoapi": false,
 		"hasWooSitemap": false,
 		"id": "0",
@@ -144,10 +148,12 @@
 		"title": ""
 	},
 	"catalogi full": {
+		"dcatLicense": "http://publications.europa.eu/resource/authority/licence/CC0",
 		"description": "D",
 		"filters": {
 			"a": 1
 		},
+		"hasDcat": true,
 		"hasOoapi": true,
 		"hasWooSitemap": true,
 		"id": "7",
@@ -177,8 +183,10 @@
 		"title": "Catalog"
 	},
 	"catalogi staffAccessPartial": {
+		"dcatLicense": "",
 		"description": "",
 		"filters": {},
+		"hasDcat": false,
 		"hasOoapi": false,
 		"hasWooSitemap": false,
 		"id": "",

@@ -30,6 +30,8 @@ export type TCatalogi = {
 	slug: string
 	hasWooSitemap: boolean
 	hasOoapi: boolean
+	hasDcat?: boolean
+	dcatLicense?: string
 	showWithheld?: boolean
 	staffAccess?: TCatalogStaffAccess
 }

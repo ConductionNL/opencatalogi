@@ -70,6 +70,8 @@ const CATALOGS: Record<string, unknown> = {
 		filters: null,
 		hasWooSitemap: '',
 		hasOoapi: 0,
+		hasDcat: 'true',
+		dcatLicense: null,
 		showWithheld: 'true',
 		staffAccess: null,
 	},
@@ -88,6 +90,8 @@ const CATALOGS: Record<string, unknown> = {
 		slug: 'catalog',
 		hasWooSitemap: true,
 		hasOoapi: true,
+		hasDcat: true,
+		dcatLicense: 'http://publications.europa.eu/resource/authority/licence/CC0',
 		showWithheld: true,
 		staffAccess: {
 			restricted: true,

@@ -34,6 +34,8 @@ export const mockCatalogi: TCatalogi = {
 	slug: 'test-catalogi',
 	hasWooSitemap: false,
 	hasOoapi: false,
+	hasDcat: false,
+	dcatLicense: '',
 	showWithheld: false,
 }
 
@@ -56,6 +58,8 @@ export const mockCatalogiList: TCatalogi[] = [
 		slug: 'another-catalogi',
 		hasWooSitemap: true,
 		hasOoapi: false,
+		hasDcat: false,
+		dcatLicense: '',
 		showWithheld: false,
 	},
 ]
