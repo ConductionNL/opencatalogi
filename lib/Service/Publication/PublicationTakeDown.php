@@ -149,17 +149,11 @@ class PublicationTakeDown {
 	 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
 	 */
 	public function save(string $id, array $record): void {
-		$configuration = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
+		$pair    = $this->registers->registerConfiguration(registerKey: 'publication_register', schemaKey: 'publication_schema');
+		$options = new ObjectSaveOptions(target: new ObjectFindTarget(register: $pair['register'], schema: $pair['schema']), uuid: $id);
 		unset($record['id']);
 
-		$this->registers->getObjectService()->saveObject(
-			object: $record,
-			options: new ObjectSaveOptions(
-				target: new ObjectFindTarget(register: $configuration['register'], schema: $configuration['schema']),
-				uuid: $id
-			),
-			_rbac: true
-		);
+		$this->registers->getObjectService()->saveObject(object: $record, options: $options, _rbac: true);
 	}//end save()
 
 	/**
