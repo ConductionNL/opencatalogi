@@ -61,7 +61,15 @@ interface Route {
 	url: string
 	verb: string
 	isPublic: boolean
+	/** Placeholder name -> the regex its value must match (the route's `requirements`). */
+	requirements: Record<string, string>
 }
+
+/**
+ * AppHost controllers are served from OpenRegister, so their source is not here.
+ * The health probe answers anonymously by design (monitoring, liveness); none other is public.
+ */
+const PUBLIC_APPHOST_ROUTES = ['OCA\\OpenCatalogi\\AppHost\\Controller\\GenericHealth#index']
 
 /**
  * Whether a controller method carries `#[PublicPage]` (or the `@PublicPage` annotation).
@@ -71,8 +79,7 @@ interface Route {
  */
 function isPublicMethod(controller: string, method: string): boolean {
 	if (controller.includes('\\')) {
-		// AppHost controllers served from OpenRegister; none of them is public.
-		return false
+		return PUBLIC_APPHOST_ROUTES.includes(`${controller}#${method}`)
 	}
 	const file = path.join(ROOT, 'lib', 'Controller', `${controller[0].toUpperCase()}${controller.slice(1)}Controller.php`)
 	const source = fs.readFileSync(file, 'utf8')
@@ -80,9 +87,12 @@ function isPublicMethod(controller: string, method: string): boolean {
 	if (at < 0) {
 		throw new Error(`${controller}#${method}: no such method in ${file}`)
 	}
-	// The attributes and docblock between the previous member and this one.
+	// The attributes and docblock between the previous member and this one. A docblock
+	// may itself hold a `;` or a `}`, so when the method has one, read from its `/**`.
 	const before = source.slice(0, at)
-	const start = Math.max(before.lastIndexOf('}'), before.lastIndexOf(';'))
+	const previousEnd = Math.max(before.lastIndexOf('}'), before.lastIndexOf(';'))
+	const docblock = before.lastIndexOf('/**')
+	const start = docblock > before.lastIndexOf('}') ? docblock : previousEnd
 	return /#\[PublicPage\]|@PublicPage\b/.test(before.slice(start))
 }
 
@@ -101,8 +111,27 @@ function routeTable(): Route[] {
 			throw new Error(`route ${match[1]} has no url`)
 		}
 		const [controller, method] = match[1].split('#')
-		return { name: match[1], url, verb: verb.toUpperCase(), isPublic: isPublicMethod(controller, method) }
+		const requirements: Record<string, string> = {}
+		// Pairs of quoted strings, since a requirement regex may itself hold `[` and `]`.
+		const block = /'requirements'\s*=>\s*\[((?:\s*'[^']*'\s*=>\s*'[^']*'\s*,?)*)\s*\]/.exec(entry)?.[1] ?? ''
+		for (const [, name, pattern] of block.matchAll(/'([A-Za-z]+)'\s*=>\s*'([^']+)'/g)) {
+			requirements[name] = pattern
+		}
+		return { name: match[1], url, verb: verb.toUpperCase(), isPublic: isPublicMethod(controller, method), requirements }
 	})
+}
+
+/**
+ * A placeholder value the route's requirement accepts.
+ *
+ * @param requirement The requirement regex, if the route declares one.
+ */
+function probeFor(requirement: string | undefined): string {
+	if (requirement === undefined) {
+		return 'boundary-probe'
+	}
+	const accepts = new RegExp(`^(?:${requirement})$`)
+	return ['boundary-probe', 'boundaryprobe', '1'].find((probe) => accepts.test(probe)) ?? 'boundary-probe'
 }
 
 /**
@@ -124,7 +153,9 @@ function filled(url: string, fill: (name: string) => string): string {
  * @param marker The value.
  */
 async function idsOf(admin: APIRequestContext, schema: string, field: string, marker: string): Promise<string[]> {
-	const response = await admin.get(`${OBJECTS}/${schema}`, { params: { [field]: marker, _limit: '20' } })
+	// Full-text search, then the exact field below: OpenRegister stores a translatable
+	// string as a language map, so an exact `field=` filter never matches it.
+	const response = await admin.get(`${OBJECTS}/${schema}`, { params: { _search: marker, _limit: '50' } })
 	expect(response.ok(), `listing ${schema} as admin: ${response.status()}`).toBeTruthy()
 	const body = await response.json()
 	const rows: any[] = Array.isArray(body) ? body : (body.results ?? [])
@@ -154,6 +185,7 @@ test.describe('the public boundary', () => {
 			httpCredentials: {
 				username: process.env.ADMIN_USER ?? process.env.NC_ADMIN_USER ?? 'admin',
 				password: process.env.ADMIN_PASSWORD ?? process.env.NC_ADMIN_PASS ?? 'admin',
+				send: 'always',
 			},
 			extraHTTPHeaders: { 'OCS-APIRequest': 'true', Accept: 'application/json' },
 		})
@@ -220,7 +252,9 @@ test.describe('the public boundary', () => {
 		})
 		const open: string[] = []
 		for (const route of routes.filter((r) => !r.isPublic)) {
-			const url = filled(route.url, () => 'boundary-probe')
+			// A probe the route's requirements refuse never reaches the controller (405),
+			// so each placeholder gets the first probe its requirement accepts.
+			const url = filled(route.url, (name) => probeFor(route.requirements[name]))
 			const response = await anonymous.fetch(url, { method: route.verb, maxRedirects: 0, failOnStatusCode: false })
 			const status = response.status()
 			const toLogin = status >= 300 && status < 400 && (response.headers().location ?? '').includes('/login')

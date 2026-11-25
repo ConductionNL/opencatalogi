@@ -169,6 +169,10 @@ use OCA\OpenCatalogi\Service\Woo\WooRequestService;
 use OCA\OpenCatalogi\Service\Woo\WooRequestStore;
 use OCA\OpenCatalogi\Service\Publication\PlainLanguageDrafter;
 use OCA\OpenCatalogi\Service\Publication\PlainSummaryProvenance;
+use OCA\OpenCatalogi\Contract\ValueListRefreshInterface;
+use OCA\OpenCatalogi\Contract\VocabularyRegisterInterface;
+use OCA\OpenCatalogi\Service\Vocabulary\ValueListRefresh;
+use OCA\OpenCatalogi\Service\Vocabulary\OpenRegisterVocabulary;
 
 /**
  * The interfaces callers in other components depend on, bound to their implementation.
@@ -201,6 +205,8 @@ final class ServiceBindings {
 		DcatDereferenceInterface::class => DcatDereference::class,
 		DocumentReferencesInterface::class => DocumentReferences::class,
 		DocumentReferenceProbeInterface::class => DocumentReferenceProbe::class,
+		VocabularyRegisterInterface::class => OpenRegisterVocabulary::class,
+		ValueListRefreshInterface::class => ValueListRefresh::class,
 		DocumentReferenceUrlPolicyInterface::class => DocumentReferenceUrlPolicy::class,
 		DonlRegistrationServiceInterface::class => DonlRegistrationService::class,
 		UsageCounterServiceInterface::class => UsageCounterService::class,

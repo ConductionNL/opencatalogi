@@ -44,9 +44,10 @@ Read `openspec/woo-build-rules.md` first. Start only once `publication-lifecycle
 
 ## 6. Verification
 
-- [ ] 6.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. The listener sits on every publication write: run the full unit suite once.
-- [ ] 6.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran. gate-19 wants the `@e2e` references of 2.2, 3.1 and 4.2; gate-18 checks the notification dialect.
-- [ ] 6.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 6.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 6.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. The listener sits on every publication write: run the full unit suite once.
+- [x] 6.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran. gate-19 wants the `@e2e` references of 2.2, 3.1 and 4.2; gate-18 checks the notification dialect.
+- [x] 6.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+- [x] 6.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - Done 25 Nov 2026 (b-opencatalogi), against `development` after the change's PRs landed, in a Nextcloud 34 tree with OpenRegister main: full PHPUnit 7300 tests, 4 errors, all `DirectoryServiceTest::testDoCronSync*` (directory cron, inherited, not this change). Full hydra run: gate-18 notification-dialect PASS; gate-19 is advisory (330 scenarios fleet-wide), the 2.2, 3.1 and 4.2 scenarios carry their `@e2e` references; the four failing gates (7, 26, 119, 123) are inherited and outside this change's files (#3065). `check:l10n-js` up to date; `npm run lint` errors only in `DashboardSideBar.vue`, not touched here.
 
 Done when merged on `development` with CI green. Rows 5.11, 5.13 and 5.21 become `production` only once a store release ships it.

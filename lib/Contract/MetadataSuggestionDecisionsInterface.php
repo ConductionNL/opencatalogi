@@ -39,7 +39,8 @@ interface MetadataSuggestionDecisionsInterface {
 	 *
 	 * @return array{suggestions: array<int, array<string, mixed>>, hermiq: bool, canDecide: bool} The overview.
 	 *
-	 * @throws \RuntimeException A MetadataSuggestionRefusedException: 404 when the caller cannot read the publication, 503 when suggestions are not set up.
+	 * @throws \RuntimeException A MetadataSuggestionRefusedException: 404 when the caller cannot read the publication,
+	 *                           503 when suggestions are not set up.
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003

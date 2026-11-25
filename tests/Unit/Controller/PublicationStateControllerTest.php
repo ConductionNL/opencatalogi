@@ -1381,7 +1381,7 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertSame('4711', $this->saves[0]['object']['file']);
 		$this->assertSame('Woonadres is weggelakt', $this->saves[0]['object']['reason']);
 		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
-		$this->assertSame(['id' => 'p1'], $this->saves[0]['object']['publication']);
+		$this->assertSame('p1', $this->saves[0]['object']['publication'], 'the depublication schema holds the uuid as a string');
 		$this->assertSame([], $this->fileService->metadata, 'a file without withdrawal labels is not written');
 	}
 

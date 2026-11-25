@@ -13,10 +13,23 @@ Read `openspec/woo-build-rules.md` first. Start once `dossiq/woo-refusal-grounds
 
 ## 2. Refresh
 
-- [ ] 2.1 Add `TooiSchemeRefresh`, registered in `appinfo/info.xml`, with the source config and the mass-deprecation guard (REQ-WVC-002). Verify: `tests/Unit/BackgroundJob/TooiSchemeRefreshTest.php::testANewConceptFromTheSourceIsImported` (fails today), `::testAMassDeprecationIsRefused`, `::testAFailedDownloadKeepsTheScheme`, `::testTheJobIsRegistered`.
+- [x] 2.1 Add `TooiSchemeRefresh`, registered in `appinfo/info.xml`, with the source config and the mass-deprecation guard (REQ-WVC-002). Verify: `tests/Unit/BackgroundJob/TooiSchemeRefreshTest.php::testANewConceptFromTheSourceIsImported` (fails today), `::testAMassDeprecationIsRefused`, `::testAFailedDownloadKeepsTheScheme`, `::testTheJobIsRegistered`.
       Blocked (17 Nov): the TOOI and DiWoo source downloads (identifier.overheid.nl, standaarden.overheid.nl,
       repository.officiele-overheidspublicaties.nl) are refused by the build session's network, and the task asks for the
       real source URLs and recorded responses, not reconstructed ones. Needs a session that can reach those hosts.
+      Built 25 Nov 2026 (b-opencatalogi); the source hosts answer from this session. `BackgroundJob/TooiSchemeRefresh`
+      (daily, in `appinfo/info.xml`) runs `Service/Vocabulary/ValueListRefresh` over app config `tooi_scheme_sources`,
+      seeded with the TOOI JSON downloads of the versions DiWoo 0.9.8 binds (informatiecategorieën 4, documentsoorten 7,
+      documenthandelingen 2, talen 1), and stores `{lastRefreshAt, created, updated, deprecated, error}` per scheme in
+      `tooi_scheme_refresh`. The TOOI repository serves expanded JSON-LD (a top-level node list, `@type` lists) that
+      OpenRegister's `importJsonLd()` cannot read, so `TooiValueListGraph` rewrites it; a collection-based list (`ccw_`)
+      has no ConceptScheme, so its list node becomes the scheme and grouping concepts are left out. The import runs in
+      OpenRegister's `SystemOperationContext` (cron has no user; RBAC refused it as Anonymous). Recorded answers in
+      `tests/fixtures/tooi/`. Tests: `TooiSchemeRefreshTest` (the four named, plus the one-third boundary and the seeded
+      sources), `TooiValueListGraphTest` (OpenRegister's own `SkosNodeReader` on the rewrite), `OpenRegisterVocabularyTest`.
+      Run through OpenRegister main's real importer on Nextcloud 34 + PostgreSQL 16 (sandbox): informatiecategorieën
+      created 1 (infocat018) updated 17, documentsoorten created 91, documenthandelingen 3, talen 27; a second run
+      unchanged. Not built here: 2.4's audit-trail refusal. 1.1 (switching the reader) can follow now that the schemes import.
 - [ ] 2.2 Live: run the job once on the dev instance and paste the per-scheme counts in the PR body (REQ-WVC-002). Verify: the pasted counts. (live pass, decision 139)
 - [ ] 2.3 Make `WooCategoryRegistry` read the categories from the vocabulary register instead of `WooCategory::ALL`, switching `SavedSearchService` and `BatchPublicationWriter` to `WooCategoryRegistry::find()`, taking the English label from the concept or `l10n/`, and keeping operator-added categories and every caller (the sitemap included) green (REQ-WVC-005, row 12.30). Verify: `tests/Unit/Service/Woo/WooCategoryRegistryTest.php::testTheCategoriesComeFromTheRegisterNotTheConstant` (fails today), and `git grep -n "const ALL" lib/Service/WooCategory.php` returns nothing.
 - [ ] 2.4 Prove that every category change is audited: a refresh that renames or deprecates a category, an administrator edit, and an operator-added category edit each leave an audit trail row with actor, time, before and after; the job refuses the categories scheme when audit trails are off (REQ-WVC-005, row 12.30). Verify: `TooiSchemeRefreshTest::testACategoryChangeIsOnTheAuditTrailWithBeforeAndAfter` (fails today), `::testWithoutAuditTrailsTheCategoriesAreNotRefreshed`, and `WooCategoryRegistryTest::testAnOperatorCategoryEditIsAudited`, each reading the row back through OpenRegister's `AuditTrailMapper`, not a double of it.

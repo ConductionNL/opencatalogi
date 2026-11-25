@@ -69,6 +69,8 @@ class CapabilityRightsController extends Controller {
 	 *
 	 * @return JSONResponse `{rights: [{verb, description, groups}]}`, or 500 when the grants cannot be read.
 	 *
+	 * @auth admin-only Who holds a Woo right is instance configuration, so the default admin gate guards it.
+	 *
 	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
 	 */
 	public function index(): JSONResponse {
@@ -87,6 +89,8 @@ class CapabilityRightsController extends Controller {
 	 * @param string $verb The right.
 	 *
 	 * @return JSONResponse `{rights: [...]}` after the change; 400 for an unknown right or group; 500 when it could not be saved.
+	 *
+	 * @auth admin-only Granting a Woo right widens who may act on every publication; admins only.
 	 *
 	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
 	 */

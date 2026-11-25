@@ -192,7 +192,11 @@ class EmbargoLifts {
 	/**
 	 * Write the one audit entry of a lift, naming the reason and both dates.
 	 *
-	 * @param object               $before  The publication before the lift.
+	 * Written through OpenRegister's createAuditTrailEntry(), which stores the
+	 * context as the entry's `changed`. createAuditTrail()'s cascade context keeps
+	 * only referential-integrity keys, so the reason was dropped there and the entry
+	 * was marked as a cascade.
+	 *
 	 * @param object               $after   The publication after the lift.
 	 * @param array<string, mixed> $context The user, the reason, the previous and the new date.
 	 *
@@ -202,12 +206,11 @@ class EmbargoLifts {
 	 *
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.1
 	 */
-	public function log(object $before, object $after, array $context): void {
-		$this->openRegister->installedService(self::AUDIT_MAPPER, 'OpenRegister is not available.')->createAuditTrail(
-			old: $before,
-			new: $after,
+	public function log(object $after, array $context): void {
+		$this->openRegister->installedService(self::AUDIT_MAPPER, 'OpenRegister is not available.')->createAuditTrailEntry(
+			object: $after,
 			action: self::ACTION,
-			cascadeContext: $context
+			context: $context
 		);
 	}//end log()
 }//end class

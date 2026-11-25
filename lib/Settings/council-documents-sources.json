@@ -33,11 +33,13 @@
                 "currentPage": 1,
                 "targetType": "register/schema",
                 "targetId": "publication/publication",
-                "conditions": {
-                    "!!": {
-                        "var": "id"
+                "conditions": [
+                    {
+                        "!!": {
+                            "var": "id"
+                        }
                     }
-                }
+                ]
             },
             "rule": {
                 "slug": "opencatalogi-council-document-file-notubiz",
@@ -101,11 +103,13 @@
                 "currentPage": 1,
                 "targetType": "register/schema",
                 "targetId": "publication/publication",
-                "conditions": {
-                    "!!": {
-                        "var": "id"
+                "conditions": [
+                    {
+                        "!!": {
+                            "var": "id"
+                        }
                     }
-                }
+                ]
             },
             "rule": {
                 "slug": "opencatalogi-council-document-file-ibabs",

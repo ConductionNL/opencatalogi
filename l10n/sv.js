@@ -883,7 +883,10 @@ OC.L10N.register(
         "Install dossiq from the app store": "Installera dossiq från appbutiken",
         "Order of the kinds of handling": "Ordning för handlingstyper",
         "Order of the document types": "Ordning för dokumenttyper",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Er egen ordning kunde inte läsas in, så listan visas i sin egen ordning."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Er egen ordning kunde inte läsas in, så listan visas i sin egen ordning.",
+        "Where the transfer stands: requested, transferred or failed.": "Var överföringen står: begärd, överförd eller misslyckad.",
+        "When the transfer to the e-depot was requested.": "När överföringen till e-depån begärdes.",
+        "When the transfer status last changed.": "När överföringens status senast ändrades."
     },
     "nplurals=2; plural=(n != 1);"
 )

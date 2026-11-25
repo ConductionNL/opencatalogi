@@ -83,6 +83,17 @@ export let SCHEMA_PUBLICCODE: number | string | null = null
  */
 export let REG_OPENCATALOGI: number | string = 14
 
+/**
+ * The transitions that bring a new (draft) publication to each later state, as
+ * the publication lifecycle in lib/Settings/publication_register.json declares them.
+ */
+const LIFECYCLE_PATHS: Record<string, string[]> = {
+	in_review: ['submit'],
+	approved: ['submit', 'approve'],
+	published: ['submit', 'approve', 'publish'],
+	archived: ['submit', 'approve', 'publish', 'archive'],
+}
+
 /** Stable slugs the OpenCatalogi register import uses (slug -> resolved id). */
 const REGISTER_SLUG = 'publication'
 const MANIFEST_REGISTER_SLUG = 'opencatalogi'
@@ -129,7 +140,9 @@ export class Fixtures {
 	async init(): Promise<void> {
 		this.ctx = await request.newContext({
 			baseURL: BASE,
-			httpCredentials: { username: ADMIN_USER, password: ADMIN_PASS },
+			// Always: Nextcloud's 401 carries no WWW-Authenticate challenge, so a
+			// challenge-only context reads anonymously and finds no admin-only schema.
+			httpCredentials: { username: ADMIN_USER, password: ADMIN_PASS, send: 'always' },
 			extraHTTPHeaders: {
 				'OCS-APIRequest': 'true',
 				'Content-Type': 'application/json',
@@ -369,12 +382,42 @@ export class Fixtures {
 		register: number | string = REG_PUBLICATION,
 	): Promise<SeededObject> {
 		const title = this.label(name)
-		return this.create(register, SCHEMA_PUBLICATION, {
+		// A publication starts in draft: OpenRegister refuses any other initial
+		// state. A fixture asked for in a later state is created in draft and walked
+		// there through the lifecycle's own transitions, as an editor would.
+		const { status, ...fields } = extra
+		const seeded = await this.create(register, SCHEMA_PUBLICATION, {
 			title,
 			summary: `Fixture publication for ${this.prefix}`,
 			description: 'Created by the OpenCatalogi deep e2e workflow suite.',
-			...extra,
+			...fields,
 		})
+		const target = typeof status === 'string' ? status : 'draft'
+		if (target === 'draft') {
+			return seeded
+		}
+		const publicationDate = typeof fields.publicationDate === 'string'
+			? fields.publicationDate
+			: new Date().toISOString()
+		const path = LIFECYCLE_PATHS[target]
+		if (path === undefined) {
+			throw new Error(`createPublication(): no lifecycle path to "${target}"`)
+		}
+		let raw = seeded.raw
+		for (const action of path) {
+			const data = action === 'publish' ? { publicationDate } : {}
+			const res = await this.ctx.post(
+				`/index.php/apps/openregister/api/objects/${seeded.id}/transition`,
+				{ data: { action, data } },
+			)
+			if (!res.ok()) {
+				throw new Error(
+					`createPublication(): ${action} towards "${target}" failed: ${res.status()} ${await res.text()}`,
+				)
+			}
+			raw = await res.json()
+		}
+		return { ...seeded, raw }
 	}
 
 	/**

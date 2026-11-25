@@ -259,7 +259,8 @@ class DraftPurgeRecords {
 	 * @spec openspec/changes/archive/2026-11-24-publication-lifecycle-on-or-draft-purge/specs/publications/spec.md#requirement-a-draft-that-was-never-released-is-deleted-permanently-with-everything-on-it-req-plc-004
 	 */
 	public function log(object $publication, string $action, array $context): void {
-		$this->service(id: self::AUDIT_MAPPER)->createAuditTrail(old: $publication, new: null, action: $action, cascadeContext: $context);
+		// The entry keeps its context through createAuditTrailEntry(); createAuditTrail()'s cascade context keeps only referential-integrity keys.
+		$this->service(id: self::AUDIT_MAPPER)->createAuditTrailEntry(object: $publication, action: $action, context: $context);
 	}//end log()
 
 	/**

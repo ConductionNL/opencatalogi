@@ -73,6 +73,8 @@ test.describe('Permanent delete of a draft', () => {
 					title: 'Zaakdossier',
 					publication: publication.id,
 					sourceSystem: 'e2e',
+					format: 'pdf',
+					url: 'https://example.org/zaakdossier.pdf',
 				},
 			},
 		)

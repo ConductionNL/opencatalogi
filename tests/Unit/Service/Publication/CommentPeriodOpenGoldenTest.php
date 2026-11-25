@@ -40,7 +40,9 @@ use Psr\Container\ContainerInterface;
  */
 class GoldenSlaCalculator {
 
-	public function add(\DateTimeInterface $from, float $value, string $unit, ?object $calendar): DateTimeImmutable {
+	public function add(\OCA\OpenRegister\Service\Flow\Timer\SlaAddition $addition): DateTimeImmutable {
+		// The engine's value object, unpacked to the names this double was written with.
+		[$from, $value, $unit, $calendar] = [$addition->start, $addition->value, $addition->unit, null];
 		return DateTimeImmutable::createFromInterface($from)->modify(sprintf('%+d days', (int)$value));
 	}//end add()
 
@@ -60,7 +62,9 @@ class GoldenSlaCalculator {
  */
 class GoldenStillCalculator extends GoldenSlaCalculator {
 
-	public function add(\DateTimeInterface $from, float $value, string $unit, ?object $calendar): DateTimeImmutable {
+	public function add(\OCA\OpenRegister\Service\Flow\Timer\SlaAddition $addition): DateTimeImmutable {
+		// The engine's value object, unpacked to the names this double was written with.
+		[$from, $value, $unit, $calendar] = [$addition->start, $addition->value, $addition->unit, null];
 		return DateTimeImmutable::createFromInterface($from);
 	}//end add()
 }//end class

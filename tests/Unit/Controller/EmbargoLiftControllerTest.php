@@ -244,21 +244,21 @@ final class EmbargoLiftControllerTest extends TestCase {
 			}
 
 			/**
-			 * Record an audit entry, or throw when the test says the trail is unavailable.
+			 * Record an audit entry, or throw when the test says the trail is unavailable;
+			 * OpenRegister's AuditTrailMapper::createAuditTrailEntry() signature.
 			 *
-			 * @param mixed                     $old            The old state.
-			 * @param mixed                     $new            The new state.
-			 * @param string|null               $action         The action.
-			 * @param array<string, mixed>|null $cascadeContext The context.
+			 * @param mixed                $object  The object.
+			 * @param string               $action  The action.
+			 * @param array<string, mixed> $context The context, stored as the entry's changes.
 			 *
 			 * @return object
 			 */
-			public function createAuditTrail(mixed $old = null, mixed $new = null, ?string $action = null, ?array $cascadeContext = null): object {
+			public function createAuditTrailEntry(mixed $object, string $action, array $context = []): object {
 				if ($this->test->auditFails === true) {
 					throw new RuntimeException('The audit trail is unavailable.');
 				}
 
-				$this->test->audits[] = [$old, $new, $action, $cascadeContext];
+				$this->test->audits[] = [$object, $action, $context];
 				return new \stdClass();
 			}
 		};
@@ -399,9 +399,8 @@ final class EmbargoLiftControllerTest extends TestCase {
 		$this->assertSame(expected: [], actual: $this->transitions);
 
 		$this->assertCount(expectedCount: 1, haystack: $this->audits);
-		[$old, $new, $action, $context] = $this->audits[0];
-		$this->assertInstanceOf(expected: ObjectEntity::class, actual: $old);
-		$this->assertInstanceOf(expected: ObjectEntity::class, actual: $new);
+		[$object, $action, $context] = $this->audits[0];
+		$this->assertInstanceOf(expected: ObjectEntity::class, actual: $object);
 		$this->assertSame(expected: 'publication.embargo.lifted', actual: $action);
 		$this->assertSame(
 			expected: [
