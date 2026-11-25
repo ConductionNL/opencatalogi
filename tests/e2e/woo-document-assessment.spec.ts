@@ -148,9 +148,18 @@ test.describe('woo-document-assessment', () => {
 		request,
 	}) => {
 		const batch = await seedBatch(request)
-		await page.goto(`${APP_BASE}/woo`, { waitUntil: 'domcontentloaded' })
-		await page.getByText(batch.reference).first().click()
-		await expect(page).toHaveURL(new RegExp(`/woo/${batch.id}$`), {
+		// Search for this run's batch: on a used instance it need not be on page 1.
+		await page.goto(
+			`${APP_BASE}/woo?_search=${encodeURIComponent(batch.reference)}`,
+			{ waitUntil: 'domcontentloaded' },
+		)
+		// The whole row is the link (an "Open row" overlay takes the click).
+		await page
+			.getByRole('row')
+			.filter({ hasText: batch.reference })
+			.getByTestId('cn-row-link')
+			.click()
+		await expect(page).toHaveURL(new RegExp(`/woo/${batch.id}(\\?|$)`), {
 			timeout: 15_000,
 		})
 		await expect(page.locator('.woo-batch')).toContainText(batch.reference, {
@@ -226,9 +235,9 @@ test.describe('woo-document-assessment', () => {
 		).toBeDisabled()
 		await dialog.getByRole('button', { name: 'Cancel' }).click()
 
-		await expect(
-			column(page, /To assess/).locator('.woo-batch__card'),
-		).toContainText('Notitie wethouder.pdf')
+		await expect(column(page, /To assess/)).toContainText(
+			'Notitie wethouder.pdf',
+		)
 		expect(saves).toBe(0)
 		expect(
 			(await assessmentOf(request, batch.reference, 'Notitie wethouder.pdf'))
@@ -260,6 +269,9 @@ test.describe('woo-document-assessment', () => {
 			.getByRole('option', { name: /5\.1.*(lid )?2.*e/i })
 			.first()
 			.click()
+		// Several grounds may be chosen, so the list stays open after a pick;
+		// close it as a person would, by clicking elsewhere in the dialog.
+		await dialog.getByRole('heading').first().click()
 		await dialog.getByRole('button', { name: 'Save assessment' }).click()
 
 		const card = column(page, /Partly public/).locator('.woo-batch__card', {

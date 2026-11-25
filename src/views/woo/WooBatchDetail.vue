@@ -563,6 +563,7 @@ export default {
 												(c) => c.key !== column.key,
 											)"
 											:key="other.key"
+											closeAfterClick
 											:disabled="saving[item.id] === true"
 											@click="requestMove(item, other.key)">
 											{{
@@ -581,6 +582,7 @@ export default {
 										</NcActionLink>
 										<NcActionButton
 											v-if="column.key === 'deels_openbaar'"
+											closeAfterClick
 											@click="openRedaction(item)">
 											{{ t('opencatalogi', 'Redact') }}
 										</NcActionButton>
