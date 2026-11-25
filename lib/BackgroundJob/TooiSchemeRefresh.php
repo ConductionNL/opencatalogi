@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\BackgroundJob;
 
-use OCA\OpenCatalogi\Service\Vocabulary\ValueListRefresh;
+use OCA\OpenCatalogi\Contract\ValueListRefreshInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -40,9 +40,9 @@ class TooiSchemeRefresh extends TimedJob {
 	 * Daily, without parallel runs: a list changes at most a few times a year.
 	 *
 	 * @param ITimeFactory     $time    The clock.
-	 * @param ValueListRefresh $refresh Downloads and imports the lists.
+	 * @param ValueListRefreshInterface $refresh Downloads and imports the lists.
 	 */
-	public function __construct(ITimeFactory $time, private readonly ValueListRefresh $refresh) {
+	public function __construct(ITimeFactory $time, private readonly ValueListRefreshInterface $refresh) {
 		parent::__construct(time: $time);
 		$this->setAllowParallelRuns(allow: false);
 		$this->setTimeSensitivity(sensitivity: IJob::TIME_INSENSITIVE);

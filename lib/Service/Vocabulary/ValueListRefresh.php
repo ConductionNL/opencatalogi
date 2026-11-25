@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Vocabulary;
 
+use OCA\OpenCatalogi\Contract\ValueListRefreshInterface;
 use OCA\OpenCatalogi\Contract\VocabularyRegisterInterface;
 use OCA\OpenCatalogi\Service\Woo\PipelineIncidents;
 use RuntimeException;
@@ -40,7 +41,7 @@ use Throwable;
  *
  * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-each-scheme-is-refreshed-from-its-national-source-daily-req-wvc-002
  */
-class ValueListRefresh {
+class ValueListRefresh implements ValueListRefreshInterface {
 
 	/**
 	 * The app config key of the sources, a JSON list of `{key, scheme, url}`.

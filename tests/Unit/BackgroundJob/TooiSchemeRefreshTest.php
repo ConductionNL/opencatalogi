@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace Unit\BackgroundJob;
 
 use OCA\OpenCatalogi\BackgroundJob\TooiSchemeRefresh;
+use OCA\OpenCatalogi\Contract\ValueListRefreshInterface;
 use OCA\OpenCatalogi\Contract\VocabularyRegisterInterface;
 use OCA\OpenCatalogi\Service\Vocabulary\TooiValueListGraph;
 use OCA\OpenCatalogi\Service\Vocabulary\ValueListDownload;
@@ -282,7 +283,7 @@ class TooiSchemeRefreshTest extends TestCase {
 		$infoXml = (string)file_get_contents(__DIR__ . '/../../../appinfo/info.xml');
 		$this->assertStringContainsString(needle: '<job>OCA\\OpenCatalogi\\BackgroundJob\\TooiSchemeRefresh</job>', haystack: $infoXml);
 
-		$refresh = $this->createMock(originalClassName: ValueListRefresh::class);
+		$refresh = $this->createMock(originalClassName: ValueListRefreshInterface::class);
 		$refresh->expects($this->once())->method('refreshAll')->willReturn([]);
 		$job = new TooiSchemeRefresh(time: $this->createMock(originalClassName: ITimeFactory::class), refresh: $refresh);
 		$this->assertSame(expected: 86400, actual: $job->getInterval());

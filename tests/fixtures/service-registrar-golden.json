@@ -81,6 +81,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\ValueListRefreshInterface",
+        "OCA\\OpenCatalogi\\Service\\Vocabulary\\ValueListRefresh"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\DocumentReferenceUrlPolicyInterface",
         "OCA\\OpenCatalogi\\Service\\DocumentReferenceUrlPolicy"
     ],
