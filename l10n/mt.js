@@ -883,7 +883,10 @@ OC.L10N.register(
         "Install dossiq from the app store": "Installa dossiq mill-ħanut tal-apps",
         "Order of the kinds of handling": "Ordni tat-tipi ta’ azzjoni",
         "Order of the document types": "Ordni tat-tipi ta’ dokumenti",
-        "Your own order could not be loaded, so the list is shown in its own order.": "L-ordni tiegħek ma setax jitgħabba, għalhekk il-lista tintwera fl-ordni oriġinali tagħha."
+        "Your own order could not be loaded, so the list is shown in its own order.": "L-ordni tiegħek ma setax jitgħabba, għalhekk il-lista tintwera fl-ordni oriġinali tagħha.",
+        "Where the transfer stands: requested, transferred or failed.": "L-istat tat-trasferiment: mitlub, trasferit jew falla.",
+        "When the transfer to the e-depot was requested.": "Meta ntalab it-trasferiment lejn l-e-depożitu.",
+        "When the transfer status last changed.": "Meta nbidel l-aħħar l-istatus tat-trasferiment."
     },
     "nplurals=2; plural=(n != 1);"
 )

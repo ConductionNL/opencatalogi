@@ -882,7 +882,10 @@
         "Install dossiq from the app store": "Nainstalujte dossiq z obchodu s aplikacemi",
         "Order of the kinds of handling": "Pořadí druhů úkonů",
         "Order of the document types": "Pořadí druhů dokumentů",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Vlastní pořadí se nepodařilo načíst, proto je seznam zobrazen v původním pořadí."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Vlastní pořadí se nepodařilo načíst, proto je seznam zobrazen v původním pořadí.",
+        "Where the transfer stands: requested, transferred or failed.": "Stav předání: vyžádáno, předáno nebo selhalo.",
+        "When the transfer to the e-depot was requested.": "Kdy bylo vyžádáno předání do e-depozitáře.",
+        "When the transfer status last changed.": "Kdy se stav předání naposledy změnil."
     },
     "plurals": {}
 }

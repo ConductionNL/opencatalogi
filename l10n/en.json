@@ -2256,7 +2256,10 @@
         "Move the %s publications filed under this category before hiding it.": "Move the %s publications filed under this category before hiding it.",
         "Order of the kinds of handling": "Order of the kinds of handling",
         "Order of the document types": "Order of the document types",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Your own order could not be loaded, so the list is shown in its own order."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Your own order could not be loaded, so the list is shown in its own order.",
+        "Where the transfer stands: requested, transferred or failed.": "Where the transfer stands: requested, transferred or failed.",
+        "When the transfer to the e-depot was requested.": "When the transfer to the e-depot was requested.",
+        "When the transfer status last changed.": "When the transfer status last changed."
     },
     "plurals": {}
 }

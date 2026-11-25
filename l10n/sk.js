@@ -883,7 +883,10 @@ OC.L10N.register(
         "Install dossiq from the app store": "Nainštalujte dossiq z obchodu s aplikáciami",
         "Order of the kinds of handling": "Poradie druhov úkonov",
         "Order of the document types": "Poradie druhov dokumentov",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Vlastné poradie sa nepodarilo načítať, preto sa zoznam zobrazuje v pôvodnom poradí."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Vlastné poradie sa nepodarilo načítať, preto sa zoznam zobrazuje v pôvodnom poradí.",
+        "Where the transfer stands: requested, transferred or failed.": "Stav odovzdania: vyžiadané, odovzdané alebo zlyhalo.",
+        "When the transfer to the e-depot was requested.": "Kedy bolo vyžiadané odovzdanie do e-depozitára.",
+        "When the transfer status last changed.": "Kedy sa stav odovzdania naposledy zmenil."
     },
     "nplurals=2; plural=(n != 1);"
 )

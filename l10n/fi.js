@@ -883,7 +883,10 @@ OC.L10N.register(
         "Install dossiq from the app store": "Asenna dossiq sovelluskaupasta",
         "Order of the kinds of handling": "Toimenpidetyyppien järjestys",
         "Order of the document types": "Asiakirjatyyppien järjestys",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Omaa järjestystänne ei voitu ladata, joten luettelo näytetään sen omassa järjestyksessä."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Omaa järjestystänne ei voitu ladata, joten luettelo näytetään sen omassa järjestyksessä.",
+        "Where the transfer stands: requested, transferred or failed.": "Siirron tila: pyydetty, siirretty tai epäonnistunut.",
+        "When the transfer to the e-depot was requested.": "Milloin siirtoa e-arkistoon pyydettiin.",
+        "When the transfer status last changed.": "Milloin siirron tila viimeksi muuttui."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -882,7 +882,10 @@
         "Install dossiq from the app store": "Установите dossiq из магазина приложений",
         "Order of the kinds of handling": "Порядок видов действий",
         "Order of the document types": "Порядок видов документов",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Не удалось загрузить ваш порядок, поэтому список показан в исходном порядке."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Не удалось загрузить ваш порядок, поэтому список показан в исходном порядке.",
+        "Where the transfer stands: requested, transferred or failed.": "Состояние передачи: запрошена, передана или не удалась.",
+        "When the transfer to the e-depot was requested.": "Когда была запрошена передача в электронное хранилище.",
+        "When the transfer status last changed.": "Когда в последний раз изменилось состояние передачи."
     },
     "plurals": {}
 }

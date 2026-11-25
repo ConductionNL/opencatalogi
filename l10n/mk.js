@@ -883,7 +883,10 @@ OC.L10N.register(
         "Install dossiq from the app store": "Инсталирајте го dossiq од продавницата за апликации",
         "Order of the kinds of handling": "Редослед на видовите дејствија",
         "Order of the document types": "Редослед на видовите документи",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Вашиот редослед не може да се вчита, па листата е прикажана во својот изворен редослед."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Вашиот редослед не може да се вчита, па листата е прикажана во својот изворен редослед.",
+        "Where the transfer stands: requested, transferred or failed.": "Состојба на преносот: побаран, пренесен или неуспешен.",
+        "When the transfer to the e-depot was requested.": "Кога е побаран преносот во е-депото.",
+        "When the transfer status last changed.": "Кога последен пат се промени состојбата на преносот."
     },
     "nplurals=2; plural=(n != 1);"
 )

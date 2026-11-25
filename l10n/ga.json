@@ -882,7 +882,10 @@
         "Install dossiq from the app store": "Suiteáil dossiq ón siopa aipeanna",
         "Order of the kinds of handling": "Ord na gcineálacha gnímh",
         "Order of the document types": "Ord na gcineálacha doiciméad",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Níorbh fhéidir d’ord féin a lódáil, mar sin taispeántar an liosta ina ord féin."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Níorbh fhéidir d’ord féin a lódáil, mar sin taispeántar an liosta ina ord féin.",
+        "Where the transfer stands: requested, transferred or failed.": "Staid an aistrithe: iarrtha, aistrithe nó theip air.",
+        "When the transfer to the e-depot was requested.": "Cathain a iarradh an t-aistriú chuig an r-thaisclann.",
+        "When the transfer status last changed.": "Cathain a athraíodh stádas an aistrithe go deireanach."
     },
     "plurals": {}
 }

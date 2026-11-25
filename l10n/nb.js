@@ -883,7 +883,10 @@ OC.L10N.register(
         "Install dossiq from the app store": "Installer dossiq fra appbutikken",
         "Order of the kinds of handling": "Rekkefølge for handlingstyper",
         "Order of the document types": "Rekkefølge for dokumenttyper",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Deres egen rekkefølge kunne ikke lastes inn, så listen vises i sin egen rekkefølge."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Deres egen rekkefølge kunne ikke lastes inn, så listen vises i sin egen rekkefølge.",
+        "Where the transfer stands: requested, transferred or failed.": "Hvor overføringen står: bedt om, overført eller mislyktes.",
+        "When the transfer to the e-depot was requested.": "Når overføringen til e-depotet ble bedt om.",
+        "When the transfer status last changed.": "Når statusen for overføringen sist ble endret."
     },
     "nplurals=2; plural=(n != 1);"
 )
