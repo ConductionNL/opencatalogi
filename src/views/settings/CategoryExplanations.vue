@@ -58,6 +58,14 @@
 					@click="save(entry)">
 					{{ t('opencatalogi', 'Save explanation') }}
 				</NcButton>
+				<NcCheckboxRadioSwitch
+					type="switch"
+					:modelValue="entry.hidden === true"
+					:disabled="saving === entry.uri"
+					:data-testid="'category-hide-' + entry.code"
+					@update:modelValue="hide(entry, $event)">
+					{{ t('opencatalogi', 'Hide from pick lists') }}
+				</NcCheckboxRadioSwitch>
 				<NcButton
 					:aria-label="
 						t('opencatalogi', 'Move {label} up', { label: entry.label })
@@ -88,7 +96,12 @@ import axios from '@nextcloud/axios'
 import { showSuccess } from '@nextcloud/dialogs'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { NcButton, NcNoteCard, NcTextArea } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcNoteCard,
+	NcTextArea,
+} from '@nextcloud/vue'
 
 /**
  * The URL of the value-list choices of the information categories.
@@ -117,7 +130,7 @@ export const ORDER_URL = '/apps/opencatalogi/api/woo/value-list-choices/order'
 export default {
 	name: 'CategoryExplanations',
 
-	components: { NcButton, NcNoteCard, NcTextArea },
+	components: { NcButton, NcCheckboxRadioSwitch, NcNoteCard, NcTextArea },
 
 	data() {
 		return {
@@ -174,6 +187,34 @@ export default {
 				})
 				this.apply(data)
 				showSuccess(t('opencatalogi', 'Explanation saved'))
+			} catch (err) {
+				this.error = err.response?.data?.error || err.message
+			} finally {
+				this.saving = null
+			}
+		},
+
+		/**
+		 * Hide a category from the officer pick lists and the public filter, or show it again.
+		 *
+		 * The server refuses to hide a category with publications filed under
+		 * it, and says how many; the refusal is shown and the switch stays off.
+		 *
+		 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+		 * @param {object} entry The category.
+		 * @param {boolean} hidden Whether to hide it.
+		 * @return {Promise<void>}
+		 */
+		async hide(entry, hidden) {
+			this.error = null
+			this.saving = entry.uri
+			try {
+				const { data } = await axios.put(generateUrl(CHOICES_URL), {
+					scheme: SCHEME,
+					entry: entry.uri,
+					choice: { hidden: hidden === true },
+				})
+				this.apply(data)
 			} catch (err) {
 				this.error = err.response?.data?.error || err.message
 			} finally {

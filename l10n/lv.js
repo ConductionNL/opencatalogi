@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Pārvietot {label} uz augšu",
         "Move {label} down": "Pārvietot {label} uz leju",
         "{label} is now at position {position}.": "{label} tagad ir {position}. vietā.",
-        "Name the list and its entries in their new order.": "Norādiet sarakstu un tā ierakstus jaunajā secībā."
+        "Name the list and its entries in their new order.": "Norādiet sarakstu un tā ierakstus jaunajā secībā.",
+        "Hide from pick lists": "Paslēpt izvēles sarakstos",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Nevar pārbaudīt, vai šajā kategorijā ir publikācijas, tāpēc tā netiek paslēpta.",
+        "Move the %s publications filed under this category before hiding it.": "Pārvietojiet šīs kategorijas %s publikācijas, pirms to paslēpjat."
     },
     "nplurals=2; plural=(n != 1);"
 )

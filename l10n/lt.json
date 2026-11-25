@@ -876,7 +876,10 @@
         "Move {label} up": "Perkelti {label} aukštyn",
         "Move {label} down": "Perkelti {label} žemyn",
         "{label} is now at position {position}.": "{label} dabar yra {position} vietoje.",
-        "Name the list and its entries in their new order.": "Nurodykite sąrašą ir jo įrašus nauja tvarka."
+        "Name the list and its entries in their new order.": "Nurodykite sąrašą ir jo įrašus nauja tvarka.",
+        "Hide from pick lists": "Slėpti pasirinkimo sąrašuose",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Negalima patikrinti, ar šioje kategorijoje yra leidinių, todėl ji neslepiama.",
+        "Move the %s publications filed under this category before hiding it.": "Prieš slėpdami šią kategoriją, perkelkite jos %s leidinius."
     },
     "plurals": {}
 }

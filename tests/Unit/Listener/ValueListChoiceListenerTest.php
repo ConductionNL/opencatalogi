@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Listener;
 
+use OCA\OpenCatalogi\Listener\HiddenCategoryCheck;
 use OCA\OpenCatalogi\Listener\ValueListChoiceListener;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
@@ -42,9 +43,11 @@ class ValueListChoiceListenerTest extends TestCase {
 	/**
 	 * The listener, with the choice schema configured.
 	 *
+	 * @param int|null $filed The publications filed under the category being hidden, or null when they cannot be counted.
+	 *
 	 * @return ValueListChoiceListener
 	 */
-	private function listener(): ValueListChoiceListener {
+	private function listener(?int $filed = 0): ValueListChoiceListener {
 		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
 			static fn (string $app, string $key, string $default = ''): string => match ($key) {
@@ -57,7 +60,10 @@ class ValueListChoiceListenerTest extends TestCase {
 			static fn (string $text, array $parameters = []): string => vsprintf($text, $parameters)
 		);
 
-		return new ValueListChoiceListener(config: $config, l10n: $l10n);
+		$hidden = $this->createMock(originalClassName: HiddenCategoryCheck::class);
+		$hidden->method('publicationsUnder')->willReturn($filed);
+
+		return new ValueListChoiceListener(config: $config, l10n: $l10n, hidden: $hidden);
 	}//end listener()
 
 	/**
@@ -158,4 +164,47 @@ class ValueListChoiceListenerTest extends TestCase {
 
 		$this->assertFalse(condition: $event->isPropagationStopped());
 	}//end testAnotherSchemaIsLeftAlone()
+	/**
+	 * A category with three publications cannot be hidden; the refusal names three.
+	 *
+	 * @return void
+	 */
+	public function testHidingACategoryInUseIsRefused(): void {
+		$event = new ObjectUpdatingEvent($this->object(data: self::choice(fields: ['hidden' => true])), $this->object(data: self::choice()));
+
+		$this->listener(filed: 3)->handle(event: $event);
+
+		$this->assertTrue(condition: $event->isPropagationStopped());
+		$this->assertSame(expected: 'hidden', actual: $event->getErrors()['property']);
+		$this->assertStringContainsString(needle: '3 publications', haystack: $event->getErrors()['message']);
+	}//end testHidingACategoryInUseIsRefused()
+
+	/**
+	 * When the publications cannot be counted the category is not hidden.
+	 *
+	 * @return void
+	 */
+	public function testACategoryWhosePublicationsCannotBeCountedIsNotHidden(): void {
+		$event = new ObjectCreatingEvent($this->object(data: self::choice(fields: ['hidden' => true])));
+
+		$this->listener(filed: null)->handle(event: $event);
+
+		$this->assertTrue(condition: $event->isPropagationStopped());
+		$this->assertSame(expected: 'hidden', actual: $event->getErrors()['property']);
+	}//end testACategoryWhosePublicationsCannotBeCountedIsNotHidden()
+
+	/**
+	 * A category without publications is hidden, and unhiding is never refused.
+	 *
+	 * @return void
+	 */
+	public function testACategoryWithoutPublicationsIsHidden(): void {
+		$hide = new ObjectCreatingEvent($this->object(data: self::choice(fields: ['hidden' => true])));
+		$this->listener(filed: 0)->handle(event: $hide);
+		$this->assertFalse(condition: $hide->isPropagationStopped());
+
+		$show = new ObjectCreatingEvent($this->object(data: self::choice(fields: ['hidden' => false])));
+		$this->listener(filed: null)->handle(event: $show);
+		$this->assertFalse(condition: $show->isPropagationStopped());
+	}//end testACategoryWithoutPublicationsIsHidden()
 }//end class

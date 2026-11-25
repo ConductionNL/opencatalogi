@@ -2208,7 +2208,10 @@ OC.L10N.register(
         "Move {label} up": "{label} omhoog verplaatsen",
         "Move {label} down": "{label} omlaag verplaatsen",
         "{label} is now at position {position}.": "{label} staat nu op plaats {position}.",
-        "Name the list and its entries in their new order.": "Noem de lijst en de items in hun nieuwe volgorde."
+        "Name the list and its entries in their new order.": "Noem de lijst en de items in hun nieuwe volgorde.",
+        "Hide from pick lists": "Verbergen in keuzelijsten",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Of er publicaties onder deze categorie vallen kan niet worden nagegaan, dus wordt ze niet verborgen.",
+        "Move the %s publications filed under this category before hiding it.": "Verplaats de %s publicaties onder deze categorie voordat u haar verbergt."
     },
     "nplurals=2; plural=(n != 1);"
 )

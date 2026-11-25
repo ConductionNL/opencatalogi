@@ -876,7 +876,10 @@
         "Move {label} up": "Μετακίνηση {label} πάνω",
         "Move {label} down": "Μετακίνηση {label} κάτω",
         "{label} is now at position {position}.": "Το {label} είναι τώρα στη θέση {position}.",
-        "Name the list and its entries in their new order.": "Ορίστε τον κατάλογο και τις καταχωρίσεις του με τη νέα σειρά."
+        "Name the list and its entries in their new order.": "Ορίστε τον κατάλογο και τις καταχωρίσεις του με τη νέα σειρά.",
+        "Hide from pick lists": "Απόκρυψη στις λίστες επιλογής",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Δεν μπορεί να ελεγχθεί αν υπάρχουν δημοσιεύσεις σε αυτή την κατηγορία, γι’ αυτό δεν αποκρύπτεται.",
+        "Move the %s publications filed under this category before hiding it.": "Μετακινήστε τις %s δημοσιεύσεις αυτής της κατηγορίας πριν την αποκρύψετε."
     },
     "plurals": {}
 }

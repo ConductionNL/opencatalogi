@@ -139,4 +139,26 @@ class CuratedCategoryRegistryTest extends TestCase {
 		$this->assertSame(expected: ['code' => 'infocat001'], actual: $registry->findBySitemapFile(sitemapFile: 'sitemapindex-diwoo-infocat001.xml'));
 		$this->assertSame(expected: 'Wetten', actual: $registry->resolveForDocument(value: 'infocat001')['label']);
 	}//end testEveryOtherAnswerIsTheWrappedRegistrys()
+	/**
+	 * A hidden category is not offered, nor the local category under it; all() keeps both for the sitemaps.
+	 *
+	 * @return void
+	 */
+	public function testAHiddenCategoryIsNotOfferedButKeepsItsSitemap(): void {
+		$registry = $this->registry(choices: [self::KERN . 'c_cf268088' => ['order' => null, 'hidden' => true]]);
+
+		$this->assertSame(expected: ['infocat001', 'infocat011'], actual: array_keys($registry->offered()));
+		$this->assertArrayHasKey(key: 'infocat013', array: $registry->all());
+		$this->assertArrayHasKey(key: 'subsidieregeling', array: $registry->all());
+		$this->assertSame(expected: ['sitemapindex-diwoo-infocat001.xml' => 'Wetten'], actual: $registry->sitemapFiles());
+	}//end testAHiddenCategoryIsNotOfferedButKeepsItsSitemap()
+
+	/**
+	 * Unreadable choices hide nothing.
+	 *
+	 * @return void
+	 */
+	public function testUnreadableChoicesHideNothing(): void {
+		$this->assertSame(expected: array_keys(self::set()), actual: array_keys($this->registry(choices: null)->offered()));
+	}//end testUnreadableChoicesHideNothing()
 }//end class

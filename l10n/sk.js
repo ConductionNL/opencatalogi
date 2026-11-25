@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Posunúť {label} nahor",
         "Move {label} down": "Posunúť {label} nadol",
         "{label} is now at position {position}.": "{label} je teraz na pozícii {position}.",
-        "Name the list and its entries in their new order.": "Uveďte zoznam a jeho položky v novom poradí."
+        "Name the list and its entries in their new order.": "Uveďte zoznam a jeho položky v novom poradí.",
+        "Hide from pick lists": "Skryť v zoznamoch výberu",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Nedá sa overiť, či sú v tejto kategórii publikácie, preto sa neskryje.",
+        "Move the %s publications filed under this category before hiding it.": "Presuňte %s publikácií z tejto kategórie skôr, ako ju skryjete."
     },
     "nplurals=2; plural=(n != 1);"
 )

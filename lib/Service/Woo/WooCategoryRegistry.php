@@ -215,6 +215,17 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 	}//end all()
 
 	/**
+	 * The categories an officer is offered: here every category, since this registry knows no choices.
+	 *
+	 * @return array<string, array<string, mixed>> The categories, keyed by code.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+	 */
+	public function offered(): array {
+		return $this->all();
+	}//end offered()
+
+	/**
 	 * The local categories this registry refused, code → reason.
 	 *
 	 * Resolved by {@see all()}, so call that first. A refusal is a configuration

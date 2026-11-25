@@ -876,7 +876,10 @@
         "Move {label} up": "Mexxi {label} ’il fuq",
         "Move {label} down": "Mexxi {label} ’l isfel",
         "{label} is now at position {position}.": "{label} issa jinsab fil-pożizzjoni {position}.",
-        "Name the list and its entries in their new order.": "Semmi l-lista u l-entrati tagħha fl-ordni l-ġdida."
+        "Name the list and its entries in their new order.": "Semmi l-lista u l-entrati tagħha fl-ordni l-ġdida.",
+        "Hide from pick lists": "Aħbi fil-listi tal-għażla",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ma jistax jiġi ċċekkjat jekk hemmx pubblikazzjonijiet taħt din il-kategorija, għalhekk ma tinħebiex.",
+        "Move the %s publications filed under this category before hiding it.": "Mexxi l-%s pubblikazzjonijiet taħt din il-kategorija qabel ma taħbiha."
     },
     "plurals": {}
 }

@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Monter {label}",
         "Move {label} down": "Descendre {label}",
         "{label} is now at position {position}.": "{label} est maintenant en position {position}.",
-        "Name the list and its entries in their new order.": "Indiquez la liste et ses entrées dans leur nouvel ordre."
+        "Name the list and its entries in their new order.": "Indiquez la liste et ses entrées dans leur nouvel ordre.",
+        "Hide from pick lists": "Masquer dans les listes de choix",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Impossible de vérifier si des publications relèvent de cette catégorie ; elle n'est donc pas masquée.",
+        "Move the %s publications filed under this category before hiding it.": "Déplacez les %s publications de cette catégorie avant de la masquer."
     },
     "nplurals=2; plural=(n != 1);"
 )

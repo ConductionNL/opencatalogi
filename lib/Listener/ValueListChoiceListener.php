@@ -73,14 +73,16 @@ class ValueListChoiceListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig $config Names the valueListChoice schema.
-	 * @param IL10N      $l10n   Localisation.
+	 * @param IAppConfig          $config Names the valueListChoice schema.
+	 * @param IL10N               $l10n   Localisation.
+	 * @param HiddenCategoryCheck $hidden Counts the publications under a category that is being hidden.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
 		private readonly IL10N $l10n,
+		private readonly HiddenCategoryCheck $hidden,
 	) {
 
 	}//end __construct()
@@ -123,7 +125,8 @@ class ValueListChoiceListener implements IEventListener {
 			return;
 		}
 
-		$refusal = $this->refusal(data: ($written->getObject() ?? []));
+		$data = ($written->getObject() ?? []);
+		$refusal = ($this->refusal(data: $data) ?? $this->hidingRefusal(data: $data));
 		if ($refusal === null) {
 			return;
 		}
@@ -182,4 +185,40 @@ class ValueListChoiceListener implements IEventListener {
 		return null;
 
 	}//end refusal()
+
+	/**
+	 * Why an information category may not be hidden, or null when it may.
+	 *
+	 * A category with publications filed under it is not hidden, and neither is
+	 * one whose publications cannot be counted: no category is hidden by an error.
+	 *
+	 * @param array<string, mixed> $data The choice as written.
+	 *
+	 * @return array{message: string, property: string}|null The refusal.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+	 */
+	private function hidingRefusal(array $data): ?array {
+		if (($data['hidden'] ?? false) !== true || ($data['scheme'] ?? '') !== HiddenCategoryCheck::SCHEME) {
+			return null;
+		}
+
+		$count = $this->hidden->publicationsUnder(entry: (string)($data['entry'] ?? ''));
+		if ($count === null) {
+			return [
+				'message' => $this->l10n->t('Whether publications are filed under this category cannot be checked, so it is not hidden.'),
+				'property' => 'hidden',
+			];
+		}
+
+		if ($count > 0) {
+			return [
+				'message' => $this->l10n->t('Move the %s publications filed under this category before hiding it.', [(string)$count]),
+				'property' => 'hidden',
+			];
+		}
+
+		return null;
+
+	}//end hidingRefusal()
 }//end class

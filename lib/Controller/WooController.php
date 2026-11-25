@@ -146,7 +146,7 @@ class WooController extends Controller {
 		}
 
 		$rows = [];
-		foreach ($this->categories->all() as $code => $category) {
+		foreach ($this->categories->offered() as $code => $category) {
 			$rows[] = $this->categoryRow(code: $code, category: $category);
 		}
 

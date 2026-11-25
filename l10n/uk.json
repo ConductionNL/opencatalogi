@@ -876,7 +876,10 @@
         "Move {label} up": "Перемістити {label} вгору",
         "Move {label} down": "Перемістити {label} вниз",
         "{label} is now at position {position}.": "{label} тепер на позиції {position}.",
-        "Name the list and its entries in their new order.": "Укажіть список і його елементи в новому порядку."
+        "Name the list and its entries in their new order.": "Укажіть список і його елементи в новому порядку.",
+        "Hide from pick lists": "Приховати у списках вибору",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Неможливо перевірити, чи є публікації в цій категорії, тому її не приховано.",
+        "Move the %s publications filed under this category before hiding it.": "Перенесіть %s публікацій із цієї категорії, перш ніж її приховати."
     },
     "plurals": {}
 }

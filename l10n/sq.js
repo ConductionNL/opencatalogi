@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Lëviz {label} lart",
         "Move {label} down": "Lëviz {label} poshtë",
         "{label} is now at position {position}.": "{label} tani është në pozicionin {position}.",
-        "Name the list and its entries in their new order.": "Emërtoni listën dhe zërat e saj në renditjen e re."
+        "Name the list and its entries in their new order.": "Emërtoni listën dhe zërat e saj në renditjen e re.",
+        "Hide from pick lists": "Fshih në listat e zgjedhjes",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Nuk mund të kontrollohet nëse ka botime në këtë kategori, prandaj nuk fshihet.",
+        "Move the %s publications filed under this category before hiding it.": "Zhvendosni %s botimet e kësaj kategorie para se ta fshihni."
     },
     "nplurals=2; plural=(n != 1);"
 )

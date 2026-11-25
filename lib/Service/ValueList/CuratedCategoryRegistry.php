@@ -9,8 +9,11 @@
  * what {@see all()} answers by the `order` of each member's value-list choice:
  * ordered members first, lowest first, then the rest in the set's own order.
  * A local category follows the member it publishes under. Everything else is
- * the wrapped registry's answer, unchanged: ordering decides what an officer
- * sees first, never what is published.
+ * the wrapped registry's answer, unchanged: the sitemaps, robots.txt and the
+ * national index keep every category, so a hidden category's sitemap index is
+ * still served (empty, since a category with publications cannot be hidden).
+ * {@see offered()} is the officer's list: {@see all()} without the hidden ones.
+ * Ordering and hiding decide what an officer is offered, never what is published.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service\ValueList
@@ -54,6 +57,13 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 	private ?array $ordered = null;
 
 	/**
+	 * Per-request cache of the choices the order came from; empty when they could not be read.
+	 *
+	 * @var array<string, array<string, mixed>>
+	 */
+	private array $choiceCache = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param WooCategoryRegistry  $registry The set of categories.
@@ -90,11 +100,29 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 			return $set;
 		}
 
+		$this->choiceCache = $choices;
 		$this->ordered = self::inOrder(set: $set, choices: $choices);
 
 		return $this->ordered;
 
 	}//end all()
+
+	/**
+	 * The categories an officer is offered: {@see all()} without the ones the administrator hid.
+	 *
+	 * A local category goes with the member it publishes under. When the
+	 * choices cannot be read nothing is hidden.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
+	 */
+	public function offered(): array {
+		$all = $this->all();
+
+		return self::visible(set: $all, choices: $this->choiceCache);
+
+	}//end offered()
 
 	/**
 	 * The local categories the set refused, code → reason.
@@ -175,6 +203,22 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 		return $this->registry->resolveForDocument(value: $value);
 
 	}//end resolveForDocument()
+
+	/**
+	 * The set without the categories the administrator hid; a local category goes with the member it publishes under.
+	 *
+	 * @param array<string, array<string, mixed>>  $set     The categories, keyed by code.
+	 * @param array<string, array<string, mixed>> $choices The choices by entry URI.
+	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	private static function visible(array $set, array $choices): array {
+		return array_filter(
+			$set,
+			static fn (array $record): bool => (($choices[(string)($record['tooiUri'] ?? '')]['hidden'] ?? false) !== true)
+		);
+
+	}//end visible()
 
 	/**
 	 * The set in the order of the choices: ordered first, lowest first, then the set's own order.

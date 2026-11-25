@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Puja {label}",
         "Move {label} down": "Baixa {label}",
         "{label} is now at position {position}.": "{label} és ara a la posició {position}.",
-        "Name the list and its entries in their new order.": "Indiqueu la llista i les seves entrades en el nou ordre."
+        "Name the list and its entries in their new order.": "Indiqueu la llista i les seves entrades en el nou ordre.",
+        "Hide from pick lists": "Amaga a les llistes de selecció",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "No es pot comprovar si hi ha publicacions en aquesta categoria, per això no s'amaga.",
+        "Move the %s publications filed under this category before hiding it.": "Moveu les %s publicacions d'aquesta categoria abans d'amagar-la."
     },
     "nplurals=2; plural=(n != 1);"
 )

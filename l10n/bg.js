@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Преместване на {label} нагоре",
         "Move {label} down": "Преместване на {label} надолу",
         "{label} is now at position {position}.": "{label} сега е на позиция {position}.",
-        "Name the list and its entries in their new order.": "Посочете списъка и елементите му в новия ред."
+        "Name the list and its entries in their new order.": "Посочете списъка и елементите му в новия ред.",
+        "Hide from pick lists": "Скриване в списъците за избор",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Не може да се провери дали има публикации в тази категория, затова тя не се скрива.",
+        "Move the %s publications filed under this category before hiding it.": "Преместете %s публикации от тази категория, преди да я скриете."
     },
     "nplurals=2; plural=(n != 1);"
 )

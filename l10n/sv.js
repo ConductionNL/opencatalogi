@@ -877,7 +877,10 @@ OC.L10N.register(
         "Move {label} up": "Flytta upp {label}",
         "Move {label} down": "Flytta ned {label}",
         "{label} is now at position {position}.": "{label} är nu på plats {position}.",
-        "Name the list and its entries in their new order.": "Ange listan och dess poster i den nya ordningen."
+        "Name the list and its entries in their new order.": "Ange listan och dess poster i den nya ordningen.",
+        "Hide from pick lists": "Dölj i vallistor",
+        "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Det går inte att kontrollera om det finns publikationer i den här kategorin, så den döljs inte.",
+        "Move the %s publications filed under this category before hiding it.": "Flytta de %s publikationerna i den här kategorin innan du döljer den."
     },
     "nplurals=2; plural=(n != 1);"
 )
