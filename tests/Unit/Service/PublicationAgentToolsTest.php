@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Mcp\OpenCatalogiScannableServices;
+use OCA\OpenCatalogi\Mcp\PublicationAgentTools;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\DownloadService;
 use OCA\OpenCatalogi\Service\Publication\AgentToolAnswer;
@@ -212,11 +213,15 @@ class PublicationAgentToolsTest extends TestCase {
 	}
 
 	/**
-	 * OpenRegister scans exactly PublicationService for OpenCatalogi's tools.
+	 * OpenRegister scans PublicationService and the governed write tools for OpenCatalogi's tools.
 	 *
 	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-no-hand-written-mcp-tool-provider-remains-in-opencatalogi-req-006
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-write-actions-are-curated-tools-with-allow-listed-properties-req-007
 	 */
 	public function testTheScannableServicesNamePublicationService(): void {
-		$this->assertSame([PublicationService::class], (new OpenCatalogiScannableServices())->getScannableServiceClasses());
+		$this->assertSame(
+			[PublicationService::class, PublicationAgentTools::class],
+			(new OpenCatalogiScannableServices())->getScannableServiceClasses()
+		);
 	}
 }
