@@ -144,9 +144,16 @@ test.describe('Archive hotspot', () => {
 		await page.goto(
 			`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${publicationId}`,
 		)
-		await expect(
-			page.getByTestId('publication-visibility-archive-hotspot'),
-		).toHaveText(`Kept permanently: archive hotspot ${subject}`)
+		// The detail grid mounts a widget when it scrolls into view, and the
+		// status widget sits below the fold: scroll down to it.
+		const hotspot = page.getByTestId('publication-visibility-archive-hotspot')
+		await expect(page.locator('[gs-id]').first()).toBeAttached({ timeout: 15000 })
+		await page.mouse.move(800, 400)
+		await expect(async () => {
+			await page.mouse.wheel(0, 400)
+			await expect(hotspot).toBeVisible({ timeout: 500 })
+		}).toPass({ timeout: 20000 })
+		await expect(hotspot).toHaveText(`Kept permanently: archive hotspot ${subject}`)
 	})
 
 	test('unmarking is logged too', async ({ request }) => {

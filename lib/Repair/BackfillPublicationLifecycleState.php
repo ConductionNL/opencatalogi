@@ -213,23 +213,56 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 		$publication = RequiredToPublish::recordGaps(publication: ['status' => $state] + $publication);
 
 		$publication['status'] = $state;
+		// An empty state has no transition out of it, so the lifecycle would refuse
+		// this write from a user. It is the system writing the state the declaration
+		// names, the way OpenRegister's own example sets do: as the system, with the
+		// declared state entered for this object.
+		$declared = $this->declaredStateContext();
+		$declared?->enterDeclaredState(uuid: $uuid);
 		try {
-			$this->objects->saveObject(
-				object: $publication,
-				options: new ObjectSaveOptions(
-					target: new ObjectFindTarget(register: $scope['register'], schema: $scope['schema']),
-					uuid: $uuid
-				),
-				_rbac: false,
-				_multitenancy: false
+			$objects = $this->objects;
+			$objects->runAsSystem(
+				static fn () => $objects->saveObject(
+					object: $publication,
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $scope['register'], schema: $scope['schema']),
+						uuid: $uuid
+					),
+					_rbac: false,
+					_multitenancy: false
+				)
 			);
 			$this->counts[$state]++;
 		} catch (\Throwable $e) {
 			$this->counts['failed']++;
 			$this->logger->warning('BackfillPublicationLifecycleState: publication ' . $uuid . ' could not be saved: ' . $e->getMessage());
+		} finally {
+			$declared?->leaveDeclaredState(uuid: $uuid);
 		}
 
 	}//end backfillOne()
+
+	/**
+	 * OpenRegister's lifecycle action context, through which a system write of a declared state passes; null when absent.
+	 *
+	 * @return object|null The context.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 */
+	private function declaredStateContext(): ?object {
+		try {
+			$context = $this->container->get('OCA\OpenRegister\Service\Lifecycle\LifecycleActionContext');
+		} catch (\Throwable) {
+			return null;
+		}
+
+		if (is_object($context) === true && method_exists($context, 'enterDeclaredState') === true) {
+			return $context;
+		}
+
+		return null;
+
+	}//end declaredStateContext()
 
 	/**
 	 * Add `status: published` to every public date rule of a publication schema that lacks a status condition.

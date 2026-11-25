@@ -52,14 +52,18 @@ test.describe('openapi-document', () => {
 		).toBeTruthy()
 
 		const body = await res.json()
-		expect(body.openapi).toBe('3.1.0')
+		// API-DOC-001: the repository ships an OpenAPI 3.0.3 document.
+		expect(body.openapi).toBe('3.0.3')
 		expect(body.info?.title).toBe('OpenCatalogi')
 		expect(body.info?.license?.name).toBe('EUPL-1.2')
 
 		// A known public path must be present — proves this is the real,
 		// maintained document and not a stale/foreign stub.
-		expect(body.paths).toHaveProperty('/api/search')
-		expect(body.paths?.['/api/search']?.get).toBeTruthy()
+		// API-DOC-001: the server ends in `/api/v1`, so the documented paths are
+		// the route URLs without the `/api` prefix.
+		expect(String(body.servers?.[0]?.url ?? '')).toMatch(/\/index\.php\/apps\/opencatalogi\/api\/v1$/)
+		expect(body.paths).toHaveProperty(['/search'])
+		expect(body.paths?.['/search']?.get).toBeTruthy()
 
 		// `info.version` must equal the installed app version, obtained via the
 		// (authenticated) `settings#getVersionInfo` endpoint that already exposes it.

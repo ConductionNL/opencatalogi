@@ -2827,6 +2827,82 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	/**
+	 * REQ-WVL-005: once an administrator activated organisations, a publisher whose TOOI
+	 * identifier is not among them is not emitted and the validator reports it; before
+	 * any activation, or when the choices cannot be read, it is emitted as before.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	public function testAPublisherNotActivatedIsOmittedAndReported(): void {
+		$queries = [];
+		$this->wireCategoryCatalog(settingsRegisters: [], catalogSchemas: ['sch-pub'], answer: static fn (array $query): array => [], queries: $queries);
+		$legacy = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855';
+		$dordrecht = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0505';
+		$publication = [
+			'id' => 'pub-legacy',
+			'title' => 'Besluit',
+			'category' => 'infocat014',
+			'soortHandeling' => 'vaststelling',
+			'tooiIdentifier' => $legacy,
+			'@self' => ['created' => '2024-01-15 10:00:00', 'updated' => '2024-06-20 14:30:00', 'published' => '2024-03-01 08:00:00'],
+		];
+		$file = ['downloadUrl' => 'https://example.com/legacy.pdf', 'extension' => 'pdf'];
+		$publisherOf = function (array|\Throwable $activated, array $fields = []) use ($publication, $file): array {
+			$activation = $this->createMock(originalClassName: \OCA\OpenCatalogi\Contract\OrganisationActivationInterface::class);
+			if ($activated instanceof \Throwable) {
+				$activation->method('activeEntries')->willThrowException($activated);
+			} else {
+				$activation->method('activeEntries')->willReturn($activated);
+			}
+
+			$service = new SitemapService(
+				new OpenRegisterLookup($this->container, $this->appManager),
+				$this->settingsService,
+				new InstanceSettings($this->urlGenerator, $this->createMock(originalClassName: IAppConfig::class)),
+				new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(
+					tooiVocabulary: new \OCA\OpenCatalogi\Service\TooiVocabularyService(activation: $activation),
+					categories: $this->wooCategories,
+					openRegister: new OpenRegisterLookup($this->container, $this->appManager),
+					fileFacts: \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
+				),
+				$this->queryService,
+				$this->wooCategories
+			);
+			$violations = [];
+			$result = (new \ReflectionMethod($service, 'mapDiwooDocument'))->invokeArgs($service, [array_merge($publication, $fields), $file, &$violations]);
+			$diwoo = $result['diwoo:Document']['diwoo:DiWoo'];
+
+			return ['publisher' => $diwoo['diwoo:publisher'], 'diwoo' => $diwoo, 'violations' => $violations];
+		};
+		$violation = static fn (string $axis, string $reason): array => [
+			'documentLoc' => 'https://example.com/legacy.pdf',
+			'axis' => $axis,
+			'reason' => $reason,
+		];
+
+		$notActivated = $publisherOf([$dordrecht]);
+		$this->assertArrayNotHasKey(key: '@resource', array: $notActivated['publisher']);
+		$this->assertArrayNotHasKey(key: 'diwoo:verantwoordelijke', array: $notActivated['diwoo'], message: 'nor emitted as responsible');
+		$this->assertContains(needle: $violation('publisher', 'organisation is not activated'), haystack: $notActivated['violations']);
+
+		$this->assertSame(expected: $legacy, actual: $publisherOf([$legacy, $dordrecht])['publisher']['@resource']);
+		$this->assertSame(expected: $legacy, actual: $publisherOf([])['publisher']['@resource'], message: 'nothing activated: every one emitted');
+		$unreadable = $publisherOf(new \RuntimeException('choices unreadable'));
+		$this->assertSame(expected: $legacy, actual: $unreadable['publisher']['@resource'], message: 'an unreadable choice list withholds nothing');
+
+		// A responsible organisation (Dordrecht, gm0505) that is not activated is left out and reported.
+		$responsible = $publisherOf([$legacy], ['responsibleOrganization' => 'org-dordrecht']);
+		$this->assertSame(expected: $legacy, actual: $responsible['publisher']['@resource']);
+		$this->assertArrayNotHasKey(key: 'diwoo:verantwoordelijke', array: $responsible['diwoo']);
+		$responsibleGap = $violation('verantwoordelijke', 'responsible organisation is not activated');
+		$this->assertContains(needle: $responsibleGap, haystack: $responsible['violations']);
+		$both = $publisherOf([$legacy, $dordrecht], ['responsibleOrganization' => 'org-dordrecht']);
+		$this->assertSame(expected: $dordrecht, actual: $both['diwoo']['diwoo:verantwoordelijke']['@resource']);
+	}
+
+	/**
 	 * A minimal public publication carrying these files.
 	 *
 	 * @param array<int, array<string, mixed>> $files The files.

@@ -899,7 +899,16 @@
         "Hide the checked categories": "Ascunde categoriile bifate",
         "The checked categories are hidden.": "Categoriile bifate sunt ascunse.",
         "Choose one of the listed organisation types.": "Alegeți unul dintre tipurile de organizație enumerate.",
-        "Legal basis": "Temei juridic"
+        "Legal basis": "Temei juridic",
+        "Organisations you publish for": "Organizații pentru care publicați",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Activați din registrul național TOOI organizațiile pentru care publică această instalare. Imediat ce una este activată, harta site-ului numește ca editor sau organizație responsabilă doar organizații activate.",
+        "Search by name or code": "Căutare după nume sau cod",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Nicio organizație nu este încă activată, așa că harta site-ului numește fiecare organizație.",
+        "No organisation in the TOOI register matches this search.": "Nicio organizație din registrul TOOI nu corespunde acestei căutări.",
+        "Name the organisation and whether it is active.": "Indicați organizația și dacă este activă.",
+        "This organisation cannot be activated: %s": "Această organizație nu poate fi activată: %s",
+        "The organisation could not be saved: %s": "Organizația nu a putut fi salvată: %s",
+        "The organisation registers could not be read: %s": "Registrele de organizații nu au putut fi citite: %s"
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

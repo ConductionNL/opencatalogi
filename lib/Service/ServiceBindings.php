@@ -171,6 +171,10 @@ use OCA\OpenCatalogi\Service\Publication\PlainLanguageDrafter;
 use OCA\OpenCatalogi\Service\Publication\PlainSummaryProvenance;
 use OCA\OpenCatalogi\Contract\ValueListRefreshInterface;
 use OCA\OpenCatalogi\Contract\VocabularyRegisterInterface;
+use OCA\OpenCatalogi\Contract\OrganisationActivationInterface;
+use OCA\OpenCatalogi\Service\ValueList\OrganisationActivation;
+use OCA\OpenCatalogi\Contract\AgentPublishingInterface;
+use OCA\OpenCatalogi\Service\Publication\AgentPublishing;
 use OCA\OpenCatalogi\Service\Vocabulary\ValueListRefresh;
 use OCA\OpenCatalogi\Service\Vocabulary\OpenRegisterVocabulary;
 
@@ -207,6 +211,8 @@ final class ServiceBindings {
 		DocumentReferenceProbeInterface::class => DocumentReferenceProbe::class,
 		VocabularyRegisterInterface::class => OpenRegisterVocabulary::class,
 		ValueListRefreshInterface::class => ValueListRefresh::class,
+		OrganisationActivationInterface::class => OrganisationActivation::class,
+		AgentPublishingInterface::class => AgentPublishing::class,
 		DocumentReferenceUrlPolicyInterface::class => DocumentReferenceUrlPolicy::class,
 		DonlRegistrationServiceInterface::class => DonlRegistrationService::class,
 		UsageCounterServiceInterface::class => UsageCounterService::class,

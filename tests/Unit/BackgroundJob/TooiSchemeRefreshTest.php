@@ -266,13 +266,67 @@ class TooiSchemeRefreshTest extends TestCase {
 
 		$sources = $refresh->sources();
 		$this->assertSame(expected: ValueListRefresh::DEFAULT_SOURCES, actual: $sources);
-		$this->assertSame(expected: ['informatiecategorieen', 'documentsoorten', 'soortHandeling', 'talen'], actual: array_column($sources, 'key'));
+		$this->assertSame(
+			expected: [
+				'informatiecategorieen',
+				'documentsoorten',
+				'soortHandeling',
+				'talen',
+				'organisaties-gemeenten',
+				'organisaties-provincies',
+				'organisaties-waterschappen',
+				'organisaties-ministeries',
+				'organisaties-zbo',
+			],
+			actual: array_column($sources, 'key')
+		);
 		foreach ($sources as $source) {
 			$this->assertStringStartsWith(prefix: 'https://repository.officiele-overheidspublicaties.nl/waardelijsten/', string: $source['url']);
 			$recorded = __DIR__ . '/../../fixtures/tooi/' . basename($source['url']);
 			$this->assertFileExists(filename: $recorded, message: 'each seeded source has its recorded answer');
 		}
 	}//end testTheSeededSourcesAreTheTooiDownloads()
+
+	/**
+	 * The organisation registers are the sources an administrator activates from, and each builds concepts.
+	 *
+	 * The recorded gemeenten and zbo answers are cut to their list node and first 25
+	 * organisations, to keep the fixtures small; the shape is the download's.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	public function testTheOrganisationRegistersAreSeededAndEachBuildsConcepts(): void {
+		$refresh = $this->refresh(active: [], download: self::recorded());
+		$this->assertSame(expected: [], actual: $refresh->organisationSchemes(), message: 'configured sources without an organisation register name none');
+		$this->stored = [ValueListRefresh::SOURCES_KEY => 'not json'];
+
+		$schemes = $refresh->organisationSchemes();
+		$this->assertSame(
+			expected: [
+				'https://identifier.overheid.nl/tooi/set/rwc_gemeenten_compleet',
+				'https://identifier.overheid.nl/tooi/set/rwc_provincies_compleet',
+				'https://identifier.overheid.nl/tooi/set/rwc_waterschappen_compleet',
+				'https://identifier.overheid.nl/tooi/set/rwc_ministeries_compleet',
+				'https://identifier.overheid.nl/tooi/set/rwc_zbo_compleet',
+			],
+			actual: $schemes
+		);
+
+		foreach (ValueListRefresh::DEFAULT_SOURCES as $source) {
+			if (in_array($source['scheme'], $schemes, true) === false) {
+				continue;
+			}
+
+			$decoded = json_decode((string)file_get_contents(__DIR__ . '/../../fixtures/tooi/' . basename($source['url'])), true);
+			$built = (new TooiValueListGraph())->build(decoded: $decoded, schemeUri: $source['scheme']);
+			$this->assertNotSame(expected: [], actual: $built['conceptUris'], message: $source['key'] . ' builds concepts');
+			foreach ($built['conceptUris'] as $uri) {
+				$this->assertStringStartsWith(prefix: 'https://identifier.overheid.nl/tooi/id/', string: $uri);
+			}
+		}
+	}//end testTheOrganisationRegistersAreSeededAndEachBuildsConcepts()
 
 	/**
 	 * The refresh writes the national concepts only, never an administrator's choice (REQ-WVL-001).

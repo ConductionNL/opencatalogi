@@ -40,6 +40,21 @@ use Psr\Log\LoggerInterface;
 class BackfillPublicationLifecycleStateTest extends TestCase {
 
 	/**
+	 * How many writes ran as the system.
+	 *
+	 * @var integer
+	 */
+	private int $asSystem = 0;
+
+	/**
+	 * The declared-state entries and leaves, in order.
+	 *
+	 * @var list<string>
+	 */
+	private array $declared = [];
+
+
+	/**
 	 * The stored publications, by id.
 	 *
 	 * @var array<string, array<string, mixed>>
@@ -136,7 +151,16 @@ class BackfillPublicationLifecycleStateTest extends TestCase {
 	 * @return void
 	 */
 	private function runStep(): void {
-		$objects = $this->environmentAwareDouble(\OCA\OpenRegister\Service\ObjectService::class, ['searchObjectsPaginated', 'saveObject']);
+		$objects = $this->environmentAwareDouble(
+			class: \OCA\OpenRegister\Service\ObjectService::class,
+			methods: ['searchObjectsPaginated', 'saveObject', 'runAsSystem']
+		);
+		$objects->method('runAsSystem')->willReturnCallback(
+			function (callable $operation): mixed {
+				$this->asSystem++;
+				return $operation();
+			}
+		);
 		$objects->method('searchObjectsPaginated')->willReturnCallback(
 			fn (array $query = []): array => ($query['@self'] === ['register' => '7', 'schema' => '12'] && $query['_page'] === 1)
 				? ['results' => array_values($this->store)]
@@ -169,7 +193,44 @@ class BackfillPublicationLifecycleStateTest extends TestCase {
 			}
 		);
 		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->with('OCA\\OpenRegister\\Db\\SchemaMapper')->willReturn($mapper);
+		$declared = new class($this->declared) {
+
+			/**
+			 * Constructor.
+			 *
+			 * @param list<string> $calls The calls.
+			 */
+			public function __construct(private array &$calls) {
+			}
+
+			/**
+			 * Record an entry.
+			 *
+			 * @param string $uuid The object.
+			 *
+			 * @return void
+			 */
+			public function enterDeclaredState(string $uuid): void {
+				$this->calls[] = 'enter ' . $uuid;
+			}
+
+			/**
+			 * Record a leave.
+			 *
+			 * @param string $uuid The object.
+			 *
+			 * @return void
+			 */
+			public function leaveDeclaredState(string $uuid): void {
+				$this->calls[] = 'leave ' . $uuid;
+			}
+		};
+		$container->method('get')->willReturnCallback(
+			static fn (string $id): object => match ($id) {
+				'OCA\\OpenRegister\\Db\\SchemaMapper' => $mapper,
+				'OCA\\OpenRegister\\Service\\Lifecycle\\LifecycleActionContext' => $declared,
+			}
+		);
 
 		$output = $this->createMock(IOutput::class);
 		$output->method('info')->willReturnCallback(
@@ -198,6 +259,24 @@ class BackfillPublicationLifecycleStateTest extends TestCase {
 		$this->assertSame([['7', '12', 'pub-1']], $this->saves);
 		$this->assertStringContainsString('1 publication(s) set to published, 0 set to draft, 0 kept', $this->info[0]);
 	}//end testALegacyPublicationWithADateBecomesPublished()
+
+	/**
+	 * REQ-PLC-007: an empty state is written as the system, with the declared state entered and left around the save.
+	 *
+	 * A user could not make that move: the lifecycle has no transition out of an empty state.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyStateIsWrittenAsTheSystemWritingTheDeclaredState(): void {
+		$this->store = ['pub-9' => ['id' => 'pub-9', 'title' => 'Oud besluit', 'status' => '', 'publicationDate' => '2025-06-01T09:00:00+00:00']];
+		$this->runStep();
+
+		$this->assertSame(expected: 'published', actual: $this->store['pub-9']['status']);
+		$this->assertSame(expected: 1, actual: $this->asSystem);
+		$this->assertSame(expected: ['enter pub-9', 'leave pub-9'], actual: $this->declared);
+	}//end testAnEmptyStateIsWrittenAsTheSystemWritingTheDeclaredState()
 
 	/**
 	 * REQ-PLC-007: a legacy publication without a date becomes a draft and gets no release moment.

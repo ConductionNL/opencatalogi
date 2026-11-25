@@ -16,7 +16,12 @@
  * hidden flag are restored afterwards.
  *
  * @e2e openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#scenario-an-administrator-puts-the-most-used-category-first
+ * An administrator activates gemeente Dordrecht and gemeente Zwijndrecht out of
+ * the TOOI register in the settings; the activated set officers are offered is
+ * exactly those two. The activations before the test are restored afterwards.
+ *
  * @e2e openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#scenario-a-water-board-hides-the-categories-it-never-publishes
+ * @e2e openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#scenario-only-activated-organisations-are-offered
  */
 import { expect, test } from './authenticated-request.ts'
 
@@ -190,5 +195,63 @@ test.describe('Organisation type proposal (REQ-WVL-004)', () => {
 		expect(
 			categories.results.map((entry: { code: string }) => entry.code),
 		).not.toContain(STATES_GENERAL)
+	})
+})
+
+test.describe('Activated organisations (REQ-WVL-005)', () => {
+	const DORDRECHT = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0505'
+	const ZWIJNDRECHT = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0642'
+	let before: string[] = []
+
+	test.beforeAll(async ({ request: admin }) => {
+		const active = await (await admin.get(`${API_BASE}/woo/organisations`)).json()
+		before = (active.results ?? []).map((row: { uri: string }) => row.uri)
+		for (const uri of before) {
+			await admin.put(`${API_BASE}/woo/organisations/activation`, {
+				data: { entry: uri, active: false },
+			})
+		}
+	})
+
+	test.afterAll(async ({ request: admin }) => {
+		for (const uri of [DORDRECHT, ZWIJNDRECHT]) {
+			await admin.put(`${API_BASE}/woo/organisations/activation`, {
+				data: { entry: uri, active: before.includes(uri) },
+			})
+		}
+		for (const uri of before) {
+			await admin.put(`${API_BASE}/woo/organisations/activation`, {
+				data: { entry: uri, active: true },
+			})
+		}
+	})
+
+	test('only activated organisations are offered', async ({
+		page,
+		request: admin,
+	}) => {
+		await page.goto(SETTINGS_PAGE)
+		const section = page.getByTestId('activated-organisations')
+		await expect(section).toBeVisible()
+		await expect(section.getByTestId('activated-organisations-empty')).toBeVisible()
+
+		for (const [name, code] of [['Dordrecht', 'gm0505'], ['Zwijndrecht', 'gm0642']]) {
+			await section.getByTestId('activated-organisations-query').getByRole('textbox').fill(name)
+			await section.getByTestId('activated-organisations-search').click()
+			const row = section.getByTestId(`activated-organisation-${code}`)
+			await expect(row).toBeVisible()
+			const saved = page.waitForResponse(
+				(response) =>
+					response.url().endsWith('/woo/organisations/activation')
+					&& response.request().method() === 'PUT',
+			)
+			await row.getByRole('switch').click()
+			expect((await saved).ok()).toBe(true)
+		}
+
+		const offered = await (await admin.get(`${API_BASE}/woo/organisations/active`)).json()
+		expect(
+			offered.results.map((row: { uri: string }) => row.uri).sort(),
+		).toEqual([DORDRECHT, ZWIJNDRECHT].sort())
 	})
 })

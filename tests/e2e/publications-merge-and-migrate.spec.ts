@@ -27,8 +27,8 @@
  */
 import type { Locator, Page } from '@playwright/test'
 
-import { expect, test } from '@playwright/test'
 import { randomBytes } from 'node:crypto'
+import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog, publicationScope } from './publication-catalog.ts'
 import { APP, dismissOverlays } from './spec-coverage/_nav.ts'
 
@@ -53,10 +53,13 @@ function row(page: Page, title: string): Locator {
  */
 async function select(page: Page, titles: string[]): Promise<void> {
 	for (const title of titles) {
-		await row(page, title)
-			.locator('input[type="checkbox"]')
-			.first()
-			.check({ force: true })
+		const box = row(page, title).locator('input[type="checkbox"]').first()
+		// The list can re-render right after it loads (a second fetch), which
+		// swallows a click; retry until the box holds.
+		await expect(async () => {
+			await box.check({ force: true })
+			await expect(box).toBeChecked({ timeout: 1_000 })
+		}).toPass({ timeout: 15_000 })
 	}
 }
 
@@ -138,7 +141,9 @@ test.describe('Publications merge and migrate', () => {
 	async function openList(page: Page): Promise<void> {
 		await page.goto(`${APP}${path}&_search=${encodeURIComponent(RUN_ID)}`)
 		await dismissOverlays(page)
-		await expect(row(page, mergeTitles[0])).toBeVisible({ timeout: 30_000 })
+		// The merge test removes one of mergeTitles; the migrate rows stay for
+		// the whole file, so the list counts as loaded once they show.
+		await expect(row(page, migrateTitles[0])).toBeVisible({ timeout: 30_000 })
 	}
 
 	test('Merge needs exactly two', async ({ page }) => {
@@ -149,7 +154,8 @@ test.describe('Publications merge and migrate', () => {
 		await expect(page.getByRole('dialog')).toHaveCount(0)
 		await expect(
 			page.getByText(
-				/Select exactly two publications to merge|Selecteer precies twee publicaties om samen te voegen/,
+				// Anchored: the screen-reader live region repeats it as "Error: …".
+				/^(Select exactly two publications to merge|Selecteer precies twee publicaties om samen te voegen)$/,
 			),
 		).toBeVisible()
 	})
@@ -163,29 +169,33 @@ test.describe('Publications merge and migrate', () => {
 		await expect(dialog).toContainText(
 			/Configure Merge|Samenvoegen configureren/i,
 		)
+		// The dialog offers "Transfer to target object" twice, once for the
+		// files and once for the relations; this scenario moves the files.
 		await dialog
-			.getByRole('radio', {
-				name: /Transfer to target object|Overzetten naar doelobject/i,
-			})
+			.locator('input[type="radio"][name="fileAction"][value="transfer"]')
 			.check({ force: true })
 
-		const sourceId = created.get(mergeTitles[0]) as string
-		const targetId = created.get(mergeTitles[1]) as string
+		// "The first publication" is the first of the selection as the list
+		// orders it, and the list orders by last update, so either seed can be
+		// the source. The request names the source in its path and the other
+		// one as target; the source is the row that goes.
+		const pairIds = mergeTitles.map((t) => created.get(t) as string)
+		const prefix = `/objects/${scope.register}/${scope.schema}/`
 		const merge = page.waitForRequest(
 			(req) =>
 				req.method() === 'POST'
-				&& req
-					.url()
-					.endsWith(
-						`/objects/${scope.register}/${scope.schema}/${sourceId}/merge`,
-					),
+				&& req.url().includes(prefix)
+				&& req.url().endsWith('/merge'),
 		)
 		await dialog
 			.getByRole('button', { name: /Merge Objects|Objecten samenvoegen/i })
 			.click()
 
-		const body = (await merge).postDataJSON()
-		expect(String(body.target)).toBe(targetId)
+		const request = await merge
+		const sourceId = request.url().split(prefix)[1].replace(/\/merge$/, '')
+		const body = request.postDataJSON()
+		expect([sourceId, String(body.target)].sort()).toEqual([...pairIds].sort())
+		expect(String(body.target)).not.toBe(sourceId)
 		expect(body.fileAction).toBe('transfer')
 		await expect(dialog).toContainText(
 			/Properties changed|Gewijzigde eigenschappen/i,
@@ -196,8 +206,9 @@ test.describe('Publications merge and migrate', () => {
 			.getByRole('button', { name: /close|sluiten/i })
 			.first()
 			.click()
-		await expect(row(page, mergeTitles[0])).toHaveCount(0)
-		created.delete(mergeTitles[0])
+		const sourceTitle = mergeTitles[pairIds.indexOf(sourceId)]
+		await expect(row(page, sourceTitle)).toHaveCount(0)
+		created.delete(sourceTitle)
 	})
 
 	test('No mapping, no migration', async ({ page }) => {
@@ -214,6 +225,15 @@ test.describe('Publications merge and migrate', () => {
 		await page.getByRole('option').first().click()
 		await dialog.getByLabel(/Target Schema|Doelschema/i).click()
 		await page.getByRole('option').first().click()
+		// Step 2 (target) -> step 3 (property mapping), where Migrate lives.
+		await dialog.getByRole('button', { name: /next|volgende/i }).click()
+		// The dialog maps same-named properties by itself; the scenario has
+		// none mapped, so clear what it filled in.
+		await expect(dialog.locator('.mapping-row').first()).toBeVisible()
+		const clear = dialog.locator('.mapping-row .vs__clear:visible')
+		while ((await clear.count()) > 0) {
+			await clear.first().click()
+		}
 
 		await expect(
 			dialog.getByRole('button', {
@@ -229,25 +249,32 @@ test.describe('Publications merge and migrate', () => {
 
 		const dialog = page.getByRole('dialog')
 		await dialog.getByRole('button', { name: /next|volgende/i }).click()
-		await dialog.getByLabel(/Target Register|Doelregister/i).click()
-		await page
-			.getByRole('option', { name: /publication|publicatie/i })
-			.first()
-			.click()
-		await dialog.getByLabel(/Target Schema|Doelschema/i).click()
-		await page
-			.getByRole('option', { name: /publication|publicatie/i })
-			.first()
-			.click()
+		// Type to filter: the register list also holds other registers whose
+		// title contains "Publication", and the schema list holds every schema.
+		for (const label of [/Target Register|Doelregister/i, /Target Schema|Doelschema/i]) {
+			await dialog.getByLabel(label).click()
+			await page.keyboard.type('Publication')
+			// The exact match sorts first; Enter picks the highlighted option.
+			await expect(page.getByRole('option').first()).toHaveText(
+				/^\s*Publication\s*$/,
+			)
+			await page.keyboard.press('Enter')
+		}
+		await dialog.getByRole('button', { name: /next|volgende/i }).click()
 
 		for (const property of ['title', 'summary']) {
 			const mapping = dialog
-				.locator('tr, .mapping-row')
-				.filter({ hasText: new RegExp(`^\\s*${property}\\b`, 'i') })
+				.locator('.mapping-row')
+				.filter({
+					has: page.locator('.property-name', {
+						hasText: new RegExp(`^\\s*${property}\\s*$`),
+					}),
+				})
 				.first()
 			await mapping.getByLabel(/Target property|Doeleigenschap/i).click()
 			await page
-				.getByRole('option', { name: new RegExp(`^${property}$`, 'i') })
+				// Options read "<name> (<type>)".
+				.getByRole('option', { name: new RegExp(`^\\s*${property} \\(`, 'i') })
 				.first()
 				.click()
 		}

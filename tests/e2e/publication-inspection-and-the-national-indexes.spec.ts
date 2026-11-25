@@ -65,6 +65,8 @@ const RECORD_WITH_A_SECRET = {
 /** The rule that publishes it, exposing only the title and the date. */
 const NARROW_RULE = {
 	recordType: 'besluit',
+	// A rule names the Woo information category its publications go under.
+	wooCategory: 'infocat016',
 	enabled: true,
 	anonymousProperties: ['title', 'publicationDate'],
 	conditions: [{ property: 'status', operator: 'equals', value: 'definitief' }],

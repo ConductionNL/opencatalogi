@@ -2455,7 +2455,16 @@
         "Proposed for hiding": "Proposed for hiding",
         "Hide the checked categories": "Hide the checked categories",
         "The checked categories are hidden.": "The checked categories are hidden.",
-        "Choose one of the listed organisation types.": "Choose one of the listed organisation types."
+        "Choose one of the listed organisation types.": "Choose one of the listed organisation types.",
+        "Organisations you publish for": "Organisations you publish for",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.",
+        "Search by name or code": "Search by name or code",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "No organisation is activated yet, so every organisation is named in the sitemap.",
+        "No organisation in the TOOI register matches this search.": "No organisation in the TOOI register matches this search.",
+        "Name the organisation and whether it is active.": "Name the organisation and whether it is active.",
+        "This organisation cannot be activated: %s": "This organisation cannot be activated: %s",
+        "The organisation could not be saved: %s": "The organisation could not be saved: %s",
+        "The organisation registers could not be read: %s": "The organisation registers could not be read: %s"
     },
     "plurals": {}
 }

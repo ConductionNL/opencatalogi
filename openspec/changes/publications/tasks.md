@@ -16,12 +16,13 @@
 
 ## Phase 3 — CORS header verification
 
-- [ ] 3. **Verify CORS headers on all six endpoint variants**: make real HTTP requests (curl or PHPUnit HTTP test) to each of the six public endpoints and confirm `Access-Control-Allow-Origin` and friends are present on both GET and OPTIONS responses.
+- [x] 3. **Verify CORS headers on all six endpoint variants**: make real HTTP requests (curl or PHPUnit HTTP test) to each of the six public endpoints and confirm `Access-Control-Allow-Origin` and friends are present on both GET and OPTIONS responses.
   - **Spec ref**: `specs/publications/spec.md` REQ-PUB-010
   - **Endpoints**: `/{slug}`, `/{slug}/{id}`, `/{slug}/{id}/attachments`, `/{slug}/{id}/download`, `/{slug}/{id}/uses`, `/{slug}/{id}/used`
   - **Acceptance criteria**: all 12 responses (6 × GET + 6 × OPTIONS) carry required CORS headers. Missing headers are fixed in `PublicationsController`.
   - **Left open**: needs live HTTP requests against a running instance.
   - 25 Nov: missing headers fixed. The 404 (unknown catalogue), 410 (tombstone), 500 and refusal answers of the six endpoints left `PublicationsController` without `Access-Control-Allow-Origin`, so a portal's browser read them as network errors; every return of `index`/`show`/`attachments`/`download`/`uses`/`used` now goes through `withCors()` (`tests/Unit/Controller/PublicationsCorsOnErrorsTest.php`, red on development, green here). The 12 live requests are written as `tests/e2e/publications-cors.spec.ts` (written, runs in nightly); the task stays open until that run is green.
+  - 25 Nov, live: `tests/e2e/publications-cors.spec.ts` 1 passed / 0 failed on a sandbox reference stack (NC 34, nginx, php-fpm, MariaDB, Redis, OpenRegister main). curl with an `Origin` header on a public publication: all 12 responses (6 GET, 6 OPTIONS) answer 200 with `Access-Control-Allow-Origin: *`.
 
 ## Phase 4 — findObjectLocation coverage
 

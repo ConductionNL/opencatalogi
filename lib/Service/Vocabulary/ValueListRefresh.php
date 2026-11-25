@@ -72,7 +72,8 @@ class ValueListRefresh implements ValueListRefreshInterface {
 	private const REPOSITORY = 'https://repository.officiele-overheidspublicaties.nl/waardelijsten/';
 
 	/**
-	 * The seeded sources: the versions DiWoo 0.9.8 binds, as the TOOI publication lists their JSON downloads.
+	 * The seeded sources: the versions DiWoo 0.9.8 binds, as the TOOI publication lists their JSON downloads,
+	 * and the TOOI organisation registers an administrator activates publishers from (REQ-WVL-005).
 	 *
 	 * @var array<int, array{key: string, scheme: string, url: string}>
 	 */
@@ -97,7 +98,39 @@ class ValueListRefresh implements ValueListRefreshInterface {
 			'scheme' => 'https://identifier.overheid.nl/tooi/def/thes/xtrn/taal',
 			'url' => self::REPOSITORY . 'scw_talen/1/json/scw_talen_1.json',
 		],
+		[
+			'key' => 'organisaties-gemeenten',
+			'scheme' => 'https://identifier.overheid.nl/tooi/set/rwc_gemeenten_compleet',
+			'url' => self::REPOSITORY . 'rwc_gemeenten_compleet/6/json/rwc_gemeenten_compleet_6.json',
+		],
+		[
+			'key' => 'organisaties-provincies',
+			'scheme' => 'https://identifier.overheid.nl/tooi/set/rwc_provincies_compleet',
+			'url' => self::REPOSITORY . 'rwc_provincies_compleet/1/json/rwc_provincies_compleet_1.json',
+		],
+		[
+			'key' => 'organisaties-waterschappen',
+			'scheme' => 'https://identifier.overheid.nl/tooi/set/rwc_waterschappen_compleet',
+			'url' => self::REPOSITORY . 'rwc_waterschappen_compleet/2/json/rwc_waterschappen_compleet_2.json',
+		],
+		[
+			'key' => 'organisaties-ministeries',
+			'scheme' => 'https://identifier.overheid.nl/tooi/set/rwc_ministeries_compleet',
+			'url' => self::REPOSITORY . 'rwc_ministeries_compleet/6/json/rwc_ministeries_compleet_6.json',
+		],
+		[
+			'key' => 'organisaties-zbo',
+			'scheme' => 'https://identifier.overheid.nl/tooi/set/rwc_zbo_compleet',
+			'url' => self::REPOSITORY . 'rwc_zbo_compleet/6/json/rwc_zbo_compleet_6.json',
+		],
 	];
+
+	/**
+	 * The key prefix of the sources that are TOOI organisation registers.
+	 *
+	 * @var string
+	 */
+	public const ORGANISATION_SOURCE_PREFIX = 'organisaties-';
 
 	/**
 	 * Constructor.
@@ -163,6 +196,24 @@ class ValueListRefresh implements ValueListRefreshInterface {
 
 		return $sources;
 	}//end sources()
+
+	/**
+	 * The scheme uris of the sources that are TOOI organisation registers.
+	 *
+	 * @return array<int, string> The scheme uris, in source order.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	public function organisationSchemes(): array {
+		$schemes = [];
+		foreach ($this->sources() as $source) {
+			if (str_starts_with($source['key'], self::ORGANISATION_SOURCE_PREFIX) === true) {
+				$schemes[] = $source['scheme'];
+			}
+		}
+
+		return $schemes;
+	}//end organisationSchemes()
 
 	/**
 	 * Refresh one scheme: download, guard, import.

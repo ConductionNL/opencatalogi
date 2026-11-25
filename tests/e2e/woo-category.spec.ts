@@ -26,10 +26,12 @@ test.describe('Woo information categories', () => {
 
 		const body = await response.json()
 		expect(body.total).toBe(18)
+		// The list follows the administrator's order (REQ-WVL-002), so the codes
+		// are compared as a set: infocat001 to infocat018, each once.
 		const codes = body.results.map((row: { code: string }) => row.code)
-		expect(codes[0]).toBe('infocat001')
-		expect(codes[16]).toBe('infocat017')
-		expect(codes[17]).toBe('infocat018')
+		expect([...codes].sort()).toEqual(
+			Array.from({ length: 18 }, (_, i) => `infocat${String(i + 1).padStart(3, '0')}`),
+		)
 		const annual = body.results.find(
 			(row: { code: string }) => row.code === 'infocat012',
 		)
