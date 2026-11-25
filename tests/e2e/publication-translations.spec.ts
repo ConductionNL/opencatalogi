@@ -47,7 +47,7 @@ test.describe('Publication translations', () => {
 		catalogSlug = String(catalog.raw.slug)
 		const publication = await fx.createPublication(
 			`translations-${run}`,
-			{ ...DUTCH, publicationDate: '2026-01-05T09:00:00+00:00' },
+			{ ...DUTCH, status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
 			REG_PUBLICATION,
 		)
 		publicationId = publication.id
@@ -92,7 +92,14 @@ test.describe('Publication translations', () => {
 	test('the Languages card names the missing English description', async ({ page }) => {
 		await page.goto(`${BASE}${APP}/publications/${catalogSlug}/${publicationId}`)
 		const english = page.getByTestId('publication-language-en')
-		await expect(english).toBeVisible({ timeout: 30_000 })
+		// The detail grid mounts a widget when it scrolls into view, and the
+		// Languages card sits below the fold: scroll down to it.
+		await expect(page.locator('[gs-id]').first()).toBeAttached({ timeout: 30_000 })
+		await page.mouse.move(800, 400)
+		await expect(async () => {
+			await page.mouse.wheel(0, 400)
+			await expect(english).toBeVisible({ timeout: 500 })
+		}).toPass({ timeout: 30_000 })
 		await expect(english).toContainText('Title and summary translated, description missing')
 		await expect(page.getByTestId('publication-language-translate-en')).toBeVisible()
 	})
