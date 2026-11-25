@@ -154,9 +154,33 @@ test.describe('app chrome (ADR-114)', () => {
 		// Two rows on ONE day for ONE publication, 7 views and 4 downloads.
 		// That is the shape the metric turns on: SUM(count) reads 7 and 4,
 		// COUNT(rows) would read 1 and 1, so the assertion below separates them.
+		//
+		// The totals are instance-wide, and public reads by earlier specs add
+		// counters of their own, so the report is read once before seeding and
+		// must then show exactly 7 and 4 more.
 		const fx = new Fixtures()
 		await fx.init()
 		try {
+			const main = page.locator('main, .app-content').first()
+			const openReport = async (): Promise<void> => {
+				await page.goto(`${APP_BASE}/reports/usage`)
+				await expect(page.locator('[data-testid="cn-nav"]')).toBeVisible({
+					timeout: 30_000,
+				})
+				await expect(
+					main.getByText('Downloads', { exact: false }).first(),
+				).toBeVisible({ timeout: 30_000 })
+			}
+			const total = async (name: string): Promise<number> => {
+				const text = await main.getByRole('region', { name, exact: true }).innerText()
+				const digits = text.replace(name, '').replace(/[^\d]/g, '')
+				return digits === '' ? 0 : Number(digits)
+			}
+
+			await openReport()
+			const viewsBefore = await total('Views')
+			const downloadsBefore = await total('Downloads')
+
 			const publication = await fx.createPublication(
 				'Usage report',
 				{},
@@ -165,14 +189,7 @@ test.describe('app chrome (ADR-114)', () => {
 			await fx.createUsageCounter(publication.id, 'view', 7)
 			await fx.createUsageCounter(publication.id, 'download', 4)
 
-			await page.goto(`${APP_BASE}/reports/usage`)
-			await expect(page.locator('[data-testid="cn-nav"]')).toBeVisible({
-				timeout: 30_000,
-			})
-			const main = page.locator('main, .app-content').first()
-			await expect(
-				main.getByText('Downloads', { exact: false }).first(),
-			).toBeVisible({ timeout: 30_000 })
+			await openReport()
 
 			// SCOPE TO THE STAT CARDS. Unscoped, `toContainText('4')` is
 			// satisfied by the bar chart's y-axis ticks (12/10/8/6/4/2/0) and by
@@ -183,12 +200,8 @@ test.describe('app chrome (ADR-114)', () => {
 			// manifest label. The `widget-id` attribute this read before was a
 			// fallthrough prop that nextcloud-vue 3.2.0 no longer renders, and
 			// `exact` keeps "Views against downloads" out of both matches.
-			await expect(
-				main.getByRole('region', { name: 'Views', exact: true }),
-			).toContainText('7', { timeout: 30_000 })
-			await expect(
-				main.getByRole('region', { name: 'Downloads', exact: true }),
-			).toContainText('4', { timeout: 30_000 })
+			await expect.poll(() => total('Views'), { timeout: 30_000 }).toBe(viewsBefore + 7)
+			await expect.poll(() => total('Downloads'), { timeout: 30_000 }).toBe(downloadsBefore + 4)
 		} finally {
 			await fx.cleanupAll()
 			await fx.dispose()

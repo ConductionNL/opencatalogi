@@ -431,7 +431,9 @@ export class Fixtures {
 		count: number,
 		extra: Record<string, unknown> = {},
 	): Promise<SeededObject> {
-		return this.create(REG_OPENCATALOGI, SCHEMA_USAGE_COUNTER, {
+		// The usage report and the publication page read usageCounter from the
+		// `publication` register (src/manifest.json), so the counter goes there.
+		return this.create(REG_PUBLICATION, SCHEMA_USAGE_COUNTER, {
 			publication: publicationId,
 			kind,
 			count,
