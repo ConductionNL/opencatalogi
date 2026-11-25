@@ -703,7 +703,7 @@ XML;
 	 * integriq, from the mapping when it fills fields, with the refusal when
 	 * integriq refuses (REQ-WIM-004).
 	 *
-	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
 	 */
 	public function testTheReportNamesTheMappingSource(): void {
 		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);

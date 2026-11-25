@@ -20,7 +20,7 @@
  *
  * @link https://www.conduction.nl
  *
- * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md
  */
 
 declare(strict_types=1);

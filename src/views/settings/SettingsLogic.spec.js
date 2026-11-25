@@ -399,7 +399,7 @@ describe('Settings register change and schema options', () => {
 	})
 })
 
-/** @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004 */
+/** @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004 */
 describe('Settings wooIndexMappingLine', () => {
 	beforeEach(() => {
 		global.t = (app, text, vars) => (vars ? `${text} ${JSON.stringify(vars)}` : text)

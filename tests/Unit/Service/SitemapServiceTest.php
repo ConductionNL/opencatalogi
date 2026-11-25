@@ -568,7 +568,7 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * When the mapping takes officieleTitel from the summary, the sitemap carries it (REQ-WIM-001).
 	 *
-	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
+	 * @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	public function testAMappedOfficialTitleIsInTheSitemap(): void {
 		[$publication, $file] = self::mappedPublicationAndFile();
@@ -586,7 +586,7 @@ class SitemapServiceTest extends TestCase {
 	 * Without integriq, or with a refused mapping, the document is exactly
 	 * what it was before this change (REQ-WIM-002).
 	 *
-	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-sitemap-never-depends-on-the-mapping-answering-req-wim-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-sitemap-never-depends-on-the-mapping-answering-req-wim-002
 	 */
 	public function testWithoutIntegriqTheSitemapIsUnchanged(): void {
 		[$publication, $file] = self::mappedPublicationAndFile();
