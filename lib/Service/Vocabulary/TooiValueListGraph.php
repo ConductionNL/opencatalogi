@@ -205,8 +205,11 @@ class TooiValueListGraph {
 	 */
 	private static function literal(array $node, string $predicate): string {
 		$value = ($node[$predicate][0]['@value'] ?? '');
+		if (is_scalar($value) === false) {
+			return '';
+		}
 
-		return trim(is_scalar($value) === true ? (string)$value : '');
+		return trim((string)$value);
 	}//end literal()
 
 	/**

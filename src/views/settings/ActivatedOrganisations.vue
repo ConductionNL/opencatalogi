@@ -3,7 +3,7 @@
   - SPDX-License-Identifier: EUPL-1.2
 -->
 <template>
-	<div class="activated-organisations" data-testid="activated-organisations">
+	<section class="activated-organisations" data-testid="activated-organisations">
 		<h3 class="activated-organisations__heading">
 			{{ t('opencatalogi', 'Organisations you publish for') }}
 		</h3>
@@ -52,7 +52,7 @@
 				</NcCheckboxRadioSwitch>
 			</li>
 		</ul>
-	</div>
+	</section>
 </template>
 
 <script>

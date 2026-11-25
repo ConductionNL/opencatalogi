@@ -2837,8 +2837,9 @@ class SitemapServiceTest extends TestCase {
 	 */
 	public function testAPublisherNotActivatedIsOmittedAndReported(): void {
 		$queries = [];
-		$this->wireCategoryCatalog([], ['sch-pub'], static fn (array $query): array => [], $queries);
+		$this->wireCategoryCatalog(settingsRegisters: [], catalogSchemas: ['sch-pub'], answer: static fn (array $query): array => [], queries: $queries);
 		$legacy = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855';
+		$dordrecht = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0505';
 		$publication = [
 			'id' => 'pub-legacy',
 			'title' => 'Besluit',
@@ -2849,7 +2850,7 @@ class SitemapServiceTest extends TestCase {
 		];
 		$file = ['downloadUrl' => 'https://example.com/legacy.pdf', 'extension' => 'pdf'];
 		$publisherOf = function (array|\Throwable $activated, array $fields = []) use ($publication, $file): array {
-			$activation = $this->createMock(\OCA\OpenCatalogi\Service\ValueList\OrganisationActivation::class);
+			$activation = $this->createMock(originalClassName: \OCA\OpenCatalogi\Contract\OrganisationActivationInterface::class);
 			if ($activated instanceof \Throwable) {
 				$activation->method('activeEntries')->willThrowException($activated);
 			} else {
@@ -2859,13 +2860,12 @@ class SitemapServiceTest extends TestCase {
 			$service = new SitemapService(
 				new OpenRegisterLookup($this->container, $this->appManager),
 				$this->settingsService,
-				new InstanceSettings($this->urlGenerator, $this->createMock(IAppConfig::class)),
+				new InstanceSettings($this->urlGenerator, $this->createMock(originalClassName: IAppConfig::class)),
 				new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(
-					tooiVocabulary: new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+					tooiVocabulary: new \OCA\OpenCatalogi\Service\TooiVocabularyService(activation: $activation),
 					categories: $this->wooCategories,
 					openRegister: new OpenRegisterLookup($this->container, $this->appManager),
-					fileFacts: \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this),
-					activation: $activation
+					fileFacts: \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
 				),
 				$this->queryService,
 				$this->wooCategories
@@ -2876,25 +2876,30 @@ class SitemapServiceTest extends TestCase {
 
 			return ['publisher' => $diwoo['diwoo:publisher'], 'diwoo' => $diwoo, 'violations' => $violations];
 		};
+		$violation = static fn (string $axis, string $reason): array => [
+			'documentLoc' => 'https://example.com/legacy.pdf',
+			'axis' => $axis,
+			'reason' => $reason,
+		];
 
-		$notActivated = $publisherOf(['https://identifier.overheid.nl/tooi/id/gemeente/gm0505']);
-		$this->assertArrayNotHasKey('@resource', $notActivated['publisher']);
-		$this->assertArrayNotHasKey('diwoo:verantwoordelijke', $notActivated['diwoo'], 'the publisher is not emitted as responsible either');
-		$this->assertContains(['documentLoc' => 'https://example.com/legacy.pdf', 'axis' => 'publisher', 'reason' => 'organisation is not activated'], $notActivated['violations']);
+		$notActivated = $publisherOf([$dordrecht]);
+		$this->assertArrayNotHasKey(key: '@resource', array: $notActivated['publisher']);
+		$this->assertArrayNotHasKey(key: 'diwoo:verantwoordelijke', array: $notActivated['diwoo'], message: 'nor emitted as responsible');
+		$this->assertContains(needle: $violation('publisher', 'organisation is not activated'), haystack: $notActivated['violations']);
 
-		$this->assertSame($legacy, $publisherOf([$legacy, 'https://identifier.overheid.nl/tooi/id/gemeente/gm0505'])['publisher']['@resource']);
-		$this->assertSame($legacy, $publisherOf([])['publisher']['@resource'], 'before any activation every publisher is emitted');
-		$this->assertSame($legacy, $publisherOf(new \RuntimeException('choices unreadable'))['publisher']['@resource'], 'an unreadable choice list withholds nothing');
+		$this->assertSame(expected: $legacy, actual: $publisherOf([$legacy, $dordrecht])['publisher']['@resource']);
+		$this->assertSame(expected: $legacy, actual: $publisherOf([])['publisher']['@resource'], message: 'nothing activated: every one emitted');
+		$unreadable = $publisherOf(new \RuntimeException('choices unreadable'));
+		$this->assertSame(expected: $legacy, actual: $unreadable['publisher']['@resource'], message: 'an unreadable choice list withholds nothing');
 
 		// A responsible organisation (Dordrecht, gm0505) that is not activated is left out and reported.
 		$responsible = $publisherOf([$legacy], ['responsibleOrganization' => 'org-dordrecht']);
-		$this->assertSame($legacy, $responsible['publisher']['@resource']);
-		$this->assertArrayNotHasKey('diwoo:verantwoordelijke', $responsible['diwoo']);
-		$this->assertContains(['documentLoc' => 'https://example.com/legacy.pdf', 'axis' => 'verantwoordelijke', 'reason' => 'responsible organisation is not activated'], $responsible['violations']);
-		$this->assertSame(
-			'https://identifier.overheid.nl/tooi/id/gemeente/gm0505',
-			$publisherOf([$legacy, 'https://identifier.overheid.nl/tooi/id/gemeente/gm0505'], ['responsibleOrganization' => 'org-dordrecht'])['diwoo']['diwoo:verantwoordelijke']['@resource']
-		);
+		$this->assertSame(expected: $legacy, actual: $responsible['publisher']['@resource']);
+		$this->assertArrayNotHasKey(key: 'diwoo:verantwoordelijke', array: $responsible['diwoo']);
+		$responsibleGap = $violation('verantwoordelijke', 'responsible organisation is not activated');
+		$this->assertContains(needle: $responsibleGap, haystack: $responsible['violations']);
+		$both = $publisherOf([$legacy, $dordrecht], ['responsibleOrganization' => 'org-dordrecht']);
+		$this->assertSame(expected: $dordrecht, actual: $both['diwoo']['diwoo:verantwoordelijke']['@resource']);
 	}
 
 	/**

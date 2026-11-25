@@ -21,7 +21,7 @@ namespace OCA\OpenCatalogi\Tests\Unit\Controller;
 
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Controller\OrganisationActivationController;
-use OCA\OpenCatalogi\Service\ValueList\OrganisationActivation;
+use OCA\OpenCatalogi\Contract\OrganisationActivationInterface;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\IL10N;
@@ -62,7 +62,7 @@ class OrganisationActivationControllerTest extends TestCase {
 			static fn (string $key, $default = null) => ($params[$key] ?? $default)
 		);
 
-		$activation = $this->createMock(originalClassName: OrganisationActivation::class);
+		$activation = $this->createMock(originalClassName: OrganisationActivationInterface::class);
 		$activation->method('search')->willReturnCallback(
 			function (string $query) use ($failure): array {
 				$this->calls[] = 'search:' . $query;
@@ -70,7 +70,8 @@ class OrganisationActivationControllerTest extends TestCase {
 					throw $failure;
 				}
 
-				return ['results' => [['uri' => self::DORDRECHT, 'label' => 'gemeente Dordrecht', 'notation' => 'gm0505', 'active' => true, 'deprecated' => false]], 'total' => 1];
+				$row = ['uri' => self::DORDRECHT, 'label' => 'gemeente Dordrecht', 'notation' => 'gm0505', 'active' => true, 'deprecated' => false];
+				return ['results' => [$row], 'total' => 1];
 			}
 		);
 		$activation->method('activate')->willReturnCallback(
@@ -101,12 +102,15 @@ class OrganisationActivationControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testOnlyAdministratorsSearchAndActivate(): void {
+		$attributes = static fn (string $method, string $attribute): array => (
+			new ReflectionMethod(OrganisationActivationController::class, $method)
+		)->getAttributes($attribute);
 		foreach (['index', 'update'] as $method) {
-			$this->assertCount(expectedCount: 1, haystack: (new ReflectionMethod(OrganisationActivationController::class, $method))->getAttributes(AuthorizedAdminSetting::class), message: $method);
-			$this->assertCount(expectedCount: 0, haystack: (new ReflectionMethod(OrganisationActivationController::class, $method))->getAttributes(NoAdminRequired::class), message: $method);
+			$this->assertCount(expectedCount: 1, haystack: $attributes($method, AuthorizedAdminSetting::class), message: $method);
+			$this->assertCount(expectedCount: 0, haystack: $attributes($method, NoAdminRequired::class), message: $method);
 		}
 
-		$this->assertCount(expectedCount: 1, haystack: (new ReflectionMethod(OrganisationActivationController::class, 'active'))->getAttributes(NoAdminRequired::class));
+		$this->assertCount(expectedCount: 1, haystack: $attributes('active', NoAdminRequired::class));
 	}//end testOnlyAdministratorsSearchAndActivate()
 
 	/**
@@ -132,7 +136,8 @@ class OrganisationActivationControllerTest extends TestCase {
 	public function testActivatingAndDeactivating(): void {
 		$on = $this->controller(params: ['entry' => self::DORDRECHT, 'active' => true])->update();
 		$this->assertSame(expected: 200, actual: $on->getStatus());
-		$this->assertSame(expected: ['entry' => self::DORDRECHT, 'active' => true, 'organisation' => 'org-uuid', 'created' => true], actual: $on->getData());
+		$expected = ['entry' => self::DORDRECHT, 'active' => true, 'organisation' => 'org-uuid', 'created' => true];
+		$this->assertSame(expected: $expected, actual: $on->getData());
 
 		$off = $this->controller(params: ['entry' => self::DORDRECHT, 'active' => false])->update();
 		$this->assertSame(expected: ['entry' => self::DORDRECHT, 'active' => false, 'organisation' => null, 'created' => false], actual: $off->getData());

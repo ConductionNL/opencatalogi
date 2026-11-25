@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\ValueList;
 
 use InvalidArgumentException;
+use OCA\OpenCatalogi\Contract\OrganisationActivationInterface;
 use OCA\OpenCatalogi\Contract\VocabularyRegisterInterface;
 use OCA\OpenCatalogi\Service\Vocabulary\ValueListRefresh;
 use RuntimeException;
@@ -39,7 +40,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
  */
-class OrganisationActivation {
+class OrganisationActivation implements OrganisationActivationInterface {
 
 	/**
 	 * The value list the choices about organisations are stored under.
@@ -97,10 +98,11 @@ class OrganisationActivation {
 				continue;
 			}
 
-			$matches = ($needle === '' && $isActive === true)
-				|| ($needle !== '' && (str_contains(mb_strtolower($concept['label']), $needle) === true || str_contains(mb_strtolower($concept['notation']), $needle) === true));
+			$named = (str_contains(mb_strtolower($concept['label']), $needle) === true
+				|| str_contains(mb_strtolower($concept['notation']), $needle) === true);
+			$matches = ($needle === '' && $isActive === true) || ($needle !== '' && $named === true);
 			if ($matches === true) {
-				$found[] = ['uri' => $uri, 'label' => $concept['label'], 'notation' => $concept['notation'], 'active' => $isActive, 'deprecated' => $concept['deprecated']];
+				$found[] = array_merge(['uri' => $uri], $concept, ['active' => $isActive]);
 			}
 		}
 

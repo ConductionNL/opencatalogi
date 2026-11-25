@@ -118,8 +118,13 @@ class OpenRegisterVocabulary implements VocabularyRegisterInterface {
 			}
 
 			$notation = trim((string)($concept['notation'] ?? ''));
+			$fallback = $notation;
+			if ($fallback === '') {
+				$fallback = (string)$uri;
+			}
+
 			$answer[(string)$uri] = [
-				'label' => self::labelOf(labels: ($concept['prefLabel'] ?? null), fallback: ($notation !== '' ? $notation : (string)$uri)),
+				'label' => self::labelOf(labels: ($concept['prefLabel'] ?? null), fallback: $fallback),
 				'notation' => $notation,
 				'deprecated' => (($concept['deprecated'] ?? false) === true),
 			];

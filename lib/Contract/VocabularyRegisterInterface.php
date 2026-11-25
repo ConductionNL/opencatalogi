@@ -59,11 +59,14 @@ interface VocabularyRegisterInterface {
 	 *
 	 * @param string $schemeUri The scheme's uri.
 	 *
-	 * @return array<string, array{label: string, notation: string, deprecated: bool}> Keyed by concept uri; empty for a scheme the register does not hold.
+	 * @return array<string, array{label: string, notation: string, deprecated: bool}> Keyed by concept uri;
+	 *                                                                                 empty for a scheme the register does not hold.
 	 *
 	 * @throws \RuntimeException When OpenRegister's vocabulary cannot be read.
 	 *
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 *
+	 * @contract-shift internal-only — OpenRegisterVocabulary, in this app, is the only implementer; its only double is a createMock() in this app.
 	 */
 	public function concepts(string $schemeUri): array;
 }//end interface

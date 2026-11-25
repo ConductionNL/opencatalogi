@@ -92,7 +92,11 @@ class OpenRegisterOrganisations {
 			throw new RuntimeException('The organisations could not be read: ' . $e->getMessage(), 0, $e);
 		}
 
-		$first = (is_array($found) === true ? reset($found) : false);
+		$first = false;
+		if (is_array($found) === true) {
+			$first = reset($found);
+		}
+
 		if (is_object($first) === false) {
 			return null;
 		}

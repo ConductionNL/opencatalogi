@@ -173,12 +173,14 @@ class TooiValueListGraphTest extends TestCase {
 		$this->assertSame(expected: 'http://www.w3.org/2004/02/skos/core#ConceptScheme', actual: $graph[0]['@type']);
 		$this->assertCount(expectedCount: 21, haystack: $built['conceptUris']);
 		$this->assertContains(needle: 'https://identifier.overheid.nl/tooi/id/waterschap/ws0152', haystack: $built['conceptUris']);
-		$this->assertNotContains(needle: 'https://identifier.overheid.nl/tooi/id/waterschap/ws0151', haystack: $built['conceptUris'], message: 'An organisation with an end date is left out.');
+		$ended = 'https://identifier.overheid.nl/tooi/id/waterschap/ws0151';
+		$this->assertNotContains(needle: $ended, haystack: $built['conceptUris'], message: 'An organisation with an end date is left out.');
 
 		$byId = array_column(array_slice($graph, 1), null, '@id');
 		$rijnEnIJssel = $byId['https://identifier.overheid.nl/tooi/id/waterschap/ws0152'];
 		$this->assertSame(expected: 'http://www.w3.org/2004/02/skos/core#Concept', actual: $rijnEnIJssel['@type']);
-		$this->assertSame(expected: [['@value' => 'waterschap Rijn en IJssel', '@language' => 'nl']], actual: $rijnEnIJssel['http://www.w3.org/2004/02/skos/core#prefLabel']);
+		$label = $rijnEnIJssel['http://www.w3.org/2004/02/skos/core#prefLabel'];
+		$this->assertSame(expected: [['@value' => 'waterschap Rijn en IJssel', '@language' => 'nl']], actual: $label);
 		$this->assertSame(expected: [['@value' => 'ws0152']], actual: $rijnEnIJssel['http://www.w3.org/2004/02/skos/core#notation']);
 		$this->assertSame(expected: [['@id' => $scheme]], actual: $rijnEnIJssel['http://www.w3.org/2004/02/skos/core#inScheme']);
 	}//end testAnOrganisationRegisterBecomesASchemeOfCurrentOrganisations()

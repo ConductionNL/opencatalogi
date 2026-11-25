@@ -138,14 +138,18 @@ class OpenRegisterOrganisationsTest extends TestCase {
 			 */
 			public function findAll(int $limit, int $offset, array $filters): array {
 				$this->filters = $filters;
-				return ($filters['tooi'] === 'https://t/gm0505') ? [$this->row] : [];
+				if ($filters['tooi'] !== 'https://t/gm0505') {
+					return [];
+				}
+
+				return [$this->row];
 			}
 		};
 		$adapter = $this->adapter(services: [OpenRegisterOrganisations::MAPPER => $mapper]);
 
 		$this->assertSame(expected: ['uuid' => 'u1', 'name' => 'Gemeente Dordrecht'], actual: $adapter->findByTooi(tooi: 'https://t/gm0505'));
 		$this->assertSame(expected: ['tooi' => 'https://t/gm0505'], actual: $mapper->filters);
-		$this->assertNull($adapter->findByTooi(tooi: 'https://t/gm0642'));
+		$this->assertNull(actual: $adapter->findByTooi(tooi: 'https://t/gm0642'));
 	}//end testAnOrganisationIsFoundByItsTooiIdentifier()
 
 	/**
@@ -155,7 +159,11 @@ class OpenRegisterOrganisationsTest extends TestCase {
 	 */
 	public function testACreatedOrganisationCarriesTheTooiIdentifier(): void {
 		if (class_exists(OpenRegisterOrganisations::NEW_ORGANISATION) === false) {
-			eval('namespace OCA\OpenRegister\Service\Organisation; final class NewOrganisation { public function __construct(public readonly string $name, public readonly string $description = "", public readonly string $uuid = "") {} }');
+			eval(
+				'namespace OCA\OpenRegister\Service\Organisation; final class NewOrganisation {'
+				. ' public function __construct(public readonly string $name, public readonly string $description = "",'
+				. ' public readonly string $uuid = "") {} }'
+			);
 		}
 
 		$created = self::organisation(uuid: 'u2', name: 'waterschap Rivierenland');
@@ -222,7 +230,7 @@ class OpenRegisterOrganisationsTest extends TestCase {
 	public function testWithoutOpenRegisterTheAnswerIsARefusal(): void {
 		try {
 			$this->adapter(services: [])->findByTooi(tooi: 'https://t/x');
-			$this->fail('a missing mapper is refused');
+			$this->fail(message: 'a missing mapper is refused');
 		} catch (RuntimeException $e) {
 			$this->assertStringContainsString(needle: 'OrganisationMapper', haystack: $e->getMessage());
 		}
@@ -239,8 +247,8 @@ class OpenRegisterOrganisationsTest extends TestCase {
 				throw new \Exception('database gone');
 			}
 		};
-		$this->expectException(RuntimeException::class);
-		$this->expectExceptionMessage('database gone');
+		$this->expectException(exception: RuntimeException::class);
+		$this->expectExceptionMessage(message: 'database gone');
 		$this->adapter(services: [OpenRegisterOrganisations::MAPPER => $failing])->findByTooi(tooi: 'https://t/x');
 	}//end testWithoutOpenRegisterTheAnswerIsARefusal()
 }//end class

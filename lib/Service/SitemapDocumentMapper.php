@@ -28,7 +28,6 @@ use Exception;
 use OCA\OpenCatalogi\Contract\DiwooCompletenessInterface;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
-use OCA\OpenCatalogi\Service\ValueList\OrganisationActivation;
 
 /**
  * The DiWoo document of one downloadable file: location, dates, publisher, format
@@ -105,20 +104,6 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	private readonly SitemapDocumentFields $fields;
 
 	/**
-	 * The activated TOOI organisations, once read: null while activation is not in use.
-	 *
-	 * @var list<string>|null
-	 */
-	private ?array $activated = null;
-
-	/**
-	 * Whether the activated organisations were read in this request.
-	 *
-	 * @var bool
-	 */
-	private bool $activatedRead = false;
-
-	/**
 	 * The TOOI identifiers left out of the document being mapped because they are not activated, by role.
 	 *
 	 * @var array<string, string>
@@ -135,8 +120,6 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @param InstanceSettings|null $instance Holds the moment the DiWoo fields were introduced; without it every record is legacy.
 	 * @param WooIndexFieldMapper|null $fieldMapper Reads the four Woo-index fields from integriq's
 	 *                                              mapping; without it every field is the built-in read.
-	 * @param OrganisationActivation|null $activation The organisations the administrator activated (REQ-WVL-005);
-	 *                                                without it every organisation is emitted.
 	 */
 	public function __construct(
 		private readonly TooiVocabularyService $tooiVocabulary,
@@ -145,7 +128,6 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 		private readonly ?FileFacts $fileFacts = null,
 		?InstanceSettings $instance = null,
 		private readonly ?WooIndexFieldMapper $fieldMapper = null,
-		private readonly ?OrganisationActivation $activation = null,
 	) {
 		$this->fields = new SitemapDocumentFields(tooiVocabulary: $tooiVocabulary, instance: $instance);
 	}//end __construct()
@@ -487,13 +469,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	}//end optionalAxes()
 
 	/**
-	 * A TOOI organisation uri while it may be emitted: activation is not in use, or it is activated.
-	 *
-	 * Activation is in use once an administrator activated one organisation;
-	 * until then every valid identifier is emitted, so an upgrade does not take
-	 * the publisher out of every existing record. An unreadable choice list
-	 * counts as not in use, as for the categories: no organisation is withheld
-	 * by an error.
+	 * A TOOI organisation uri while it may be named: activation is not in use, or it is activated (REQ-WVL-005).
 	 *
 	 * @param string|null $uri  The resolved TOOI uri.
 	 * @param string      $role The DiWoo element it is for, to report a refusal.
@@ -503,45 +479,13 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
 	 */
 	private function onlyActivated(?string $uri, string $role): ?string {
-		if ($uri === null) {
-			return null;
-		}
-
-		if ($this->activatedRead === false) {
-			$this->activatedRead = true;
-			$this->activated = $this->readActivated();
-		}
-
-		if ($this->activated === null || in_array($uri, $this->activated, true) === true) {
+		if ($uri === null || $this->tooiVocabulary->isActivatedOrganisatie(uri: $uri) === true) {
 			return $uri;
 		}
 
 		$this->notActivated[$role] = $uri;
 		return null;
 	}//end onlyActivated()
-
-	/**
-	 * The activated TOOI organisations, or null when activation is not in use or cannot be read.
-	 *
-	 * @return list<string>|null The identifiers.
-	 */
-	private function readActivated(): ?array {
-		if ($this->activation === null) {
-			return null;
-		}
-
-		try {
-			$activated = $this->activation->activeEntries();
-		} catch (\Throwable $e) {
-			return null;
-		}
-
-		if ($activated === []) {
-			return null;
-		}
-
-		return $activated;
-	}//end readActivated()
 
 	/**
 	 * Why an element has no TOOI identifier: it is not activated, or the given reason.

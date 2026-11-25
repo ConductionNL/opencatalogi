@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * @category Tests
- * @package  OCA\OpenCatalogi\Tests\Unit\Service\Woo
+ * @package  OCA\OpenCatalogi\Tests\Unit\Service\ValueList
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
@@ -17,7 +17,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Tests\Unit\Service\Woo;
+namespace OCA\OpenCatalogi\Tests\Unit\Service\ValueList;
 
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\VocabularyRegisterInterface;
@@ -110,7 +110,8 @@ class OrganisationActivationTest extends TestCase {
 				$this->assertSame(expected: OrganisationActivation::SCHEME, actual: $scheme);
 				$answer = [];
 				foreach ($this->stored as $entry => $choice) {
-					$answer[$entry] = ['order' => null, 'localLabel' => '', 'explanation' => '', 'hidden' => false, 'active' => (($choice['active'] ?? false) === true)];
+					$active = (($choice['active'] ?? false) === true);
+					$answer[$entry] = ['order' => null, 'localLabel' => '', 'explanation' => '', 'hidden' => false, 'active' => $active];
 				}
 
 				return $answer;
@@ -163,7 +164,7 @@ class OrganisationActivationTest extends TestCase {
 
 		$this->assertSame(expected: [['name' => 'waterschap Rivierenland', 'tooi' => self::RIVIERENLAND]], actual: $this->created);
 		$this->assertSame(expected: 'new-uuid', actual: $answer['organisation']);
-		$this->assertTrue($answer['created']);
+		$this->assertTrue(condition: $answer['created']);
 		$this->assertSame(expected: [self::RIVIERENLAND], actual: $this->activation()->activeEntries());
 	}//end testActivatingCreatesOneWithTheTooiIdentifier()
 
@@ -177,7 +178,7 @@ class OrganisationActivationTest extends TestCase {
 		foreach (['https://identifier.overheid.nl/tooi/id/gemeente/gm9999', self::ENDED] as $uri) {
 			try {
 				$activation->activate(uri: $uri);
-				$this->fail('activating ' . $uri . ' is refused');
+				$this->fail(message: 'activating ' . $uri . ' is refused');
 			} catch (InvalidArgumentException $e) {
 				$this->assertNotSame(expected: '', actual: $e->getMessage());
 			}
