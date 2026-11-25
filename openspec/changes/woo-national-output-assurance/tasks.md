@@ -30,9 +30,10 @@ Read `openspec/woo-build-rules.md` first. Start once `diwoo-metadata-on-the-publ
 
 ## 5. Verification
 
-- [ ] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
-- [ ] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
-- [ ] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
+- [x] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
+- [x] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+- [x] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - Done 25 Nov 2026 (b-opencatalogi) against `development` after this change's PRs landed, in a Nextcloud 34 tree with OpenRegister main beside it: PHPUnit 7300 tests, 4 errors, all `DirectoryServiceTest::testDoCronSync*` (directory cron, inherited, not this change). Full hydra run: 81 gates pass; the four failing (7 no-admin-idor, 26 visual-coverage on `WooRedaction.vue`, 119 procedure-file count, 123 sig-floor) are inherited fleet debt. `check:l10n`, `check:l10n-js` and `check:manifest` pass. Inherited on `development`, not this change: phpcs/phpmd/phpstan findings in other files, psalm 5.26 crash, `format` (Prettier, 317 files), `check:schema-l10n` (320 uncovered vs baseline 218), `npm run lint` errors only in `DashboardSideBar.vue`. The coverage guard is CI's and was not measured here.
 
 Done when merged on `development` with CI green. Rows 5.19, 9.13, 9.20 and 13.9 become `production` only once a store release ships it.
