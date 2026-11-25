@@ -168,7 +168,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 *
 	 * @return array{loc: string, lastmod: string, 'diwoo:Document': array}|null The url entry, or null.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function mapComplete(array $publication, array $file, array &$violations = [], array $relations = []): ?array {
 		$document = $this->document(publication: $publication, file: $file);
@@ -251,7 +251,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 *
 	 * @return array<string, string> The missing fields and why, empty when complete.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication
 	 */
 	public function mandatoryGaps(array $publication): array {
 		$gaps = [];

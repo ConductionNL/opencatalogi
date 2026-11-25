@@ -22,7 +22,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+ * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
  */
 
 declare(strict_types=1);
@@ -36,7 +36,7 @@ use Exception;
 /**
  * Reads the stored DiWoo fields of a publication for {@see SitemapDocumentMapper}.
  *
- * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+ * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
  */
 class SitemapDocumentFields {
 
@@ -65,7 +65,7 @@ class SitemapDocumentFields {
 	 *
 	 * @return array|false|null The element, false when the stored type resolves to no member, null when none is stored.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function documentTypeElement(array $publication, array $file): array|false|null {
 		$perFile = $publication['fileDocumentsoorten'] ?? [];
@@ -97,7 +97,7 @@ class SitemapDocumentFields {
 	 *
 	 * @return bool True when the derivation may fill a missing field.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function isLegacy(array $publication): bool {
 		$introduced = strtotime((string)$this->instance?->stringValue(SitemapDocumentMapper::FIELDS_INTRODUCED_AT, ''));
@@ -189,7 +189,7 @@ class SitemapDocumentFields {
 	 *
 	 * @return array<string, array|null> The axes, ready to emit.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function withoutUnresolvedType(array $elements): array {
 		if (is_array($elements['diwoo:classificatiecollectie'] ?? null) === true
@@ -208,7 +208,7 @@ class SitemapDocumentFields {
 	 *
 	 * @return array{'diwoo:creatiedatum': string|null, 'diwoo:language': array|null, 'diwoo:geldigheid': array|null} The elements.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function storedElements(array $publication): array {
 		$legacy = $this->isLegacy(publication: $publication);
@@ -228,7 +228,7 @@ class SitemapDocumentFields {
 	 *
 	 * @return array|null The verantwoordelijke element, or null.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function responsible(array $publisher): ?array {
 		if (isset($publisher['@resource']) === false || ($publisher['#text'] ?? '') === '') {
@@ -246,7 +246,7 @@ class SitemapDocumentFields {
 	 *
 	 * @return array<int, array{0: string, 1: string}> The gaps as axis and reason.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
 	 */
 	public function storedGaps(array $diwoo, array $elements): array {
 		$gaps = [];

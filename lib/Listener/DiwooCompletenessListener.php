@@ -24,7 +24,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/diwoo-metadata-on-the-publication
+ * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication
  */
 
 declare(strict_types=1);
@@ -46,7 +46,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Normalises and checks a publication's DiWoo metadata before it is saved.
  *
- * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
+ * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-woo-publication-without-the-metadata-the-woo-index-requires-does-not-go-public-req-dwp-003
  *
  * @template-implements IEventListener<Event>
  */
@@ -84,7 +84,7 @@ class DiwooCompletenessListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectCreatingEvent || $event instanceof ObjectUpdatingEvent) {
@@ -100,7 +100,7 @@ class DiwooCompletenessListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication
 	 */
 	private function check(ObjectCreatingEvent|ObjectUpdatingEvent $event): void {
 		$scope = $this->scopeOf(event: $event);

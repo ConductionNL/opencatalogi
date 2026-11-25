@@ -297,7 +297,7 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 *
 	 * @return array{code: string, label: string, uri: string}|null The member, or null.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
 	 */
 	public function resolveDocumentsoort(?string $value): ?array {
 		return $this->resolveMember(list: $this->documentsoortList(), value: $value);
@@ -308,7 +308,7 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 *
 	 * @return array<int, array{code: string, label: string, uri: string}> The members.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
 	 */
 	public function documentsoortList(): array {
 		return $this->bundledMembers(key: 'documentsoorten');
@@ -324,7 +324,7 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 *
 	 * @return array{code: string, label: string, uri: string}|null The member, or null.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
 	 */
 	public function resolveLanguage(?string $value): ?array {
 		return $this->resolveMember(list: $this->languageList(), value: $value);
@@ -335,7 +335,7 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 *
 	 * @return array<int, array{code: string, label: string, uri: string}> The members.
 	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
 	 */
 	public function languageList(): array {
 		return $this->bundledMembers(key: 'talen');
