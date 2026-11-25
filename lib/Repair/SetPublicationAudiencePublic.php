@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Repair;
 
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Service\Publication\RequiredToPublish;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\Migration\IOutput;
@@ -173,10 +174,15 @@ class SetPublicationAudiencePublic implements IRepairStep {
 	/**
 	 * Give one publication the audience public when it has none.
 	 *
+	 * A legacy publication that misses a field now required to publish is saved with that gap recorded.
+	 *
 	 * @param array<string, mixed>                    $publication The publication.
 	 * @param array{register: string, schema: string} $scope       Where it is stored.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @SuppressWarnings(PHPMD.StaticAccess) RequiredToPublish::recordGaps() is a pure record transform.
 	 */
 	private function setOne(array $publication, array $scope): void {
 		$audience = $publication['audience'] ?? null;
@@ -188,6 +194,7 @@ class SetPublicationAudiencePublic implements IRepairStep {
 		$uuid = (string)($publication['id'] ?? ($publication['@self']['id'] ?? ''));
 		unset($publication['@self']);
 		$publication['audience'] = self::AUDIENCE;
+		$publication = RequiredToPublish::recordGaps(publication: $publication);
 		try {
 			$this->objects->saveObject(
 				object: $publication,

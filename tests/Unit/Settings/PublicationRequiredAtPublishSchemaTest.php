@@ -19,17 +19,17 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Settings;
 
+use OCA\OpenCatalogi\Service\Publication\RequiredToPublish;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenRegister\Service\Lifecycle\LifecycleAnnotationValidator;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * The required-to-publish state rules are held back (REQ-PRP-001, tasks.md 1.1): OpenRegister enforces a state's
- * `required` on every save, the upgrade repair steps that run after the schema import re-save legacy published
- * publications, and a legacy publication without a summary, description or organisation would be refused there and
- * left without its state or audience, which hides it. The rule ships again once those steps can save such a
- * publication.
+ * The required-to-publish state rules (REQ-PRP-001, tasks.md 1.1, design D1): from `in_review` on a publication
+ * carries a summary, a description and its organisation; a draft declares no rule. OpenRegister enforces a state's
+ * `required` on every save, so the schema also administers the not-supplied reason the upgrade repair steps record
+ * for a legacy publication that lacks one of them (design D2), and the repair steps can save it.
  *
  * @coversNothing
  */
@@ -49,28 +49,50 @@ final class PublicationRequiredAtPublishSchemaTest extends TestCase {
 	}//end publication()
 
 	/**
-	 * No state of the publication lifecycle requires a field, so an upgrade can re-save every legacy publication.
+	 * In review, approved and published require the three fields for everyone; a draft requires nothing.
 	 *
 	 * @return void
 	 */
-	public function testNoStateRequiresAFieldWhileTheUpgradePathCannotFillIt(): void {
+	public function testFromReviewOnTheThreeFieldsAreRequired(): void {
 		$publication = self::publication();
+		$states = $publication['x-openregister-lifecycle']['states'];
 
-		self::assertArrayNotHasKey(key: 'states', array: $publication['x-openregister-lifecycle']);
+		self::assertArrayNotHasKey(key: 'draft', array: $states);
+		foreach (['in_review', 'approved', 'published'] as $state) {
+			self::assertSame(
+				expected: [['fields' => RequiredToPublish::FIELDS]],
+				actual: $states[$state]['fields']['required'],
+				message: $state
+			);
+		}
+
 		self::assertSame(expected: ['title'], actual: $publication['required']);
-	}//end testNoStateRequiresAFieldWhileTheUpgradePathCannotFillIt()
+		self::assertSame(expected: RequiredToPublish::STATES, actual: array_keys($states));
+	}//end testFromReviewOnTheThreeFieldsAreRequired()
 
 	/**
-	 * The schema version moved past 0.0.15, so an instance that imported the rule imports it away again.
+	 * The schema administers the reason the upgrade records, so OpenRegister accepts the record on a system save.
 	 *
 	 * @return void
 	 */
-	public function testTheVersionMovedPastTheOneThatDeclaredTheRule(): void {
+	public function testTheUpgradeReasonIsAdministered(): void {
+		$reasons = self::publication()['x-openregister-not-supplied-reasons'];
+
+		self::assertArrayHasKey(key: RequiredToPublish::NOT_SUPPLIED_REASON, array: $reasons);
+		self::assertNotSame(expected: '', actual: trim($reasons[RequiredToPublish::NOT_SUPPLIED_REASON]));
+	}//end testTheUpgradeReasonIsAdministered()
+
+	/**
+	 * The schema version moved past 0.0.17, so an instance that imported the held-back schema imports the rule.
+	 *
+	 * @return void
+	 */
+	public function testTheVersionMovedPastTheHeldBackSchema(): void {
 		$publication = self::publication();
 
 		self::assertSame(expected: 'draft', actual: $publication['x-openregister-lifecycle']['initial']);
-		self::assertTrue(condition: version_compare($publication['version'], '0.0.15', '>'), message: $publication['version']);
-	}//end testTheVersionMovedPastTheOneThatDeclaredTheRule()
+		self::assertTrue(condition: version_compare($publication['version'], '0.0.17', '>'), message: $publication['version']);
+	}//end testTheVersionMovedPastTheHeldBackSchema()
 
 	/**
 	 * OpenRegister's own annotation validator accepts the declaration.

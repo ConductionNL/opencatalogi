@@ -39,6 +39,7 @@ use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IL10N;
+use OCP\IRequest;
 
 /**
  * Refuses a plain summary without a level, and keeps its provenance the server's.
@@ -64,12 +65,14 @@ class PlainSummaryCheck implements IEventListener {
 	 *
 	 * @param PlainSummaryProvenanceInterface $provenance Builds the provenance, and holds an accepted one.
 	 * @param IL10N $l10n Localisation.
+	 * @param IRequest|null $request The request of the save, to tell an empty level from one not named.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
 		private readonly PlainSummaryProvenanceInterface $provenance,
 		private readonly IL10N $l10n,
+		private readonly ?IRequest $request = null,
 	) {
 
 	}//end __construct()
@@ -117,6 +120,10 @@ class PlainSummaryCheck implements IEventListener {
 
 		$text = $this->text(data: $data);
 		$modified = $this->levelFix(text: $text, data: $data);
+		if ($text !== '' && $this->requestNamesAnEmptyLevel() === true) {
+			$modified = null;
+		}
+
 		if ($modified === null) {
 			$this->refuse(event: $event);
 			return;
@@ -154,6 +161,33 @@ class PlainSummaryCheck implements IEventListener {
 		return [];
 
 	}//end levelFix()
+
+	/**
+	 * Whether the save's own request names the level and leaves it empty.
+	 *
+	 * The schema's default (B1) fills an empty level before this listener runs, so
+	 * an empty level is told from one the caller did not name by reading the
+	 * request; a save without a request (a background job) is not judged here.
+	 *
+	 * @return bool True when the request carries `plainSummaryLevel` empty or null.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 */
+	private function requestNamesAnEmptyLevel(): bool {
+		if ($this->request === null) {
+			return false;
+		}
+
+		$params = $this->request->getParams();
+		if (array_key_exists('plainSummaryLevel', $params) === false) {
+			return false;
+		}
+
+		$level = $params['plainSummaryLevel'];
+
+		return $level === null || (is_string($level) === true && trim($level) === '');
+
+	}//end requestNamesAnEmptyLevel()
 
 	/**
 	 * Write the modified fields onto the event, unless they change nothing.

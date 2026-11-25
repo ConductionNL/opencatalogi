@@ -19,7 +19,7 @@
  */
 import type { Page } from '@playwright/test'
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog, publicationScope } from './publication-catalog.ts'
 import { APP, dismissOverlays } from './spec-coverage/_nav.ts'
 

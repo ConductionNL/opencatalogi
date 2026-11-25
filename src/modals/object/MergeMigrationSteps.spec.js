@@ -265,6 +265,42 @@ describe('MigrationObject set-up steps', () => {
 		expect(console.error).toHaveBeenCalledWith('Error loading schema properties:', expect.any(Error))
 	})
 
+	it('fetches the source schema when the object names it by id only', async () => {
+		fetch
+			.mockResolvedValueOnce({ json: async () => ({ id: 40, title: 'Publication', properties: { title: {} } }) })
+			.mockResolvedValueOnce({ json: async () => ({ id: 8, properties: { b: {} } }) })
+		const state = {
+			...MigrationObject.methods,
+			sourceSchema: { id: 40, title: 40 },
+			targetSchema: { id: 8 },
+			sourceSchemaDetail: null,
+			extractSchemaProperties: (schema) => Object.keys(schema.properties),
+			initializePropertyMappings: jest.fn(),
+			convertMappingToUI: jest.fn(),
+		}
+		await MigrationObject.methods.loadSchemaProperties.call(state)
+
+		expect(fetch).toHaveBeenNthCalledWith(1, '/index.php/apps/openregister/api/schemas/40')
+		expect(state.sourceSchemaDetail.title).toBe('Publication')
+		expect(state.sourceProperties).toEqual(['title'])
+		expect(state.targetProperties).toEqual(['b'])
+	})
+
+	it('names the source register from the registers the dialog loaded', () => {
+		const state = {
+			selectedObjects: [{ '@self': { register: 26 } }],
+			availableRegisters: [{ id: '26', title: 'Publication' }],
+		}
+
+		expect(MigrationObject.computed.sourceRegister.call(state).title).toBe('Publication')
+	})
+
+	it('prefers the fetched source schema', () => {
+		const state = { sourceSchemaDetail: { id: 40, title: 'Publication' }, selectedObjects: [] }
+
+		expect(MigrationObject.computed.sourceSchema.call(state).title).toBe('Publication')
+	})
+
 	it('loads nothing without both schemas', async () => {
 		const state = { ...MigrationObject.methods, sourceSchema: {}, targetSchema: null }
 		await MigrationObject.methods.loadSchemaProperties.call(state)

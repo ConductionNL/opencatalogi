@@ -29,6 +29,7 @@ use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IL10N;
+use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
@@ -54,11 +55,68 @@ class PlainSummaryCheckTest extends TestCase {
 		$this->provenance = new PlainSummaryProvenance($session, $time);
 	}
 
-	private function listener(): PlainSummaryCheck {
+	/**
+	 * The listener, with the request of the save when one is given.
+	 *
+	 * @param IRequest|null $request The request.
+	 *
+	 * @return PlainSummaryCheck The listener.
+	 */
+	private function listener(?IRequest $request = null): PlainSummaryCheck {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
-		return new PlainSummaryCheck($this->provenance, $l10n);
+		return new PlainSummaryCheck($this->provenance, $l10n, $request);
+	}
+
+	/**
+	 * A request whose body carries the given parameters.
+	 *
+	 * @param array<string, mixed> $params The parameters.
+	 *
+	 * @return IRequest The request.
+	 */
+	private function requestWith(array $params): IRequest {
+		$request = $this->createMock(originalClassName: IRequest::class);
+		$request->method('getParams')->willReturn($params);
+		return $request;
+	}
+
+	/**
+	 * REQ-PPL-001: an empty level in the request is refused, though the schema default already filled it.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyLevelInTheRequestIsRefusedThoughTheDefaultFilledIt(): void {
+		$event = new ObjectUpdatingEvent(
+			$this->entity(data: ['title' => 'Besluit', 'plainSummary' => self::SUMMARY, 'plainSummaryLevel' => 'B1']),
+			$this->entity(data: ['title' => 'Besluit'])
+		);
+
+		$this->listener(request: $this->requestWith(params: ['plainSummary' => self::SUMMARY, 'plainSummaryLevel' => '']))->handle($event);
+
+		$this->assertTrue(condition: $event->isPropagationStopped());
+		$this->assertSame(expected: 'plainSummaryLevel', actual: $event->getErrors()['property']);
+	}
+
+	/**
+	 * A request that does not name the level gets the default, as before.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 *
+	 * @return void
+	 */
+	public function testARequestThatDoesNotNameTheLevelKeepsTheDefault(): void {
+		$event = new ObjectUpdatingEvent(
+			$this->entity(data: ['title' => 'Besluit', 'plainSummary' => self::SUMMARY, 'plainSummaryLevel' => 'B1']),
+			$this->entity(data: ['title' => 'Besluit'])
+		);
+
+		$this->listener(request: $this->requestWith(params: ['plainSummary' => self::SUMMARY]))->handle($event);
+
+		$this->assertFalse(condition: $event->isPropagationStopped());
 	}
 
 	private function entity(array $data): ObjectEntity {

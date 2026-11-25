@@ -40,6 +40,21 @@ final class RequiredToPublish {
 	public const FIELDS = ['summary', 'description', 'organization'];
 
 	/**
+	 * The lifecycle states that declare the rule (design D1); a draft declares none.
+	 */
+	public const STATES = ['in_review', 'approved', 'published'];
+
+	/**
+	 * OpenRegister's body key that records a value as deliberately not supplied.
+	 */
+	public const NOT_SUPPLIED_KEY = '@notSupplied';
+
+	/**
+	 * The reason the publication schema administers for a field left empty before the rule existed.
+	 */
+	public const NOT_SUPPLIED_REASON = 'published-before-required';
+
+	/**
 	 * The required fields the record leaves empty.
 	 *
 	 * A value is empty when it is absent, null, a blank string or an empty list or object.
@@ -60,6 +75,52 @@ final class RequiredToPublish {
 
 		return $missing;
 	}//end missing()
+
+	/**
+	 * The record as a system save must write it: every required field it leaves empty recorded as not supplied.
+	 *
+	 * The upgrade repair steps re-save legacy publications as the system, and OpenRegister applies a state's
+	 * `required` on every save. A publication published before the rule existed would be refused there and keep no
+	 * state or audience, which hides it. Recording the gap under the reason the schema administers lets the save
+	 * through and keeps the gap visible: nothing is invented, and the next person to edit the publication fills it
+	 * (design D2). A record in a state without the rule is returned as it is, and a field that carries a value is
+	 * never marked; an existing record's other entries are kept.
+	 *
+	 * @param array<string, mixed> $publication The publication record about to be saved.
+	 *
+	 * @return array<string, mixed> The record to save.
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 */
+	public static function recordGaps(array $publication): array {
+		$state = trim((string)($publication['status'] ?? ''));
+		if (in_array($state, self::STATES, true) === false) {
+			return $publication;
+		}
+
+		$missing = self::missing(publication: $publication);
+		if ($missing === []) {
+			return $publication;
+		}
+
+		$record = $publication[self::NOT_SUPPLIED_KEY] ?? [];
+		if (is_array($record) === false || ($record !== [] && array_is_list($record) === true)) {
+			$record = [];
+		}
+
+		foreach ($missing as $field) {
+			// OpenRegister refuses a marked field that carries a value, and it counts a blank string as one.
+			$publication[$field] = null;
+			$reason = $record[$field] ?? null;
+			if (is_string($reason) === false || $reason === '') {
+				$record[$field] = self::NOT_SUPPLIED_REASON;
+			}
+		}
+
+		$publication[self::NOT_SUPPLIED_KEY] = $record;
+
+		return $publication;
+	}//end recordGaps()
 
 	/**
 	 * Whether one value counts as not filled in.

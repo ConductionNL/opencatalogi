@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Repair;
 
 use OCA\OpenCatalogi\Service\Publication\PublicationLinkRules;
+use OCA\OpenCatalogi\Service\Publication\RequiredToPublish;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
@@ -142,11 +143,16 @@ class MirrorCaseReferenceIntoSourceIdentifiers implements IRepairStep {
 	/**
 	 * Write one publication's mirrored identifiers when it lacks the entry.
 	 *
+	 * A legacy publication that misses a field now required to publish is saved with that gap recorded.
+	 *
 	 * @param object $objects OpenRegister's ObjectService.
 	 * @param mixed $object The stored publication.
 	 * @param array{register: string, schema: string} $scope The publication register and schema.
 	 *
 	 * @return int 1 when written, else 0.
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @SuppressWarnings(PHPMD.StaticAccess) RequiredToPublish::recordGaps() is a pure record transform.
 	 */
 	private function mirror(object $objects, mixed $object, array $scope): int {
 		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
@@ -163,6 +169,7 @@ class MirrorCaseReferenceIntoSourceIdentifiers implements IRepairStep {
 		}
 
 		$object['sourceIdentifiers'] = $identifiers;
+		$object = RequiredToPublish::recordGaps(publication: $object);
 		$objects->saveObject(
 			object: $object,
 			options: new ObjectSaveOptions(

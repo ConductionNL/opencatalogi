@@ -66,4 +66,63 @@ class RequiredToPublishTest extends TestCase {
 			RequiredToPublish::missing(publication: ['summary' => 0, 'description' => '', 'organization' => ['id' => 'org-1']])
 		);
 	}//end testBlankNullAndEmptyCountAsMissing()
+	/**
+	 * A published record that misses fields has each gap recorded as not supplied, its blank values cleared.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 */
+	public function testAPublishedRecordGetsItsGapsRecordedAsNotSupplied(): void {
+		$saved = RequiredToPublish::recordGaps(
+			publication: ['title' => 'Raadsstukken', 'status' => 'published', 'summary' => '  ', 'description' => 'Lang']
+		);
+
+		$this->assertSame(
+			expected: ['summary' => 'published-before-required', 'organization' => 'published-before-required'],
+			actual: $saved['@notSupplied']
+		);
+		$this->assertNull(actual: $saved['summary']);
+		$this->assertNull(actual: $saved['organization']);
+		$this->assertSame(expected: 'Lang', actual: $saved['description']);
+	}//end testAPublishedRecordGetsItsGapsRecordedAsNotSupplied()
+
+	/**
+	 * A draft, a record without a state and a complete record are returned unchanged.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 */
+	public function testOnlyAStateWithTheRuleIsMarked(): void {
+		$draft = ['title' => 'Concept', 'status' => 'draft'];
+		$none = ['title' => 'Oud', 'status' => ''];
+		$complete = ['status' => 'approved', 'summary' => 'Kort', 'description' => 'Lang', 'organization' => 'org-1'];
+
+		$this->assertSame(expected: $draft, actual: RequiredToPublish::recordGaps(publication: $draft));
+		$this->assertSame(expected: $none, actual: RequiredToPublish::recordGaps(publication: $none));
+		$this->assertSame(expected: $complete, actual: RequiredToPublish::recordGaps(publication: $complete));
+	}//end testOnlyAStateWithTheRuleIsMarked()
+
+	/**
+	 * An existing record keeps its own entries and reasons; a list record is replaced.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 */
+	public function testAnExistingRecordKeepsItsEntries(): void {
+		$saved = RequiredToPublish::recordGaps(publication: [
+			'status'       => 'in_review',
+			'summary'      => 'Kort',
+			'organization' => 'org-1',
+			'@notSupplied' => ['description' => 'unknown-at-source', 'theme' => 'not-applicable'],
+		]);
+		$this->assertSame(expected: ['description' => 'unknown-at-source', 'theme' => 'not-applicable'], actual: $saved['@notSupplied']);
+
+		$listed = RequiredToPublish::recordGaps(
+			publication: ['status' => 'published', 'summary' => 'Kort', 'organization' => 'org-1', '@notSupplied' => ['description']]
+		);
+		$this->assertSame(expected: ['description' => 'published-before-required'], actual: $listed['@notSupplied']);
+	}//end testAnExistingRecordKeepsItsEntries()
 }//end class
