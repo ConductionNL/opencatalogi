@@ -165,7 +165,7 @@ class InitializeSettingsTest extends TestCase {
 		$this->importRecordedIn(order: $order, jobs: $jobs);
 		$this->appManager->method('isUpgradeRequired')->with('openregister')->willReturn(true);
 		$output = $this->createMock(originalClassName: IOutput::class);
-		$output->expects($this->once())->method('warning')->with($this->stringContains('run cron to finish the upgrade'));
+		$output->expects($this->once())->method('warning')->with($this->stringContains(string: 'run cron to finish the upgrade'));
 
 		$this->repairStep->run(output: $output);
 

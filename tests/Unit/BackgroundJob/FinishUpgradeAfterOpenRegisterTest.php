@@ -90,12 +90,16 @@ class FinishUpgradeAfterOpenRegisterTest extends TestCase {
 		$apps->method('isUpgradeRequired')->with('openregister')->willReturn($orWaits);
 		$apps->method('getAppInfo')->willReturn(['repair-steps' => ['post-migration' => array_keys($steps)]]);
 		$container = $this->createMock(originalClassName: ContainerInterface::class);
-		$container->method('get')->willReturnCallback(static fn (string $id) => $steps[$id]);
+		$container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				IJobList::class => $jobs,
+				default => $steps[$id],
+			}
+		);
 
 		$job = new FinishUpgradeAfterOpenRegister(
 			time: $this->createMock(originalClassName: ITimeFactory::class),
 			appManager: $apps,
-			jobList: $jobs,
 			container: $container,
 			logger: ($logger ?? $this->createMock(originalClassName: LoggerInterface::class))
 		);
@@ -145,7 +149,7 @@ class FinishUpgradeAfterOpenRegisterTest extends TestCase {
 	public function testAFailingStepIsLoggedAndTheNextStillRuns(): void {
 		$order = [];
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
-		$logger->expects($this->once())->method('error')->with($this->stringContains('repair step Initialize failed'));
+		$logger->expects($this->once())->method('error')->with($this->stringContains(string: 'repair step Initialize failed'));
 
 		$this->runJob(
 			orWaits: false,

@@ -84,7 +84,11 @@ class SettingsServiceMissingSchemasTest extends TestCase {
 			function (string $appId, array $data, string $version, bool $force=false) use (&$imports): array {
 				$imports[] = ['data' => $data, 'force' => $force];
 				$schemas = array_map(static fn (string $slug): string => 'imported ' . $slug, array_keys($data['components']['schemas'] ?? []));
-				return ['registers' => [], 'schemas' => ($force === true ? $schemas : []), 'objects' => []];
+				if ($force === false) {
+					$schemas = [];
+				}
+
+				return ['registers' => [], 'schemas' => $schemas, 'objects' => []];
 			}
 		);
 		$apps = $this->createMock(originalClassName: IAppManager::class);

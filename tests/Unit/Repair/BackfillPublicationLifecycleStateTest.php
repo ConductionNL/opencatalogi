@@ -151,7 +151,10 @@ class BackfillPublicationLifecycleStateTest extends TestCase {
 	 * @return void
 	 */
 	private function runStep(): void {
-		$objects = $this->environmentAwareDouble(\OCA\OpenRegister\Service\ObjectService::class, ['searchObjectsPaginated', 'saveObject', 'runAsSystem']);
+		$objects = $this->environmentAwareDouble(
+			class: \OCA\OpenRegister\Service\ObjectService::class,
+			methods: ['searchObjectsPaginated', 'saveObject', 'runAsSystem']
+		);
 		$objects->method('runAsSystem')->willReturnCallback(
 			function (callable $operation): mixed {
 				$this->asSystem++;

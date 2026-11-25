@@ -410,7 +410,7 @@ class RegisterSchemaLinkServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheSchemasTheInstanceDoesNotHaveAreMissing(): void {
-		$mapper = $this->environmentAwareDouble('OCA\OpenRegister\Db\SchemaMapper', ['findBySlug']);
+		$mapper = $this->environmentAwareDouble(class: 'OCA\OpenRegister\Db\SchemaMapper', methods: ['findBySlug']);
 		$mapper->method('findBySlug')->willReturnCallback(
 			static fn (string $slug): array => match ($slug) {
 				'publication' => [new \stdClass()],

@@ -54,6 +54,8 @@ class LoggedRepairOutput implements IOutput {
 	 * @param string $message The line.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
 	 */
 	public function debug(string $message): void {
 		$this->logger->debug($message, ['app' => AppIdentity::APP_ID]);
@@ -66,6 +68,8 @@ class LoggedRepairOutput implements IOutput {
 	 * @param string $message The line.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
 	 */
 	public function info($message): void {
 		$this->logger->info((string)$message, ['app' => AppIdentity::APP_ID]);
@@ -78,6 +82,8 @@ class LoggedRepairOutput implements IOutput {
 	 * @param string $message The warning.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
 	 */
 	public function warning($message): void {
 		$this->logger->warning((string)$message, ['app' => AppIdentity::APP_ID]);
@@ -92,6 +98,8 @@ class LoggedRepairOutput implements IOutput {
 	 * @return void
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) IOutput fixes the signature.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
 	 */
 	public function startProgress($max=0): void {
 
@@ -106,6 +114,8 @@ class LoggedRepairOutput implements IOutput {
 	 * @return void
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) IOutput fixes the signature.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
 	 */
 	public function advance($step=1, $description=''): void {
 
@@ -115,6 +125,8 @@ class LoggedRepairOutput implements IOutput {
 	 * Progress is not reported outside `occ`.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
 	 */
 	public function finishProgress(): void {
 

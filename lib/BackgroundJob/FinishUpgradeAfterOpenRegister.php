@@ -56,8 +56,7 @@ class FinishUpgradeAfterOpenRegister extends QueuedJob {
 	 *
 	 * @param ITimeFactory       $time       The clock.
 	 * @param IAppManager        $appManager Says whether OpenRegister still waits and lists this app's steps.
-	 * @param IJobList           $jobList    Queues the job again while OpenRegister waits.
-	 * @param ContainerInterface $container  Resolves each repair step.
+	 * @param ContainerInterface $container  Resolves each repair step and the job list the job queues itself on again.
 	 * @param LoggerInterface    $logger     Receives what the steps report.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
@@ -65,7 +64,6 @@ class FinishUpgradeAfterOpenRegister extends QueuedJob {
 	public function __construct(
 		ITimeFactory $time,
 		private readonly IAppManager $appManager,
-		private readonly IJobList $jobList,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -86,7 +84,7 @@ class FinishUpgradeAfterOpenRegister extends QueuedJob {
 	 */
 	protected function run($argument): void {
 		if ($this->appManager->isUpgradeRequired(appId: 'openregister') === true) {
-			$this->jobList->add(job: self::class);
+			$this->container->get(IJobList::class)->add(job: self::class);
 			return;
 		}
 
