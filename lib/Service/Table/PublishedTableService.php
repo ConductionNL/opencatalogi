@@ -604,8 +604,12 @@ class PublishedTableService implements PublishedTableServiceInterface {
 		$file = $this->attachmentFile(publication: $publication, fileId: $fileId);
 		$record = self::plain(value: $publication);
 
+		if (is_array($record) === false) {
+			$record = ['id' => (string)$publication->getUuid()];
+		}
+
 		return $this->createFromFile(
-			publication: is_array($record) === true ? $record : ['id' => (string)$publication->getUuid()],
+			publication: $record,
 			file: $file,
 			user: $user
 		);
@@ -690,7 +694,11 @@ class PublishedTableService implements PublishedTableServiceInterface {
 		$schema = $mapper->find((string)($table['schema'] ?? ''));
 		$properties = (array)$schema->getProperties();
 		foreach ($columns as $column) {
-			$name = (string)(is_array($column) === true ? ($column['name'] ?? '') : '');
+			$name = '';
+			if (is_array($column) === true) {
+				$name = (string)($column['name'] ?? '');
+			}
+
 			if (is_array($properties[$name] ?? null) === false) {
 				throw new InvalidArgumentException('This table has no column named '.$name.'.');
 			}
@@ -714,7 +722,11 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	private static function describedColumn(array $column): array {
 		$described = [];
 		foreach (['title', 'description'] as $field) {
-			$text = is_string($column[$field] ?? null) === true ? mb_substr(trim($column[$field]), 0, self::MAX_TEXT) : null;
+			$text = null;
+			if (is_string($column[$field] ?? null) === true) {
+				$text = mb_substr(trim($column[$field]), 0, self::MAX_TEXT);
+			}
+
 			// A column always keeps a title; an empty one leaves the current title.
 			if ($text !== null && ($text !== '' || $field === 'description')) {
 				$described[$field] = $text;

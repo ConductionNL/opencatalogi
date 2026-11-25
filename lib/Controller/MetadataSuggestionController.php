@@ -137,7 +137,6 @@ class MetadataSuggestionController extends Controller {
 	 * @param callable(string): array<string, mixed> $step The step, given the user id.
 	 *
 	 * @return JSONResponse The step's answer, 401 without a session, or the refusal's status.
-
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-nothing-is-written-until-a-person-accepts-req-wms-003
 	 */

@@ -1128,7 +1128,12 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		$languages = ['nl'];
-		foreach (is_array($value) === true ? $value : [] as $tag) {
+		$tags = [];
+		if (is_array($value) === true) {
+			$tags = $value;
+		}
+
+		foreach ($tags as $tag) {
 			$tag = self::normalisedLanguageTag(tag: $tag);
 			if ($tag !== null && in_array($tag, $languages, true) === false) {
 				$languages[] = $tag;
@@ -1197,7 +1202,11 @@ class SettingsService implements SettingsServiceInterface {
 		$parts[0] = strtolower($parts[0]);
 		$tag = implode('-', $parts);
 
-		return preg_match('/^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})*$/', $tag) === 1 ? $tag : null;
+		if (preg_match('/^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})*$/', $tag) !== 1) {
+			return null;
+		}
+
+		return $tag;
 	}//end normalisedLanguageTag()
 
 	/**

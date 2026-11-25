@@ -140,7 +140,8 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 	 *
 	 * @return array<string, mixed>|null The PLOOI fields stored, the dry run in staging (nothing stored), or null when no catalogue asks for PLOOI.
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) PipelineIncidents::plooiFailure() is a pure message helper and UnlistedPublications::isUnlisted() a pure predicate.
+	 * @SuppressWarnings(PHPMD.StaticAccess) PipelineIncidents::plooiFailure() is a pure message helper and
+	 *                                        UnlistedPublications::isUnlisted() a pure predicate.
 	 */
 	private function send(string $uuid, string $register, string $schema, string $action): ?array {
 		if ($this->isInPlooiCatalogue(register: $register, schema: $schema) === false) {
