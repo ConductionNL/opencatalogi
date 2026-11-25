@@ -28,6 +28,7 @@ use Exception;
 use OCA\OpenCatalogi\Contract\DiwooCompletenessInterface;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
+use OCA\OpenCatalogi\Service\ValueList\OrganisationActivation;
 
 /**
  * The DiWoo document of one downloadable file: location, dates, publisher, format
@@ -104,6 +105,27 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	private readonly SitemapDocumentFields $fields;
 
 	/**
+	 * The activated TOOI organisations, once read: null while activation is not in use.
+	 *
+	 * @var list<string>|null
+	 */
+	private ?array $activated = null;
+
+	/**
+	 * Whether the activated organisations were read in this request.
+	 *
+	 * @var bool
+	 */
+	private bool $activatedRead = false;
+
+	/**
+	 * The TOOI identifiers left out of the document being mapped because they are not activated, by role.
+	 *
+	 * @var array<string, string>
+	 */
+	private array $notActivated = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param TooiVocabularyService $tooiVocabulary Resolves organisations and handling types to TOOI.
@@ -113,6 +135,8 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @param InstanceSettings|null $instance Holds the moment the DiWoo fields were introduced; without it every record is legacy.
 	 * @param WooIndexFieldMapper|null $fieldMapper Reads the four Woo-index fields from integriq's
 	 *                                              mapping; without it every field is the built-in read.
+	 * @param OrganisationActivation|null $activation The organisations the administrator activated (REQ-WVL-005);
+	 *                                                without it every organisation is emitted.
 	 */
 	public function __construct(
 		private readonly TooiVocabularyService $tooiVocabulary,
@@ -121,6 +145,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 		private readonly ?FileFacts $fileFacts = null,
 		?InstanceSettings $instance = null,
 		private readonly ?WooIndexFieldMapper $fieldMapper = null,
+		private readonly ?OrganisationActivation $activation = null,
 	) {
 		$this->fields = new SitemapDocumentFields(tooiVocabulary: $tooiVocabulary, instance: $instance);
 	}//end __construct()
@@ -205,6 +230,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 */
 	private function document(array $publication, array $file): array {
 		$violations = [];
+		$this->notActivated = [];
 		$loc = ($file['downloadUrl'] ?? '');
 		$mapped = $this->mappedFields(publication: $publication);
 		$format = $this->formatOf(file: $file);
@@ -255,13 +281,14 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 */
 	public function mandatoryGaps(array $publication): array {
 		$gaps = [];
+		$this->notActivated = [];
 		$publisher = $this->publisherElement(publication: $publication);
 		if ($publisher['#text'] === '') {
 			$gaps['publisher'] = 'organisation has no name';
 		}
 
 		if (isset($publisher['@resource']) === false) {
-			$gaps['publisher'] = 'organisation has no TOOI identifier';
+			$gaps['publisher'] = $this->missingIdentifierReason(role: 'publisher', reason: 'organisation has no TOOI identifier');
 		}
 
 		if ($this->titleElement(publication: $publication) === null) {
@@ -340,7 +367,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	private function axisGaps(array $diwoo, array $elements): array {
 		$gaps = [];
 		if (isset($diwoo['diwoo:publisher']['@resource']) === false) {
-			$gaps[] = ['publisher', 'organisation has no TOOI identifier'];
+			$gaps[] = ['publisher', $this->missingIdentifierReason(role: 'publisher', reason: 'organisation has no TOOI identifier')];
 		}
 
 		if ($diwoo['diwoo:publisher']['#text'] === '') {
@@ -460,6 +487,79 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	}//end optionalAxes()
 
 	/**
+	 * A TOOI organisation uri while it may be emitted: activation is not in use, or it is activated.
+	 *
+	 * Activation is in use once an administrator activated one organisation;
+	 * until then every valid identifier is emitted, so an upgrade does not take
+	 * the publisher out of every existing record. An unreadable choice list
+	 * counts as not in use, as for the categories: no organisation is withheld
+	 * by an error.
+	 *
+	 * @param string|null $uri  The resolved TOOI uri.
+	 * @param string      $role The DiWoo element it is for, to report a refusal.
+	 *
+	 * @return string|null The uri, or null when it is not activated.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	private function onlyActivated(?string $uri, string $role): ?string {
+		if ($uri === null) {
+			return null;
+		}
+
+		if ($this->activatedRead === false) {
+			$this->activatedRead = true;
+			$this->activated = $this->readActivated();
+		}
+
+		if ($this->activated === null || in_array($uri, $this->activated, true) === true) {
+			return $uri;
+		}
+
+		$this->notActivated[$role] = $uri;
+		return null;
+	}//end onlyActivated()
+
+	/**
+	 * The activated TOOI organisations, or null when activation is not in use or cannot be read.
+	 *
+	 * @return list<string>|null The identifiers.
+	 */
+	private function readActivated(): ?array {
+		if ($this->activation === null) {
+			return null;
+		}
+
+		try {
+			$activated = $this->activation->activeEntries();
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		if ($activated === []) {
+			return null;
+		}
+
+		return $activated;
+	}//end readActivated()
+
+	/**
+	 * Why an element has no TOOI identifier: it is not activated, or the given reason.
+	 *
+	 * @param string $role   The DiWoo element.
+	 * @param string $reason The reason when it was not left out for activation.
+	 *
+	 * @return string The reason.
+	 */
+	private function missingIdentifierReason(string $role, string $reason): string {
+		if (isset($this->notActivated[$role]) === true) {
+			return 'organisation is not activated';
+		}
+
+		return $reason;
+	}//end missingIdentifierReason()
+
+	/**
 	 * The publisher element: the owning organisation's name as text, with `@resource`
 	 * bound to a valid TOOI organisatie URI, or without `@resource` when there is none.
 	 *
@@ -477,7 +577,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 		$organisation = $this->organisationRow(publication: $publication);
 		$publisher = ['#text' => trim((string)$this->stringOrNull(value: ($organisation['name'] ?? null)))];
 		$tooiIdentifier = ($mappedPublisher ?? $this->resolveOrganisationTooiIdentifier(publication: $publication, organisation: $organisation));
-		$orgUri = $this->tooiVocabulary->resolveOrganisatie($tooiIdentifier);
+		$orgUri = $this->onlyActivated(uri: $this->tooiVocabulary->resolveOrganisatie($tooiIdentifier), role: 'publisher');
 		if ($orgUri !== null) {
 			$publisher['@resource'] = $orgUri;
 		}
@@ -507,7 +607,10 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 
 		$organisation = $this->organisationByUuid(uuid: $responsible);
 		$element = ['#text' => trim((string)$this->stringOrNull(value: ($organisation['name'] ?? null)))];
-		$orgUri = $this->tooiVocabulary->resolveOrganisatie($this->stringOrNull(value: ($organisation['tooiIdentifier'] ?? null)));
+		$orgUri = $this->onlyActivated(
+			uri: $this->tooiVocabulary->resolveOrganisatie($this->stringOrNull(value: ($organisation['tooiIdentifier'] ?? null))),
+			role: 'verantwoordelijke'
+		);
 		if ($orgUri !== null) {
 			$element['@resource'] = $orgUri;
 		}
@@ -533,6 +636,10 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 		$responsible = $this->stringOrNull(value: ($publication['responsibleOrganization'] ?? null));
 		if ($responsible === null || isset($diwoo['diwoo:verantwoordelijke']) === true) {
 			return [];
+		}
+
+		if (isset($this->notActivated['verantwoordelijke']) === true) {
+			return [['verantwoordelijke', 'responsible organisation is not activated']];
 		}
 
 		$organisation = $this->organisationByUuid(uuid: $responsible);
