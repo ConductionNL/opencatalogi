@@ -73,7 +73,9 @@ Decision D10 struck OAI-PMH (row 9.10). Groups 1 to 5 above specified the OAI-PM
 
 - [x] 7.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
 - [x] 7.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
-- [ ] 7.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 7.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 7.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+- [x] 7.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+
+  - Done 25 Nov 2026 (b-opencatalogi): group 6 landed on `development` through its own PRs (6.4 fix #3035). `check:strict` on `development` inside a Nextcloud 34 tree: PHPUnit 7299 tests, 4 errors, all in `DirectoryServiceTest::testDoCronSync*` (directory cron, not this change); `ChangesEndpointTest` and `OpenApiParityTest` green. The phpcs, phpmd, psalm (5.26 crash) and phpstan reds on `development` are in files this change does not touch.
 
 Done when merged on `development` with CI green. Row 8.12 becomes `production` only once a store release ships it.
