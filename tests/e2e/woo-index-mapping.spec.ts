@@ -17,7 +17,7 @@
  * Base URL and the admin session come from the environment and
  * playwright.config.ts.
  *
- * @e2e openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#scenario-the-settings-page-names-the-source
+ * @e2e openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#scenario-the-settings-page-names-the-source
  */
 import { expect, test } from './authenticated-request.ts'
 

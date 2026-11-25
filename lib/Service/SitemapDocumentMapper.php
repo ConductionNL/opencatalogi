@@ -288,7 +288,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 *
 	 * @return array<string, string> Field => mapped value.
 	 *
-	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
+	 * @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
 	 */
 	private function mappedFields(array $publication): array {
 		if ($this->fieldMapper === null) {

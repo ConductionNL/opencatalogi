@@ -28,7 +28,7 @@
  *
  * @link https://www.conduction.nl
  *
- * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
+ * @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use Throwable;
 /**
  * Runs integriq's Woo-index mapping for a publication.
  *
- * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
+ * @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
  */
 class WooIndexFieldMapper {
 
@@ -109,7 +109,7 @@ class WooIndexFieldMapper {
 	 *
 	 * @return array{fields: array<string, string>, origin: array<string, string>, refusal: array{code: string, reason: string}|null}
 	 *
-	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-sitemap-never-depends-on-the-mapping-answering-req-wim-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-sitemap-never-depends-on-the-mapping-answering-req-wim-002
 	 */
 	public function map(array $publication, ?array $organisation = null): array {
 		$uuid = (string)($publication['@self']['id'] ?? ($publication['id'] ?? ''));
@@ -130,7 +130,7 @@ class WooIndexFieldMapper {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
 	 */
 	public function isAvailable(): bool {
 		return class_exists($this->eventClass) === true;
@@ -143,7 +143,7 @@ class WooIndexFieldMapper {
 	 *
 	 * @return array{source: string, refusal: array{code: string, reason: string}|null, fieldsFromMapping: array<int, string>}
 	 *
-	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
 	 */
 	public function source(): array {
 		if ($this->isAvailable() === false) {
