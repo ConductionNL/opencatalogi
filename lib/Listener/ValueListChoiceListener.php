@@ -26,14 +26,14 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
-use OCA\OpenRegister\Db\ObjectEntity;
-use OCA\OpenRegister\Event\ObjectCreatingEvent;
-use OCA\OpenRegister\Event\ObjectUpdatingEvent;
-use OCP\EventDispatcher\Event;
-use OCP\EventDispatcher\IEventListener;
-use OCP\IAppConfig;
 use OCP\IL10N;
+use OCP\IAppConfig;
+use OCP\EventDispatcher\IEventListener;
+use OCP\EventDispatcher\Event;
+use OCA\OpenRegister\Event\ObjectUpdatingEvent;
+use OCA\OpenRegister\Event\ObjectCreatingEvent;
+use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
 
 /**
  * Refuses a value-list choice that sets a property it does not own.

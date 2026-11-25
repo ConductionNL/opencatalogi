@@ -68,7 +68,13 @@ class ValueListViewTest extends TestCase {
 			'results' => [
 				['scheme' => 'informatiecategorieen', 'code' => 'infocat005', 'label' => $contactLabel, 'uri' => self::CONTACT, 'status' => 'active'],
 				['scheme' => 'informatiecategorieen', 'code' => 'infocat011', 'label' => 'Convenanten', 'uri' => self::COVENANTS, 'status' => 'active'],
-				['scheme' => 'informatiecategorieen', 'code' => 'infocat013', 'label' => 'Subsidieverplichtingen anders dan met beschikking', 'uri' => self::SUBSIDIES, 'status' => 'active'],
+				[
+					'scheme' => 'informatiecategorieen',
+					'code' => 'infocat013',
+					'label' => 'Subsidieverplichtingen anders dan met beschikking',
+					'uri' => self::SUBSIDIES,
+					'status' => 'active',
+				],
 			],
 			'total' => 3,
 			'schemes' => ['informatiecategorieen'],
@@ -139,7 +145,7 @@ class ValueListViewTest extends TestCase {
 			}
 		}
 
-		self::fail('No entry for ' . $uri);
+		self::fail(message: 'No entry for ' . $uri);
 	}//end entry()
 
 	/**
@@ -148,16 +154,17 @@ class ValueListViewTest extends TestCase {
 	 * @return void
 	 */
 	public function testARefreshChangesTheSourceLabelAndKeepsTheLocalOne(): void {
-		$choices = [self::CONTACT => self::choice(['localLabel' => 'Contact en bereikbaarheid'])];
+		$choices = [self::CONTACT => self::choice(fields: ['localLabel' => 'Contact en bereikbaarheid'])];
 
-		$before = self::entry($this->view(lists: $this->lists(), store: $this->store(choices: $choices))->entries(scheme: 'informatiecategorieen'), self::CONTACT);
+		$before = self::entry(
+			view: $this->view(lists: $this->lists(), store: $this->store(choices: $choices))->entries(scheme: 'informatiecategorieen'),
+			uri: self::CONTACT
+		);
 		$this->assertSame(expected: 'Bereikbaarheidsgegevens', actual: $before['sourceLabel']);
 		$this->assertSame(expected: 'Contact en bereikbaarheid', actual: $before['label']);
 
-		$after = self::entry(
-			$this->view(lists: $this->lists(contactLabel: 'Contactgegevens'), store: $this->store(choices: $choices))->entries(scheme: 'informatiecategorieen'),
-			self::CONTACT
-		);
+		$renamed = $this->view(lists: $this->lists(contactLabel: 'Contactgegevens'), store: $this->store(choices: $choices));
+		$after = self::entry(view: $renamed->entries(scheme: 'informatiecategorieen'), uri: self::CONTACT);
 		$this->assertSame(expected: 'Contactgegevens', actual: $after['sourceLabel']);
 		$this->assertSame(expected: 'Contact en bereikbaarheid', actual: $after['label']);
 		$this->assertSame(expected: 'infocat005', actual: $after['code']);
@@ -171,7 +178,7 @@ class ValueListViewTest extends TestCase {
 	public function testWithoutALocalLabelTheSourceLabelIsShown(): void {
 		$view = $this->view(lists: $this->lists(), store: $this->store(choices: []))->entries(scheme: 'informatiecategorieen');
 
-		$entry = self::entry($view, self::COVENANTS);
+		$entry = self::entry(view: $view, uri: self::COVENANTS);
 		$this->assertSame(expected: 'Convenanten', actual: $entry['label']);
 		$this->assertSame(expected: '', actual: $entry['explanation']);
 		$this->assertNull(actual: $entry['order']);
@@ -194,20 +201,32 @@ class ValueListViewTest extends TestCase {
 	}//end testUnreadableChoicesFallBackToSourceOrderAndSaySo()
 
 	/**
+	 * A save goes to the choice store unchanged.
+	 *
+	 * @return void
+	 */
+	public function testASaveGoesToTheChoiceStore(): void {
+		$store = $this->createMock(originalClassName: ValueListChoiceStore::class);
+		$store->expects($this->once())->method('save')->with('informatiecategorieen', self::COVENANTS, ['hidden' => true]);
+
+		$this->view(lists: $this->lists(), store: $store)->save(scheme: 'informatiecategorieen', entry: self::COVENANTS, fields: ['hidden' => true]);
+	}//end testASaveGoesToTheChoiceStore()
+
+	/**
 	 * Entries with an order come first, lowest first; the rest follow in source order.
 	 *
 	 * @return void
 	 */
 	public function testTheOrganisationsOrderComesFirstThenTheSourceOrder(): void {
 		$choices = [
-			self::SUBSIDIES => self::choice(['order' => 0]),
-			self::COVENANTS => self::choice(['explanation' => 'Afspraken met andere partijen.', 'hidden' => true]),
+			self::SUBSIDIES => self::choice(fields: ['order' => 0]),
+			self::COVENANTS => self::choice(fields: ['explanation' => 'Afspraken met andere partijen.', 'hidden' => true]),
 		];
 
 		$view = $this->view(lists: $this->lists(), store: $this->store(choices: $choices))->entries(scheme: 'informatiecategorieen');
 
 		$this->assertSame(expected: ['infocat013', 'infocat005', 'infocat011'], actual: array_column($view['entries'], 'code'));
-		$covenants = self::entry($view, self::COVENANTS);
+		$covenants = self::entry(view: $view, uri: self::COVENANTS);
 		$this->assertSame(expected: 'Afspraken met andere partijen.', actual: $covenants['explanation']);
 		$this->assertTrue(condition: $covenants['hidden']);
 	}//end testTheOrganisationsOrderComesFirstThenTheSourceOrder()

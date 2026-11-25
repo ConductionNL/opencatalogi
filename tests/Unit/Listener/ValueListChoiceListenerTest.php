@@ -99,7 +99,7 @@ class ValueListChoiceListenerTest extends TestCase {
 	public function testANormativeFieldIsRefused(): void {
 		foreach (['code' => 'infocat099', 'uri' => 'https://example.org/other'] as $field => $value) {
 			$event = new ObjectUpdatingEvent(
-				$this->object(data: self::choice([$field => $value, 'localLabel' => 'Contact'])),
+				$this->object(data: self::choice(fields: [$field => $value, 'localLabel' => 'Contact'])),
 				$this->object(data: self::choice())
 			);
 
@@ -117,7 +117,7 @@ class ValueListChoiceListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAPropertyAChoiceDoesNotHaveIsRefused(): void {
-		$event = new ObjectCreatingEvent($this->object(data: self::choice(['colour' => 'blue'])));
+		$event = new ObjectCreatingEvent($this->object(data: self::choice(fields: ['colour' => 'blue'])));
 
 		$this->listener()->handle(event: $event);
 
@@ -131,7 +131,7 @@ class ValueListChoiceListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAChoiceOfItsOwnFieldsIsSaved(): void {
-		$event = new ObjectCreatingEvent($this->object(data: self::choice([
+		$event = new ObjectCreatingEvent($this->object(data: self::choice(fields: [
 			'id' => 'choice-1',
 			'@self' => ['schema' => self::CHOICE_SCHEMA],
 			'order' => 1,

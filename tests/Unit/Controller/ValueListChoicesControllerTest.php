@@ -20,19 +20,17 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\ValueListChoicesController;
-use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
 use OCA\OpenCatalogi\Service\Woo\ValueListView;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 use RuntimeException;
 
 /**
- * The view and the store are doubles; the request checks are real.
+ * The view is a double; the request checks are real.
  *
  * @covers \OCA\OpenCatalogi\Controller\ValueListChoicesController
  */
@@ -66,11 +64,13 @@ class ValueListChoicesControllerTest extends TestCase {
 
 		$view = $this->createMock(originalClassName: ValueListView::class);
 		$view->method('entries')->willReturnCallback(
-			static fn (string $scheme): array => ['entries' => [['code' => 'infocat011', 'uri' => self::COVENANTS]], 'choicesUnavailable' => false, 'scheme' => $scheme]
+			static fn (string $scheme): array => [
+				'entries' => [['code' => 'infocat011', 'uri' => self::COVENANTS]],
+				'choicesUnavailable' => false,
+				'scheme' => $scheme,
+			]
 		);
-
-		$store = $this->createMock(originalClassName: ValueListChoiceStore::class);
-		$store->method('save')->willReturnCallback(function (string $scheme, string $entry, array $fields) use ($saveFails): void {
+		$view->method('save')->willReturnCallback(function (string $scheme, string $entry, array $fields) use ($saveFails): void {
 			if ($saveFails === true) {
 				throw new RuntimeException('The field code belongs to the national value list.');
 			}
@@ -87,9 +87,7 @@ class ValueListChoicesControllerTest extends TestCase {
 			appName: 'opencatalogi',
 			request: $request,
 			view: $view,
-			store: $store,
-			l10n: $l10n,
-			logger: $this->createMock(originalClassName: LoggerInterface::class)
+			l10n: $l10n
 		);
 	}//end controller()
 
@@ -171,9 +169,9 @@ class ValueListChoicesControllerTest extends TestCase {
 	 */
 	public function testTheRoutesAreForAdministratorsOnly(): void {
 		foreach (['index', 'update'] as $name) {
-			$method = new ReflectionMethod(ValueListChoicesController::class, $name);
-			$this->assertSame(expected: [], actual: $method->getAttributes(NoAdminRequired::class), message: $name);
-			$this->assertSame(expected: [], actual: $method->getAttributes(PublicPage::class), message: $name);
+			$method = new ReflectionMethod(objectOrMethod: ValueListChoicesController::class, method: $name);
+			$this->assertSame(expected: [], actual: $method->getAttributes(name: NoAdminRequired::class), message: $name);
+			$this->assertSame(expected: [], actual: $method->getAttributes(name: PublicPage::class), message: $name);
 			$this->assertStringNotContainsString(needle: '@NoAdminRequired', haystack: (string)$method->getDocComment());
 		}
 	}//end testTheRoutesAreForAdministratorsOnly()

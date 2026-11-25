@@ -55,7 +55,7 @@ GET /api/v1/themes themes#index
 GET /api/v1/themes/{id} themes#show
 GET /api/v1/themes/{id}/publications themes#publications
 GET /api/v1/value-lists valueLists#index
-GET /api/v1/woo/categories/public publicCategories#index
+GET /api/v1/woo/categories/public valueListChoices#publicCategories
 GET /api/v1/{catalogSlug} publications#index
 GET /api/v1/{catalogSlug}/changes changes#changes
 GET /api/v1/{catalogSlug}/{id} publications#show
@@ -73,7 +73,7 @@ GET /api/v1/{catalogSlug}/{publicationId}/tables/{tableId}/rows publishedTable#r
 GET /api/v1/{catalogSlug}/{publicationId}/tables/{tableId}/views datasetView#index
 GET /api/v1/{catalogSlug}/{publicationId}/tables/{tableId}/views/{viewId}/data datasetView#data
 GET /api/value-lists valueLists#index
-GET /api/woo/categories/public publicCategories#index
+GET /api/woo/categories/public valueListChoices#publicCategories
 GET /api/{catalogSlug} publications#index
 GET /api/{catalogSlug}/changes changes#changes
 GET /api/{catalogSlug}/sitemaps/{categoryCode} sitemap#index

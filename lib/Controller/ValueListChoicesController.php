@@ -3,10 +3,14 @@
 /**
  * OpenCatalogi Value List Choices Controller.
  *
- * The Woo settings' way to curate a national value list: read the list as this
- * organisation uses it, and save the organisation's choice about one entry
- * (its explanation, order, own label, hidden). Administrators only: the
- * routes carry no NoAdminRequired, so Nextcloud refuses everyone else.
+ * How this organisation uses the national value lists, over HTTP:
+ *
+ * - An administrator reads a list with the organisation's choices and saves
+ *   the choice about one entry (its explanation, order, own label, hidden).
+ *   Those two routes carry no NoAdminRequired, so Nextcloud refuses everyone
+ *   else.
+ * - Anyone, cross-origin, reads the visible information categories with
+ *   their explanation: the contract a portal's category filter reads.
  *
  * @category Controller
  * @package  OCA\OpenCatalogi\Controller
@@ -24,19 +28,21 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\ValueListsService;
-use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
 use OCA\OpenCatalogi\Service\Woo\ValueListView;
+use OCA\OpenCatalogi\Service\ValueListsService;
+use OCP\AppFramework\Http\Attribute\CORS;
+use OCP\AppFramework\Http\Attribute\PublicPage;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IL10N;
+use OCP\AppFramework\Http;
 use OCP\IRequest;
-use Psr\Log\LoggerInterface;
+use OCP\IL10N;
 use Throwable;
 
 /**
- * Reads a value list with the organisation's choices, and saves one choice.
+ * Reads a value list with the organisation's choices, saves one choice, and serves the public categories.
  *
  * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
  */
@@ -57,14 +63,19 @@ class ValueListChoicesController extends Controller {
 	public const EXPLANATION_MAX = 1000;
 
 	/**
+	 * The value list the information categories are.
+	 *
+	 * @var string
+	 */
+	public const CATEGORIES = 'informatiecategorieen';
+
+	/**
 	 * Constructor.
 	 *
-	 * @param string               $appName The app name.
-	 * @param IRequest             $request The request.
-	 * @param ValueListView        $view    The lists with the organisation's choices.
-	 * @param ValueListChoiceStore $store   Where a choice is saved.
-	 * @param IL10N                $l10n    Localisation.
-	 * @param LoggerInterface      $logger  The logger.
+	 * @param string        $appName The app name.
+	 * @param IRequest      $request The request.
+	 * @param ValueListView $view    The lists with the organisation's choices.
+	 * @param IL10N         $l10n    Localisation.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
@@ -72,23 +83,21 @@ class ValueListChoicesController extends Controller {
 		string $appName,
 		IRequest $request,
 		private readonly ValueListView $view,
-		private readonly ValueListChoiceStore $store,
 		private readonly IL10N $l10n,
-		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
 
 	/**
-	 * One list as the organisation uses it.
+	 * One list as the organisation uses it, for an administrator.
 	 *
 	 * @return JSONResponse 200 with `{entries, choicesUnavailable}`; 400 for an unknown list.
 	 *
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
 	 */
 	public function index(): JSONResponse {
-		$scheme = (string)$this->request->getParam('scheme', 'informatiecategorieen');
+		$scheme = (string)$this->request->getParam('scheme', self::CATEGORIES);
 		if (in_array($scheme, ValueListsService::SCHEMES, true) === false) {
 			return new JSONResponse(['error' => $this->l10n->t('Unknown value list.')], Http::STATUS_BAD_REQUEST);
 		}
@@ -98,7 +107,7 @@ class ValueListChoicesController extends Controller {
 	}//end index()
 
 	/**
-	 * Save the organisation's choice about one entry.
+	 * Save the organisation's choice about one entry, for an administrator.
 	 *
 	 * @return JSONResponse 200 with the list after the save; 400 for a bad request; 422 when the save is refused.
 	 *
@@ -115,9 +124,8 @@ class ValueListChoicesController extends Controller {
 		}
 
 		try {
-			$this->store->save(scheme: $scheme, entry: $entry, fields: $fields);
+			$this->view->save(scheme: $scheme, entry: $entry, fields: $fields);
 		} catch (Throwable $e) {
-			$this->logger->warning('OpenCatalogi: a value list choice was not saved: ' . $e->getMessage(), ['app' => 'opencatalogi']);
 			return new JSONResponse(
 				['error' => $this->l10n->t('The choice could not be saved: %s', [$e->getMessage()])],
 				Http::STATUS_UNPROCESSABLE_ENTITY
@@ -129,7 +137,31 @@ class ValueListChoicesController extends Controller {
 	}//end update()
 
 	/**
-	 * What is wrong with the request, or null when nothing is.
+	 * Every visible information category as `{code, uri, label, explanation, order}`, in the organisation's order.
+	 *
+	 * @return JSONResponse 200 with `{results, total, choicesUnavailable}`.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
+	 */
+	#[CORS]
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 120, period: 60)]
+	public function publicCategories(): JSONResponse {
+		$view = $this->view->entries(scheme: self::CATEGORIES);
+		$results = [];
+		foreach ($view['entries'] as $entry) {
+			if ($entry['hidden'] !== true) {
+				$results[] = array_intersect_key($entry, array_flip(['code', 'uri', 'label', 'explanation', 'order']));
+			}
+		}
+
+		return new JSONResponse(['results' => $results, 'total' => count($results), 'choicesUnavailable' => $view['choicesUnavailable']]);
+
+	}//end publicCategories()
+
+	/**
+	 * What is wrong with a save request, or null when nothing is.
 	 *
 	 * @param string               $scheme The list.
 	 * @param string               $entry  The entry's URI.
@@ -146,10 +178,9 @@ class ValueListChoicesController extends Controller {
 			return $this->l10n->t('Name the entry the choice is about.');
 		}
 
-		foreach (array_keys($fields) as $field) {
-			if (in_array((string)$field, self::EDITABLE, true) === false) {
-				return $this->l10n->t('A value list choice has no field %s.', [(string)$field]);
-			}
+		$unknown = array_diff(array_map('strval', array_keys($fields)), self::EDITABLE);
+		if ($unknown !== []) {
+			return $this->l10n->t('A value list choice has no field %s.', [reset($unknown)]);
 		}
 
 		if (mb_strlen((string)($fields['explanation'] ?? '')) > self::EXPLANATION_MAX) {

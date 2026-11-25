@@ -24,12 +24,11 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
-use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
-use OCA\OpenCatalogi\Service\ReadsObjectProperties;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
-use OCP\IAppConfig;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 
 /**
  * The stored choices of one value list, keyed by entry URI.
@@ -56,13 +55,11 @@ class ValueListChoiceStore {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig                  $config       Holds the register and schema ids.
-	 * @param OpenRegisterLookupInterface $openRegister OpenRegister's ObjectService.
+	 * @param OpenRegisterLookupInterface $openRegister OpenRegister's ObjectService and the register configuration.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
-		private readonly IAppConfig $config,
 		private readonly OpenRegisterLookupInterface $openRegister,
 	) {
 
@@ -84,10 +81,6 @@ class ValueListChoiceStore {
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-organisations-own-text-sits-beside-the-normative-entry-req-wvl-001
 	 */
 	public function forScheme(string $scheme): array {
-		if ($this->openRegister->isInstalled() === false) {
-			throw new RuntimeException('OpenRegister is not available, so the value list choices cannot be read.');
-		}
-
 		$choices = [];
 		foreach ($this->stored(scheme: $scheme) as $stored) {
 			$choices[(string)$stored['entry']] = self::choiceOf(stored: $stored);
@@ -105,7 +98,7 @@ class ValueListChoiceStore {
 	 *
 	 * @param string               $scheme The list.
 	 * @param string               $entry  The entry's URI.
-	 * @param array<string, mixed> $fields The choice's own fields to change; any other key is passed on and refused by the guard.
+	 * @param array<string, mixed> $fields The choice's fields to change.
 	 *
 	 * @return void
 	 *
@@ -114,12 +107,8 @@ class ValueListChoiceStore {
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
 	 */
 	public function save(string $scheme, string $entry, array $fields): void {
-		if ($this->openRegister->isInstalled() === false) {
-			throw new RuntimeException('OpenRegister is not available, so the value list choice cannot be saved.');
-		}
-
 		$existing = null;
-		$object = ['scheme' => $scheme, 'entry' => $entry];
+		$object = [];
 		foreach ($this->stored(scheme: $scheme) as $stored) {
 			if ($stored['entry'] === $entry) {
 				$existing = (string)($stored['id'] ?? '');
@@ -132,10 +121,10 @@ class ValueListChoiceStore {
 			$existing = null;
 		}
 
-		[$register, $schema] = $this->target();
+		$target = $this->target();
 		$this->openRegister->objectService()->saveObject(
 			object: array_merge($object, $fields, ['scheme' => $scheme, 'entry' => $entry]),
-			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $register, schema: $schema), uuid: $existing),
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $target['register'], schema: $target['schema']), uuid: $existing),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -152,23 +141,20 @@ class ValueListChoiceStore {
 	 * @throws RuntimeException When OpenRegister or the schema configuration is not there.
 	 */
 	private function stored(string $scheme): array {
-		[$register, $schema] = $this->target();
-		$result = $this->openRegister->objectService()->searchObjectsPaginated(
-			query: ['@self' => ['register' => $register, 'schema' => $schema], 'scheme' => $scheme, '_limit' => 1000],
+		$target = $this->target();
+		$found = $this->openRegister->objectService()->searchObjectsPaginated(
+			query: ['@self' => $target, 'scheme' => $scheme, '_limit' => 1000],
 			_rbac: false,
 			_multitenancy: false
 		);
 
 		$rows = [];
-		foreach ((array)($result['results'] ?? []) as $row) {
+		foreach ((array)($found['results'] ?? []) as $row) {
 			$stored = $this->asRecord(object: $row);
-			$entry = trim((string)($stored['entry'] ?? ''));
-			if ($entry === '' || (string)($stored['scheme'] ?? '') !== $scheme) {
-				continue;
+			$stored['entry'] = trim((string)($stored['entry'] ?? ''));
+			if ($stored['entry'] !== '' && (string)($stored['scheme'] ?? '') === $scheme) {
+				$rows[] = $stored;
 			}
-
-			$stored['entry'] = $entry;
-			$rows[] = $stored;
 		}
 
 		return $rows;
@@ -176,20 +162,24 @@ class ValueListChoiceStore {
 	}//end stored()
 
 	/**
-	 * The publication register and the valueListChoice schema from the app config.
+	 * The publication register and the valueListChoice schema.
 	 *
-	 * @return array{0: string, 1: string}
+	 * @return array{register: string, schema: string}
 	 *
-	 * @throws RuntimeException When either is not configured.
+	 * @throws RuntimeException When OpenRegister is not installed or either is not configured.
 	 */
 	private function target(): array {
-		$register = trim($this->config->getValueString('opencatalogi', 'publication_register', ''));
-		$schema = trim($this->config->getValueString('opencatalogi', self::SCHEMA_KEY, ''));
-		if ($register === '' || $schema === '') {
-			throw new RuntimeException('Register configuration is not set for publication_register / ' . self::SCHEMA_KEY . '.');
+		if ($this->openRegister->isInstalled() === false) {
+			throw new RuntimeException('OpenRegister is not available, so the value list choices cannot be reached.');
 		}
 
-		return [$register, $schema];
+		try {
+			$target = $this->openRegister->registerConfiguration(registerKey: 'publication_register', schemaKey: self::SCHEMA_KEY);
+		} catch (\Throwable $e) {
+			throw new RuntimeException('The value list choice schema is not configured: ' . $e->getMessage(), 0, $e);
+		}
+
+		return ['register' => (string)($target['register'] ?? ''), 'schema' => (string)($target['schema'] ?? '')];
 
 	}//end target()
 

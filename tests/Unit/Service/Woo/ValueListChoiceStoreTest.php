@@ -22,7 +22,6 @@ namespace OCA\OpenCatalogi\Tests\Unit\Service\Woo;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
-use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -57,15 +56,6 @@ class ValueListChoiceStoreTest extends TestCase {
 	 * @return ValueListChoiceStore
 	 */
 	private function store(array $rows, bool $installed = true, string $schema = '41'): ValueListChoiceStore {
-		$config = $this->createMock(originalClassName: IAppConfig::class);
-		$config->method('getValueString')->willReturnCallback(
-			static fn (string $app, string $key, string $default = ''): string => match ($key) {
-				'publication_register' => '7',
-				ValueListChoiceStore::SCHEMA_KEY => $schema,
-				default => $default,
-			}
-		);
-
 		$test = $this;
 		$objects = new class($rows, $test) {
 			/**
@@ -102,8 +92,17 @@ class ValueListChoiceStoreTest extends TestCase {
 		$openRegister = $this->createMock(originalClassName: OpenRegisterLookupInterface::class);
 		$openRegister->method('isInstalled')->willReturn($installed);
 		$openRegister->method('objectService')->willReturn($objects);
+		$openRegister->method('registerConfiguration')->willReturnCallback(
+			static function (string $registerKey, string $schemaKey) use ($schema): array {
+				if ($registerKey !== 'publication_register' || $schemaKey !== ValueListChoiceStore::SCHEMA_KEY || $schema === '') {
+					throw new RuntimeException('not configured');
+				}
 
-		return new ValueListChoiceStore(config: $config, openRegister: $openRegister);
+				return ['register' => '7', 'schema' => $schema];
+			}
+		);
+
+		return new ValueListChoiceStore(openRegister: $openRegister);
 	}//end store()
 
 	/**
@@ -139,7 +138,7 @@ class ValueListChoiceStoreTest extends TestCase {
 
 		$this->assertCount(expectedCount: 1, haystack: $this->saves);
 		$this->assertSame(
-			expected: ['scheme' => 'informatiecategorieen', 'entry' => 'https://example.org/c1', 'explanation' => 'Uitleg'],
+			expected: ['explanation' => 'Uitleg', 'scheme' => 'informatiecategorieen', 'entry' => 'https://example.org/c1'],
 			actual: $this->saves[0]['object']
 		);
 		$this->assertInstanceOf(expected: ObjectSaveOptions::class, actual: $this->saves[0]['options']);
@@ -154,7 +153,14 @@ class ValueListChoiceStoreTest extends TestCase {
 	 */
 	public function testAnExistingChoiceKeepsWhatIsNotChanged(): void {
 		$this->store(rows: [
-			['id' => 'choice-9', 'scheme' => 'informatiecategorieen', 'entry' => 'https://example.org/c1', 'order' => 3, 'localLabel' => 'Eigen', 'explanation' => 'Oud'],
+			[
+				'id' => 'choice-9',
+				'scheme' => 'informatiecategorieen',
+				'entry' => 'https://example.org/c1',
+				'order' => 3,
+				'localLabel' => 'Eigen',
+				'explanation' => 'Oud',
+			],
 		])->save(scheme: 'informatiecategorieen', entry: 'https://example.org/c1', fields: ['explanation' => 'Nieuw']);
 
 		$this->assertSame(expected: 'choice-9', actual: $this->saves[0]['options']->uuid);
@@ -171,13 +177,22 @@ class ValueListChoiceStoreTest extends TestCase {
 	 */
 	public function testTheChoicesOfAListAreKeyedByEntry(): void {
 		$choices = $this->store(rows: [
-			['scheme' => 'informatiecategorieen', 'entry' => 'https://example.org/c1', 'order' => '2', 'localLabel' => ' Eigen naam ', 'explanation' => 'Uitleg', 'hidden' => true],
+			[
+				'scheme' => 'informatiecategorieen',
+				'entry' => 'https://example.org/c1',
+				'order' => '2',
+				'localLabel' => ' Eigen naam ',
+				'explanation' => 'Uitleg',
+				'hidden' => true,
+			],
 			['scheme' => 'documentsoorten', 'entry' => 'https://example.org/d1', 'order' => 1],
 			['scheme' => 'informatiecategorieen', 'entry' => ''],
 		])->forScheme(scheme: 'informatiecategorieen');
 
 		$this->assertSame(
-			expected: ['https://example.org/c1' => ['order' => 2, 'localLabel' => 'Eigen naam', 'explanation' => 'Uitleg', 'hidden' => true, 'active' => false]],
+			expected: [
+				'https://example.org/c1' => ['order' => 2, 'localLabel' => 'Eigen naam', 'explanation' => 'Uitleg', 'hidden' => true, 'active' => false],
+			],
 			actual: $choices
 		);
 		$this->assertSame(expected: ['register' => '7', 'schema' => '41'], actual: $this->queries[0]['@self']);
@@ -190,7 +205,7 @@ class ValueListChoiceStoreTest extends TestCase {
 	 * @return void
 	 */
 	public function testWithoutOpenRegisterTheReadFails(): void {
-		$this->expectException(RuntimeException::class);
+		$this->expectException(exception: RuntimeException::class);
 		$this->store(rows: [], installed: false)->forScheme(scheme: 'informatiecategorieen');
 	}//end testWithoutOpenRegisterTheReadFails()
 
@@ -200,7 +215,7 @@ class ValueListChoiceStoreTest extends TestCase {
 	 * @return void
 	 */
 	public function testWithoutTheSchemaConfiguredTheReadFails(): void {
-		$this->expectException(RuntimeException::class);
+		$this->expectException(exception: RuntimeException::class);
 		$this->store(rows: [], schema: '')->forScheme(scheme: 'informatiecategorieen');
 	}//end testWithoutTheSchemaConfiguredTheReadFails()
 }//end class
