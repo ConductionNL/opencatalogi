@@ -886,7 +886,21 @@ OC.L10N.register(
         "Your own order could not be loaded, so the list is shown in its own order.": "Non è stato possibile caricare il tuo ordine, quindi l’elenco è mostrato nel suo ordine originale.",
         "Where the transfer stands: requested, transferred or failed.": "Stato del trasferimento: richiesto, trasferito o non riuscito.",
         "When the transfer to the e-depot was requested.": "Quando è stato richiesto il trasferimento all'e-depot.",
-        "When the transfer status last changed.": "Quando lo stato del trasferimento è cambiato l'ultima volta."
+        "When the transfer status last changed.": "Quando lo stato del trasferimento è cambiato l'ultima volta.",
+        "Organisation type": "Tipo di organizzazione",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Scegli il tipo di organizzazione per cui pubblichi. Le categorie di informazioni a cui la Woo non si applica per quel tipo vengono proposte per essere nascoste.",
+        "Municipality": "Comune",
+        "Province": "Provincia",
+        "Water board": "Consorzio idrico",
+        "Joint arrangement": "Regime comune",
+        "Central government": "Amministrazione centrale",
+        "Independent administrative body": "Organo amministrativo autonomo",
+        "Other": "Altro",
+        "Proposed for hiding": "Proposte da nascondere",
+        "Hide the checked categories": "Nascondi le categorie selezionate",
+        "The checked categories are hidden.": "Le categorie selezionate sono nascoste.",
+        "Choose one of the listed organisation types.": "Scegli uno dei tipi di organizzazione elencati.",
+        "Legal basis": "Base giuridica"
     },
     "nplurals=2; plural=(n != 1);"
 )

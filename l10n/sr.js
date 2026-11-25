@@ -886,7 +886,21 @@ OC.L10N.register(
         "Your own order could not be loaded, so the list is shown in its own order.": "Ваш редослед није могуће учитати, па је списак приказан у изворном редоследу.",
         "Where the transfer stands: requested, transferred or failed.": "Стање преноса: затражен, пренет или неуспешан.",
         "When the transfer to the e-depot was requested.": "Када је затражен пренос у е-депо.",
-        "When the transfer status last changed.": "Када се стање преноса последњи пут променило."
+        "When the transfer status last changed.": "Када се стање преноса последњи пут променило.",
+        "Organisation type": "Врста организације",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Изаберите врсту организације за коју објављујете. Категорије информација на које се Woo за ту врсту не примењује предлажу се за скривање.",
+        "Municipality": "Општина",
+        "Province": "Покрајина",
+        "Water board": "Водни савет",
+        "Joint arrangement": "Заједничко уређење",
+        "Central government": "Централна власт",
+        "Independent administrative body": "Самостални управни орган",
+        "Other": "Остало",
+        "Proposed for hiding": "Предложено за скривање",
+        "Hide the checked categories": "Сакриј означене категорије",
+        "The checked categories are hidden.": "Означене категорије су скривене.",
+        "Choose one of the listed organisation types.": "Изаберите једну од наведених врста организације.",
+        "Legal basis": "Правни основ"
     },
     "nplurals=2; plural=(n != 1);"
 )

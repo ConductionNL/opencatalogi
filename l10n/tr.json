@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Kendi sıralamanız yüklenemedi, bu nedenle liste kendi sırasıyla gösteriliyor.",
         "Where the transfer stands: requested, transferred or failed.": "Aktarımın durumu: istendi, aktarıldı veya başarısız oldu.",
         "When the transfer to the e-depot was requested.": "E-arşive aktarımın ne zaman istendiği.",
-        "When the transfer status last changed.": "Aktarım durumunun en son ne zaman değiştiği."
+        "When the transfer status last changed.": "Aktarım durumunun en son ne zaman değiştiği.",
+        "Organisation type": "Kuruluş türü",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Adına yayın yaptığınız kuruluşun türünü seçin. Woo'nun bu tür için uygulanmadığı bilgi kategorileri gizlenmek üzere önerilir.",
+        "Municipality": "Belediye",
+        "Province": "İl",
+        "Water board": "Su kurulu",
+        "Joint arrangement": "Ortak düzenleme",
+        "Central government": "Merkezi yönetim",
+        "Independent administrative body": "Bağımsız idari kurum",
+        "Other": "Diğer",
+        "Proposed for hiding": "Gizlenmesi önerilen",
+        "Hide the checked categories": "İşaretli kategorileri gizle",
+        "The checked categories are hidden.": "İşaretli kategoriler gizlendi.",
+        "Choose one of the listed organisation types.": "Listelenen kuruluş türlerinden birini seçin.",
+        "Legal basis": "Hukuki dayanak"
     },
     "plurals": {}
 }

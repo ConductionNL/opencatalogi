@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Вашиот редослед не може да се вчита, па листата е прикажана во својот изворен редослед.",
         "Where the transfer stands: requested, transferred or failed.": "Состојба на преносот: побаран, пренесен или неуспешен.",
         "When the transfer to the e-depot was requested.": "Кога е побаран преносот во е-депото.",
-        "When the transfer status last changed.": "Кога последен пат се промени состојбата на преносот."
+        "When the transfer status last changed.": "Кога последен пат се промени состојбата на преносот.",
+        "Organisation type": "Вид на организација",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Изберете го видот на организацијата за која објавувате. Категориите на информации на кои Woo не се применува за тој вид се предлагаат за сокривање.",
+        "Municipality": "Општина",
+        "Province": "Покраина",
+        "Water board": "Воден совет",
+        "Joint arrangement": "Заедничко уредување",
+        "Central government": "Централна власт",
+        "Independent administrative body": "Самостоен управен орган",
+        "Other": "Друго",
+        "Proposed for hiding": "Предложено за сокривање",
+        "Hide the checked categories": "Сокриј ги означените категории",
+        "The checked categories are hidden.": "Означените категории се сокриени.",
+        "Choose one of the listed organisation types.": "Изберете еден од наведените видови организација.",
+        "Legal basis": "Правна основа"
     },
     "plurals": {}
 }

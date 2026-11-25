@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Jeres egen rækkefølge kunne ikke indlæses, så listen vises i sin egen rækkefølge.",
         "Where the transfer stands: requested, transferred or failed.": "Hvor overførslen står: anmodet, overført eller mislykket.",
         "When the transfer to the e-depot was requested.": "Hvornår overførslen til e-depotet blev anmodet.",
-        "When the transfer status last changed.": "Hvornår overførslens status sidst blev ændret."
+        "When the transfer status last changed.": "Hvornår overførslens status sidst blev ændret.",
+        "Organisation type": "Organisationstype",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Vælg den type organisation, du udgiver for. De informationskategorier, som Woo ikke gælder for for denne type, foreslås skjult.",
+        "Municipality": "Kommune",
+        "Province": "Provins",
+        "Water board": "Vandråd",
+        "Joint arrangement": "Fælles ordning",
+        "Central government": "Centraladministration",
+        "Independent administrative body": "Selvstændigt forvaltningsorgan",
+        "Other": "Andet",
+        "Proposed for hiding": "Foreslået skjult",
+        "Hide the checked categories": "Skjul de markerede kategorier",
+        "The checked categories are hidden.": "De markerede kategorier er skjult.",
+        "Choose one of the listed organisation types.": "Vælg en af de angivne organisationstyper.",
+        "Legal basis": "Retsgrundlag"
     },
     "plurals": {}
 }

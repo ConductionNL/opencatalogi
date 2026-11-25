@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Er egen ordning kunde inte läsas in, så listan visas i sin egen ordning.",
         "Where the transfer stands: requested, transferred or failed.": "Var överföringen står: begärd, överförd eller misslyckad.",
         "When the transfer to the e-depot was requested.": "När överföringen till e-depån begärdes.",
-        "When the transfer status last changed.": "När överföringens status senast ändrades."
+        "When the transfer status last changed.": "När överföringens status senast ändrades.",
+        "Organisation type": "Organisationstyp",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Välj vilken typ av organisation du publicerar för. De informationskategorier som Woo inte gäller för denna typ föreslås bli dolda.",
+        "Municipality": "Kommun",
+        "Province": "Provins",
+        "Water board": "Vattenråd",
+        "Joint arrangement": "Gemensam ordning",
+        "Central government": "Centralförvaltning",
+        "Independent administrative body": "Självständigt förvaltningsorgan",
+        "Other": "Övrigt",
+        "Proposed for hiding": "Föreslås bli dolda",
+        "Hide the checked categories": "Dölj de markerade kategorierna",
+        "The checked categories are hidden.": "De markerade kategorierna är dolda.",
+        "Choose one of the listed organisation types.": "Välj en av de angivna organisationstyperna.",
+        "Legal basis": "Rättslig grund"
     },
     "plurals": {}
 }

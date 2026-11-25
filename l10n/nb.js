@@ -886,7 +886,21 @@ OC.L10N.register(
         "Your own order could not be loaded, so the list is shown in its own order.": "Deres egen rekkefølge kunne ikke lastes inn, så listen vises i sin egen rekkefølge.",
         "Where the transfer stands: requested, transferred or failed.": "Hvor overføringen står: bedt om, overført eller mislyktes.",
         "When the transfer to the e-depot was requested.": "Når overføringen til e-depotet ble bedt om.",
-        "When the transfer status last changed.": "Når statusen for overføringen sist ble endret."
+        "When the transfer status last changed.": "Når statusen for overføringen sist ble endret.",
+        "Organisation type": "Organisasjonstype",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Velg hvilken type organisasjon du publiserer for. Informasjonskategoriene som Woo ikke gjelder for for denne typen, foreslås skjult.",
+        "Municipality": "Kommune",
+        "Province": "Provins",
+        "Water board": "Vannråd",
+        "Joint arrangement": "Felles ordning",
+        "Central government": "Sentralforvaltning",
+        "Independent administrative body": "Selvstendig forvaltningsorgan",
+        "Other": "Annet",
+        "Proposed for hiding": "Foreslått skjult",
+        "Hide the checked categories": "Skjul de avmerkede kategoriene",
+        "The checked categories are hidden.": "De avmerkede kategoriene er skjult.",
+        "Choose one of the listed organisation types.": "Velg en av de oppførte organisasjonstypene.",
+        "Legal basis": "Rettslig grunnlag"
     },
     "nplurals=2; plural=(n != 1);"
 )

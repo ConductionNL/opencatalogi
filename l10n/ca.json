@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "No s’ha pogut carregar el vostre ordre, per això la llista es mostra en el seu ordre original.",
         "Where the transfer stands: requested, transferred or failed.": "Estat de la transferència: sol·licitada, transferida o fallida.",
         "When the transfer to the e-depot was requested.": "Quan es va sol·licitar la transferència a l'e-dipòsit.",
-        "When the transfer status last changed.": "Quan va canviar per última vegada l'estat de la transferència."
+        "When the transfer status last changed.": "Quan va canviar per última vegada l'estat de la transferència.",
+        "Organisation type": "Tipus d'organització",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Trieu el tipus d'organització per a la qual publiqueu. Les categories d'informació a les quals la Woo no s'aplica per a aquest tipus es proposen per amagar.",
+        "Municipality": "Municipi",
+        "Province": "Província",
+        "Water board": "Junta d'aigües",
+        "Joint arrangement": "Règim comú",
+        "Central government": "Administració central",
+        "Independent administrative body": "Organisme administratiu autònom",
+        "Other": "Altres",
+        "Proposed for hiding": "Proposades per amagar",
+        "Hide the checked categories": "Amaga les categories marcades",
+        "The checked categories are hidden.": "Les categories marcades estan amagades.",
+        "Choose one of the listed organisation types.": "Trieu un dels tipus d'organització indicats.",
+        "Legal basis": "Base jurídica"
     },
     "plurals": {}
 }

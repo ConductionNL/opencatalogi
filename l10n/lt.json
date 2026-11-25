@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Nepavyko įkelti jūsų tvarkos, todėl sąrašas rodomas jo paties tvarka.",
         "Where the transfer stands: requested, transferred or failed.": "Perdavimo būsena: paprašyta, perduota arba nepavyko.",
         "When the transfer to the e-depot was requested.": "Kada buvo paprašyta perduoti į e. saugyklą.",
-        "When the transfer status last changed.": "Kada paskutinį kartą pasikeitė perdavimo būsena."
+        "When the transfer status last changed.": "Kada paskutinį kartą pasikeitė perdavimo būsena.",
+        "Organisation type": "Organizacijos tipas",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Pasirinkite organizacijos, kurios vardu skelbiate, tipą. Informacijos kategorijos, kurioms Woo šiam tipui netaikomas, siūlomos paslėpti.",
+        "Municipality": "Savivaldybė",
+        "Province": "Provincija",
+        "Water board": "Vandens taryba",
+        "Joint arrangement": "Bendra tvarka",
+        "Central government": "Centrinė valdžia",
+        "Independent administrative body": "Savarankiška administracinė institucija",
+        "Other": "Kita",
+        "Proposed for hiding": "Siūloma paslėpti",
+        "Hide the checked categories": "Paslėpti pažymėtas kategorijas",
+        "The checked categories are hidden.": "Pažymėtos kategorijos paslėptos.",
+        "Choose one of the listed organisation types.": "Pasirinkite vieną iš nurodytų organizacijos tipų.",
+        "Legal basis": "Teisinis pagrindas"
     },
     "plurals": {}
 }

@@ -885,7 +885,21 @@
         "Your own order could not be loaded, so the list is shown in its own order.": "Ordinea dvs. nu a putut fi încărcată, așa că lista este afișată în ordinea ei inițială.",
         "Where the transfer stands: requested, transferred or failed.": "Stadiul transferului: solicitat, transferat sau eșuat.",
         "When the transfer to the e-depot was requested.": "Când a fost solicitat transferul către e-depozit.",
-        "When the transfer status last changed.": "Când s-a schimbat ultima dată starea transferului."
+        "When the transfer status last changed.": "Când s-a schimbat ultima dată starea transferului.",
+        "Organisation type": "Tip de organizație",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Alegeți tipul de organizație pentru care publicați. Categoriile de informații cărora Woo nu li se aplică pentru acest tip sunt propuse pentru ascundere.",
+        "Municipality": "Municipalitate",
+        "Province": "Provincie",
+        "Water board": "Autoritate a apelor",
+        "Joint arrangement": "Regim comun",
+        "Central government": "Guvern central",
+        "Independent administrative body": "Organ administrativ autonom",
+        "Other": "Altele",
+        "Proposed for hiding": "Propuse pentru ascundere",
+        "Hide the checked categories": "Ascunde categoriile bifate",
+        "The checked categories are hidden.": "Categoriile bifate sunt ascunse.",
+        "Choose one of the listed organisation types.": "Alegeți unul dintre tipurile de organizație enumerate.",
+        "Legal basis": "Temei juridic"
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

@@ -886,7 +886,21 @@ OC.L10N.register(
         "Your own order could not be loaded, so the list is shown in its own order.": "Vlastné poradie sa nepodarilo načítať, preto sa zoznam zobrazuje v pôvodnom poradí.",
         "Where the transfer stands: requested, transferred or failed.": "Stav odovzdania: vyžiadané, odovzdané alebo zlyhalo.",
         "When the transfer to the e-depot was requested.": "Kedy bolo vyžiadané odovzdanie do e-depozitára.",
-        "When the transfer status last changed.": "Kedy sa stav odovzdania naposledy zmenil."
+        "When the transfer status last changed.": "Kedy sa stav odovzdania naposledy zmenil.",
+        "Organisation type": "Typ organizácie",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Zvoľte druh organizácie, za ktorú publikujete. Informačné kategórie, na ktoré sa Woo pre tento typ nevzťahuje, sú navrhnuté na skrytie.",
+        "Municipality": "Obec",
+        "Province": "Provincia",
+        "Water board": "Vodná správa",
+        "Joint arrangement": "Spoločné ujednanie",
+        "Central government": "Ústredná vláda",
+        "Independent administrative body": "Samostatný správny orgán",
+        "Other": "Iné",
+        "Proposed for hiding": "Navrhnuté na skrytie",
+        "Hide the checked categories": "Skryť začiarknuté kategórie",
+        "The checked categories are hidden.": "Začiarknuté kategórie sú skryté.",
+        "Choose one of the listed organisation types.": "Zvoľte jeden z uvedených typov organizácie.",
+        "Legal basis": "Právny základ"
     },
     "nplurals=2; plural=(n != 1);"
 )

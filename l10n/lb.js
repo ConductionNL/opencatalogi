@@ -886,7 +886,21 @@ OC.L10N.register(
         "Your own order could not be loaded, so the list is shown in its own order.": "Är eege Reiefolleg konnt net geluede ginn, dofir gëtt d’Lëscht an hirer eegener Reiefolleg gewisen.",
         "Where the transfer stands: requested, transferred or failed.": "Stand vum Transfert: ugefrot, iwwerdroen oder feelgeschloen.",
         "When the transfer to the e-depot was requested.": "Wéini den Transfert an den E-Depot ugefrot gouf.",
-        "When the transfer status last changed.": "Wéini de Status vum Transfert fir d'lescht geännert huet."
+        "When the transfer status last changed.": "Wéini de Status vum Transfert fir d'lescht geännert huet.",
+        "Organisation type": "Organisatiounstyp",
+        "Choose the kind of organisation you publish for. The information categories the Woo does not apply to for it are proposed for hiding.": "Wielt d'Zort vun Organisatioun, fir déi Dir publizéiert. D'Informatiounskategorien, op déi d'Woo fir dësen Typ net gëllt, gi proposéiert fir ze verstoppen.",
+        "Municipality": "Gemeng",
+        "Province": "Provënz",
+        "Water board": "Waasserverband",
+        "Joint arrangement": "Gemeinsam Regelung",
+        "Central government": "Zentralregierung",
+        "Independent administrative body": "Selbststänneg Verwaltungsautoritéit",
+        "Other": "Anerer",
+        "Proposed for hiding": "Proposéiert fir ze verstoppen",
+        "Hide the checked categories": "Déi markéiert Kategorien verstoppen",
+        "The checked categories are hidden.": "Déi markéiert Kategorie si verstoppt.",
+        "Choose one of the listed organisation types.": "Wielt ee vun den opgezielten Organisatiounstypen.",
+        "Legal basis": "Rechtsgrondlag"
     },
     "nplurals=2; plural=(n != 1);"
 )
