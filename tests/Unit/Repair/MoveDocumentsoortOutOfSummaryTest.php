@@ -172,6 +172,24 @@ class MoveDocumentsoortOutOfSummaryTest extends TestCase {
 	}//end testASummaryThatIsADocumentTypeIsMoved()
 
 	/**
+	 * A published publication whose summary moves keeps no summary, so the save records it as not supplied:
+	 * the required-to-publish rule would otherwise refuse the system save.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 */
+	public function testThePublishedSummaryThatMovesIsRecordedAsNotSupplied(): void {
+		$this->store = ['pub-1' => ['id' => 'pub-1', 'title' => 'Besluit', 'status' => 'published', 'summary' => 'besluit', 'description' => 'Lang', 'organization' => 'org-1']];
+
+		$this->runStep();
+
+		$this->assertNull($this->store['pub-1']['summary']);
+		$this->assertSame(['summary' => 'published-before-required'], $this->store['pub-1']['@notSupplied']);
+		$this->assertSame('org-1', $this->store['pub-1']['organization']);
+	}//end testThePublishedSummaryThatMovesIsRecordedAsNotSupplied()
+
+	/**
 	 * REQ-DWP-005: a real summary, and a publication that already has a type, stay as they are.
 	 *
 	 * @return void

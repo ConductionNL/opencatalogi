@@ -92,3 +92,27 @@ export function refusalMessage(error) {
 	const data = error?.response?.data
 	return String(data?.message ?? data?.error ?? error?.message ?? '')
 }
+
+/**
+ * The body to save, without a not-supplied entry for a field the editor has now filled in.
+ *
+ * The upgrade records the required fields a legacy publication left empty in
+ * OpenRegister's `@notSupplied` (design D2). OpenRegister refuses a field that
+ * is both filled in and recorded as not supplied, so an editor completing such
+ * a publication would be refused without this. Entries for fields still empty
+ * stay, and the key goes when no entry is left. The body passed in is not changed.
+ *
+ * @param {object} body The publication body about to be saved.
+ * @return {object} The body to send.
+ * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+ */
+export function clearAnsweredGaps(body) {
+	const record = body?.['@notSupplied']
+	if (!record || typeof record !== 'object' || Array.isArray(record)) return body
+
+	const kept = Object.fromEntries(
+		Object.entries(record).filter(([field]) => isEmpty(body[field])),
+	)
+	const { '@notSupplied': _record, ...rest } = body
+	return Object.keys(kept).length === 0 ? rest : { ...rest, '@notSupplied': kept }
+}

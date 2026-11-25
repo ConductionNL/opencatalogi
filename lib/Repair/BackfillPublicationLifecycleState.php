@@ -210,6 +210,7 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 		}
 
 		$publication['status'] = $state;
+		$publication = RequiredToPublish::recordGaps(publication: $publication);
 		try {
 			$this->objects->saveObject(
 				object: $publication,

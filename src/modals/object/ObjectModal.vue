@@ -366,7 +366,7 @@ import Plus from 'vue-material-design-icons/Plus.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
 import { getTheme } from '../../services/getTheme.js'
-import { requiredToPublishFields } from '../../services/requiredToPublish.js'
+import { clearAnsweredGaps, requiredToPublishFields } from '../../services/requiredToPublish.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 /**
@@ -827,7 +827,7 @@ export default {
 
 				const response = await fetch(FETCH_URL, {
 					method,
-					body: JSON.stringify(dataToSave),
+					body: JSON.stringify(clearAnsweredGaps(dataToSave)),
 					headers: {
 						requesttoken: getRequestToken(),
 						'Content-Type': 'application/json',

@@ -236,6 +236,31 @@ class BackfillPublicationLifecycleStateTest extends TestCase {
 	}//end testThePublishedPublicationsMissingARequiredFieldAreCounted()
 
 	/**
+	 * Design D2: a legacy publication that becomes published without a description or organisation is saved with
+	 * those gaps recorded as not supplied, so the required-to-publish rule lets the system save it; one that becomes
+	 * a draft gets no record.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 */
+	public function testABackfilledPublicationIsSavedWithItsGapsRecorded(): void {
+		$this->store = [
+			'pub-9'  => ['id' => 'pub-9', 'title' => 'Besluit', 'summary' => 'Kort', 'publicationDate' => '2025-03-01T00:00:00+00:00'],
+			'pub-10' => ['id' => 'pub-10', 'title' => 'Concept'],
+		];
+		$this->runStep();
+
+		$this->assertSame('published', $this->store['pub-9']['status']);
+		$this->assertSame(
+			['description' => 'published-before-required', 'organization' => 'published-before-required'],
+			$this->store['pub-9']['@notSupplied']
+		);
+		$this->assertSame('Kort', $this->store['pub-9']['summary']);
+		$this->assertArrayNotHasKey('@notSupplied', $this->store['pub-10']);
+	}//end testABackfilledPublicationIsSavedWithItsGapsRecorded()
+
+	/**
 	 * REQ-PLC-007: a stored state, archived included, is left as it is.
 	 *
 	 * @return void

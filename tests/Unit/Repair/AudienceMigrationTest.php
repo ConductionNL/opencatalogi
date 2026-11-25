@@ -154,6 +154,30 @@ final class AudienceMigrationTest extends TestCase {
 	}//end testEveryExistingPublicationGetsAudiencePublic()
 
 	/**
+	 * A published publication without a summary or organisation is saved with those gaps recorded as not supplied,
+	 * so the required-to-publish rule lets the system save through; a draft is saved as it is.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 */
+	public function testALegacyPublicationIsSavedWithItsGapsRecorded(): void {
+		$this->store = [
+			'a' => ['id' => 'a', 'title' => 'Raadsbesluit', 'status' => 'published', 'description' => 'Lang'],
+			'b' => ['id' => 'b', 'title' => 'Concept', 'status' => 'draft'],
+		];
+
+		$this->runStep();
+
+		self::assertSame(
+			['summary' => 'published-before-required', 'organization' => 'published-before-required'],
+			$this->store['a']['@notSupplied']
+		);
+		self::assertSame('public', $this->store['a']['audience']);
+		self::assertArrayNotHasKey('@notSupplied', $this->store['b']);
+	}//end testALegacyPublicationIsSavedWithItsGapsRecorded()
+
+	/**
 	 * A publication that says who can read it is not touched, so a second run saves nothing.
 	 *
 	 * @return void

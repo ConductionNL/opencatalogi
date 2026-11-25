@@ -9,6 +9,7 @@
 jest.mock('../store/store.js', () => ({ objectStore: { availableSchemas: [] } }))
 
 import {
+	clearAnsweredGaps,
 	missingToPublish,
 	refusalMessage,
 	requiredToPublishFields,
@@ -110,5 +111,36 @@ describe('refusalMessage', () => {
 			}),
 		).toBe('summary is required to publish')
 		expect(refusalMessage({ message: 'Network Error' })).toBe('Network Error')
+	})
+})
+
+describe('clearAnsweredGaps', () => {
+	it('drops the entry of a field the editor filled in and keeps the others', () => {
+		const body = {
+			summary: 'Besluit over de begroting',
+			description: '',
+			'@notSupplied': {
+				summary: 'published-before-required',
+				description: 'published-before-required',
+			},
+		}
+		expect(clearAnsweredGaps(body)).toEqual({
+			summary: 'Besluit over de begroting',
+			description: '',
+			'@notSupplied': { description: 'published-before-required' },
+		})
+		expect(body['@notSupplied'].summary).toBe('published-before-required')
+	})
+
+	it('removes the record when every recorded field is filled in', () => {
+		expect(clearAnsweredGaps({
+			organization: 'org-1',
+			'@notSupplied': { organization: 'published-before-required' },
+		})).toEqual({ organization: 'org-1' })
+	})
+
+	it('returns a body without a record as it is', () => {
+		const body = { title: 'Raadsstukken' }
+		expect(clearAnsweredGaps(body)).toBe(body)
 	})
 })
