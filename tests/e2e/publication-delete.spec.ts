@@ -15,9 +15,9 @@
  * the seeded catalog holds the publication schema and, where the instance has
  * it, the publiccode schema.
  *
- * @e2e openspec/changes/publication-delete-says-what-it-removes/specs/publication-delete/spec.md#scenario-the-editor-reads-the-consequence-before-deleting
- * @e2e openspec/changes/publication-delete-says-what-it-removes/specs/publication-delete/spec.md#scenario-cancel-keeps-the-publication
- * @e2e openspec/changes/publication-delete-says-what-it-removes/specs/publication-delete/spec.md#scenario-a-publiccode-record-gets-the-generic-text
+ * @e2e openspec/changes/archive/2026-11-25-publication-delete-says-what-it-removes/specs/publication-delete/spec.md#scenario-the-editor-reads-the-consequence-before-deleting
+ * @e2e openspec/changes/archive/2026-11-25-publication-delete-says-what-it-removes/specs/publication-delete/spec.md#scenario-cancel-keeps-the-publication
+ * @e2e openspec/changes/archive/2026-11-25-publication-delete-says-what-it-removes/specs/publication-delete/spec.md#scenario-a-publiccode-record-gets-the-generic-text
  */
 import type { Page } from '@playwright/test'
 import type { SeededObject } from './workflows/_fixtures.ts'
