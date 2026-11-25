@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * The render-time DiWoo XSD check (REQ-WNO-002).
  *
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
  */
 #[CoversClass(DiwooXsdValidator::class)]
 #[UsesClass(XMLResponse::class)]

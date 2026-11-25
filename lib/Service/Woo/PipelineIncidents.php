@@ -41,7 +41,7 @@ use Throwable;
  * Raising never throws: a pipeline failure must not become a second failure in
  * the caller. When the incident cannot be stored, that is logged as an error.
  *
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
  */
 class PipelineIncidents {
 	use ReadsObjectProperties;
@@ -100,7 +100,7 @@ class PipelineIncidents {
 	 *
 	 * @return string The message.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	public static function plooiFailure(string $title, string $reason, string $action = 'delivery'): string {
 		return 'PLOOI ' . $action . " of '" . $title . "' failed: " . $reason;
@@ -115,7 +115,7 @@ class PipelineIncidents {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	public function raise(string $kind, string $subject, string $message): void {
 		try {

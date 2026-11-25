@@ -34,7 +34,7 @@ use OCP\IRequest;
 /**
  * Admin only, like the rest of the Woo settings (REQ-WNO-004).
  *
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
  */
 class WooIncidentsController extends Controller {
 
@@ -58,7 +58,7 @@ class WooIncidentsController extends Controller {
 	 *
 	 * @return JSONResponse `{group, incidents}`, or `{group, incidents: [], error}` when the incidents cannot be read.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function index(): JSONResponse {
@@ -79,7 +79,7 @@ class WooIncidentsController extends Controller {
 	 *
 	 * @return JSONResponse `{group}`; 400 for a group that does not exist, 409 when the role cannot be assigned.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function setGroup(string $group = ''): JSONResponse {

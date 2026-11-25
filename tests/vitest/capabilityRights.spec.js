@@ -4,7 +4,7 @@
  *
  * The rights table's helpers (woo-access-boundary-hardening, REQ-WAB-004).
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
  */
 import { describe, expect, it } from 'vitest'
 import { grantPayload, groupOptions, rightLabels, rightsRefusal, rightsRows } from '../../src/views/settings/capabilityRights.js'

@@ -197,7 +197,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @return array<string, mixed> The report (verdict, checks, registration, baseUrl, checkedAt).
 	 *
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
 	 * @SuppressWarnings(PHPMD.StaticAccess) DiwooSitemapReconciliation::lastResults() reads the stored results.
 	 */
 	public function runCheck(): array {
@@ -252,7 +252,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 *
 	 * @return array<string, mixed> The check.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	private function checkIncidentGroup(): array {
 		if (trim($this->config->getValueString(self::APP_NAME, PipelineIncidentSettings::GROUP_KEY, '')) === '') {
@@ -269,7 +269,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	private function raiseWhenNotReady(array $report): void {
 		if ($this->incidents === null || $report['verdict'] !== 'not-ready') {

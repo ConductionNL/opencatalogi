@@ -28,7 +28,7 @@
  * The admin account is used only to find the fixtures and the catalogs; every
  * probe runs in a context with no credentials and an empty storage state.
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-a-test-proves-the-public-side-cannot-reach-a-non-public-record-req-wab-002
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-a-test-proves-the-public-side-cannot-reach-a-non-public-record-req-wab-002
  */
 import type { APIRequestContext } from '@playwright/test'
 

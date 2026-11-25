@@ -20,7 +20,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use OCP\IUserSession;
 /**
  * Draft, follow and accept a publication's plain language summary.
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
  */
 class PlainSummaryController extends Controller {
 
@@ -68,7 +68,7 @@ class PlainSummaryController extends Controller {
 	 *
 	 * @return JSONResponse `{available}`, or 401 without a session.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	#[NoAdminRequired]
 	public function assistant(): JSONResponse {
@@ -87,7 +87,7 @@ class PlainSummaryController extends Controller {
 	 *
 	 * @return JSONResponse `{taskId}` (202), or the refusal: 409 `no-provider` without a text assistant.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 *
 	 * @no-admin-idor-exempt The per-object guard runs in PlainLanguageDrafter, reached
 	 *   through PlainSummaryDrafterInterface: writable() reads the publication with
@@ -112,7 +112,7 @@ class PlainSummaryController extends Controller {
 	 *
 	 * @return JSONResponse `{status, text?, error?}`, or the refusal.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 *
 	 * @no-admin-idor-exempt The per-object guard runs in PlainLanguageDrafter, reached
 	 *   through PlainSummaryDrafterInterface: writable() reads the publication with
@@ -140,7 +140,7 @@ class PlainSummaryController extends Controller {
 	 *
 	 * @return JSONResponse The stored plain summary, level and provenance, or the refusal.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 *
 	 * @no-admin-idor-exempt The per-object guard runs in PlainLanguageDrafter, reached
 	 *   through PlainSummaryDrafterInterface: writable() reads the publication with
@@ -173,7 +173,7 @@ class PlainSummaryController extends Controller {
 	 *
 	 * @return int|null The task id, or null when absent or not a whole number.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	private function taskIdOf(mixed $value): ?int {
 		if (is_int($value) === true || (is_string($value) === true && ctype_digit($value) === true)) {

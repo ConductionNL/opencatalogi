@@ -15,7 +15,7 @@
  * The grant `openInspection` had before the run is put back afterwards, and
  * the run's user is removed.
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
  */
 import type { APIRequestContext } from '@playwright/test'
 

@@ -34,7 +34,7 @@ use PHPUnit\Framework\TestCase;
  * The schema is a real OpenRegister Schema entity; its mapper, the object service,
  * the app config and the group manager are doubles.
  *
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
  */
 #[CoversClass(PipelineIncidentSettings::class)]
 #[UsesClass(SchemaObjects::class)]

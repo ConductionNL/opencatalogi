@@ -2679,7 +2679,7 @@ https://andere.example"]);
 	/**
 	 * Search indexing defaults to allowed, and only `blocked` is stored as blocked (REQ-WAB-003).
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
 	 *
 	 * @return void
 	 */

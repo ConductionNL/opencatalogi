@@ -60,7 +60,7 @@ import { grantPayload, groupOptions, rightsRefusal, rightsRows } from './capabil
  * administrator always holds every right, so an empty row means
  * "administrators only".
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
  */
 export default {
 	name: 'CapabilityRightsSection',
@@ -86,7 +86,7 @@ export default {
 		 * Read the groups and the rights.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+		 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
 		 */
 		async load() {
 			this.loading = true
@@ -111,7 +111,7 @@ export default {
 		 * @param {object} row The right's row.
 		 * @param {Array<{id: string, label: string}>} selected The picked groups.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+		 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
 		 */
 		async save(row, selected) {
 			const before = row.selected

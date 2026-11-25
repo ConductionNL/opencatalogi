@@ -1659,7 +1659,7 @@ class SitemapServiceTest extends TestCase {
 	 * time, the page that remains validates, and the validator lists the document with
 	 * `xsd-invalid` and the XSD message.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
 	 */
 	public function testAnXsdInvalidDocumentIsLeftOutAndReported(): void {
 		$publications = [
@@ -1707,7 +1707,7 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * REQ-WNO-004: a document held back for its XSD errors raises an incident naming it.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	public function testADocumentHeldBackByTheXsdRaisesAnIncident(): void {
 		$incidents = $this->createMock(\OCA\OpenCatalogi\Service\Woo\PipelineIncidents::class);
@@ -1729,7 +1729,7 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * REQ-WNO-004: a sitemap the instance cannot serve raises an incident; a name nothing is served at does not.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	public function testARefusedSitemapRaisesAndAnUnknownNameDoesNot(): void {
 		$raised = [];
@@ -1761,7 +1761,7 @@ class SitemapServiceTest extends TestCase {
 	 * REQ-WNO-003: the register side of the reconciliation lists every public document,
 	 * also the one the page holds back, so the difference shows as missing.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
 	 */
 	public function testTheRegisterSideListsADocumentThePageHoldsBack(): void {
 		$publications = [
@@ -1781,7 +1781,7 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * REQ-WNO-003: a category the registry does not know is a failed read, not an empty one.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
 	 */
 	public function testTheRegisterSideRefusesAnUnknownCategory(): void {
 		$this->storedValuesPage([]);
@@ -1795,7 +1795,7 @@ class SitemapServiceTest extends TestCase {
 	 * REQ-WNO-002: the XSD the app ships and validates with at render time is the
 	 * authority's file, and a rendered page validates against it.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
 	 */
 	public function testARenderedPageValidatesAgainstTheShippedXsd(): void {
 		$shipped = dirname(__DIR__, 3) . '/lib/Settings/diwoo';

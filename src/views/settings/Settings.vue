@@ -1877,7 +1877,7 @@ export default defineComponent({
 		 * server stores `blocked` or `allowed`, which is shown back.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+		 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
 		 */
 		async saveSearchIndexing() {
 			this.savingSearchIndexing = true
@@ -1905,7 +1905,7 @@ export default defineComponent({
 		 *
 		 * @param {string|undefined} stored `blocked`, `allowed`, or undefined when absent.
 		 * @return {void}
-		 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+		 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
 		 */
 		showStoredSearchIndexing(stored) {
 			if (stored !== undefined) {

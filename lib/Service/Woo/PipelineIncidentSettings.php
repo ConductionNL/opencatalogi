@@ -37,7 +37,7 @@ use RuntimeException;
  * because the schema's notification rule addresses the role: the group setting is what
  * the notifications and e-mails go to (REQ-WNO-004).
  *
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
  */
 class PipelineIncidentSettings {
 	use ReadsObjectProperties;
@@ -91,7 +91,7 @@ class PipelineIncidentSettings {
 	 *
 	 * @return string The group id.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	public function group(): string {
 		return trim($this->config->getValueString(AppIdentity::APP_ID, self::GROUP_KEY, ''));
@@ -111,7 +111,7 @@ class PipelineIncidentSettings {
 	 * @throws InvalidArgumentException When the group does not exist.
 	 * @throws RuntimeException When the incident schema cannot be updated.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	public function setGroup(string $group): string {
 		$group = trim($group);
@@ -132,7 +132,7 @@ class PipelineIncidentSettings {
 	 *
 	 * @throws RuntimeException When the incident schema cannot be read.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	public function openIncidents(): array {
 		$found = $this->objects()->search(filters: ['_limit' => self::LIST_LIMIT, '_order' => ['at' => 'desc']]);
@@ -168,7 +168,7 @@ class PipelineIncidentSettings {
 	 *
 	 * @throws RuntimeException When the schema cannot be found or updated.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	private function assignRole(string $group): void {
 		$ids = $this->openRegister->registerConfiguration(registerKey: PipelineIncidents::REGISTER_KEY, schemaKey: PipelineIncidents::SCHEMA_KEY);

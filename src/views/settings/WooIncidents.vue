@@ -100,7 +100,7 @@ export default {
 	},
 
 	computed: {
-		/** @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004 */
+		/** @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004 */
 		nobodyReceives() {
 			return nobodyReceives(this.state)
 		},
@@ -115,7 +115,7 @@ export default {
 		 * Read the group and the open incidents.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+		 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 		 */
 		async load() {
 			try {
@@ -131,7 +131,7 @@ export default {
 		 * Save the group; the server assigns it to the incident schema's receiver role.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+		 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 		 */
 		async save() {
 			this.saving = true

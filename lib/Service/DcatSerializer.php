@@ -354,7 +354,7 @@ class DcatSerializer implements DcatSerializerInterface {
 	 *
 	 * @return string The suffix.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
 	 */
 	private function languageSuffix(array $value): string {
 		$language = (string)($value['@language'] ?? '');

@@ -12,7 +12,7 @@
  *
  * @param {function(string, string, object=): string} t The translate function.
  * @return {Object<string, string>} The label per verb.
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
  */
 export function rightLabels(t) {
 	return {
@@ -54,7 +54,7 @@ export function groupOptions(response) {
  * @param {Array<{id: string, label: string}>} options The groups to pick from.
  * @param {function(string, string, object=): string} t The translate function.
  * @return {Array<{verb: string, label: string, selected: Array<{id: string, label: string}>}>} The rows.
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
  */
 export function rightsRows(data, options, t) {
 	const labels = rightLabels(t)

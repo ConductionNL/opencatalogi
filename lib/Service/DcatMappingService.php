@@ -529,7 +529,7 @@ class DcatMappingService {
 	 *
 	 * @return array<string, mixed> The abstract, or nothing without a plain summary.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
 	 */
 	private function plainSummaryProperties(array $publication): array {
 		$text = ($publication['plainSummary'] ?? null);
