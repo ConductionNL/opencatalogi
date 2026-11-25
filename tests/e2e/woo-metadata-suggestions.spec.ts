@@ -143,6 +143,12 @@ test.describe('Woo metadata suggestions on the publication page', () => {
 			(await stored.json()).summary,
 			'the accepted value is on the publication',
 		).toBe(proposed)
+		// The publication card folds all but its first fields under
+		// "Show all N fields"; Summary is among the folded ones.
+		await page
+			.getByRole('button', { name: /Show all \d+ fields|Alle \d+ velden tonen/ })
+			.first()
+			.click()
 		await expect(page.getByText(proposed).first()).toBeVisible({
 			timeout: 20_000,
 		})
