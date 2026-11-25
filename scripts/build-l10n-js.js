@@ -36,6 +36,13 @@
 // using plural strings in such a language needs its real rule declared in the
 // JSON, which this script will then honour.
 //
+// ENGLISH IDENTITY ENTRIES ARE LEFT OUT OF THE BROWSER CATALOGUE. In en.json
+// all but one of the ~2250 entries map a string to itself: t() already
+// returns the key when the catalogue has no entry for it, so those entries
+// only made every page download ~200 KB for nothing. en.json stays complete
+// (PHP and the l10n checks read it); en.js and any en_* .js carry only the
+// entries whose English differs from the key. Other locales keep every entry.
+//
 // Usage:
 //   node scripts/build-l10n-js.js            (npm run l10n:build)
 //   node scripts/build-l10n-js.js --check    exit 1 if any .js is stale
@@ -93,12 +100,38 @@ function renderJs(id, translations, pluralForm) {
 		'OC.L10N.register(',
 		`    ${JSON.stringify(id)},`,
 		'    {',
-		body,
+		// An empty catalogue (en.js when every English entry equals its key)
+		// renders as `{}` over two lines, without a blank line inside.
+		...(body === '' ? [] : [body]),
 		'    },',
 		`    ${JSON.stringify(pluralForm)}`,
 		')',
 		'',
 	].join('\n')
+}
+
+/**
+ * The entries a locale's browser catalogue carries. For English (`en` and
+ * any regional `en_*`) an entry that maps a string to itself is left out:
+ * t() falls back to the key, so it renders the same and costs bytes on
+ * every page. Every other locale keeps all its entries.
+ *
+ * @spec openspec/specs/l10n (PERF-HANDOFF all apps: drop English identity entries at build time)
+ * @param {string} locale - the catalogue's locale, e.g. `en`, `en_GB`, `nl`
+ * @param {object} translations - key -> translation, as in the .json
+ * @return {object} key -> translation for the .js
+ */
+function browserEntries(locale, translations) {
+	if (locale !== 'en' && !locale.startsWith('en_')) {
+		return translations
+	}
+	const entries = {}
+	for (const key of Object.keys(translations)) {
+		if (translations[key] !== key) {
+			entries[key] = translations[key]
+		}
+	}
+	return entries
 }
 
 /**
@@ -139,9 +172,10 @@ function main() {
 			process.exit(1)
 		}
 
+		const entries = browserEntries(locale, doc.translations)
 		const rendered = renderJs(
 			id,
-			doc.translations,
+			entries,
 			doc.pluralForm || DEFAULT_PLURAL_FORM,
 		)
 		const current = fs.existsSync(jsFile)
@@ -150,7 +184,7 @@ function main() {
 
 		if (current === rendered) {
 			console.log(
-				`  ✓ l10n/${locale}.js up to date (${Object.keys(doc.translations).length} keys)`,
+				`  ✓ l10n/${locale}.js up to date (${Object.keys(entries).length} keys)`,
 			)
 			continue
 		}
@@ -160,7 +194,7 @@ function main() {
 		}
 		fs.writeFileSync(jsFile, rendered)
 		console.log(
-			`  ✎ l10n/${locale}.js written (${Object.keys(doc.translations).length} keys)`,
+			`  ✎ l10n/${locale}.js written (${Object.keys(entries).length} keys)`,
 		)
 	}
 
@@ -172,4 +206,8 @@ function main() {
 	}
 }
 
-main()
+if (require.main === module) {
+	main()
+}
+
+module.exports = { browserEntries, renderJs }

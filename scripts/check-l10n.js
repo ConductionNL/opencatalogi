@@ -21,12 +21,12 @@
 
 const fs = require('fs')
 const path = require('path')
-const { loadJsTranslations, walk } = require('./lib/l10n.js')
+const { loadSourceCatalogue, walk } = require('./lib/l10n.js')
 
 const ROOT = path.resolve(__dirname, '..')
 const SRC_DIR = path.join(ROOT, 'src')
 const SCHEMA_DIR = path.join(ROOT, 'lib', 'Settings')
-const L10N_FILE = path.join(ROOT, 'l10n', 'en.js')
+const L10N_DIR = path.join(ROOT, 'l10n')
 
 const RED = '\x1b[31m'
 const YELLOW = '\x1b[33m'
@@ -594,7 +594,8 @@ function collectSchemaStrings() {
  *
  */
 function main() {
-	const { app, translations } = loadJsTranslations(L10N_FILE)
+	// en.json + en.js: en.js leaves out English entries that equal their key.
+	const { app, translations } = loadSourceCatalogue(L10N_DIR)
 	const keys = new Set(Object.keys(translations))
 	const files = walk(SRC_DIR, ['.vue', '.js', '.ts'])
 	const vueFiles = files.filter((f) => f.endsWith('.vue'))

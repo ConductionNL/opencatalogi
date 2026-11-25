@@ -32,6 +32,7 @@ const fs = require('fs')
 const path = require('path')
 const {
 	loadJsTranslations,
+	loadSourceCatalogue,
 	serializeJs,
 	collectUsedKeys,
 	runEslintFix,
@@ -65,7 +66,8 @@ function main() {
 		process.exit(1)
 	}
 
-	const { app, translations: english } = loadJsTranslations(ENGLISH_FILE)
+	// en.json + en.js: en.js leaves out English entries that equal their key.
+	const { app, translations: english } = loadSourceCatalogue(L10N_DIR)
 	const existingKeys = new Set(Object.keys(english))
 	const usedKeys = collectUsedKeys(SRC_DIR, app)
 	const unused = [...existingKeys].filter((k) => !usedKeys.has(k)).sort()

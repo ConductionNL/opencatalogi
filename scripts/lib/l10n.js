@@ -286,6 +286,27 @@ function listJsLocaleFiles(l10nDir) {
 		.map((f) => path.join(l10nDir, f))
 }
 
+/**
+ * The English source catalogue: every key the app translates, with its
+ * English text. l10n/en.js no longer carries entries that map a string to
+ * itself (scripts/build-l10n-js.js leaves them out), so the full key set is
+ * en.json's, with en.js's entries on top. App name and plural form come from
+ * en.js, as before.
+ *
+ * @spec openspec/specs/l10n (PERF-HANDOFF all apps: drop English identity entries at build time)
+ */
+function loadSourceCatalogue(l10nDir) {
+	const english = loadJsTranslations(path.join(l10nDir, 'en.js'))
+	const jsonFile = path.join(l10nDir, 'en.json')
+	const json = fs.existsSync(jsonFile)
+		? JSON.parse(fs.readFileSync(jsonFile, 'utf8')).translations || {}
+		: {}
+	return {
+		...english,
+		translations: { ...json, ...english.translations },
+	}
+}
+
 /** Strip the `.js` extension from a locale file basename ("en.js" → "en"). */
 function localeNameOf(file) {
 	return path.basename(file, '.js')
@@ -293,6 +314,7 @@ function localeNameOf(file) {
 
 module.exports = {
 	loadJsTranslations,
+	loadSourceCatalogue,
 	serializeJs,
 	walk,
 	collectUsedKeys,
