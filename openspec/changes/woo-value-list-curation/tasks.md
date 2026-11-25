@@ -18,8 +18,9 @@ Read `openspec/woo-build-rules.md` first. Start once `woo-value-lists-on-the-con
 
 ## 4. Hide by organisation type
 
-- [ ] 4.1 Write `lib/Settings/woo-category-applicability.json` with, per entry, the article of the Woo that makes the category not apply to that type; leave out any entry you cannot cite (REQ-WVL-004). Verify: `tests/Unit/Settings/WooCategoryApplicabilityTest.php::testEveryEntryCitesItsLegalBasis`. List the cited articles in the PR body for review.
-- [ ] 4.2 Add the organisation type setting with the confirm-or-override proposal, the in-use refusal, and the empty valid sitemap index for a hidden category (REQ-WVL-004, REQ-WIC-001). Verify: `tests/Unit/Service/SitemapServiceTest.php::testAHiddenCategoryServesAnEmptyValidIndex` (fails today), `WooCategoryRegistryTest::testAHiddenCategoryKeepsItsSitemapIndexAndRobotsLine`, `ValueListChoiceListenerTest::testHidingACategoryInUseIsRefused`, and `tests/e2e/value-list-curation.spec.ts` "a water board hides the categories it never publishes".
+- [x] 4.1 Write `lib/Settings/woo-category-applicability.json` with, per entry, the article of the Woo that makes the category not apply to that type; leave out any entry you cannot cite (REQ-WVL-004). Verify: `tests/Unit/Settings/WooCategoryApplicabilityTest.php::testEveryEntryCitesItsLegalBasis`. List the cited articles in the PR body for review.
+- [x] 4.2 Add the organisation type setting with the confirm-or-override proposal, the in-use refusal, and the empty valid sitemap index for a hidden category (REQ-WVL-004, REQ-WIC-001). Verify: `tests/Unit/Service/SitemapServiceTest.php::testAHiddenCategoryServesAnEmptyValidIndex` (fails today), `WooCategoryRegistryTest::testAHiddenCategoryKeepsItsSitemapIndexAndRobotsLine`, `ValueListChoiceListenerTest::testHidingACategoryInUseIsRefused`, and `tests/e2e/value-list-curation.spec.ts` "a water board hides the categories it never publishes".
+  - Built (#3101): every entry cites `Wet open overheid, artikel 3.3` and quotes the category's scope as the TOOI list records it (`skos:definition`, scw_woo_informatiecategorieen v4); the test checks each quote against the recorded list. Proposed: infocat006 for gemeenschappelijke regeling and zbo, infocat007 for every type but rijksoverheid and overig, infocat008 for rijksoverheid and zbo, infocat009 for zbo. Not proposed: infocat013 (TOOI notes 'alleen bij Min. BZ', which is not the article's text). `CategoryApplicability`, `GET`/`PUT /api/woo/organisation-type` (admin), the settings section `OrganisationTypeProposal.vue` (proposal checked, uncheck to keep, hide the rest through the choice route; refusals listed per category). The hiding and the in-use refusal itself landed earlier (#3038). The e2e scenario "a water board hides the categories it never publishes" is written, runs in nightly; not run live. Decision in #3101: the sitemaps.org `siteindex.xsd` needs at least one `sitemap`, so the spec now asks for a well-formed empty index, not a schema-valid one.
 
 ## 5. Activated organisations
 
@@ -29,7 +30,7 @@ Read `openspec/woo-build-rules.md` first. Start once `woo-value-lists-on-the-con
 ## 6. Docs
 
 - [ ] 6.1 Document curation for administrators in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
-  - Written for what is built (`docs/features/value-list-curation.md`: choices, explanations, order, the routes); the strings of the built parts are in `l10n/` for all locales. Left open until hiding (4.x) and activation (5.x) are built and documented.
+  - Written for what is built (`docs/features/value-list-curation.md`: choices, explanations, order, the routes); the strings of the built parts are in `l10n/` for all locales. Hiding and the organisation type proposal are documented (#3101). Left open until activation (5.x) is built and documented.
 
 ## 7. Verification
 

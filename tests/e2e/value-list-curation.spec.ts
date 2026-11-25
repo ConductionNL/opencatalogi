@@ -10,7 +10,13 @@
  * An explanation written in the same section is served by the public category
  * list. The stored order and explanation are restored afterwards.
  *
+ * A water board sets its organisation type: the meeting documents of the
+ * Staten-Generaal are proposed with their legal basis, and confirming the
+ * proposal takes them out of the officer's category list. The type and the
+ * hidden flag are restored afterwards.
+ *
  * @e2e openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#scenario-an-administrator-puts-the-most-used-category-first
+ * @e2e openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#scenario-a-water-board-hides-the-categories-it-never-publishes
  */
 import { expect, test } from './authenticated-request.ts'
 
@@ -111,5 +117,78 @@ test.describe('Value list curation (REQ-WVL-002)', () => {
 			(entry: { code: string }) => entry.code === COVENANTS,
 		)
 		expect(covenants.explanation).toBe(explanation)
+	})
+})
+
+test.describe('Organisation type proposal (REQ-WVL-004)', () => {
+	const STATES_GENERAL = 'infocat007'
+	let previousType: string | null = null
+	let statesGeneralUri = ''
+	let statesGeneralHidden = false
+
+	test.beforeAll(async ({ request: admin }) => {
+		previousType = (
+			await (await admin.get(`${API_BASE}/woo/organisation-type`)).json()
+		).type
+		const list = await (
+			await admin.get(`${API_BASE}/woo/value-list-choices?scheme=${SCHEME}`)
+		).json()
+		const entry = (list.entries ?? []).find(
+			(candidate: { code: string }) => candidate.code === STATES_GENERAL,
+		)
+		statesGeneralUri = entry?.uri ?? ''
+		statesGeneralHidden = entry?.hidden === true
+	})
+
+	test.afterAll(async ({ request: admin }) => {
+		if (previousType !== null) {
+			await admin.put(`${API_BASE}/woo/organisation-type`, {
+				data: { type: previousType },
+			})
+		}
+		if (statesGeneralUri !== '') {
+			await admin.put(`${API_BASE}/woo/value-list-choices`, {
+				data: {
+					scheme: SCHEME,
+					entry: statesGeneralUri,
+					choice: { hidden: statesGeneralHidden },
+				},
+			})
+		}
+	})
+
+	test('a water board hides the categories it never publishes', async ({
+		page,
+		request: admin,
+	}) => {
+		const set = await admin.put(`${API_BASE}/woo/organisation-type`, {
+			data: { type: 'waterschap' },
+		})
+		expect(set.ok()).toBe(true)
+
+		await page.goto(SETTINGS_PAGE)
+		const section = page.getByTestId('organisation-type')
+		await expect(section).toBeVisible()
+		const proposed = section.getByTestId(
+			`organisation-type-proposal-${STATES_GENERAL}`,
+		)
+		await expect(proposed).toContainText(/artikel 3\.3/)
+		await expect(proposed.getByRole('checkbox')).toBeChecked()
+
+		const hidden = page.waitForResponse(
+			(response) =>
+				response.url().endsWith('/value-list-choices')
+				&& response.request().method() === 'PUT',
+		)
+		await section.getByTestId('organisation-type-hide').click()
+		expect((await hidden).ok()).toBe(true)
+		await expect(section.getByTestId('organisation-type-done')).toBeVisible()
+
+		const categories = await (
+			await admin.get(`${API_BASE}/woo/categories`)
+		).json()
+		expect(
+			categories.results.map((entry: { code: string }) => entry.code),
+		).not.toContain(STATES_GENERAL)
 	})
 })
