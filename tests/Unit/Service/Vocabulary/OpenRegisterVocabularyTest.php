@@ -44,7 +44,7 @@ class OpenRegisterVocabularyTest extends TestCase {
 	 * @return OpenRegisterVocabulary
 	 */
 	private function adapter(array $services): OpenRegisterVocabulary {
-		$container = $this->createMock(ContainerInterface::class);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			static function (string $name) use ($services): object {
 				if (isset($services[$name]) === false) {
@@ -108,7 +108,7 @@ class OpenRegisterVocabularyTest extends TestCase {
 
 		$this->assertSame(expected: 2, actual: $adapter->import(jsonLd: ['@graph' => [['@id' => 's']]])['created']);
 
-		$this->expectException(RuntimeException::class);
+		$this->expectException(exception: RuntimeException::class);
 		$this->expectExceptionMessage(message: 'The vocabulary import failed: no scheme');
 		$adapter->import(jsonLd: []);
 	}//end testTheImportAnswersTheCountsAndWrapsAFailure()
@@ -127,7 +127,7 @@ class OpenRegisterVocabularyTest extends TestCase {
 			$this->assertStringContainsString(needle: 'ConceptRepository', haystack: $e->getMessage());
 		}
 
-		$this->expectException(RuntimeException::class);
+		$this->expectException(exception: RuntimeException::class);
 		$this->expectExceptionMessage(message: 'VocabularyImporterInterface');
 		$adapter->import(jsonLd: ['@graph' => []]);
 	}//end testWithoutOpenRegisterBothCallsRefuse()

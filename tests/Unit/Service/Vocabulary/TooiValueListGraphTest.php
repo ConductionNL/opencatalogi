@@ -113,7 +113,8 @@ class TooiValueListGraphTest extends TestCase {
 		$types = array_map(static fn (array $node): string => $skos->localName(iriOrPrefixed: (string)$node['@type']), $built['jsonLd']['@graph']);
 		$this->assertSame(expected: ['ConceptScheme'], actual: array_values(array_unique(array_slice($types, 0, 1))));
 		$this->assertSame(expected: ['Concept'], actual: array_values(array_unique(array_slice($types, 1))));
-		$labels = $skos->langMap(value: $skos->findPredicate(node: $this->nodeOf(graph: $built['jsonLd']['@graph'], id: 'c_99a836c7'), localName: 'prefLabel'));
+		$advies = $this->nodeOf(graph: $built['jsonLd']['@graph'], id: 'c_99a836c7');
+		$labels = $skos->langMap(value: $skos->findPredicate(node: $advies, localName: 'prefLabel'));
 		$this->assertSame(expected: 'advies', actual: $labels['nl'], message: 'the Dutch label reads through the expanded literal');
 	}//end testOpenRegistersReaderSeesTheSchemeAndTheConcepts()
 
@@ -123,8 +124,9 @@ class TooiValueListGraphTest extends TestCase {
 	 * @return void
 	 */
 	public function testADownloadWithoutSchemeOrConceptIsRefused(): void {
-		$this->expectException(InvalidArgumentException::class);
-		(new TooiValueListGraph())->build(decoded: [['@id' => 'https://example.test/x', '@type' => ['https://example.test/Thing']]], schemeUri: 'https://example.test/s');
+		$this->expectException(exception: InvalidArgumentException::class);
+		$thing = ['@id' => 'https://example.test/x', '@type' => ['https://example.test/Thing']];
+		(new TooiValueListGraph())->build(decoded: [$thing], schemeUri: 'https://example.test/s');
 	}//end testADownloadWithoutSchemeOrConceptIsRefused()
 
 	/**
@@ -133,7 +135,7 @@ class TooiValueListGraphTest extends TestCase {
 	 * @return void
 	 */
 	public function testADownloadThatIsNoNodeListIsRefused(): void {
-		$this->expectException(InvalidArgumentException::class);
+		$this->expectException(exception: InvalidArgumentException::class);
 		(new TooiValueListGraph())->build(decoded: ['title' => 'maintenance'], schemeUri: 'https://example.test/s');
 	}//end testADownloadThatIsNoNodeListIsRefused()
 

@@ -104,8 +104,8 @@ class TooiSchemeRefreshTest extends TestCase {
 			),
 		];
 
-		$response = $this->createMock(IResponse::class);
-		$client = $this->createMock(IClient::class);
+		$response = $this->createMock(originalClassName: IResponse::class);
+		$client = $this->createMock(originalClassName: IClient::class);
 		if ($download instanceof RuntimeException) {
 			$client->method('get')->willThrowException($download);
 		} else {
@@ -113,10 +113,10 @@ class TooiSchemeRefreshTest extends TestCase {
 			$client->method('get')->willReturn($response);
 		}
 
-		$clients = $this->createMock(IClientService::class);
+		$clients = $this->createMock(originalClassName: IClientService::class);
 		$clients->method('newClient')->willReturn($client);
 
-		$vocabulary = $this->createMock(VocabularyRegisterInterface::class);
+		$vocabulary = $this->createMock(originalClassName: VocabularyRegisterInterface::class);
 		$vocabulary->method('activeConceptUris')->willReturn($active);
 		$vocabulary->method('import')->willReturnCallback(
 			function (array $jsonLd): array {
@@ -125,7 +125,7 @@ class TooiSchemeRefreshTest extends TestCase {
 			}
 		);
 
-		$config = $this->createMock(IAppConfig::class);
+		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
 			fn (string $app, string $key, string $default = ''): string => ($this->stored[$key] ?? $default)
 		);
@@ -136,14 +136,14 @@ class TooiSchemeRefreshTest extends TestCase {
 			}
 		);
 
-		$incidents = $this->createMock(PipelineIncidents::class);
+		$incidents = $this->createMock(originalClassName: PipelineIncidents::class);
 		$incidents->method('raise')->willReturnCallback(
 			function (string $kind, string $subject, string $message): void {
 				$this->raised[] = ['kind' => $kind, 'subject' => $subject, 'message' => $message];
 			}
 		);
 
-		$time = $this->createMock(ITimeFactory::class);
+		$time = $this->createMock(originalClassName: ITimeFactory::class);
 		$time->method('getDateTime')->willReturn(new \DateTime('2026-11-25T03:00:00+00:00'));
 
 		return new ValueListRefresh(
@@ -181,9 +181,9 @@ class TooiSchemeRefreshTest extends TestCase {
 
 		$this->assertCount(expectedCount: 1, haystack: $this->imported);
 		$graph = $this->imported[0]['@graph'];
-		$this->assertSame(self::SCHEME, $graph[0]['@id']);
+		$this->assertSame(expected: self::SCHEME, actual: $graph[0]['@id']);
 		$this->assertSame(expected: 'http://www.w3.org/2004/02/skos/core#ConceptScheme', actual: $graph[0]['@type']);
-		$this->assertContains(self::NEW_CONCEPT, array_column($graph, '@id'));
+		$this->assertContains(needle: self::NEW_CONCEPT, haystack: array_column($graph, '@id'));
 		$this->assertCount(expectedCount: 19, haystack: $graph, message: 'the scheme and its 18 concepts');
 
 		$this->assertNull(actual: $state['informatiecategorieen']['error']);
@@ -212,13 +212,14 @@ class TooiSchemeRefreshTest extends TestCase {
 		$short[] = $concepts[0];
 		$short[] = $concepts[1];
 
-		$active = array_merge([$concepts[0]['@id'], $concepts[1]['@id']], array_map(static fn (int $i): string => 'https://example.test/c_' . $i, range(1, 38)));
+		$others = array_map(callback: static fn (int $i): string => 'https://example.test/c_' . $i, array: range(start: 1, end: 38));
+		$active = array_merge([$concepts[0]['@id'], $concepts[1]['@id']], $others);
 		$state = $this->refresh(active: $active, download: (string)json_encode($short))->refreshAll();
 
 		$this->assertSame(expected: [], actual: $this->imported, message: 'nothing is imported, so the 40 concepts stay active');
 		$this->assertStringContainsString(needle: '38 of 40', haystack: (string)$state['informatiecategorieen']['error']);
 		$this->assertCount(expectedCount: 1, haystack: $this->raised);
-		$this->assertSame(ValueListRefresh::INCIDENT_KIND, $this->raised[0]['kind']);
+		$this->assertSame(expected: ValueListRefresh::INCIDENT_KIND, actual: $this->raised[0]['kind']);
 		$this->assertSame(expected: 'informatiecategorieen', actual: $this->raised[0]['subject']);
 	}//end testAMassDeprecationIsRefused()
 
@@ -263,11 +264,12 @@ class TooiSchemeRefreshTest extends TestCase {
 		$this->stored = [ValueListRefresh::SOURCES_KEY => 'not json'];
 
 		$sources = $refresh->sources();
-		$this->assertSame(ValueListRefresh::DEFAULT_SOURCES, $sources);
+		$this->assertSame(expected: ValueListRefresh::DEFAULT_SOURCES, actual: $sources);
 		$this->assertSame(expected: ['informatiecategorieen', 'documentsoorten', 'soortHandeling', 'talen'], actual: array_column($sources, 'key'));
 		foreach ($sources as $source) {
 			$this->assertStringStartsWith(prefix: 'https://repository.officiele-overheidspublicaties.nl/waardelijsten/', string: $source['url']);
-			$this->assertFileExists(filename: __DIR__ . '/../../fixtures/tooi/' . basename($source['url']), message: 'each seeded source has its recorded answer');
+			$recorded = __DIR__ . '/../../fixtures/tooi/' . basename($source['url']);
+			$this->assertFileExists(filename: $recorded, message: 'each seeded source has its recorded answer');
 		}
 	}//end testTheSeededSourcesAreTheTooiDownloads()
 
@@ -280,9 +282,9 @@ class TooiSchemeRefreshTest extends TestCase {
 		$infoXml = (string)file_get_contents(__DIR__ . '/../../../appinfo/info.xml');
 		$this->assertStringContainsString(needle: '<job>OCA\\OpenCatalogi\\BackgroundJob\\TooiSchemeRefresh</job>', haystack: $infoXml);
 
-		$refresh = $this->createMock(ValueListRefresh::class);
+		$refresh = $this->createMock(originalClassName: ValueListRefresh::class);
 		$refresh->expects($this->once())->method('refreshAll')->willReturn([]);
-		$job = new TooiSchemeRefresh(time: $this->createMock(ITimeFactory::class), refresh: $refresh);
+		$job = new TooiSchemeRefresh(time: $this->createMock(originalClassName: ITimeFactory::class), refresh: $refresh);
 		$this->assertSame(expected: 86400, actual: $job->getInterval());
 
 		$run = new \ReflectionMethod($job, 'run');
