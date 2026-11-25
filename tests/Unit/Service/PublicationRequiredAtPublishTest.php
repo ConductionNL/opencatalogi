@@ -105,20 +105,24 @@ final class PublicationRequiredAtPublishTest extends TestCase {
 	 * @return StateFieldRuleListener The listener.
 	 */
 	private function listener(): StateFieldRuleListener {
-		$user = $this->createMock(IUser::class);
+		$user = $this->createMock(originalClassName: IUser::class);
 		$user->method('getUID')->willReturn('redacteur');
-		$session = $this->createMock(IUserSession::class);
+		$session = $this->createMock(originalClassName: IUserSession::class);
 		$session->method('getUser')->willReturn($user);
-		$groups = $this->createMock(IGroupManager::class);
+		$groups = $this->createMock(originalClassName: IGroupManager::class);
 		$groups->method('getUserGroupIds')->willReturn([]);
-		$mapper = $this->createMock(SchemaMapper::class);
+		$mapper = $this->createMock(originalClassName: SchemaMapper::class);
 		$mapper->method('find')->willReturn(self::schemaEntity());
 
 		$dialect = new ConditionDialect(new CalculationEvaluator(new PlaceholderResolver($session)));
 		$resolver = new StateFieldRuleResolver($session, $groups, $dialect);
 
 		return new StateFieldRuleListener(
-			new StateFieldRulePlatform($mapper, $this->createMock(RuleRunRecorder::class), $this->createMock(LoggerInterface::class)),
+			new StateFieldRulePlatform(
+				$mapper,
+				$this->createMock(originalClassName: RuleRunRecorder::class),
+				$this->createMock(originalClassName: LoggerInterface::class)
+			),
 			$resolver,
 			new StateConditionEvaluator($resolver, $dialect)
 		);
@@ -149,12 +153,12 @@ final class PublicationRequiredAtPublishTest extends TestCase {
 	 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
 	 */
 	public function testADraftWithOnlyATitleIsSaved(): void {
-		$event = new ObjectCreatingEvent(self::publication(['title' => 'Raadsstukken 15 oktober', 'status' => 'draft']));
+		$event = new ObjectCreatingEvent(self::publication(data: ['title' => 'Raadsstukken 15 oktober', 'status' => 'draft']));
 
 		$this->listener()->handle($event);
 
-		self::assertFalse($event->isPropagationStopped());
-		self::assertSame([], $event->getErrors());
+		self::assertFalse(condition: $event->isPropagationStopped());
+		self::assertSame(expected: [], actual: $event->getErrors());
 	}//end testADraftWithOnlyATitleIsSaved()
 
 	/**
@@ -165,16 +169,16 @@ final class PublicationRequiredAtPublishTest extends TestCase {
 	 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-a-draft-needs-only-a-title-req-prp-001
 	 */
 	public function testPublishingWithoutSummaryIsRefusedByName(): void {
-		$old = self::publication(['title' => 'Raadsstukken 15 oktober', 'status' => 'draft']);
-		$new = self::publication(['title' => 'Raadsstukken 15 oktober', 'status' => 'published', 'organization' => 'org-1']);
+		$old = self::publication(data: ['title' => 'Raadsstukken 15 oktober', 'status' => 'draft']);
+		$new = self::publication(data: ['title' => 'Raadsstukken 15 oktober', 'status' => 'published', 'organization' => 'org-1']);
 		$event = new ObjectUpdatingEvent($new, $old);
 
 		$this->listener()->handle($event);
 
-		self::assertTrue($event->isPropagationStopped());
-		self::assertSame(StateFieldRuleListener::CODE_REQUIRED, $event->getErrors()['code']);
-		self::assertSame('summary', $event->getErrors()['field']);
-		self::assertSame('published', $event->getErrors()['state']);
+		self::assertTrue(condition: $event->isPropagationStopped());
+		self::assertSame(expected: StateFieldRuleListener::CODE_REQUIRED, actual: $event->getErrors()['code']);
+		self::assertSame(expected: 'summary', actual: $event->getErrors()['field']);
+		self::assertSame(expected: 'published', actual: $event->getErrors()['state']);
 	}//end testPublishingWithoutSummaryIsRefusedByName()
 
 	/**
@@ -189,14 +193,14 @@ final class PublicationRequiredAtPublishTest extends TestCase {
 		$legacy = ['title' => 'Besluit 2019', 'status' => 'published', 'summary' => '', 'audience' => 'public'];
 		$saved = RequiredToPublish::recordGaps(publication: $legacy);
 
-		self::assertSame([], (new NotSuppliedHandler())->validate($saved, self::schemaEntity()));
+		self::assertSame(expected: [], actual: (new NotSuppliedHandler())->validate($saved, self::schemaEntity()));
 
-		$accepted = new ObjectUpdatingEvent(self::publication($saved), self::publication($legacy));
+		$accepted = new ObjectUpdatingEvent(self::publication(data: $saved), self::publication(data: $legacy));
 		$this->listener()->handle($accepted);
-		self::assertFalse($accepted->isPropagationStopped(), json_encode($accepted->getErrors()));
+		self::assertFalse(condition: $accepted->isPropagationStopped(), message: json_encode($accepted->getErrors()));
 
-		$refused = new ObjectUpdatingEvent(self::publication($legacy), self::publication($legacy));
+		$refused = new ObjectUpdatingEvent(self::publication(data: $legacy), self::publication(data: $legacy));
 		$this->listener()->handle($refused);
-		self::assertTrue($refused->isPropagationStopped());
+		self::assertTrue(condition: $refused->isPropagationStopped());
 	}//end testALegacyPublicationTheUpgradeResavesIsAccepted()
 }//end class

@@ -251,13 +251,13 @@ class BackfillPublicationLifecycleStateTest extends TestCase {
 		];
 		$this->runStep();
 
-		$this->assertSame('published', $this->store['pub-9']['status']);
+		$this->assertSame(expected: 'published', actual: $this->store['pub-9']['status']);
 		$this->assertSame(
-			['description' => 'published-before-required', 'organization' => 'published-before-required'],
-			$this->store['pub-9']['@notSupplied']
+			expected: ['description' => 'published-before-required', 'organization' => 'published-before-required'],
+			actual: $this->store['pub-9']['@notSupplied']
 		);
-		$this->assertSame('Kort', $this->store['pub-9']['summary']);
-		$this->assertArrayNotHasKey('@notSupplied', $this->store['pub-10']);
+		$this->assertSame(expected: 'Kort', actual: $this->store['pub-9']['summary']);
+		$this->assertArrayNotHasKey(key: '@notSupplied', array: $this->store['pub-10']);
 	}//end testABackfilledPublicationIsSavedWithItsGapsRecorded()
 
 	/**

@@ -170,11 +170,11 @@ final class AudienceMigrationTest extends TestCase {
 		$this->runStep();
 
 		self::assertSame(
-			['summary' => 'published-before-required', 'organization' => 'published-before-required'],
-			$this->store['a']['@notSupplied']
+			expected: ['summary' => 'published-before-required', 'organization' => 'published-before-required'],
+			actual: $this->store['a']['@notSupplied']
 		);
-		self::assertSame('public', $this->store['a']['audience']);
-		self::assertArrayNotHasKey('@notSupplied', $this->store['b']);
+		self::assertSame(expected: 'public', actual: $this->store['a']['audience']);
+		self::assertArrayNotHasKey(key: '@notSupplied', array: $this->store['b']);
 	}//end testALegacyPublicationIsSavedWithItsGapsRecorded()
 
 	/**

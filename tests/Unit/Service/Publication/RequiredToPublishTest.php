@@ -74,12 +74,17 @@ class RequiredToPublishTest extends TestCase {
 	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public function testAPublishedRecordGetsItsGapsRecordedAsNotSupplied(): void {
-		$saved = RequiredToPublish::recordGaps(publication: ['title' => 'Raadsstukken', 'status' => 'published', 'summary' => '  ', 'description' => 'Lang']);
+		$saved = RequiredToPublish::recordGaps(
+			publication: ['title' => 'Raadsstukken', 'status' => 'published', 'summary' => '  ', 'description' => 'Lang']
+		);
 
-		$this->assertSame(['summary' => 'published-before-required', 'organization' => 'published-before-required'], $saved['@notSupplied']);
-		$this->assertNull($saved['summary']);
-		$this->assertNull($saved['organization']);
-		$this->assertSame('Lang', $saved['description']);
+		$this->assertSame(
+			expected: ['summary' => 'published-before-required', 'organization' => 'published-before-required'],
+			actual: $saved['@notSupplied']
+		);
+		$this->assertNull(actual: $saved['summary']);
+		$this->assertNull(actual: $saved['organization']);
+		$this->assertSame(expected: 'Lang', actual: $saved['description']);
 	}//end testAPublishedRecordGetsItsGapsRecordedAsNotSupplied()
 
 	/**
@@ -94,9 +99,9 @@ class RequiredToPublishTest extends TestCase {
 		$none = ['title' => 'Oud', 'status' => ''];
 		$complete = ['status' => 'approved', 'summary' => 'Kort', 'description' => 'Lang', 'organization' => 'org-1'];
 
-		$this->assertSame($draft, RequiredToPublish::recordGaps(publication: $draft));
-		$this->assertSame($none, RequiredToPublish::recordGaps(publication: $none));
-		$this->assertSame($complete, RequiredToPublish::recordGaps(publication: $complete));
+		$this->assertSame(expected: $draft, actual: RequiredToPublish::recordGaps(publication: $draft));
+		$this->assertSame(expected: $none, actual: RequiredToPublish::recordGaps(publication: $none));
+		$this->assertSame(expected: $complete, actual: RequiredToPublish::recordGaps(publication: $complete));
 	}//end testOnlyAStateWithTheRuleIsMarked()
 
 	/**
@@ -113,9 +118,11 @@ class RequiredToPublishTest extends TestCase {
 			'organization' => 'org-1',
 			'@notSupplied' => ['description' => 'unknown-at-source', 'theme' => 'not-applicable'],
 		]);
-		$this->assertSame(['description' => 'unknown-at-source', 'theme' => 'not-applicable'], $saved['@notSupplied']);
+		$this->assertSame(expected: ['description' => 'unknown-at-source', 'theme' => 'not-applicable'], actual: $saved['@notSupplied']);
 
-		$listed = RequiredToPublish::recordGaps(publication: ['status' => 'published', 'summary' => 'Kort', 'organization' => 'org-1', '@notSupplied' => ['description']]);
-		$this->assertSame(['description' => 'published-before-required'], $listed['@notSupplied']);
+		$listed = RequiredToPublish::recordGaps(
+			publication: ['status' => 'published', 'summary' => 'Kort', 'organization' => 'org-1', '@notSupplied' => ['description']]
+		);
+		$this->assertSame(expected: ['description' => 'published-before-required'], actual: $listed['@notSupplied']);
 	}//end testAnExistingRecordKeepsItsEntries()
 }//end class

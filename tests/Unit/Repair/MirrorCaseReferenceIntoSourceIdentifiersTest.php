@@ -159,14 +159,14 @@ class MirrorCaseReferenceIntoSourceIdentifiersTest extends TestCase {
 	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public function testALegacyPublicationIsSavedWithItsGapsRecorded(): void {
-		$store = self::store([
+		$store = self::store(publications: [
 			['id' => 'p1', 'caseReference' => 'Z-1', 'status' => 'published', 'description' => 'Lang', 'organization' => 'org-1'],
 		]);
 
-		$this->step($store)->run($this->createMock(IOutput::class));
+		$this->step(store: $store)->run($this->createMock(originalClassName: IOutput::class));
 
-		$this->assertSame(['summary' => 'published-before-required'], $store->saves[0]['object']['@notSupplied']);
-		$this->assertSame('Z-1', $store->saves[0]['object']['sourceIdentifiers'][0]['identifier']);
+		$this->assertSame(expected: ['summary' => 'published-before-required'], actual: $store->saves[0]['object']['@notSupplied']);
+		$this->assertSame(expected: 'Z-1', actual: $store->saves[0]['object']['sourceIdentifiers'][0]['identifier']);
 	}//end testALegacyPublicationIsSavedWithItsGapsRecorded()
 
 	/**

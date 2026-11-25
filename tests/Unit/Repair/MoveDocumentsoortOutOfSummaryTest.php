@@ -180,13 +180,22 @@ class MoveDocumentsoortOutOfSummaryTest extends TestCase {
 	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public function testThePublishedSummaryThatMovesIsRecordedAsNotSupplied(): void {
-		$this->store = ['pub-1' => ['id' => 'pub-1', 'title' => 'Besluit', 'status' => 'published', 'summary' => 'besluit', 'description' => 'Lang', 'organization' => 'org-1']];
+		$this->store = [
+			'pub-1' => [
+				'id'           => 'pub-1',
+				'title'        => 'Besluit',
+				'status'       => 'published',
+				'summary'      => 'besluit',
+				'description'  => 'Lang',
+				'organization' => 'org-1',
+			],
+		];
 
 		$this->runStep();
 
-		$this->assertNull($this->store['pub-1']['summary']);
-		$this->assertSame(['summary' => 'published-before-required'], $this->store['pub-1']['@notSupplied']);
-		$this->assertSame('org-1', $this->store['pub-1']['organization']);
+		$this->assertNull(actual: $this->store['pub-1']['summary']);
+		$this->assertSame(expected: ['summary' => 'published-before-required'], actual: $this->store['pub-1']['@notSupplied']);
+		$this->assertSame(expected: 'org-1', actual: $this->store['pub-1']['organization']);
 	}//end testThePublishedSummaryThatMovesIsRecordedAsNotSupplied()
 
 	/**
