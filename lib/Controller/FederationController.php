@@ -294,18 +294,8 @@ class FederationController extends Controller {
 			// A miss carries `error` and no `data`; answer that error as the body.
 			$result['data'] = ($result['data'] ?? ['error' => ($result['error'] ?? 'Publication not found')]);
 
-			// REQ-WDW-003: the same `withheld` list publications#show answers, for a
-			// publication of this instance whose catalogue opted in. A publication a peer
-			// answered (marked `federated`, carrying `sources`) is never described from this
-			// instance's catalogues: its register and schema ids are the peer's.
-			$isLocal = (($result['federated'] ?? false) !== true
-				&& is_array($result['data']) === true
-				&& array_key_exists('sources', $result['data']) === false);
-			if ($this->localState !== null && $result['status'] === 200 && $isLocal === true) {
-				$result['data'] = $this->localState->addTo(publication: $result['data']);
-			}
-
-			if ($result['status'] === 200 && $isLocal === true) {
+			if (self::isServedHere(result: $result) === true) {
+				$result['data'] = $this->withLocalState(publication: $result['data']);
 				$this->countReach(publicationId: $id, kind: UsageCounterServiceInterface::KIND_VIEW);
 			}
 
@@ -340,6 +330,45 @@ class FederationController extends Controller {
 		}
 
 	}//end publication()
+
+	/**
+	 * Whether the service found a publication of this instance, not one a peer answered.
+	 *
+	 * REQ-WDW-003: a publication a peer answered (marked `federated`, carrying
+	 * `sources`) is never described from this instance's catalogues: its register
+	 * and schema ids are the peer's.
+	 *
+	 * @param array<string, mixed> $result The service's answer.
+	 *
+	 * @return bool True for a publication found here.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private static function isServedHere(array $result): bool {
+		return $result['status'] === 200
+			&& ($result['federated'] ?? false) !== true
+			&& is_array($result['data']) === true
+			&& array_key_exists('sources', $result['data']) === false;
+
+	}//end isServedHere()
+
+	/**
+	 * A publication of this instance with the `withheld` list publications#show answers (REQ-WDW-003).
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 *
+	 * @return array<string, mixed> The publication, with its withheld list when its catalogue opted in.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function withLocalState(array $publication): array {
+		if ($this->localState === null) {
+			return $publication;
+		}
+
+		return $this->localState->addTo(publication: $publication);
+
+	}//end withLocalState()
 
 	/**
 	 * The tombstone of a withdrawn publication of this instance, or null for the 404 (REQ-PWA-002).

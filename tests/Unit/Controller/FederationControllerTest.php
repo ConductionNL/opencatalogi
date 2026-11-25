@@ -302,9 +302,9 @@ class FederationControllerTest extends TestCase {
 		$this->publicationService->method('getCatalogFilters')
 			->willReturn(['registers' => [7], 'schemas' => [11, 12]]);
 		$tombstone = ['id' => 'pub-1', 'withdrawnAt' => '2026-11-24T10:00:00+00:00', 'publicReason' => 'Gepubliceerd in strijd met de AVG'];
-		$tombstones = $this->createMock(PublicationTombstone::class);
+		$tombstones = $this->createMock(originalClassName: PublicationTombstone::class);
 		$tombstones->expects($this->once())->method('tombstone')
-			->with($this->callback(
+			->with($this->callback(callback: 
 				static fn (CatalogSlugQuery $query): bool => $query->slug === 'pub-1'
 					&& $query->registers === [7]
 					&& $query->schemas === [11, 12]
@@ -312,12 +312,12 @@ class FederationControllerTest extends TestCase {
 			->willReturn($tombstone);
 		$this->tombstonesAre(tombstones: $tombstones);
 
-		$response = $this->controller->publication('pub-1');
+		$response = $this->controller->publication(id: 'pub-1');
 
-		$this->assertInstanceOf(TombstoneResponse::class, $response);
-		$this->assertSame(410, $response->getStatus());
-		$this->assertSame($tombstone, $response->getData());
-		$this->assertStringNotContainsString('public', (string)($response->getHeaders()['Cache-Control'] ?? ''));
+		$this->assertInstanceOf(expected: TombstoneResponse::class, actual: $response);
+		$this->assertSame(expected: 410, actual: $response->getStatus());
+		$this->assertSame(expected: $tombstone, actual: $response->getData());
+		$this->assertStringNotContainsString(needle: 'public', haystack: (string)($response->getHeaders()['Cache-Control'] ?? ''));
 	}
 
 	/**
@@ -333,12 +333,12 @@ class FederationControllerTest extends TestCase {
 			->willReturn(['success' => false, 'error' => 'Publication not found', 'status' => 404]);
 		$this->publicationService->method('getCatalogFilters')
 			->willThrowException(new \RuntimeException('no catalogue'));
-		$this->tombstonesAre(tombstones: $this->createMock(PublicationTombstone::class));
+		$this->tombstonesAre(tombstones: $this->createMock(originalClassName: PublicationTombstone::class));
 
-		$response = $this->controller->publication('draft-1');
+		$response = $this->controller->publication(id: 'draft-1');
 
-		$this->assertSame(404, $response->getStatus());
-		$this->assertSame(['error' => 'Publication not found'], $response->getData());
+		$this->assertSame(expected: 404, actual: $response->getStatus());
+		$this->assertSame(expected: ['error' => 'Publication not found'], actual: $response->getData());
 	}
 
 	/**
@@ -350,11 +350,11 @@ class FederationControllerTest extends TestCase {
 		$this->request->method('getParams')->willReturn([]);
 		$this->publicationService->method('getFederatedPublication')
 			->willReturn(['data' => ['id' => 'pub-2'], 'status' => 200, 'federated' => true]);
-		$tombstones = $this->createMock(PublicationTombstone::class);
+		$tombstones = $this->createMock(originalClassName: PublicationTombstone::class);
 		$tombstones->expects($this->never())->method('tombstone');
 		$this->tombstonesAre(tombstones: $tombstones);
 
-		$this->assertSame(200, $this->controller->publication('pub-2')->getStatus());
+		$this->assertSame(expected: 200, actual: $this->controller->publication(id: 'pub-2')->getStatus());
 	}
 
 	public function testPublicationReturns500OnException(): void {
