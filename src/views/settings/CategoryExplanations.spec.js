@@ -2,17 +2,17 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Unit test for `WooCategoryExplanations.vue`: the categories load with the
+ * Unit test for `CategoryExplanations.vue`: the categories load with the
  * organisation's choices, an explanation is saved as a value-list choice,
  * and a refused save shows the reason.
  */
 
 import axios from '@nextcloud/axios'
-import WooCategoryExplanations, {
+import CategoryExplanations, {
 	CHOICES_URL,
 	draftOf,
 	SCHEME,
-} from './WooCategoryExplanations.vue'
+} from './CategoryExplanations.vue'
 
 jest.mock('@nextcloud/axios', () => ({
 	__esModule: true,
@@ -36,13 +36,13 @@ const COVENANTS = {
  */
 function state() {
 	const fresh = {
-		...WooCategoryExplanations.methods,
-		...WooCategoryExplanations.data(),
+		...CategoryExplanations.methods,
+		...CategoryExplanations.data(),
 	}
 	return fresh
 }
 
-describe('WooCategoryExplanations', () => {
+describe('CategoryExplanations', () => {
 	beforeEach(() => {
 		axios.get.mockReset()
 		axios.put.mockReset()

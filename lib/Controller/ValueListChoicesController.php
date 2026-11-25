@@ -5,10 +5,10 @@
  *
  * How this organisation uses the national value lists, over HTTP:
  *
- * - An administrator reads a list with the organisation's choices and saves
- *   the choice about one entry (its explanation, order, own label, hidden).
- *   Those two routes carry no NoAdminRequired, so Nextcloud refuses everyone
- *   else.
+ * - An administrator (or a delegated OpenCatalogi administrator) reads a list
+ *   with the organisation's choices and saves the choice about one entry (its
+ *   explanation, order, own label, hidden). Those two routes carry no
+ *   NoAdminRequired, so Nextcloud refuses everyone else.
  * - Anyone, cross-origin, reads the visible information categories with
  *   their explanation: the contract a portal's category filter reads.
  *
@@ -30,6 +30,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\Woo\ValueListView;
 use OCA\OpenCatalogi\Service\ValueListsService;
+use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\CORS;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
@@ -96,6 +98,7 @@ class ValueListChoicesController extends Controller {
 	 *
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
 	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function index(): JSONResponse {
 		$scheme = (string)$this->request->getParam('scheme', self::CATEGORIES);
 		if (in_array($scheme, ValueListsService::SCHEMES, true) === false) {
@@ -113,6 +116,7 @@ class ValueListChoicesController extends Controller {
 	 *
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
 	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function update(): JSONResponse {
 		$scheme = (string)$this->request->getParam('scheme', '');
 		$fields = (array)$this->request->getParam('choice', []);

@@ -33,7 +33,6 @@ use OCP\EventDispatcher\Event;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Db\ObjectEntity;
-use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
 
 /**
  * Refuses a value-list choice that sets a property it does not own.
@@ -42,6 +41,20 @@ use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
  * @template-implements IEventListener<Event>
  */
 class ValueListChoiceListener implements IEventListener {
+
+	/**
+	 * The app-config key of the valueListChoice schema; the store reads the same key.
+	 *
+	 * @var string
+	 */
+	public const SCHEMA_KEY = 'value_list_choice_schema';
+
+	/**
+	 * The properties a choice holds; every other property is refused on save.
+	 *
+	 * @var list<string>
+	 */
+	public const PROPERTIES = ['scheme', 'entry', 'order', 'localLabel', 'explanation', 'hidden', 'active'];
 
 	/**
 	 * The fields of a list entry that belong to the national list, not to the organisation.
@@ -129,7 +142,7 @@ class ValueListChoiceListener implements IEventListener {
 	 */
 	private function isChoice(ObjectEntity $entity): bool {
 		$schema = trim((string)$entity->getSchema());
-		$configured = trim($this->config->getValueString('opencatalogi', ValueListChoiceStore::SCHEMA_KEY, ''));
+		$configured = trim($this->config->getValueString('opencatalogi', self::SCHEMA_KEY, ''));
 
 		return $schema !== '' && $schema === $configured;
 
@@ -145,7 +158,7 @@ class ValueListChoiceListener implements IEventListener {
 	private function refusal(array $data): ?array {
 		foreach (array_keys($data) as $key) {
 			$key = (string)$key;
-			if (in_array($key, ValueListChoiceStore::PROPERTIES, true) === true
+			if (in_array($key, self::PROPERTIES, true) === true
 				|| in_array($key, self::SYSTEM_KEYS, true) === true
 				|| str_starts_with($key, '@') === true
 				|| str_starts_with($key, '_') === true

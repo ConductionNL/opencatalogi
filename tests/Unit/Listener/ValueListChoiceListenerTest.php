@@ -20,7 +20,6 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Listener;
 
 use OCA\OpenCatalogi\Listener\ValueListChoiceListener;
-use OCA\OpenCatalogi\Service\Woo\ValueListChoiceStore;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
@@ -49,7 +48,7 @@ class ValueListChoiceListenerTest extends TestCase {
 		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
 			static fn (string $app, string $key, string $default = ''): string => match ($key) {
-				ValueListChoiceStore::SCHEMA_KEY => self::CHOICE_SCHEMA,
+				ValueListChoiceListener::SCHEMA_KEY => self::CHOICE_SCHEMA,
 				default => $default,
 			}
 		);

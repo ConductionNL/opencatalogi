@@ -46,13 +46,6 @@ class ValueListChoiceStore {
 	public const SCHEMA_KEY = 'value_list_choice_schema';
 
 	/**
-	 * The properties a choice holds; every other property is refused on save.
-	 *
-	 * @var list<string>
-	 */
-	public const PROPERTIES = ['scheme', 'entry', 'order', 'localLabel', 'explanation', 'hidden', 'active'];
-
-	/**
 	 * Constructor.
 	 *
 	 * @param OpenRegisterLookupInterface $openRegister OpenRegister's ObjectService and the register configuration.
@@ -112,7 +105,8 @@ class ValueListChoiceStore {
 		foreach ($this->stored(scheme: $scheme) as $stored) {
 			if ($stored['entry'] === $entry) {
 				$existing = (string)($stored['id'] ?? '');
-				$object = array_intersect_key($stored, array_flip(self::PROPERTIES));
+				$object = $stored;
+				unset($object['id'], $object['uuid'], $object['@self']);
 				break;
 			}
 		}

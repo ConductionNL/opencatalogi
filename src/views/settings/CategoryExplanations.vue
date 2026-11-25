@@ -3,11 +3,11 @@
   - SPDX-License-Identifier: EUPL-1.2
 -->
 <template>
-	<div class="woo-category-explanations" data-testid="woo-category-explanations">
-		<h3 class="woo-category-explanations__heading">
+	<div class="category-explanations" data-testid="category-explanations">
+		<h3 class="category-explanations__heading">
 			{{ t('opencatalogi', 'Category explanations') }}
 		</h3>
-		<p class="woo-category-explanations__hint">
+		<p class="category-explanations__hint">
 			{{
 				t(
 					'opencatalogi',
@@ -18,13 +18,13 @@
 		<NcNoteCard
 			v-if="error"
 			type="error"
-			data-testid="woo-category-explanations-error">
+			data-testid="category-explanations-error">
 			{{ error }}
 		</NcNoteCard>
 		<NcNoteCard
 			v-if="choicesUnavailable"
 			type="warning"
-			data-testid="woo-category-explanations-unavailable">
+			data-testid="category-explanations-unavailable">
 			{{
 				t(
 					'opencatalogi',
@@ -32,12 +32,12 @@
 				)
 			}}
 		</NcNoteCard>
-		<ul class="woo-category-explanations__list">
+		<ul class="category-explanations__list">
 			<li
 				v-for="entry in entries"
 				:key="entry.uri"
-				class="woo-category-explanations__row"
-				:data-testid="'woo-category-explanation-' + entry.code">
+				class="category-explanations__row"
+				:data-testid="'category-explanation-' + entry.code">
 				<NcTextArea
 					:modelValue="draftOf(entry)"
 					:label="entry.label"
@@ -83,7 +83,7 @@ export const SCHEME = 'informatiecategorieen'
  * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
  */
 export default {
-	name: 'WooCategoryExplanations',
+	name: 'CategoryExplanations',
 
 	components: { NcButton, NcNoteCard, NcTextArea },
 
@@ -150,6 +150,7 @@ export default {
 		/**
 		 * Keep the list the server answered and drop the drafts it now holds.
 		 *
+		 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
 		 * @param {object} data The answer: `{entries, choicesUnavailable}`.
 		 * @return {void}
 		 */
@@ -162,6 +163,7 @@ export default {
 		/**
 		 * The explanation being edited for a category.
 		 *
+		 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
 		 * @param {object} entry The category.
 		 * @return {string} The draft, or the saved explanation.
 		 */
@@ -172,6 +174,7 @@ export default {
 		/**
 		 * Change the draft of a category.
 		 *
+		 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
 		 * @param {object} entry The category.
 		 * @param {string} value The new text.
 		 * @return {void}
@@ -185,6 +188,7 @@ export default {
 /**
  * The draft explanation of an entry, or its saved one when it has no draft.
  *
+ * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
  * @param {object} drafts The drafts by entry URI.
  * @param {object} entry The entry.
  * @return {string} The text.
@@ -197,20 +201,20 @@ export function draftOf(drafts, entry) {
 </script>
 
 <style scoped>
-.woo-category-explanations__heading {
+.category-explanations__heading {
 	margin-top: calc(var(--default-grid-baseline) * 4);
 }
 
-.woo-category-explanations__hint {
+.category-explanations__hint {
 	color: var(--color-text-maxcontrast);
 }
 
-.woo-category-explanations__list {
+.category-explanations__list {
 	list-style: none;
 	padding: 0;
 }
 
-.woo-category-explanations__row {
+.category-explanations__row {
 	display: flex;
 	align-items: flex-end;
 	gap: calc(var(--default-grid-baseline) * 2);

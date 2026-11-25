@@ -21,6 +21,7 @@ namespace OCA\OpenCatalogi\Tests\Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\ValueListChoicesController;
 use OCA\OpenCatalogi\Service\Woo\ValueListView;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\IL10N;
@@ -172,6 +173,7 @@ class ValueListChoicesControllerTest extends TestCase {
 			$method = new ReflectionMethod(objectOrMethod: ValueListChoicesController::class, method: $name);
 			$this->assertSame(expected: [], actual: $method->getAttributes(name: NoAdminRequired::class), message: $name);
 			$this->assertSame(expected: [], actual: $method->getAttributes(name: PublicPage::class), message: $name);
+			$this->assertCount(expectedCount: 1, haystack: $method->getAttributes(name: AuthorizedAdminSetting::class), message: $name);
 			$this->assertStringNotContainsString(needle: '@NoAdminRequired', haystack: (string)$method->getDocComment());
 		}
 	}//end testTheRoutesAreForAdministratorsOnly()
