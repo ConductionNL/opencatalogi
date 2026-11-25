@@ -254,7 +254,7 @@ class ListenerRegistrar {
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-1.1
 	 * @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-1.4
 	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-1.2
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-1.2
 	 */
 	private function registerWriteGuards(IRegistrationContext $context): void {
 		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);

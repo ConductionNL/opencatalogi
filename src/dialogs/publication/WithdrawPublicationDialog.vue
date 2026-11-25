@@ -151,7 +151,7 @@ export default {
 		 * the public reason and whether it shows the title (REQ-PWA-002).
 		 *
 		 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
-		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-2.1
 		 */
 		confirm() {
 			const answer = {

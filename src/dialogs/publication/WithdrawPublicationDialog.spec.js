@@ -6,7 +6,7 @@
  * says: the public reason and whether it shows the title (REQ-PWA-002). For one
  * document it asks only the reason. It calls nothing itself.
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-2.1
  */
 
 import { mount } from '@vue/test-utils'

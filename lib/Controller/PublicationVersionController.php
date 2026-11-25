@@ -21,7 +21,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-1.3
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-1.3
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use OCP\IRequest;
  * The version and document numbers are read from the route's parameters on
  * the request, beside the catalogue slug and id the methods take.
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
  */
 class PublicationVersionController extends Controller {
 	use AnswersCrossOriginReadRequests;
@@ -95,7 +95,7 @@ class PublicationVersionController extends Controller {
 	 *
 	 * @return Response The list, or 404.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -113,7 +113,7 @@ class PublicationVersionController extends Controller {
 	 *
 	 * @return Response The version, or 404.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -135,7 +135,7 @@ class PublicationVersionController extends Controller {
 	 *
 	 * @return Response The file, or 404.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -159,7 +159,7 @@ class PublicationVersionController extends Controller {
 	 *
 	 * @return Response The preflight answer.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]

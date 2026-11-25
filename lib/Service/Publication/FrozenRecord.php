@@ -15,7 +15,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
  */
 
 declare(strict_types=1);
@@ -36,7 +36,7 @@ use Throwable;
  * `ObjectStateWriteException::frozen()`, so a refusal reads the same through
  * every door. No OpenRegister class is needed to read it.
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-is-frozen-with-the-withdrawal-reason-req-pwa-003
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-is-frozen-with-the-withdrawal-reason-req-pwa-003
  */
 class FrozenRecord {
 
@@ -47,7 +47,7 @@ class FrozenRecord {
 	 *
 	 * @return string|null The refusal naming who froze it and when, or null.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	public function refusal(mixed $record): ?string {
 		$marker = $this->marker(record: $record);
@@ -74,7 +74,7 @@ class FrozenRecord {
 	 *
 	 * @return array<string, mixed>|null The marker, or null.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	private function marker(mixed $record): ?array {
 		$marker = null;
@@ -105,7 +105,7 @@ class FrozenRecord {
 	 *
 	 * @return string|null The value, or null.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	private function field(array $marker, string $key): ?string {
 		$value = ($marker[$key] ?? null);

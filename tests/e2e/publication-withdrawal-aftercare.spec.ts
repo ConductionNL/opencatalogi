@@ -18,8 +18,8 @@
  * The base URL comes from NEXTCLOUD_URL (base-url.ts); anonymous calls run in a
  * context with an empty storage state.
  *
- * @e2e openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#scenario-the-officer-chooses-what-the-tombstone-says REQ-PWA-002
- * @e2e openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#scenario-the-page-says-why REQ-PWA-003
+ * @e2e openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#scenario-the-officer-chooses-what-the-tombstone-says REQ-PWA-002
+ * @e2e openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#scenario-the-page-says-why REQ-PWA-003
  */
 import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog } from './publication-catalog.ts'

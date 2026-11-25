@@ -21,7 +21,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-1.2
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use Throwable;
 /**
  * Keeps the earlier public version of a publication before a correction is written.
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
  *
  * @template-implements IEventListener<Event>
  */
@@ -74,7 +74,7 @@ class PublicationVersionListener implements IEventListener {
 	 *
 	 * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof ObjectUpdatingEvent === false) {
@@ -109,7 +109,7 @@ class PublicationVersionListener implements IEventListener {
 	 *
 	 * @return bool True for the publication schema.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function isPublication(string $schema): bool {
 		$configured = trim($this->config->getValueString('opencatalogi', 'publication_schema', ''));

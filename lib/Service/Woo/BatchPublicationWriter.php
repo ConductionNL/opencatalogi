@@ -504,7 +504,7 @@ class BatchPublicationWriter {
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
 	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-the-published-file-carries-its-official-title-req-pff-002
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-the-publishers-rsin-travels-with-every-stored-document-req-pro-002
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2b
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c

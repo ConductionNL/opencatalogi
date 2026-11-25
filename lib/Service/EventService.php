@@ -566,7 +566,7 @@ class EventService implements EventServiceInterface {
 	 * @return array Result of the attachment publishing operation.
 	 *
 	 * @spec openspec/specs/auto-publishing/spec.md
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	private function publishObjectAttachments(array $objectData): array {
 		$objectId = ($objectData['@self']['uuid'] ?? $objectData['@self']['id']);

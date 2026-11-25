@@ -111,7 +111,7 @@ export default {
 		 * Whether the publication is frozen, so no upload or reorder is offered.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+		 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.4
 		 */
 		frozen() {
 			return frozenMarker(this.publication) !== null

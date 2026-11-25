@@ -39,7 +39,7 @@ interface PublicationVersionServiceInterface {
 	 *
 	 * @return bool True when the old version has to be kept.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function replacesPublicVersion(ObjectEntity $old, ObjectEntity $new): bool;
 
@@ -53,7 +53,7 @@ interface PublicationVersionServiceInterface {
 	 *
 	 * @throws \RuntimeException When the version cannot be stored.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function snapshot(ObjectEntity $old, ?DateTimeInterface $now = null): ?array;
 
@@ -66,7 +66,7 @@ interface PublicationVersionServiceInterface {
 	 *
 	 * @throws \RuntimeException When the version schema is not configured.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 * @contract-shift internal-only - added for the version routes; only this app implements and calls it.
 	 */
 	public function versionsOf(string $publication): array;
@@ -79,7 +79,7 @@ interface PublicationVersionServiceInterface {
 	 *
 	 * @return object|null The file node.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 * @contract-shift internal-only - added for the version routes; only this app implements and calls it.
 	 */
 	public function documentOf(array $version, int $fileId): ?object;
@@ -93,7 +93,7 @@ interface PublicationVersionServiceInterface {
 	 *
 	 * @contract-shift internal-only - added for the version routes; only this app implements and calls it.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function publicUuidOf(array $record): ?string;
 }//end interface

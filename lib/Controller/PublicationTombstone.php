@@ -22,7 +22,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -36,7 +36,7 @@ use Throwable;
 /**
  * Finds, as the system, whether a publication the public read missed was withdrawn.
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
  */
 class PublicationTombstone {
 
@@ -70,7 +70,7 @@ class PublicationTombstone {
 	 *
 	 * @return array{id: string, withdrawnAt: string|null, publicReason: string|null, title?: string}|null The tombstone.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
 	 */
 	public function tombstone(CatalogSlugQuery $query): ?array {
 		$objectService = $this->openRegister->installedObjectService();
@@ -106,7 +106,7 @@ class PublicationTombstone {
 	 *
 	 * @return array{id: string, withdrawnAt: string|null, publicReason: string|null, title?: string} The tombstone.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
 	 */
 	private static function fromDepublication(array $depublication, array $identity): array {
 		$tombstone = [
@@ -130,7 +130,7 @@ class PublicationTombstone {
 	 *
 	 * @return object|null The stored publication.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
 	 */
 	private function findAsSystem(object $objectService, CatalogSlugQuery $query): ?object {
 		foreach (self::pairsOf(query: $query) as $options) {
@@ -190,7 +190,7 @@ class PublicationTombstone {
 	 *
 	 * @return array<string, mixed>|null The depublication.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
 	 */
 	private function latestDepublication(object $objectService, string $publicationId): ?array {
 		$result = self::attempt(

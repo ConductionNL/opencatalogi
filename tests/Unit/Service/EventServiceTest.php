@@ -826,7 +826,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.3
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.3
 	 */
 	public function testPublishObjectAttachmentsOfAFrozenPublicationSharesNothing(): void {
 		$objectData = [

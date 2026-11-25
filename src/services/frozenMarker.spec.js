@@ -5,7 +5,7 @@
  * The frozen marker as the publication page reads it, and the page condition
  * that makes a frozen publication read-only (REQ-PWA-003).
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.4
  */
 
 import manifest from '../manifest.json'

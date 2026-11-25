@@ -264,7 +264,7 @@ function withdrawPath(answer) {
  *
  * @param {{reason: string, fileId: string, publicReason?: string, tombstoneShowsTitle?: boolean}} answer What the dialog collected.
  * @return {object} The body.
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-2.1
  */
 function withdrawBody(answer) {
 	const body = { reason: answer.reason }
@@ -364,7 +364,7 @@ export default {
 		 * The publication's frozen marker, or null when it is not frozen.
 		 *
 		 * @return {object|null}
-		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+		 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.4
 		 */
 		frozenState() {
 			return frozenMarker(this.ctx.object)
@@ -374,7 +374,7 @@ export default {
 		 * Whether the publication is frozen, so no file action is offered.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+		 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.4
 		 */
 		frozen() {
 			return this.frozenState !== null
@@ -385,7 +385,7 @@ export default {
 		 * by whom and with which reason (REQ-PWA-003).
 		 *
 		 * @return {string} The note, or an empty string when it is not frozen.
-		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+		 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.4
 		 */
 		frozenNote() {
 			const marker = this.frozenState
@@ -817,7 +817,7 @@ export default {
 		 * @param {{reason: string, fileId: string, publicReason?: string, tombstoneShowsTitle?: boolean}} answer What the dialog collected.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
-		 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-2.1
+		 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-2.1
 		 */
 		async withdraw(answer) {
 			this.busy = true

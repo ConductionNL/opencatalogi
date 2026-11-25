@@ -22,7 +22,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-1.3
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-1.3
  */
 
 declare(strict_types=1);
@@ -41,7 +41,7 @@ use Throwable;
 /**
  * Builds the answers of the publication version routes.
  *
- * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+ * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
  */
 class PublicationVersions {
 
@@ -71,7 +71,7 @@ class PublicationVersions {
 	 *
 	 * @return Response The answer.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	public function respond(array $asked): Response {
 		try {
@@ -102,7 +102,7 @@ class PublicationVersions {
 	 *
 	 * @return Response|null The answer, or null when the publication is not public or has no such version or document.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function answer(array $asked): ?Response {
 		$asked['uuid'] = $this->publicUuid(asked: $asked);
@@ -142,7 +142,7 @@ class PublicationVersions {
 	 *
 	 * @return string|null The uuid.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function publicUuid(array $asked): ?string {
 		$read = $this->publications->show(catalogSlug: $asked['catalogSlug'], id: $asked['id']);
@@ -162,7 +162,7 @@ class PublicationVersions {
 	 *
 	 * @return JSONResponse The list.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function listAnswer(array $asked, array $stored): JSONResponse {
 		$results = array_map(
@@ -186,7 +186,7 @@ class PublicationVersions {
 	 *
 	 * @return JSONResponse|null The version.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function versionAnswer(array $asked, ?array $found): ?JSONResponse {
 		if ($found === null) {
@@ -223,7 +223,7 @@ class PublicationVersions {
 	 *
 	 * @return array{catalogSlug: string, id: string} The address.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function address(array $asked): array {
 		return ['catalogSlug' => $asked['catalogSlug'], 'id' => $asked['id']];
@@ -238,7 +238,7 @@ class PublicationVersions {
 	 *
 	 * @return string The URL.
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-corrected-publication-keeps-its-earlier-public-versions-reachable-req-pwa-001
 	 */
 	private function link(string $route, array $parameters): string {
 		return $this->urls->linkToRouteAbsolute('opencatalogi.' . $route, $parameters);

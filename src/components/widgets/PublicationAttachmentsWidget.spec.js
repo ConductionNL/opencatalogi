@@ -115,7 +115,7 @@ describe('PublicationAttachmentsWidget', () => {
 
 		expect(wrapper.vm.refreshKey).toBe(before + 1)
 	})
-	// @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-3.4
+	// @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-3.4
 	it('offers no upload or reorder on a frozen publication, and still lists its files (REQ-PWA-003)', () => {
 		const frozen = {
 			...publication,

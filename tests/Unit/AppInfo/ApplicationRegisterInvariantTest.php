@@ -471,7 +471,7 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-withdrawal-aftercare/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-1.2
 	 */
 	public function testThePublicationVersionListenerIsRegisteredBeforeAnUpdate(): void {
 		$listeners = [];
