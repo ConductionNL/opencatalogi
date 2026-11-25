@@ -6,7 +6,7 @@
  */
 
 import { mount } from '@vue/test-utils'
-import WooRequestHandover, { dossiqEnabled } from './WooRequestHandover.vue'
+import RequestIntakeNotice, { dossiqEnabled } from './RequestIntakeNotice.vue'
 
 jest.mock('@nextcloud/router', () => ({ generateUrl: (path) => '/index.php' + path }))
 jest.mock('@nextcloud/vue', () => ({
@@ -21,14 +21,14 @@ jest.mock('@nextcloud/vue', () => ({
  */
 function mountWith(oc) {
 	globalThis.OC = oc
-	return mount(WooRequestHandover, { global: { mocks: { t: (app, text) => text } } })
+	return mount(RequestIntakeNotice, { global: { mocks: { t: (app, text) => text } } })
 }
 
 afterEach(() => {
 	delete globalThis.OC
 })
 
-describe('WooRequestHandover', () => {
+describe('RequestIntakeNotice', () => {
 	it('says Woo requests are dossiq\'s and links to the app store when dossiq is not enabled', () => {
 		const wrapper = mountWith({ appswebroots: { opencatalogi: '/apps/opencatalogi' } })
 

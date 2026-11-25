@@ -25,7 +25,7 @@ import { NcNoteCard } from '@nextcloud/vue'
  * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-without-dossiq-opencatalogi-takes-no-woo-requests-req-whd-005
  */
 export default {
-	name: 'WooRequestHandover',
+	name: 'RequestIntakeNotice',
 
 	components: { NcNoteCard },
 

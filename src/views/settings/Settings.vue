@@ -259,7 +259,7 @@
 
 				<RefusalGroundsSource />
 
-				<WooRequestHandover />
+				<RequestIntakeNotice />
 
 				<CategoryExplanations />
 
@@ -759,9 +759,9 @@ import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
 import RecordHandover from './RecordHandover.vue'
 import RefusalGroundsSource from './RefusalGroundsSource.vue'
+import RequestIntakeNotice from './RequestIntakeNotice.vue'
 import WooIncidents from './WooIncidents.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
-import WooRequestHandover from './WooRequestHandover.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
 	corsOriginLines,
@@ -875,6 +875,7 @@ export default defineComponent({
 		NcLoadingIcon,
 		NcCheckboxRadioSwitch,
 		CnAdminSettingsShell,
+		RequestIntakeNotice,
 		Save,
 		Refresh,
 		Sync,
@@ -889,7 +890,6 @@ export default defineComponent({
 		RefusalGroundsSource,
 		CategoryExplanations,
 		WooIndexConnection,
-		WooRequestHandover,
 		WooIncidents,
 		DcatDefaultLicence,
 		DcatFeedValidation,
