@@ -67,10 +67,10 @@ describe('CatalogDetailPage catalog', () => {
 		expect(objectStore.getActiveObject).toHaveBeenCalledWith('catalog')
 	})
 
-	it('starts with the four widgets laid out, not loading and with the sidebar open', () => {
+	it('starts with the five widgets laid out, not loading and with the sidebar open', () => {
 		const data = CatalogDetailPage.data()
 
-		expect(data.detailLayout.map((cell) => cell.widgetId)).toEqual(['metadata', 'configuration', 'description', 'raw-data'])
+		expect(data.detailLayout.map((cell) => cell.widgetId)).toEqual(['metadata', 'configuration', 'description', 'raw-data', 'feed-consumers'])
 		expect(data).toMatchObject({ loading: false, error: null, sidebarOpen: true })
 	})
 })

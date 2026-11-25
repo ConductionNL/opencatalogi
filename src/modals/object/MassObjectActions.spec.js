@@ -43,6 +43,8 @@ function open(component) {
 		global: {
 			mocks: { t: (app, text, vars) => text.replace('{type}', vars?.type ?? '') },
 			stubs: {
+				// The shared shell renders the title, the result cards and the buttons.
+				MassObjectActionDialog: false,
 				NcDialog: { props: ['name'], template: '<div class="dialog"><h2>{{ name }}</h2><slot /><slot name="actions" /></div>' },
 				NcNoteCard: { props: ['type'], template: '<div :class="\'note-\' + type"><slot /></div>' },
 			},
@@ -142,9 +144,11 @@ describe.each(DIALOGS)('the mass $name dialog', ({ component, action, run, verb,
 		jest.runAllTimers()
 		expect(navigationStore.setDialog).toHaveBeenCalledTimes(1)
 
-		wrapper.vm.handleDialogClose(true)
+		// The shared shell turns the dialog closing into `close`; opening it does nothing.
+		const shell = wrapper.findComponent({ name: 'MassObjectActionDialog' })
+		shell.vm.onOpenChange(true)
 		expect(navigationStore.setDialog).toHaveBeenCalledTimes(1)
-		wrapper.vm.handleDialogClose(false)
+		shell.vm.onOpenChange(false)
 		expect(navigationStore.setDialog).toHaveBeenCalledTimes(2)
 	})
 })

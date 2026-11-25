@@ -15,6 +15,7 @@ const mockEvents = []
 const mockDispatched = []
 
 jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'test-request-token' }))
+jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: { post: jest.fn() } }))
 jest.mock('@conduction/nextcloud-vue', () => ({
 	...jest.requireActual('@conduction/nextcloud-vue'),
 	dispatchObjectsChanged: (change) => mockDispatched.push(change),

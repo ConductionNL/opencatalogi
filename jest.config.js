@@ -59,6 +59,8 @@ module.exports = {
 		// @nextcloud/dialogs ships ESM only; stub the toasts so a component
 		// that shows one can still be imported by its specs.
 		'^@nextcloud/dialogs$': '<rootDir>/tests/mocks/nextcloud-dialogs.js',
+		// ESM only; @nextcloud/auth's CommonJS build requires it.
+		'^@nextcloud/browser-storage$': '<rootDir>/tests/mocks/nextcloud-browser-storage.js',
 		// Untranspiled .vue SFCs inside node_modules — see the mock's docblock.
 		'^vue-material-design-icons/(.*)\\.vue$':
 			'<rootDir>/tests/mocks/vue-material-design-icon.js',

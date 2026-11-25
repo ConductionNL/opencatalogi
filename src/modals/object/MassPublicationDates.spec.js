@@ -54,6 +54,8 @@ function open(component) {
 		global: {
 			mocks: { t: translate },
 			stubs: {
+				// The shared shell renders the title, the result cards and the buttons.
+				MassObjectActionDialog: false,
 				NcDialog: { props: ['name'], template: '<div><h2>{{ name }}</h2><slot /><slot name="actions" /></div>' },
 				NcNoteCard: { props: ['type'], template: '<div :class="\'note-\' + type"><slot /></div>' },
 			},
@@ -292,9 +294,11 @@ describe('MassDepublishObjects', () => {
 		expect(wrapper.vm.error).toBe('Failed to depublish 1 object(s)')
 		expect(wrapper.vm.success).toBe(null)
 		expect(catalogStore.fetchPublications).not.toHaveBeenCalled()
-		wrapper.vm.handleDialogClose(true)
+		// The shared shell turns the dialog closing into `close`; opening it does nothing.
+		const shell = wrapper.findComponent({ name: 'MassObjectActionDialog' })
+		shell.vm.onOpenChange(true)
 		expect(navigationStore.setDialog).not.toHaveBeenCalled()
-		wrapper.vm.handleDialogClose(false)
+		shell.vm.onOpenChange(false)
 		expect(navigationStore.setDialog).toHaveBeenCalledWith(false)
 	})
 })
