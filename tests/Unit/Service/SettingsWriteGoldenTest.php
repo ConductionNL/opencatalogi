@@ -70,7 +70,8 @@ class SettingsWriteGoldenTest extends TestCase {
 
 		$instance = [
 			'auto_publish_attachments' => 'true', 'auto_publish_objects' => 'false', 'use_old_style_publishing_view' => 'x',
-			'dcat_instance_title' => 'T', 'dcat_publisher_name' => 'P', 'dcat_publisher_uri' => 'https://p', 'dcat_default_license' => self::LICENCE, 'dcat_contact_point' => 'C',
+			'dcat_instance_title' => 'T', 'dcat_publisher_name' => 'P', 'dcat_publisher_uri' => 'https://p',
+			'dcat_default_license' => self::LICENCE, 'dcat_contact_point' => 'C',
 			'ooapi_consumers' => 'alice,bob',
 			'woo_index_registration_status' => 'registered', 'woo_index_registration_url' => 'https://u', 'woo_index_registration_at' => '2026', 'woo_index_registration_answer' => 'a',
 			'public_api_cache_seconds' => '120',
