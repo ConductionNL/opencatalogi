@@ -100,7 +100,7 @@ class PublicationStateController extends Controller {
 	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
 	 * @spec openspec/changes/archive/2026-11-24-capability-rows-close-gaps/tasks.md
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-2.2
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.2
 	 * @spec openspec/changes/publication-schedule-guards/tasks.md#task-4.2
 	 */
 	#[NoAdminRequired]

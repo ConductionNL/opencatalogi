@@ -23,7 +23,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.1
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use Throwable;
 /**
  * Says whether an archive hotspot holds a publication back from its retention action.
  *
- * @spec openspec/changes/theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-opencatalogis-own-retention-takes-no-action-under-a-hotspot-req-tha-003
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-opencatalogis-own-retention-takes-no-action-under-a-hotspot-req-tha-003
  */
 class RetentionHotspotHold {
 
@@ -84,7 +84,7 @@ class RetentionHotspotHold {
 	 *
 	 * @return array{outcome: string, subject?: string}|null The hold.
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-opencatalogis-own-retention-takes-no-action-under-a-hotspot-req-tha-003
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#requirement-opencatalogis-own-retention-takes-no-action-under-a-hotspot-req-tha-003
 	 */
 	public function holdOf(object $objectService, array $publication): ?array {
 		$unresolved = false;

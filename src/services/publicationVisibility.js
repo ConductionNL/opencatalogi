@@ -151,7 +151,7 @@ export function isNoDocumentsRefusal(error) {
  *
  * @param {object|null} answer The `GET visibility` body.
  * @return {string} The subject's title, trimmed.
- * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.2
  */
 export function archiveHotspotOf(answer) {
 	const subject = answer ? answer.archiveHotspot : null

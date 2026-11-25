@@ -685,7 +685,7 @@ class RetentionService implements RetentionServiceInterface {
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
 	 * @spec openspec/changes/archive/2026-11-20-integration-maintenance-commands/specs/maintenance-commands/spec.md
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.1
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The dry run is the command's safe default; the job keeps the plain call.
 	 */
@@ -736,7 +736,7 @@ class RetentionService implements RetentionServiceInterface {
 	 *
 	 * @return array{outcome: string, subject?: string}|null The hold.
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.1
 	 */
 	private function hotspotHold(RetentionRun $run, array $data, string $outcome): ?array {
 		if ($outcome !== 'depublished' && $outcome !== 'archived') {
@@ -1081,7 +1081,7 @@ class RetentionService implements RetentionServiceInterface {
 	 * @return array<int, array<string, mixed>> Report rows.
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.1
 	 */
 	public function buildReport(?string $catalogSlug = null, ?string $from = null, ?string $to = null): array {
 		$report = new RetentionReport(filter: ['catalog' => $catalogSlug, 'from' => $from, 'to' => $to]);
@@ -1104,7 +1104,7 @@ class RetentionService implements RetentionServiceInterface {
 	 *
 	 * @return array<string, string> The row.
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.1
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.1
 	 */
 	private function withHotspot(array $row, array $data): array {
 		$objectService = $this->getObjectService();

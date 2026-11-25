@@ -552,7 +552,7 @@ class PublicationStateControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.2
 	 */
 	public function testVisibilityNamesTheHotspotThatKeepsThePublication(): void {
 		$this->subjects = [
@@ -572,7 +572,7 @@ class PublicationStateControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.2
 	 */
 	public function testVisibilityNamesNoHotspotWithoutOne(): void {
 		$this->subjects = ['theme-1' => ['id' => 'theme-1', 'title' => 'Verkeer', 'archiveHotspot' => false]];
@@ -588,7 +588,7 @@ class PublicationStateControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.2
 	 */
 	public function testVisibilityWithoutTheHoldNamesNoHotspot(): void {
 		$this->publication = ['id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'themes' => ['theme-2']];

@@ -15,7 +15,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-1.1
  */
 
 declare(strict_types=1);

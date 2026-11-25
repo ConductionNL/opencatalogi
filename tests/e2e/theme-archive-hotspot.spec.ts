@@ -22,14 +22,14 @@
  * WHAT IT CREATES AND REMOVES. One theme, one catalogue and one publication,
  * deleted in afterAll.
  *
- * @e2e openspec/changes/theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#scenario-an-administrator-marks-a-subject REQ-THA-001
- * @e2e openspec/changes/theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#scenario-the-officer-sees-why REQ-THA-003
- * @spec openspec/changes/theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md
- * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-1.4
- * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+ * @e2e openspec/changes/archive/2026-11-25-theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#scenario-an-administrator-marks-a-subject REQ-THA-001
+ * @e2e openspec/changes/archive/2026-11-25-theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md#scenario-the-officer-sees-why REQ-THA-003
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/specs/publication-retention-lifecycle/spec.md
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-1.4
+ * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.2
  */
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog } from './publication-catalog.ts'
 
 const APP_BASE = '/index.php/apps/opencatalogi'

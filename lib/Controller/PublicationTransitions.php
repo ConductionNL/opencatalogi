@@ -181,7 +181,7 @@ class PublicationTransitions {
 	 *
 	 * @return string|null The subject's title.
 	 *
-	 * @spec openspec/changes/theme-archive-hotspot/tasks.md#task-3.2
+	 * @spec openspec/changes/archive/2026-11-25-theme-archive-hotspot/tasks.md#task-3.2
 	 */
 	public function archiveHotspotOf(array $publication): ?string {
 		try {
