@@ -99,6 +99,9 @@ class BatchPublicationWriterEdgesTest extends TestCase {
 				}
 			);
 		}
+		$this->publisher->method('approveAsSystem')->willReturnCallback(
+			static fn (string $id, string $stored): string => in_array($stored, ['', 'draft', 'in_review'], true) ? 'approved' : $stored
+		);
 		$this->objects = new WriterFakeObjectService();
 
 	}//end setUp()

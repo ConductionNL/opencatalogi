@@ -1221,8 +1221,10 @@ class WooService implements TransparencyWorkflowServiceInterface {
 			throw new RuntimeException($unverifiable);
 		}
 
+		// OpenRegister's TaskSequence is a Nextcloud Entity whose getters exist only
+		// through __call: method_exists() never sees getStatus(), is_callable() does.
 		$status = '';
-		if (is_object($sequence) === true && method_exists($sequence, 'getStatus') === true) {
+		if (is_object($sequence) === true && is_callable([$sequence, 'getStatus']) === true) {
 			$status = (string)$sequence->getStatus();
 		}
 

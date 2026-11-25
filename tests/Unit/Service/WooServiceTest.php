@@ -272,14 +272,20 @@ class WooFakeTaskSequenceMapper {
 			return null;
 		}
 
+		// Shaped like OpenRegister's TaskSequence, a Nextcloud Entity: its getters
+		// exist only through __call, so method_exists() does not see them.
 		$status = $this->status;
 		return new class($status) {
 			public function __construct(
 				private string $status,
 			) {
 			}
-			public function getStatus(): string {
-				return $this->status;
+			public function __call(string $name, array $arguments): mixed {
+				if ($name === 'getStatus') {
+					return $this->status;
+				}
+
+				throw new \BadMethodCallException($name);
 			}
 		};
 
@@ -1101,6 +1107,26 @@ class WooServiceTest extends TestCase {
 
 	}//end testPublishEvaluatesTheChainAnchoredOnTheBatch()
 
+	/**
+	 * A completed chain read from an entity whose getStatus() exists only through
+	 * __call (as OpenRegister's TaskSequence) releases the publish.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md
+	 */
+	public function testACompletedChainOnAMagicGetterEntityReleasesThePublish(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->service->markReadyForReview('batch-1');
+		$this->engine->transition('batch-1', 'approve');
+		$this->sequences->status = 'completed';
+
+		$this->service->publishBatch('batch-1');
+
+		$this->assertCount(1, $this->sequences->lookups);
+
+	}//end testACompletedChainOnAMagicGetterEntityReleasesThePublish()
+
 	public function testPublishExcludesNietOpenbaar(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->service->markReadyForReview('batch-1');
@@ -1193,8 +1219,9 @@ class WooServiceTest extends TestCase {
 		$this->assertSame('infocat014', $publication['wooCategory']);
 		$this->assertSame('WOO-2026-009', $publication['caseReference']);
 		$this->assertSame('Woo-publicatie WOO-2026-009', $publication['title']);
-		// Created approved; the publish transition writes the publication date (REQ-PLC-003).
-		$this->assertSame('approved', $publication['status']);
+		// Created in draft (OpenRegister refuses any other initial state); the batch review is
+		// recorded through the lifecycle and the publish transition writes the date (REQ-PLC-003).
+		$this->assertArrayNotHasKey('status', $publication);
 		$this->assertArrayNotHasKey('publicationDate', $publication);
 		$this->assertContains(['register' => 'publication', 'schema' => 'publication'], $this->objects->saveTargets);
 

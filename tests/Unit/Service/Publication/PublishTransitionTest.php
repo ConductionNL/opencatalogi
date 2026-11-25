@@ -72,6 +72,11 @@ class PublishTransitionTest extends TestCase {
 				$this->test->runs[] = [$objectId, $action, $data];
 				return (object)['id' => $objectId];
 			}
+
+			public function transitionAsSystem(string $objectId, string $action, string $appId, array $data = []): object {
+				$this->test->runs[] = [$objectId, $action . '@' . $appId, $data];
+				return (object)['id' => $objectId];
+			}
 		};
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->with(PublishTransition::ENGINE)->willReturn($engine);
@@ -89,6 +94,30 @@ class PublishTransitionTest extends TestCase {
 			documents: $this->documents ?? $this->createMock(originalClassName: PublicationDocumentCount::class)
 		);
 	}//end subject()
+
+	/**
+	 * REQ-PLC-003: a review held elsewhere (a Woo batch) is recorded on the publication as the system:
+	 * submit and approve from draft, approve from in review, nothing from approved or published.
+	 *
+	 * @return void
+	 */
+	public function testAReviewHeldElsewhereIsRecordedThroughTheLifecycle(): void {
+		$subject = $this->subject(reviewRequired: 'true');
+
+		$this->assertSame(expected: 'approved', actual: $subject->approveAsSystem(id: 'p-draft', stored: ''));
+		$this->assertSame(expected: 'approved', actual: $subject->approveAsSystem(id: 'p-review', stored: 'in_review'));
+		$this->assertSame(expected: 'approved', actual: $subject->approveAsSystem(id: 'p-approved', stored: 'approved'));
+		$this->assertSame(expected: 'published', actual: $subject->approveAsSystem(id: 'p-public', stored: 'published'));
+
+		$this->assertSame(
+			expected: [
+				['p-draft', 'submit@opencatalogi', []],
+				['p-draft', 'approve@opencatalogi', []],
+				['p-review', 'approve@opencatalogi', []],
+			],
+			actual: $this->runs
+		);
+	}//end testAReviewHeldElsewhereIsRecordedThroughTheLifecycle()
 
 	/**
 	 * REQ-PLC-003: approved publishes with `publish`; a draft only while review is off; nothing else publishes.
