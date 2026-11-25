@@ -284,15 +284,20 @@ seed_boundary_fixture () {
 	# $1 schema slug, $2 JSON body (must carry the title field named in $3)
 	local schema="$1" body="$2" field="$3" title found
 	title="$(printf '%s' "$body" | python3 -c "import json,sys; print(json.load(sys.stdin)['$field'])")"
+	# Full-text search, then the exact field: a translatable string is stored as a
+	# language map, so an exact `field=` filter never finds it and every run would
+	# add another copy.
 	found="$(curl -sS -G -u "${USER_NAME}:${USER_PASS}" -H 'OCS-APIRequest: true' \
-		--data-urlencode "${field}=${title}" --data-urlencode '_limit=1' \
+		--data-urlencode "_search=${title}" --data-urlencode '_limit=50' \
 		"${BASE}/index.php/apps/openregister/api/objects/publication/${schema}" \
-		| python3 -c 'import json,sys
+		| FIELD="$field" TITLE="$title" python3 -c 'import json,os,sys
 try:
     d=json.load(sys.stdin); rows=d.get("results", d if isinstance(d,list) else [])
+    rows=[r for r in rows if r.get(os.environ["FIELD"]) == os.environ["TITLE"]]
     print((rows[0].get("id") or rows[0].get("@self",{}).get("id") or "") if rows else "")
 except Exception:
     print("")' 2>/dev/null || true)"
+	BOUNDARY_CREATED=0
 	if [ -n "$found" ]; then
 		echo "[ci-seed] boundary fixture ${schema} '${title}' -> ${found} (already there)"
 		BOUNDARY_LAST_ID="$found"
@@ -310,7 +315,35 @@ except Exception:
 		echo "::error::Could not create the boundary fixture ${schema} '${title}'; public-boundary.spec.ts needs it."
 		exit 1
 	fi
+	BOUNDARY_CREATED=1
 	echo "[ci-seed] boundary fixture ${schema} '${title}' -> ${BOUNDARY_LAST_ID}"
+}
+
+# A publication starts in draft (OpenRegister refuses any other initial state), so a
+# fixture that must be published or archived is walked there through the lifecycle's
+# own transition route, as an editor would. Only a fixture made in this run is walked.
+# $1 object id, $2 transition, $3 optional JSON `data` (the transition's inputs).
+boundary_transition () {
+	local id="$1" action="$2" data="${3:-{\}}" code
+	code="$(curl -sS -o /dev/null -w '%{http_code}' -X POST -u "${USER_NAME}:${USER_PASS}" \
+		-H 'OCS-APIRequest: true' -H 'Content-Type: application/json' \
+		--data "{\"action\":\"${action}\",\"data\":${data}}" \
+		"${BASE}/index.php/apps/openregister/api/objects/${id}/transition" || echo 000)"
+	case "$code" in
+		2??) echo "[ci-seed] boundary fixture ${id}: ${action} -> HTTP ${code}" ;;
+		*)
+			echo "::error::The boundary fixture ${id} could not take '${action}' (HTTP ${code}); public-boundary.spec.ts needs it."
+			exit 1
+			;;
+	esac
+}
+
+# Draft -> submit -> approve -> publish with the given date.
+# $1 object id, $2 publication date.
+boundary_publish () {
+	boundary_transition "$1" submit
+	boundary_transition "$1" approve
+	boundary_transition "$1" publish "{\"publicationDate\":\"$2\"}"
 }
 
 PAST="$(date -u -d '-30 days' +%Y-%m-%dT%H:%M:%SZ)"
@@ -321,12 +354,19 @@ seed_boundary_fixture publication '{"title":"Boundary fixture: draft publication
 seed_boundary_fixture publication "{\"title\":\"Boundary fixture: scheduled publication\",\"publicationDate\":\"${FUTURE}\"}" title
 seed_boundary_fixture publication "{\"title\":\"Boundary fixture: withdrawn publication\",\"publicationDate\":\"${LONG_PAST}\",\"depublicationDate\":\"${PAST}\"}" title
 WITHDRAWN_ID="$BOUNDARY_LAST_ID"
-seed_boundary_fixture publication "{\"title\":\"Boundary fixture: archived publication\",\"publicationDate\":\"${LONG_PAST}\",\"status\":\"archived\"}" title
+seed_boundary_fixture publication '{"title":"Boundary fixture: archived publication","audience":"public"}' title
+if [ "$BOUNDARY_CREATED" = 1 ]; then
+	boundary_publish "$BOUNDARY_LAST_ID" "$LONG_PAST"
+	boundary_transition "$BOUNDARY_LAST_ID" archive
+fi
 seed_boundary_fixture wooAssessment '{"documentReference":"Boundary fixture: woo assessment","assessment":"niet_openbaar"}' documentReference
 seed_boundary_fixture wooBatch '{"caseReference":"Boundary fixture: woo batch","status":"in_progress"}' caseReference
 seed_boundary_fixture wooRequest "{\"reference\":\"Boundary fixture: woo request\",\"receivedAt\":\"${PAST}\",\"requestedInformation\":\"Boundary fixture: what was asked\",\"status\":\"received\"}" reference
-seed_boundary_fixture publication "{\"title\":\"Boundary fixture: public publication with a withdrawn file\",\"publicationDate\":\"${LONG_PAST}\",\"status\":\"published\"}" title
+seed_boundary_fixture publication '{"title":"Boundary fixture: public publication with a withdrawn file","audience":"public"}' title
 PUBLIC_WITH_FILE="$BOUNDARY_LAST_ID"
+if [ "$BOUNDARY_CREATED" = 1 ]; then
+	boundary_publish "$PUBLIC_WITH_FILE" "$LONG_PAST"
+fi
 seed_boundary_fixture depublication "{\"publication\":\"${WITHDRAWN_ID}\",\"reason\":\"Boundary fixture: depublication\",\"depublishedBy\":\"admin\",\"depublishedAt\":\"${PAST}\"}" reason
 
 # The file is added unshared (`share: false`), which is how a withdrawn file
