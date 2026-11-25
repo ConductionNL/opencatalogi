@@ -125,6 +125,20 @@ class PublicationTransitions {
 	}//end storable()
 
 	/**
+	 * Lift the freeze a withdrawal put on a publication, before it is published again.
+	 *
+	 * @param array<string, mixed> $publication The publication as stored, with its `@self`.
+	 * @param string               $reason      Why it is unfrozen.
+	 *
+	 * @return array{unfrozen: bool, unfrozenError?: string} Whether it is (now) not frozen, and why not.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 */
+	public function liftWithdrawalFreeze(array $publication, string $reason): array {
+		return $this->depublisher->liftWithdrawalFreeze(publication: $publication, reason: $reason);
+	}//end liftWithdrawalFreeze()
+
+	/**
 	 * Send the withdrawals of a publication.
 	 *
 	 * @param array{publication: array, reason: string, depublishedBy: string, channels: array} $withdrawal The withdrawal.

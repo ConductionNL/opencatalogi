@@ -99,6 +99,25 @@ class DepublicationService implements DepublicationServiceInterface {
 	}//end depublish()
 
 	/**
+	 * Lift the freeze the withdrawal put on a publication (decision 25 Nov 2026: Publish again
+	 * unfreezes, audited with the editor and the reason, then publishes).
+	 *
+	 * @param array<string, mixed> $publication The publication as stored, with its `@self`.
+	 * @param string               $reason      Why it is unfrozen.
+	 *
+	 * @return array{unfrozen: bool, unfrozenError?: string} Whether it is (now) not frozen, and why not.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 */
+	public function liftWithdrawalFreeze(array $publication, string $reason): array {
+		if ($this->freezer === null) {
+			return ['unfrozen' => false, 'unfrozenError' => 'No freezer is wired to lift the withdrawal\'s freeze.'];
+		}
+
+		return $this->freezer->liftWithdrawalFreeze(publication: $publication, reason: $reason);
+	}//end liftWithdrawalFreeze()
+
+	/**
 	 * Record one document of a publication coming down. Nothing is sent to a
 	 * channel and the publication itself is not frozen: the rest of it stays
 	 * public and editable.

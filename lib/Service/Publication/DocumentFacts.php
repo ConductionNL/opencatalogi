@@ -147,8 +147,14 @@ final class DocumentFacts {
 	 * @return bool False for a draft, a future publication or a depublished one.
 	 *
 	 * @spec openspec/changes/archive/2026-11-24-publication-detail-for-the-portal/tasks.md#2.1
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
 	 */
 	public static function isLive(array $publication, DateTimeImmutable $now): bool {
+		if (array_key_exists('status', $publication) === true) {
+			return self::isLiveInLifecycle(publication: $publication, now: $now);
+		}
+
+		// A record without a lifecycle status: OpenRegister's own publish markers.
 		$self = $publication['@self'] ?? [];
 		if (is_array($self) === false) {
 			return false;
@@ -164,6 +170,35 @@ final class DocumentFacts {
 		return $depublished === null || $depublished > $now;
 
 	}//end isLive()
+
+	/**
+	 * Whether a publication on the lifecycle is public now: stored `published`, its
+	 * publication date reached and its depublication date not (REQ-PLC-002). The
+	 * lifecycle no longer sets OpenRegister's `@self.published`, so reading that
+	 * marker found no publication live (error reports refused 404, live 25 Nov 2026).
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param DateTimeImmutable    $now         The moment.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-a-publication-is-public-only-in-the-published-state-and-every-publish-path-moves-the-lifecycle-req-plc-003
+	 */
+	private static function isLiveInLifecycle(array $publication, DateTimeImmutable $now): bool {
+		if (($publication['status'] ?? null) !== 'published') {
+			return false;
+		}
+
+		$published = self::moment(value: ($publication['publicationDate'] ?? null));
+		if ($published === null || $published > $now) {
+			return false;
+		}
+
+		$depublished = self::moment(value: ($publication['depublicationDate'] ?? null));
+
+		return $depublished === null || $depublished > $now;
+
+	}//end isLiveInLifecycle()
 
 	/**
 	 * Whether an attachment's own publication window has ended.

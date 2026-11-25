@@ -158,7 +158,8 @@ async function makeCatalog(
 			slug,
 			summary: `OOAPI-009 fixture (hasOoapi=${hasOoapi})`,
 			listed: true,
-			status: 'stable',
+			// A catalog starts in its lifecycle's initial state ("development");
+			// OpenRegister refuses any other status on create.
 			hasOoapi,
 		},
 	})

@@ -24,6 +24,7 @@ use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCP\App\IAppManager;
+use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
@@ -161,6 +162,55 @@ class BatchPublicationWriterEdgesTest extends TestCase {
 			owner: 'alice'
 		);
 	}//end testAnUntitledMissingDocumentIsNamedByItsReference()
+
+	/**
+	 * A path with a leading slash as the owner sees it, not at the storage root, is found in the owner's files.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 */
+	public function testAnOwnerPathWithALeadingSlashIsFoundInTheOwnersFiles(): void {
+		$file = $this->createMock(originalClassName: File::class);
+		$folder = $this->createMock(originalClassName: Folder::class);
+		$folder->method('get')->with('Woo/besluit.pdf')->willReturn($file);
+		$root = $this->createMock(originalClassName: IRootFolder::class);
+		$root->method('get')->with('/Woo/besluit.pdf')->willThrowException(new NotFoundException(message: 'not at the root'));
+		$root->method('getUserFolder')->with('alice')->willReturn($folder);
+
+		self::assertSame(expected: $file, actual: $this->writer(root: $root)->resolve(reference: '/Woo/besluit.pdf', owner: 'alice'));
+	}//end testAnOwnerPathWithALeadingSlashIsFoundInTheOwnersFiles()
+
+	/**
+	 * A file found at the storage root is taken as it is; the owner's files are not asked.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 */
+	public function testAnAbsolutePathAtTheRootIsTakenAsItIs(): void {
+		$file = $this->createMock(originalClassName: File::class);
+		$root = $this->createMock(originalClassName: IRootFolder::class);
+		$root->method('get')->with('/alice/files/Woo/besluit.pdf')->willReturn($file);
+		$root->expects($this->never())->method('getUserFolder');
+
+		self::assertSame(expected: $file, actual: $this->writer(root: $root)->resolve(reference: '/alice/files/Woo/besluit.pdf', owner: 'alice'));
+	}//end testAnAbsolutePathAtTheRootIsTakenAsItIs()
+
+	/**
+	 * A file id never falls back to a path in the owner's files.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 */
+	public function testAFileIdThatIsGoneIsNotLookedUpAsAPath(): void {
+		$root = $this->createMock(originalClassName: IRootFolder::class);
+		$root->method('getFirstNodeById')->willReturn(null);
+		$root->expects($this->never())->method('getUserFolder');
+
+		self::assertNull(actual: $this->writer(root: $root)->resolve(reference: '4711', owner: 'alice'));
+	}//end testAFileIdThatIsGoneIsNotLookedUpAsAPath()
 
 	public function testWithoutOpenRegisterNoPublicationIsMade(): void {
 		$this->installed = false;

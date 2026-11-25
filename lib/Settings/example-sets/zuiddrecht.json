@@ -121,8 +121,7 @@
 				"soortHandeling": "ontvangst",
 				"publicationDate": "{{datetime:-60 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat015"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -147,8 +146,7 @@
 				"soortHandeling": "ontvangst",
 				"publicationDate": "{{datetime:-45 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat010"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -174,8 +172,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-32 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat009"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -206,8 +203,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-21 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat008"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -238,8 +234,7 @@
 				"soortHandeling": "ondertekening",
 				"publicationDate": "{{datetime:-12 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat008"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -297,7 +292,6 @@
 				"publicationDate": "{{datetime:-18 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat014",
 				"period": {
 					"from": "{{date:-240}}",
 					"to": "{{date:-60}}"
@@ -347,8 +341,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-16 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat002"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -373,8 +366,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-8 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat001"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -399,8 +391,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-70 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat002"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -426,8 +417,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-100 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat016"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -452,8 +442,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-90 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat004"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -478,8 +467,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-150 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat012"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -790,10 +778,10 @@
 			"data": {
 				"title": "Woo-besluit over de parkeervergunningen van 2021",
 				"summary": "Besluit op een Woo-verzoek over de uitgifte van parkeervergunningen in 2021.",
+				"description": "Het besluit op het verzoek, met de lijst van verstrekte parkeervergunningen per wijk. De bewaartermijn is verstreken; het archief beoordeelt of het weg kan.",
 				"publicationDate": "{{datetime:-1845 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat014",
 				"retentionCategory": "Woo-verzoeken en -besluiten",
 				"retentionTermMonths": 60,
 				"retentionAction": "review",
@@ -807,10 +795,10 @@
 			"data": {
 				"title": "Convenant leerlingenvervoer 2016 tot 2026",
 				"summary": "Afspraken met de vervoerders over het leerlingenvervoer.",
+				"description": "Het convenant met de vervoerders over routes, tarieven en klachtafhandeling voor het leerlingenvervoer. Het loopt dit jaar af en wacht op de beoordeling van de bewaartermijn.",
 				"publicationDate": "{{datetime:-3735 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat011",
 				"retentionCategory": "Convenanten",
 				"retentionTermMonths": 120,
 				"retentionAction": "review",
@@ -824,10 +812,10 @@
 			"data": {
 				"title": "Evaluatie sportbeleid 2019",
 				"summary": "Wat het sportbeleid van 2015 tot 2019 opleverde.",
+				"description": "De evaluatie van het sportbeleid 2015 tot 2019: deelname, accommodaties en subsidies. De bewaartermijn is verstreken; het archief beoordeelt of het weg kan.",
 				"publicationDate": "{{datetime:-2537 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat016",
 				"retentionCategory": "Onderzoeksrapporten",
 				"retentionTermMonths": 84,
 				"retentionAction": "depublish",
@@ -841,10 +829,10 @@
 			"data": {
 				"title": "Raadsstukken voor de vergadering van 21 oktober 2021",
 				"summary": "De stukken voor de raadsvergadering van 21 oktober 2021.",
+				"description": "De agenda, de voorstellen en de besluitenlijst van de raadsvergadering van 21 oktober 2021. De bewaartermijn loopt binnen dertig dagen af.",
 				"publicationDate": "{{datetime:-1835 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat004",
 				"retentionCategory": "Vergaderstukken",
 				"retentionTermMonths": 60,
 				"retentionAction": "archive",
@@ -858,10 +846,10 @@
 			"data": {
 				"title": "Woo-besluit over de aanbesteding begraafplaats",
 				"summary": "Besluit op een Woo-verzoek over de aanbesteding van het onderhoud van de begraafplaats.",
+				"description": "Het besluit op het verzoek, met de openbaar gemaakte stukken over de aanbesteding van het onderhoud van de begraafplaats. De bewaartermijn loopt binnen dertig dagen af.",
 				"publicationDate": "{{datetime:-1819 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat014",
 				"retentionCategory": "Woo-verzoeken en -besluiten",
 				"retentionTermMonths": 60,
 				"retentionAction": "review",

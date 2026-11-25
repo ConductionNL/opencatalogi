@@ -495,6 +495,7 @@ export class Fixtures {
 	 * @param id
 	 * @param fileName
 	 * @param content
+	 * @param share Whether the file is shared (made public) on upload.
 	 */
 	async attachFile(
 		register: number | string,
@@ -502,9 +503,10 @@ export class Fixtures {
 		id: string,
 		fileName: string,
 		content: string,
+		share = false,
 	): Promise<number> {
 		const res = await this.ctx.post(`${OBJ(register, schema, id)}/files`, {
-			data: { name: fileName, content },
+			data: { name: fileName, content, share },
 		})
 		if (!res.ok()) {
 			throw new Error(

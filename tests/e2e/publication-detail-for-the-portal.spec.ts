@@ -22,7 +22,7 @@ import { expect, test } from './authenticated-request.ts'
 import {
 	BASE,
 	Fixtures,
-	REG_OPENCATALOGI,
+	REG_PUBLICATION,
 	SCHEMA_PUBLICATION,
 } from './workflows/_fixtures.ts'
 
@@ -101,30 +101,44 @@ test.describe('Publication detail for the portal', () => {
 		const slug = `pdp-order-${Date.now().toString(36)}`
 		await fx.createCatalog('pdp-order', {
 			slug,
-			registers: [REG_OPENCATALOGI],
+			registers: [REG_PUBLICATION],
 			schemas: [SCHEMA_PUBLICATION],
 		})
 		const publication = await fx.createPublication(
 			'pdp-order',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
-			REG_OPENCATALOGI,
+			// Reviewed and approved: publishing a draft needs that review first.
+			{ status: 'approved', publicationDate: '2026-01-05T09:00:00+00:00' },
+			REG_PUBLICATION,
 		)
 		for (const name of ['Bijlage 2', 'Besluit', 'Bijlage 1']) {
 			await fx.attachFile(
-				REG_OPENCATALOGI,
+				REG_PUBLICATION,
 				SCHEMA_PUBLICATION,
 				publication.id,
 				`${name}.txt`,
 				`Inhoud van ${name}`,
+				// Shared: the portal reads only the documents made public.
+				true,
 			)
 		}
 		const published = await admin.post(
 			`${API_BASE}/publications/${publication.id}/publish`,
 		)
-		expect(published.ok(), `publish: ${published.status()}`).toBe(true)
+		expect(
+			published.ok(),
+			`publish: ${published.status()} ${await published.text()}`,
+		).toBe(true)
 
 		await page.goto(`${APP_BASE}/publications/${slug}/${publication.id}`)
-		await expect(page.getByTestId('attachment-order')).toBeVisible()
+		// The detail grid mounts a widget when it scrolls into view, and the
+		// attachments widget sits below the fold: scroll down to it.
+		const order = page.getByTestId('attachment-order')
+		await expect(page.locator('[gs-id]').first()).toBeAttached({ timeout: 30_000 })
+		await page.mouse.move(800, 400)
+		await expect(async () => {
+			await page.mouse.wheel(0, 400)
+			await expect(order).toBeVisible({ timeout: 500 })
+		}).toPass({ timeout: 30_000 })
 
 		// "Besluit" to the top, then "Bijlage 1" above "Bijlage 2".
 		await moveByKeyboard(page, 'Besluit', 'up')
@@ -177,20 +191,23 @@ test.describe('Publication detail for the portal', () => {
 			const slug = `pdp-report-${run}`
 			await fx.createCatalog('pdp-report', {
 				slug,
-				registers: [REG_OPENCATALOGI],
+				registers: [REG_PUBLICATION],
 				schemas: [SCHEMA_PUBLICATION],
 				acceptErrorReports: true,
 				errorReportModerators: [group],
 			})
 			const publication = await fx.createPublication(
 				'pdp-report',
-				{ publicationDate: '2026-01-05T09:00:00+00:00' },
-				REG_OPENCATALOGI,
+				// Reviewed and approved: publishing a draft needs that review first.
+				{ status: 'approved', publicationDate: '2026-01-05T09:00:00+00:00' },
+				REG_PUBLICATION,
 			)
 			expect(
 				(
 					await admin.post(
 						`${API_BASE}/publications/${publication.id}/publish`,
+						// It carries no documents; publishing one without asks this.
+						{ data: { confirmNoDocuments: true } },
 					)
 				).ok(),
 			).toBe(true)
@@ -240,7 +257,7 @@ test.describe('Publication detail for the portal', () => {
 		} finally {
 			if (reportId !== '') {
 				await admin.delete(
-					`/index.php/apps/openregister/api/objects/${REG_OPENCATALOGI}/errorReport/${reportId}`,
+					`/index.php/apps/openregister/api/objects/${REG_PUBLICATION}/errorReport/${reportId}`,
 					{ failOnStatusCode: false },
 				)
 			}

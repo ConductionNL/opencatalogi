@@ -301,7 +301,9 @@ class PublicationStateController extends Controller {
 			return $this->conflict(state: $state);
 		}
 
-		$guard = ($this->embargoHolds(properties: $properties) ?? $this->noDocuments(id: $id, publication: $publication));
+		$guard = ($this->embargoHolds(properties: $properties)
+			?? $this->noDocuments(id: $id, publication: $publication)
+			?? $this->unfreezeWithdrawn(state: $state, properties: $properties));
 		if ($guard !== null) {
 			return $guard;
 		}
@@ -316,6 +318,35 @@ class PublicationStateController extends Controller {
 
 		return new JSONResponse(['state' => PublicationStateServiceInterface::STATE_PUBLIC]);
 	}//end publish()
+
+	/**
+	 * Publish again lifts the freeze the withdrawal set (decision 25 Nov 2026), audited in
+	 * OpenRegister with the editor and the reason; null when it may go ahead.
+	 *
+	 * @param string               $state      The publication's state.
+	 * @param array<string, mixed> $properties The publication as stored, with its `@self`.
+	 *
+	 * @return JSONResponse|null 409 `frozen` with the reason when the freeze stays; null when not frozen or lifted.
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 */
+	private function unfreezeWithdrawn(string $state, array $properties): ?JSONResponse {
+		if ($state !== PublicationStateServiceInterface::STATE_WITHDRAWN || empty($properties['@self']['frozen']) === true) {
+			return null;
+		}
+
+		$reason = trim((string)$this->request->getParam('reason', ''));
+		if ($reason === '') {
+			$reason = 'Published again';
+		}
+
+		$answer = $this->registers->liftWithdrawalFreeze(publication: $properties, reason: $reason);
+		if ($answer['unfrozen'] === true) {
+			return null;
+		}
+
+		return new JSONResponse(data: ['error' => 'frozen', 'detail' => $answer['unfrozenError'] ?? ''], statusCode: Http::STATUS_CONFLICT);
+	}//end unfreezeWithdrawn()
 
 	/**
 	 * Publish now: a stored `published` publication (scheduled or withdrawn) gets today's date; any other runs
