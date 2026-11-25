@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Liosta luachanna anaithnid.",
         "Name the entry the choice is about.": "Ainmnigh an iontráil a bhaineann leis an rogha.",
         "An explanation is at most %s characters.": "Tá %s carachtar ar a mhéad i míniú.",
-        "The choice could not be saved: %s": "Níorbh fhéidir an rogha a shábháil: %s"
+        "The choice could not be saved: %s": "Níorbh fhéidir an rogha a shábháil: %s",
+        "Move {label} up": "Bog {label} suas",
+        "Move {label} down": "Bog {label} síos",
+        "{label} is now at position {position}.": "Tá {label} anois in áit {position}.",
+        "Name the list and its entries in their new order.": "Ainmnigh an liosta agus a iontrálacha san ord nua."
     },
     "nplurals=2; plural=(n != 1);"
 )

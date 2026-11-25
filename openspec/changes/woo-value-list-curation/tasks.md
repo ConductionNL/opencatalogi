@@ -10,6 +10,7 @@ Read `openspec/woo-build-rules.md` first. Start once `woo-value-lists-on-the-con
 ## 2. Order
 
 - [ ] 2.1 Read the order in `WooCategoryRegistry`, `GET /api/woo/categories` and the publication form pickers; add Move up and Move down to the Woo settings lists (REQ-WVL-002). Verify: `tests/Unit/Service/Woo/WooCategoryRegistryTest.php::testTheAdministratorsOrderWins` and `tests/e2e/value-list-curation.spec.ts` "an administrator puts the most used category first", carrying `@e2e` REQ-WVL-002.
+  - Built (#2999): `CuratedCategoryRegistry` orders `InformationCategoryRegistryInterface::all()` (so `GET /api/woo/categories` and its pickers), `PUT /api/woo/value-list-choices/order`, Move up/Move down with a live region for the information categories, `CuratedCategoryRegistryTest::testTheAdministratorsOrderWins`, and `tests/e2e/value-list-curation.spec.ts` (written, runs in nightly). Left: the publication form's category, handling and document type pickers render the schema enum through the nextcloud-vue data widget, which cannot read its options from an endpoint yet; and the soort handeling and documentsoorten lists in the Woo settings.
 
 ## 3. Explanation
 

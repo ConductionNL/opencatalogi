@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Tuntematon arvolista.",
         "Name the entry the choice is about.": "Nimeä kohde, jota valinta koskee.",
         "An explanation is at most %s characters.": "Selitys on enintään %s merkkiä.",
-        "The choice could not be saved: %s": "Valintaa ei voitu tallentaa: %s"
+        "The choice could not be saved: %s": "Valintaa ei voitu tallentaa: %s",
+        "Move {label} up": "Siirrä {label} ylös",
+        "Move {label} down": "Siirrä {label} alas",
+        "{label} is now at position {position}.": "{label} on nyt sijalla {position}.",
+        "Name the list and its entries in their new order.": "Nimeä luettelo ja sen kohteet uudessa järjestyksessä."
     },
     "nplurals=2; plural=(n != 1);"
 )

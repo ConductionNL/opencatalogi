@@ -872,7 +872,11 @@
         "Unknown value list.": "Llista de valors desconeguda.",
         "Name the entry the choice is about.": "Indiqueu l'entrada a què es refereix l'elecció.",
         "An explanation is at most %s characters.": "Una explicació té com a màxim %s caràcters.",
-        "The choice could not be saved: %s": "No s'ha pogut desar l'elecció: %s"
+        "The choice could not be saved: %s": "No s'ha pogut desar l'elecció: %s",
+        "Move {label} up": "Puja {label}",
+        "Move {label} down": "Baixa {label}",
+        "{label} is now at position {position}.": "{label} és ara a la posició {position}.",
+        "Name the list and its entries in their new order.": "Indiqueu la llista i les seves entrades en el nou ordre."
     },
     "plurals": {}
 }

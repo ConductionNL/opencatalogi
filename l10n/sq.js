@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Listë vlerash e panjohur.",
         "Name the entry the choice is about.": "Emërtoni zërin që lidhet me zgjedhjen.",
         "An explanation is at most %s characters.": "Një shpjegim ka më së shumti %s karaktere.",
-        "The choice could not be saved: %s": "Zgjedhja nuk mund të ruhej: %s"
+        "The choice could not be saved: %s": "Zgjedhja nuk mund të ruhej: %s",
+        "Move {label} up": "Lëviz {label} lart",
+        "Move {label} down": "Lëviz {label} poshtë",
+        "{label} is now at position {position}.": "{label} tani është në pozicionin {position}.",
+        "Name the list and its entries in their new order.": "Emërtoni listën dhe zërat e saj në renditjen e re."
     },
     "nplurals=2; plural=(n != 1);"
 )

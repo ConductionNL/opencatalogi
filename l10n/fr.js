@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Liste de valeurs inconnue.",
         "Name the entry the choice is about.": "Indiquez l'entrée concernée par le choix.",
         "An explanation is at most %s characters.": "Une explication comporte au plus %s caractères.",
-        "The choice could not be saved: %s": "Le choix n'a pas pu être enregistré : %s"
+        "The choice could not be saved: %s": "Le choix n'a pas pu être enregistré : %s",
+        "Move {label} up": "Monter {label}",
+        "Move {label} down": "Descendre {label}",
+        "{label} is now at position {position}.": "{label} est maintenant en position {position}.",
+        "Name the list and its entries in their new order.": "Indiquez la liste et ses entrées dans leur nouvel ordre."
     },
     "nplurals=2; plural=(n != 1);"
 )

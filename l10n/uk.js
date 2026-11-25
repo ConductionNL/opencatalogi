@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Невідомий список значень.",
         "Name the entry the choice is about.": "Укажіть елемент, якого стосується вибір.",
         "An explanation is at most %s characters.": "Пояснення — не більше %s символів.",
-        "The choice could not be saved: %s": "Не вдалося зберегти вибір: %s"
+        "The choice could not be saved: %s": "Не вдалося зберегти вибір: %s",
+        "Move {label} up": "Перемістити {label} вгору",
+        "Move {label} down": "Перемістити {label} вниз",
+        "{label} is now at position {position}.": "{label} тепер на позиції {position}.",
+        "Name the list and its entries in their new order.": "Укажіть список і його елементи в новому порядку."
     },
     "nplurals=2; plural=(n != 1);"
 )

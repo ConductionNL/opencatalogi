@@ -872,7 +872,11 @@
         "Unknown value list.": "Nieznana lista wartości.",
         "Name the entry the choice is about.": "Wskaż pozycję, której dotyczy wybór.",
         "An explanation is at most %s characters.": "Objaśnienie może mieć najwyżej %s znaków.",
-        "The choice could not be saved: %s": "Nie udało się zapisać wyboru: %s"
+        "The choice could not be saved: %s": "Nie udało się zapisać wyboru: %s",
+        "Move {label} up": "Przenieś {label} w górę",
+        "Move {label} down": "Przenieś {label} w dół",
+        "{label} is now at position {position}.": "{label} jest teraz na pozycji {position}.",
+        "Name the list and its entries in their new order.": "Wskaż listę i jej pozycje w nowej kolejności."
     },
     "plurals": {}
 }

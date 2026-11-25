@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Bilinmeyen değer listesi.",
         "Name the entry the choice is about.": "Seçimin ilgili olduğu öğeyi belirtin.",
         "An explanation is at most %s characters.": "Bir açıklama en fazla %s karakterdir.",
-        "The choice could not be saved: %s": "Seçim kaydedilemedi: %s"
+        "The choice could not be saved: %s": "Seçim kaydedilemedi: %s",
+        "Move {label} up": "{label} öğesini yukarı taşı",
+        "Move {label} down": "{label} öğesini aşağı taşı",
+        "{label} is now at position {position}.": "{label} şimdi {position}. sırada.",
+        "Name the list and its entries in their new order.": "Listeyi ve öğelerini yeni sıralarıyla belirtin."
     },
     "nplurals=2; plural=(n != 1);"
 )

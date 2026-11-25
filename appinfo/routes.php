@@ -83,6 +83,7 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// An administrator curates a value list: the list with the organisation's choices, and one choice saved (REQ-WVL-003).
 		['name' => 'valueListChoices#index', 'url' => '/api/woo/value-list-choices', 'verb' => 'GET'],
 		['name' => 'valueListChoices#update', 'url' => '/api/woo/value-list-choices', 'verb' => 'PUT'],
+		['name' => 'valueListChoices#reorder', 'url' => '/api/woo/value-list-choices/order', 'verb' => 'PUT'],
 		// The annual report's availability (woo-annual-report, REQ-WAR-002).
 		['name' => 'annualReport#availability', 'url' => '/api/reports/annual', 'verb' => 'GET'],
 		// Every controlled-list entry, public: declared before `/api/{catalogSlug}`, which would match it.

@@ -11,12 +11,20 @@ import axios from '@nextcloud/axios'
 import CategoryExplanations, {
 	CHOICES_URL,
 	draftOf,
+	moveEntry,
+	ORDER_URL,
 	SCHEME,
 } from './CategoryExplanations.vue'
 
 jest.mock('@nextcloud/axios', () => ({
 	__esModule: true,
 	default: { get: jest.fn(), put: jest.fn() },
+}))
+jest.mock('@nextcloud/l10n', () => ({
+	translate: (app, text, vars = {}) =>
+		text.replace(/{(\w+)}/g, (match, key) =>
+			key in vars ? String(vars[key]) : match,
+		),
 }))
 jest.mock('@nextcloud/router', () => ({ generateUrl: (path) => path }))
 jest.mock('@nextcloud/dialogs', () => ({ showSuccess: jest.fn() }))
@@ -79,6 +87,7 @@ describe('CategoryExplanations', () => {
 		expect(s.entries).toEqual([saved])
 		expect(s.drafts).toEqual({})
 		expect(s.saving).toBeNull()
+		expect(s.error).toBeNull()
 	})
 
 	it('shows the reason when a save is refused', async () => {
@@ -97,5 +106,51 @@ describe('CategoryExplanations', () => {
 		expect(draftOf({}, { uri: 'a', explanation: 'Saved' })).toBe('Saved')
 		expect(draftOf({ a: '' }, { uri: 'a', explanation: 'Saved' })).toBe('')
 		expect(draftOf({}, { uri: 'a' })).toBe('')
+	})
+
+	it('moves a category up and saves the new order, announcing its place', async () => {
+		const first = { code: 'infocat001', uri: 'u1', label: 'Wetten' }
+		const subsidies = {
+			code: 'infocat013',
+			uri: 'u13',
+			label: 'Subsidieverplichtingen anders dan met beschikking',
+		}
+		axios.put.mockResolvedValue({
+			data: { entries: [subsidies, first], choicesUnavailable: false },
+		})
+		const s = state()
+		s.entries = [first, subsidies]
+		await s.move(1, -1)
+		expect(axios.put).toHaveBeenCalledWith(ORDER_URL, {
+			scheme: SCHEME,
+			entries: ['u13', 'u1'],
+		})
+		expect(s.entries).toEqual([subsidies, first])
+		expect(s.announcement).toBe(
+			'Subsidieverplichtingen anders dan met beschikking is now at position 1.',
+		)
+		expect(s.reordering).toBe(false)
+	})
+
+	it('does not move past either end, and shows a refused order', async () => {
+		expect(moveEntry([{ uri: 'a' }], 0, -1)).toBeNull()
+		expect(moveEntry([{ uri: 'a' }, { uri: 'b' }], 1, 1)).toBeNull()
+		expect(
+			moveEntry([{ uri: 'a' }, { uri: 'b' }, { uri: 'c' }], 0, 1).map(
+				(e) => e.uri,
+			),
+		).toEqual(['b', 'a', 'c'])
+		axios.put.mockRejectedValue({
+			response: { data: { error: 'The choice could not be saved: nope' } },
+		})
+		const s = state()
+		s.entries = [
+			{ uri: 'a', label: 'A' },
+			{ uri: 'b', label: 'B' },
+		]
+		await s.move(0, 1)
+		expect(s.error).toBe('The choice could not be saved: nope')
+		await s.move(0, -1)
+		expect(axios.put).toHaveBeenCalledTimes(1)
 	})
 })

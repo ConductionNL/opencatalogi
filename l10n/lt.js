@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Nežinomas reikšmių sąrašas.",
         "Name the entry the choice is about.": "Nurodykite įrašą, kurio pasirinkimas liečia.",
         "An explanation is at most %s characters.": "Paaiškinimas yra ne ilgesnis nei %s simbolių.",
-        "The choice could not be saved: %s": "Pasirinkimo nepavyko įrašyti: %s"
+        "The choice could not be saved: %s": "Pasirinkimo nepavyko įrašyti: %s",
+        "Move {label} up": "Perkelti {label} aukštyn",
+        "Move {label} down": "Perkelti {label} žemyn",
+        "{label} is now at position {position}.": "{label} dabar yra {position} vietoje.",
+        "Name the list and its entries in their new order.": "Nurodykite sąrašą ir jo įrašus nauja tvarka."
     },
     "nplurals=2; plural=(n != 1);"
 )

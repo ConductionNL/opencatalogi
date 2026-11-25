@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Óþekktur gildalisti.",
         "Name the entry the choice is about.": "Tilgreindu færsluna sem valið varðar.",
         "An explanation is at most %s characters.": "Skýring er í mesta lagi %s stafir.",
-        "The choice could not be saved: %s": "Ekki tókst að vista valið: %s"
+        "The choice could not be saved: %s": "Ekki tókst að vista valið: %s",
+        "Move {label} up": "Færa {label} upp",
+        "Move {label} down": "Færa {label} niður",
+        "{label} is now at position {position}.": "{label} er nú í sæti {position}.",
+        "Name the list and its entries in their new order.": "Tilgreindu listann og færslur hans í nýju röðinni."
     },
     "nplurals=2; plural=(n != 1);"
 )

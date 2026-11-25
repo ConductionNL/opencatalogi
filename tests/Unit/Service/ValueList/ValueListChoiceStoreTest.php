@@ -171,6 +171,38 @@ class ValueListChoiceStoreTest extends TestCase {
 	}//end testAnExistingChoiceKeepsWhatIsNotChanged()
 
 	/**
+	 * Saving an order writes each entry whose position changed, and only those.
+	 *
+	 * @return void
+	 */
+	public function testSavingAnOrderWritesOnlyWhatMoved(): void {
+		$written = $this->store(rows: [
+			['id' => 'c-a', 'scheme' => 'informatiecategorieen', 'entry' => 'https://example.org/a', 'order' => 0],
+			['id' => 'c-b', 'scheme' => 'informatiecategorieen', 'entry' => 'https://example.org/b', 'order' => 1, 'explanation' => 'Uitleg'],
+		])->saveOrder(scheme: 'informatiecategorieen', entries: ['https://example.org/b', 'https://example.org/a', 'https://example.org/c']);
+
+		$this->assertSame(expected: 3, actual: $written);
+		$this->assertSame(expected: [0, 1, 2], actual: array_map(static fn (array $save): int => $save['object']['order'], $this->saves));
+		$this->assertSame(expected: 'Uitleg', actual: $this->saves[0]['object']['explanation']);
+		$this->assertSame(expected: 'c-b', actual: $this->saves[0]['options']->uuid);
+		$this->assertNull(actual: $this->saves[2]['options']->uuid);
+	}//end testSavingAnOrderWritesOnlyWhatMoved()
+
+	/**
+	 * An order that is already stored writes nothing.
+	 *
+	 * @return void
+	 */
+	public function testAnUnchangedOrderWritesNothing(): void {
+		$written = $this->store(rows: [
+			['id' => 'c-a', 'scheme' => 'informatiecategorieen', 'entry' => 'https://example.org/a', 'order' => 0],
+		])->saveOrder(scheme: 'informatiecategorieen', entries: ['https://example.org/a']);
+
+		$this->assertSame(expected: 0, actual: $written);
+		$this->assertSame(expected: [], actual: $this->saves);
+	}//end testAnUnchangedOrderWritesNothing()
+
+	/**
 	 * The choices of a list are keyed by entry, in a fixed shape; rows of another list are left out.
 	 *
 	 * @return void

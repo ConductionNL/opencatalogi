@@ -127,8 +127,46 @@ class ValueListChoicesController extends Controller {
 			return new JSONResponse(['error' => $problem], Http::STATUS_BAD_REQUEST);
 		}
 
+		return $this->written(scheme: $scheme, write: fn () => $this->view->save(choice: $choice));
+
+	}//end update()
+
+	/**
+	 * Save the order of a list, for an administrator: `entries` names every entry URI, first first.
+	 *
+	 * @return JSONResponse 200 with the list after the save; 400 for a bad request; 422 when the save is refused.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrators-order-drives-every-pick-list-req-wvl-002
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function reorder(): JSONResponse {
+		$scheme = (string)$this->request->getParam('scheme', '');
+		$entries = [];
+		foreach ((array)$this->request->getParam('entries', []) as $entry) {
+			if (trim((string)$entry) !== '') {
+				$entries[] = trim((string)$entry);
+			}
+		}
+
+		if (in_array($scheme, ValueListsService::SCHEMES, true) === false || $entries === []) {
+			return new JSONResponse(['error' => $this->l10n->t('Name the list and its entries in their new order.')], Http::STATUS_BAD_REQUEST);
+		}
+
+		return $this->written(scheme: $scheme, write: fn () => $this->view->saveOrder(scheme: $scheme, entries: $entries));
+
+	}//end reorder()
+
+	/**
+	 * Run a write and answer the list after it, or the refusal.
+	 *
+	 * @param string   $scheme The list written to.
+	 * @param callable $write  The write.
+	 *
+	 * @return JSONResponse 200 with the list; 422 when the write is refused.
+	 */
+	private function written(string $scheme, callable $write): JSONResponse {
 		try {
-			$this->view->save(choice: $choice);
+			$write();
 		} catch (Throwable $e) {
 			return new JSONResponse(
 				['error' => $this->l10n->t('The choice could not be saved: %s', [$e->getMessage()])],
@@ -138,7 +176,7 @@ class ValueListChoicesController extends Controller {
 
 		return new JSONResponse($this->view->entries(scheme: $scheme));
 
-	}//end update()
+	}//end written()
 
 	/**
 	 * Every visible information category as `{code, uri, label, explanation, order}`, in the organisation's order.

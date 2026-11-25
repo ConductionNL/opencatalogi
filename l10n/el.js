@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Άγνωστος κατάλογος τιμών.",
         "Name the entry the choice is about.": "Ορίστε την καταχώριση που αφορά η επιλογή.",
         "An explanation is at most %s characters.": "Μια επεξήγηση έχει το πολύ %s χαρακτήρες.",
-        "The choice could not be saved: %s": "Η επιλογή δεν μπόρεσε να αποθηκευτεί: %s"
+        "The choice could not be saved: %s": "Η επιλογή δεν μπόρεσε να αποθηκευτεί: %s",
+        "Move {label} up": "Μετακίνηση {label} πάνω",
+        "Move {label} down": "Μετακίνηση {label} κάτω",
+        "{label} is now at position {position}.": "Το {label} είναι τώρα στη θέση {position}.",
+        "Name the list and its entries in their new order.": "Ορίστε τον κατάλογο και τις καταχωρίσεις του με τη νέα σειρά."
     },
     "nplurals=2; plural=(n != 1);"
 )
