@@ -74,6 +74,29 @@ class CouncilSourceTemplatesTest extends TestCase {
 	}//end testTheShippedFileListsBothSystems()
 
 	/**
+	 * The templates match integriq's schemas: a synchronization's `conditions` is a
+	 * list of JsonLogic filters, a rule's `conditions` one JsonLogic object. With an
+	 * object for the synchronization, integriq refused the set-up (HTTP 500, found
+	 * live on a sandbox instance with integriq development).
+	 *
+	 * @return void
+	 */
+	public function testTheTemplatesMatchIntegriqsConditionShapes(): void {
+		$templates = new CouncilSourceTemplates(appRoot: __DIR__ . '/../../..', file: '/lib/Settings/council-documents-sources.json');
+
+		foreach ($templates->all() as $kind => $template) {
+			$this->assertTrue(
+				condition: array_is_list($template['synchronization']['conditions']),
+				message: $kind.': a synchronization takes a list of conditions'
+			);
+			$this->assertFalse(
+				condition: array_is_list($template['rule']['conditions']),
+				message: $kind.': a rule takes one JsonLogic object'
+			);
+		}
+	}//end testTheTemplatesMatchIntegriqsConditionShapes()
+
+	/**
 	 * An unknown source is refused with its slug in the message.
 	 *
 	 * @return void

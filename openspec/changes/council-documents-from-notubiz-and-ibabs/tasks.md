@@ -16,13 +16,16 @@ Read `lib/Settings/register.d/publiccode-github-harvest.json` and `lib/Service/P
 
 ## 3. Settings section
 
-- [ ] 3.1 Add the "Council documents" section to the admin settings after "GitHub harvest" (board `OcInstellingen`), with the fields and actions of design D5 and the decidiq warning (REQ-CDH-001). Verify: `tests/e2e/council-documents-harvest.spec.ts` "an administrator sets up the council harvest", carrying `@e2e` REQ-CDH-001.
+- [x] 3.1 Add the "Council documents" section to the admin settings after "GitHub harvest" (board `OcInstellingen`), with the fields and actions of design D5 and the decidiq warning (REQ-CDH-001). Verify: `tests/e2e/council-documents-harvest.spec.ts` "an administrator sets up the council harvest", carrying `@e2e` REQ-CDH-001.
   - Round 2: `tests/e2e/council-documents-harvest.spec.ts` is written (admin sets up from `notubiz-ris-v1`, sees Run now and Switch on/off, switches it off again; a context with an empty storage state is refused on the status and set-up routes). Not run: needs a live instance with integriq and its Notubiz source.
+  - 25 Nov 2026, live on a sandbox Nextcloud 34 + MariaDB with integriq development: the set-up answered 500, because integriq's `synchronization.conditions` is now a list of JsonLogic filters and the Notubiz and iBabs templates in `lib/Settings/council-documents-sources.json` still gave one object ("Property 'conditions' should be type 'array or null' but is 'object'"). Fixed (the two synchronization conditions are one-element lists; a rule's stays an object), pinned by `CouncilSourceTemplatesTest::testTheTemplatesMatchIntegriqsConditionShapes`. After it `tests/e2e/council-documents-harvest.spec.ts` passes 2/2. integriq ships `notubiz-ris-v1` only as an importable configuration (`configurations/decidesk-ris-import/sources/`), so the run created that source from integriq's own file first.
 - [x] 3.2 Add the strings to `l10n/` (en, nl) and document the harvest for administrators in `docs/`. Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
 
 ## 4. Verification
 
 - [ ] 4.1 `openspec validate council-documents-from-notubiz-and-ibabs --strict`, `composer check:strict`, `npm run lint`. The change's own files are clean on 17 Nov: phpcs, phpmd (CouncilHarvestService split into `CouncilSourceTemplates`, `RegisterObjectsBySlug` and `LatestFlowRun` to stay under the complexity and coupling limits, error-control operator removed) and phpstan, eslint on the settings section and its specs. Left unticked: `check:strict` and `npm run lint` still fail app-wide on findings outside this change (psalm cannot see OpenRegister main's value classes in a bare checkout, phpcs/phpmd in other files, eslint in `DashboardSideBar.vue`), and `openspec validate` was not run in the cloud session.
+  - 25 Nov 2026: `openspec validate --strict` still warns that REQ-CDH-001's text is over 500 characters; the plain validate passes.
 - [ ] 4.2 Live: point the Notubiz source at a municipality with a public feed, run the harvest once, and paste the run counts and one publication in the PR body. (live pass, decision 139)
+  - 25 Nov 2026: not reachable from the cloud sandbox: `api.notubiz.nl` is refused by the session's network proxy.
 - [x] 4.3 Set `int-council` in `openspec/parity/capabilities.json` to `built` with this change.
   - Done 22 Nov: `built`, owner `ConductionNL/opencatalogi`, `opencatalogi: yes`, evidence naming the fragment, the service, the admin routes and the settings section; `reachedOn` names the Council documents section.
