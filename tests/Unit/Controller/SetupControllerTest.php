@@ -506,7 +506,7 @@ class SetupControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-connect-to-federation-privileged-action-onb-007
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-setup/spec.md#requirement-connect-to-federation-privileged-action-onb-007
 	 */
 	public function testTheFederationStepNeverGatesCompletion(): void {
 		$this->wireRegisters();
