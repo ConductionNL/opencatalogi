@@ -102,6 +102,25 @@ interface PublishedTableServiceInterface {
 	public function rows(array $table, array $query): array;
 
 	/**
+	 * Run a read over a table's rows the way rows() reads them: without the
+	 * caller's read rule and organisation, in OpenRegister's system context.
+	 *
+	 * For reads rows() cannot express, such as a view's grouped aggregation;
+	 * the caller has already checked that the publication is public.
+	 *
+	 * @param callable $read The read.
+	 *
+	 * @return mixed What the read returns.
+	 *
+	 * @contract-shift internal-only — PublishedTableService in this app is the only implementer;
+	 *                  a ConductionNL code search finds the interface nowhere else, and the
+	 *                  app's own doubles are createMock() stubs.
+	 *
+	 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-anyone-reads-a-view-s-data-while-the-publication-is-public-req-dsv-002
+	 */
+	public function overAllRows(callable $read): mixed;
+
+	/**
 	 * The ready tables of a publication, each with its rows and dictionary URLs.
 	 *
 	 * @param string $publicationId The publication.

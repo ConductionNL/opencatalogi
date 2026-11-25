@@ -890,4 +890,51 @@ class PublishedTableServiceTest extends TestCase {
 		$this->expectExceptionMessage(message: 'The publication of this table is gone.');
 		$this->serviceWithQueue(queue: null)->reimport(table: ['id' => 't9', 'publication' => 'p1', 'file' => '77']);
 	}//end testReimportOfATableWhosePublicationIsGoneIsRefused()
+	/**
+	 * A read over every row runs in OpenRegister's system context, like rows() reads without
+	 * the caller's organisation.
+	 *
+	 * @return void
+	 */
+	public function testAReadOverEveryRowRunsInTheSystemContext(): void {
+		$objects = new class {
+			/**
+			 * How often a read was run in the system context.
+			 *
+			 * @var integer
+			 */
+			public int $elevated = 0;
+
+			/**
+			 * ObjectService::runAsSystem().
+			 *
+			 * @param callable $operation The read.
+			 *
+			 * @return mixed What it returns.
+			 */
+			public function runAsSystem(callable $operation): mixed {
+				$this->elevated++;
+				return $operation();
+			}
+		};
+		$registers = $this->createMock(originalClassName: OpenRegisterLookupInterface::class);
+		$registers->method('objectService')->willReturn($objects);
+		$service = new PublishedTableService(registers: $registers, container: $this->container);
+
+		$this->assertSame(expected: 'groups', actual: $service->overAllRows(read: static fn (): string => 'groups'));
+		$this->assertSame(expected: 1, actual: $objects->elevated);
+	}//end testAReadOverEveryRowRunsInTheSystemContext()
+
+	/**
+	 * Without OpenRegister's system context the read still runs, as the caller.
+	 *
+	 * @return void
+	 */
+	public function testWithoutTheSystemContextTheReadRunsAsTheCaller(): void {
+		$registers = $this->createMock(originalClassName: OpenRegisterLookupInterface::class);
+		$registers->method('objectService')->willReturn(null);
+		$service = new PublishedTableService(registers: $registers, container: $this->container);
+
+		$this->assertSame(expected: 'groups', actual: $service->overAllRows(read: static fn (): string => 'groups'));
+	}//end testWithoutTheSystemContextTheReadRunsAsTheCaller()
 }//end class
