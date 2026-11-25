@@ -156,4 +156,30 @@ class TooiValueListGraphTest extends TestCase {
 
 		$this->fail(message: 'no node ' . $id);
 	}//end nodeOf()
+
+	/**
+	 * An organisation register becomes a scheme of its current organisations, named and coded.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	public function testAnOrganisationRegisterBecomesASchemeOfCurrentOrganisations(): void {
+		$scheme = 'https://identifier.overheid.nl/tooi/set/rwc_waterschappen_compleet';
+		$built = (new TooiValueListGraph())->build(decoded: self::recorded(file: 'rwc_waterschappen_compleet_2.json'), schemeUri: $scheme);
+
+		$graph = $built['jsonLd']['@graph'];
+		$this->assertSame(expected: $scheme, actual: $graph[0]['@id']);
+		$this->assertSame(expected: 'http://www.w3.org/2004/02/skos/core#ConceptScheme', actual: $graph[0]['@type']);
+		$this->assertCount(expectedCount: 21, haystack: $built['conceptUris']);
+		$this->assertContains(needle: 'https://identifier.overheid.nl/tooi/id/waterschap/ws0152', haystack: $built['conceptUris']);
+		$this->assertNotContains(needle: 'https://identifier.overheid.nl/tooi/id/waterschap/ws0151', haystack: $built['conceptUris'], message: 'An organisation with an end date is left out.');
+
+		$byId = array_column(array_slice($graph, 1), null, '@id');
+		$rijnEnIJssel = $byId['https://identifier.overheid.nl/tooi/id/waterschap/ws0152'];
+		$this->assertSame(expected: 'http://www.w3.org/2004/02/skos/core#Concept', actual: $rijnEnIJssel['@type']);
+		$this->assertSame(expected: [['@value' => 'waterschap Rijn en IJssel', '@language' => 'nl']], actual: $rijnEnIJssel['http://www.w3.org/2004/02/skos/core#prefLabel']);
+		$this->assertSame(expected: [['@value' => 'ws0152']], actual: $rijnEnIJssel['http://www.w3.org/2004/02/skos/core#notation']);
+		$this->assertSame(expected: [['@id' => $scheme]], actual: $rijnEnIJssel['http://www.w3.org/2004/02/skos/core#inScheme']);
+	}//end testAnOrganisationRegisterBecomesASchemeOfCurrentOrganisations()
 }//end class

@@ -38,6 +38,14 @@ use InvalidArgumentException;
  * becomes the scheme. Grouping concepts (`Groeperingsconcept`) only structure
  * the TOOI page and are left out.
  *
+ * A TOOI organisation register (`rwc_`, a `RegisterwaardelijstCompleet`) holds
+ * no SKOS at all: each organisation is a node of its own type (Gemeente,
+ * Waterschap, ...) with an `organisatiecode` and a preferred name. Every
+ * current organisation becomes a concept with that name as its Dutch
+ * `prefLabel` and its code as `notation`. A historical version, and an
+ * organisation with an end date, are left out, so the import deprecates an
+ * organisation once it ends instead of offering it for activation.
+ *
  * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-each-scheme-is-refreshed-from-its-national-source-daily-req-wvc-002
  */
 class TooiValueListGraph {
@@ -55,6 +63,27 @@ class TooiValueListGraph {
 	 * @var string
 	 */
 	private const VALUE_LIST_SUFFIX = 'Conceptwaardelijst';
+
+	/**
+	 * The local type name of a TOOI organisation register node.
+	 *
+	 * @var string
+	 */
+	private const REGISTER_LIST_SUFFIX = 'RegisterwaardelijstCompleet';
+
+	/**
+	 * The TOOI ontology namespace the organisation registers use.
+	 *
+	 * @var string
+	 */
+	private const TOOI_ONT = 'https://identifier.overheid.nl/tooi/def/ont/';
+
+	/**
+	 * The PROV predicate a historical version of an organisation carries.
+	 *
+	 * @var string
+	 */
+	private const SPECIALIZATION_OF = 'http://www.w3.org/ns/prov#specializationOf';
 
 	/**
 	 * The local type name of a TOOI grouping concept.
@@ -96,6 +125,10 @@ class TooiValueListGraph {
 		$graph = [$scheme];
 		$uris = [];
 		foreach ($nodes as $node) {
+			if ($this->isOrganisation(node: $node) === true) {
+				$node = $this->organisationConcept(node: $node);
+			}
+
 			if ($this->isConcept(node: $node) === false) {
 				continue;
 			}
@@ -112,6 +145,69 @@ class TooiValueListGraph {
 
 		return ['jsonLd' => ['@graph' => $graph], 'conceptUris' => $uris];
 	}//end build()
+
+	/**
+	 * Whether a node is a current organisation of a TOOI organisation register.
+	 *
+	 * @param array<string, mixed> $node The node.
+	 *
+	 * @return bool True for an organisation with a code and a name, not ended and not a historical version.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	private function isOrganisation(array $node): bool {
+		return self::literal(node: $node, predicate: self::TOOI_ONT . 'organisatiecode') !== ''
+			&& $this->organisationName(node: $node) !== ''
+			&& isset($node[self::SPECIALIZATION_OF]) === false
+			&& isset($node[self::TOOI_ONT . 'einddatum']) === false;
+	}//end isOrganisation()
+
+	/**
+	 * An organisation node as a SKOS concept: its preferred name as the Dutch label, its code as notation.
+	 *
+	 * @param array<string, mixed> $node The organisation node.
+	 *
+	 * @return array<string, mixed> The node typed as a concept.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	private function organisationConcept(array $node): array {
+		$node['@type'] = [self::SKOS . 'Concept'];
+		$node[self::SKOS . 'prefLabel'] = [['@value' => $this->organisationName(node: $node), '@language' => 'nl']];
+		$node[self::SKOS . 'notation'] = [['@value' => self::literal(node: $node, predicate: self::TOOI_ONT . 'organisatiecode')]];
+
+		return $node;
+	}//end organisationConcept()
+
+	/**
+	 * The name an organisation is known by: the preferred name with its kind, else its label.
+	 *
+	 * @param array<string, mixed> $node The organisation node.
+	 *
+	 * @return string The name, or '' when it has none.
+	 */
+	private function organisationName(array $node): string {
+		$name = self::literal(node: $node, predicate: self::TOOI_ONT . 'voorkeursnaamInclSoort');
+		if ($name !== '') {
+			return $name;
+		}
+
+		return self::literal(node: $node, predicate: 'http://www.w3.org/2000/01/rdf-schema#label');
+	}//end organisationName()
+
+	/**
+	 * The first literal value of a predicate, trimmed.
+	 *
+	 * @param array<string, mixed> $node      The node.
+	 * @param string               $predicate The predicate IRI.
+	 *
+	 * @return string The value, or ''.
+	 */
+	private static function literal(array $node, string $predicate): string {
+		$value = ($node[$predicate][0]['@value'] ?? '');
+
+		return trim(is_scalar($value) === true ? (string)$value : '');
+	}//end literal()
 
 	/**
 	 * The node list of a download: a top-level list, or a `@graph` envelope.
@@ -159,7 +255,9 @@ class TooiValueListGraph {
 				return $this->asScheme(node: $node, schemeUri: $schemeUri);
 			}
 
-			if ($listNode === null && $this->hasLocalType(types: $types, suffix: self::VALUE_LIST_SUFFIX) === true) {
+			$isList = ($this->hasLocalType(types: $types, suffix: self::VALUE_LIST_SUFFIX) === true
+				|| $this->hasLocalType(types: $types, suffix: self::REGISTER_LIST_SUFFIX) === true);
+			if ($listNode === null && $isList === true) {
 				$listNode = $node;
 			}
 		}
