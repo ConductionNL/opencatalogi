@@ -156,7 +156,7 @@ export function catalogPairs(catalogs) {
  * @param {Array<{register: string, schema: string}>} options.pairs - The pairs to count
  * @param {string} [options.prefix] - `/index.php` when the app runs behind it
  * @param {object} [options.headers] - The request headers
- * @param {Function} [options.fetchFn] - The fetch implementation
+ * @param {function(string, object): Promise<Response>} [options.fetchFn] - The fetch implementation
  * @return {Promise<Array<{register: string, schema: string, count: number}>|null>} The counts
  * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
  */
