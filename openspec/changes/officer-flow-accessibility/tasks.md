@@ -17,8 +17,15 @@ Read `openspec/woo-build-rules.md` first. Never `pkill -f playwright`; kill by P
 
 ## 2. Keyboard walk
 
-- [ ] 2.1 Add `tests/e2e/officer-keyboard.spec.ts` with the focus-indicator and focus-trap assertions (REQ-OFA-002). Verify: the spec; it must fail on a step that today needs the mouse, so note in the PR body which step failed first.
+- [x] 2.1 Add `tests/e2e/officer-keyboard.spec.ts` with the focus-indicator and focus-trap assertions (REQ-OFA-002). Verify: the spec; it must fail on a step that today needs the mouse, so note in the PR body which step failed first.
+  - Built 25 Nov 2026 (b-opencatalogi). With Tab, Shift+Tab, Enter, Escape and the arrow keys the spec creates a publication (title, summary, description, Woo category), attaches a document, publishes it from the page's Actions menu with a publication date and withdraws it with a reason. The review (submit, approve) is a reviewer's step and goes through the lifecycle API, as the CI seed does. At every focus change inside the app (Nextcloud's header and navigation are the server's) it checks that the element is visible and in the viewport, and that its outline or box-shadow (on the element or up to four wrappers, where Nextcloud draws a switch's or select's focus) differs once focus moves on. It checks that every modal dialog holds focus and that each one opened moves focus into it, and that closing the attachment and publication dialogs returns focus to their openers.
+    First red, against the released `@conduction/nextcloud-vue`: `"Description" cannot be reached with Tab: it needs the mouse`. CnPropertiesTab opened a property only on a mouse click.
 - [ ] 2.2 Fix what blocks the keyboard in OpenCatalogi's components (REQ-OFA-002). Verify: the spec green.
+  - Built 25 Nov 2026 (b-opencatalogi), not ticked: it goes green once nextcloud-vue#2401 (and #2398) are released and the app bumps `@conduction/nextcloud-vue`. Found and fixed:
+    - nextcloud-vue#2401: a CnPropertiesTab row opens from its name button with Enter or Space; a held-back CnDetailGridCell mounts on the first Tab, because before it the publication status card with Withdraw was never reached (Tab cycled through 49 stops).
+    - App: after Create, focus fell to the page body outside the dialog; `focusFirstTab` now puts it on the dialog's first tab (`src/services/focusAfterCreate.js`).
+    - App: the publication status card kept the moves of the state before a lifecycle move from the Actions menu; it now reads its state again when the record's state or dates change (`lifecycleKeyOf`).
+    Live, with both library branches built in: the spec passes.
 
 ## 3. Virtual screen reader
 
