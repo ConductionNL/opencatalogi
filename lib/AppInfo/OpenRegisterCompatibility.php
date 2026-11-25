@@ -29,7 +29,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+ * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ namespace OCA\OpenCatalogi\AppInfo;
 /**
  * Answers whether OpenRegister's AppHost engine is installed.
  *
- * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+ * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
  */
 class OpenRegisterCompatibility {
 
@@ -73,7 +73,7 @@ class OpenRegisterCompatibility {
 	 *
 	 * @return bool True when the marker class exists.
 	 *
-	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
 	 */
 	public function appHostAvailable(): bool {
 		return class_exists($this->markerClass);
@@ -85,7 +85,7 @@ class OpenRegisterCompatibility {
 	 *
 	 * @return string The fully qualified class name.
 	 *
-	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
 	 */
 	public function markerClass(): string {
 		return $this->markerClass;

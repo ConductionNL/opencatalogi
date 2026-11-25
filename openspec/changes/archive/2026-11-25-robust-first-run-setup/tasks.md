@@ -88,6 +88,9 @@
 
 ## Verification
 - [x] All tasks checked off
-- [ ] `openspec validate` passes
-- [ ] Manual testing against acceptance criteria — verify on a clean `occ app:enable openregister && occ app:enable opencatalogi` that `GET /api/setup/status` reports `config-check: done` with no manual repair/reload step
-- [ ] Code review against spec requirements
+- [x] `openspec validate` passes
+  - 2026-11-25: `openspec validate robust-first-run-setup` is valid. It was not: the MODIFIED ONB-001 dropped three scenarios the current spec has (copied back in), ONB-007 was MODIFIED in `first-time-onboarding` although it lives in `first-time-setup` (moved to its own delta), and the delta carried a preamble plus Non-Functional Requirements, Acceptance Criteria and Notes sections that archive drops (moved to `design.md`). `--strict` still warns that three requirement texts are over 500 characters.
+- [x] Manual testing against acceptance criteria — verify on a clean `occ app:enable openregister && occ app:enable opencatalogi` that `GET /api/setup/status` reports `config-check: done` with no manual repair/reload step
+  - 2026-11-25 on a fresh Nextcloud 34 + MariaDB database: `occ app:enable openregister`, `occ app:enable opencatalogi`, then the first `GET /api/setup/status` answers `registersReady: true` with no repair or reload; `settings_initialized` is `true` and `catalog_register`, `catalog_schema`, `publication_register`, `listing_register` are wired. The manifest no longer has a `config-check` step (later setup changes replaced it with `welcome`, `demo-data`, `catalog-scope`, `create-catalog`, `connect-federation`, `sync-all-directories`), so `registersReady` is the signal the criterion asks for. Output in the PR body.
+- [x] Code review against spec requirements
+  - 2026-11-25: `FirstRunSettings::ensureInitialized()` sets `settings_initialized` only after a successful load and leaves it unset when the load throws (ONB-001 fallback, retried on the next request); `Application::register()` wires the AppHost controllers only when `OpenRegisterCompatibility::appHostAvailable()`, otherwise a stand-in, and `OpenRegisterVersionCheck` raises the admin notice (ONB-009); covered by `tests/Unit/AppInfo/ApplicationTest.php`.

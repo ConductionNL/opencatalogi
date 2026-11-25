@@ -25,7 +25,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-setup-wizard-gates-the-shell-on-required-publishing-configuration-onb-001
+ * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-setup-wizard-gates-the-shell-on-required-publishing-configuration-onb-001
  */
 
 declare(strict_types=1);
@@ -43,7 +43,7 @@ use Throwable;
 /**
  * Imports the configuration once on the first request after a clean install.
  *
- * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-setup-wizard-gates-the-shell-on-required-publishing-configuration-onb-001
+ * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-setup-wizard-gates-the-shell-on-required-publishing-configuration-onb-001
  */
 class FirstRunSettings {
 
@@ -79,7 +79,7 @@ class FirstRunSettings {
 	 *
 	 * @return bool True when the import ran and succeeded on this call.
 	 *
-	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-setup-wizard-gates-the-shell-on-required-publishing-configuration-onb-001
+	 * @spec openspec/changes/archive/2026-11-25-robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-setup-wizard-gates-the-shell-on-required-publishing-configuration-onb-001
 	 */
 	public function ensureInitialized(): bool {
 		if ($this->config->getValueString(AppIdentity::APP_ID, self::FLAG, '') === 'true') {
