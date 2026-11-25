@@ -94,6 +94,68 @@ class OpenRegisterVocabulary implements VocabularyRegisterInterface {
 	}//end activeConceptUris()
 
 	/**
+	 * The concepts of a scheme with their Dutch label, notation and whether they are deprecated.
+	 *
+	 * The label is the Dutch `prefLabel`, else the first one filled, else the
+	 * notation, else the uri, so every concept can be named in a pick list.
+	 *
+	 * @param string $schemeUri The scheme's uri.
+	 *
+	 * @return array<string, array{label: string, notation: string, deprecated: bool}> Keyed by concept uri.
+	 *
+	 * @throws RuntimeException When OpenRegister's vocabulary cannot be read.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	public function concepts(string $schemeUri): array {
+		$repository = $this->service(name: self::CONCEPTS);
+		$concepts = $this->asSystem(operation: static fn (): array => $repository->conceptsOf(schemeUri: $schemeUri));
+
+		$answer = [];
+		foreach ($concepts as $uri => $concept) {
+			if (is_array($concept) === false) {
+				continue;
+			}
+
+			$notation = trim((string)($concept['notation'] ?? ''));
+			$answer[(string)$uri] = [
+				'label' => self::labelOf(labels: ($concept['prefLabel'] ?? null), fallback: ($notation !== '' ? $notation : (string)$uri)),
+				'notation' => $notation,
+				'deprecated' => (($concept['deprecated'] ?? false) === true),
+			];
+		}
+
+		return $answer;
+	}//end concepts()
+
+	/**
+	 * The Dutch label of a `prefLabel` map, else its first filled label, else the fallback.
+	 *
+	 * @param mixed  $labels   The decoded `prefLabel`: a language map, or a plain string.
+	 * @param string $fallback What names the concept without a label.
+	 *
+	 * @return string The label.
+	 */
+	private static function labelOf(mixed $labels, string $fallback): string {
+		if (is_string($labels) === true && trim($labels) !== '') {
+			return trim($labels);
+		}
+
+		if (is_array($labels) === false) {
+			return $fallback;
+		}
+
+		$ordered = array_merge(['nl' => ($labels['nl'] ?? null)], $labels);
+		foreach ($ordered as $label) {
+			if (is_string($label) === true && trim($label) !== '') {
+				return trim($label);
+			}
+		}
+
+		return $fallback;
+	}//end labelOf()
+
+	/**
 	 * Import a SKOS JSON-LD document.
 	 *
 	 * @param array<string, mixed> $jsonLd The document.

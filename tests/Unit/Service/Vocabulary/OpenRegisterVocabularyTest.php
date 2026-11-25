@@ -131,4 +131,46 @@ class OpenRegisterVocabularyTest extends TestCase {
 		$this->expectExceptionMessage(message: 'VocabularyImporterInterface');
 		$adapter->import(jsonLd: ['@graph' => []]);
 	}//end testWithoutOpenRegisterBothCallsRefuse()
+
+	/**
+	 * Concepts are named by their Dutch label, else another label, else their notation or uri.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	public function testConceptsAreNamedByTheirDutchLabel(): void {
+		$repository = new class {
+			/**
+			 * The concepts of a scheme.
+			 *
+			 * @param string $schemeUri The scheme.
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function conceptsOf(string $schemeUri): array {
+				return [
+					'https://t/a' => ['prefLabel' => ['en' => 'Dordrecht municipality', 'nl' => 'gemeente Dordrecht'], 'notation' => 'gm0505'],
+					'https://t/b' => ['prefLabel' => ['en' => 'Water board', 'nl' => ' '], 'deprecated' => true],
+					'https://t/c' => ['prefLabel' => 'provincie Utrecht', 'notation' => 'pv26'],
+					'https://t/d' => ['notation' => 'ws0152'],
+					'https://t/e' => [],
+					'https://t/f' => 'not a concept',
+				];
+			}
+		};
+
+		$concepts = $this->adapter(services: [OpenRegisterVocabulary::CONCEPTS => $repository])->concepts(schemeUri: 'https://t');
+
+		$this->assertSame(
+			expected: [
+				'https://t/a' => ['label' => 'gemeente Dordrecht', 'notation' => 'gm0505', 'deprecated' => false],
+				'https://t/b' => ['label' => 'Water board', 'notation' => '', 'deprecated' => true],
+				'https://t/c' => ['label' => 'provincie Utrecht', 'notation' => 'pv26', 'deprecated' => false],
+				'https://t/d' => ['label' => 'ws0152', 'notation' => 'ws0152', 'deprecated' => false],
+				'https://t/e' => ['label' => 'https://t/e', 'notation' => '', 'deprecated' => false],
+			],
+			actual: $concepts
+		);
+	}//end testConceptsAreNamedByTheirDutchLabel()
 }//end class

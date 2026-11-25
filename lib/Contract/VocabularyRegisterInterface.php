@@ -53,4 +53,17 @@ interface VocabularyRegisterInterface {
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-each-scheme-is-refreshed-from-its-national-source-daily-req-wvc-002
 	 */
 	public function import(array $jsonLd): array;
+
+	/**
+	 * The concepts of a scheme with their Dutch label, notation and whether they are deprecated.
+	 *
+	 * @param string $schemeUri The scheme's uri.
+	 *
+	 * @return array<string, array{label: string, notation: string, deprecated: bool}> Keyed by concept uri; empty for a scheme the register does not hold.
+	 *
+	 * @throws \RuntimeException When OpenRegister's vocabulary cannot be read.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	public function concepts(string $schemeUri): array;
 }//end interface
