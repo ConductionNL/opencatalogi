@@ -17,7 +17,7 @@ import { request as playwrightRequest } from '@playwright/test'
  * delivery then fails with IndexUnreachableException exactly as a refusing
  * platform does, without anything leaving the instance.
  *
- * @e2e openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#scenario-a-failed-plooi-delivery-reaches-the-woo-team REQ-WNO-004
+ * @e2e openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#scenario-a-failed-plooi-delivery-reaches-the-woo-team REQ-WNO-004
  */
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'

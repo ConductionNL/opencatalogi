@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-reads-of-non-public-woo-records-are-logged-req-wab-001
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-reads-of-non-public-woo-records-are-logged-req-wab-001
  */
 
 declare(strict_types=1);
@@ -73,7 +73,7 @@ class WooReadAttribution {
 	 *
 	 * @return array{fallbackAttributedReads: int|null, days: int}
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-reads-of-non-public-woo-records-are-logged-req-wab-001
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-reads-of-non-public-woo-records-are-logged-req-wab-001
 	 */
 	public function report(): array {
 		return ['fallbackAttributedReads' => $this->fallbackCount(), 'days' => self::DAYS];

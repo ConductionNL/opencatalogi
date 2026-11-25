@@ -208,6 +208,10 @@ class PublicationRulesController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
+	 * @no-admin-idor-exempt Takes no object id. It searches the anonymous projections of the configured published
+	 *                       collections under their own conditions, or the records the caller posts; no record is
+	 *                       looked up by a reference the caller supplies.
+	 *
 	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]

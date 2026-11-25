@@ -536,7 +536,7 @@ XML;
 	/**
 	 * REQ-WNO-003: the readiness report shows the last reconciliation, and leaves it out before the first run.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
 	 */
 	public function testTheReportShowsTheLastReconciliation(): void {
 		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
@@ -560,7 +560,7 @@ XML;
 	/**
 	 * REQ-WNO-004: while no incident group is set, nobody receives pipeline failures and readiness fails.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	public function testNoIncidentGroupFailsReadiness(): void {
 		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);

@@ -30,7 +30,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * without dossiq, and 410 on a change once the requests are read-only
  * (woo-request-intake-hands-over-to-dossiq, REQ-WHD-004 and REQ-WHD-005).
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
  */
 class MiddlewareRegistrar {
 
@@ -41,7 +41,7 @@ class MiddlewareRegistrar {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
 	 */
 	public function register(IRegistrationContext $context): void {
 		// API-Version header and problem details on the JSON API (spec api-documentation).

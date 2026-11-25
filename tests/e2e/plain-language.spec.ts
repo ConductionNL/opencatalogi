@@ -16,7 +16,7 @@
  * instance that has a provider the same test walks the suggestion-then-accept
  * flow instead. Either way it asserts; nothing is skipped.
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md
  * @e2e publication-plain-language-and-translation/requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001/an-officer-writes-a-b1-summary-and-the-reader-sees-it
  * @e2e publication-plain-language-and-translation/requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002/a-draft-is-a-suggestion-until-accepted
  */

@@ -96,7 +96,7 @@ class WooRegistrationController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function request(): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'requestWooRegistration');
+		$refusal = $this->requireCapability(verb: 'requestWooRegistration');
 		if ($refusal !== null) {
 			return $refusal;
 		}
@@ -118,7 +118,7 @@ class WooRegistrationController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function confirm(): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'requestWooRegistration');
+		$refusal = $this->requireCapability(verb: 'requestWooRegistration');
 		if ($refusal !== null) {
 			return $refusal;
 		}

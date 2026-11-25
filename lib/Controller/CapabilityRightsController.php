@@ -20,7 +20,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use Psr\Log\LoggerInterface;
  * hand out a right is an administrator only, never a delegated group, since a
  * delegated group could otherwise grant itself every right.
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
  */
 class CapabilityRightsController extends Controller {
 
@@ -71,7 +71,7 @@ class CapabilityRightsController extends Controller {
 	 *
 	 * @auth admin-only Who holds a Woo right is instance configuration, so the default admin gate guards it.
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
 	 */
 	public function index(): JSONResponse {
 		try {
@@ -92,7 +92,7 @@ class CapabilityRightsController extends Controller {
 	 *
 	 * @auth admin-only Granting a Woo right widens who may act on every publication; admins only.
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
 	 */
 	public function update(string $verb): JSONResponse {
 		$groups = $this->request->getParam('groups', []);

@@ -296,7 +296,7 @@ class SitemapService implements SitemapServiceInterface {
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) SitemapDocumentRelations is a pure static helper.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
 	 */
 	public function publicDocumentLocations(string $catalogSlug, string $categoryCode): array {
 		$objectService = $this->getObjectService();
@@ -344,7 +344,7 @@ class SitemapService implements SitemapServiceInterface {
 	 *
 	 * @return bool True when the document is valid.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
 	 */
 	private function passesXsd(array $entry): bool {
 		$errors = $this->xsdValidator->entryErrors(entry: $entry);
@@ -375,7 +375,7 @@ class SitemapService implements SitemapServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	private function raiseWhenRefused(SitemapRequest $request, XMLResponse $error): void {
 		if ($error->getStatus() < 500 && empty($request->catalog) === true) {

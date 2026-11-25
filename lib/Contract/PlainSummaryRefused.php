@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
  */
 
 declare(strict_types=1);
@@ -30,7 +30,7 @@ namespace OCA\OpenCatalogi\Contract;
  * A plain-summary action that is refused raises this, with the reason code
  * and the HTTP status the caller answers with.
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
  */
 interface PlainSummaryRefused extends \Throwable {
 	/**
@@ -38,7 +38,7 @@ interface PlainSummaryRefused extends \Throwable {
 	 *
 	 * @return string The reason, such as no-provider.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function reason(): string;
 
@@ -47,7 +47,7 @@ interface PlainSummaryRefused extends \Throwable {
 	 *
 	 * @return int The status code.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function status(): int;
 }//end interface

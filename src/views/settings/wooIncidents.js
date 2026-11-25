@@ -21,7 +21,7 @@ export const WOO_INCIDENT_GROUP_PATH = '/apps/opencatalogi/api/woo/incidents/gro
  *
  * @param {object|null} data The answer of the incidents endpoint.
  * @return {{group: string, incidents: Array<{id: string, kind: string, subject: string, message: string, at: string}>, error: string}} The state.
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
  */
 export function incidentStateFrom(data) {
 	const incidents = Array.isArray(data?.incidents) ? data.incidents : []
@@ -46,7 +46,7 @@ export function incidentStateFrom(data) {
  *
  * @param {{group: string}|null} state The state.
  * @return {boolean} True while no group is set.
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
  */
 export function nobodyReceives(state) {
 	return !state || state.group.trim() === ''
@@ -58,7 +58,7 @@ export function nobodyReceives(state) {
  * @param {{kind: string, subject: string, message: string, at: string}} incident The incident.
  * @param {function(string): string} formatDate Formats the moment.
  * @return {string} The line.
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
  */
 export function incidentLine(incident, formatDate) {
 	const at = incident.at === '' ? '' : formatDate(incident.at) + ': '

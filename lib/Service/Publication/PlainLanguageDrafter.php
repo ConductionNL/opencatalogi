@@ -24,7 +24,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
  */
 
 declare(strict_types=1);
@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Drafts, polls and accepts a publication's plain language summary.
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
  */
 class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	use ReadsObjectProperties;
@@ -97,7 +97,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @return bool True when a provider serves the task type.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function isAvailable(): bool {
 		try {
@@ -121,7 +121,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @throws PlainSummaryRefusal 401, 404 or 403 on access, 409 no-provider without a text assistant, 502 when scheduling fails.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function draft(string $publicationId): array {
 		$publication = $this->asArray(object: $this->writable(publicationId: $publicationId));
@@ -148,7 +148,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @throws PlainSummaryRefusal 409 without a provider.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	private function assertAvailable(): void {
 		if ($this->isAvailable() === false) {
@@ -170,7 +170,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @throws PlainSummaryRefusal 502 when the provider does not take it.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	private function schedule(Task $task): void {
 		try {
@@ -198,7 +198,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @throws PlainSummaryRefusal 401, 404 or 403 on access, 404 for a task that is not this caller's draft of this publication.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function poll(string $publicationId, int $taskId): array {
 		$this->writable(publicationId: $publicationId);
@@ -218,7 +218,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @return array<string, mixed> `status`, with `text` or `error`.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	private function statusOf(Task $task): array {
 		return match ($task->getStatus()) {
@@ -249,7 +249,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @throws PlainSummaryRefusal 401, 404 or 403 on access, 400 for an empty or too long text or an unknown level, 503 when the save fails.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function accept(string $publicationId, string $text, string $level, ?int $fromTaskId = null): array {
 		$publication = $this->writable(publicationId: $publicationId);
@@ -280,7 +280,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @return array<string, mixed> The provenance.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	private function acceptedProvenance(string $publicationId, ?int $fromTaskId): array {
 		$task = null;
@@ -306,7 +306,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @throws PlainSummaryRefusal 503 when it could not be stored.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	private function save(string $publicationId, array $record): void {
 		try {
@@ -387,7 +387,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @throws PlainSummaryRefusal 404 when it is not there or not readable, 503 when the register is unavailable.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	private function findPublication(string $publicationId): object {
 		try {
@@ -420,7 +420,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @return PlainSummaryRefusal 404, or 503 when the register itself failed.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	private function readRefusal(\Throwable $exception): PlainSummaryRefusal {
 		$class = get_class($exception);
@@ -464,7 +464,7 @@ class PlainLanguageDrafter implements PlainSummaryDrafterInterface {
 	 *
 	 * @return bool True when it is.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	private function isOwnDraft(Task $task, string $publicationId): bool {
 		return $task->getTaskTypeId() === self::TASK_TYPE

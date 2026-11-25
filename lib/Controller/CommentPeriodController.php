@@ -127,7 +127,7 @@ class CommentPeriodController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function open(): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'openCommentPeriod');
+		$refusal = $this->requireCapability(verb: 'openCommentPeriod');
 		if ($refusal !== null) {
 			return $refusal;
 		}

@@ -37,7 +37,7 @@ use Psr\Log\LoggerInterface;
  * versions and raises a pipeline incident; an authority that cannot be read is
  * "could not verify", never a pass.
  *
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
  */
 class DiwooStandardCheck extends TimedJob {
 
@@ -77,7 +77,7 @@ class DiwooStandardCheck extends TimedJob {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The job signature; the job takes no argument.
 	 */
 	protected function run($argument): void {
@@ -96,7 +96,7 @@ class DiwooStandardCheck extends TimedJob {
 	 *
 	 * @return array{declared: string, published: string|null, status: string, ready: bool, message: string, checkedAt: int} The stored result.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
 	 */
 	public function check(): array {
 		$version = $this->standards->diwooVersion();

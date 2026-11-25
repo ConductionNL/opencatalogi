@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
  */
 
 declare(strict_types=1);
@@ -35,7 +35,7 @@ use Psr\Container\ContainerInterface;
  * Only the eight verb keys are ever written; every other rule in the block
  * (the public read rules among them) is kept exactly as it was.
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
  */
 class CapabilityRightsTable {
 
@@ -62,7 +62,7 @@ class CapabilityRightsTable {
 	 *
 	 * @return array<int, array{verb: string, description: string, groups: array<int, string>}> The rows.
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
 	 */
 	public function rows(): array {
 		$authorization = $this->authorization(schema: $this->catalogSchema());
@@ -90,7 +90,7 @@ class CapabilityRightsTable {
 	 *
 	 * @throws InvalidArgumentException When the verb is unknown, a group id is not a string or a group does not exist.
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md#requirement-capabilities-are-rights-granted-per-group-req-wab-004
 	 */
 	public function grant(string $verb, array $groups): array {
 		if (array_key_exists($verb, CapabilityRights::VERBS) === false) {

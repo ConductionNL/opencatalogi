@@ -89,7 +89,7 @@ export const MAX_POLLS = 90
  * Shown only when the server says a text assistant is available. A draft is
  * a suggestion: nothing is stored until the officer accepts it, with a level.
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md
  */
 export default {
 	name: 'PlainSummaryDraftWidget',
@@ -147,7 +147,7 @@ export default {
 		 * @param {string} tail The path after the publication id.
 		 * @return {string} The URL.
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		url(tail) {
 			return generateUrl('/apps/opencatalogi/api/publications/' + encodeURIComponent(this.resolvedObjectId) + '/' + tail)
@@ -159,7 +159,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		async checkAssistant() {
 			try {
@@ -176,7 +176,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		async startDraft() {
 			this.busy = true
@@ -196,7 +196,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		schedulePoll() {
 			this.timer = setTimeout(() => this.poll(), POLL_INTERVAL)
@@ -207,7 +207,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		stopPolling() {
 			if (this.timer !== null) {
@@ -221,7 +221,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		async poll() {
 			this.timer = null
@@ -240,7 +240,7 @@ export default {
 		 * @param {{status: string, text?: string, error?: string}} data The answer.
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		take(data) {
 			if (data.status === 'successful') {
@@ -262,7 +262,7 @@ export default {
 		 * @param {{status: string, error?: string}} data The answer.
 		 * @return {string|null} The error, or null to poll again.
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		pollError(data) {
 			if (data.status === 'failed') {
@@ -279,7 +279,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		async accept() {
 			this.busy = true
@@ -300,7 +300,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		accepted() {
 			this.suggestion = ''
@@ -315,7 +315,7 @@ export default {
 		 *
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		discard() {
 			this.stopPolling()
@@ -331,7 +331,7 @@ export default {
 		 * @param {object} error The request error.
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		fail(error) {
 			const data = error && error.response ? error.response.data : null
@@ -344,7 +344,7 @@ export default {
 		 * @param {string} text The error.
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+		 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 		 */
 		showError(text) {
 			this.busy = false

@@ -94,7 +94,7 @@ class PublicationDisclosureController extends Controller {
 	 */
 	#[NoAdminRequired]
 	public function announce(): JSONResponse {
-		$refusal = $this->capabilityRefusal(verb: 'announceNationally');
+		$refusal = $this->requireCapability(verb: 'announceNationally');
 		if ($refusal !== null) {
 			return $refusal;
 		}

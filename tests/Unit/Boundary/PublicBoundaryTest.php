@@ -26,7 +26,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-access-boundary-hardening/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/tasks.md#task-2.2
  */
 
 declare(strict_types=1);
@@ -39,7 +39,7 @@ use ReflectionMethod;
 /**
  * Reads appinfo/routes.php and the controllers' public markers.
  *
- * @spec openspec/changes/woo-access-boundary-hardening/tasks.md#task-2.2
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/tasks.md#task-2.2
  */
 class PublicBoundaryTest extends TestCase {
 
@@ -131,7 +131,7 @@ class PublicBoundaryTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/tasks.md#task-2.2
 	 */
 	public function testTheRouteListIsReadFromTheRouteTable(): void {
 		$routes = self::routes();
@@ -155,7 +155,7 @@ class PublicBoundaryTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/tasks.md#task-2.2
 	 */
 	public function testEveryNonPublicRouteRefusesAnonymous(): void {
 		$lines = array_map('trim', (array)file(self::LIST));
@@ -176,7 +176,7 @@ class PublicBoundaryTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/tasks.md#task-2.2
 	 */
 	public function testTheMarkerDecidesWhatIsPublic(): void {
 		$probe = new class {

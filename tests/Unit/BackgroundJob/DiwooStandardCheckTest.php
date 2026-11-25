@@ -38,7 +38,7 @@ use Psr\Log\LoggerInterface;
  * The job reads the authority through the real StandardsVersionService over a
  * recorded version index; only the HTTP client and the store are doubles.
  *
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
  */
 #[CoversClass(DiwooStandardCheck::class)]
 #[UsesClass(StandardsVersionService::class)]

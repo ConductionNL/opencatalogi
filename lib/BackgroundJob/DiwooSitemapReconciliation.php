@@ -44,7 +44,7 @@ use RuntimeException;
  * checkedAt, complete}`. A missing or extra entry raises a pipeline incident. A read
  * that fails makes the result incomplete with the reason, never a clean bill.
  *
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A job wiring the sitemap, the readiness catalogues, the store and the incidents.
  */
@@ -95,7 +95,7 @@ class DiwooSitemapReconciliation extends TimedJob {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) The job signature; the job takes no argument.
 	 */
 	protected function run($argument): void {
@@ -123,7 +123,7 @@ class DiwooSitemapReconciliation extends TimedJob {
 	 *
 	 * @return list<array<string, mixed>> One result per catalogue and category.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
 	 */
 	public function reconcile(): array {
 		$results = [];
@@ -150,7 +150,7 @@ class DiwooSitemapReconciliation extends TimedJob {
 	 *
 	 * @return list<array<string, mixed>>|null The results.
 	 *
-	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
 	 */
 	public static function lastResults(IAppConfig $config): ?array {
 		$decoded = json_decode($config->getValueString(AppIdentity::APP_ID, self::CONFIG_KEY, ''), true);

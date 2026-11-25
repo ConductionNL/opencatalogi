@@ -37,7 +37,7 @@ use OCA\OpenCatalogi\Http\XMLResponse;
  * reaches the network. A schema that cannot be loaded is an error, never a pass: the
  * document is then held back, which is the safe state.
  *
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
  */
 class DiwooXsdValidator
 {
@@ -80,7 +80,7 @@ class DiwooXsdValidator
      *
      * @return list<string> The XSD messages, empty when valid.
      *
-     * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+     * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
      */
     public function entryErrors(array $entry): array
     {
@@ -111,7 +111,7 @@ class DiwooXsdValidator
      *
      * @return list<list<string>> Per document in order, its XSD messages; empty when the text holds none.
      *
-     * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
+     * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-diwoo-output-is-validated-as-it-is-generated-against-the-current-standard-req-wno-002
      */
     public function documentErrors(string $xml): array
     {

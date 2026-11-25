@@ -22,7 +22,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
  */
 
 declare(strict_types=1);
@@ -37,7 +37,7 @@ use OCP\IUserSession;
 /**
  * Builds the provenance of a plain summary, and holds an accepted one for its save.
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
  */
 class PlainSummaryProvenance implements PlainSummaryProvenanceInterface {
 
@@ -71,7 +71,7 @@ class PlainSummaryProvenance implements PlainSummaryProvenanceInterface {
 	 *
 	 * @return array{generatedBy: string, provider?: string, at: string, acceptedBy: string} The provenance.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function acceptedNow(string $generatedBy, ?string $provider = null): array {
 		$acceptedBy = $this->acceptingUser();
@@ -92,7 +92,7 @@ class PlainSummaryProvenance implements PlainSummaryProvenanceInterface {
 	 *
 	 * @return string The accepting user id.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	private function acceptingUser(): string {
 		$user = $this->userSession->getUser();
@@ -112,7 +112,7 @@ class PlainSummaryProvenance implements PlainSummaryProvenanceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function expect(string $text, array $provenance): void {
 		$this->expected[trim($text)] = $provenance;
@@ -126,7 +126,7 @@ class PlainSummaryProvenance implements PlainSummaryProvenanceInterface {
 	 *
 	 * @return array<string, mixed>|null The provenance, or null when none was held for it.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function take(string $text): ?array {
 		$key = trim($text);
@@ -148,7 +148,7 @@ class PlainSummaryProvenance implements PlainSummaryProvenanceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function forget(string $text): void {
 		unset($this->expected[trim($text)]);

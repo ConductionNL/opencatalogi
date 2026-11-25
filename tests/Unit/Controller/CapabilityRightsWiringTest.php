@@ -81,7 +81,11 @@ class CapabilityRightsWiringTest extends TestCase {
 
 			$lines = file((string) $method->getFileName());
 			$first = trim($lines[$method->getStartLine()]);
-			$this->assertSame('$refusal = $this->capabilityRefusal(verb: \''.$verb.'\');', $first, $label.' does not check '.$verb.' first');
+			$this->assertSame(
+				expected: '$refusal = $this->requireCapability(verb: \''.$verb.'\');',
+				actual: $first,
+				message: $label.' does not check '.$verb.' first'
+			);
 			$this->assertSame('if ($refusal !== null) {', trim($lines[($method->getStartLine() + 1)]), $label);
 			$this->assertSame('return $refusal;', trim($lines[($method->getStartLine() + 2)]), $label);
 		}
@@ -94,7 +98,7 @@ class CapabilityRightsWiringTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheGuardAsksMayWithTheVerb(): void {
-		$guard  = new ReflectionMethod(CapabilityGuard::class, 'capabilityRefusal');
+		$guard  = new ReflectionMethod(CapabilityGuard::class, 'requireCapability');
 		$lines  = file((string) $guard->getFileName());
 		$body   = implode('', array_slice($lines, $guard->getStartLine(), ($guard->getEndLine() - $guard->getStartLine())));
 

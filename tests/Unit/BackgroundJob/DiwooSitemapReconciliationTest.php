@@ -37,7 +37,7 @@ use Psr\Log\LoggerInterface;
  * The register side and the rendered pages are doubles of SitemapService; the pages
  * are real XMLResponse documents, read back the way the job reads them.
  *
- * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
+ * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-the-sitemaps-are-reconciled-against-the-register-daily-req-wno-003
  */
 #[CoversClass(DiwooSitemapReconciliation::class)]
 #[UsesClass(XMLResponse::class)]

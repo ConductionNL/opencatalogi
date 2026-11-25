@@ -19,7 +19,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use ReflectionMethod;
  * response carries it, so an acceptance or test install stays out of the indexes while its
  * public side is still served (REQ-WAB-003).
  *
- * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
  */
 class NoIndexMiddleware extends Middleware {
 
@@ -76,7 +76,7 @@ class NoIndexMiddleware extends Middleware {
 	 *
 	 * @param IAppConfig $appConfig The app configuration holding the indexing switch.
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
@@ -92,7 +92,7 @@ class NoIndexMiddleware extends Middleware {
 	 *
 	 * @return Response The same response, with the header where it applies.
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
 	 */
 	public function afterController($controller, $methodName, Response $response): Response {
 		if ($this->indexingBlocked() === true
@@ -109,7 +109,7 @@ class NoIndexMiddleware extends Middleware {
 	 *
 	 * @return bool True when `search_indexing` is `blocked`.
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
 	 */
 	private function indexingBlocked(): bool {
 		$value = $this->appConfig->getValueString(AppIdentity::APP_ID, self::SETTING, self::ALLOWED);
@@ -127,7 +127,7 @@ class NoIndexMiddleware extends Middleware {
 	 *
 	 * @return bool True for a `#[PublicPage]` or `@PublicPage` method.
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
 	 */
 	private function isPublicPage(?object $controller, string $methodName): bool {
 		$method = $this->readMethod(controller: $controller, methodName: $methodName);
@@ -143,7 +143,7 @@ class NoIndexMiddleware extends Middleware {
 	 *
 	 * @return ReflectionMethod|null The method, or null without a controller, a name or a readable method.
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
 	 */
 	private function readMethod(?object $controller, string $methodName): ?ReflectionMethod {
 		if ($controller === null || $methodName === '') {
@@ -164,7 +164,7 @@ class NoIndexMiddleware extends Middleware {
 	 *
 	 * @return bool True for a public page.
 	 *
-	 * @spec openspec/changes/woo-access-boundary-hardening/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-woo-access-boundary-hardening/specs/woo-compliance/spec.md
 	 */
 	private function declaresPublicPage(ReflectionMethod $method): bool {
 		if ($method->getAttributes(PublicPage::class) !== []) {

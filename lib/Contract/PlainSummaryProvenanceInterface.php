@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
  */
 
 declare(strict_types=1);
@@ -29,7 +29,7 @@ namespace OCA\OpenCatalogi\Contract;
  *
  * Callers outside Service/ depend on this interface instead of on the class.
  *
- * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+ * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
  */
 interface PlainSummaryProvenanceInterface {
 	/**
@@ -40,7 +40,7 @@ interface PlainSummaryProvenanceInterface {
 	 *
 	 * @return array{generatedBy: string, provider?: string, at: string, acceptedBy: string} The provenance.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function acceptedNow(string $generatedBy, ?string $provider = null): array;
 
@@ -52,7 +52,7 @@ interface PlainSummaryProvenanceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function expect(string $text, array $provenance): void;
 
@@ -63,7 +63,7 @@ interface PlainSummaryProvenanceInterface {
 	 *
 	 * @return array<string, mixed>|null The provenance, or null when none is held.
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function take(string $text): ?array;
 
@@ -74,7 +74,7 @@ interface PlainSummaryProvenanceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function forget(string $text): void;
 }//end interface
