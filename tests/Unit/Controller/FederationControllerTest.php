@@ -336,6 +336,7 @@ class FederationControllerTest extends TestCase {
 		$response = $this->controller->publication('draft-1');
 
 		$this->assertSame(404, $response->getStatus());
+		$this->assertSame(['error' => 'Publication not found'], $response->getData());
 	}
 
 	/**

@@ -291,6 +291,8 @@ class FederationController extends Controller {
 		try {
 			// Use the service method to get the publication with federation support.
 			$result = $this->publicationService->getFederatedPublication($id, $this->request->getParams());
+			// A miss carries `error` and no `data`; answer that error as the body.
+			$result['data'] = ($result['data'] ?? ['error' => ($result['error'] ?? 'Publication not found')]);
 
 			// REQ-WDW-003: the same `withheld` list publications#show answers, for a
 			// publication of this instance whose catalogue opted in. A publication a peer
@@ -355,12 +357,12 @@ class FederationController extends Controller {
 	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
 	 */
 	private function tombstoneOf(string $id): ?array {
-		$tombstones = self::optional(container: $this->container, class: PublicationTombstone::class);
-		if ($tombstones instanceof PublicationTombstone === false) {
-			return null;
-		}
-
 		try {
+			$tombstones = self::optional(container: $this->container, class: PublicationTombstone::class);
+			if ($tombstones instanceof PublicationTombstone === false) {
+				return null;
+			}
+
 			$scope = $this->publicationService->getCatalogFilters();
 			return $tombstones->tombstone(
 				query: new CatalogSlugQuery(
