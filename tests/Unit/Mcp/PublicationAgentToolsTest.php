@@ -16,6 +16,7 @@ namespace Unit\Mcp;
 use OCA\OpenCatalogi\Mcp\McpArgumentValidator;
 use OCA\OpenCatalogi\Mcp\PublicationAgentTools;
 use OCA\OpenCatalogi\Contract\AgentPublishingInterface;
+use OCA\OpenCatalogi\Contract\AgentWithdrawalInterface;
 use OCA\OpenRegister\Mcp\Attribute\McpTool;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -54,11 +55,17 @@ class PublicationAgentToolsTest extends TestCase {
 	/**
 	 * The tools with the object service double and the given register and schema.
 	 *
-	 * @param string $configured The configured publication register and schema.
+	 * @param string                        $configured The configured publication register and schema.
+	 * @param AgentPublishingInterface|null $publishing The publishing service, if any.
+	 * @param AgentWithdrawalInterface|null $withdrawal The staging service, if any.
 	 *
 	 * @return PublicationAgentTools The tools.
 	 */
-	private function tools(string $configured = 'publication', ?AgentPublishingInterface $publishing = null): PublicationAgentTools {
+	private function tools(
+		string $configured = 'publication',
+		?AgentPublishingInterface $publishing = null,
+		?AgentWithdrawalInterface $withdrawal = null
+	): PublicationAgentTools {
 		$config = $this->createConfiguredStub(
 			originalClassName: IAppConfig::class,
 			configuration: ['getValueString' => $configured]
@@ -68,7 +75,8 @@ class PublicationAgentToolsTest extends TestCase {
 			container: new ObjectsContainer(objects: $this->objects),
 			config: $config,
 			validator: new McpArgumentValidator(),
-			publishing: $publishing
+			publishing: $publishing,
+			withdrawal: $withdrawal
 		);
 	}//end tools()
 
@@ -226,7 +234,10 @@ class PublicationAgentToolsTest extends TestCase {
 			}
 		}
 
-		$this->assertSame(expected: ['createDraftPublication', 'publishPublication'], actual: array_keys($tools));
+		$this->assertSame(
+			expected: ['createDraftPublication', 'publishPublication', 'depublishPublication', 'archivePublication'],
+			actual: array_keys($tools)
+		);
 		$tool = $tools['createDraftPublication'];
 		$this->assertSame(expected: 'createDraftPublication', actual: $tool->name);
 		$this->assertSame(expected: 'create', actual: $tool->scope);
@@ -302,6 +313,88 @@ class PublicationAgentToolsTest extends TestCase {
 		$all->method('publishApproved')->willReturn(['published' => ['a'], 'refused' => []]);
 		$this->assertTrue(condition: $this->tools(publishing: $all)->publishPublication(ids: ['a'])['success']);
 	}//end testThePublishToolAnswersAWholeRefusal()
+
+	/**
+	 * Depublish and archive declare their reach, say they write nothing, and require a reason.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-write-actions-are-curated-tools-with-allow-listed-properties-req-007
+	 */
+	public function testTheStagingToolsDeclareTheirReachAndWriteNothing(): void {
+		foreach (['depublishPublication' => 'external', 'archivePublication' => 'instance'] as $name => $reach) {
+			$method = new ReflectionMethod(objectOrMethod: PublicationAgentTools::class, method: $name);
+			$tool   = $method->getAttributes(name: McpTool::class)[0]->newInstance();
+
+			$this->assertSame(expected: $name, actual: $tool->name);
+			$this->assertSame(expected: 'update', actual: $tool->scope);
+			$this->assertSame(expected: $reach, actual: $tool->reach);
+			$this->assertStringContainsString(needle: 'does not', haystack: $tool->description);
+			$this->assertStringContainsString(needle: 'publishers group', haystack: $tool->description);
+			$this->assertSame(expected: ['ids', 'reason'], actual: array_map(static fn ($p) => $p->getName(), $method->getParameters()));
+			$this->assertFalse(condition: $method->getParameters()[1]->isOptional());
+		}
+	}//end testTheStagingToolsDeclareTheirReachAndWriteNothing()
+
+	/**
+	 * Bad ids and a missing reason are refused before the service is asked; good ones go on deduplicated and trimmed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 */
+	public function testTheStagingToolsCheckIdsAndReason(): void {
+		$withdrawal = $this->createMock(originalClassName: AgentWithdrawalInterface::class);
+		$withdrawal->expects($this->exactly(2))->method('stage')->willReturnCallback(
+			static fn (string $action, array $ids, string $reason): array => [
+				'staged'  => [['id' => $ids[0], 'task' => 'task-' . $action]],
+				'refused' => [['id' => $ids[1], 'code' => 'not_public']],
+			]
+		);
+		$tools = $this->tools(withdrawal: $withdrawal);
+
+		foreach ([[], [''], [3]] as $ids) {
+			$this->assertSame(expected: 'invalid_arguments', actual: $tools->depublishPublication(ids: $ids, reason: 'Rechterlijke uitspraak')['error']['code']);
+		}
+
+		foreach (['', '   ', str_repeat(string: 'x', times: 2001)] as $reason) {
+			$this->assertSame(expected: 'invalid_arguments', actual: $tools->archivePublication(ids: ['a'], reason: $reason)['error']['code']);
+		}
+
+		$this->assertSame(
+			expected: [
+				'success' => false,
+				'staged'  => [['id' => 'a', 'task' => 'task-depublish']],
+				'refused' => [['id' => 'b', 'code' => 'not_public']],
+			],
+			actual: $tools->depublishPublication(ids: ['a', ' b ', 'a'], reason: ' Rechterlijke uitspraak ')
+		);
+		$this->assertSame(
+			expected: [['id' => 'a', 'task' => 'task-archive']],
+			actual: $tools->archivePublication(ids: ['a', 'b'], reason: 'Bewaartermijn verstreken')['staged']
+		);
+	}//end testTheStagingToolsCheckIdsAndReason()
+
+	/**
+	 * No staging service, no tasks or no register is an error envelope, and nothing is saved.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 */
+	public function testTheStagingToolsAnswerAWholeRefusal(): void {
+		$this->assertSame(expected: 'not_configured', actual: $this->tools()->depublishPublication(ids: ['a'], reason: 'R')['error']['code']);
+
+		foreach (['tasks_unavailable', 'not_configured'] as $code) {
+			$withdrawal = $this->createMock(originalClassName: AgentWithdrawalInterface::class);
+			$withdrawal->method('stage')->willReturn(['error' => $code]);
+			$answer = $this->tools(withdrawal: $withdrawal)->archivePublication(ids: ['a'], reason: 'R');
+			$this->assertSame(expected: $code, actual: $answer['error']['code']);
+			$this->assertNotSame(expected: '', actual: $answer['error']['message']);
+		}
+
+		$this->assertSame(expected: [], actual: $this->objects->saves);
+	}//end testTheStagingToolsAnswerAWholeRefusal()
 }//end class
 
 /**

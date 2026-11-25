@@ -26,6 +26,7 @@ namespace OCA\OpenCatalogi\Mcp;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\AgentPublishingInterface;
+use OCA\OpenCatalogi\Contract\AgentWithdrawalInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Mcp\Attribute\McpTool;
@@ -59,12 +60,14 @@ class PublicationAgentTools {
 	 * @param IAppConfig           $config    Where the publication register and schema are configured.
 	 * @param McpArgumentValidator $validator The draft allow-list and the publish ids.
 	 * @param AgentPublishingInterface|null $publishing Publishes approved publications; without it the publish tool refuses.
+	 * @param AgentWithdrawalInterface|null $withdrawal Stages withdrawals and archives as publisher tasks; without it those tools refuse.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $config,
 		private readonly McpArgumentValidator $validator,
 		private readonly ?AgentPublishingInterface $publishing = null,
+		private readonly ?AgentWithdrawalInterface $withdrawal = null,
 	) {
 	}//end __construct()
 
@@ -175,6 +178,123 @@ class PublicationAgentTools {
 
 		return ['success' => $answer['refused'] === [], 'published' => $answer['published'], 'refused' => $answer['refused']];
 	}//end publishPublication()
+
+	/**
+	 * Agent tool: ask a publisher to withdraw publications from the public.
+	 *
+	 * Nothing is withdrawn by this call. Each publication gets an OpenRegister
+	 * task for the publishers group, on the publication, carrying the reason;
+	 * the publication stays public until a publisher completes the task.
+	 *
+	 * @param array<array-key, mixed> $ids    The publication ids, at most AgentWithdrawalInterface::MAX_ITEMS.
+	 * @param string                  $reason Why they must come down.
+	 *
+	 * @return array<string, mixed> `staged` (each `{id, task}`) and `refused` (each `{id, code}`), or an `error` envelope.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 */
+	#[McpTool(
+		name: 'depublishPublication',
+		description: 'Ask a publisher to withdraw publications from the public. Pass "ids", a list of publication '
+			. 'uuids (at most 50), and "reason", why they must come down. This tool does not withdraw anything: it '
+			. 'creates one task per publication for the publishers group, and the publication stays public until a '
+			. 'publisher completes that task. A withdrawal does not recall copies that harvesters, the national index '
+			. 'or federated catalogues already took. Each id is answered as staged (with its task id) or refused.',
+		readOnlyHint: false,
+		destructiveHint: false,
+		idempotentHint: false,
+		scope: 'update',
+		subject: 'publication',
+		action: 'depublish',
+		reach: 'external',
+	)]
+	public function depublishPublication(array $ids, string $reason): array {
+		return $this->stageThroughTask(action: AgentWithdrawalInterface::DEPUBLISH, ids: $ids, reason: $reason);
+	}//end depublishPublication()
+
+	/**
+	 * Agent tool: ask a publisher to archive publications.
+	 *
+	 * Nothing is archived by this call. Each publication gets an OpenRegister
+	 * task for the publishers group, on the publication, carrying the reason;
+	 * only a publisher completing it archives the publication.
+	 *
+	 * @param array<array-key, mixed> $ids    The publication ids, at most AgentWithdrawalInterface::MAX_ITEMS.
+	 * @param string                  $reason Why they should be archived.
+	 *
+	 * @return array<string, mixed> `staged` (each `{id, task}`) and `refused` (each `{id, code}`), or an `error` envelope.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 */
+	#[McpTool(
+		name: 'archivePublication',
+		description: 'Ask a publisher to archive publications. Pass "ids", a list of publication uuids (at most 50), '
+			. 'and "reason", why. This tool does not archive anything: it creates one task per publication for the '
+			. 'publishers group, and only a publisher completing that task archives the publication. Each id is '
+			. 'answered as staged (with its task id) or refused.',
+		readOnlyHint: false,
+		destructiveHint: false,
+		idempotentHint: false,
+		scope: 'update',
+		subject: 'publication',
+		action: 'archive',
+		reach: 'instance',
+	)]
+	public function archivePublication(array $ids, string $reason): array {
+		return $this->stageThroughTask(action: AgentWithdrawalInterface::ARCHIVE, ids: $ids, reason: $reason);
+	}//end archivePublication()
+
+	/**
+	 * Validate the call and stage one publisher task per publication.
+	 *
+	 * @param string                  $action AgentWithdrawalInterface::DEPUBLISH or ::ARCHIVE.
+	 * @param array<array-key, mixed> $ids    The publication ids.
+	 * @param mixed                   $reason The reason argument.
+	 *
+	 * @return array<string, mixed> `staged` and `refused`, or an `error` envelope.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 */
+	private function stageThroughTask(string $action, array $ids, mixed $reason): array {
+		$checked = $this->validator->publicationIds(ids: $ids, max: AgentWithdrawalInterface::MAX_ITEMS);
+		if (isset($checked['error']) === true) {
+			return $checked;
+		}
+
+		$why = $this->validator->reason(reason: $reason);
+		if (isset($why['error']) === true) {
+			return $why;
+		}
+
+		if ($this->withdrawal === null) {
+			return self::error(code: 'not_configured', message: 'Publisher tasks are not available on this instance.');
+		}
+
+		$answer = $this->withdrawal->stage(action: $action, ids: $checked['ids'], reason: $why['reason']);
+		if (isset($answer['error']) === true) {
+			return self::stageError(code: (string)$answer['error']);
+		}
+
+		return ['success' => $answer['refused'] === [], 'staged' => $answer['staged'], 'refused' => $answer['refused']];
+	}//end stageThroughTask()
+
+	/**
+	 * The error envelope of a staging call refused as a whole.
+	 *
+	 * @param string $code `tasks_unavailable` or `not_configured`.
+	 *
+	 * @return array{error: array{code: string, message: string}} The envelope.
+	 */
+	private static function stageError(string $code): array {
+		if ($code === 'tasks_unavailable') {
+			return self::error(
+				code: $code,
+				message: 'OpenRegister tasks are not available, or the call has no signed-in user, so no publisher task was created.'
+			);
+		}
+
+		return self::error(code: $code, message: 'The publication register is not configured on this instance.');
+	}//end stageError()
 
 	/**
 	 * The error envelope of a publish call refused as a whole.
