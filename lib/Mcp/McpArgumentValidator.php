@@ -67,11 +67,9 @@ class McpArgumentValidator {
 	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-write-actions-are-curated-tools-with-allow-listed-properties-req-007
 	 */
 	public function draftFields(array $fields): array {
-		foreach (array_keys($fields) as $name) {
-			$refusal = $this->fieldRefusal(name: (string)$name);
-			if ($refusal !== null) {
-				return $refusal;
-			}
+		$refusal = $this->namesRefusal(names: array_map('strval', array_keys($fields)));
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$draft = $this->collect(fields: $fields);
@@ -85,6 +83,26 @@ class McpArgumentValidator {
 
 		return ['fields' => $draft];
 	}//end draftFields()
+
+	/**
+	 * The refusal of the first field name the draft may not carry, or null.
+	 *
+	 * @param list<string> $names The field names the agent sent.
+	 *
+	 * @return array{error: array{code: string, message: string}}|null The refusal.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-write-actions-are-curated-tools-with-allow-listed-properties-req-007
+	 */
+	private function namesRefusal(array $names): ?array {
+		foreach ($names as $name) {
+			$refusal = $this->fieldRefusal(name: $name);
+			if ($refusal !== null) {
+				return $refusal;
+			}
+		}
+
+		return null;
+	}//end namesRefusal()
 
 	/**
 	 * The non-empty allow-listed fields of a draft, or the refusal of a mistyped one.
