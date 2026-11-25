@@ -43,7 +43,7 @@
 <script>
 import { NcNoteCard } from '@nextcloud/vue'
 import ValueListMoveButtons from './ValueListMoveButtons.vue'
-import { fetchList, saveMove } from './valueListOrder.js'
+import { fetchList, moveInList } from './valueListOrder.js'
 
 /**
  * Move up and Move down for one value list in the Woo settings (REQ-WVL-002).
@@ -107,19 +107,7 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async move(index, delta) {
-			this.error = null
-			this.reordering = true
-			try {
-				const saved = await saveMove(this.scheme, this.entries, index, delta)
-				if (saved !== null) {
-					this.apply(saved.data)
-					this.announcement = saved.announcement
-				}
-			} catch (err) {
-				this.error = err.response?.data?.error || err.message
-			} finally {
-				this.reordering = false
-			}
+			await moveInList(this, this.scheme, index, delta)
 		},
 
 		/**

@@ -91,7 +91,7 @@ import {
 	NcTextArea,
 } from '@nextcloud/vue'
 import ValueListMoveButtons from './ValueListMoveButtons.vue'
-import { CHOICES_URL, moveEntry, ORDER_URL, saveMove } from './valueListOrder.js'
+import { CHOICES_URL, moveEntry, moveInList, ORDER_URL } from './valueListOrder.js'
 
 export { CHOICES_URL, moveEntry, ORDER_URL }
 
@@ -222,19 +222,7 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async move(index, delta) {
-			this.error = null
-			this.reordering = true
-			try {
-				const saved = await saveMove(SCHEME, this.entries, index, delta)
-				if (saved !== null) {
-					this.apply(saved.data)
-					this.announcement = saved.announcement
-				}
-			} catch (err) {
-				this.error = err.response?.data?.error || err.message
-			} finally {
-				this.reordering = false
-			}
+			await moveInList(this, SCHEME, index, delta)
 		},
 
 		/**

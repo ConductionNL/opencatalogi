@@ -88,3 +88,30 @@ export async function saveMove(scheme, entries, index, delta) {
 		}),
 	}
 }
+
+/**
+ * Move an entry of a component's list, keeping its `error`, `reordering`
+ * and `announcement` state, and apply the server's answer with `apply()`.
+ *
+ * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrators-order-drives-every-pick-list-req-wvl-002
+ * @param {object} vm The component: `entries`, `apply()` and the state fields.
+ * @param {string} scheme The list.
+ * @param {number} index The place of the entry to move.
+ * @param {number} delta -1 for up, 1 for down.
+ * @return {Promise<void>}
+ */
+export async function moveInList(vm, scheme, index, delta) {
+	vm.error = null
+	vm.reordering = true
+	try {
+		const saved = await saveMove(scheme, vm.entries, index, delta)
+		if (saved !== null) {
+			vm.apply(saved.data)
+			vm.announcement = saved.announcement
+		}
+	} catch (err) {
+		vm.error = err.response?.data?.error || err.message
+	} finally {
+		vm.reordering = false
+	}
+}
