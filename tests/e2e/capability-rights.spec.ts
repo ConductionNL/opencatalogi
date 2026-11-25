@@ -84,7 +84,10 @@ test('a group may open inspection periods and nothing else', async ({ page }) =>
 			const picker = page.locator('#capability-right-openInspection')
 			await picker.click()
 			await picker.fill(GROUP)
-			await page.getByRole('option', { name: GROUP, exact: true }).click()
+			// The group is offered; Enter picks the highlighted option (a pointer click on
+			// the option closes the list without picking it in headless Chromium).
+			await expect(page.locator('.vs__dropdown-option', { hasText: GROUP }).first()).toBeVisible()
+			await picker.press('Enter')
 			expect((await saved).ok(), 'saving the grant').toBeTruthy()
 		}
 		expect(await grantOf(admin, 'openInspection')).toContain(GROUP)
