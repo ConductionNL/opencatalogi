@@ -1180,7 +1180,7 @@ class SettingsService implements SettingsServiceInterface {
 			return self::SETTING_DEFAULTS['publication_embargo_lift_groups'];
 		}
 
-		return json_encode(array_keys($groups));
+		return json_encode(array_keys($groups), JSON_THROW_ON_ERROR);
 	}//end normaliseLiftGroups()
 
 	/**

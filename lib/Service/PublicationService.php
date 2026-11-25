@@ -2320,7 +2320,7 @@ class PublicationService implements PublicationServiceInterface {
 		$startIndex = (($context['page'] - 1) * $context['limit']);
 		$responseData = $this->buildListingPage(
 			results: array_slice($merged, $startIndex, $context['limit']),
-			total: (($federationResult['total'] ?? 0) + $localTotal),
+			total: ((int)($federationResult['total'] ?? 0) + (int)$localTotal),
 			offset: $startIndex,
 			context: $context
 		);
@@ -2441,7 +2441,7 @@ class PublicationService implements PublicationServiceInterface {
 	 */
 	private function aggregationPerformance(float $startTime, bool $federated): array {
 		$performance = [
-			'execution_time_ms' => round(((microtime(true) - $startTime) * 1000), 2),
+			'execution_time_ms' => round(((microtime(true) - $startTime) * 1000.0), 2),
 			'fast_path' => false,
 			'federation' => $federated,
 		];
@@ -2548,7 +2548,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * @spec exclude Timing helper for the `_performance` blocks; carries no behaviour of its own.
 	 */
 	private function elapsedMs(float $since): float {
-		return ((microtime(true) - $since) * 1000);
+		return ((microtime(true) - $since) * 1000.0);
 	}//end elapsedMs()
 
 	/**

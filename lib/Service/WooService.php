@@ -337,7 +337,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 *
 	 * @param string|null $search Optional filter term.
 	 *
-	 * @return array<int, array<string, mixed>> The grounds, each with `article` (the code) and `description` (the label).
+	 * @return array<int, array{article: string, description: string}> The grounds, each with `article` (the code) and `description` (the label).
 	 *
 	 * @throws RefusalGroundsUnavailableException When the grounds cannot be read.
 	 *

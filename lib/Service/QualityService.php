@@ -328,10 +328,10 @@ class QualityService implements QualityServiceInterface {
 
 		$weighted = 0.0;
 		foreach ($dimensions as $dimension => $sub) {
-			$weighted += ($sub * ($weights[$dimension] ?? 0));
+			$weighted += ((float)$sub * (float)($weights[$dimension] ?? 0));
 		}
 
-		return (int)round($weighted / $weightSum);
+		return (int)round($weighted / (float)$weightSum);
 	}//end weightedTotal()
 
 	/**
