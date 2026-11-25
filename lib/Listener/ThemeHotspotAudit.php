@@ -122,7 +122,7 @@ class ThemeHotspotAudit implements IEventListener {
 		];
 		try {
 			$mapper = $this->openRegister->installedService('OCA\OpenRegister\Db\AuditTrailMapper', 'OpenRegister is not available.');
-			// createAuditTrailEntry() keeps the context; createAuditTrail()'s cascade context keeps only referential-integrity keys.
+			// The entry keeps its context through createAuditTrailEntry(); createAuditTrail()'s cascade context keeps only referential-integrity keys.
 			$mapper->createAuditTrailEntry(object: $written, action: $action, context: $context);
 		} catch (Throwable $e) {
 			$this->logger->error('[ThemeHotspotAudit] The archive hotspot change was saved but not audited: ' . $e->getMessage());
