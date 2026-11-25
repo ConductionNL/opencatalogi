@@ -21,7 +21,7 @@ Start after `integration-feed-consumer-credentials` is merged: task 2.2 adds a f
 
 ## 3. The editor
 
-- [ ] 3.1 Add "Who can read it" to the Visibility card on the publication page and in the editor, as design D5 (boards `OcPublicatie`, `OcPublicatieBewerken`) (REQ-PSR-001). Verify: `tests/e2e/publications-for-signed-in-readers.spec.ts` "an editor limits a publication to signed-in readers", carrying `@e2e` REQ-PSR-001.
+- [x] 3.1 Add "Who can read it" to the Visibility card on the publication page and in the editor, as design D5 (boards `OcPublicatie`, `OcPublicatieBewerken`) (REQ-PSR-001). Verify: `tests/e2e/publications-for-signed-in-readers.spec.ts` "an editor limits a publication to signed-in readers", carrying `@e2e` REQ-PSR-001. Verified live 25 Nov 2026 (NC 34 + MariaDB, OpenRegister main): the e2e passes, 1/1; the publication page shows "Who can read it" with its inline edit.
   - Code built: the Visibility card shows who can read it and the sign-in link line (`PublicationVisibilityWidget`), and the editable Publication card includes `audience` and `minimumAssurance` (manifest). Left open: the e2e spec, which needs a live instance, and the D5 radio-pair layout, which the shared Data widget renders as a select.
   - Round 2 (17 Nov): the e2e spec is written, `tests/e2e/publications-for-signed-in-readers.spec.ts`: a draft without a Woo category, saved with `audience: signedIn` and level Substantial through the object endpoint, the Visibility card wording and link line, and the anonymous public read answering 404. Not run here (no live instance); tick after a live run.
 - [x] 3.2 Add the strings to `l10n/` (en, nl). Verify: `npm run check:l10n`, `npm run check:schema-l10n`.
