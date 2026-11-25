@@ -878,7 +878,9 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Ορίστε τον κατάλογο και τις καταχωρίσεις του με τη νέα σειρά.",
         "Hide from pick lists": "Απόκρυψη στις λίστες επιλογής",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Δεν μπορεί να ελεγχθεί αν υπάρχουν δημοσιεύσεις σε αυτή την κατηγορία, γι’ αυτό δεν αποκρύπτεται.",
-        "Move the %s publications filed under this category before hiding it.": "Μετακινήστε τις %s δημοσιεύσεις αυτής της κατηγορίας πριν την αποκρύψετε."
+        "Move the %s publications filed under this category before hiding it.": "Μετακινήστε τις %s δημοσιεύσεις αυτής της κατηγορίας πριν την αποκρύψετε.",
+        "Woo requests are handled by dossiq, which is not installed.": "Τα αιτήματα Woo διεκπεραιώνονται από το dossiq, το οποίο δεν είναι εγκατεστημένο.",
+        "Install dossiq from the app store": "Εγκαταστήστε το dossiq από το κατάστημα εφαρμογών"
     },
     "nplurals=2; plural=(n != 1);"
 )

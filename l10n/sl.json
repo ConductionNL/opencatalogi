@@ -877,7 +877,9 @@
         "Name the list and its entries in their new order.": "Navedite seznam in njegove vnose v novem vrstnem redu.",
         "Hide from pick lists": "Skrij na izbirnih seznamih",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ni mogoče preveriti, ali so v tej kategoriji objave, zato ni skrita.",
-        "Move the %s publications filed under this category before hiding it.": "Premaknite %s objav iz te kategorije, preden jo skrijete."
+        "Move the %s publications filed under this category before hiding it.": "Premaknite %s objav iz te kategorije, preden jo skrijete.",
+        "Woo requests are handled by dossiq, which is not installed.": "Zahteve Woo obravnava dossiq, ki ni nameščen.",
+        "Install dossiq from the app store": "Namestite dossiq iz trgovine z aplikacijami"
     },
     "plurals": {}
 }

@@ -878,7 +878,9 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Nimetage loend ja selle kirjed uues järjekorras.",
         "Hide from pick lists": "Peida valikuloenditest",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ei saa kontrollida, kas selles kategoorias on väljaandeid, seega seda ei peideta.",
-        "Move the %s publications filed under this category before hiding it.": "Teisaldage selle kategooria %s väljaannet enne selle peitmist."
+        "Move the %s publications filed under this category before hiding it.": "Teisaldage selle kategooria %s väljaannet enne selle peitmist.",
+        "Woo requests are handled by dossiq, which is not installed.": "Woo-taotlusi menetleb dossiq, mis pole paigaldatud.",
+        "Install dossiq from the app store": "Paigalda dossiq rakenduste poest"
     },
     "nplurals=2; plural=(n != 1);"
 )

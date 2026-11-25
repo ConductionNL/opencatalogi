@@ -877,7 +877,9 @@
         "Name the list and its entries in their new order.": "Nennen Sie die Liste und ihre Einträge in der neuen Reihenfolge.",
         "Hide from pick lists": "In Auswahllisten ausblenden",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ob Veröffentlichungen unter dieser Kategorie abgelegt sind, kann nicht geprüft werden, daher wird sie nicht ausgeblendet.",
-        "Move the %s publications filed under this category before hiding it.": "Verschieben Sie die %s Veröffentlichungen unter dieser Kategorie, bevor Sie sie ausblenden."
+        "Move the %s publications filed under this category before hiding it.": "Verschieben Sie die %s Veröffentlichungen unter dieser Kategorie, bevor Sie sie ausblenden.",
+        "Woo requests are handled by dossiq, which is not installed.": "Woo-Anfragen werden von dossiq bearbeitet, das nicht installiert ist.",
+        "Install dossiq from the app store": "dossiq aus dem App-Store installieren"
     },
     "plurals": {}
 }

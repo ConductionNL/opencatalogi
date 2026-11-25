@@ -878,7 +878,9 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Nennt d’Lëscht an hir Antréeën an der neier Reiefolleg.",
         "Hide from pick lists": "An de Wiellëschten verstoppen",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Et kann net gepréift ginn, ob Publikatiounen ënner dëser Kategorie sinn, dofir gëtt se net verstoppt.",
-        "Move the %s publications filed under this category before hiding it.": "Réckelt déi %s Publikatiounen ënner dëser Kategorie, ier Dir se verstoppt."
+        "Move the %s publications filed under this category before hiding it.": "Réckelt déi %s Publikatiounen ënner dëser Kategorie, ier Dir se verstoppt.",
+        "Woo requests are handled by dossiq, which is not installed.": "Woo-Ufroe gi vun dossiq behandelt, dat net installéiert ass.",
+        "Install dossiq from the app store": "dossiq aus dem App Store installéieren"
     },
     "nplurals=2; plural=(n != 1);"
 )

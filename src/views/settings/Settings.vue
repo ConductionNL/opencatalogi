@@ -259,6 +259,8 @@
 
 				<RefusalGroundsSource />
 
+				<RequestIntakeNotice />
+
 				<CategoryExplanations />
 
 				<DonlHarvestStatus />
@@ -757,6 +759,7 @@ import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
 import RecordHandover from './RecordHandover.vue'
 import RefusalGroundsSource from './RefusalGroundsSource.vue'
+import RequestIntakeNotice from './RequestIntakeNotice.vue'
 import WooIncidents from './WooIncidents.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
@@ -872,6 +875,7 @@ export default defineComponent({
 		NcLoadingIcon,
 		NcCheckboxRadioSwitch,
 		CnAdminSettingsShell,
+		RequestIntakeNotice,
 		Save,
 		Refresh,
 		Sync,

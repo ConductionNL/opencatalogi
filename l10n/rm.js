@@ -878,7 +878,9 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Numnai la glista e sias endataziuns en la nova successiun.",
         "Hide from pick lists": "Zuppentar en las glistas da tscherna",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "I na po betg vegnir controllà sch’i dat publicaziuns en questa categoria, perquai na vegn ella betg zuppentada.",
-        "Move the %s publications filed under this category before hiding it.": "Spustai las %s publicaziuns da questa categoria avant che la zuppentar."
+        "Move the %s publications filed under this category before hiding it.": "Spustai las %s publicaziuns da questa categoria avant che la zuppentar.",
+        "Woo requests are handled by dossiq, which is not installed.": "Las dumondas Woo vegnan tractadas da dossiq, che n'è betg installà.",
+        "Install dossiq from the app store": "Installar dossiq da la butia d'apps"
     },
     "nplurals=2; plural=(n != 1);"
 )

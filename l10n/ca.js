@@ -878,7 +878,9 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Indiqueu la llista i les seves entrades en el nou ordre.",
         "Hide from pick lists": "Amaga a les llistes de selecció",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "No es pot comprovar si hi ha publicacions en aquesta categoria, per això no s'amaga.",
-        "Move the %s publications filed under this category before hiding it.": "Moveu les %s publicacions d'aquesta categoria abans d'amagar-la."
+        "Move the %s publications filed under this category before hiding it.": "Moveu les %s publicacions d'aquesta categoria abans d'amagar-la.",
+        "Woo requests are handled by dossiq, which is not installed.": "Les sol·licituds Woo les gestiona dossiq, que no està instal·lat.",
+        "Install dossiq from the app store": "Instal·la dossiq des de la botiga d'aplicacions"
     },
     "nplurals=2; plural=(n != 1);"
 )

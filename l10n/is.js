@@ -878,7 +878,9 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Tilgreindu listann og færslur hans í nýju röðinni.",
         "Hide from pick lists": "Fela í vallistum",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ekki er hægt að athuga hvort útgáfur séu skráðar í þennan flokk, svo hann er ekki falinn.",
-        "Move the %s publications filed under this category before hiding it.": "Færðu þær %s útgáfur sem eru í þessum flokki áður en þú felur hann."
+        "Move the %s publications filed under this category before hiding it.": "Færðu þær %s útgáfur sem eru í þessum flokki áður en þú felur hann.",
+        "Woo requests are handled by dossiq, which is not installed.": "Woo-beiðnir eru afgreiddar í dossiq, sem er ekki uppsett.",
+        "Install dossiq from the app store": "Settu upp dossiq úr forritaversluninni"
     },
     "nplurals=2; plural=(n != 1);"
 )
