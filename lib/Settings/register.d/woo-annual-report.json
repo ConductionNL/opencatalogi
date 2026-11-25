@@ -1,0 +1,97 @@
+{
+  "$comment": "openspec/changes/woo-annual-report. The woo-jaarverslag report template, a seed object of OpenRegister's report-templates schema (openregister rapportage-bi-export, POST /api/reports/generate). OpenRegister skips an object whose register is missing, so on an OpenRegister without report templates nothing is imported and the publications report says the annual report needs a newer OpenRegister. Woo requests are dossiq's (decision D1), so the template counts publications only and says so in its description. The category rows list every member of the waardelijst so a category without publications shows 0; WooAnnualReportTemplateTest keeps them equal to WooCategoryRegistry.",
+  "components": {
+    "objects": [
+      {
+        "@self": {
+          "register": "report-templates",
+          "schema": "report-templates",
+          "slug": "woo-jaarverslag"
+        },
+        "name": "Woo-jaarverslag",
+        "slug": "woo-jaarverslag",
+        "app": "opencatalogi",
+        "description": "De Woo-cijfers van een kalenderjaar voor het jaarverslag: hoeveel er is gepubliceerd, in welke informatiecategorie, per maand, hoeveel publicaties geen creatiedatum hebben en hoeveel er zijn ingetrokken, met het jaar ervoor ernaast. Alleen openbare publicaties tellen mee, met de rechten van wie het verslag maakt. Woo-verzoeken en hun termijnen staan niet in dit verslag: die behandelt dossiq, in het verslag van dossiq.",
+        "dataSource": {
+          "register": "publication",
+          "schema": "publication",
+          "filters": {
+            "status": "published"
+          }
+        },
+        "dateField": "publicationDate",
+        "formats": [
+          "pdf",
+          "ods",
+          "csv"
+        ],
+        "sections": [
+          {
+            "key": "per-category",
+            "title": "Publicaties per informatiecategorie",
+            "type": "grouped",
+            "groupBy": "wooCategory",
+            "metric": "count",
+            "rows": [
+              "infocat001",
+              "infocat002",
+              "infocat003",
+              "infocat004",
+              "infocat005",
+              "infocat006",
+              "infocat007",
+              "infocat008",
+              "infocat009",
+              "infocat010",
+              "infocat011",
+              "infocat012",
+              "infocat013",
+              "infocat014",
+              "infocat015",
+              "infocat016",
+              "infocat017",
+              "infocat018"
+            ],
+            "compareWithPreviousYear": true
+          },
+          {
+            "key": "per-month",
+            "title": "Publicaties per maand",
+            "type": "series",
+            "interval": "month",
+            "compareWithPreviousYear": true
+          },
+          {
+            "key": "total",
+            "title": "Publicaties in totaal",
+            "type": "total",
+            "metric": "count",
+            "compareWithPreviousYear": true
+          },
+          {
+            "key": "no-creation-date",
+            "title": "Publicaties zonder creatiedatum",
+            "type": "total",
+            "metric": "count",
+            "filters": {
+              "creationDate": {
+                "isnull": true
+              }
+            },
+            "compareWithPreviousYear": true
+          },
+          {
+            "key": "withdrawals",
+            "title": "Intrekkingen per reden",
+            "type": "grouped",
+            "schema": "depublication",
+            "dateField": "depublishedAt",
+            "groupBy": "reason",
+            "metric": "count",
+            "compareWithPreviousYear": true
+          }
+        ]
+      }
+    ]
+  }
+}
