@@ -5,8 +5,10 @@ exports[`CatalogModal form adds the catalog without an id, then resets and close
   [
     "catalog",
     Catalogi {
+      "dcatLicense": "",
       "description": "",
       "filters": {},
+      "hasDcat": false,
       "hasOoapi": false,
       "hasWooSitemap": false,
       "image": "",
@@ -225,8 +227,10 @@ exports[`CatalogModal form fills itself once from the active catalog and saves i
     "catalog",
     "cat-1",
     Catalogi {
+      "dcatLicense": "",
       "description": "",
       "filters": {},
+      "hasDcat": false,
       "hasOoapi": false,
       "hasWooSitemap": false,
       "id": "cat-1",

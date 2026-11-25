@@ -51,10 +51,25 @@ describe('Catalogi Store', () => {
 			slug: '',
 			hasWooSitemap: false,
 			hasOoapi: false,
+			hasDcat: false,
+			dcatLicense: '',
 			showWithheld: false,
 		})
 
 		expect(catalogi).toBeInstanceOf(Catalogi)
 		expect(catalogi.validate().success).toBe(false)
+	})
+
+	// @spec openspec/changes/dcat-catalogue-completion/tasks.md#task-6.2
+	it('keeps the DCAT switch and its licence, so the catalogue form saves them (DCAT-010)', () => {
+		const catalogi = new Catalogi({
+			...mockCatalogi,
+			hasDcat: true,
+			dcatLicense: 'http://publications.europa.eu/resource/authority/licence/CC0',
+		})
+
+		expect(catalogi.hasDcat).toBe(true)
+		expect(catalogi.dcatLicense).toBe('http://publications.europa.eu/resource/authority/licence/CC0')
+		expect(new Catalogi({ ...mockCatalogi, hasDcat: 'yes' as unknown as boolean }).hasDcat).toBe(false)
 	})
 })
