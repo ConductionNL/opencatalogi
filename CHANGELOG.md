@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Governed agent writes** (hermiq-ai-tooling): four MCP write tools on `PublicationAgentTools`. `opencatalogi.createDraftPublication` creates a draft from its descriptive fields only. `opencatalogi.publishPublication` publishes only what a person approved. `opencatalogi.depublishPublication` and `opencatalogi.archivePublication` write nothing themselves: each creates an OpenRegister task for `opencatalogi-publishers`, and the publisher completing it withdraws or archives the publication. Every call is recorded on OpenRegister's audit trail. See `docs/features/agent-tools.md`.
 - **Mail intake for publications** — with the Nextcloud Mail app, an email becomes a draft publication from the Mail sidebar (title from the subject, summary and a provenance description from the message). The template never sets the publication date, status, organization, themes or retention, so an emailed request is never public until an editor publishes it (change `leaf-integrations`).
 - **Publication planning panel** — "Planning (does not publish)" on the publication page links calendar events to a publication; it never changes whether the publication is public.
 

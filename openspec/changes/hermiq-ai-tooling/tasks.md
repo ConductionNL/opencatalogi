@@ -109,6 +109,16 @@
   - GIVEN `CHANGELOG.md` WHEN read THEN it records the governed write surface
 - [ ] Implement
 - [ ] Test
+  - 25 Nov 2026 (b-opencatalogi, partly): `tests/e2e/spec-coverage/hermiq-ai-tooling.spec.ts` calls the tools the
+    way an agent does, JSON-RPC on OpenRegister's `/api/mcp` after `initialize`: the four write tools are served; a
+    draft from `createDraftPublication` is refused `not_approved` and stays a draft; a publication a person approved
+    (with a document) is published by `publishPublication`; `depublishPublication` stages a task for
+    `opencatalogi-publishers`, the publication stays public until a publisher claims and completes it, then it is
+    withdrawn; `archivePublication` on a draft is refused `not_published`. Live 25 Nov on NC 34 + PostgreSQL 16 with
+    OpenRegister main and Redis (MCP sessions need a distributed cache): 4 passed. `docs/features/agent-tools.md`
+    records the tool table (scope, reach, human step), the approval model, the irreversibility of external reach, the
+    absence of write tools on other schemas and the audit; `CHANGELOG.md` records the governed write surface.
+    Left: the classification check against a live Hermiq (not installed in this sandbox).
 
 ## Verification
 - [ ] All tasks checked off
