@@ -121,8 +121,7 @@
 				"soortHandeling": "ontvangst",
 				"publicationDate": "{{datetime:-60 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat015"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -147,8 +146,7 @@
 				"soortHandeling": "ontvangst",
 				"publicationDate": "{{datetime:-45 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat010"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -174,8 +172,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-32 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat009"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -206,8 +203,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-21 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat008"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -238,8 +234,7 @@
 				"soortHandeling": "ondertekening",
 				"publicationDate": "{{datetime:-12 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat008"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -297,7 +292,6 @@
 				"publicationDate": "{{datetime:-18 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat014",
 				"period": {
 					"from": "{{date:-240}}",
 					"to": "{{date:-60}}"
@@ -347,8 +341,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-16 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat002"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -373,8 +366,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-8 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat001"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -399,8 +391,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-70 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat002"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -426,8 +417,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-100 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat016"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -452,8 +442,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-90 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat004"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -478,8 +467,7 @@
 				"soortHandeling": "vaststelling",
 				"publicationDate": "{{datetime:-150 10:00}}",
 				"status": "published",
-				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat012"
+				"organization": "{{organisation:zuiddrecht}}"
 			},
 			"files": [
 				{
@@ -793,7 +781,6 @@
 				"publicationDate": "{{datetime:-1845 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat014",
 				"retentionCategory": "Woo-verzoeken en -besluiten",
 				"retentionTermMonths": 60,
 				"retentionAction": "review",
@@ -810,7 +797,6 @@
 				"publicationDate": "{{datetime:-3735 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat011",
 				"retentionCategory": "Convenanten",
 				"retentionTermMonths": 120,
 				"retentionAction": "review",
@@ -827,7 +813,6 @@
 				"publicationDate": "{{datetime:-2537 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat016",
 				"retentionCategory": "Onderzoeksrapporten",
 				"retentionTermMonths": 84,
 				"retentionAction": "depublish",
@@ -844,7 +829,6 @@
 				"publicationDate": "{{datetime:-1835 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat004",
 				"retentionCategory": "Vergaderstukken",
 				"retentionTermMonths": 60,
 				"retentionAction": "archive",
@@ -861,7 +845,6 @@
 				"publicationDate": "{{datetime:-1819 10:00}}",
 				"status": "published",
 				"organization": "{{organisation:zuiddrecht}}",
-				"wooCategory": "infocat014",
 				"retentionCategory": "Woo-verzoeken en -besluiten",
 				"retentionTermMonths": 60,
 				"retentionAction": "review",
