@@ -191,16 +191,29 @@ export function comingDepublication(publication, now = new Date()) {
  * @spec openspec/changes/officer-flow-accessibility/specs/officer-accessibility/spec.md#requirement-the-officer-flow-works-from-the-keyboard-alone-req-ofa-002
  */
 export function lifecycleKeyOf(publication) {
+	const id = recordIdOf(publication)
+	if (id === null) {
+		return null
+	}
+	const self = publication['@self'] || {}
+	const state = publication.status || self.state || self.status || ''
+	return [id, state, publication.publicationDate || '', publication.depublicationDate || ''].join('|')
+}
+
+/**
+ * The id of a loaded publication record, or null when there is none.
+ *
+ * @param {object|null} publication The publication's properties.
+ * @return {string|null} The id.
+ * @spec openspec/changes/officer-flow-accessibility/specs/officer-accessibility/spec.md#requirement-the-officer-flow-works-from-the-keyboard-alone-req-ofa-002
+ */
+function recordIdOf(publication) {
 	if (!publication || typeof publication !== 'object') {
 		return null
 	}
 	const self = publication['@self'] || {}
 	const id = String(publication.id ?? self.id ?? publication.uuid ?? '')
-	if (id === '') {
-		return null
-	}
-	const state = publication.status ?? self.state ?? self.status ?? ''
-	return [id, state, publication.publicationDate ?? '', publication.depublicationDate ?? ''].map(String).join('|')
+	return id === '' ? null : id
 }
 
 /**
@@ -212,12 +225,8 @@ export function lifecycleKeyOf(publication) {
  * @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1
  */
 export function depublicationKeyOf(publication) {
-	if (!publication || typeof publication !== 'object') {
-		return null
-	}
-	const self = publication['@self'] || {}
-	const id = String(publication.id ?? self.id ?? publication.uuid ?? '')
-	if (id === '') {
+	const id = recordIdOf(publication)
+	if (id === null) {
 		return null
 	}
 	return id + '|' + String(publication.depublicationDate ?? '')

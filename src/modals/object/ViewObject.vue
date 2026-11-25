@@ -2210,9 +2210,11 @@ export default {
 
 		/**
 		 * Save the form: create the new object once its selections are made,
-		 * or update the current one and close the modal a second later.
+		 * or update the current one and close the modal a second later. After a
+		 * create, focus moves to the dialog's first tab (REQ-OFA-002).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/officer-flow-accessibility/specs/officer-accessibility/spec.md#requirement-the-officer-flow-works-from-the-keyboard-alone-req-ofa-002
 		 */
 		async saveCurrentForm() {
 			const isCreating = this.isNewObject

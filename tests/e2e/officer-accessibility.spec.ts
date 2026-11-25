@@ -138,7 +138,7 @@ test.describe('Officer pages pass axe (REQ-OFA-001)', () => {
 			expect(response?.status() ?? 0, 'the page loads').toBeLessThan(400)
 			await dismissOverlays(page)
 			await expect(page.locator('#content-vue, #content').first()).toBeVisible({ timeout: 30_000 })
-			await page.waitForLoadState('networkidle').catch(() => undefined)
+			await page.waitForTimeout(1500)
 
 			const findings = await audit(page)
 			await testInfo.attach('axe', { body: JSON.stringify(findings, null, 2), contentType: 'application/json' })

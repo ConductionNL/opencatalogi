@@ -162,7 +162,7 @@ test.describe('The officer flow works from the keyboard alone (REQ-OFA-002)', ()
 
 		await page.goto(`${APP}/publications/${slug}`, { waitUntil: 'domcontentloaded' })
 		await dismissOverlays(page)
-		await page.waitForLoadState('networkidle').catch(() => undefined)
+		await expect(page.getByRole('button', { name: 'Add Publication' })).toBeVisible({ timeout: 30_000 })
 
 		await test.step('create with a title and a category', async () => {
 			await tabTo(page, 'Add Publication')
@@ -218,7 +218,7 @@ test.describe('The officer flow works from the keyboard alone (REQ-OFA-002)', ()
 			await tabTo(page, TITLE)
 			await press(page, 'Enter')
 			await page.waitForURL(new RegExp(String(publication?.id)))
-			await page.waitForLoadState('networkidle').catch(() => undefined)
+			await expect(page.getByRole('button', { name: 'Edit', exact: true })).toBeVisible({ timeout: 30_000 })
 			// The page's Actions menu holds the lifecycle moves.
 			await tabTo(page, 'Edit', false, true)
 			await tabTo(page, 'Actions', false, true)
