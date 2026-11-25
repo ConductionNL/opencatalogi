@@ -34,7 +34,8 @@ import { publicationCatalog } from './publication-catalog.ts'
 
 const APP_BASE = '/index.php/apps/opencatalogi'
 const THEMES = '/index.php/apps/openregister/api/objects/publication/theme'
-const PUBLICATIONS = '/index.php/apps/openregister/api/objects/publication/publication'
+const PUBLICATIONS =
+	'/index.php/apps/openregister/api/objects/publication/publication'
 const RUN = Date.now().toString(36)
 const REASON = 'Aangewezen in archiefhotspotlijst 2026'
 
@@ -47,7 +48,10 @@ test.describe('Archive hotspot', () => {
 
 	test.beforeAll(async ({ request }) => {
 		const res = await request.post(THEMES, {
-			data: { title: subject, summary: 'A subject for the archive-hotspot check.' },
+			data: {
+				title: subject,
+				summary: 'A subject for the archive-hotspot check.',
+			},
 		})
 		expect(res.ok(), `creating the subject: ${await res.text()}`).toBe(true)
 		const body = await res.json()
@@ -56,7 +60,9 @@ test.describe('Archive hotspot', () => {
 
 	test.afterAll(async ({ request }) => {
 		if (publicationId !== '') {
-			await request.delete(`${PUBLICATIONS}/${publicationId}`).catch(() => undefined)
+			await request
+				.delete(`${PUBLICATIONS}/${publicationId}`)
+				.catch(() => undefined)
 		}
 		if (themeId !== '') {
 			await request.delete(`${THEMES}/${themeId}`).catch(() => undefined)
@@ -64,7 +70,9 @@ test.describe('Archive hotspot', () => {
 	})
 
 	test('a marking without a reason is refused', async ({ request }) => {
-		const res = await request.patch(`${THEMES}/${themeId}`, { data: { archiveHotspot: true } })
+		const res = await request.patch(`${THEMES}/${themeId}`, {
+			data: { archiveHotspot: true },
+		})
 		expect(res.ok(), 'no reason, no marking').toBe(false)
 
 		const stored = await (await request.get(`${THEMES}/${themeId}`)).json()
@@ -80,40 +88,65 @@ test.describe('Archive hotspot', () => {
 		const stored = await (await request.get(`${THEMES}/${themeId}`)).json()
 		expect(stored.archiveHotspot).toBe(true)
 		expect(stored.archiveHotspotReason).toBe(REASON)
-		expect(String(stored.archiveHotspotSince ?? '').slice(0, 10)).toBe(new Date().toISOString().slice(0, 10))
-		expect(stored?.['@self']?.retention?.archiefnominatie).toBe('blijvend_bewaren')
+		expect(String(stored.archiveHotspotSince ?? '').slice(0, 10)).toBe(
+			new Date().toISOString().slice(0, 10),
+		)
+		expect(stored?.['@self']?.retention?.archiefnominatie).toBe(
+			'blijvend_bewaren',
+		)
 
-		const trail = await request.get(`/index.php/apps/openregister/api/audit-trails?object_uuid=${themeId}`)
+		const trail = await request.get(
+			`/index.php/apps/openregister/api/audit-trails?object_uuid=${themeId}`,
+		)
 		expect(trail.ok(), await trail.text()).toBe(true)
-		const entries = ((await trail.json())?.results ?? []) as Array<{ action?: string }>
-		const marked = entries.filter((entry) => entry.action === 'theme.archiveHotspot.marked')
+		const entries = ((await trail.json())?.results ?? []) as Array<{
+			action?: string
+		}>
+		const marked = entries.filter(
+			(entry) => entry.action === 'theme.archiveHotspot.marked',
+		)
 		expect(marked, 'one marking entry').toHaveLength(1)
 		expect(JSON.stringify(marked[0])).toContain(REASON)
 	})
 
-	test('the theme page shows the toggle and the reason to an administrator', async ({ page }) => {
+	test('the theme page shows the toggle and the reason to an administrator', async ({
+		page,
+	}) => {
 		await page.goto(`${APP_BASE}/themes/${themeId}`)
-		await expect(page.getByText('Archive hotspot', { exact: true }).first()).toBeVisible()
-		await expect(page.getByText('Reason for the archive hotspot').first()).toBeVisible()
+		await expect(
+			page.getByText('Archive hotspot', { exact: true }).first(),
+		).toBeVisible()
+		await expect(
+			page.getByText('Reason for the archive hotspot').first(),
+		).toBeVisible()
 		await expect(page.getByText(REASON).first()).toBeVisible()
 	})
 
 	test('the officer sees why', async ({ request, page }) => {
 		const catalogSlug = (await publicationCatalog(request, `tha-${RUN}`)).slug
 		const res = await request.post(PUBLICATIONS, {
-			data: { title: `E2E hotspot ${RUN}`, summary: 'A publication filed under an archive hotspot.', themes: [themeId] },
+			data: {
+				title: `E2E hotspot ${RUN}`,
+				summary: 'A publication filed under an archive hotspot.',
+				themes: [themeId],
+			},
 		})
 		expect(res.ok(), await res.text()).toBe(true)
 		const body = await res.json()
 		publicationId = String(body?.id ?? body?.['@self']?.id ?? body?.uuid ?? '')
 
-		const visibility = await request.get(`${APP_BASE}/api/publications/${publicationId}/visibility`)
+		const visibility = await request.get(
+			`${APP_BASE}/api/publications/${publicationId}/visibility`,
+		)
 		expect(visibility.ok(), await visibility.text()).toBe(true)
 		expect((await visibility.json()).archiveHotspot).toBe(subject)
 
-		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${publicationId}`)
-		await expect(page.getByTestId('publication-visibility-archive-hotspot'))
-			.toHaveText(`Kept permanently: archive hotspot ${subject}`)
+		await page.goto(
+			`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${publicationId}`,
+		)
+		await expect(
+			page.getByTestId('publication-visibility-archive-hotspot'),
+		).toHaveText(`Kept permanently: archive hotspot ${subject}`)
 	})
 
 	test('unmarking is logged too', async ({ request }) => {
@@ -121,10 +154,21 @@ test.describe('Archive hotspot', () => {
 			data: { archiveHotspot: false, archiveHotspotReason: 'Lijst herzien' },
 		})
 		expect(res.ok(), await res.text()).toBe(true)
-		expect((await (await request.get(`${THEMES}/${themeId}`)).json()).archiveHotspot).toBe(false)
+		expect(
+			(await (await request.get(`${THEMES}/${themeId}`)).json())
+				.archiveHotspot,
+		).toBe(false)
 
-		const trail = await request.get(`/index.php/apps/openregister/api/audit-trails?object_uuid=${themeId}`)
-		const entries = ((await trail.json())?.results ?? []) as Array<{ action?: string }>
-		expect(entries.filter((entry) => entry.action === 'theme.archiveHotspot.unmarked')).toHaveLength(1)
+		const trail = await request.get(
+			`/index.php/apps/openregister/api/audit-trails?object_uuid=${themeId}`,
+		)
+		const entries = ((await trail.json())?.results ?? []) as Array<{
+			action?: string
+		}>
+		expect(
+			entries.filter(
+				(entry) => entry.action === 'theme.archiveHotspot.unmarked',
+			),
+		).toHaveLength(1)
 	})
 })

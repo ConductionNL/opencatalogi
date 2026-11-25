@@ -277,7 +277,7 @@ class PublicationTransitions {
 	 *
 	 * @return string `changed`, `unchanged`, `failed` or `skipped`.
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
 	 */
 	public function reevaluateCompleteness(string $id): string {
 		if ($this->container->has(CompletenessSweepService::class) === false) {

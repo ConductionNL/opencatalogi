@@ -23,13 +23,15 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 ## 4. Live
 
 - [x] 4.1 On the dev instance, create a publication through OpenRegister's object API and paste the response's `publicUrl` and `officerUrl` in the PR body; open both (REQ-PTS-001). Verify: the pasted response. (live pass, decision 139) Live pass 17 Nov (livepass-opencatalogi): create answered `publicUrl` http://localhost:8093/index.php/apps/opencatalogi/api/publications/{uuid} and `officerUrl` http://localhost:8093/apps/opencatalogi/publications/publications/{uuid}; both open (200). Before this pass's fix the default `publication_url_catalog` was `publication`, a catalogue no install has, so publicUrl was a 404.
-- [ ] 4.2 Subscribe a webhook with the recipe's filters to a local catcher, complete a publication, edit it once more, and paste the delivery log showing one delivery (REQ-PTS-003). Verify: the pasted log. (live pass, decision 139)
+- [x] 4.2 Subscribe a webhook with the recipe's filters to a local catcher, complete a publication, edit it once more, and paste the delivery log showing one delivery (REQ-PTS-003). Verify: the pasted log. (live pass, decision 139)
+  - Ran 2026-11-25 on a sandbox Nextcloud 34 + MariaDB with OpenRegister main: the recipe's webhook (ObjectUpdatedEvent, `oldObject.completeness` incomplete, `newObject.completeness` complete, owner, register and schema) to a catcher on 127.0.0.1; a publication taken draft, in_review, approved, published with a publication date (completeness complete, `completeAt` set), then its title edited once more. Each run logged exactly one attempt, for the completing update; the edit sent nothing. The first attempt was refused by OpenRegister's private-address guard (the catcher is on loopback); with the hook's `configuration.allowPrivateTargets` the second run delivered once (200), carrying `completeAt` and `publicUrl`. The recipe now names that opt-in. Delivery log in the PR body.
 
 ## 5. Verification
 
 - [x] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
 - [x] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
-- [ ] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+- [x] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+  - Ran 2026-11-25 at archive time: `check:l10n` clean, `check:l10n-js` up to date, `check:manifest` pass; `check:strict`, `lint` and `check:schema-l10n` red only on findings development has too (phpcs line length in `PlooiDeliveryService`, phpstan in `PublicationAgentTools`/`PublicationService`, psalm crashes on load, eslint errors in three untouched views, 320 uncovered schema strings vs baseline 218); this change touches none of them.
 - [x] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
 
 Done when merged on `development` with CI green. Rows 1.17 and 1.20 become `production` only once a store release ships it.

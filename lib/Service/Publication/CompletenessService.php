@@ -28,7 +28,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+ * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
  */
 
 declare(strict_types=1);
@@ -46,7 +46,7 @@ use RuntimeException;
 /**
  * Evaluates `completeness` and works out the properties to store for it.
  *
- * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+ * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
  */
 class CompletenessService {
 
@@ -77,7 +77,7 @@ class CompletenessService {
 	 * @param PublicationStateServiceInterface $states    Whether the publication is public.
 	 * @param ContainerInterface               $container Resolves OpenRegister's file mapper.
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
 	 */
 	public function __construct(
 		private readonly PublicationStateServiceInterface $states,
@@ -96,7 +96,7 @@ class CompletenessService {
 	 *
 	 * @throws RuntimeException When the files cannot be read.
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
 	 */
 	public function evaluate(array $publication, ObjectEntity $object, ?DateTimeInterface $now = null): string {
 		if ($this->states->stateOf(publication: $publication, now: $now) !== PublicationStateServiceInterface::STATE_PUBLIC) {
@@ -132,7 +132,7 @@ class CompletenessService {
 	 *
 	 * @return array<string, string> `completeness`, and `completeAt` when there is one.
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
 	 */
 	public function propertiesFor(string $value, array $previous, ?DateTimeInterface $now = null): array {
 		$properties = ['completeness' => $value];
@@ -155,7 +155,7 @@ class CompletenessService {
 	 *
 	 * @return array<string, string> `completeness` as stored (incomplete when never set), and `completeAt` when stored.
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
 	 */
 	public function storedProperties(array $previous): array {
 		$value = self::INCOMPLETE;

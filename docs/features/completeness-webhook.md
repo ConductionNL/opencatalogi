@@ -38,7 +38,7 @@ Create the webhook as the user the source system writes with, on
 }
 ```
 
-Replace `zaaksysteem` with the user id of the source system. The two
+Replace `zaaksysteem` with the user id of the source system. OpenRegister refuses a webhook address on a private or loopback network unless the hook carries `"configuration": {"allowPrivateTargets": true}`; set that only for a source system inside your own network. The two
 `completeness` filters match only the update that moves the publication to
 complete. A later edit of a complete publication goes from `complete` to
 `complete`, so it is not sent.

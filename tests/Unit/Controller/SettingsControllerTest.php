@@ -143,7 +143,7 @@ class SettingsControllerTest extends TestCase {
 	/**
 	 * REQ-PTS-001: changing a link setting queues one rewrite of every publication's pages; saving the same value queues none.
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
 	 */
 	public function testChangingTheLinkTemplateQueuesTheRewrite(): void {
 		$stored = ['publication_url_template' => 'https://old.example/{id}', 'publication_url_catalog' => 'woo'];

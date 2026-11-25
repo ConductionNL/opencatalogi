@@ -24,7 +24,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+ * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
  */
 
 declare(strict_types=1);
@@ -52,7 +52,7 @@ use Psr\Log\LoggerInterface;
  *     now: DateTimeInterface
  * }
  *
- * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+ * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
  */
 class CompletenessSweepService {
 
@@ -85,7 +85,7 @@ class CompletenessSweepService {
 	 * @param IAppConfig          $config       Names the publication register and schema.
 	 * @param LoggerInterface     $logger       Records a publication that could not be swept.
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
 	 */
 	public function __construct(
 		private readonly CompletenessService $completeness,
@@ -103,7 +103,7 @@ class CompletenessSweepService {
 	 *
 	 * @return array{checked: int, changed: int, failed: int} The counts.
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
 	 */
 	public function sweep(DateTimeInterface $since, DateTimeInterface $now): array {
 		$counts   = ['checked' => 0, 'changed' => 0, 'failed' => 0];
@@ -154,7 +154,7 @@ class CompletenessSweepService {
 	 *
 	 * @return string `changed`, `unchanged`, `failed`, or `skipped` when no publication register, schema or OpenRegister is configured.
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
 	 */
 	public function reevaluate(string $id): string {
 		$register = $this->config->getValueString('opencatalogi', 'publication_register', '');

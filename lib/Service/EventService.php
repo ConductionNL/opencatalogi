@@ -310,7 +310,7 @@ class EventService implements EventServiceInterface {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
 	 */
 	private function reevaluateCompleteness(string $id): void {
 		// Named by string, like the OpenRegister services this class resolves lazily.
