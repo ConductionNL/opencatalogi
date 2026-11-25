@@ -81,7 +81,11 @@ class CapabilityRightsWiringTest extends TestCase {
 
 			$lines = file((string) $method->getFileName());
 			$first = trim($lines[$method->getStartLine()]);
-			$this->assertSame('$refusal = $this->requireCapability(verb: \''.$verb.'\');', $first, $label.' does not check '.$verb.' first');
+			$this->assertSame(
+				expected: '$refusal = $this->requireCapability(verb: \''.$verb.'\');',
+				actual: $first,
+				message: $label.' does not check '.$verb.' first'
+			);
 			$this->assertSame('if ($refusal !== null) {', trim($lines[($method->getStartLine() + 1)]), $label);
 			$this->assertSame('return $refusal;', trim($lines[($method->getStartLine() + 2)]), $label);
 		}

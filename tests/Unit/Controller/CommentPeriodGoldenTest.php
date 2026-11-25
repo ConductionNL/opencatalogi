@@ -269,7 +269,7 @@ class CommentPeriodGoldenTest extends TestCase {
 
 		$lines = file((string) $method->getFileName());
 		$body  = implode('', array_slice($lines, $method->getStartLine(), 3));
-		$this->assertStringContainsString('$refusal = $this->requireCapability(verb: \'openCommentPeriod\');', $body);
+		$this->assertStringContainsString(needle: '$refusal = $this->requireCapability(verb: \'openCommentPeriod\');', haystack: $body);
 
 	}//end testOpenIsGuardedByTheOpenCommentPeriodRight()
 
