@@ -402,4 +402,44 @@ class RegisterSchemaLinkServiceTest extends TestCase {
 		$this->assertSame(['magicMapping' => false], $saved['schemas']['new-schema']);
 
 	}//end testAnExistingSchemaConfigurationIsKept()
+	/**
+	 * The payload schemas no schema on the instance carries yet are missing, in payload order (REQ-PLC-007).
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 *
+	 * @return void
+	 */
+	public function testTheSchemasTheInstanceDoesNotHaveAreMissing(): void {
+		$mapper = $this->environmentAwareDouble('OCA\OpenRegister\Db\SchemaMapper', ['findBySlug']);
+		$mapper->method('findBySlug')->willReturnCallback(
+			static fn (string $slug): array => match ($slug) {
+				'publication' => [new \stdClass()],
+				default => [],
+			}
+		);
+		$this->container->method('get')->with('OCA\OpenRegister\Db\SchemaMapper')->willReturn($mapper);
+
+		$missing = $this->service->missingSchemas(
+			data: ['components' => ['schemas' => ['publication' => [], 'publicationVersion' => [], 'depublication' => []]]]
+		);
+
+		$this->assertSame(expected: ['publicationVersion', 'depublication'], actual: $missing);
+	}//end testTheSchemasTheInstanceDoesNotHaveAreMissing()
+
+	/**
+	 * Without a schema lookup nothing is called missing, so nothing is imported over.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 *
+	 * @return void
+	 */
+	public function testWithoutASchemaLookupNothingIsMissing(): void {
+		$this->container->method('get')->willThrowException(new \RuntimeException('OpenRegister is not available'));
+
+		$this->assertSame(
+			expected: [],
+			actual: $this->service->missingSchemas(data: ['components' => ['schemas' => ['publicationVersion' => []]]])
+		);
+	}//end testWithoutASchemaLookupNothingIsMissing()
+
 }//end class

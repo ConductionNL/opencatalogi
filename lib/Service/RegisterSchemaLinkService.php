@@ -107,6 +107,40 @@ class RegisterSchemaLinkService {
 	}//end reconcile()
 
 	/**
+	 * The schemas of an import payload this instance does not have yet, by slug.
+	 *
+	 * OpenRegister's non-forced import on an existing install creates none of the
+	 * schemas a newer version of this app added and still records the new version,
+	 * so every later import skips them: measured upgrading opencatalogi 2.1.0, 34 of
+	 * 46 schemas never landed and every legacy publication went dark. A slug any
+	 * schema on the instance already carries counts as present, so nothing that
+	 * exists is ever imported over.
+	 *
+	 * @param array $data The import payload.
+	 *
+	 * @return list<string> The missing schema slugs, in payload order; empty when none can be read.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 */
+	public function missingSchemas(array $data): array {
+		$missing = [];
+		try {
+			$mapper = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
+			foreach (array_keys((array)($data['components']['schemas'] ?? [])) as $slug) {
+				if (is_string($slug) === true && $mapper->findBySlug(slug: $slug, _rbac: false, _multitenancy: false) === []) {
+					$missing[] = $slug;
+				}
+			}
+		} catch (\Throwable) {
+			// Without a lookup nothing is called missing: the regular import stands.
+			return [];
+		}
+
+		return $missing;
+
+	}//end missingSchemas()
+
+	/**
 	 * Write the extended schema list and configuration to the register, then provision the new tables.
 	 *
 	 * Nothing is written when no schema is missing.
