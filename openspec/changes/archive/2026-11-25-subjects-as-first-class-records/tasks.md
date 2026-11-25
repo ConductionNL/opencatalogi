@@ -32,7 +32,9 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 - [x] 6.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. Public search is central: run the full unit suite once.
 - [x] 6.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran. gate-19 wants the `@e2e` references of 4.1.
-- [ ] 6.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 6.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 6.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+  - Ran 2026-11-25 at archive time: `check:l10n` clean, `check:l10n-js` up to date, `check:manifest` pass; `check:strict`, `lint` and `check:schema-l10n` red only on findings development has too. `tests/e2e/subjects.spec.ts` ran live on a sandbox Nextcloud 34 + MariaDB: it used the bare Playwright request (412 CSRF on every write), created themes without the required `summary`, and expected publications to be public straight from create; fixed (authenticated request, summaries, review lifecycle to published) it passes 2/2 with openregister#11179, which makes array filters work on MySQL and MariaDB (without it `GET /api/themes?featured=true` answers 500 there; PostgreSQL is unaffected).
+- [x] 6.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - The change landed through its PRs on development (last #3025); this archive PR merges development in, no rebase, no Co-Authored-By.
 
 Done when merged on `development` with CI green. Row 16.9 becomes `production` once a store release ships it; row 6.28 once this and `portaliq/home-and-theme-landing-pages` are both in store releases.

@@ -23,7 +23,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+ * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
  */
 
 declare(strict_types=1);
@@ -36,7 +36,7 @@ use OCP\AppFramework\Db\Entity;
 /**
  * Finds the subjects a search term matches.
  *
- * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+ * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
  */
 class SubjectSearch {
 
@@ -79,7 +79,7 @@ class SubjectSearch {
 	 * @return array<int, array<string, mixed>> The subject results: resultType, id, slug, title,
 	 *                                          summary, image, publicationCount and url.
 	 *
-	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+	 * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
 	 */
 	public function search(object $objectService, string $term): array {
 		$term = trim($term);

@@ -22,7 +22,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-lists-what-is-filed-under-it-req-sub-003
+ * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-lists-what-is-filed-under-it-req-sub-003
  */
 
 declare(strict_types=1);
@@ -35,7 +35,7 @@ use OCP\AppFramework\Db\Entity;
 /**
  * Lists and counts the public publications filed under a subject.
  *
- * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-lists-what-is-filed-under-it-req-sub-003
+ * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-lists-what-is-filed-under-it-req-sub-003
  */
 class SubjectPublications {
 
@@ -67,7 +67,7 @@ class SubjectPublications {
 	 *
 	 * @throws \RuntimeException When OpenRegister is not installed.
 	 *
-	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-lists-what-is-filed-under-it-req-sub-003
+	 * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-a-subject-lists-what-is-filed-under-it-req-sub-003
 	 */
 	public function listPublic(string $subjectId, int $limit, int $page): array {
 		$limit = max(1, min(self::MAX_LIMIT, $limit));
@@ -110,7 +110,7 @@ class SubjectPublications {
 	 *
 	 * @throws \RuntimeException When OpenRegister is not installed.
 	 *
-	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-the-featured-subjects-are-served-for-the-portal-req-sub-002
+	 * @spec openspec/changes/archive/2026-11-25-subjects-as-first-class-records/specs/subjects/spec.md#requirement-the-featured-subjects-are-served-for-the-portal-req-sub-002
 	 */
 	public function countPublic(string $subjectId): int {
 		$result = $this->publicSearch(subjectId: $subjectId, paging: ['_limit' => 1, '_page' => 1]);

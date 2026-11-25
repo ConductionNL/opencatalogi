@@ -1048,7 +1048,7 @@
 				"requirement": [
 					"openspec/specs/content-management :: Theme management UI (CMS-038)",
 					"openspec/specs/content-management :: List all themes with pagination and facets via public API (CMS-020)",
-					"openspec/changes/subjects-as-first-class-records/specs/subjects :: A subject lists what is filed under it (REQ-SUB-003)"
+					"openspec/specs/subjects :: A subject lists what is filed under it (REQ-SUB-003)"
 				],
 				"change": [
 					"subjects-as-first-class-records",
