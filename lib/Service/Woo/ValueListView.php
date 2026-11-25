@@ -68,7 +68,8 @@ class ValueListView {
 	 *
 	 * @param string $scheme The list, one of {@see ValueListsService::SCHEMES}.
 	 *
-	 * @return array{entries: list<array{code: string, uri: string, sourceLabel: string, label: string, explanation: string, order: int|null, hidden: bool, active: bool, status: string}>, choicesUnavailable: bool}
+	 * @return array{entries: list<array<string, mixed>>, choicesUnavailable: bool} Each entry is
+	 *         `{code, uri, sourceLabel, label, explanation, order, hidden, active, status}`.
 	 *
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-organisations-own-text-sits-beside-the-normative-entry-req-wvl-001
 	 */
@@ -100,10 +101,10 @@ class ValueListView {
 	/**
 	 * One source entry with its choice applied.
 	 *
-	 * @param array<string, mixed>                                                                         $row    The source entry.
-	 * @param array{order: int|null, localLabel: string, explanation: string, hidden: bool, active: bool}|null $choice The choice, or null.
+	 * @param array<string, mixed>      $row    The source entry.
+	 * @param array<string, mixed>|null $choice The choice (`order`, `localLabel`, `explanation`, `hidden`, `active`), or null.
 	 *
-	 * @return array{code: string, uri: string, sourceLabel: string, label: string, explanation: string, order: int|null, hidden: bool, active: bool, status: string}
+	 * @return array<string, mixed> The entry: `{code, uri, sourceLabel, label, explanation, order, hidden, active, status}`.
 	 */
 	private static function merged(array $row, ?array $choice): array {
 		$sourceLabel = (string)($row['label'] ?? '');

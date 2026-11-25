@@ -84,16 +84,29 @@ class ValueListChoiceListener implements IEventListener {
 	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-organisations-own-text-sits-beside-the-normative-entry-req-wvl-001
 	 */
 	public function handle(Event $event): void {
-		$written = null;
 		if ($event instanceof ObjectUpdatingEvent === true) {
-			$written = $event->getNewObject();
+			$this->guard(event: $event, written: $event->getNewObject());
+			return;
 		}
 
 		if ($event instanceof ObjectCreatingEvent === true) {
-			$written = $event->getObject();
+			$this->guard(event: $event, written: $event->getObject());
 		}
 
-		if ($written === null || $this->isChoice(entity: $written) === false) {
+	}//end handle()
+
+	/**
+	 * Refuse the save when the object is a choice that sets a field it does not own.
+	 *
+	 * @param ObjectCreatingEvent|ObjectUpdatingEvent $event   The pre-save event.
+	 * @param ObjectEntity                            $written The object as written.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-organisations-own-text-sits-beside-the-normative-entry-req-wvl-001
+	 */
+	private function guard(ObjectCreatingEvent|ObjectUpdatingEvent $event, ObjectEntity $written): void {
+		if ($this->isChoice(entity: $written) === false) {
 			return;
 		}
 
@@ -105,7 +118,7 @@ class ValueListChoiceListener implements IEventListener {
 		$event->setErrors($refusal);
 		$event->stopPropagation();
 
-	}//end handle()
+	}//end guard()
 
 	/**
 	 * Whether the object is a value-list choice.
