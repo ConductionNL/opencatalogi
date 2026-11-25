@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Φόντο",
         "Catalog": "Κατάλογος",
         "Catalog edit": "Επεξεργασία καταλόγου",
-        "Catalog is being added...": "Ο κατάλογος προστίθεται...",
-        "Catalog is being edited...": "Ο κατάλογος επεξεργάζεται...",
         "Catalog successfully added": "Ο κατάλογος προστέθηκε με επιτυχία",
         "Catalog successfully edited": "Ο κατάλογος επεξεργάστηκε με επιτυχία",
         "Catalog:": "Κατάλογος:",

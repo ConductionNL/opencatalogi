@@ -304,8 +304,6 @@ OC.L10N.register(
         "Blocked as an unsafe outbound target — check the configured public base URL.": "Blocked as an unsafe outbound target — check the configured public base URL.",
         "Catalog": "Catalog",
         "Catalog edit": "Catalog edit",
-        "Catalog is being added...": "Catalog is being added...",
-        "Catalog is being edited...": "Catalog is being edited...",
         "Catalog is not configured for publications": "Catalog is not configured for publications",
         "Catalog successfully added": "Catalog successfully added",
         "Catalog successfully edited": "Catalog successfully edited",

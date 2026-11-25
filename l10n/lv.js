@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Fons",
         "Catalog": "Katalogs",
         "Catalog edit": "Kataloga rediģēšana",
-        "Catalog is being added...": "Katalogs tiek pievienots...",
-        "Catalog is being edited...": "Katalogs tiek rediģēts...",
         "Catalog successfully added": "Katalogs veiksmīgi pievienots",
         "Catalog successfully edited": "Katalogs veiksmīgi rediģēts",
         "Catalog:": "Katalogs:",

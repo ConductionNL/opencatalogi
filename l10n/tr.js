@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Arka plan",
         "Catalog": "Katalog",
         "Catalog edit": "Katalog düzenleme",
-        "Catalog is being added...": "Katalog ekleniyor...",
-        "Catalog is being edited...": "Katalog düzenleniyor...",
         "Catalog successfully added": "Katalog başarıyla eklendi",
         "Catalog successfully edited": "Katalog başarıyla düzenlendi",
         "Catalog:": "Katalog:",

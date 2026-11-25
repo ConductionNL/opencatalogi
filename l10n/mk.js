@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Позадина",
         "Catalog": "Каталог",
         "Catalog edit": "Уредување на каталог",
-        "Catalog is being added...": "Каталогот се додава...",
-        "Catalog is being edited...": "Каталогот се уредува...",
         "Catalog successfully added": "Каталогот успешно додаден",
         "Catalog successfully edited": "Каталогот успешно уреден",
         "Catalog:": "Каталог:",

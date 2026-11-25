@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Bakgrunn",
         "Catalog": "Katalog",
         "Catalog edit": "Rediger katalog",
-        "Catalog is being added...": "Katalog legges til ...",
-        "Catalog is being edited...": "Katalog redigeres ...",
         "Catalog successfully added": "Katalogen ble lagt til",
         "Catalog successfully edited": "Katalogen ble redigert",
         "Catalog:": "Katalog:",

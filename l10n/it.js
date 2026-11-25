@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Sfondo",
         "Catalog": "Catalogo",
         "Catalog edit": "Modifica catalogo",
-        "Catalog is being added...": "Catalogo in fase di aggiunta...",
-        "Catalog is being edited...": "Catalogo in fase di modifica...",
         "Catalog successfully added": "Catalogo aggiunto correttamente",
         "Catalog successfully edited": "Catalogo modificato correttamente",
         "Catalog:": "Catalogo:",

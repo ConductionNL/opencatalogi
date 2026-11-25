@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Hannergrond",
         "Catalog": "Katalog",
         "Catalog edit": "Katalog beaarbechten",
-        "Catalog is being added...": "Katalog gëtt bäigesat...",
-        "Catalog is being edited...": "Katalog gëtt beaarbecht...",
         "Catalog successfully added": "Katalog erfollegräich bäigesat",
         "Catalog successfully edited": "Katalog erfollegräich beaarbecht",
         "Catalog:": "Katalog:",

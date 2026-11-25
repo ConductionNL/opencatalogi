@@ -8,62 +8,32 @@ const { isAdmin } = useIsAdmin()
 </script>
 
 <template>
-	<NcModal
+	<!-- catalogs: create/edit runs in CnFormDialog; the fields stay in its #form slot. -->
+	<CnFormDialog
 		v-if="navigationStore.modal === 'catalog'"
-		ref="modalRef"
-		:name="
+		ref="formDialog"
+		:item="isEdit ? objectStore.getActiveObject('catalog') : null"
+		:schema="dialogSchema"
+		:dialogTitle="
 			isEdit
 				? t('opencatalogi', 'Catalog edit')
 				: t('opencatalogi', 'Add Catalog')
 		"
-		:labelId="isEdit ? 'editCatalogModal' : 'addCatalogModal'"
+		:successText="
+			isEdit
+				? t('opencatalogi', 'Catalog successfully edited')
+				: t('opencatalogi', 'Catalog successfully added')
+		"
+		:confirmLabel="isEdit ? t('opencatalogi', 'Save') : t('opencatalogi', 'Add')"
+		:cancelLabel="isEdit ? t('opencatalogi', 'Close') : t('opencatalogi', 'Cancel')"
+		:closeLabel="t('opencatalogi', 'Close')"
+		:confirmDisabled="!inputValidation.success"
+		:feedback="false"
+		:cancelIcon="dismissIcon"
+		@confirm="saveCatalog"
 		@close="closeModal">
-		<div class="modal__content">
-			<div
-				v-if="
-					objectStore.getState('catalog').success !== null
-					|| objectStore.getState('catalog').error
-				">
-				<NcNoteCard
-					v-if="objectStore.getState('catalog').success"
-					type="success">
-					<p>
-						{{
-							isEdit
-								? t('opencatalogi', 'Catalog successfully edited')
-								: t('opencatalogi', 'Catalog successfully added')
-						}}
-					</p>
-				</NcNoteCard>
-				<NcNoteCard
-					v-if="!objectStore.getState('catalog').success"
-					type="error">
-					<p>
-						{{
-							isEdit
-								? t(
-										'opencatalogi',
-										'Something went wrong while editing the catalog',
-									)
-								: t(
-										'opencatalogi',
-										'Something went wrong while adding the catalog',
-									)
-						}}
-					</p>
-				</NcNoteCard>
-				<NcNoteCard
-					v-if="objectStore.getState('catalog').error"
-					type="error">
-					<p>{{ objectStore.getState('catalog').error }}</p>
-				</NcNoteCard>
-			</div>
-			<div
-				v-if="
-					objectStore.getState('catalog').success === null
-					&& !objectStore.isLoading('catalog')
-				"
-				class="form-group">
+		<template #form>
+			<div class="form-group">
 				<TranslationLanguageSwitch
 					v-if="isEdit && editLanguages.length > 1"
 					:languages="editLanguages"
@@ -202,62 +172,20 @@ const { isAdmin } = useIsAdmin()
 						:disabled="objectStore.isLoading('catalog')" />
 				</fieldset>
 			</div>
-			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
-				<NcLoadingIcon :size="20" />
-				<span>{{
-					isEdit
-						? t('opencatalogi', 'Catalog is being edited...')
-						: t('opencatalogi', 'Catalog is being added...')
-				}}</span>
-			</div>
-			<div class="modalActions">
-				<NcButton class="modalCloseButton" @click="closeModal">
-					<template #icon>
-						<Cancel :size="20" />
-					</template>
-					{{
-						isEdit
-							? t('opencatalogi', 'Close')
-							: t('opencatalogi', 'Cancel')
-					}}
-				</NcButton>
-				<NcButton
-					v-if="
-						objectStore.getState('catalog').success === null
-						&& !objectStore.isLoading('catalog')
-					"
-					:title="inputValidation.errorMessages?.[0]"
-					:disabled="
-						!inputValidation.success || objectStore.isLoading('catalog')
-					"
-					variant="primary"
-					@click="saveCatalog">
-					<template #icon>
-						<ContentSaveOutline :size="20" />
-					</template>
-					{{
-						isEdit ? t('opencatalogi', 'Save') : t('opencatalogi', 'Add')
-					}}
-				</NcButton>
-			</div>
-		</div>
-	</NcModal>
+		</template>
+	</CnFormDialog>
 </template>
 
 <script>
 import {
-	NcButton,
+	CnFormDialog,
 	NcCheckboxRadioSwitch,
-	NcLoadingIcon,
-	NcModal,
 	NcNoteCard,
 	NcSelect,
 	NcTextField,
 } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
-import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import CatalogRetentionDefaultsFields from '../../components/CatalogRetentionDefaultsFields.vue'
 import CatalogStaffAccessFields from '../../components/CatalogStaffAccessFields.vue'
 import LicencePicker from '../../components/LicencePicker.vue'
@@ -360,16 +288,11 @@ export default {
 		LicencePicker,
 		TranslationLanguageSwitch,
 		CatalogStaffAccessFields,
-		NcModal,
+		CnFormDialog,
 		NcTextField,
-		NcButton,
-		NcLoadingIcon,
 		NcNoteCard,
 		NcCheckboxRadioSwitch,
 		NcSelect,
-		// Icons
-		ContentSaveOutline,
-		Cancel,
 	},
 
 	data() {
@@ -395,6 +318,9 @@ export default {
 				{ id: 'stable', label: 'Stable' },
 				{ id: 'obsolete', label: 'Obsolete' },
 			],
+
+			// The MDI icon on the dialog's Cancel / Close button.
+			dismissIcon: 'Cancel',
 		}
 	},
 
@@ -440,6 +366,17 @@ export default {
 
 		isEdit() {
 			return !!objectStore.getActiveObject('catalog')
+		},
+
+		/**
+		 * The schema CnFormDialog is given: the title only. The fields are the
+		 * #form slot's own, validated by the Catalogi entity (inputValidation).
+		 *
+		 * @return {object} The dialog schema.
+		 * @spec openspec/changes/catalogs/tasks.md#task-9
+		 */
+		dialogSchema() {
+			return { title: t('opencatalogi', 'Catalog'), properties: {} }
 		},
 
 		/**
@@ -573,15 +510,30 @@ export default {
 		},
 
 		/**
-		 * Close the modal once the user has had two seconds to read the feedback.
+		 * Show the outcome in the dialog; on success it closes itself after two seconds.
 		 *
+		 * @param {object} result `{ success: true }` or `{ error: string }`.
 		 * @return {void}
+		 * @spec openspec/changes/catalogs/tasks.md#task-9
 		 */
-		closeAfterFeedback() {
-			const self = this
-			setTimeout(function () {
-				self.closeModal()
-			}, 2000)
+		showResult(result) {
+			this.$refs.formDialog?.setResult(result)
+		},
+
+		/**
+		 * The message of a failed save: the store's error, else a sentence for the mode.
+		 *
+		 * @param {Error|undefined} error The rejection.
+		 * @return {string} The message.
+		 * @spec openspec/changes/catalogs/tasks.md#task-9
+		 */
+		saveErrorMessage(error) {
+			if (error?.message) {
+				return error.message
+			}
+			return this.isEdit
+				? t('opencatalogi', 'Something went wrong while editing the catalog')
+				: t('opencatalogi', 'Something went wrong while adding the catalog')
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
@@ -693,17 +645,21 @@ export default {
 					'opencatalogi',
 					'The translation could not be saved. Try again.',
 				)
+				// Keep the form open so the editor can try again.
+				this.$refs.formDialog?.setValidationErrors({})
 				return
 			}
 			this.translationOpened = { ...this.translation }
-			this.closeAfterFeedback()
+			this.showResult({ success: true })
 		},
 
 		/**
 		 * Create or update the catalog via the object store; in another
 		 * language than Dutch, save the translation only.
 		 *
+		 * @return {Promise<void>}
 		 * @spec openspec/specs/catalogs/spec.md
+		 * @spec openspec/changes/catalogs/tasks.md#task-9
 		 */
 		saveCatalog() {
 			if (this.isEdit && this.editLanguage !== SOURCE_LANGUAGE) {
@@ -711,19 +667,17 @@ export default {
 			}
 			const catalogiItem = this.catalogItem()
 
+			let write
 			if (this.isEdit) {
-				objectStore
-					.updateObject('catalog', catalogiItem.id, catalogiItem)
-					.then(() => {
-						this.closeAfterFeedback()
-					})
+				write = objectStore.updateObject('catalog', catalogiItem.id, catalogiItem)
 			} else {
 				delete catalogiItem.id
-
-				objectStore.createObject('catalog', catalogiItem).then(() => {
-					this.closeAfterFeedback()
-				})
+				write = objectStore.createObject('catalog', catalogiItem)
 			}
+
+			return write
+				.then(() => this.showResult({ success: true }))
+				.catch((error) => this.showResult({ error: this.saveErrorMessage(error) }))
 		},
 	},
 }
@@ -738,15 +692,6 @@ export default {
 
 .success {
 	color: green;
-}
-
-.loading-status {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	margin: 1rem 0;
-	color: var(--color-text-lighter);
 }
 </style>
 

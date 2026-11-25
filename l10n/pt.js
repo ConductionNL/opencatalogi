@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Fundo",
         "Catalog": "Catálogo",
         "Catalog edit": "Edição de catálogo",
-        "Catalog is being added...": "O catálogo está a ser adicionado...",
-        "Catalog is being edited...": "O catálogo está a ser editado...",
         "Catalog successfully added": "Catálogo adicionado com sucesso",
         "Catalog successfully edited": "Catálogo editado com sucesso",
         "Catalog:": "Catálogo:",

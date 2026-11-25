@@ -114,7 +114,8 @@
 - **Files**: `src/views/CatalogiIndex.vue`, `src/modals/CatalogModal.vue`, `src/modals/ViewCatalogi.vue`, `src/components/CatalogiWidget.vue`
 - **Acceptance criteria**:
   - [x] `CatalogiIndex.vue` uses `CnIndexPage` (or equivalent `@conduction/nextcloud-vue` list component) — no bespoke table. (verified: src/views/catalogi/CatalogiIndex.vue)
-  - [ ] `CatalogModal.vue` uses `CnFormDialog` or `CnAdvancedFormDialog` for create/edit — no bespoke form component.
+  - [x] `CatalogModal.vue` uses `CnFormDialog` or `CnAdvancedFormDialog` for create/edit — no bespoke form component.
+    - 25 Nov: `src/modals/catalog/CatalogModal.vue` runs in `CnFormDialog` (title, Cancel/Close and confirm, result phase, two-second close after a save); the fields stay in its `#form` slot because the dependent register/schema pickers, the translation language switch and the staff-access and retention fields are not schema-generated. Tests: `CatalogModalFeedback.spec.js` (result notes, button labels, confirm disabled until the Catalogi entity validates), the unchanged form/translation/schema specs and snapshots; `tests/mocks/conduction-nextcloud-vue.js` gained a `CnFormDialog` stand-in with the host contract.
     - Left open (17 Nov): the modal's register-dependent schema picker (options narrow to the chosen registers and drop the chosen ones) and its entity validation have no equivalent in CnFormDialog's field model, and the rewrite needs a browser check this build session does not have.
   - [x] `ViewCatalogi.vue` uses `CnDetailPage` or `CnDetailCard` sections. (17 Nov: the details block is a `CnDetailCard` with a horizontal `CnDetailGrid`; the tabs below it are unchanged; needs a browser look)
   - [x] `CatalogiWidget.vue` uses `CnWidgetWrapper` / `CnInfoWidget` or equivalent — no custom widget shell. (verified: the ADR-049 CnDataTable list-widget with CnWidgetEmptyState for the empty case; no import from @nextcloud/vue left in the widget)

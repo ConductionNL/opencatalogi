@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Tausta",
         "Catalog": "Luettelo",
         "Catalog edit": "Luettelon muokkaus",
-        "Catalog is being added...": "Luetteloa lisätään...",
-        "Catalog is being edited...": "Luetteloa muokataan...",
         "Catalog successfully added": "Luettelo lisättiin onnistuneesti",
         "Catalog successfully edited": "Luetteloa muokattiin onnistuneesti",
         "Catalog:": "Luettelo:",

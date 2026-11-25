@@ -251,8 +251,6 @@ OC.L10N.register(
         "Background": "Pozadina",
         "Catalog": "Katalog",
         "Catalog edit": "Uređivanje kataloga",
-        "Catalog is being added...": "Katalog se dodaje...",
-        "Catalog is being edited...": "Katalog se uređuje...",
         "Catalog successfully added": "Katalog uspješno dodan",
         "Catalog successfully edited": "Katalog uspješno uređen",
         "Catalog:": "Katalog:",
