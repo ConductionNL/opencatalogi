@@ -1,0 +1,592 @@
+[ {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_139c6280",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, eerste lid, onder a, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "wetten en andere algemeen verbindende voorschriften"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "wet of algemeen verbindend voorschrift"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1010"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "wetten en algemeen verbindende voorschriften"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_3a248e3a",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder d, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "agenda’s en besluitenlijsten van vergaderingen van de ministerraad, gedeputeerde staten, colleges van burgemeester en wethouders en dagelijkse besturen van waterschappen en dagelijkse besturen van openbare lichamen als bedoeld in de Wet gemeenschappelijke regelingen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "agenda of besluitenlijst bestuurscollege"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1090"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "agenda’s en besluitenlijsten bestuurscolleges"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_3baef532",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder i, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "de inhoud van de schriftelijke verzoeken op grond van artikel 4.1, van de schriftelijke beslissingen op die verzoeken en de daarbij verstrekte informatie"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "Woo-verzoek of -besluit"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1140"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "Woo-verzoeken en -besluiten"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_40a05794",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, eerste lid, onder d, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "inzicht in zijn organisatie en werkwijze, waaronder de taken en bevoegdheden van de organisatieonderdelen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "organisatie en werkwijze"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1040"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "organisatie en werkwijze"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_46a81018",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder k, en artikel 3.3a, eerste en tweede lid, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "beschikkingen, met uitzondering van 21 categorieën."
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "beschikking"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1160"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "beschikkingen"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_759721e2",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, eerste lid, onder c, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "ontwerpen van wetten, andere algemeen verbindende voorschriften en overige besluiten van algemene strekking waarover een extern advies is gevraagd, met inbegrip van de adviesaanvraag"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "ontwerp van wet- en regelgeving met adviesaanvraag"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1030"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "ontwerpen van wet- en regelgeving met adviesaanvraag"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_816e508d",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.1 Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "Informatie die niet valt onder een van de verplichte informatiecategorieën van artikel 3.3 Woo, maar actief openbaar is gemaakt op grond van de algemene inspanningsverplichting van artikel 3.1 Woo "
+  } ],
+  "http://www.w3.org/2004/02/skos/core#example" : [ {
+    "@language" : "nl",
+    "@value" : "beleidsdossier"
+  }, {
+    "@language" : "nl",
+    "@value" : "intern vergaderstuk"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "inspanningsverplichting art 3.1 Woo"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1180"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "inspanningsverplichting art 3.1 Woo"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_89ee6784",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, eerste lid, onder e, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "de bereikbaarheid van het bestuursorgaan en zijn organisatieonderdelen en de wijze waarop een verzoek om informatie kan worden ingediend"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "bereikbaarheidsgegevens"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1050"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "bereikbaarheidsgegevens"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_8c840238",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder a, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "bij de Kamers en de verenigde vergadering der Staten-Generaal, provinciale staten, gemeenteraden en algemene besturen van waterschappen ter behandeling ingekomen stukken, tenzij deze betrekking hebben op door de regering vertrouwelijk aan de Staten-Generaal verstrekte informatie of tenzij deze betrekking hebben op individuele gevallen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "bij vertegenwoordigend orgaan ingekomen stuk"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1060"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "bij vertegenwoordigende organen ingekomen stukken"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_8fc2335c",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder f, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "convenanten"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "convenant"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1110"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "convenanten"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_99a836c7",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder e, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "adviezen:1. over de ontwerpen, bedoeld in het eerste lid, onderdeel c, van adviescolleges of -commissies alsmede van andere externe partijen indien die om advies zijn verzocht;2. over andere onderwerpen van adviescolleges of -commissies, alsmede de op dat advies betrekking hebbende adviesaanvraag, uitgezonderd adviezen die betrekking hebben op individuele gevallen;"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "advies"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1100"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "adviezen"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_a870c43d",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder l, en artikel 3.3a, derde lid, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "schriftelijke oordelen in klachtprocedures als bedoeld in titel 9.1 van de Algemene wet bestuursrecht"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "klachtoordeel"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1170"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "klachtoordelen"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_aab6bfc7",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, eerste lid, onder b, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "overige besluiten van algemene strekking"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "overig besluit van algemene strekking"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1020"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "overige besluiten van algemene strekking"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder g, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "jaarplannen en jaarverslagen van bestuursorganen inzake de voorgenomen uitvoering van de taak of de verantwoording van die uitvoering"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "jaarplan of jaarverslag"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1120"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "jaarplannen en jaarverslagen"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_c76862ab",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder b, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "vergaderstukken en verslagen van de Kamers en de verenigde vergadering der Staten-Generaal en hun commissies, tenzij deze betrekking hebben op door de regering vertrouwelijk aan de Staten-Generaal verstrekte informatie"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "vergaderstuk Staten-Generaal"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1070"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "vergaderstukken Staten-Generaal"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_cf268088",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder h, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "verplichtingen tot verstrekking van subsidies, anders dan met een beschikking (NB - alleen bij Min. BZ)"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "subsidieverplichting anders dan met beschikking"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1130"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "subsidieverplichtingen anders dan met beschikking"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_db4862c3",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder c, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "vergaderstukken en verslagen van provinciale staten, gemeenteraden en algemene besturen van waterschappen, algemene besturen van openbare lichamen, besturen van bedrijfsvoeringsorganisaties en gemeenschappelijke organen als bedoeld in de Wet gemeenschappelijke regelingen en hun commissies"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "vergaderstuk decentrale overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1080"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "vergaderstukken decentrale overheden"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/c_fdaee95e",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#Concept" ],
+  "http://purl.org/dc/terms/source" : [ {
+    "@language" : "nl",
+    "@value" : "Artikel 3.3, tweede lid, onder j, Wet open overheid"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : "op verzoek van een bestuursorgaan ambtelijk of extern opgestelde onderzoeksrapporten die geen onderdeel vormen van de uitvoering van de taak van dat bestuursorgaan, die voornamelijk uit feitelijk materiaal bestaan en die betrekking hebben op:1. de wijze van functioneren van de eigen organisatie;2. de voorbereiding of de evaluatie van beleid, inclusief de uitvoering, naleving en handhaving."
+  } ],
+  "http://www.w3.org/2004/02/skos/core#inScheme" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "onderzoeksrapport"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#topConceptOf" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "http://www.w3.org/ns/shacl#order" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "1150"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/prefLabelVoorGroepen" : [ {
+    "@language" : "nl",
+    "@value" : "onderzoeksrapporten"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen",
+  "@type" : [ "http://www.w3.org/2004/02/skos/core#ConceptScheme" ],
+  "http://www.w3.org/2004/02/skos/core#definition" : [ {
+    "@language" : "nl",
+    "@value" : " informatiecategorieën die expliciet worden genoemd in artikel 3.3 van de Wet open overheid (Woo)"
+  } ],
+  "http://www.w3.org/2004/02/skos/core#prefLabel" : [ {
+    "@language" : "nl",
+    "@value" : "Woo informatiecategorieën"
+  } ]
+}, {
+  "@id" : "https://identifier.overheid.nl/tooi/set/scw_woo_informatiecategorieen/4",
+  "@type" : [ "http://www.w3.org/2002/07/owl#Ontology", "https://identifier.overheid.nl/tooi/def/wl/SchemagebaseerdeConceptwaardelijst" ],
+  "http://purl.org/dc/terms/description" : [ {
+    "@value" : "Waardelijst met informatiecategorieën zoals benoemd in de Wet open overheid."
+  } ],
+  "http://purl.org/pav/derivedFrom" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern"
+  } ],
+  "http://www.w3.org/2002/07/owl#imports" : [ {
+    "@id" : "http://www.w3.org/2004/02/skos/core"
+  }, {
+    "@id" : "https://identifier.overheid.nl/tooi/def/ont"
+  }, {
+    "@id" : "https://identifier.overheid.nl/tooi/def/wl"
+  }, {
+    "@id" : "http://purl.org/pav"
+  } ],
+  "http://www.w3.org/2002/07/owl#versionInfo" : [ {
+    "@value" : "Definitie van inspanningsverplichting art 3.1 Woo aangescherpt en grondslag en voorbeelden toegevoegd"
+  } ],
+  "http://www.w3.org/ns/prov#generatedAtTime" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#dateTime",
+    "@value" : "2024-09-24T14:28:14.896Z"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/publicatiedatum" : [ {
+    "@value" : "2024-09-24"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/titel" : [ {
+    "@value" : "Woo informatiecategorieën"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/verantwoordelijke" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/id/ministerie/mnre1034"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/ont/zichtdatum" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#date",
+    "@value" : "2024-09-24"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/wl/afgeleidVanVersie" : [ {
+    "@value" : ""
+  } ],
+  "https://identifier.overheid.nl/tooi/def/wl/bronversie" : [ {
+    "@value" : ""
+  } ],
+  "https://identifier.overheid.nl/tooi/def/wl/schema" : [ {
+    "@id" : "https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen"
+  } ],
+  "https://identifier.overheid.nl/tooi/def/wl/volgnummer" : [ {
+    "@type" : "http://www.w3.org/2001/XMLSchema#integer",
+    "@value" : "4"
+  } ]
+} ]
