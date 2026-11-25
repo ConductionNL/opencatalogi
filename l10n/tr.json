@@ -882,7 +882,10 @@
         "Install dossiq from the app store": "dossiq'i uygulama mağazasından yükleyin",
         "Order of the kinds of handling": "İşlem türlerinin sırası",
         "Order of the document types": "Belge türlerinin sırası",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Kendi sıralamanız yüklenemedi, bu nedenle liste kendi sırasıyla gösteriliyor."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Kendi sıralamanız yüklenemedi, bu nedenle liste kendi sırasıyla gösteriliyor.",
+        "Where the transfer stands: requested, transferred or failed.": "Aktarımın durumu: istendi, aktarıldı veya başarısız oldu.",
+        "When the transfer to the e-depot was requested.": "E-arşive aktarımın ne zaman istendiği.",
+        "When the transfer status last changed.": "Aktarım durumunun en son ne zaman değiştiği."
     },
     "plurals": {}
 }

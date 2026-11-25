@@ -883,7 +883,10 @@ OC.L10N.register(
         "Install dossiq from the app store": "Settu upp dossiq úr forritaversluninni",
         "Order of the kinds of handling": "Röð tegunda aðgerða",
         "Order of the document types": "Röð skjalategunda",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Ekki tókst að hlaða ykkar eigin röð, svo listinn er sýndur í sinni eigin röð."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Ekki tókst að hlaða ykkar eigin röð, svo listinn er sýndur í sinni eigin röð.",
+        "Where the transfer stands: requested, transferred or failed.": "Staða flutningsins: beðið um, fluttur eða mistókst.",
+        "When the transfer to the e-depot was requested.": "Hvenær beðið var um flutning í rafrænt safn.",
+        "When the transfer status last changed.": "Hvenær staða flutningsins breyttist síðast."
     },
     "nplurals=2; plural=(n != 1);"
 )

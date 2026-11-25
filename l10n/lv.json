@@ -882,7 +882,10 @@
         "Install dossiq from the app store": "Instalējiet dossiq no lietotņu veikala",
         "Order of the kinds of handling": "Darbību veidu secība",
         "Order of the document types": "Dokumentu veidu secība",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Jūsu secību neizdevās ielādēt, tāpēc saraksts tiek rādīts tā sākotnējā secībā."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Jūsu secību neizdevās ielādēt, tāpēc saraksts tiek rādīts tā sākotnējā secībā.",
+        "Where the transfer stands: requested, transferred or failed.": "Nodošanas stāvoklis: pieprasīta, nodota vai neizdevās.",
+        "When the transfer to the e-depot was requested.": "Kad tika pieprasīta nodošana e-krātuvei.",
+        "When the transfer status last changed.": "Kad pēdējo reizi mainījās nodošanas statuss."
     },
     "plurals": {}
 }

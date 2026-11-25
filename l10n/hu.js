@@ -883,7 +883,10 @@ OC.L10N.register(
         "Install dossiq from the app store": "Telepítse a dossiq alkalmazást az alkalmazásboltból",
         "Order of the kinds of handling": "A cselekményfajták sorrendje",
         "Order of the document types": "A dokumentumtípusok sorrendje",
-        "Your own order could not be loaded, so the list is shown in its own order.": "A saját sorrendet nem sikerült betölteni, ezért a lista az eredeti sorrendjében jelenik meg."
+        "Your own order could not be loaded, so the list is shown in its own order.": "A saját sorrendet nem sikerült betölteni, ezért a lista az eredeti sorrendjében jelenik meg.",
+        "Where the transfer stands: requested, transferred or failed.": "Az átadás állapota: kérve, átadva vagy sikertelen.",
+        "When the transfer to the e-depot was requested.": "Mikor kérték az átadást az e-archívumba.",
+        "When the transfer status last changed.": "Mikor változott utoljára az átadás állapota."
     },
     "nplurals=2; plural=(n != 1);"
 )

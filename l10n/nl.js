@@ -2212,7 +2212,10 @@ OC.L10N.register(
         "Move the %s publications filed under this category before hiding it.": "Verplaats de %s publicaties onder deze categorie voordat u haar verbergt.",
         "Order of the kinds of handling": "Volgorde van de soorten handeling",
         "Order of the document types": "Volgorde van de documentsoorten",
-        "Your own order could not be loaded, so the list is shown in its own order.": "Uw eigen volgorde kon niet worden geladen, daarom wordt de lijst in zijn eigen volgorde getoond."
+        "Your own order could not be loaded, so the list is shown in its own order.": "Uw eigen volgorde kon niet worden geladen, daarom wordt de lijst in zijn eigen volgorde getoond.",
+        "Where the transfer stands: requested, transferred or failed.": "Hoe de overdracht ervoor staat: aangevraagd, overgedragen of mislukt.",
+        "When the transfer to the e-depot was requested.": "Wanneer de overdracht naar het e-depot is aangevraagd.",
+        "When the transfer status last changed.": "Wanneer de status van de overdracht voor het laatst is gewijzigd."
     },
     "nplurals=2; plural=(n != 1);"
 )
