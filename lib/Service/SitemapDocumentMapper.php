@@ -104,6 +104,13 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	private readonly SitemapDocumentFields $fields;
 
 	/**
+	 * The TOOI identifiers left out of the document being mapped because they are not activated, by role.
+	 *
+	 * @var array<string, string>
+	 */
+	private array $notActivated = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param TooiVocabularyService $tooiVocabulary Resolves organisations and handling types to TOOI.
@@ -205,6 +212,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 */
 	private function document(array $publication, array $file): array {
 		$violations = [];
+		$this->notActivated = [];
 		$loc = ($file['downloadUrl'] ?? '');
 		$mapped = $this->mappedFields(publication: $publication);
 		$format = $this->formatOf(file: $file);
@@ -255,13 +263,14 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 */
 	public function mandatoryGaps(array $publication): array {
 		$gaps = [];
+		$this->notActivated = [];
 		$publisher = $this->publisherElement(publication: $publication);
 		if ($publisher['#text'] === '') {
 			$gaps['publisher'] = 'organisation has no name';
 		}
 
 		if (isset($publisher['@resource']) === false) {
-			$gaps['publisher'] = 'organisation has no TOOI identifier';
+			$gaps['publisher'] = $this->missingIdentifierReason(role: 'publisher', reason: 'organisation has no TOOI identifier');
 		}
 
 		if ($this->titleElement(publication: $publication) === null) {
@@ -340,7 +349,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	private function axisGaps(array $diwoo, array $elements): array {
 		$gaps = [];
 		if (isset($diwoo['diwoo:publisher']['@resource']) === false) {
-			$gaps[] = ['publisher', 'organisation has no TOOI identifier'];
+			$gaps[] = ['publisher', $this->missingIdentifierReason(role: 'publisher', reason: 'organisation has no TOOI identifier')];
 		}
 
 		if ($diwoo['diwoo:publisher']['#text'] === '') {
@@ -460,6 +469,41 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	}//end optionalAxes()
 
 	/**
+	 * A TOOI organisation uri while it may be named: activation is not in use, or it is activated (REQ-WVL-005).
+	 *
+	 * @param string|null $uri  The resolved TOOI uri.
+	 * @param string      $role The DiWoo element it is for, to report a refusal.
+	 *
+	 * @return string|null The uri, or null when it is not activated.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	private function onlyActivated(?string $uri, string $role): ?string {
+		if ($uri === null || $this->tooiVocabulary->isActivatedOrganisatie(uri: $uri) === true) {
+			return $uri;
+		}
+
+		$this->notActivated[$role] = $uri;
+		return null;
+	}//end onlyActivated()
+
+	/**
+	 * Why an element has no TOOI identifier: it is not activated, or the given reason.
+	 *
+	 * @param string $role   The DiWoo element.
+	 * @param string $reason The reason when it was not left out for activation.
+	 *
+	 * @return string The reason.
+	 */
+	private function missingIdentifierReason(string $role, string $reason): string {
+		if (isset($this->notActivated[$role]) === true) {
+			return 'organisation is not activated';
+		}
+
+		return $reason;
+	}//end missingIdentifierReason()
+
+	/**
 	 * The publisher element: the owning organisation's name as text, with `@resource`
 	 * bound to a valid TOOI organisatie URI, or without `@resource` when there is none.
 	 *
@@ -477,7 +521,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 		$organisation = $this->organisationRow(publication: $publication);
 		$publisher = ['#text' => trim((string)$this->stringOrNull(value: ($organisation['name'] ?? null)))];
 		$tooiIdentifier = ($mappedPublisher ?? $this->resolveOrganisationTooiIdentifier(publication: $publication, organisation: $organisation));
-		$orgUri = $this->tooiVocabulary->resolveOrganisatie($tooiIdentifier);
+		$orgUri = $this->onlyActivated(uri: $this->tooiVocabulary->resolveOrganisatie($tooiIdentifier), role: 'publisher');
 		if ($orgUri !== null) {
 			$publisher['@resource'] = $orgUri;
 		}
@@ -507,7 +551,10 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 
 		$organisation = $this->organisationByUuid(uuid: $responsible);
 		$element = ['#text' => trim((string)$this->stringOrNull(value: ($organisation['name'] ?? null)))];
-		$orgUri = $this->tooiVocabulary->resolveOrganisatie($this->stringOrNull(value: ($organisation['tooiIdentifier'] ?? null)));
+		$orgUri = $this->onlyActivated(
+			uri: $this->tooiVocabulary->resolveOrganisatie($this->stringOrNull(value: ($organisation['tooiIdentifier'] ?? null))),
+			role: 'verantwoordelijke'
+		);
 		if ($orgUri !== null) {
 			$element['@resource'] = $orgUri;
 		}
@@ -533,6 +580,10 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 		$responsible = $this->stringOrNull(value: ($publication['responsibleOrganization'] ?? null));
 		if ($responsible === null || isset($diwoo['diwoo:verantwoordelijke']) === true) {
 			return [];
+		}
+
+		if (isset($this->notActivated['verantwoordelijke']) === true) {
+			return [['verantwoordelijke', 'responsible organisation is not activated']];
 		}
 
 		$organisation = $this->organisationByUuid(uuid: $responsible);

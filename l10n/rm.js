@@ -900,7 +900,16 @@ OC.L10N.register(
         "Hide the checked categories": "Zuppentar las categorias marcadas",
         "The checked categories are hidden.": "Las categorias marcadas èn zuppentadas.",
         "Choose one of the listed organisation types.": "Tscherni in dals tips d'organisaziun enumerads.",
-        "Legal basis": "Basa giuridica"
+        "Legal basis": "Basa giuridica",
+        "Organisations you publish for": "Organisaziuns per las qualas Vus publitgais",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Activai or dal register naziunal TOOI las organisaziuns per las qualas questa installaziun publitgescha. Uschespert ch’ina è activada, numna la charta da la pagina mo organisaziuns activadas sco editur u organisaziun responsabla.",
+        "Search by name or code": "Tschertgar tenor num u code",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Anc nagina organisaziun n’è activada, perquai vegn mintga organisaziun numnada en la charta da la pagina.",
+        "No organisation in the TOOI register matches this search.": "Nagina organisaziun dal register TOOI na correspunda a questa tschertga.",
+        "Name the organisation and whether it is active.": "Numnai l’organisaziun e sch’ella è activa.",
+        "This organisation cannot be activated: %s": "Questa organisaziun na po betg vegnir activada: %s",
+        "The organisation could not be saved: %s": "L’organisaziun n’ha betg pudì vegnir memorisada: %s",
+        "The organisation registers could not be read: %s": "Ils registers da las organisaziuns n’han betg pudì vegnir legids: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

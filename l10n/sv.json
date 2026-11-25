@@ -899,7 +899,16 @@
         "Hide the checked categories": "Dölj de markerade kategorierna",
         "The checked categories are hidden.": "De markerade kategorierna är dolda.",
         "Choose one of the listed organisation types.": "Välj en av de angivna organisationstyperna.",
-        "Legal basis": "Rättslig grund"
+        "Legal basis": "Rättslig grund",
+        "Organisations you publish for": "Organisationer du publicerar för",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Aktivera de organisationer som den här installationen publicerar för, ur det nationella TOOI-registret. När en är aktiverad nämner webbplatskartan bara aktiverade organisationer som utgivare eller ansvarig organisation.",
+        "Search by name or code": "Sök på namn eller kod",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Ingen organisation är aktiverad än, så alla organisationer nämns i webbplatskartan.",
+        "No organisation in the TOOI register matches this search.": "Ingen organisation i TOOI-registret matchar sökningen.",
+        "Name the organisation and whether it is active.": "Ange organisationen och om den är aktiv.",
+        "This organisation cannot be activated: %s": "Den här organisationen kan inte aktiveras: %s",
+        "The organisation could not be saved: %s": "Organisationen kunde inte sparas: %s",
+        "The organisation registers could not be read: %s": "Organisationsregistren kunde inte läsas: %s"
     },
     "plurals": {}
 }

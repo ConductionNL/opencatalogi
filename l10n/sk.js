@@ -900,7 +900,16 @@ OC.L10N.register(
         "Hide the checked categories": "Skryť začiarknuté kategórie",
         "The checked categories are hidden.": "Začiarknuté kategórie sú skryté.",
         "Choose one of the listed organisation types.": "Zvoľte jeden z uvedených typov organizácie.",
-        "Legal basis": "Právny základ"
+        "Legal basis": "Právny základ",
+        "Organisations you publish for": "Organizácie, za ktoré publikujete",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Aktivujte z národného registra TOOI organizácie, za ktoré táto inštalácia publikuje. Keď je aktivovaná jedna, mapa stránky uvádza ako vydavateľa alebo zodpovednú organizáciu len aktivované organizácie.",
+        "Search by name or code": "Hľadať podľa názvu alebo kódu",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Zatiaľ nie je aktivovaná žiadna organizácia, preto mapa stránky uvádza každú organizáciu.",
+        "No organisation in the TOOI register matches this search.": "Tomuto vyhľadávaniu nezodpovedá žiadna organizácia z registra TOOI.",
+        "Name the organisation and whether it is active.": "Uveďte organizáciu a či je aktívna.",
+        "This organisation cannot be activated: %s": "Túto organizáciu nemožno aktivovať: %s",
+        "The organisation could not be saved: %s": "Organizáciu sa nepodarilo uložiť: %s",
+        "The organisation registers could not be read: %s": "Registre organizácií sa nepodarilo načítať: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

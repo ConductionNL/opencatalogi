@@ -900,7 +900,16 @@ OC.L10N.register(
         "Hide the checked categories": "Skjul de avmerkede kategoriene",
         "The checked categories are hidden.": "De avmerkede kategoriene er skjult.",
         "Choose one of the listed organisation types.": "Velg en av de oppførte organisasjonstypene.",
-        "Legal basis": "Rettslig grunnlag"
+        "Legal basis": "Rettslig grunnlag",
+        "Organisations you publish for": "Organisasjoner du publiserer for",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Aktiver organisasjonene denne installasjonen publiserer for, fra det nasjonale TOOI-registeret. Når én er aktivert, nevner nettstedskartet bare aktiverte organisasjoner som utgiver eller ansvarlig organisasjon.",
+        "Search by name or code": "Søk etter navn eller kode",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Ingen organisasjon er aktivert ennå, så alle organisasjoner nevnes i nettstedskartet.",
+        "No organisation in the TOOI register matches this search.": "Ingen organisasjon i TOOI-registeret samsvarer med dette søket.",
+        "Name the organisation and whether it is active.": "Oppgi organisasjonen og om den er aktiv.",
+        "This organisation cannot be activated: %s": "Denne organisasjonen kan ikke aktiveres: %s",
+        "The organisation could not be saved: %s": "Organisasjonen kunne ikke lagres: %s",
+        "The organisation registers could not be read: %s": "Organisasjonsregistrene kunne ikke leses: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

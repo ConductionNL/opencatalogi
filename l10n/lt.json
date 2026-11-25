@@ -899,7 +899,16 @@
         "Hide the checked categories": "Paslėpti pažymėtas kategorijas",
         "The checked categories are hidden.": "Pažymėtos kategorijos paslėptos.",
         "Choose one of the listed organisation types.": "Pasirinkite vieną iš nurodytų organizacijos tipų.",
-        "Legal basis": "Teisinis pagrindas"
+        "Legal basis": "Teisinis pagrindas",
+        "Organisations you publish for": "Organizacijos, kurių vardu skelbiate",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Iš nacionalinio TOOI registro aktyvinkite organizacijas, kurių vardu skelbia ši įdiegtis. Kai bent viena aktyvinta, svetainės žemėlapis leidėju ar atsakinga organizacija nurodo tik aktyvintas organizacijas.",
+        "Search by name or code": "Ieškoti pagal pavadinimą arba kodą",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Dar neaktyvinta nė viena organizacija, todėl svetainės žemėlapyje nurodoma kiekviena organizacija.",
+        "No organisation in the TOOI register matches this search.": "Jokia TOOI registro organizacija neatitinka šios paieškos.",
+        "Name the organisation and whether it is active.": "Nurodykite organizaciją ir ar ji aktyvi.",
+        "This organisation cannot be activated: %s": "Šios organizacijos negalima aktyvinti: %s",
+        "The organisation could not be saved: %s": "Organizacijos išsaugoti nepavyko: %s",
+        "The organisation registers could not be read: %s": "Organizacijų registrų perskaityti nepavyko: %s"
     },
     "plurals": {}
 }

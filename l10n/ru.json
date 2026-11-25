@@ -899,7 +899,16 @@
         "Hide the checked categories": "Скрыть отмеченные категории",
         "The checked categories are hidden.": "Отмеченные категории скрыты.",
         "Choose one of the listed organisation types.": "Выберите один из перечисленных типов организации.",
-        "Legal basis": "Правовое основание"
+        "Legal basis": "Правовое основание",
+        "Organisations you publish for": "Организации, от имени которых вы публикуете",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Активируйте из национального реестра TOOI организации, от имени которых публикует эта установка. Как только одна активирована, карта сайта указывает издателем или ответственной организацией только активированные организации.",
+        "Search by name or code": "Поиск по названию или коду",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Ни одна организация ещё не активирована, поэтому в карте сайта указывается каждая организация.",
+        "No organisation in the TOOI register matches this search.": "Ни одна организация реестра TOOI не соответствует этому поиску.",
+        "Name the organisation and whether it is active.": "Укажите организацию и активна ли она.",
+        "This organisation cannot be activated: %s": "Эту организацию нельзя активировать: %s",
+        "The organisation could not be saved: %s": "Не удалось сохранить организацию: %s",
+        "The organisation registers could not be read: %s": "Не удалось прочитать реестры организаций: %s"
     },
     "plurals": {}
 }

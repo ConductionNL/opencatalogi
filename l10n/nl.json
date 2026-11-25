@@ -2409,7 +2409,16 @@
         "Proposed for hiding": "Voorgesteld om te verbergen",
         "Hide the checked categories": "Aangevinkte categorieën verbergen",
         "The checked categories are hidden.": "De aangevinkte categorieën zijn verborgen.",
-        "Choose one of the listed organisation types.": "Kies een van de genoemde organisatietypen."
+        "Choose one of the listed organisation types.": "Kies een van de genoemde organisatietypen.",
+        "Organisations you publish for": "Organisaties waarvoor u publiceert",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Activeer de organisaties waarvoor deze installatie publiceert, uit het landelijke TOOI-register. Zodra er één is geactiveerd, noemt de sitemap alleen geactiveerde organisaties als publicerende of verantwoordelijke organisatie.",
+        "Search by name or code": "Zoeken op naam of code",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Er is nog geen organisatie geactiveerd, dus elke organisatie wordt in de sitemap genoemd.",
+        "No organisation in the TOOI register matches this search.": "Geen organisatie in het TOOI-register past bij deze zoekopdracht.",
+        "Name the organisation and whether it is active.": "Noem de organisatie en of zij actief is.",
+        "This organisation cannot be activated: %s": "Deze organisatie kan niet worden geactiveerd: %s",
+        "The organisation could not be saved: %s": "De organisatie kon niet worden opgeslagen: %s",
+        "The organisation registers could not be read: %s": "De organisatieregisters konden niet worden gelezen: %s"
     },
     "plurals": {}
 }
