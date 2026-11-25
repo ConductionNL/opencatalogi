@@ -585,6 +585,11 @@ class RegisterPlumbingGoldenTest extends TestCase {
 						return $this->searchAnswer(paginated: $name === 'searchObjectsPaginated');
 					}
 
+					// OCP's Response::getHeaders() declares no return type, but a response always carries an array.
+					if ($name === 'getHeaders' && is_a(object_or_class: $type, class: \OCP\AppFramework\Http\Response::class, allow_string: true) === true) {
+						return [];
+					}
+
 					return $this->defaultFor(type: $method->getReturnType(), self: $double, depth: $depth, label: $label . '.' . $name);
 				}
 			);
