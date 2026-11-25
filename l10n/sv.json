@@ -855,7 +855,13 @@
         "These publications miss a field required to publish and will be skipped:": "Dessa publikationer saknar ett fält som krävs för att publicera och hoppas över:",
         "Required to publish": "Krävs för att publicera",
         "Publisher RSIN": "Utgivarens RSIN",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN för den publicerande organisationen, sparat när ett dokument bifogas."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN för den publicerande organisationen, sparat när ett dokument bifogas.",
+        "Woo annual report": "Woo-årsrapport",
+        "Year": "År",
+        "Generate annual report": "Skapa årsrapport",
+        "The Woo annual report needs a newer OpenRegister.": "Woo-årsrapporten kräver en nyare OpenRegister.",
+        "The annual report could not be generated.": "Årsrapporten kunde inte skapas.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "De publicerade siffrorna för ett år bredvid året innan. Woo-förfrågningar rapporteras i dossiq."
     },
     "plurals": {}
 }

@@ -855,7 +855,13 @@
         "These publications miss a field required to publish and will be skipped:": "A queste pubblicazioni manca un campo obbligatorio per la pubblicazione e verranno saltate:",
         "Required to publish": "Obbligatorio per pubblicare",
         "Publisher RSIN": "RSIN dell'editore",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "L'RSIN dell'organizzazione che pubblica, memorizzato quando viene allegato un documento."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "L'RSIN dell'organizzazione che pubblica, memorizzato quando viene allegato un documento.",
+        "Woo annual report": "Relazione annuale Woo",
+        "Year": "Anno",
+        "Generate annual report": "Genera relazione annuale",
+        "The Woo annual report needs a newer OpenRegister.": "La relazione annuale Woo richiede una versione più recente di OpenRegister.",
+        "The annual report could not be generated.": "Non è stato possibile generare la relazione annuale.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "I dati pubblicati di un anno accanto a quelli dell'anno precedente. Le richieste Woo sono riportate in dossiq."
     },
     "plurals": {}
 }

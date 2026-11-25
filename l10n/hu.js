@@ -856,7 +856,13 @@ OC.L10N.register(
         "These publications miss a field required to publish and will be skipped:": "Ezekből a publikációkból hiányzik egy közzétételhez szükséges mező, ezért kimaradnak:",
         "Required to publish": "Közzétételhez kötelező",
         "Publisher RSIN": "A kiadó RSIN-je",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "A közzétevő szervezet RSIN-je, amely dokumentum csatolásakor kerül tárolásra."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "A közzétevő szervezet RSIN-je, amely dokumentum csatolásakor kerül tárolásra.",
+        "Woo annual report": "Woo éves jelentés",
+        "Year": "Év",
+        "Generate annual report": "Éves jelentés készítése",
+        "The Woo annual report needs a newer OpenRegister.": "A Woo éves jelentéshez újabb OpenRegister szükséges.",
+        "The annual report could not be generated.": "Az éves jelentést nem sikerült elkészíteni.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Egy év közzétett adatai az előző év adatai mellett. A Woo-kérelmekről a dossiq számol be."
     },
     "nplurals=2; plural=(n != 1);"
 )

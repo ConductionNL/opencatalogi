@@ -2218,7 +2218,13 @@
         "These publications miss a field required to publish and will be skipped:": "These publications miss a field required to publish and will be skipped:",
         "Required to publish": "Required to publish",
         "Publisher RSIN": "Publisher RSIN",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "The RSIN of the publishing organisation, stored when a document is attached."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "The RSIN of the publishing organisation, stored when a document is attached.",
+        "Woo annual report": "Woo annual report",
+        "Year": "Year",
+        "Generate annual report": "Generate annual report",
+        "The Woo annual report needs a newer OpenRegister.": "The Woo annual report needs a newer OpenRegister.",
+        "The annual report could not be generated.": "The annual report could not be generated.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "The published figures of a year beside the year before. Woo requests are reported in dossiq."
     },
     "plurals": {}
 }

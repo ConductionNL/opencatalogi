@@ -856,7 +856,13 @@ OC.L10N.register(
         "These publications miss a field required to publish and will be skipped:": "Näistä julkaisuista puuttuu julkaisemiseen vaadittu kenttä, ja ne ohitetaan:",
         "Required to publish": "Pakollinen julkaisemiseen",
         "Publisher RSIN": "Julkaisijan RSIN",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "Julkaisevan organisaation RSIN, tallennetaan kun asiakirja liitetään."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Julkaisevan organisaation RSIN, tallennetaan kun asiakirja liitetään.",
+        "Woo annual report": "Woo-vuosiraportti",
+        "Year": "Vuosi",
+        "Generate annual report": "Luo vuosiraportti",
+        "The Woo annual report needs a newer OpenRegister.": "Woo-vuosiraportti vaatii uudemman OpenRegisterin.",
+        "The annual report could not be generated.": "Vuosiraporttia ei voitu luoda.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Vuoden julkaistut luvut edellisen vuoden rinnalla. Woo-pyynnöistä raportoidaan dossiqissa."
     },
     "nplurals=2; plural=(n != 1);"
 )

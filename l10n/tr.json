@@ -855,7 +855,13 @@
         "These publications miss a field required to publish and will be skipped:": "Bu yayınlarda yayımlamak için gereken bir alan eksik ve atlanacaklar:",
         "Required to publish": "Yayımlamak için gerekli",
         "Publisher RSIN": "Yayıncı RSIN",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "Yayımlayan kuruluşun RSIN numarası, bir belge eklendiğinde kaydedilir."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Yayımlayan kuruluşun RSIN numarası, bir belge eklendiğinde kaydedilir.",
+        "Woo annual report": "Woo yıllık raporu",
+        "Year": "Yıl",
+        "Generate annual report": "Yıllık rapor oluştur",
+        "The Woo annual report needs a newer OpenRegister.": "Woo yıllık raporu daha yeni bir OpenRegister gerektirir.",
+        "The annual report could not be generated.": "Yıllık rapor oluşturulamadı.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Bir yılın yayımlanan rakamları bir önceki yılın yanında. Woo talepleri dossiq'te raporlanır."
     },
     "plurals": {}
 }

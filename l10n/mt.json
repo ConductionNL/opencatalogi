@@ -855,7 +855,13 @@
         "These publications miss a field required to publish and will be skipped:": "Dawn il-pubblikazzjonijiet m'għandhomx qasam meħtieġ biex jiġu ppubblikati u se jinqabżu:",
         "Required to publish": "Meħtieġ biex jiġi ppubblikat",
         "Publisher RSIN": "RSIN tal-pubblikatur",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "L-RSIN tal-organizzazzjoni li qed tippubblika, maħżun meta jiġi mehmuż dokument."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "L-RSIN tal-organizzazzjoni li qed tippubblika, maħżun meta jiġi mehmuż dokument.",
+        "Woo annual report": "Rapport annwali Woo",
+        "Year": "Sena",
+        "Generate annual report": "Oħloq ir-rapport annwali",
+        "The Woo annual report needs a newer OpenRegister.": "Ir-rapport annwali Woo jeħtieġ verżjoni aktar ġdida ta' OpenRegister.",
+        "The annual report could not be generated.": "Ir-rapport annwali ma setax jinħoloq.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Iċ-ċifri ppubblikati ta' sena ħdejn dawk tas-sena ta' qabel. It-talbiet Woo jiġu rrappurtati f'dossiq."
     },
     "plurals": {}
 }

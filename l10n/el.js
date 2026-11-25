@@ -856,7 +856,13 @@ OC.L10N.register(
         "These publications miss a field required to publish and will be skipped:": "Σε αυτές τις δημοσιεύσεις λείπει πεδίο που απαιτείται για δημοσίευση και θα παραλειφθούν:",
         "Required to publish": "Απαιτείται για δημοσίευση",
         "Publisher RSIN": "RSIN εκδότη",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "Το RSIN του εκδίδοντος οργανισμού, αποθηκεύεται όταν επισυνάπτεται έγγραφο."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Το RSIN του εκδίδοντος οργανισμού, αποθηκεύεται όταν επισυνάπτεται έγγραφο.",
+        "Woo annual report": "Ετήσια έκθεση Woo",
+        "Year": "Έτος",
+        "Generate annual report": "Δημιουργία ετήσιας έκθεσης",
+        "The Woo annual report needs a newer OpenRegister.": "Η ετήσια έκθεση Woo χρειάζεται νεότερο OpenRegister.",
+        "The annual report could not be generated.": "Δεν ήταν δυνατή η δημιουργία της ετήσιας έκθεσης.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Τα δημοσιευμένα στοιχεία ενός έτους δίπλα σε εκείνα του προηγούμενου. Τα αιτήματα Woo αναφέρονται στο dossiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

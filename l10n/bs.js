@@ -856,7 +856,13 @@ OC.L10N.register(
         "These publications miss a field required to publish and will be skipped:": "Ovim publikacijama nedostaje polje obavezno za objavu i bit će preskočene:",
         "Required to publish": "Obavezno za objavu",
         "Publisher RSIN": "RSIN izdavača",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN organizacije izdavača, sačuvan kada se priloži dokument."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN organizacije izdavača, sačuvan kada se priloži dokument.",
+        "Woo annual report": "Godišnji izvještaj Woo",
+        "Year": "Godina",
+        "Generate annual report": "Napravi godišnji izvještaj",
+        "The Woo annual report needs a newer OpenRegister.": "Godišnji izvještaj Woo zahtijeva noviji OpenRegister.",
+        "The annual report could not be generated.": "Godišnji izvještaj nije moguće napraviti.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Objavljeni podaci za godinu pored podataka prethodne godine. O zahtjevima Woo izvještava se u dossiqu."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -855,7 +855,13 @@
         "These publications miss a field required to publish and will be skipped:": "Þessar útgáfur vantar reit sem þarf til að birta og þeim verður sleppt:",
         "Required to publish": "Nauðsynlegt til að birta",
         "Publisher RSIN": "RSIN útgefanda",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN útgefandi stofnunar, vistað þegar skjal er hengt við."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN útgefandi stofnunar, vistað þegar skjal er hengt við.",
+        "Woo annual report": "Woo-ársskýrsla",
+        "Year": "Ár",
+        "Generate annual report": "Búa til ársskýrslu",
+        "The Woo annual report needs a newer OpenRegister.": "Woo-ársskýrslan þarf nýrri útgáfu af OpenRegister.",
+        "The annual report could not be generated.": "Ekki tókst að búa til ársskýrsluna.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Birtar tölur ársins við hlið ársins á undan. Greint er frá Woo-beiðnum í dossiq."
     },
     "plurals": {}
 }

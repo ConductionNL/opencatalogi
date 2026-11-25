@@ -855,7 +855,13 @@
         "These publications miss a field required to publish and will be skipped:": "Nendel väljaannetel puudub avaldamiseks nõutav väli ja need jäetakse vahele:",
         "Required to publish": "Avaldamiseks nõutav",
         "Publisher RSIN": "Väljaandja RSIN",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "Avaldava organisatsiooni RSIN, salvestatakse dokumendi lisamisel."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "Avaldava organisatsiooni RSIN, salvestatakse dokumendi lisamisel.",
+        "Woo annual report": "Woo aastaaruanne",
+        "Year": "Aasta",
+        "Generate annual report": "Koosta aastaaruanne",
+        "The Woo annual report needs a newer OpenRegister.": "Woo aastaaruanne vajab uuemat OpenRegisteri versiooni.",
+        "The annual report could not be generated.": "Aastaaruannet ei õnnestunud koostada.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Aasta avaldatud arvud eelmise aasta kõrval. Woo taotlustest antakse aru dossiqis."
     },
     "plurals": {}
 }

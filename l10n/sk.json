@@ -855,7 +855,13 @@
         "These publications miss a field required to publish and will be skipped:": "Týmto publikáciám chýba pole povinné na publikovanie a budú preskočené:",
         "Required to publish": "Povinné na publikovanie",
         "Publisher RSIN": "RSIN vydavateľa",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN vydávajúcej organizácie, uložené pri pripojení dokumentu."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "RSIN vydávajúcej organizácie, uložené pri pripojení dokumentu.",
+        "Woo annual report": "Výročná správa Woo",
+        "Year": "Rok",
+        "Generate annual report": "Vytvoriť výročnú správu",
+        "The Woo annual report needs a newer OpenRegister.": "Výročná správa Woo vyžaduje novší OpenRegister.",
+        "The annual report could not be generated.": "Výročnú správu sa nepodarilo vytvoriť.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Zverejnené údaje za rok vedľa údajov za predchádzajúci rok. Žiadosti Woo sa vykazujú v dossiq."
     },
     "plurals": {}
 }

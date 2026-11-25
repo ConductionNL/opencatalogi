@@ -855,7 +855,13 @@
         "These publications miss a field required to publish and will be skipped:": "A aquestes publicacions els falta un camp obligatori per publicar i s'ometran:",
         "Required to publish": "Obligatori per publicar",
         "Publisher RSIN": "RSIN de l'editor",
-        "The RSIN of the publishing organisation, stored when a document is attached.": "El RSIN de l'organització editora, desat quan s'adjunta un document."
+        "The RSIN of the publishing organisation, stored when a document is attached.": "El RSIN de l'organització editora, desat quan s'adjunta un document.",
+        "Woo annual report": "Informe anual Woo",
+        "Year": "Any",
+        "Generate annual report": "Genera l'informe anual",
+        "The Woo annual report needs a newer OpenRegister.": "L'informe anual Woo necessita una versió més recent d'OpenRegister.",
+        "The annual report could not be generated.": "No s'ha pogut generar l'informe anual.",
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Les xifres publicades d'un any al costat de les de l'any anterior. Les sol·licituds Woo s'informen a dossiq."
     },
     "plurals": {}
 }
