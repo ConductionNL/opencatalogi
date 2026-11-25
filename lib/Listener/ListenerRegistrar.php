@@ -183,6 +183,8 @@ class ListenerRegistrar {
 		// A Woo batch whose review task is rejected in OpenRegister goes back to its
 		// author with the task's comment (woo-review-surface, REQ-WRV-002).
 		$context->registerEventListener(TaskTerminalEvent::class, BatchReviewTaskListener::class);
+		// An agent's withdrawal or archive request is taken when a publisher completes its task (hermiq-ai-tooling REQ-009).
+		$context->registerEventListener(TaskTerminalEvent::class, AgentTaskCompletionListener::class);
 
 		// A publication records whether it is complete and public; a source
 		// system subscribes to the move to complete (publication-tells-its-source, REQ-PTS-002).

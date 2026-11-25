@@ -30,6 +30,7 @@ use OCA\OpenCatalogi\Dashboard\MostViewedPublicationsWidget;
 use OCA\OpenCatalogi\Dashboard\RetentionWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedAttachmentsWidget;
 use OCA\OpenCatalogi\Dashboard\UnpublishedPublicationsWidget;
+use OCA\OpenCatalogi\Listener\AgentTaskCompletionListener;
 use OCA\OpenCatalogi\Listener\BatchReviewTaskListener;
 use OCA\OpenCatalogi\Listener\CapabilityDeclarationListener;
 use OCA\OpenCatalogi\Listener\CapabilityScopeListener;
@@ -186,6 +187,7 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectCreatingEvent', PublicationAudienceCheck::class],
 				[$e . 'ObjectUpdatingEvent', PublicationAudienceCheck::class],
 				[$e . 'TaskTerminalEvent', BatchReviewTaskListener::class],
+				[$e . 'TaskTerminalEvent', AgentTaskCompletionListener::class],
 				[$e . 'ObjectCreatingEvent', CompletenessListener::class],
 				[$e . 'ObjectUpdatingEvent', CompletenessListener::class],
 				[$e . 'ObjectCreatingEvent', PublicationLinksListener::class],
