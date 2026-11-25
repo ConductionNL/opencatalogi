@@ -197,8 +197,16 @@ class DatasetViewControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testABarViewAggregatesOverEveryRowOfTheTable(): void {
-		$tables = $this->createMock(PublishedTableServiceInterface::class);
-		$tables->method('findTable')->willReturnCallback(static fn (string $id): ?array => $id === 't1' ? self::TABLE : null);
+		$tables = $this->createMock(originalClassName: PublishedTableServiceInterface::class);
+		$tables->method('findTable')->willReturnCallback(
+			static function (string $id): ?array {
+				if ($id === 't1') {
+					return self::TABLE;
+				}
+
+				return null;
+			}
+		);
 		$tables->method('canReadPublication')->willReturn(true);
 		$inside = false;
 		$tables->expects($this->once())->method('overAllRows')->willReturnCallback(
@@ -211,14 +219,18 @@ class DatasetViewControllerTest extends TestCase {
 		);
 		$this->aggregation->expects($this->once())->method('runAdhocByRef')->willReturnCallback(
 			static function () use (&$inside): array {
-				return ['groups' => $inside === true ? [['key' => 'Noord', 'value' => 7]] : []];
+				if ($inside === true) {
+					return ['groups' => [['key' => 'Noord', 'value' => 7]]];
+				}
+
+				return ['groups' => []];
 			}
 		);
 		$data = new \OCA\OpenCatalogi\Service\Table\DatasetViewData(tables: $tables, aggregation: $this->aggregation);
 
 		$answer = $data->chart(view: ['kind' => 'bar', 'x' => 'wijk', 'aggregate' => 'count'], table: self::TABLE);
 
-		$this->assertSame([['x' => 'Noord', 'value' => 7]], $answer['points']);
+		$this->assertSame(expected: [['x' => 'Noord', 'value' => 7]], actual: $answer['points']);
 	}//end testABarViewAggregatesOverEveryRowOfTheTable()
 
 	/**

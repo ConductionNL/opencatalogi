@@ -898,6 +898,11 @@ class PublishedTableServiceTest extends TestCase {
 	 */
 	public function testAReadOverEveryRowRunsInTheSystemContext(): void {
 		$objects = new class {
+			/**
+			 * How often a read was run in the system context.
+			 *
+			 * @var integer
+			 */
 			public int $elevated = 0;
 
 			/**
@@ -916,8 +921,8 @@ class PublishedTableServiceTest extends TestCase {
 		$registers->method('objectService')->willReturn($objects);
 		$service = new PublishedTableService(registers: $registers, container: $this->container);
 
-		$this->assertSame('groups', $service->overAllRows(read: static fn (): string => 'groups'));
-		$this->assertSame(1, $objects->elevated);
+		$this->assertSame(expected: 'groups', actual: $service->overAllRows(read: static fn (): string => 'groups'));
+		$this->assertSame(expected: 1, actual: $objects->elevated);
 	}//end testAReadOverEveryRowRunsInTheSystemContext()
 
 	/**
@@ -930,6 +935,6 @@ class PublishedTableServiceTest extends TestCase {
 		$registers->method('objectService')->willReturn(null);
 		$service = new PublishedTableService(registers: $registers, container: $this->container);
 
-		$this->assertSame('groups', $service->overAllRows(read: static fn (): string => 'groups'));
+		$this->assertSame(expected: 'groups', actual: $service->overAllRows(read: static fn (): string => 'groups'));
 	}//end testWithoutTheSystemContextTheReadRunsAsTheCaller()
 }//end class
