@@ -20,6 +20,8 @@
 
 declare(strict_types=1);
 
+// phpcs:disable CustomSniffs.Functions.NamedParameters -- PHPUnit assertion and mock helpers take positional arguments.
+
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
 
 use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
