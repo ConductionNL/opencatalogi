@@ -38,7 +38,7 @@ async function as(username: string, password: string): Promise<APIRequestContext
 	return request.newContext({
 		baseURL: BASE_URL,
 		storageState: { cookies: [], origins: [] },
-		httpCredentials: { username, password },
+		httpCredentials: { username, password, send: 'always' },
 		extraHTTPHeaders: OCS,
 	})
 }

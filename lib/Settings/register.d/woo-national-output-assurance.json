@@ -21,7 +21,7 @@
       "wooPipelineIncident": {
         "slug": "wooPipelineIncident",
         "title": "Woo pipeline incident",
-        "version": "0.1.0",
+        "version": "0.1.1",
         "summary": "A failure of the Woo publication pipeline that a named group must look at",
         "description": "Records one failure of the Woo publication pipeline: a readiness check, a refused sitemap, a failed batch, a failed national hand-over, a sitemap gap or a superseded DiWoo version. The incident group is told when one is created.",
         "icon": null,
@@ -37,7 +37,7 @@
           "update": ["admin"],
           "delete": ["admin"],
           "roles": {
-            "woo-incident-receiver": []
+            "woo-incident-receiver": ["admin"]
           }
         },
         "properties": {
