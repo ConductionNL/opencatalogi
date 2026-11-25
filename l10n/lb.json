@@ -861,7 +861,9 @@
         "Generate annual report": "Joresbericht erstellen",
         "The Woo annual report needs a newer OpenRegister.": "De Woo-Joresbericht brauch eng méi nei Versioun vun OpenRegister.",
         "The annual report could not be generated.": "De Joresbericht konnt net erstallt ginn.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Déi publizéiert Zuele vun engem Joer nieft deene vum Joer virdrun. Woo-Ufroen ginn an dossiq gemellt."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Déi publizéiert Zuele vun engem Joer nieft deene vum Joer virdrun. Woo-Ufroen ginn an dossiq gemellt.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "D'Feld %s gehéiert zur nationaler Wäertlëscht a kann hei net geännert ginn; ännert et bei der Quell.",
+        "A value list choice has no field %s.": "Eng Auswiel an enger Wäertlëscht huet kee Feld %s."
     },
     "plurals": {}
 }

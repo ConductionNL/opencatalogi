@@ -861,7 +861,9 @@
         "Generate annual report": "Opret årsrapport",
         "The Woo annual report needs a newer OpenRegister.": "Woo-årsrapporten kræver en nyere OpenRegister.",
         "The annual report could not be generated.": "Årsrapporten kunne ikke oprettes.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "De offentliggjorte tal for et år ved siden af året før. Woo-anmodninger rapporteres i dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "De offentliggjorte tal for et år ved siden af året før. Woo-anmodninger rapporteres i dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Feltet %s hører til den nationale værdiliste og kan ikke ændres her; ret det ved kilden.",
+        "A value list choice has no field %s.": "Et valg i en værdiliste har intet felt %s."
     },
     "plurals": {}
 }

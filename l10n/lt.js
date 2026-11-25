@@ -862,7 +862,9 @@ OC.L10N.register(
         "Generate annual report": "Sukurti metinę ataskaitą",
         "The Woo annual report needs a newer OpenRegister.": "Woo metinei ataskaitai reikia naujesnės OpenRegister versijos.",
         "The annual report could not be generated.": "Nepavyko sukurti metinės ataskaitos.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Paskelbti metų skaičiai šalia praėjusių metų. Apie Woo prašymus pranešama dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Paskelbti metų skaičiai šalia praėjusių metų. Apie Woo prašymus pranešama dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Laukas %s priklauso nacionaliniam reikšmių sąrašui ir jo čia pakeisti negalima; pakeiskite jį šaltinyje.",
+        "A value list choice has no field %s.": "Reikšmių sąrašo pasirinkimas neturi lauko %s."
     },
     "nplurals=2; plural=(n != 1);"
 )

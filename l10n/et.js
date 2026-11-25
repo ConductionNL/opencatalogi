@@ -862,7 +862,9 @@ OC.L10N.register(
         "Generate annual report": "Koosta aastaaruanne",
         "The Woo annual report needs a newer OpenRegister.": "Woo aastaaruanne vajab uuemat OpenRegisteri versiooni.",
         "The annual report could not be generated.": "Aastaaruannet ei õnnestunud koostada.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Aasta avaldatud arvud eelmise aasta kõrval. Woo taotlustest antakse aru dossiqis."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Aasta avaldatud arvud eelmise aasta kõrval. Woo taotlustest antakse aru dossiqis.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Väli %s kuulub riiklikku väärtusloendisse ja seda ei saa siin muuta; muutke seda allikas.",
+        "A value list choice has no field %s.": "Väärtusloendi valikul pole välja %s."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -2180,7 +2180,9 @@ OC.L10N.register(
         "Generate annual report": "Jaarverslag maken",
         "The Woo annual report needs a newer OpenRegister.": "Het Woo-jaarverslag vraagt een nieuwere OpenRegister.",
         "The annual report could not be generated.": "Het jaarverslag kon niet worden gemaakt.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "De gepubliceerde cijfers van een jaar naast het jaar ervoor. Woo-verzoeken staan in het verslag van dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "De gepubliceerde cijfers van een jaar naast het jaar ervoor. Woo-verzoeken staan in het verslag van dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Het veld %s hoort bij de landelijke waardelijst en kan hier niet worden gewijzigd; wijzig het bij de bron.",
+        "A value list choice has no field %s.": "Een keuze in een waardelijst heeft geen veld %s."
     },
     "nplurals=2; plural=(n != 1);"
 )

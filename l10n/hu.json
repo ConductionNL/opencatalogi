@@ -861,7 +861,9 @@
         "Generate annual report": "Éves jelentés készítése",
         "The Woo annual report needs a newer OpenRegister.": "A Woo éves jelentéshez újabb OpenRegister szükséges.",
         "The annual report could not be generated.": "Az éves jelentést nem sikerült elkészíteni.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Egy év közzétett adatai az előző év adatai mellett. A Woo-kérelmekről a dossiq számol be."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Egy év közzétett adatai az előző év adatai mellett. A Woo-kérelmekről a dossiq számol be.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "A(z) %s mező az országos értéklistához tartozik, és itt nem módosítható; módosítsa a forrásnál.",
+        "A value list choice has no field %s.": "Egy értéklista-választásnak nincs %s mezője."
     },
     "plurals": {}
 }

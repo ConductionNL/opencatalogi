@@ -862,7 +862,9 @@ OC.L10N.register(
         "Generate annual report": "Búa til ársskýrslu",
         "The Woo annual report needs a newer OpenRegister.": "Woo-ársskýrslan þarf nýrri útgáfu af OpenRegister.",
         "The annual report could not be generated.": "Ekki tókst að búa til ársskýrsluna.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Birtar tölur ársins við hlið ársins á undan. Greint er frá Woo-beiðnum í dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Birtar tölur ársins við hlið ársins á undan. Greint er frá Woo-beiðnum í dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Reiturinn %s tilheyrir landsgildalistanum og er ekki hægt að breyta honum hér; breyttu honum við upprunann.",
+        "A value list choice has no field %s.": "Val í gildalista hefur engan reit %s."
     },
     "nplurals=2; plural=(n != 1);"
 )

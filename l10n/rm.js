@@ -862,7 +862,9 @@ OC.L10N.register(
         "Generate annual report": "Crear il rapport annual",
         "The Woo annual report needs a newer OpenRegister.": "Il rapport annual Woo dovra in OpenRegister pli nov.",
         "The annual report could not be generated.": "Il rapport annual n'ha betg pudì vegnir creà.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Las cifras publitgadas d'in onn sper quellas da l'onn precedent. Dumondas Woo vegnan rapportadas en dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Las cifras publitgadas d'in onn sper quellas da l'onn precedent. Dumondas Woo vegnan rapportadas en dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Il champ %s appartegna a la glista naziunala da valurs e na po betg vegnir midà qua; midai el a la funtauna.",
+        "A value list choice has no field %s.": "Ina tscherna d'ina glista da valurs n'ha nagin champ %s."
     },
     "nplurals=2; plural=(n != 1);"
 )

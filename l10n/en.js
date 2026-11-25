@@ -2225,7 +2225,9 @@ OC.L10N.register(
         "Generate annual report": "Generate annual report",
         "The Woo annual report needs a newer OpenRegister.": "The Woo annual report needs a newer OpenRegister.",
         "The annual report could not be generated.": "The annual report could not be generated.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "The published figures of a year beside the year before. Woo requests are reported in dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "The published figures of a year beside the year before. Woo requests are reported in dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "The field %s belongs to the national value list and cannot be changed here; change it at the source.",
+        "A value list choice has no field %s.": "A value list choice has no field %s."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -861,7 +861,9 @@
         "Generate annual report": "Genera relazione annuale",
         "The Woo annual report needs a newer OpenRegister.": "La relazione annuale Woo richiede una versione più recente di OpenRegister.",
         "The annual report could not be generated.": "Non è stato possibile generare la relazione annuale.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "I dati pubblicati di un anno accanto a quelli dell'anno precedente. Le richieste Woo sono riportate in dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "I dati pubblicati di un anno accanto a quelli dell'anno precedente. Le richieste Woo sono riportate in dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Il campo %s appartiene all'elenco di valori nazionale e non può essere modificato qui; modificalo alla fonte.",
+        "A value list choice has no field %s.": "Una scelta dell'elenco di valori non ha il campo %s."
     },
     "plurals": {}
 }

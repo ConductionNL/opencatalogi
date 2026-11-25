@@ -861,7 +861,9 @@
         "Generate annual report": "Δημιουργία ετήσιας έκθεσης",
         "The Woo annual report needs a newer OpenRegister.": "Η ετήσια έκθεση Woo χρειάζεται νεότερο OpenRegister.",
         "The annual report could not be generated.": "Δεν ήταν δυνατή η δημιουργία της ετήσιας έκθεσης.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Τα δημοσιευμένα στοιχεία ενός έτους δίπλα σε εκείνα του προηγούμενου. Τα αιτήματα Woo αναφέρονται στο dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Τα δημοσιευμένα στοιχεία ενός έτους δίπλα σε εκείνα του προηγούμενου. Τα αιτήματα Woo αναφέρονται στο dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Το πεδίο %s ανήκει στον εθνικό κατάλογο τιμών και δεν μπορεί να αλλάξει εδώ· αλλάξτε το στην πηγή.",
+        "A value list choice has no field %s.": "Μια επιλογή καταλόγου τιμών δεν έχει πεδίο %s."
     },
     "plurals": {}
 }

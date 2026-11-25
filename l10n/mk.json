@@ -861,7 +861,9 @@
         "Generate annual report": "Направи годишен извештај",
         "The Woo annual report needs a newer OpenRegister.": "Годишниот извештај Woo бара понов OpenRegister.",
         "The annual report could not be generated.": "Годишниот извештај не можеше да се направи.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Објавените бројки за годината покрај оние од претходната година. Барањата Woo се известуваат во dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Објавените бројки за годината покрај оние од претходната година. Барањата Woo се известуваат во dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Полето %s припаѓа на националната листа на вредности и не може да се промени тука; променете го на изворот.",
+        "A value list choice has no field %s.": "Изборот од листата на вредности нема поле %s."
     },
     "plurals": {}
 }

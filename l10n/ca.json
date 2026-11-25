@@ -861,7 +861,9 @@
         "Generate annual report": "Genera l'informe anual",
         "The Woo annual report needs a newer OpenRegister.": "L'informe anual Woo necessita una versió més recent d'OpenRegister.",
         "The annual report could not be generated.": "No s'ha pogut generar l'informe anual.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Les xifres publicades d'un any al costat de les de l'any anterior. Les sol·licituds Woo s'informen a dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Les xifres publicades d'un any al costat de les de l'any anterior. Les sol·licituds Woo s'informen a dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "El camp %s pertany a la llista de valors nacional i no es pot canviar aquí; canvieu-lo a l'origen.",
+        "A value list choice has no field %s.": "Una elecció de la llista de valors no té el camp %s."
     },
     "plurals": {}
 }

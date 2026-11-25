@@ -862,7 +862,9 @@ OC.L10N.register(
         "Generate annual report": "Generează raportul anual",
         "The Woo annual report needs a newer OpenRegister.": "Raportul anual Woo necesită o versiune mai nouă de OpenRegister.",
         "The annual report could not be generated.": "Raportul anual nu a putut fi generat.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Cifrele publicate ale unui an alături de cele ale anului precedent. Cererile Woo sunt raportate în dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Cifrele publicate ale unui an alături de cele ale anului precedent. Cererile Woo sunt raportate în dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Câmpul %s aparține listei naționale de valori și nu poate fi modificat aici; modificați-l la sursă.",
+        "A value list choice has no field %s.": "O alegere din lista de valori nu are câmpul %s."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

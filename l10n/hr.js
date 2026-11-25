@@ -862,7 +862,9 @@ OC.L10N.register(
         "Generate annual report": "Izradi godišnje izvješće",
         "The Woo annual report needs a newer OpenRegister.": "Godišnje izvješće Woo zahtijeva noviji OpenRegister.",
         "The annual report could not be generated.": "Godišnje izvješće nije moguće izraditi.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Objavljeni podaci za godinu uz podatke prethodne godine. O zahtjevima Woo izvješćuje se u dossiqu."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Objavljeni podaci za godinu uz podatke prethodne godine. O zahtjevima Woo izvješćuje se u dossiqu.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Polje %s pripada nacionalnom popisu vrijednosti i ne može se ovdje promijeniti; promijenite ga na izvoru.",
+        "A value list choice has no field %s.": "Odabir s popisa vrijednosti nema polje %s."
     },
     "nplurals=2; plural=(n != 1);"
 )

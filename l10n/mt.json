@@ -861,7 +861,9 @@
         "Generate annual report": "Oħloq ir-rapport annwali",
         "The Woo annual report needs a newer OpenRegister.": "Ir-rapport annwali Woo jeħtieġ verżjoni aktar ġdida ta' OpenRegister.",
         "The annual report could not be generated.": "Ir-rapport annwali ma setax jinħoloq.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Iċ-ċifri ppubblikati ta' sena ħdejn dawk tas-sena ta' qabel. It-talbiet Woo jiġu rrappurtati f'dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Iċ-ċifri ppubblikati ta' sena ħdejn dawk tas-sena ta' qabel. It-talbiet Woo jiġu rrappurtati f'dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Il-qasam %s jappartjeni għal-lista nazzjonali tal-valuri u ma jistax jinbidel hawn; ibdlu fis-sors.",
+        "A value list choice has no field %s.": "Għażla tal-lista tal-valuri m'għandhiex il-qasam %s."
     },
     "plurals": {}
 }

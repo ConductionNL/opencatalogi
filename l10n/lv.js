@@ -862,7 +862,9 @@ OC.L10N.register(
         "Generate annual report": "Izveidot gada pārskatu",
         "The Woo annual report needs a newer OpenRegister.": "Woo gada pārskatam nepieciešama jaunāka OpenRegister versija.",
         "The annual report could not be generated.": "Gada pārskatu neizdevās izveidot.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Gada publicētie skaitļi blakus iepriekšējā gada skaitļiem. Par Woo pieprasījumiem ziņo dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Gada publicētie skaitļi blakus iepriekšējā gada skaitļiem. Par Woo pieprasījumiem ziņo dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Lauks %s pieder valsts vērtību sarakstam, un to šeit nevar mainīt; mainiet to avotā.",
+        "A value list choice has no field %s.": "Vērtību saraksta izvēlei nav lauka %s."
     },
     "nplurals=2; plural=(n != 1);"
 )

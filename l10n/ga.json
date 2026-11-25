@@ -861,7 +861,9 @@
         "Generate annual report": "Cruthaigh tuarascáil bhliantúil",
         "The Woo annual report needs a newer OpenRegister.": "Teastaíonn leagan níos nuaí de OpenRegister don tuarascáil bhliantúil Woo.",
         "The annual report could not be generated.": "Níorbh fhéidir an tuarascáil bhliantúil a chruthú.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Na figiúirí foilsithe do bhliain taobh le figiúirí na bliana roimhe. Tuairiscítear iarratais Woo in dossiq."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Na figiúirí foilsithe do bhliain taobh le figiúirí na bliana roimhe. Tuairiscítear iarratais Woo in dossiq.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "Baineann an réimse %s leis an liosta luachanna náisiúnta agus ní féidir é a athrú anseo; athraigh é ag an bhfoinse.",
+        "A value list choice has no field %s.": "Níl réimse %s ag rogha liosta luachanna."
     },
     "plurals": {}
 }

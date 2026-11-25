@@ -862,7 +862,9 @@ OC.L10N.register(
         "Generate annual report": "Yıllık rapor oluştur",
         "The Woo annual report needs a newer OpenRegister.": "Woo yıllık raporu daha yeni bir OpenRegister gerektirir.",
         "The annual report could not be generated.": "Yıllık rapor oluşturulamadı.",
-        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Bir yılın yayımlanan rakamları bir önceki yılın yanında. Woo talepleri dossiq'te raporlanır."
+        "The published figures of a year beside the year before. Woo requests are reported in dossiq.": "Bir yılın yayımlanan rakamları bir önceki yılın yanında. Woo talepleri dossiq'te raporlanır.",
+        "The field %s belongs to the national value list and cannot be changed here; change it at the source.": "%s alanı ulusal değer listesine aittir ve burada değiştirilemez; kaynağında değiştirin.",
+        "A value list choice has no field %s.": "Bir değer listesi seçiminin %s alanı yok."
     },
     "nplurals=2; plural=(n != 1);"
 )
