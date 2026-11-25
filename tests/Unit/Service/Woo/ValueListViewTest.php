@@ -209,7 +209,8 @@ class ValueListViewTest extends TestCase {
 		$store = $this->createMock(originalClassName: ValueListChoiceStore::class);
 		$store->expects($this->once())->method('save')->with(['scheme' => 'informatiecategorieen', 'entry' => self::COVENANTS, 'hidden' => true]);
 
-		$this->view(lists: $this->lists(), store: $store)->save(choice: ['scheme' => 'informatiecategorieen', 'entry' => self::COVENANTS, 'hidden' => true]);
+		$choice = ['scheme' => 'informatiecategorieen', 'entry' => self::COVENANTS, 'hidden' => true];
+		$this->view(lists: $this->lists(), store: $store)->save(choice: $choice);
 	}//end testASaveGoesToTheChoiceStore()
 
 	/**
