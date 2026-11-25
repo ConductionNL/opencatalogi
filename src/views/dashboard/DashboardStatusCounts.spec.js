@@ -8,7 +8,7 @@
  */
 
 import Dashboard from './Dashboard.vue'
-import { fetchPublicationStatusCounts } from '../../services/publicationStatusCounts.js'
+import { fetchPairCounts, fetchPublicationStatusCounts } from '../../services/publicationStatusCounts.js'
 
 jest.mock('@conduction/nextcloud-vue', () => ({
 	...jest.requireActual('@conduction/nextcloud-vue'),
@@ -18,7 +18,11 @@ jest.mock('@conduction/nextcloud-vue', () => ({
 jest.mock('@nextcloud/initial-state', () => ({
 	loadState: (app, key, fallback) => ({ publication_register: 'reg-1', publication_schema: 'sch-1' })[key] ?? fallback,
 }))
-jest.mock('../../services/publicationStatusCounts.js', () => ({ fetchPublicationStatusCounts: jest.fn() }))
+jest.mock('../../services/publicationStatusCounts.js', () => ({
+	fetchPublicationStatusCounts: jest.fn(),
+	fetchPairCounts: jest.fn(),
+	catalogPairs: (catalogs) => catalogs.map((c) => ({ register: c.registers[0], schema: c.schemas[0] })),
+}))
 jest.mock('../../services/usageStats.js', () => ({ countingStartNote: () => null, fetchInstanceSeries: async () => [] }))
 jest.mock('../../store/store.js', () => ({ navigationStore: {}, objectStore: {} }))
 
@@ -103,5 +107,55 @@ describe('Dashboard publication KPIs', () => {
 
 		expect(state).toEqual({ statusCounts: null, publicationTotal: 4 })
 		expect(console.warn).toHaveBeenCalledWith('Failed to load publication count aggregations')
+	})
+})
+
+/**
+ * The category chart data for a state.
+ *
+ * @param {object} state The component state.
+ * @return {object} The labels and series.
+ */
+function categories(state) {
+	return Dashboard.computed.publicationsByCategoryData.call({
+		allPublications: [
+			{ '@self': { schema: { id: 40, title: 'Publication' } } },
+			{ '@self': { schema: { id: 40, title: 'Publication' } } },
+		],
+		categoryCounts: null,
+		...state,
+	})
+}
+
+describe('Dashboard publications by category', () => {
+	it('counts each category from the uncapped pair counts, not the fetched page', () => {
+		expect(categories({ categoryCounts: [{ register: '26', schema: '40', count: 1178 }] })).toEqual({
+			labels: ['Publication'],
+			series: [1178],
+		})
+	})
+
+	it('leaves out a pair without publications', () => {
+		expect(categories({
+			categoryCounts: [{ register: '26', schema: '40', count: 3 }, { register: '26', schema: '41', count: 0 }],
+		}).labels).toEqual(['Publication'])
+	})
+
+	it('counts the fetched page when no pair count could be read', () => {
+		expect(categories({})).toEqual({ labels: ['Publication'], series: [2] })
+	})
+
+	it('asks for the counts of the catalogue pairs', async () => {
+		fetchPairCounts.mockResolvedValue([{ register: '26', schema: '40', count: 5 }])
+		const state = { catalogs: [{ registers: ['26'], schemas: ['40'] }], categoryCounts: null }
+
+		await Dashboard.methods.fetchCategoryCounts.call(state)
+
+		expect(fetchPairCounts).toHaveBeenCalledWith({
+			pairs: [{ register: '26', schema: '40' }],
+			prefix: '',
+			headers: { requesttoken: 'token-1' },
+		})
+		expect(state.categoryCounts).toEqual([{ register: '26', schema: '40', count: 5 }])
 	})
 })
