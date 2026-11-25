@@ -39,6 +39,7 @@ use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
@@ -306,6 +307,15 @@ class FederationController extends Controller {
 				$this->countReach(publicationId: $id, kind: UsageCounterServiceInterface::KIND_VIEW);
 			}
 
+			$tombstone = null;
+			if ($result['status'] === 404) {
+				$tombstone = $this->tombstoneOf(id: $id);
+			}
+
+			if ($tombstone !== null) {
+				$result = ['data' => $tombstone, 'status' => Http::STATUS_GONE];
+			}
+
 			// The same cache headers publications#show sends: the portal reads a
 			// publication with its schema through this route on every page view,
 			// and an unchanged answer comes back as a 304 without a body.
@@ -328,6 +338,44 @@ class FederationController extends Controller {
 		}
 
 	}//end publication()
+
+	/**
+	 * The tombstone of a withdrawn publication of this instance, or null for the 404 (REQ-PWA-002).
+	 *
+	 * Asked only when neither this instance nor a peer serves the id. The portal
+	 * reads a publication through this route, so a withdrawn link must answer
+	 * the same 410 here as on `/api/{catalogSlug}/{id}`. The lookup covers the
+	 * registers and schemas of every catalogue of this instance, reads as the
+	 * system and answers only the withdrawal; any failure keeps the 404.
+	 *
+	 * @param string $id The publication id from the URL.
+	 *
+	 * @return array<string, mixed>|null The tombstone, or null.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
+	 */
+	private function tombstoneOf(string $id): ?array {
+		$tombstones = self::optional(container: $this->container, class: PublicationTombstone::class);
+		if ($tombstones instanceof PublicationTombstone === false) {
+			return null;
+		}
+
+		try {
+			$scope = $this->publicationService->getCatalogFilters();
+			return $tombstones->tombstone(
+				query: new CatalogSlugQuery(
+					slug: $id,
+					catalogSlug: '',
+					registers: (array)($scope['registers'] ?? []),
+					schemas: (array)($scope['schemas'] ?? [])
+				)
+			);
+		} catch (\Throwable $e) {
+			$this->logger?->warning('[FederationController::publication] The tombstone lookup failed: ' . $e->getMessage());
+			return null;
+		}
+
+	}//end tombstoneOf()
 
 	/**
 	 * Retrieve objects that this publication references.
