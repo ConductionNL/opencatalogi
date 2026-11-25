@@ -29,6 +29,8 @@ use DateTimeZone;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\IAppConfig;
+use Psr\Container\ContainerInterface;
+use Throwable;
 
 /**
  * Reads the sources from, and writes the results to, this app's config.
@@ -38,16 +40,46 @@ use OCP\IAppConfig;
 class ValueListRefreshState {
 
 	/**
+	 * OpenRegister's settings service.
+	 *
+	 * @var string
+	 */
+	public const OPENREGISTER_SETTINGS = 'OCA\\OpenRegister\\Service\\SettingsService';
+
+	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig   $config Holds the sources and the results.
-	 * @param ITimeFactory $time   The clock.
+	 * @param IAppConfig              $config    Holds the sources and the results.
+	 * @param ITimeFactory            $time      The clock.
+	 * @param ContainerInterface|null $container Where OpenRegister's settings come from, for its audit trail switch.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
 		private readonly ITimeFactory $time,
+		private readonly ?ContainerInterface $container = null,
 	) {
 	}//end __construct()
+
+	/**
+	 * Whether OpenRegister keeps audit trails, so a change to a concept is traceable.
+	 *
+	 * Read from OpenRegister's retention settings (`auditTrailsEnabled`). When the
+	 * setting cannot be read the answer is OpenRegister's own default, on: that is
+	 * what OpenRegister's save does in the same case, so the trail is written.
+	 *
+	 * @return bool True when audit trails are on.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-woo-information-categories-are-audited-data-not-a-constant-req-wvc-005
+	 */
+	public function auditTrailsOn(): bool {
+		try {
+			$settings = $this->container?->get(self::OPENREGISTER_SETTINGS)->getRetentionSettingsOnly();
+		} catch (Throwable) {
+			return true;
+		}
+
+		return (is_array($settings) === false || ($settings['auditTrailsEnabled'] ?? true) !== false);
+	}//end auditTrailsOn()
 
 	/**
 	 * The configured sources as decoded, or null when none or unreadable.
