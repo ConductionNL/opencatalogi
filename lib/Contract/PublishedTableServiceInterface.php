@@ -112,7 +112,9 @@ interface PublishedTableServiceInterface {
 	 *
 	 * @return mixed What the read returns.
 	 *
-	 * @contract-shift internal-only — PublishedTableService in this app is the only implementer; a ConductionNL code search finds the interface nowhere else, and the app's own doubles are createMock() stubs.
+	 * @contract-shift internal-only — PublishedTableService in this app is the only implementer;
+	 *                  a ConductionNL code search finds the interface nowhere else, and the
+	 *                  app's own doubles are createMock() stubs.
 	 *
 	 * @spec openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables/spec.md#requirement-anyone-reads-a-view-s-data-while-the-publication-is-public-req-dsv-002
 	 */
