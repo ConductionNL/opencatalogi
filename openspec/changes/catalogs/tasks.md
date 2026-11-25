@@ -15,7 +15,8 @@
   - [x] The `catalog` schema is declared under `components.schemas` in `publication_register.json`.
   - [x] Schema fields match the data model table in `specs/catalogs/spec.md` exactly: `title` (required), `summary`, `description`, `image`, `listed`, `organization`, `registers`, `schemas`, `filters`, `status`, `view`, `slug` (pattern `^[a-z0-9-]+$`), `hasWooSitemap`. (verified 17 Nov: every field with the spec's type, `title` the only required one, `status` the four-value enum, `slug` the pattern; the extra `hasOoapi`, `hasDcat`, `published`, `plooiDelivery` and `showWithheld` belong to later changes and stay)
   - [x] The `catalog` schema is associated with the `publication` register in the register definition.
-  - [ ] Schema is idempotent on re-import (`force: false` MUST NOT create duplicates, matched by slug).
+  - [x] Schema is idempotent on re-import (`force: false` MUST NOT create duplicates, matched by slug).
+    - 25 Nov: OpenRegister's ImportHandler matches an incoming schema to the stored one by slug among the schemas the register links (OR `ImportHandlerRegisterSchemaLinkOnVersionSkipTest`, WOO-563). `tests/Unit/Settings/CatalogSchemaReimportKeyTest.php` pins the opencatalogi side on the effective register: exactly one schema carries slug `catalog`, and the `publication` register links it.
     - Left open (17 Nov): OpenRegister's importer decides this; it needs a re-import on a running instance.
 
 ## Task 2: IAppConfig configuration keys
