@@ -56,7 +56,7 @@ test.describe('Organizations: the shared organisation', () => {
 		const member = await playwright.request.newContext({
 			baseURL,
 			storageState: { cookies: [], origins: [] },
-			httpCredentials: { username: MEMBER.id, password: MEMBER.password },
+			httpCredentials: { username: MEMBER.id, password: MEMBER.password, send: 'always' },
 		})
 		const joined = await member.post(`${OR_API}/organisations/${uuid}/join`, {
 			headers: { 'OCS-APIRequest': 'true' },

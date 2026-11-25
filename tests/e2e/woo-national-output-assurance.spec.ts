@@ -145,7 +145,7 @@ test.describe('A pipeline failure reaches a named group', () => {
 		const member = await playwrightRequest.newContext({
 			baseURL: BASE_URL,
 			storageState: { cookies: [], origins: [] },
-			httpCredentials: { username: MEMBER, password: MEMBER_PASSWORD },
+			httpCredentials: { username: MEMBER, password: MEMBER_PASSWORD, send: 'always' },
 			extraHTTPHeaders: OCS,
 		})
 		try {

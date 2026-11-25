@@ -155,14 +155,14 @@ class PipelineIncidentSettingsTest extends TestCase {
 		);
 	}
 
-	public function testClearingTheGroupLeavesTheRoleEmpty(): void {
+	public function testClearingTheGroupHandsTheRoleBackToTheAdministrators(): void {
 		$settings = $this->settings();
 		$settings->setGroup('woo-team');
 
 		$this->assertSame('', $settings->setGroup(''));
 
 		$this->assertSame('', $this->stored['woo_incident_group']);
-		$this->assertSame([], $this->schema->getAuthorization()['roles']['woo-incident-receiver']);
+		$this->assertSame(['admin'], $this->schema->getAuthorization()['roles']['woo-incident-receiver']);
 	}
 
 	public function testAGroupThatDoesNotExistIsRefused(): void {

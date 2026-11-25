@@ -57,6 +57,15 @@ class PipelineIncidentSettings {
 	public const ROLE = 'woo-incident-receiver';
 
 	/**
+	 * The group the receiver role holds while no Woo team is named. OpenRegister
+	 * refuses a role without a group, and administrators already hold every right
+	 * on the incident schema.
+	 *
+	 * @var string
+	 */
+	public const FALLBACK_GROUP = 'admin';
+
+	/**
 	 * The most open incidents listed.
 	 *
 	 * @var int
@@ -150,13 +159,16 @@ class PipelineIncidentSettings {
 	}//end openIncidents()
 
 	/**
-	 * Put the group, or nobody, on the receiver role of the incident schema.
+	 * Put the group on the receiver role of the incident schema; with no group, the
+	 * administrators (OpenRegister refuses a role that lists no group).
 	 *
 	 * @param string $group The group id, or ''.
 	 *
 	 * @return void
 	 *
 	 * @throws RuntimeException When the schema cannot be found or updated.
+	 *
+	 * @spec openspec/changes/woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
 	 */
 	private function assignRole(string $group): void {
 		$ids = $this->openRegister->registerConfiguration(registerKey: PipelineIncidents::REGISTER_KEY, schemaKey: PipelineIncidents::SCHEMA_KEY);
@@ -174,7 +186,7 @@ class PipelineIncidentSettings {
 				$roles = [];
 			}
 
-			$roles[self::ROLE] = [];
+			$roles[self::ROLE] = [self::FALLBACK_GROUP];
 			if ($group !== '') {
 				$roles[self::ROLE] = [$group];
 			}
