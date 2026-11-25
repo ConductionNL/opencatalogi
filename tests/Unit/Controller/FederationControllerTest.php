@@ -10,7 +10,10 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Controller\CatalogSlugQuery;
 use OCA\OpenCatalogi\Controller\FederationController;
+use OCA\OpenCatalogi\Controller\PublicationTombstone;
+use OCA\OpenCatalogi\Http\TombstoneResponse;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
@@ -266,6 +269,92 @@ class FederationControllerTest extends TestCase {
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(404, $response->getStatus());
+	}
+
+	/**
+	 * A container that answers the given tombstone reader and nothing else.
+	 *
+	 * @param PublicationTombstone $tombstones The tombstone reader.
+	 *
+	 * @return void
+	 */
+	private function tombstonesAre(PublicationTombstone $tombstones): void {
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				PublicationTombstone::class => $tombstones,
+				default => throw new class('not available') extends \RuntimeException implements NotFoundExceptionInterface {
+				},
+			}
+		);
+	}
+
+	/**
+	 * A withdrawn publication answers 410 with its tombstone on the federation route too (REQ-PWA-002).
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
+	 *
+	 * @return void
+	 */
+	public function testAWithdrawnPublicationAnswers410WithItsTombstone(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->publicationService->method('getFederatedPublication')
+			->willReturn(['success' => false, 'error' => 'Publication not found', 'status' => 404]);
+		$this->publicationService->method('getCatalogFilters')
+			->willReturn(['registers' => [7], 'schemas' => [11, 12]]);
+		$tombstone = ['id' => 'pub-1', 'withdrawnAt' => '2026-11-24T10:00:00+00:00', 'publicReason' => 'Gepubliceerd in strijd met de AVG'];
+		$tombstones = $this->createMock(originalClassName: PublicationTombstone::class);
+		$tombstones->expects($this->once())->method('tombstone')
+			->with($this->callback(callback: 
+				static fn (CatalogSlugQuery $query): bool => $query->slug === 'pub-1'
+					&& $query->registers === [7]
+					&& $query->schemas === [11, 12]
+			))
+			->willReturn($tombstone);
+		$this->tombstonesAre(tombstones: $tombstones);
+
+		$response = $this->controller->publication(id: 'pub-1');
+
+		$this->assertInstanceOf(expected: TombstoneResponse::class, actual: $response);
+		$this->assertSame(expected: 410, actual: $response->getStatus());
+		$this->assertSame(expected: $tombstone, actual: $response->getData());
+		$this->assertStringNotContainsString(needle: 'public', haystack: (string)($response->getHeaders()['Cache-Control'] ?? ''));
+	}
+
+	/**
+	 * A miss that was never withdrawn, or a lookup that fails, stays the plain 404.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/specs/publications/spec.md#requirement-a-withdrawn-publication-answers-with-a-tombstone-about-the-withdrawal-req-pwa-002
+	 *
+	 * @return void
+	 */
+	public function testAMissThatWasNeverWithdrawnStays404(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->publicationService->method('getFederatedPublication')
+			->willReturn(['success' => false, 'error' => 'Publication not found', 'status' => 404]);
+		$this->publicationService->method('getCatalogFilters')
+			->willThrowException(new \RuntimeException('no catalogue'));
+		$this->tombstonesAre(tombstones: $this->createMock(originalClassName: PublicationTombstone::class));
+
+		$response = $this->controller->publication(id: 'draft-1');
+
+		$this->assertSame(expected: 404, actual: $response->getStatus());
+		$this->assertSame(expected: ['error' => 'Publication not found'], actual: $response->getData());
+	}
+
+	/**
+	 * A served publication never asks for a tombstone.
+	 *
+	 * @return void
+	 */
+	public function testAServedPublicationNeverAsksForATombstone(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->publicationService->method('getFederatedPublication')
+			->willReturn(['data' => ['id' => 'pub-2'], 'status' => 200, 'federated' => true]);
+		$tombstones = $this->createMock(originalClassName: PublicationTombstone::class);
+		$tombstones->expects($this->never())->method('tombstone');
+		$this->tombstonesAre(tombstones: $tombstones);
+
+		$this->assertSame(expected: 200, actual: $this->controller->publication(id: 'pub-2')->getStatus());
 	}
 
 	public function testPublicationReturns500OnException(): void {

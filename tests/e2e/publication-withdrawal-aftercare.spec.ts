@@ -8,7 +8,8 @@
  * an internal reason, a public reason and Show the title ticked. The stored
  * depublication carries both reasons and the choice, and the publication's
  * public link answers 410 with its id, the moment, the public reason and the
- * title, and nothing else of the record. Withdrawn without the title, the
+ * title, and nothing else of the record; the federation route the portal
+ * reads answers the same tombstone. Withdrawn without the title, the
  * tombstone carries no title.
  *
  * The withdrawal also freezes the publication (REQ-PWA-003). Opened by the
@@ -50,12 +51,12 @@ test.describe('Publication withdrawal aftercare', () => {
 		const catalog = await publicationCatalog(admin, 'e2e-tombstone')
 		const shown = await fx.createPublication(
 			'tombstone-shown',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			{ status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
 			REG_PUBLICATION,
 		)
 		const hidden = await fx.createPublication(
 			'tombstone-hidden',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			{ status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
 			REG_PUBLICATION,
 		)
 
@@ -91,6 +92,14 @@ test.describe('Publication withdrawal aftercare', () => {
 			storageState: { cookies: [], origins: [] },
 		})
 		try {
+			// The public read rule ends at `depublicationDate $gte $now`, so the
+			// withdrawal's own second still reads; the tombstone follows after it.
+			await expect
+				.poll(
+					async () => (await anonymous.get(`${API_BASE}/${encodeURIComponent(catalog.slug)}/${hidden.id}`)).status(),
+					{ timeout: 5000 },
+				)
+				.toBe(410)
 			const tombstone = await anonymous.get(
 				`${API_BASE}/${encodeURIComponent(catalog.slug)}/${shown.id}`,
 			)
@@ -112,6 +121,14 @@ test.describe('Publication withdrawal aftercare', () => {
 			)
 			expect(untitled.status()).toBe(410)
 			expect(await untitled.json()).not.toHaveProperty('title')
+
+			// The portal reads a publication through the federation route: a
+			// withdrawn link answers the same tombstone there.
+			const federated = await anonymous.get(
+				`${API_BASE}/federation/publications/${shown.id}`,
+			)
+			expect(federated.status()).toBe(410)
+			expect(await federated.json()).toEqual(body)
 		} finally {
 			await anonymous.dispose()
 		}
@@ -120,7 +137,7 @@ test.describe('Publication withdrawal aftercare', () => {
 		const catalog = await publicationCatalog(admin, 'e2e-frozen-page')
 		const publication = await fx.createPublication(
 			'frozen-page',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			{ status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
 			REG_PUBLICATION,
 		)
 
@@ -135,7 +152,14 @@ test.describe('Publication withdrawal aftercare', () => {
 			`${APP_BASE}/publications/${encodeURIComponent(catalog.slug)}/${publication.id}`,
 		)
 		const note = page.getByTestId('publication-frozen')
-		await expect(note).toBeVisible()
+		// The detail grid mounts a widget when it scrolls into view, and the
+		// status widget sits below the fold: scroll the page down to it.
+		await expect(page.locator('[gs-id]').first()).toBeAttached()
+		await page.mouse.move(800, 400)
+		await expect(async () => {
+			await page.mouse.wheel(0, 400)
+			await expect(note).toBeVisible({ timeout: 500 })
+		}).toPass({ timeout: 20000 })
 		await expect(note).toContainText('Frozen on')
 		await expect(note).toContainText('AVG-melding 14')
 
