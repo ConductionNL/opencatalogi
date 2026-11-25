@@ -286,6 +286,18 @@ class PublicationStateControllerTest extends TestCase {
 							$this->freezes[] = ['identifier' => $request->identifier, 'reason' => $request->reason];
 							return ['uuid' => $request->identifier, 'frozen' => ['by' => 'redacteur', 'reason' => $request->reason]];
 						}
+
+						/**
+						 * OpenRegister's ArchiveHandlerInterface::unfreezeWith() signature; records the unfreeze.
+						 *
+						 * @param \OCA\OpenRegister\Service\Object\ObjectStateRequest $request The object and why.
+						 *
+						 * @return array{uuid: string, frozen: null} The cleared marker.
+						 */
+						public function unfreezeWith(\OCA\OpenRegister\Service\Object\ObjectStateRequest $request): array {
+							$this->freezes[] = ['unfreeze' => $request->identifier, 'reason' => $request->reason];
+							return ['uuid' => $request->identifier, 'frozen' => null];
+						}
 					};
 				}
 
@@ -394,7 +406,8 @@ class PublicationStateControllerTest extends TestCase {
 					config: $config,
 					logger: $this->createMock(originalClassName: LoggerInterface::class)
 				)
-			)
+			),
+			$freezer
 		);
 		$this->controller = ($this->build)(null);
 		$this->container = $container;
@@ -1064,6 +1077,60 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertCount(1, $this->saves);
 		$this->assertArrayNotHasKey('depublicationDate', $this->saves[0]['object']);
 		$this->assertTrue($this->saves[0]['rbac']);
+	}
+
+	/**
+	 * REQ-PPW-003 with the 25 Nov 2026 decision: publishing a withdrawn, frozen publication again first lifts the
+	 * withdrawal's freeze in OpenRegister with the editor's reason, then publishes.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 */
+	public function testPublishAgainLiftsTheWithdrawalFreeze(): void {
+		$controller = ($this->build)(
+			new PublicationFreezer(container: $this->container, logger: $this->createMock(originalClassName: LoggerInterface::class))
+		);
+		$this->publication = [
+			'id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00',
+			'depublicationDate' => '2026-09-29T09:00:00+00:00',
+			'@self' => ['id' => 'p1', 'frozen' => ['by' => 'redacteur', 'at' => '2026-09-29T09:00:02+00:00', 'reason' => 'Wrong annex']],
+		];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(params: ['reason' => 'Annex corrected', 'confirmNoDocuments' => true]);
+
+		$response = $controller->publish(id: 'p1');
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus(), message: json_encode($response->getData()));
+		$this->assertSame(expected: [['unfreeze' => 'p1', 'reason' => 'Annex corrected']], actual: $this->freezes);
+		$this->assertCount(expectedCount: 1, haystack: $this->saves);
+	}
+
+	/**
+	 * A freeze set long after the withdrawal (a legal hold) is not lifted by publishing again: 409, nothing saved.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 */
+	public function testPublishAgainKeepsAFreezeThatIsNotTheWithdrawals(): void {
+		$controller = ($this->build)(
+			new PublicationFreezer(container: $this->container, logger: $this->createMock(originalClassName: LoggerInterface::class))
+		);
+		$this->publication = [
+			'id' => 'p1', 'status' => 'published', 'publicationDate' => '2026-09-01T09:00:00+00:00',
+			'depublicationDate' => '2026-09-29T09:00:00+00:00',
+			'@self' => ['id' => 'p1', 'frozen' => ['by' => 'archivaris', 'at' => '2026-10-15T12:00:00+00:00', 'reason' => 'Legal hold']],
+		];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(params: ['confirmNoDocuments' => true]);
+
+		$response = $controller->publish(id: 'p1');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: 'frozen', actual: $response->getData()['error']);
+		$this->assertSame(expected: [], actual: $this->freezes);
+		$this->assertSame(expected: [], actual: $this->saves);
 	}
 
 	/**
