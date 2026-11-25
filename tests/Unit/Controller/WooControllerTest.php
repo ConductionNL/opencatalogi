@@ -393,4 +393,27 @@ class WooControllerTest extends TestCase {
 		$attributes = (new \ReflectionMethod(WooController::class, 'verifyRedaction'))->getAttributes(\OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting::class);
 		$this->assertCount(1, $attributes, 'the same right as updateAssessment');
 	}//end testVerifyRedactionOfAMissingAssessmentIs400AndTheRouteIsAPost()
+
+	/**
+	 * A category the administrator hid is not offered to an officer (REQ-WVL-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/tasks.md#task-4.2
+	 */
+	public function testAHiddenCategoryIsNotOffered(): void {
+		$this->authenticate();
+		$registry = $this->createMock(\OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface::class);
+		$registry->method('all')->willReturn([
+			'infocat007' => ['label' => 'Vergaderstukken Staten-Generaal', 'labelEn' => 'Meeting documents of the States General', 'tooiUri' => 'u7', 'mapsTo' => 'infocat007', 'origin' => 'waardelijst', 'sitemapFile' => 'f7', 'hidden' => true],
+			'infocat011' => ['label' => 'Convenanten', 'labelEn' => 'Covenants', 'tooiUri' => 'u11', 'mapsTo' => 'infocat011', 'origin' => 'waardelijst', 'sitemapFile' => 'f11', 'hidden' => false],
+		]);
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
+		$controller = new WooController('opencatalogi', $this->request, $this->wooService, $l10n, $this->userSession, $registry);
+
+		$rows = $controller->categories()->getData()['results'];
+
+		$this->assertSame(['infocat011'], array_column($rows, 'code'));
+	}//end testAHiddenCategoryIsNotOffered()
 }//end class

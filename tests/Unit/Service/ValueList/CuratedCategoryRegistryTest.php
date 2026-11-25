@@ -92,7 +92,7 @@ class CuratedCategoryRegistryTest extends TestCase {
 		])->all();
 
 		$this->assertSame(expected: ['infocat013', 'subsidieregeling', 'infocat011', 'infocat001'], actual: array_keys($all));
-		$this->assertSame(expected: self::set()['infocat001'], actual: $all['infocat001']);
+		$this->assertSame(expected: self::set()['infocat001'] + ['hidden' => false], actual: $all['infocat001']);
 	}//end testTheAdministratorsOrderWins()
 
 	/**
@@ -140,18 +140,20 @@ class CuratedCategoryRegistryTest extends TestCase {
 		$this->assertSame(expected: 'Wetten', actual: $registry->resolveForDocument(value: 'infocat001')['label']);
 	}//end testEveryOtherAnswerIsTheWrappedRegistrys()
 	/**
-	 * A hidden category is not offered, nor the local category under it; all() keeps both for the sitemaps.
+	 * A hidden category, and the local category under it, stay in the set marked hidden; the sitemaps are untouched.
 	 *
 	 * @return void
 	 */
-	public function testAHiddenCategoryIsNotOfferedButKeepsItsSitemap(): void {
+	public function testAHiddenCategoryStaysInTheSetMarkedHidden(): void {
 		$registry = $this->registry(choices: [self::KERN . 'c_cf268088' => ['order' => null, 'hidden' => true]]);
+		$all = $registry->all();
 
-		$this->assertSame(expected: ['infocat001', 'infocat011'], actual: array_keys($registry->offered()));
-		$this->assertArrayHasKey(key: 'infocat013', array: $registry->all());
-		$this->assertArrayHasKey(key: 'subsidieregeling', array: $registry->all());
+		$this->assertSame(expected: array_keys(self::set()), actual: array_keys($all));
+		$this->assertTrue(condition: $all['infocat013']['hidden']);
+		$this->assertTrue(condition: $all['subsidieregeling']['hidden']);
+		$this->assertFalse(condition: $all['infocat011']['hidden']);
 		$this->assertSame(expected: ['sitemapindex-diwoo-infocat001.xml' => 'Wetten'], actual: $registry->sitemapFiles());
-	}//end testAHiddenCategoryIsNotOfferedButKeepsItsSitemap()
+	}//end testAHiddenCategoryStaysInTheSetMarkedHidden()
 
 	/**
 	 * Unreadable choices hide nothing.
@@ -159,6 +161,8 @@ class CuratedCategoryRegistryTest extends TestCase {
 	 * @return void
 	 */
 	public function testUnreadableChoicesHideNothing(): void {
-		$this->assertSame(expected: array_keys(self::set()), actual: array_keys($this->registry(choices: null)->offered()));
+		$all = $this->registry(choices: null)->all();
+
+		$this->assertSame(expected: [], actual: array_filter(array_column($all, 'hidden')));
 	}//end testUnreadableChoicesHideNothing()
 }//end class

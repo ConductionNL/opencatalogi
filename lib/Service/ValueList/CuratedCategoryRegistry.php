@@ -12,7 +12,8 @@
  * the wrapped registry's answer, unchanged: the sitemaps, robots.txt and the
  * national index keep every category, so a hidden category's sitemap index is
  * still served (empty, since a category with publications cannot be hidden).
- * {@see offered()} is the officer's list: {@see all()} without the hidden ones.
+ * Each record says whether the administrator hid it (`hidden`), so the
+ * officer's list can leave it out while the sitemaps keep it.
  * Ordering and hiding decide what an officer is offered, never what is published.
  *
  * @category Service
@@ -57,13 +58,6 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 	private ?array $ordered = null;
 
 	/**
-	 * Per-request cache of the choices the order came from; empty when they could not be read.
-	 *
-	 * @var array<string, array<string, mixed>>
-	 */
-	private array $choiceCache = [];
-
-	/**
 	 * Constructor.
 	 *
 	 * @param WooCategoryRegistry  $registry The set of categories.
@@ -79,7 +73,10 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 	}//end __construct()
 
 	/**
-	 * Every category, keyed by code, in the administrator's order.
+	 * Every category, keyed by code, in the administrator's order, each with `hidden`.
+	 *
+	 * A hidden category stays in the set: the sitemaps and the completeness
+	 * checks keep reading it. Only the officer's list leaves it out.
 	 *
 	 * When the choices cannot be read the set is answered in its own order:
 	 * an unreadable order never hides or drops a category.
@@ -100,29 +97,11 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 			return $set;
 		}
 
-		$this->choiceCache = $choices;
 		$this->ordered = self::inOrder(set: $set, choices: $choices);
 
 		return $this->ordered;
 
 	}//end all()
-
-	/**
-	 * The categories an officer is offered: {@see all()} without the ones the administrator hid.
-	 *
-	 * A local category goes with the member it publishes under. When the
-	 * choices cannot be read nothing is hidden.
-	 *
-	 * @return array<string, array<string, mixed>>
-	 *
-	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-categories-that-do-not-apply-are-hidden-and-their-sitemap-stays-valid-req-wvl-004
-	 */
-	public function offered(): array {
-		$all = $this->all();
-
-		return self::visible(set: $all, choices: $this->choiceCache);
-
-	}//end offered()
 
 	/**
 	 * The local categories the set refused, code → reason.
@@ -205,23 +184,7 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 	}//end resolveForDocument()
 
 	/**
-	 * The set without the categories the administrator hid; a local category goes with the member it publishes under.
-	 *
-	 * @param array<string, array<string, mixed>>  $set     The categories, keyed by code.
-	 * @param array<string, array<string, mixed>> $choices The choices by entry URI.
-	 *
-	 * @return array<string, array<string, mixed>>
-	 */
-	private static function visible(array $set, array $choices): array {
-		return array_filter(
-			$set,
-			static fn (array $record): bool => (($choices[(string)($record['tooiUri'] ?? '')]['hidden'] ?? false) !== true)
-		);
-
-	}//end visible()
-
-	/**
-	 * The set in the order of the choices: ordered first, lowest first, then the set's own order.
+	 * The set in the order of the choices (ordered first, lowest first, then the set's own order), each record marked `hidden`.
 	 *
 	 * @param array<string, array<string, mixed>>  $set     The categories, keyed by code.
 	 * @param array<string, array<string, mixed>> $choices The choices by entry URI.
@@ -232,7 +195,9 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 		$keys = [];
 		$position = 0;
 		foreach ($set as $code => $record) {
-			$order = ($choices[(string)($record['tooiUri'] ?? '')]['order'] ?? null);
+			$choice = ($choices[(string)($record['tooiUri'] ?? '')] ?? []);
+			$set[$code]['hidden'] = (($choice['hidden'] ?? false) === true);
+			$order = ($choice['order'] ?? null);
 			$unordered = (int)($order === null);
 			$keys[$code] = [$unordered, (int)$order, $position];
 			$position++;
