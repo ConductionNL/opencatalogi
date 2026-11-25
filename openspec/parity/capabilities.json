@@ -6840,14 +6840,15 @@
 			"name": "Map a source system's metadata onto the Woo-index fields (publisher, official title, category, document action) and change that mapping without a developer.",
 			"origin": "tender",
 			"originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/407973",
-			"opencatalogi": "partial",
+			"opencatalogi": "yes",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/integriq",
-				"evidence": "source read at integriq development 5e903e546: integriq's half is archived (2026-09-29-mapping-woo-index-field-mapping, 8 of 8 tasks): MappingExecutionRequestedEvent (lib/Event/MappingExecutionRequestedEvent.php:40) runs a mapping by slug for an app named in callableBy, and lib/Settings/register.d/mapping-woo-index-field-mapping.json:23-26 seeds woo-index-publication, editable on integriq's /mappings pages. Source read at opencatalogi development 7a5a8a492: opencatalogi does not use it: git grep MappingExecutionRequested, woo-index-publication and officieleTitel in lib and src finds nothing; the sitemap still maps in code (lib/Service/SitemapService.php mapDiwooDocument).",
+				"evidence": "WooIndexFieldMapper asks integriq's woo-index-publication mapping (MappingExecutionRequestedEvent) for publisher, officieleTitel, informatiecategorie and soortHandeling, falls back per field to its own reads, and validates mapped values like built-in ones (REQ-WIM-001..004). Verified live 25 Nov 2026 on a sandbox instance: an edit of officieleTitel on the mapping reaches the anonymous sitemap once integriq#3934 (unscoped mapping lookup for app events) merged.",
 				"change": "woo-index-fields-from-the-mapping",
 				"readOn": "2026-10-07",
-				"requirement": "openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance :: Woo-index fields come from the editable mapping when integriq answers (REQ-WIM-001)"
+				"requirement": "openspec/specs/woo-compliance :: Woo-index fields come from the editable mapping when integriq answers (REQ-WIM-001)",
+				"plan": "openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping"
 			},
 			"reachedOn": "integriq /mappings editor; the fixed DIWOO mapping is reached on /api/{catalogSlug}/sitemaps/{categoryCode}/publications",
 			"provider": "integriq",

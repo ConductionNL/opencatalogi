@@ -42,7 +42,9 @@ function daysFromNow(days: number): string {
  * @param id The publication id.
  */
 async function anonymousSearchFinds(anonymous: APIRequestContext, title: string, id: string): Promise<boolean> {
-	const answer = await anonymous.post(`${API_BASE}/publications/search`, { data: { _search: title } })
+	// The public search is GET /api/search; POST /api/publications/search is the
+	// publication-rules search, which reads `records` and `rules`, not `_search`.
+	const answer = await anonymous.get(`${API_BASE}/search`, { params: { _search: title } })
 	expect(answer.ok(), 'anonymous search must answer').toBe(true)
 	const body = await answer.json()
 	const rows: Array<Record<string, unknown>> = body.results ?? []
@@ -98,14 +100,17 @@ test.describe('Publication lifecycle', () => {
 	test('publish now moves the lifecycle', async ({ request: admin }) => {
 		const publication = await fx.createPublication('publish-now', { status: 'approved' }, REG_PUBLICATION)
 
-		const published = await admin.post(`${API_BASE}/publications/${publication.id}/publish`)
+		// The fixture carries no documents; publishing one without asks for this confirmation.
+		const published = await admin.post(`${API_BASE}/publications/${publication.id}/publish`, {
+			data: { confirmNoDocuments: true },
+		})
 		expect(published.ok()).toBe(true)
 		expect((await published.json()).state).toBe('public')
 
 		const visibility = await admin.get(`${API_BASE}/publications/${publication.id}/visibility`)
 		expect((await visibility.json()).state).toBe('public')
 
-		const stored = await admin.get(`/index.php/apps/openregister/api/objects/${publication.id}`)
+		const stored = await admin.get(`/index.php/apps/openregister/api/objects/publication/publication/${publication.id}`)
 		const body = await stored.json()
 		expect(body.status).toBe('published')
 		expect(body.publicationDate).toBeTruthy()

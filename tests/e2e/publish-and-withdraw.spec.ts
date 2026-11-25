@@ -46,7 +46,7 @@ test.describe('Publish and withdraw in one action', () => {
 	}) => {
 		const publication = await fx.createPublication(
 			'withdraw',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			{ status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
 			REG_PUBLICATION,
 		)
 
@@ -84,8 +84,10 @@ test.describe('Publish and withdraw in one action', () => {
 		)
 		expect(again.status()).toBe(409)
 
+		// The fixture carries no documents; publishing one without asks for this confirmation.
 		const republished = await admin.post(
 			`${API_BASE}/publications/${publication.id}/publish`,
+			{ data: { confirmNoDocuments: true } },
 		)
 		expect(republished.ok()).toBe(true)
 		const restored = await admin.get(
@@ -97,7 +99,7 @@ test.describe('Publish and withdraw in one action', () => {
 	test('a caller without a session cannot withdraw', async ({ playwright }) => {
 		const publication = await fx.createPublication(
 			'anonymous',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			{ status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
 			REG_PUBLICATION,
 		)
 		const anonymous = await playwright.request.newContext({
@@ -119,7 +121,7 @@ test.describe('Publish and withdraw in one action', () => {
 	}) => {
 		const publication = await fx.createPublication(
 			'annex',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			{ status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
 			REG_PUBLICATION,
 		)
 		const annex = await fx.attachFile(
@@ -172,7 +174,7 @@ test.describe('Publish and withdraw in one action', () => {
 	}) => {
 		const publication = await fx.createPublication(
 			'annex-seen',
-			{ publicationDate: '2026-01-05T09:00:00+00:00' },
+			{ status: 'published', publicationDate: '2026-01-05T09:00:00+00:00' },
 			REG_PUBLICATION,
 		)
 		const annex = await fx.attachFile(

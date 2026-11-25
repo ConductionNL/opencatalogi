@@ -673,7 +673,9 @@ class PublicationStateController extends Controller {
 
 		return $this->recordRepublication(
 			republication: [
-				'publication' => ['id' => $id],
+				// The depublication schema holds the publication as its uuid string; an
+				// array here was refused by validation, so every put-back answered 503.
+				'publication' => $id,
 				'file' => $fileId,
 				'reason' => $reason,
 				'depublishedBy' => $this->actor(),

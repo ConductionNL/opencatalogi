@@ -1687,7 +1687,7 @@
 					"showAdd": true,
 					"showEditAction": false,
 					"showCopyAction": false,
-					"showDeleteAction": false,
+					"showDeleteAction": true,
 					"showMassImport": false,
 					"showMassExport": false,
 					"showMassCopy": false,

@@ -1635,7 +1635,7 @@ export default defineComponent({
 		 *
 		 * @param {{source: string, refusal: ?{code: string, reason: string}}} mapping The report's `mapping`.
 		 * @return {string} The line.
-		 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
+		 * @spec openspec/changes/archive/2026-11-25-woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
 		 */
 		wooIndexMappingLine(mapping) {
 			const line = mapping.source === 'integriq'
