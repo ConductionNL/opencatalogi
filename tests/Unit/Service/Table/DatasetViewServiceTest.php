@@ -238,6 +238,22 @@ class DatasetViewServiceTest extends TestCase {
 	}//end testTheViewsOfATableAreListedByPositionWithTheirDataUrl()
 
 	/**
+	 * A new view that names no position goes after the views the table already has.
+	 *
+	 * @return void
+	 */
+	public function testANewViewWithoutAPositionGoesLast(): void {
+		$this->objects->method('searchObjectsPaginated')->willReturn(
+			['results' => [['id' => 'v1', 'table' => 't1', 'kind' => 'bar', 'title' => 'Per wijk', 'position' => 0]]]
+		);
+		$this->objects->expects($this->once())->method('saveObject')
+			->with($this->callback(static fn (array $record): bool => $record['position'] === 1))
+			->willReturn($this->entity(data: ['id' => 'v2']));
+
+		$this->service->save(view: ['kind' => 'table', 'title' => 'Alle speeltuinen', 'columns' => ['naam']], table: self::TABLE);
+	}//end testANewViewWithoutAPositionGoesLast()
+
+	/**
 	 * A view that cannot be found answers null.
 	 *
 	 * @return void

@@ -109,6 +109,13 @@ class DatasetViewService implements DatasetViewServiceInterface {
 			$uuid = self::idOf(record: $view);
 		}
 
+		// A new view that names no place goes last. Left at 0 it tied with the
+		// views before it and the title broke the tie, so a view added through
+		// the API could land above the ones already on the page.
+		if ($uuid === null && array_key_exists('position', $view) === false) {
+			$record['position'] = count($this->viewsOf(tableId: (string)$record['table']));
+		}
+
 		$saved = $this->registers->objectService()->saveObject(
 			object: $record,
 			options: new ObjectSaveOptions(

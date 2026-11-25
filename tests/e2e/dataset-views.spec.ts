@@ -139,8 +139,11 @@ test.describe('views on a published table', () => {
 		const dialog = page.locator('[data-testid="dataset-view-dialog"]')
 		await expect(dialog).toBeVisible()
 		await choose(page, 'dataset-view-kind', BAR)
+		// By its label, not `[data-testid] input`: nextcloud-vue 9's NcTextField
+		// passes its attributes to the <input> itself, so the testid is ON the
+		// input and a descendant `input` never matches.
 		await dialog
-			.locator('[data-testid="dataset-view-title"] input')
+			.getByLabel('Title readers see')
 			.fill('Playgrounds per district')
 		await choose(page, 'dataset-view-x', /^wijk$/)
 		await choose(page, 'dataset-view-aggregate', COUNT)
