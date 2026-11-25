@@ -517,6 +517,9 @@ export default {
 			targetRegister: null,
 			targetSchema: null,
 			sourceProperties: [],
+			// The source schema as OpenRegister answers it, fetched when the
+			// selected object names its schema by id only.
+			sourceSchemaDetail: null,
 			targetProperties: [],
 			mapping: {},
 			// Go-between variable for UI binding - maps source properties to selected target options
@@ -551,9 +554,11 @@ export default {
 			if (typeof register === 'object') {
 				return register
 			}
-			// If it's just an ID, try to find it in available registers
+			// If it's just an ID, find it among the registers this dialog
+			// loaded (OpenRegister may answer the id as a number or a string).
 			return (
-				objectStore.availableRegisters.find((r) => r.id === register) || {
+				this.availableRegisters.find((r) => String(r.id) === String(register))
+				|| objectStore.availableRegisters?.find((r) => String(r.id) === String(register)) || {
 					id: register,
 					title: register,
 				}
@@ -562,6 +567,7 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		sourceSchema() {
+			if (this.sourceSchemaDetail) return this.sourceSchemaDetail
 			// Get schema info from the first selected object
 			if (this.selectedObjects.length === 0) return null
 			const firstObject = this.selectedObjects[0]
@@ -571,7 +577,7 @@ export default {
 			}
 			// If it's just an ID, try to find it in available schemas
 			return (
-				objectStore.availableSchemas.find((s) => s.id === schema) || {
+				objectStore.availableSchemas?.find((s) => String(s.id) === String(schema)) || {
 					id: schema,
 					title: schema,
 				}
@@ -749,8 +755,19 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async loadPropertyLists() {
-			// Load source schema properties
-			this.sourceProperties = this.extractSchemaProperties(this.sourceSchema)
+			// Load source schema properties. A selected object names its schema
+			// by id; without the schema definition there is nothing to map, so
+			// fetch it (as for the target).
+			// @spec openspec/specs/publication-merge-and-migration/spec.md
+			let source = this.sourceSchema
+			if (!source?.properties && source?.id !== undefined && source?.id !== null) {
+				const sourceResponse = await fetch(
+					`/index.php/apps/openregister/api/schemas/${source.id}`,
+				)
+				source = await sourceResponse.json()
+				this.sourceSchemaDetail = source
+			}
+			this.sourceProperties = this.extractSchemaProperties(source)
 
 			// Load target schema properties
 			const response = await fetch(
