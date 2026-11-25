@@ -204,7 +204,7 @@ describe('src/main.js', () => {
 		expect(manifest.pages[0]).toEqual(PAGES[0])
 	})
 
-	it('mounts the app with the manifest, components and page types, and installs editor, store and router', async () => {
+	it('mounts the app with the manifest, components and page types, and installs store and router', async () => {
 		const app = await runMain()
 		const vnode = app.root.render()
 
@@ -213,12 +213,13 @@ describe('src/main.js', () => {
 		expect(vnode.props.pageTypes).not.toBe(lib.defaultPageTypes)
 		expect(app.config.globalProperties.$vMdEditorLang).toBe('en-US')
 		expect(app.config.globalProperties.$vMdEditorLangConfig).toEqual({ 'en-US': { lang: 'en-US' } })
-		expect(app.use).toHaveBeenCalledTimes(3)
-		expect(app.use.mock.calls[0][0]).toBe(editor)
-		expect(app.use.mock.calls[2][0]).toEqual({ options: expect.any(Object) })
+		// The markdown editor loads on demand (components/markdownEditorSetup.js),
+		// so boot installs only the store and the router.
+		expect(app.use).toHaveBeenCalledTimes(2)
+		expect(app.use.mock.calls.map((call) => call[0])).not.toContain(editor)
+		expect(app.use.mock.calls[1][0]).toEqual({ options: expect.any(Object) })
 		expect(app.mount).toHaveBeenCalledExactlyOnceWith('#opencatalogi')
-		expect(editor.use).toHaveBeenCalledWith({ theme: 'github' }, { Hljs: { hljs: true } })
-		expect(editor.lang.use).toHaveBeenCalledWith('en-US', { lang: 'en-US' })
+		expect(editor.use).not.toHaveBeenCalled()
 		expect(lib.registerIcons).toHaveBeenCalledOnce()
 	})
 
@@ -253,13 +254,14 @@ describe('src/main.js', () => {
 })
 
 describe('src/settings.js', () => {
-	it('mounts the admin settings with the markdown editor on its own host', async () => {
+	it('mounts the admin settings on its own host, without loading the markdown editor', async () => {
 		await import('../../src/settings.js')
 		const app = vueApp.apps[vueApp.apps.length - 1]
 
 		expect(app.root).toEqual({ name: 'AdminSettings' })
 		expect(app.config.globalProperties.$vMdEditorLang).toBe('en-US')
-		expect(app.use).toHaveBeenCalledExactlyOnceWith(editor)
+		expect(app.use).not.toHaveBeenCalled()
+		expect(editor.use).not.toHaveBeenCalled()
 		expect(app.mixin).toHaveBeenCalledOnce()
 		expect(Object.keys(app.mixin.mock.calls[0][0].methods)).toEqual(['t', 'n'])
 		expect(app.mount).toHaveBeenCalledExactlyOnceWith('#opencatalogi-settings')
