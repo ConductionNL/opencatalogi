@@ -85,7 +85,7 @@ class PublicationsCorsOnErrorsTest extends TestCase {
 	 * @spec openspec/changes/publications/specs/publications/spec.md#req-pub-010-all-public-endpoints-include-cors-headers
 	 */
 	public function testAFailingListAnswers500WithCors(): void {
-		$catalogi = $this->createMock(CatalogiServiceInterface::class);
+		$catalogi = $this->createMock(originalClassName: CatalogiServiceInterface::class);
 		$catalogi->method('getCatalogBySlug')->willThrowException(new RuntimeException('database down'));
 
 		$response = $this->controller(catalogi: $catalogi)->index(catalogSlug: 'woo');
@@ -116,7 +116,7 @@ class PublicationsCorsOnErrorsTest extends TestCase {
 	 * @return CatalogiServiceInterface The service.
 	 */
 	private function catalogiAnswering(?array $catalog): CatalogiServiceInterface {
-		$catalogi = $this->createMock(CatalogiServiceInterface::class);
+		$catalogi = $this->createMock(originalClassName: CatalogiServiceInterface::class);
 		$catalogi->method('getCatalogBySlug')->willReturn($catalog);
 		return $catalogi;
 	}//end catalogiAnswering()
@@ -129,31 +129,43 @@ class PublicationsCorsOnErrorsTest extends TestCase {
 	 * @return PublicationsController The controller.
 	 */
 	private function controller(CatalogiServiceInterface $catalogi): PublicationsController {
-		$request = $this->createMock(ServerAwareRequest::class);
+		$request = $this->createMock(originalClassName: ServerAwareRequest::class);
 		$request->method('getHeader')->willReturnCallback(
-			static fn (string $name): string => ($name === 'Origin' ? self::ORIGIN : '')
+			static function (string $name): string {
+				if ($name === 'Origin') {
+					return self::ORIGIN;
+				}
+
+				return '';
+			}
 		);
 		$request->server = ['HTTP_ORIGIN' => self::ORIGIN];
 
-		$config = $this->createMock(IAppConfig::class);
+		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
-			static fn (string $app, string $key, string $default = ''): string => ($key === 'cors_allowed_origins' ? self::ORIGIN : $default)
+			static function (string $app, string $key, string $default = ''): string {
+				if ($key === 'cors_allowed_origins') {
+					return self::ORIGIN;
+				}
+
+				return $default;
+			}
 		);
 
-		$l10n = $this->createMock(IL10N::class);
-		$l10n->method('t')->willReturnArgument(0);
+		$l10n = $this->createMock(originalClassName: IL10N::class);
+		$l10n->method('t')->willReturnArgument(argumentIndex: 0);
 
 		return new PublicationsController(
 			'opencatalogi',
 			$request,
-			$this->createMock(PublicationServiceInterface::class),
+			$this->createMock(originalClassName: PublicationServiceInterface::class),
 			$catalogi,
-			$this->createMock(PublicationQueryServiceInterface::class),
-			$this->createMock(ContainerInterface::class),
-			$this->createMock(IAppManager::class),
-			$this->createMock(LoggerInterface::class),
+			$this->createMock(originalClassName: PublicationQueryServiceInterface::class),
+			$this->createMock(originalClassName: ContainerInterface::class),
+			$this->createMock(originalClassName: IAppManager::class),
+			$this->createMock(originalClassName: LoggerInterface::class),
 			$l10n,
-			$this->createMock(UsageCounterServiceInterface::class),
+			$this->createMock(originalClassName: UsageCounterServiceInterface::class),
 			$config
 		);
 	}//end controller()

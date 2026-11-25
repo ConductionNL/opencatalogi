@@ -17,7 +17,7 @@
  * @e2e openspec/changes/publications/specs/publications/spec.md
  */
 
-import { request as playwrightRequest, expect, test } from '@playwright/test'
+import { expect, request as playwrightRequest, test } from '@playwright/test'
 import { publicationCatalog } from './publication-catalog.ts'
 
 const API = '/index.php/apps/opencatalogi/api'
