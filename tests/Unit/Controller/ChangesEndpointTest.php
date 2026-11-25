@@ -200,8 +200,14 @@ class ChangesEndpointTest extends TestCase {
 						continue;
 					}
 
+					if (isset($query['status']) === true && $query['status'] !== $publication['status']) {
+						continue;
+					}
+
 					$rows[] = [
 						'title' => $publication['title'],
+						'status' => $publication['status'],
+						'firstReleasedAt' => $publication['firstReleasedAt'],
 						'@self' => ['uuid' => $publication['uuid'], 'updated' => $publication['updated'], 'schema' => 2],
 					];
 				}
@@ -287,10 +293,12 @@ class ChangesEndpointTest extends TestCase {
 	 * @param string $updated Its last change.
 	 * @param bool $public Whether an anonymous visitor may read it.
 	 * @param int $register Its register.
+	 * @param string $status Its stored lifecycle state.
+	 * @param string|null $firstReleasedAt When it was first published, if ever.
 	 *
 	 * @return void
 	 */
-	private function publication(string $uuid, string $updated, bool $public, int $register = 1): void {
+	private function publication(string $uuid, string $updated, bool $public, int $register = 1, string $status = 'published', ?string $firstReleasedAt = null): void {
 		$this->store->publications[] = [
 			'uuid' => $uuid,
 			'title' => 'Title of ' . $uuid,
@@ -298,6 +306,8 @@ class ChangesEndpointTest extends TestCase {
 			'public' => $public,
 			'register' => $register,
 			'schema' => 2,
+			'status' => $status,
+			'firstReleasedAt' => $firstReleasedAt,
 		];
 	}
 
@@ -472,6 +482,39 @@ class ChangesEndpointTest extends TestCase {
 
 		$this->assertSame([], $data['withdrawn']);
 		$this->assertStringNotContainsString('draft', (string)json_encode($data));
+	}
+
+	/**
+	 * A publication the lifecycle archived after its first release is reported as withdrawn, with no
+	 * depublication record. An archived draft that was never released, one archived before the
+	 * moment and one of another catalogue are not.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-withdrawn-record-is-reported-not-shown-oai-007
+	 */
+	public function testAnArchivedOncePublicPublicationIsListed(): void {
+		$this->publication(uuid: 'archived', updated: '2026-11-13T09:00:00+00:00', public: false, status: 'archived', firstReleasedAt: '2026-11-01T08:00:00Z');
+		$this->publication(uuid: 'never-released', updated: '2026-11-13T09:00:00Z', public: false, status: 'archived');
+		$this->publication(uuid: 'archived-long-ago', updated: '2026-11-01T09:00:00Z', public: false, status: 'archived', firstReleasedAt: '2026-10-01T08:00:00Z');
+		$this->publication(uuid: 'elsewhere', updated: '2026-11-13T09:00:00Z', public: false, register: 9, status: 'archived', firstReleasedAt: '2026-11-01T08:00:00Z');
+		$this->publication(uuid: 'withdrawn', updated: '2026-11-13T08:00:00Z', public: false);
+		$this->store->depublications[] = ['publication' => 'withdrawn', 'depublishedAt' => '2026-11-13T08:00:00+00:00'];
+
+		$data = $this->ask(['since' => '2026-11-12T12:00:00Z'])->getData();
+
+		$this->assertSame(
+			[
+				['id' => 'withdrawn', 'withdrawnAt' => '2026-11-13T08:00:00Z'],
+				['id' => 'archived', 'withdrawnAt' => '2026-11-13T09:00:00Z'],
+			],
+			$data['withdrawn']
+		);
+		$this->assertStringNotContainsString('Title of', (string)json_encode($data['withdrawn']));
+
+		$archivedRead = end($this->store->searches);
+		$this->assertFalse($archivedRead['rbac']);
+		$this->assertSame('archived', $archivedRead['query']['status']);
 	}
 
 	/**
