@@ -19,9 +19,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Listener;
 
+use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Listener\HiddenCategoryCheck;
-use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -53,7 +53,7 @@ class HiddenCategoryCheckTest extends TestCase {
 	 * @return HiddenCategoryCheck
 	 */
 	private function check(array $counts, bool $configured = true): HiddenCategoryCheck {
-		$registry = $this->createMock(originalClassName: WooCategoryRegistry::class);
+		$registry = $this->createMock(originalClassName: InformationCategoryRegistryInterface::class);
 		$registry->method('all')->willReturn([
 			'infocat013' => ['code' => 'infocat013', 'label' => 'Subsidieverplichtingen anders dan met beschikking', 'tooiUri' => self::SUBSIDIES],
 			'subsidieregeling' => ['code' => 'subsidieregeling', 'label' => 'Subsidieregeling', 'tooiUri' => self::SUBSIDIES],

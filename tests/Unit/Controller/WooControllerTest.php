@@ -403,17 +403,45 @@ class WooControllerTest extends TestCase {
 	 */
 	public function testAHiddenCategoryIsNotOffered(): void {
 		$this->authenticate();
-		$registry = $this->createMock(\OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface::class);
+		$registry = $this->createMock(originalClassName: \OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface::class);
 		$registry->method('all')->willReturn([
-			'infocat007' => ['label' => 'Vergaderstukken Staten-Generaal', 'labelEn' => 'Meeting documents of the States General', 'tooiUri' => 'u7', 'mapsTo' => 'infocat007', 'origin' => 'waardelijst', 'sitemapFile' => 'f7', 'hidden' => true],
-			'infocat011' => ['label' => 'Convenanten', 'labelEn' => 'Covenants', 'tooiUri' => 'u11', 'mapsTo' => 'infocat011', 'origin' => 'waardelijst', 'sitemapFile' => 'f11', 'hidden' => false],
+			'infocat007' => self::categoryRecord(code: 'infocat007', label: 'Vergaderstukken Staten-Generaal', hidden: true),
+			'infocat011' => self::categoryRecord(code: 'infocat011', label: 'Convenanten', hidden: false),
 		]);
-		$l10n = $this->createMock(IL10N::class);
+		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
-		$controller = new WooController('opencatalogi', $this->request, $this->wooService, $l10n, $this->userSession, $registry);
+		$controller = new WooController(
+			appName: 'opencatalogi',
+			request: $this->request,
+			wooService: $this->wooService,
+			l10n: $l10n,
+			userSession: $this->userSession,
+			categories: $registry
+		);
 
 		$rows = $controller->categories()->getData()['results'];
 
-		$this->assertSame(['infocat011'], array_column($rows, 'code'));
+		$this->assertSame(expected: ['infocat011'], actual: array_column($rows, 'code'));
 	}//end testAHiddenCategoryIsNotOffered()
+
+	/**
+	 * One category record as the registry answers it.
+	 *
+	 * @param string $code   The code.
+	 * @param string $label  The label.
+	 * @param bool   $hidden Whether the administrator hid it.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function categoryRecord(string $code, string $label, bool $hidden): array {
+		return [
+			'label' => $label,
+			'labelEn' => $label,
+			'tooiUri' => 'https://identifier.overheid.nl/tooi/def/thes/kern/' . $code,
+			'mapsTo' => $code,
+			'origin' => 'waardelijst',
+			'sitemapFile' => 'sitemapindex-diwoo-' . $code . '.xml',
+			'hidden' => $hidden,
+		];
+	}//end categoryRecord()
 }//end class

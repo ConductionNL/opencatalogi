@@ -26,8 +26,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
+use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
-use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use Throwable;
 
 /**
@@ -47,13 +47,13 @@ class HiddenCategoryCheck {
 	/**
 	 * Constructor.
 	 *
-	 * @param WooCategoryRegistry         $categories   The set of categories, unordered and unfiltered.
-	 * @param OpenRegisterLookupInterface $openRegister Where the publications are counted.
+	 * @param InformationCategoryRegistryInterface $categories   The set of categories; hidden ones stay in it.
+	 * @param OpenRegisterLookupInterface          $openRegister Where the publications are counted.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
-		private readonly WooCategoryRegistry $categories,
+		private readonly InformationCategoryRegistryInterface $categories,
 		private readonly OpenRegisterLookupInterface $openRegister,
 	) {
 
