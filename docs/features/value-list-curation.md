@@ -1,0 +1,52 @@
+# Curating the national value lists
+
+The national value lists (the Woo information categories, the DiWoo document handling and document types, the languages) are the same for every organisation. How an organisation uses them is its own: which category comes first, how it explains a category to a citizen. OpenCatalogi keeps those choices beside the list, in a value-list choice, so a refresh of the list never overwrites them and a choice never changes the list.
+
+## What a choice holds
+
+One `valueListChoice` object per list entry the organisation has an opinion about, in the publication register:
+
+| Property | Meaning |
+| --- | --- |
+| `scheme` | The list, by the name the value-lists page uses (`informatiecategorieen`, `soortHandeling`, `documentsoorten`, ...). |
+| `entry` | The URI of the list entry. |
+| `order` | Where the entry is offered, lowest first. Entries without an order follow in the list's own order. |
+| `localLabel` | The label the organisation shows instead of the source's. Empty shows the source's label. |
+| `explanation` | What the entry means in the organisation's own words, at most 1,000 characters. |
+| `hidden` | Leave the entry out of pick lists and the public filter. |
+| `active` | For the organisation list: the installation publishes for this organisation. |
+
+The code, the URI and the source's label are not in a choice. They belong to the national list and are refreshed from it. A save that sets one of them, or any property not in the table above, is refused before it is written, and the refusal names the field.
+
+Signed-in users can read choices; only administrators write them.
+
+## In the Woo settings
+
+The admin settings page of OpenCatalogi has a **Category explanations** section with every information category:
+
+- **Explanation.** Write the text and press **Save explanation**. The portal shows it where a citizen chooses the category filter.
+- **Move up / Move down.** Changes the place of a category. The buttons work from the keyboard, and a screen reader hears where the category is now. The order is saved immediately.
+
+When the choices cannot be read, the section says so and shows the categories in the list's own order. No category is hidden because of an error.
+
+## Where the choices show
+
+- `GET /api/woo/categories` (signed-in users) lists the information categories in the administrator's order. The pickers that read it, such as the catalogue's retention defaults, follow that order.
+- `GET /api/woo/categories/public` (anyone, CORS) answers the categories that are not hidden, as `{code, uri, label, explanation, order}`, in the administrator's order, with `choicesUnavailable` when the choices could not be read. This is what a portal's category filter reads.
+- The sitemaps, `robots.txt` and the national-index registration are not affected by the order: ordering decides what an officer sees first, never what is published.
+
+## For integrators
+
+| Route | Who | What |
+| --- | --- | --- |
+| `GET /api/woo/value-list-choices?scheme=<list>` | administrators | The list with the choices applied: `{entries: [{code, uri, sourceLabel, label, explanation, order, hidden, active, status}], choicesUnavailable}`. |
+| `PUT /api/woo/value-list-choices` | administrators | Save one choice: `{scheme, entry, choice: {order?, localLabel?, explanation?, hidden?}}`. |
+| `PUT /api/woo/value-list-choices/order` | administrators | Save an order: `{scheme, entries: [uri, ...]}`, first first. Only the entries whose place changed are written. |
+| `GET /api/woo/categories/public` | anyone | The visible information categories with their explanation. |
+
+A refused save answers `422` with the reason; a request that names an unknown list, no entry, or a field a choice does not have answers `400`.
+
+## Not yet
+
+- The publication form's category, handling and document type pickers render the schema's own list and do not follow the order yet.
+- Hiding a category by organisation type, and activating the organisations an installation publishes for, are planned in the same change (`woo-value-list-curation`).

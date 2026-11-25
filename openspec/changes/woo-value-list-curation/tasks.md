@@ -29,6 +29,7 @@ Read `openspec/woo-build-rules.md` first. Start once `woo-value-lists-on-the-con
 ## 6. Docs
 
 - [ ] 6.1 Document curation for administrators in `docs/` and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+  - Written for what is built (`docs/features/value-list-curation.md`: choices, explanations, order, the routes); the strings of the built parts are in `l10n/` for all locales. Left open until hiding (4.x) and activation (5.x) are built and documented.
 
 ## 7. Verification
 
