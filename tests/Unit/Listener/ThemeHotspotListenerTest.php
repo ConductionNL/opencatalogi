@@ -148,17 +148,16 @@ final class ThemeHotspotListenerTest extends TestCase {
 			}
 
 			/**
-			 * OpenRegister's AuditTrailMapper::createAuditTrail(), called with named arguments.
+			 * OpenRegister's AuditTrailMapper::createAuditTrailEntry(), called with named arguments.
 			 *
-			 * @param object|null $old The object before.
-			 * @param object|null $new The object after.
-			 * @param string|null $action The action.
-			 * @param array<string, mixed>|null $cascadeContext The context.
+			 * @param object               $object  The object.
+			 * @param string               $action  The action.
+			 * @param array<string, mixed> $context The context, stored as the entry's changes.
 			 *
 			 * @return void
 			 */
-			public function createAuditTrail(?object $old = null, ?object $new = null, ?string $action = null, ?array $cascadeContext = null): void {
-				$this->test->recordAudit(action: (string)$action, context: (array)$cascadeContext);
+			public function createAuditTrailEntry(object $object, string $action, array $context = []): void {
+				$this->test->recordAudit(action: $action, context: $context);
 			}
 		};
 		$openRegister = $this->createMock(originalClassName: OpenRegisterServicesInterface::class);
