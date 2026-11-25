@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Mcp;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Service\Publication\AgentPublishing;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCA\OpenRegister\Mcp\Attribute\McpTool;
@@ -56,12 +57,14 @@ class PublicationAgentTools {
 	 *
 	 * @param ContainerInterface   $container The container OpenRegister's object service comes from.
 	 * @param IAppConfig           $config    Where the publication register and schema are configured.
-	 * @param McpArgumentValidator $validator The draft allow-list.
+	 * @param McpArgumentValidator $validator The draft allow-list and the publish ids.
+	 * @param AgentPublishing|null $publishing Publishes approved publications; without it the publish tool refuses.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $config,
 		private readonly McpArgumentValidator $validator,
+		private readonly ?AgentPublishing $publishing = null,
 	) {
 	}//end __construct()
 
@@ -123,6 +126,73 @@ class PublicationAgentTools {
 
 		return self::draftAnswer(saved: $saved);
 	}//end createDraftPublication()
+
+	/**
+	 * Agent tool: publish publications a human has approved.
+	 *
+	 * The approval is the publication's own review: only a publication a
+	 * reviewer or publisher moved to `approved` in the screen is published; a
+	 * draft or one still in review is refused, also where review is switched
+	 * off. The publish runs the publish button's checks and lifecycle
+	 * transition as the person the agent acts for, item by item.
+	 *
+	 * @param array<array-key, mixed> $ids The publication ids, at most AgentPublishing::MAX_ITEMS.
+	 *
+	 * @return array<string, mixed> `published` and `refused` (each `{id, code}`), or an `error` envelope.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-every-write-runs-the-existing-rbacd-path-as-the-granting-user-req-008
+	 */
+	#[McpTool(
+		name: 'publishPublication',
+		description: 'Publish publications that a person has already approved. Pass "ids", a list of publication '
+			. 'uuids (at most 50). Only a publication in the state "approved" is published; a draft or a publication '
+			. 'in review is refused with "not_approved" and must be approved by a reviewer first. Publishing makes '
+			. 'the publication public and sends it to the national index and other harvesters: that distribution '
+			. 'cannot be undone by withdrawing it later. Each id is answered as published or refused with a reason.',
+		readOnlyHint: false,
+		destructiveHint: false,
+		idempotentHint: true,
+		scope: 'update',
+		subject: 'publication',
+		action: 'publish',
+		reach: 'external',
+	)]
+	public function publishPublication(array $ids): array {
+		$checked = $this->validator->publicationIds(ids: $ids, max: AgentPublishing::MAX_ITEMS);
+		if (isset($checked['error']) === true) {
+			return $checked;
+		}
+
+		if ($this->publishing === null) {
+			return self::error(code: 'not_configured', message: 'Publishing is not available on this instance.');
+		}
+
+		$answer = $this->publishing->publishApproved(ids: $checked['ids']);
+		if (isset($answer['error']) === true) {
+			return self::publishError(code: (string)$answer['error']);
+		}
+
+		return ['success' => $answer['refused'] === [], 'published' => $answer['published'], 'refused' => $answer['refused']];
+	}//end publishPublication()
+
+	/**
+	 * The error envelope of a publish call refused as a whole.
+	 *
+	 * @param string $code `not_a_publisher` or `not_configured`.
+	 *
+	 * @return array{error: array{code: string, message: string}} The envelope.
+	 */
+	private static function publishError(string $code): array {
+		if ($code === 'not_a_publisher') {
+			return self::error(
+				code: $code,
+				message: 'The account this agent acts for may not publish. Ask a member of the publishers group.'
+			);
+		}
+
+		return self::error(code: $code, message: 'The publication register is not configured on this instance.');
+	}//end publishError()
 
 	/**
 	 * The answer for a saved draft.

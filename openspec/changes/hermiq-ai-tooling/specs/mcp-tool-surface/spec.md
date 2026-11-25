@@ -38,33 +38,34 @@ Each write tool MUST delegate to the same `PublicationService`/ObjectService wri
 > @e2e exclude backend gate parity — covered by PHPUnit invoking the tool path and the service path against the same fixture user.
 
 ### Requirement: Publish, depublish, and archive execute only after a server-verified human approval (REQ-009)
-`publishPublication`, `depublishPublication`, and `archivePublication` MUST be two-phase: phase 1 validates and stages a batch proposal (target publication ids, intended property write, requesting agent, granting user) and writes no property; phase 2 executes only when presented with an approval token the server verifies was minted for a human approver distinct from the acting agent, unexpired, and bound to that exact batch. The gate MUST be enforced in OpenCatalogi's tool path — a client that never presents a valid token can never reach the property write, whether or not that client is Hermiq. The batch is the approval unit: the approver MUST be shown the full item list, and one approval covers exactly one staged batch. `createDraftPublication` MUST be single-phase (a draft is invisible to the public by construction).
+The human approval is the publication lifecycle's own review (decision 25 Nov 2026, Ruben: reuse the lifecycle, no new approval mechanism). `publishPublication` MUST publish only publications a person moved to `approved` on their lifecycle, through the publish button's checks (publish right, update right on the item, embargo, documents) and its lifecycle transition, as the granting user; a draft or a publication in review MUST be refused with `not_approved`, also where review is switched off, because the agent cannot approve. `depublishPublication` and `archivePublication` MUST NOT write the publication: each MUST stage an OpenRegister approval task on the publication that a member of the publishers group completes, and only that completion withdraws or archives it. The gate MUST be enforced in OpenCatalogi's tool path: no tool call reaches a publish, withdrawal or archive write without that human step, whatever the client. `createDraftPublication` MUST be single-phase (a draft is invisible to the public by construction).
 
 #### Scenario: The canonical batch-publish chat flow
 
-- GIVEN twelve draft dataset descriptions and a user asking their agent to publish them,
-- WHEN the agent stages one `publishPublication` batch and the editor approves it in Hermiq,
-- THEN phase 2 sets `publicationDate` on each item and the records become publicly readable, sitemapped, and harvestable,
-- AND a batch the editor rejects writes nothing.
+- GIVEN twelve draft dataset descriptions an agent created, of which a reviewer approved eight in the screen,
+- WHEN the agent calls `publishPublication` with all twelve,
+- THEN the eight approved ones are published and become publicly readable, sitemapped and harvestable,
+- AND the four others are answered `not_approved` and nothing is written for them.
 
 @e2e tests/e2e/spec-coverage/hermiq-ai-tooling.spec.ts
 
-#### Scenario: An unapproved publish proposal never publishes
+#### Scenario: An agent cannot approve its own proposal
 
-- GIVEN a staged publish batch for which no approval token is ever presented,
-- WHEN the staging period ends,
-- THEN no `publicationDate` was written for any item in the batch,
-- AND the expired proposal is visible in the audit trail as proposed-but-not-approved.
+- GIVEN a draft publication and review switched off on the instance,
+- WHEN an agent calls `publishPublication` for it,
+- THEN it is refused with `not_approved`, although the publish button would publish it for a person,
+- AND no `publicationDate` is written.
 
-> @e2e exclude backend two-phase state machine — covered by PHPUnit.
+> @e2e exclude backend state check, covered by PHPUnit (`AgentPublishingTest::testOnlyAnApprovedPublicationIsPublished`).
 
-#### Scenario: A token cannot be replayed onto a different batch
+#### Scenario: A withdrawal by an agent waits for a publisher
 
-- GIVEN an approval token minted for batch A,
-- WHEN phase 2 of batch B is invoked with it,
-- THEN the execution is refused and batch B remains staged.
+- GIVEN a published publication,
+- WHEN an agent calls `depublishPublication` for it,
+- THEN an approval task for the withdrawal is created for the publishers group and the publication stays public,
+- AND it is withdrawn only when a publisher completes the task.
 
-> @e2e exclude backend token-binding check — covered by PHPUnit.
+> @e2e exclude backend task staging, covered by PHPUnit.
 
 ### Requirement: Every agent write is attributed to the agent principal in the audit trail (REQ-010)
 Every write performed through a curated write tool MUST record, alongside OpenRegister's normal audit fields: the acting agent identity (from the MCP session context), the granting user, the tool id, the batch/proposal reference, and the approval token id where a gate applies. An agent-proposed, human-approved publication MUST be answerable as such from the audit trail alone — never as a purely human act.

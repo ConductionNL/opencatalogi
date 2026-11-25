@@ -213,6 +213,37 @@ class McpArgumentValidator {
 	}//end fieldValue()
 
 	/**
+	 * The publication ids of a publish call: a non-empty list of distinct non-empty strings, at most $max.
+	 *
+	 * @param mixed $ids What the agent sent.
+	 * @param int   $max The most ids one call takes.
+	 *
+	 * @return array{ids: list<string>}|array{error: array{code: string, message: string}} The ids, or the refusal.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-write-actions-are-curated-tools-with-allow-listed-properties-req-007
+	 */
+	public function publicationIds(mixed $ids, int $max): array {
+		if (is_array($ids) === false || $ids === [] || array_is_list($ids) === false) {
+			return self::error(message: 'Field "ids" must be a non-empty list of publication ids.');
+		}
+
+		$clean = [];
+		foreach ($ids as $id) {
+			if (is_string($id) === false || trim($id) === '') {
+				return self::error(message: 'Every entry of "ids" must be a publication id.');
+			}
+
+			$clean[trim($id)] = true;
+		}
+
+		if (count($clean) > $max) {
+			return self::error(message: 'At most ' . $max . ' publications can be published in one call.');
+		}
+
+		return ['ids' => array_keys($clean)];
+	}//end publicationIds()
+
+	/**
 	 * The invalid-arguments envelope.
 	 *
 	 * @param string $message The fixed message.

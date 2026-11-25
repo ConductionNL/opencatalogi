@@ -43,6 +43,14 @@
   - GIVEN `createDraftPublication` WHEN invoked THEN it is single-phase (no token concept)
 - [ ] Implement
 - [ ] Test
+  - 25 Nov 2026 (decision 25 Nov 13:50, Ruben): the approval is the publication lifecycle's own review, not a
+    token; REQ-009 is amended to say so. Built: `publishPublication` (`lib/Mcp/PublicationAgentTools.php` over
+    `lib/Service/Publication/AgentPublishing.php`) publishes only `approved` publications, through the publish
+    button's checks and `PublishTransition` as the session user, each refusal named (`not_approved`, `forbidden`,
+    `embargo_holds`, `no_documents`, `not_found`, `not_published`). Tests:
+    `tests/Unit/Service/Publication/AgentPublishingTest.php`, `tests/Unit/Mcp/PublicationAgentToolsTest.php`.
+    Left: `depublishPublication` and `archivePublication` as an OpenRegister approval task a publisher completes,
+    and the completion that withdraws or archives.
 
 ### Task 4: Agent-principal attribution (must / MVP)
 - **spec_ref**: `openspec/specs/mcp-tool-surface/spec.md#requirement-every-agent-write-is-attributed-to-the-agent-principal-in-the-audit-trail-req-010`
