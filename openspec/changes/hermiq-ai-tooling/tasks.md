@@ -86,6 +86,18 @@
   - GIVEN the same write performed through the UI WHEN audited THEN it carries no agent fields (control)
 - [ ] Implement
 - [ ] Test
+  - 25 Nov 2026 (b-opencatalogi, partly): every call of the four tools is recorded through OpenRegister's
+    `ToolInvocationRecorderInterface` (`PublicationAgentTools::recorded()`), refusals included: a hash-chained audit
+    row `mcp.<tool>` with the signed-in user (the granting user), `toolId` `opencatalogi.<tool>`, a digest of the
+    arguments and a summary of the answer, pointing at the created draft for `createDraftPublication`. The approval
+    reference of a gated write is the staged task (its uuid is in the tool's answer and on the task's own trail), since
+    the 13:50 decision replaced tokens with the lifecycle and the task. A write through the screen goes nowhere near the
+    recorder (the control). Live 25 Nov on NC 34 + PG16: rows `mcp.createDraftPublication | admin |
+    opencatalogi.createDraftPublication | <draft uuid>` and `mcp.publishPublication | admin | ...` read back from
+    `oc_openregister_audit_trails`. Test: `PublicationAgentToolsTest::testEveryToolCallIsRecorded`.
+    Left, needs a dependency: the acting agent's identity. OpenRegister's tool-invocation row has no agent field and
+    the MCP call reaches the app without an agent principal; Hermiq (or OpenRegister's MCP layer) has to pass one, and
+    OpenRegister's recorder has to store it. Until then the row names the person the agent acts for, not the agent.
 
 ### Task 5: Hermiq classification check + chat-scenario e2e + docs (must / MVP)
 - **spec_ref**: `openspec/specs/mcp-tool-surface/spec.md#requirement-hermiq-governance-is-honoured-but-never-relied-upon-req-011`
