@@ -21,6 +21,8 @@ parameters:
         - tests/Stubs/OpenRegister/Lifecycle/LifecycleGuardInterface.php
         - tests/Stubs/OpenRegister/Lifecycle/GuardResult.php
         - tests/Stubs/OpenRegister/Mcp/Db/Agent.php
+        # PublicationAgentTools and PublicationService mark their agent tools with OpenRegister's #[McpTool].
+        - tests/Stubs/OpenRegister/Mcp/Attribute/McpTool.php
         - tests/Stubs/AppHost/IMetricsProvider.php
         - tests/Stubs/AppHost/IHealthCheckProvider.php
         - tests/Stubs/AppHost/MetricSample.php
