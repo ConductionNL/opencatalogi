@@ -100,9 +100,10 @@ class TermRoll implements TermRollInterface {
 
 		// Calendar days, because a public comment period is a span of calendar
 		// time; only its LANDING is moved off a non-working day.
+		$from = new DateTimeImmutable($start->format('Y-m-d\TH:i:s.uP'));
 		$landed = $calculator->add(
 			new SlaAddition(
-				start: ($start instanceof DateTimeImmutable) ? $start : new DateTimeImmutable($start->format('Y-m-d\TH:i:s.uP')),
+				start: $from,
 				value: (float)$days,
 				unit: 'calendarDays',
 				calendar: $calendar
