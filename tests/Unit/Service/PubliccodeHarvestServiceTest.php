@@ -108,7 +108,8 @@ class PubliccodeHarvestServiceTest extends TestCase {
 		$objects->method('find')->willReturnCallback(
 			function (int|string $id, ...$rest): ?ObjectEntity {
 				$rest = array_slice(LegacyObjectArgs::positional(method: 'find', args: [$id, ...$rest]), 1);
-				$this->calls[] = ['find', self::passedArguments(method: 'find', arguments: func_get_args())];
+				// Named by the release signature, so the arguments go in its order too.
+				$this->calls[] = ['find', self::passedArguments(method: 'find', arguments: LegacyObjectArgs::positional(method: 'find', args: func_get_args()))];
 				return ($this->store[(string)$id] ?? null);
 			}
 		);
@@ -118,7 +119,7 @@ class PubliccodeHarvestServiceTest extends TestCase {
 				$register = $options->target->register;
 				$schema = $options->target->schema;
 				$uuid = $options->uuid;
-				$arguments = self::passedArguments(method: 'saveObject', arguments: func_get_args());
+				$arguments = self::passedArguments(method: 'saveObject', arguments: LegacyObjectArgs::positional(method: 'saveObject', args: func_get_args()));
 				$arguments['object'] = $object['slug'];
 				$this->calls[] = ['saveObject', $arguments];
 				$entity = ($this->store[$object['slug']] ?? new ObjectEntity());

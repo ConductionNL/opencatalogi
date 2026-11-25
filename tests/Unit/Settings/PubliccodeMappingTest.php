@@ -189,8 +189,14 @@ class PubliccodeMappingTest extends TestCase {
 		$this->assertSame('2026-05-26', $component['releaseDate']);
 		$this->assertSame(['nextcloud'], $component['platforms']);
 		$this->assertSame(['nl', 'en'], $component['localisationAvailableLanguages']);
-		$this->assertSame('internal', $component['maintenanceType']);
-		$this->assertSame('Conduction Development Team', $component['maintainers'][0]['name']);
+		// The frozen file declares `maintenance.type: contract` and `softwareType: addon`.
+		$this->assertSame(expected: 'contract', actual: $component['maintenanceType']);
+		$this->assertSame(expected: 'addon', actual: $component['softwareType']);
+		// Contractors first, then contacts, as the mapping merges them.
+		$this->assertSame(
+			expected: ['Conduction B.V.', 'Conduction Development Team'],
+			actual: array_column(array: $component['maintainers'], column_key: 'name')
+		);
 		$this->assertSame('Framework for federated catalogs in Nextcloud', $component['description']['en']['shortDescription']);
 		$this->assertSame('github.com', $component['harvestedFrom']);
 		$this->assertSame('OpenCatalogi', $component['rawPubliccode']['name']);
@@ -205,7 +211,7 @@ class PubliccodeMappingTest extends TestCase {
 	public function testAnUndeclaredFieldIsAbsentNotItsPath(): void {
 		$component = $this->map(item: $this->item(yaml: $this->ownPubliccode()));
 
-		foreach (['applicationSuite', 'landingURL', 'logo', 'softwareType', 'legalRepoOwner', 'itConformsTo'] as $absent) {
+		foreach (['applicationSuite', 'landingURL', 'logo', 'legalRepoOwner', 'itConformsTo'] as $absent) {
 			$this->assertArrayNotHasKey($absent, $component, $absent . ' is not in the file, so it must not be in the object.');
 		}
 

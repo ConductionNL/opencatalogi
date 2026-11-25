@@ -283,36 +283,36 @@
                     "title": "match, live",
                     "depublicationDate": null
                 },
-                "uuid": null,
-                "register": null,
-                "schema": null
+                "uuid": "u-1",
+                "register": "5",
+                "schema": "7"
             },
             {
                 "save": {
                     "title": "fail-save",
                     "depublicationDate": null
                 },
-                "uuid": null,
-                "register": null,
-                "schema": null
+                "uuid": "u-2",
+                "register": "5",
+                "schema": "7"
             },
             {
                 "save": {
                     "title": "match, not live",
                     "depublicationDate": null
                 },
-                "uuid": null,
-                "register": null,
-                "schema": null
+                "uuid": "3",
+                "register": "5",
+                "schema": "7"
             },
             {
                 "save": {
                     "title": "id only",
                     "depublicationDate": null
                 },
-                "uuid": null,
-                "register": null,
-                "schema": null
+                "uuid": "9",
+                "register": "5",
+                "schema": "7"
             }
         ]
     },
@@ -416,9 +416,9 @@
                     "title": "match, live",
                     "depublicationDate": null
                 },
-                "uuid": null,
-                "register": null,
-                "schema": null
+                "uuid": "u-1",
+                "register": "5",
+                "schema": "7"
             },
             {
                 "share": "/OpenRegister/files/doc.pdf"
@@ -437,9 +437,9 @@
                     "title": "fail-save",
                     "depublicationDate": null
                 },
-                "uuid": null,
-                "register": null,
-                "schema": null
+                "uuid": "u-2",
+                "register": "5",
+                "schema": "7"
             },
             {
                 "share": "/OpenRegister/files/doc.pdf"
@@ -458,9 +458,9 @@
                     "title": "match, not live",
                     "depublicationDate": null
                 },
-                "uuid": null,
-                "register": null,
-                "schema": null
+                "uuid": "3",
+                "register": "5",
+                "schema": "7"
             },
             {
                 "share": "/OpenRegister/files/doc.pdf"
@@ -479,9 +479,9 @@
                     "title": "id only",
                     "depublicationDate": null
                 },
-                "uuid": null,
-                "register": null,
-                "schema": null
+                "uuid": "9",
+                "register": "5",
+                "schema": "7"
             },
             {
                 "share": "/OpenRegister/files/doc.pdf"

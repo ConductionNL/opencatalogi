@@ -157,7 +157,7 @@
             "dcat_instance_title": "T",
             "dcat_publisher_name": "P",
             "dcat_publisher_uri": "https://p",
-            "dcat_default_license": "L",
+            "dcat_default_license": "http://publications.europa.eu/resource/authority/licence/CC0",
             "dcat_contact_point": "C",
             "ooapi_consumers": "alice,bob",
             "woo_index_registration_status": "registered",
@@ -201,7 +201,7 @@
             [
                 "opencatalogi",
                 "dcat_default_license",
-                "L"
+                "http://publications.europa.eu/resource/authority/licence/CC0"
             ],
             [
                 "opencatalogi",
@@ -498,7 +498,7 @@
             "dcat_instance_title": "v18",
             "dcat_publisher_name": "v19",
             "dcat_publisher_uri": "v20",
-            "dcat_default_license": "v16",
+            "dcat_default_license": "http://publications.europa.eu/resource/authority/licence/CC0",
             "dcat_contact_point": "v15",
             "ooapi_consumers": "v42",
             "woo_index_registration_status": "v74",
@@ -665,7 +665,7 @@
             [
                 "opencatalogi",
                 "dcat_default_license",
-                "v16"
+                "http://publications.europa.eu/resource/authority/licence/CC0"
             ],
             [
                 "opencatalogi",

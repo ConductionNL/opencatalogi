@@ -44,6 +44,11 @@ class SettingsWriteGoldenTest extends TestCase {
 	private const FIXTURE = __DIR__ . '/fixtures/settings-write-golden.json';
 
 	/**
+	 * A licence of the EU licences authority list, which the DCAT licence rule accepts.
+	 */
+	private const LICENCE = 'http://publications.europa.eu/resource/authority/licence/CC0';
+
+	/**
 	 * The keys and values written, in order.
 	 *
 	 * @var list<array{0: string, 1: string}>
@@ -65,7 +70,8 @@ class SettingsWriteGoldenTest extends TestCase {
 
 		$instance = [
 			'auto_publish_attachments' => 'true', 'auto_publish_objects' => 'false', 'use_old_style_publishing_view' => 'x',
-			'dcat_instance_title' => 'T', 'dcat_publisher_name' => 'P', 'dcat_publisher_uri' => 'https://p', 'dcat_default_license' => 'L', 'dcat_contact_point' => 'C',
+			'dcat_instance_title' => 'T', 'dcat_publisher_name' => 'P', 'dcat_publisher_uri' => 'https://p',
+			'dcat_default_license' => self::LICENCE, 'dcat_contact_point' => 'C',
 			'ooapi_consumers' => 'alice,bob',
 			'woo_index_registration_status' => 'registered', 'woo_index_registration_url' => 'https://u', 'woo_index_registration_at' => '2026', 'woo_index_registration_answer' => 'a',
 			'public_api_cache_seconds' => '120',
@@ -82,6 +88,8 @@ class SettingsWriteGoldenTest extends TestCase {
 
 		// The allowlist refuses a value that is not an origin, which would refuse the whole payload.
 		$knownValues['cors_allowed_origins'] = 'https://v' . array_search('cors_allowed_origins', $known, true) . '.example';
+		// The licence rule refuses a value that is not on the EU licences authority list.
+		$knownValues['dcat_default_license'] = self::LICENCE;
 
 		return [
 			'every known config key' => ['updateSettings', $knownValues],
