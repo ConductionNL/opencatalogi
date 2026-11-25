@@ -13,13 +13,14 @@
 - [x] 1.2 `ViewMenuModal.vue` — same replacement (`_.cloneDeep(newMenu)` → `structuredClone(newMenu)`)
 - [x] 1.3 `MenuItemForm.vue` — same replacement (`_.cloneDeep(this.menuObject)` → `structuredClone(this.menuObject)`)
 - [x] 1.4 `DeletePageContentDialog.vue` — same replacement (`_.cloneDeep(this.pageItem)` → `structuredClone(this.pageItem)`)
-- [ ] 1.5 DEFERRED — needs a running instance to click through each modal's
+- [x] 1.5 DEFERRED — needs a running instance to click through each modal's
       save/duplicate flow. Reasoned through statically instead: all four
       cloned values (`activeObject`, `newMenu`, `this.menuObject`,
       `this.pageItem`) are plain JSON-shaped OpenRegister object/entity data
       (no functions, DOM nodes, or non-structured-cloneable types anywhere in
       this codebase's object/menu/page shapes) — `structuredClone` is a safe,
       behavior-preserving substitute for `_.cloneDeep` on all four.
+      25 Nov 2026: no longer reachable on a live instance. `ViewMenuModal.vue`, `MenuItemForm.vue` and `DeletePageContentDialog.vue` have been removed by later refactors, and `ObjectModal.vue` is mounted nowhere (only `ObjectModalInit.spec.js` imports it); that characterisation suite (20 tests, `initializeData` with `structuredClone`) passes under jest. `grep -rn "from 'lodash" src` finds no lodash import at all.
 
 ## 2. Cherry-pick lodash imports in the dual-function file
 
@@ -33,8 +34,9 @@
 - [x] 2.2 Replaced both call sites (`_.upperFirst(contentsItem.type)` in the
       `NcDialog` `:name` binding, `_.cloneDeep(this.pageItem)` in
       `addPageContent()`) with the named imports.
-- [ ] 2.3 DEFERRED — same reasoning as 1.5; not exercisable from this
+- [x] 2.3 DEFERRED — same reasoning as 1.5; not exercisable from this
       isolated worktree.
+      25 Nov 2026: `PageContentForm.vue` has been removed by a later refactor, so there is no flow to click through; no lodash import remains in `src/`.
 
 ## 3. Verify bundle impact
 
