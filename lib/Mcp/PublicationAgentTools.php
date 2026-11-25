@@ -60,14 +60,12 @@ class PublicationAgentTools {
 	 * @param IAppConfig           $config    Where the publication register and schema are configured.
 	 * @param McpArgumentValidator $validator The draft allow-list and the publish ids.
 	 * @param AgentPublishingInterface|null $publishing Publishes approved publications; without it the publish tool refuses.
-	 * @param AgentWithdrawalInterface|null $withdrawal Stages withdrawals and archives as publisher tasks; without it those tools refuse.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppConfig $config,
 		private readonly McpArgumentValidator $validator,
 		private readonly ?AgentPublishingInterface $publishing = null,
-		private readonly ?AgentWithdrawalInterface $withdrawal = null,
 	) {
 	}//end __construct()
 
@@ -266,17 +264,37 @@ class PublicationAgentTools {
 			return $why;
 		}
 
-		if ($this->withdrawal === null) {
+		$withdrawal = $this->withdrawal();
+		if ($withdrawal === null) {
 			return self::error(code: 'not_configured', message: 'Publisher tasks are not available on this instance.');
 		}
 
-		$answer = $this->withdrawal->stage(action: $action, ids: $checked['ids'], reason: $why['reason']);
+		$answer = $withdrawal->stage(action: $action, ids: $checked['ids'], reason: $why['reason']);
 		if (isset($answer['error']) === true) {
 			return self::stageError(code: (string)$answer['error']);
 		}
 
 		return ['success' => $answer['refused'] === [], 'staged' => $answer['staged'], 'refused' => $answer['refused']];
 	}//end stageThroughTask()
+
+	/**
+	 * The staging service, from the container; null when it cannot be built.
+	 *
+	 * @return AgentWithdrawalInterface|null The service.
+	 */
+	private function withdrawal(): ?AgentWithdrawalInterface {
+		try {
+			$withdrawal = $this->container->get(AgentWithdrawalInterface::class);
+		} catch (\Throwable) {
+			return null;
+		}
+
+		if ($withdrawal instanceof AgentWithdrawalInterface) {
+			return $withdrawal;
+		}
+
+		return null;
+	}//end withdrawal()
 
 	/**
 	 * The error envelope of a staging call refused as a whole.

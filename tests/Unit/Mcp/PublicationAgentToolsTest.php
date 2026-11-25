@@ -72,11 +72,10 @@ class PublicationAgentToolsTest extends TestCase {
 		);
 
 		return new PublicationAgentTools(
-			container: new ObjectsContainer(objects: $this->objects),
+			container: new ObjectsContainer(objects: $this->objects, withdrawal: $withdrawal),
 			config: $config,
 			validator: new McpArgumentValidator(),
-			publishing: $publishing,
-			withdrawal: $withdrawal
+			publishing: $publishing
 		);
 	}//end tools()
 
@@ -345,7 +344,7 @@ class PublicationAgentToolsTest extends TestCase {
 	 */
 	public function testTheStagingToolsCheckIdsAndReason(): void {
 		$withdrawal = $this->createMock(originalClassName: AgentWithdrawalInterface::class);
-		$withdrawal->expects($this->exactly(2))->method('stage')->willReturnCallback(
+		$withdrawal->expects($this->exactly(count: 2))->method('stage')->willReturnCallback(
 			static fn (string $action, array $ids, string $reason): array => [
 				'staged'  => [['id' => $ids[0], 'task' => 'task-' . $action]],
 				'refused' => [['id' => $ids[1], 'code' => 'not_public']],
@@ -354,7 +353,8 @@ class PublicationAgentToolsTest extends TestCase {
 		$tools = $this->tools(withdrawal: $withdrawal);
 
 		foreach ([[], [''], [3]] as $ids) {
-			$this->assertSame(expected: 'invalid_arguments', actual: $tools->depublishPublication(ids: $ids, reason: 'Rechterlijke uitspraak')['error']['code']);
+			$answer = $tools->depublishPublication(ids: $ids, reason: 'Rechterlijke uitspraak');
+			$this->assertSame(expected: 'invalid_arguments', actual: $answer['error']['code']);
 		}
 
 		foreach (['', '   ', str_repeat(string: 'x', times: 2001)] as $reason) {
@@ -405,9 +405,13 @@ class ObjectsContainer implements ContainerInterface {
 	/**
 	 * Build the container.
 	 *
-	 * @param RecordingObjects $objects The object service double.
+	 * @param RecordingObjects              $objects    The object service double.
+	 * @param AgentWithdrawalInterface|null $withdrawal The staging service double, if any.
 	 */
-	public function __construct(private readonly RecordingObjects $objects) {
+	public function __construct(
+		private readonly RecordingObjects $objects,
+		private readonly ?AgentWithdrawalInterface $withdrawal = null
+	) {
 	}//end __construct()
 
 	/**
@@ -418,6 +422,10 @@ class ObjectsContainer implements ContainerInterface {
 	 * @return mixed The double.
 	 */
 	public function get(string $id): mixed {
+		if ($id === AgentWithdrawalInterface::class && $this->withdrawal !== null) {
+			return $this->withdrawal;
+		}
+
 		if ($id !== 'OCA\OpenRegister\Service\ObjectService') {
 			throw new RuntimeException(message: 'Unexpected service ' . $id);
 		}

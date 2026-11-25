@@ -28,6 +28,8 @@ use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\AgentWithdrawal;
 use OCA\OpenCatalogi\Service\Publication\AgentWithdrawalRequest;
+use OCA\OpenCatalogi\Service\Publication\ObjectProperties;
+use OCA\OpenCatalogi\Service\Publication\OpenRegisterTasks;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -46,6 +48,8 @@ use RuntimeException;
  */
 #[CoversClass(AgentWithdrawal::class)]
 #[CoversClass(AgentWithdrawalRequest::class)]
+#[CoversClass(OpenRegisterTasks::class)]
+#[CoversClass(ObjectProperties::class)]
 class AgentWithdrawalTest extends TestCase {
 
 	/**
@@ -107,6 +111,9 @@ class AgentWithdrawalTest extends TestCase {
 		}
 
 		$this->created[] = ['data' => $data, 'actor' => $actor];
+		if ($data['objectUuid'] === 'pub-3') {
+			return new \stdClass();
+		}
 
 		return new class('task-' . $data['objectUuid']) {
 			/**
@@ -191,7 +198,7 @@ class AgentWithdrawalTest extends TestCase {
 		};
 		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		if ($tasks === true) {
-			$container->method('get')->with(AgentWithdrawal::TASKS)->willReturn($manager);
+			$container->method('get')->with(OpenRegisterTasks::TASKS)->willReturn($manager);
 		} else {
 			$container->method('get')->willThrowException(new RuntimeException(message: 'not installed'));
 		}
@@ -208,8 +215,7 @@ class AgentWithdrawalTest extends TestCase {
 			openRegister: $openRegister,
 			rights: $rights,
 			states: $states,
-			container: $container,
-			session: $session
+			tasks: new OpenRegisterTasks(container: $container, session: $session)
 		);
 	}//end service()
 
@@ -301,12 +307,13 @@ class AgentWithdrawalTest extends TestCase {
 		$this->stored = [
 			'pub-1' => ['title' => 'A', '_state' => PublicationStateServiceInterface::STATE_PUBLIC],
 			'pub-2' => ['title' => 'B', '_state' => PublicationStateServiceInterface::STATE_PUBLIC],
+			'pub-3' => ['title' => 'C', '_state' => PublicationStateServiceInterface::STATE_PUBLIC],
 		];
 		$this->failing = ['pub-1'];
 
-		$answer = $this->service()->stage(action: AgentWithdrawalInterface::DEPUBLISH, ids: ['pub-1', 'pub-2'], reason: 'R');
+		$answer = $this->service()->stage(action: AgentWithdrawalInterface::DEPUBLISH, ids: ['pub-1', 'pub-2', 'pub-3'], reason: 'R');
 
-		$this->assertSame(expected: [['id' => 'pub-1', 'code' => 'not_staged']], actual: $answer['refused']);
+		$this->assertSame(expected: [['id' => 'pub-1', 'code' => 'not_staged'], ['id' => 'pub-3', 'code' => 'not_staged']], actual: $answer['refused']);
 		$this->assertSame(expected: [['id' => 'pub-2', 'task' => 'task-pub-2']], actual: $answer['staged']);
 	}//end testARefusedTaskIsNotStagedAndTheRestGoesOn()
 
