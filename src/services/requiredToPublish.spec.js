@@ -133,10 +133,12 @@ describe('clearAnsweredGaps', () => {
 	})
 
 	it('removes the record when every recorded field is filled in', () => {
-		expect(clearAnsweredGaps({
-			organization: 'org-1',
-			'@notSupplied': { organization: 'published-before-required' },
-		})).toEqual({ organization: 'org-1' })
+		expect(
+			clearAnsweredGaps({
+				organization: 'org-1',
+				'@notSupplied': { organization: 'published-before-required' },
+			}),
+		).toEqual({ organization: 'org-1' })
 	})
 
 	it('returns a body without a record as it is', () => {

@@ -113,6 +113,7 @@ export function clearAnsweredGaps(body) {
 	const kept = Object.fromEntries(
 		Object.entries(record).filter(([field]) => isEmpty(body[field])),
 	)
-	const { '@notSupplied': _record, ...rest } = body
+	const rest = { ...body }
+	delete rest['@notSupplied']
 	return Object.keys(kept).length === 0 ? rest : { ...rest, '@notSupplied': kept }
 }
