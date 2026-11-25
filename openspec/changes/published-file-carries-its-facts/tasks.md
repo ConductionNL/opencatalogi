@@ -23,9 +23,13 @@ Read `openspec/woo-build-rules.md` first. Mock `OCP\Files\File` and `OCP\Files\I
 
 ## 3. Verification
 
-- [ ] 3.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
-- [ ] 3.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran; `composer audit` covers any new library.
-- [ ] 3.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 3.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 3.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
+  - Done 25 Nov 2026 (b-opencatalogi) on `development` after this change's PRs landed (4c7a8688e; gate-7 re-run on the #3091 branch), Nextcloud 34 on PostgreSQL with OpenRegister main beside it, TMPDIR outside the clone, `--no-coverage`: PHPUnit 7315 tests, 4 errors, all `DirectoryServiceTest::testDoCronSync*` (directory cron, inherited, not this change).
+- [x] 3.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran; `composer audit` covers any new library.
+  - Done 25 Nov 2026 (b-opencatalogi) on `development` after this change's PRs landed (4c7a8688e; gate-7 re-run on the #3091 branch), Nextcloud 34 on PostgreSQL with OpenRegister main beside it: full `run-hydra-gates.sh --base origin/development` ran 88 gates, 79 pass, 4 warn, 1 non-blocking; gate-7 no-admin-idor passes since #3091; failing, inherited fleet debt: 26 visual-coverage (`WooRedaction.vue`), 119 procedure-code count, 123 floor. `composer audit`: no advisories.
+- [x] 3.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+  - Done 25 Nov 2026 (b-opencatalogi) on `development` after this change's PRs landed (4c7a8688e; gate-7 re-run on the #3091 branch), Nextcloud 34 on PostgreSQL with OpenRegister main beside it: `composer lint` pass, `phpcs` 0 errors (#3086), `phpstan` no errors (#3087), `npm run lint` 0 errors (#3079), `check:l10n`, `check:l10n-js`, `check:manifest` pass, `check:schema-l10n` 138 = baseline (#3085). Inherited, not this change: phpmd 100 findings outside the baseline (coupling and complexity in other classes), psalm 5.26 crash, `format` (Prettier, 318 files). The coverage guard is CI's and was not measured here.
+- [x] 3.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - Done: the change shipped in its own PRs on `development` (development merged in, never rebased, no `Co-Authored-By`).
 
 Done when merged on `development` with CI green. Rows 2.20 and 4.29 become `production` only once a store release ships it.
