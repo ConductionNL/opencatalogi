@@ -2099,10 +2099,15 @@ export const useObjectStore = defineStore('object', {
 		 */
 		/**
 		 * @param type
+		 * @param type.type
 		 * @param id
+		 * @param type.id
 		 * @param dataType
+		 * @param type.dataType
 		 * @param params
+		 * @param type.params
 		 * @param publicationData
+		 * @param type.publicationData
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async fetchRelatedData({
@@ -2652,10 +2657,20 @@ export const useObjectStore = defineStore('object', {
 		/**
 		 * Preload collections for all available schemas
 		 *
+		 * With `options.later`, the catalog collection (the navigation's
+		 * catalog entries) loads at once and every other type only after
+		 * `later()` resolves, so the page's own reads do not queue behind
+		 * nine list requests it does not show.
+		 *
+		 * @param {object} [options] Options.
+		 * @param {Function} [options.later] Resolves when the other collections may load.
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/specs/generic-object-modals/spec.md */
-		async preloadCollections() {
+		/**
+		 * @param options
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		async preloadCollections(options = {}) {
 			try {
 				if (!this.settings) {
 					await this.fetchSettings()
@@ -2664,9 +2679,8 @@ export const useObjectStore = defineStore('object', {
 				this._registerTypesFromSettings()
 
 				const objectTypes = this.objectTypes
-
-				await Promise.allSettled(
-					objectTypes.map(async (type) => {
+				const load = (types) => Promise.allSettled(
+					types.map(async (type) => {
 						try {
 							await this.fetchCollection(type)
 						} catch (error) {
@@ -2677,6 +2691,14 @@ export const useObjectStore = defineStore('object', {
 						}
 					}),
 				)
+
+				if (typeof options.later !== 'function') {
+					await load(objectTypes)
+					return
+				}
+				await load(objectTypes.filter((type) => type === 'catalog'))
+				await options.later()
+				await load(objectTypes.filter((type) => type !== 'catalog'))
 			} catch (error) {
 				console.error('Error during preload:', error)
 			}
