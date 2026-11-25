@@ -31,6 +31,9 @@ const API_BASE = '/index.php/apps/opencatalogi/api'
 const OBJECTS = '/index.php/apps/openregister/api/objects/publication'
 const RUN = Date.now().toString(36)
 const FOLDER = `E2E-review-${RUN}`
+
+/** How many batches this file seeded, for a case reference of each its own. */
+let seeded = 0
 const PDF = '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[]/Count 0>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n'
 const REASON = 'Bijlage 3 bevat nog een BSN'
 
@@ -61,7 +64,9 @@ async function seedBatchInReview(request: APIRequestContext, uid: string): Promi
 		expect(put.status(), `uploading ${name}`).toBeLessThan(300)
 	}
 
-	const reference = `WOO-E2E-WRV-${RUN}`
+	// One reference per batch: a case reference names one batch (409 on a second).
+	seeded += 1
+	const reference = `WOO-E2E-WRV-${RUN}-${seeded}`
 	const created = await request.post(`${API_BASE}/woo/batches`, {
 		data: {
 			caseReference: reference,
@@ -132,7 +137,8 @@ test.describe('woo-review-surface', () => {
 		const approve = review.getByRole('button', { name: 'Approve' })
 		await expect(approve).toBeDisabled()
 
-		const views = review.getByText('Open the public view')
+		// The links themselves: the note above them names the same words.
+		const views = review.getByRole('link', { name: 'Open the public view' })
 		await expect(views).toHaveCount(2)
 		for (const index of [0, 1]) {
 			const opened = context.waitForEvent('page')
