@@ -263,6 +263,14 @@
 
 				<CategoryExplanations />
 
+				<ValueListOrder
+					scheme="soortHandeling"
+					:heading="t('opencatalogi', 'Order of the kinds of handling')" />
+
+				<ValueListOrder
+					scheme="documentsoorten"
+					:heading="t('opencatalogi', 'Order of the document types')" />
+
 				<DonlHarvestStatus />
 
 				<DcatDefaultLicence />
@@ -750,6 +758,7 @@ import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
 import CapabilityRightsSection from './CapabilityRightsSection.vue'
 import CategoryExplanations from './CategoryExplanations.vue'
+import ValueListOrder from './ValueListOrder.vue'
 import CouncilHarvest from './CouncilHarvest.vue'
 import DcatDefaultLicence from './DcatDefaultLicence.vue'
 import DcatFeedValidation from './DcatFeedValidation.vue'
@@ -889,6 +898,7 @@ export default defineComponent({
 		RecordHandover,
 		RefusalGroundsSource,
 		CategoryExplanations,
+		ValueListOrder,
 		WooIndexConnection,
 		WooIncidents,
 		DcatDefaultLicence,

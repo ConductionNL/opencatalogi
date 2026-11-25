@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Невозможно проверить, есть ли публикации в этой категории, поэтому она не скрыта.",
         "Move the %s publications filed under this category before hiding it.": "Перенесите %s публикаций из этой категории, прежде чем скрыть её.",
         "Woo requests are handled by dossiq, which is not installed.": "Запросы Woo обрабатываются в dossiq, который не установлен.",
-        "Install dossiq from the app store": "Установите dossiq из магазина приложений"
+        "Install dossiq from the app store": "Установите dossiq из магазина приложений",
+        "Order of the kinds of handling": "Порядок видов действий",
+        "Order of the document types": "Порядок видов документов",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Не удалось загрузить ваш порядок, поэтому список показан в исходном порядке."
     },
     "nplurals=2; plural=(n != 1);"
 )

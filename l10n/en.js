@@ -2254,7 +2254,10 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Name the list and its entries in their new order.",
         "Hide from pick lists": "Hide from pick lists",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Whether publications are filed under this category cannot be checked, so it is not hidden.",
-        "Move the %s publications filed under this category before hiding it.": "Move the %s publications filed under this category before hiding it."
+        "Move the %s publications filed under this category before hiding it.": "Move the %s publications filed under this category before hiding it.",
+        "Order of the kinds of handling": "Order of the kinds of handling",
+        "Order of the document types": "Order of the document types",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Your own order could not be loaded, so the list is shown in its own order."
     },
     "nplurals=2; plural=(n != 1);"
 )

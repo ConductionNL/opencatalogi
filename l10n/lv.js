@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Nevar pārbaudīt, vai šajā kategorijā ir publikācijas, tāpēc tā netiek paslēpta.",
         "Move the %s publications filed under this category before hiding it.": "Pārvietojiet šīs kategorijas %s publikācijas, pirms to paslēpjat.",
         "Woo requests are handled by dossiq, which is not installed.": "Woo pieprasījumus apstrādā dossiq, kas nav instalēts.",
-        "Install dossiq from the app store": "Instalējiet dossiq no lietotņu veikala"
+        "Install dossiq from the app store": "Instalējiet dossiq no lietotņu veikala",
+        "Order of the kinds of handling": "Darbību veidu secība",
+        "Order of the document types": "Dokumentu veidu secība",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Jūsu secību neizdevās ielādēt, tāpēc saraksts tiek rādīts tā sākotnējā secībā."
     },
     "nplurals=2; plural=(n != 1);"
 )

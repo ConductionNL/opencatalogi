@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ekki er hægt að athuga hvort útgáfur séu skráðar í þennan flokk, svo hann er ekki falinn.",
         "Move the %s publications filed under this category before hiding it.": "Færðu þær %s útgáfur sem eru í þessum flokki áður en þú felur hann.",
         "Woo requests are handled by dossiq, which is not installed.": "Woo-beiðnir eru afgreiddar í dossiq, sem er ekki uppsett.",
-        "Install dossiq from the app store": "Settu upp dossiq úr forritaversluninni"
+        "Install dossiq from the app store": "Settu upp dossiq úr forritaversluninni",
+        "Order of the kinds of handling": "Röð tegunda aðgerða",
+        "Order of the document types": "Röð skjalategunda",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Ekki tókst að hlaða ykkar eigin röð, svo listinn er sýndur í sinni eigin röð."
     },
     "nplurals=2; plural=(n != 1);"
 )

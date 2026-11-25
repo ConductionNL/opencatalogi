@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Δεν μπορεί να ελεγχθεί αν υπάρχουν δημοσιεύσεις σε αυτή την κατηγορία, γι’ αυτό δεν αποκρύπτεται.",
         "Move the %s publications filed under this category before hiding it.": "Μετακινήστε τις %s δημοσιεύσεις αυτής της κατηγορίας πριν την αποκρύψετε.",
         "Woo requests are handled by dossiq, which is not installed.": "Τα αιτήματα Woo διεκπεραιώνονται από το dossiq, το οποίο δεν είναι εγκατεστημένο.",
-        "Install dossiq from the app store": "Εγκαταστήστε το dossiq από το κατάστημα εφαρμογών"
+        "Install dossiq from the app store": "Εγκαταστήστε το dossiq από το κατάστημα εφαρμογών",
+        "Order of the kinds of handling": "Σειρά των ειδών ενέργειας",
+        "Order of the document types": "Σειρά των τύπων εγγράφων",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Η δική σας σειρά δεν ήταν δυνατό να φορτωθεί, οπότε η λίστα εμφανίζεται με τη δική της σειρά."
     },
     "nplurals=2; plural=(n != 1);"
 )

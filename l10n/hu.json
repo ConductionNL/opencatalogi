@@ -879,7 +879,10 @@
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Nem ellenőrizhető, vannak-e kiadványok ebben a kategóriában, ezért nem rejtjük el.",
         "Move the %s publications filed under this category before hiding it.": "Helyezze át a kategória %s kiadványát, mielőtt elrejti.",
         "Woo requests are handled by dossiq, which is not installed.": "A Woo-kérelmeket a dossiq kezeli, amely nincs telepítve.",
-        "Install dossiq from the app store": "Telepítse a dossiq alkalmazást az alkalmazásboltból"
+        "Install dossiq from the app store": "Telepítse a dossiq alkalmazást az alkalmazásboltból",
+        "Order of the kinds of handling": "A cselekményfajták sorrendje",
+        "Order of the document types": "A dokumentumtípusok sorrendje",
+        "Your own order could not be loaded, so the list is shown in its own order.": "A saját sorrendet nem sikerült betölteni, ezért a lista az eredeti sorrendjében jelenik meg."
     },
     "plurals": {}
 }

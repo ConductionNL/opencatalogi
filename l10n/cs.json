@@ -879,7 +879,10 @@
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Nelze ověřit, zda jsou v této kategorii publikace, proto se neskryje.",
         "Move the %s publications filed under this category before hiding it.": "Přesuňte %s publikací z této kategorie, než ji skryjete.",
         "Woo requests are handled by dossiq, which is not installed.": "Žádosti Woo vyřizuje dossiq, který není nainstalován.",
-        "Install dossiq from the app store": "Nainstalujte dossiq z obchodu s aplikacemi"
+        "Install dossiq from the app store": "Nainstalujte dossiq z obchodu s aplikacemi",
+        "Order of the kinds of handling": "Pořadí druhů úkonů",
+        "Order of the document types": "Pořadí druhů dokumentů",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Vlastní pořadí se nepodařilo načíst, proto je seznam zobrazen v původním pořadí."
     },
     "plurals": {}
 }
