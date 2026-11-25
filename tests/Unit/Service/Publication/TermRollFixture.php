@@ -26,6 +26,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
 use OCA\OpenRegister\Service\Flow\Timer\RollRule;
+use OCA\OpenRegister\Service\Flow\Timer\SlaAddition;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 
@@ -34,8 +35,8 @@ use Psr\Container\ContainerInterface;
  */
 class HolidaySlaCalculator {
 
-	public function add(DateTimeInterface $from, float $value, string $unit, ?object $calendar): DateTimeImmutable {
-		return DateTimeImmutable::createFromInterface($from)->modify(sprintf('%+d days', (int)$value));
+	public function add(SlaAddition $addition): DateTimeImmutable {
+		return $addition->start->modify(sprintf('%+d days', (int)$addition->value));
 	}//end add()
 
 	public function roll(DateTimeInterface $moment, RollRule $rule): array {

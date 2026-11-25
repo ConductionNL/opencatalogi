@@ -61,7 +61,9 @@ class FakeCalendarService {
  */
 class FakeSlaCalculator {
 
-	public function add(\DateTimeInterface $from, float $value, string $unit, ?object $calendar): DateTimeImmutable {
+	public function add(\OCA\OpenRegister\Service\Flow\Timer\SlaAddition $addition): DateTimeImmutable {
+		// The engine's value object, unpacked to the names this double was written with.
+		[$from, $value, $unit, $calendar] = [$addition->start, $addition->value, $addition->unit, null];
 		return DateTimeImmutable::createFromInterface($from)->modify(sprintf('%+d days', (int)$value));
 	}//end add()
 
@@ -537,7 +539,9 @@ class CommentPeriodServiceTest extends TestCase {
 					// An engine that lands the term on its own start, which the
 					// real one cannot do and which is asserted against anyway.
 					return new class {
-						public function add(\DateTimeInterface $from, float $value, string $unit, ?object $calendar): DateTimeImmutable {
+						public function add(\OCA\OpenRegister\Service\Flow\Timer\SlaAddition $addition): DateTimeImmutable {
+							// The engine's value object, unpacked to the names this double was written with.
+							[$from, $value, $unit, $calendar] = [$addition->start, $addition->value, $addition->unit, null];
 							return DateTimeImmutable::createFromInterface($from);
 						}
 
@@ -632,7 +636,9 @@ class CommentPeriodServiceTest extends TestCase {
 			static function (string $id): object {
 				if ($id === 'OCA\OpenRegister\Service\Flow\Timer\SlaCalculator') {
 					return new class {
-						public function add(\DateTimeInterface $from, float $value, string $unit, ?object $calendar): DateTimeImmutable {
+						public function add(\OCA\OpenRegister\Service\Flow\Timer\SlaAddition $addition): DateTimeImmutable {
+							// The engine's value object, unpacked to the names this double was written with.
+							[$from, $value, $unit, $calendar] = [$addition->start, $addition->value, $addition->unit, null];
 							return DateTimeImmutable::createFromInterface($from);
 						}
 
