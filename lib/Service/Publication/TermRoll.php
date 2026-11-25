@@ -102,7 +102,7 @@ class TermRoll implements TermRollInterface {
 		// time; only its LANDING is moved off a non-working day.
 		$landed = $calculator->add(
 			new SlaAddition(
-				start: DateTimeImmutable::createFromInterface($start),
+				start: ($start instanceof DateTimeImmutable) ? $start : new DateTimeImmutable($start->format('Y-m-d\TH:i:s.uP')),
 				value: (float)$days,
 				unit: 'calendarDays',
 				calendar: $calendar
