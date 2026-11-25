@@ -44,11 +44,13 @@ class OpenCatalogiScannableServices implements IMcpScannableServices {
 	 * The service classes OpenRegister scans for `#[McpTool]` methods.
 	 *
 	 * @return list<class-string> PublicationService, which carries
-	 *                            `searchCatalogPublications` and `listPublicationFiles`.
+	 *                            `searchCatalogPublications` and `listPublicationFiles`,
+	 *                            and PublicationAgentTools, which carries the governed writes.
 	 *
 	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-no-hand-written-mcp-tool-provider-remains-in-opencatalogi-req-006
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-write-actions-are-curated-tools-with-allow-listed-properties-req-007
 	 */
 	public function getScannableServiceClasses(): array {
-		return [PublicationService::class];
+		return [PublicationService::class, PublicationAgentTools::class];
 	}//end getScannableServiceClasses()
 }//end class
