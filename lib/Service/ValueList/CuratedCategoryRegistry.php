@@ -189,7 +189,8 @@ class CuratedCategoryRegistry implements InformationCategoryRegistryInterface {
 		$position = 0;
 		foreach ($set as $code => $record) {
 			$order = ($choices[(string)($record['tooiUri'] ?? '')]['order'] ?? null);
-			$keys[$code] = [($order === null) ? 1 : 0, (int)$order, $position];
+			$unordered = (int)($order === null);
+			$keys[$code] = [$unordered, (int)$order, $position];
 			$position++;
 		}
 

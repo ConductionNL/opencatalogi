@@ -173,7 +173,8 @@ class ValueListChoicesControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnOrderIsSaved(): void {
-		$response = $this->controller(params: ['scheme' => 'informatiecategorieen', 'entries' => [self::COVENANTS, '', 'https://example.org/b']])->reorder();
+		$params = ['scheme' => 'informatiecategorieen', 'entries' => [self::COVENANTS, '', 'https://example.org/b']];
+		$response = $this->controller(params: $params)->reorder();
 
 		$this->assertSame(expected: 200, actual: $response->getStatus());
 		$this->assertSame(expected: [['order' => [self::COVENANTS, 'https://example.org/b'], 'scheme' => 'informatiecategorieen']], actual: $this->saves);

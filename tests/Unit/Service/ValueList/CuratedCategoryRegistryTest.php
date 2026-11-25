@@ -70,7 +70,7 @@ class CuratedCategoryRegistryTest extends TestCase {
 		$registry->method('resolveForDocument')->willReturn(['uri' => self::KERN . 'c_139c6280', 'label' => 'Wetten']);
 
 		$store = $this->createMock(originalClassName: ValueListChoiceStore::class);
-		$expects = $store->expects($this->exactly($reads))->method('forScheme')->with(CuratedCategoryRegistry::SCHEME);
+		$expects = $store->expects($this->exactly(count: $reads))->method('forScheme')->with(CuratedCategoryRegistry::SCHEME);
 		if ($choices === null) {
 			$expects->willThrowException(new RuntimeException('not configured'));
 		} else {
