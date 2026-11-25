@@ -21,7 +21,7 @@
  * @spec openspec/changes/archive/2026-11-25-instance-staging-mode/specs/admin-settings/spec.md
  */
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from './authenticated-request.ts'
 import { isSharedInstance } from './shared-instance.ts'
 
 const API_BASE = '/index.php/apps/opencatalogi/api'
