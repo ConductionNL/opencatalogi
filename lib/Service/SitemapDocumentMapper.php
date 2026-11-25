@@ -147,7 +147,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md
 	 */
 	public function map(array $publication, array $file, array &$violations = [], array $relations = []): array {
 		$document = $this->document(publication: $publication, file: $file);
@@ -309,7 +309,7 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 *
 	 * @return string The moment in DATE_ATOM form, UTC.
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-documents-lastmod-follows-its-metadata-as-well-as-its-file-req-wsd-001
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-documents-lastmod-follows-its-metadata-as-well-as-its-file-req-wsd-001
 	 */
 	private static function lastModified(array $publication, array $file): string {
 		$moments = [];

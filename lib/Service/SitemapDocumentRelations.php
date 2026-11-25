@@ -17,7 +17,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md
  */
 
 declare(strict_types=1);
@@ -38,7 +38,7 @@ namespace OCA\OpenCatalogi\Service;
  * (`diwoo:isPartOf` and `diwoo:hasPart` are a `documentverwijzingType`: a label
  * with a `resource` attribute; `diwoo:hasParts` holds one or more `hasPart`).
  *
- * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md
  */
 final class SitemapDocumentRelations {
 
@@ -56,7 +56,7 @@ final class SitemapDocumentRelations {
 	 *
 	 * @return array<int, array{0: array<string, mixed>, 1: array<string, array<string, mixed>>}>
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
 	 */
 	public static function forPublication(array $publication, string $apiBase): array {
 		$files = self::filesOf(publication: $publication);
@@ -83,7 +83,7 @@ final class SitemapDocumentRelations {
 	 *
 	 * @return array{documentLoc: string, axis: string, reason: string}|null
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
 	 */
 	public static function mainDocumentViolation(array $publication): ?array {
 		$files = self::filesOf(publication: $publication);
@@ -110,7 +110,7 @@ final class SitemapDocumentRelations {
 	 *
 	 * @return array<int, array<string, mixed>>
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
 	 */
 	private static function filesOf(array $publication): array {
 		$files = [];
@@ -130,7 +130,7 @@ final class SitemapDocumentRelations {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
 	 */
 	private static function titleOf(array $publication): string {
 		$title = ($publication['title'] ?? ($publication['@self']['name'] ?? ''));
@@ -150,7 +150,7 @@ final class SitemapDocumentRelations {
 	 *
 	 * @return array<int, array<string, array<string, mixed>>> The elements to add to each document's `diwoo:DiWoo`.
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
 	 */
 	public static function forFiles(array $files, string $publicationUrl, string $publicationTitle): array {
 		if (count($files) < 2) {
@@ -187,7 +187,7 @@ final class SitemapDocumentRelations {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
 	 */
 	public static function mainDocumentCount(array $files): int {
 		return count(array_filter($files, static fn (array $file): bool => self::isMainDocument(file: $file)));
@@ -201,7 +201,7 @@ final class SitemapDocumentRelations {
 	 *
 	 * @return int|null
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
 	 */
 	private static function mainDocumentIndex(array $files): ?int {
 		$marked = array_keys(array_filter($files, static fn (array $file): bool => self::isMainDocument(file: $file)));
@@ -219,7 +219,7 @@ final class SitemapDocumentRelations {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
 	 */
 	private static function isMainDocument(array $file): bool {
 		$labels = ($file['labels'] ?? []);
@@ -235,7 +235,7 @@ final class SitemapDocumentRelations {
 	 *
 	 * @return array{'@resource': string, '#text': string}
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
 	 */
 	private static function reference(array $file): array {
 		$name = ($file['title'] ?? ($file['name'] ?? ($file['filename'] ?? '')));

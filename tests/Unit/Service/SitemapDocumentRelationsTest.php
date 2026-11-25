@@ -15,7 +15,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md
  */
 
 namespace Unit\Service;
@@ -26,7 +26,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Which documents of one publication say they belong together.
  *
- * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
+ * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md
  */
 class SitemapDocumentRelationsTest extends TestCase {
 
@@ -47,7 +47,7 @@ class SitemapDocumentRelationsTest extends TestCase {
 	/**
 	 * A single document carries no relation.
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
 	 */
 	public function testASingleDocumentHasNoRelation(): void {
 		$this->assertSame([], SitemapDocumentRelations::forFiles(files: [self::file('a.pdf', ['main-document'])], publicationUrl: self::URL, publicationTitle: 'Besluit'));
@@ -56,7 +56,7 @@ class SitemapDocumentRelationsTest extends TestCase {
 	/**
 	 * Three files and no main document: each is part of the publication.
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-documents-of-one-publication-say-they-belong-together-req-wsd-002
 	 */
 	public function testWithoutAMainDocumentEachIsPartOfThePublication(): void {
 		$relations = SitemapDocumentRelations::forFiles(files: [self::file('a.pdf'), self::file('b.pdf'), self::file('c.pdf')], publicationUrl: self::URL, publicationTitle: 'Besluit');
@@ -68,7 +68,7 @@ class SitemapDocumentRelationsTest extends TestCase {
 	/**
 	 * One main document lists the others in order; each other points at it.
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
 	 */
 	public function testAMainDocumentListsItsParts(): void {
 		$files = [self::file('bijlage1.pdf'), self::file('besluit.pdf', ['concept', 'main-document']), self::file('bijlage2.pdf')];
@@ -92,7 +92,7 @@ class SitemapDocumentRelationsTest extends TestCase {
 	/**
 	 * Two main documents fall back to the publication and are counted.
 	 *
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
 	 */
 	public function testTwoMainDocumentsFallBackToThePublication(): void {
 		$files = [self::file('a.pdf', ['main-document']), self::file('b.pdf', ['main-document'])];

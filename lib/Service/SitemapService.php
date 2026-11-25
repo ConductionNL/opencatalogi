@@ -247,7 +247,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @SuppressWarnings(PHPMD.StaticAccess) SitemapDocumentRelations is a pure static helper.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
-	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/archive/2026-11-25-woo-sitemap-document-signals/specs/woo-compliance/spec.md
 	 */
 	public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse {
 		$objectService = $this->getObjectService();
