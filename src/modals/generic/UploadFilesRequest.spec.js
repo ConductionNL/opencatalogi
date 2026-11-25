@@ -8,11 +8,11 @@
  * `this`, so no component is mounted.
  */
 
-import axios from 'axios'
+import axios from '@nextcloud/axios'
 import { ref } from 'vue'
 import UploadFiles from './UploadFiles.vue'
 
-jest.mock('axios', () => ({ __esModule: true, default: { post: jest.fn() } }))
+jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: { post: jest.fn() } }))
 
 jest.mock('../../composables/UseFileSelection.js', () => ({
 	useFileSelection: () => ({

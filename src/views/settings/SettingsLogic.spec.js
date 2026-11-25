@@ -266,7 +266,8 @@ describe('Settings save and sync actions', () => {
 			auto_publish_objects: false,
 			use_old_style_publishing_view: true,
 		})
-		expect(ctx.publishingOptions).toEqual({ autoPublishAttachments: false, autoPublishObjects: true, useOldStylePublishingView: false })
+		// publication_review_required is absent from the answer, so review stays on.
+		expect(ctx.publishingOptions).toEqual({ autoPublishAttachments: false, autoPublishObjects: true, useOldStylePublishingView: false, publicationReviewRequired: true })
 		expect(ctx.saving).toBe(false)
 	})
 
