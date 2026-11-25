@@ -62,6 +62,7 @@ vi.mock('vue', async (importOriginal) => ({
 vi.mock('../../src/App.vue', () => ({ default: { name: 'App' } }))
 vi.mock('../../src/registry.js', () => ({ default: { FederationDirectory: { name: 'FederationDirectory' } } }))
 vi.mock('../../src/views/settings/Settings.vue', () => ({ default: { name: 'AdminSettings' } }))
+vi.mock('../../src/components/widgets/AnnualReportWidget.vue', () => ({ default: { name: 'AnnualReportWidget' } }))
 vi.mock('../../src/components/widgets/AuditTrailWidget.vue', () => ({ default: { name: 'AuditTrailWidget' } }))
 vi.mock('../../src/components/widgets/MetadataSuggestionsWidget.vue', () => ({ default: { name: 'MetadataSuggestionsWidget' } }))
 vi.mock('../../src/components/widgets/NationalAnnounceWidget.vue', () => ({ default: { name: 'NationalAnnounceWidget' } }))
@@ -69,6 +70,7 @@ vi.mock('../../src/components/widgets/PlainSummaryDraftWidget.vue', () => ({ def
 vi.mock('../../src/components/widgets/PublicationAttachmentsWidget.vue', () => ({ default: { name: 'PublicationAttachmentsWidget' } }))
 vi.mock('../../src/components/widgets/PublicationLanguagesWidget.vue', () => ({ default: { name: 'PublicationLanguagesWidget' } }))
 vi.mock('../../src/components/widgets/PublicationQualityWidget.vue', () => ({ default: { name: 'PublicationQualityWidget' } }))
+vi.mock('../../src/components/widgets/PublicationTablesWidget.vue', () => ({ default: { name: 'PublicationTablesWidget' } }))
 vi.mock('../../src/components/widgets/PublicationVisibilityWidget.vue', () => ({ default: { name: 'PublicationVisibilityWidget' } }))
 vi.mock('../../src/components/widgets/ThemePreviewWidget.vue', () => ({ default: { name: 'ThemePreviewWidget' } }))
 
@@ -120,7 +122,7 @@ afterEach(() => {
 })
 
 describe('src/main.js', () => {
-	it('registers the twelve detail-page widgets after the built-in ones', async () => {
+	it('registers the thirteen detail-page widgets and the annual report after the built-in ones', async () => {
 		await runMain()
 
 		expect(lib.registerBuiltinDashboardWidgets).toHaveBeenCalledOnce()
@@ -133,14 +135,17 @@ describe('src/main.js', () => {
 			'publication-languages',
 			'plain-summary-draft',
 			'publication-quality',
+			'annual-report',
 			'publication-attachments',
+			'publication-tables',
 			'theme-preview',
 			'tree-view',
 			'relationship-graph',
 			'file-manager',
 		])
-		for (const [, options] of calls) {
-			expect(options.surfaces).toEqual(['detail-page'])
+		for (const [key, options] of calls) {
+			// The annual report sits on the publications report dashboard (REQ-WAR-002).
+			expect(options.surfaces).toEqual(key === 'annual-report' ? ['app-dashboard'] : ['detail-page'])
 			expect(options.form).toBe(null)
 		}
 		expect(calls[0][1].renderer).toEqual({ name: 'AuditTrailWidget' })
@@ -148,8 +153,10 @@ describe('src/main.js', () => {
 		expect(calls[4][1].renderer).toEqual({ name: 'PublicationLanguagesWidget' })
 		expect(calls[5][1].renderer).toEqual({ name: 'PlainSummaryDraftWidget' })
 		expect(calls[6][1].renderer).toEqual({ name: 'PublicationQualityWidget' })
-		expect(calls[7][1].defaultContent).toEqual({ maxDisplay: 100 })
-		expect(calls[9][1].renderer).toBe(lib.CnTreeView)
+		expect(calls[7][1].renderer).toEqual({ name: 'AnnualReportWidget' })
+		expect(calls[8][1].defaultContent).toEqual({ maxDisplay: 100 })
+		expect(calls[9][1].renderer).toEqual({ name: 'PublicationTablesWidget' })
+		expect(calls[11][1].renderer).toBe(lib.CnTreeView)
 		expect(lib.registerBuiltinDashboardWidgets.mock.invocationCallOrder[0]).toBeLessThan(lib.registerDashboardWidget.mock.invocationCallOrder[0])
 	})
 
