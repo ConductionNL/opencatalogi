@@ -152,7 +152,14 @@ test.describe('Publication withdrawal aftercare', () => {
 			`${APP_BASE}/publications/${encodeURIComponent(catalog.slug)}/${publication.id}`,
 		)
 		const note = page.getByTestId('publication-frozen')
-		await expect(note).toBeVisible()
+		// The detail grid mounts a widget when it scrolls into view, and the
+		// status widget sits below the fold: scroll the page down to it.
+		await expect(page.locator('[gs-id]').first()).toBeAttached()
+		await page.mouse.move(800, 400)
+		await expect(async () => {
+			await page.mouse.wheel(0, 400)
+			await expect(note).toBeVisible({ timeout: 500 })
+		}).toPass({ timeout: 20000 })
 		await expect(note).toContainText('Frozen on')
 		await expect(note).toContainText('AVG-melding 14')
 
