@@ -8,7 +8,8 @@
  * an internal reason, a public reason and Show the title ticked. The stored
  * depublication carries both reasons and the choice, and the publication's
  * public link answers 410 with its id, the moment, the public reason and the
- * title, and nothing else of the record. Withdrawn without the title, the
+ * title, and nothing else of the record; the federation route the portal
+ * reads answers the same tombstone. Withdrawn without the title, the
  * tombstone carries no title.
  *
  * The withdrawal also freezes the publication (REQ-PWA-003). Opened by the
@@ -112,6 +113,14 @@ test.describe('Publication withdrawal aftercare', () => {
 			)
 			expect(untitled.status()).toBe(410)
 			expect(await untitled.json()).not.toHaveProperty('title')
+
+			// The portal reads a publication through the federation route: a
+			// withdrawn link answers the same tombstone there.
+			const federated = await anonymous.get(
+				`${API_BASE}/federation/publications/${shown.id}`,
+			)
+			expect(federated.status()).toBe(410)
+			expect(await federated.json()).toEqual(body)
 		} finally {
 			await anonymous.dispose()
 		}
