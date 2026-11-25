@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ma jistax jiġi ċċekkjat jekk hemmx pubblikazzjonijiet taħt din il-kategorija, għalhekk ma tinħebiex.",
         "Move the %s publications filed under this category before hiding it.": "Mexxi l-%s pubblikazzjonijiet taħt din il-kategorija qabel ma taħbiha.",
         "Woo requests are handled by dossiq, which is not installed.": "It-talbiet Woo jiġu ttrattati minn dossiq, li mhuwiex installat.",
-        "Install dossiq from the app store": "Installa dossiq mill-ħanut tal-apps"
+        "Install dossiq from the app store": "Installa dossiq mill-ħanut tal-apps",
+        "Order of the kinds of handling": "Ordni tat-tipi ta’ azzjoni",
+        "Order of the document types": "Ordni tat-tipi ta’ dokumenti",
+        "Your own order could not be loaded, so the list is shown in its own order.": "L-ordni tiegħek ma setax jitgħabba, għalhekk il-lista tintwera fl-ordni oriġinali tagħha."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ní féidir a sheiceáil an bhfuil foilseacháin faoin gcatagóir seo, mar sin níl sí folaithe.",
         "Move the %s publications filed under this category before hiding it.": "Bog na %s foilseachán faoin gcatagóir seo sula bhfolaíonn tú í.",
         "Woo requests are handled by dossiq, which is not installed.": "Is é dossiq a láimhseálann iarratais Woo, agus níl sé suiteáilte.",
-        "Install dossiq from the app store": "Suiteáil dossiq ón siopa aipeanna"
+        "Install dossiq from the app store": "Suiteáil dossiq ón siopa aipeanna",
+        "Order of the kinds of handling": "Ord na gcineálacha gnímh",
+        "Order of the document types": "Ord na gcineálacha doiciméad",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Níorbh fhéidir d’ord féin a lódáil, mar sin taispeántar an liosta ina ord féin."
     },
     "nplurals=2; plural=(n != 1);"
 )

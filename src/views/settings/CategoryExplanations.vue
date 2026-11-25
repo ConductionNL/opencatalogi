@@ -66,26 +66,14 @@
 					@update:modelValue="hide(entry, $event)">
 					{{ t('opencatalogi', 'Hide from pick lists') }}
 				</NcCheckboxRadioSwitch>
-				<NcButton
-					:aria-label="
-						t('opencatalogi', 'Move {label} up', { label: entry.label })
-					"
-					:disabled="reordering || index === 0"
-					:data-testid="'category-move-up-' + entry.code"
-					@click="move(index, -1)">
-					{{ t('opencatalogi', 'Move up') }}
-				</NcButton>
-				<NcButton
-					:aria-label="
-						t('opencatalogi', 'Move {label} down', {
-							label: entry.label,
-						})
-					"
-					:disabled="reordering || index === entries.length - 1"
-					:data-testid="'category-move-down-' + entry.code"
-					@click="move(index, 1)">
-					{{ t('opencatalogi', 'Move down') }}
-				</NcButton>
+				<ValueListMoveButtons
+					:label="entry.label"
+					:index="index"
+					:count="entries.length"
+					:disabled="reordering"
+					testidPrefix="category"
+					:testidKey="entry.code"
+					@move="move(index, $event)" />
 			</li>
 		</ul>
 	</div>
@@ -102,21 +90,15 @@ import {
 	NcNoteCard,
 	NcTextArea,
 } from '@nextcloud/vue'
+import ValueListMoveButtons from './ValueListMoveButtons.vue'
+import { CHOICES_URL, moveEntry, moveInList, ORDER_URL } from './valueListOrder.js'
 
-/**
- * The URL of the value-list choices of the information categories.
- */
-export const CHOICES_URL = '/apps/opencatalogi/api/woo/value-list-choices'
+export { CHOICES_URL, moveEntry, ORDER_URL }
 
 /**
  * The list the information categories are.
  */
 export const SCHEME = 'informatiecategorieen'
-
-/**
- * The URL that saves the order of a list.
- */
-export const ORDER_URL = '/apps/opencatalogi/api/woo/value-list-choices/order'
 
 /**
  * The administrator writes an explanation per information category (REQ-WVL-003).
@@ -130,7 +112,13 @@ export const ORDER_URL = '/apps/opencatalogi/api/woo/value-list-choices/order'
 export default {
 	name: 'CategoryExplanations',
 
-	components: { NcButton, NcCheckboxRadioSwitch, NcNoteCard, NcTextArea },
+	components: {
+		NcButton,
+		NcCheckboxRadioSwitch,
+		NcNoteCard,
+		NcTextArea,
+		ValueListMoveButtons,
+	},
 
 	data() {
 		return {
@@ -234,32 +222,7 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async move(index, delta) {
-			const moved = moveEntry(this.entries, index, delta)
-			if (moved === null) {
-				return
-			}
-			this.error = null
-			this.reordering = true
-			const entry = this.entries[index]
-			try {
-				const { data } = await axios.put(generateUrl(ORDER_URL), {
-					scheme: SCHEME,
-					entries: moved.map((item) => item.uri),
-				})
-				this.apply(data)
-				this.announcement = t(
-					'opencatalogi',
-					'{label} is now at position {position}.',
-					{
-						label: entry.label,
-						position: index + delta + 1,
-					},
-				)
-			} catch (err) {
-				this.error = err.response?.data?.error || err.message
-			} finally {
-				this.reordering = false
-			}
+			await moveInList(this, SCHEME, index, delta)
 		},
 
 		/**
@@ -298,31 +261,6 @@ export default {
 			this.drafts = { ...this.drafts, [entry.uri]: value }
 		},
 	},
-}
-
-/**
- * The entries with one moved a place up or down, or null when it cannot move.
- *
- * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrators-order-drives-every-pick-list-req-wvl-002
- * @param {Array<object>} entries The entries in their current order.
- * @param {number} index The place of the entry to move.
- * @param {number} delta -1 for up, 1 for down.
- * @return {Array<object>|null} The entries in their new order.
- */
-export function moveEntry(entries, index, delta) {
-	const target = index + delta
-	if (
-		index < 0
-		|| index >= entries.length
-		|| target < 0
-		|| target >= entries.length
-	) {
-		return null
-	}
-	const moved = [...entries]
-	const [entry] = moved.splice(index, 1)
-	moved.splice(target, 0, entry)
-	return moved
 }
 
 /**

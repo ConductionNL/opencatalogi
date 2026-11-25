@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ei voida tarkistaa, onko tässä luokassa julkaisuja, joten sitä ei piiloteta.",
         "Move the %s publications filed under this category before hiding it.": "Siirrä tämän luokan %s julkaisua ennen sen piilottamista.",
         "Woo requests are handled by dossiq, which is not installed.": "Woo-pyynnöt käsitellään dossiqissa, jota ei ole asennettu.",
-        "Install dossiq from the app store": "Asenna dossiq sovelluskaupasta"
+        "Install dossiq from the app store": "Asenna dossiq sovelluskaupasta",
+        "Order of the kinds of handling": "Toimenpidetyyppien järjestys",
+        "Order of the document types": "Asiakirjatyyppien järjestys",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Omaa järjestystänne ei voitu ladata, joten luettelo näytetään sen omassa järjestyksessä."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "No es pot comprovar si hi ha publicacions en aquesta categoria, per això no s'amaga.",
         "Move the %s publications filed under this category before hiding it.": "Moveu les %s publicacions d'aquesta categoria abans d'amagar-la.",
         "Woo requests are handled by dossiq, which is not installed.": "Les sol·licituds Woo les gestiona dossiq, que no està instal·lat.",
-        "Install dossiq from the app store": "Instal·la dossiq des de la botiga d'aplicacions"
+        "Install dossiq from the app store": "Instal·la dossiq des de la botiga d'aplicacions",
+        "Order of the kinds of handling": "Ordre dels tipus d’actuació",
+        "Order of the document types": "Ordre dels tipus de document",
+        "Your own order could not be loaded, so the list is shown in its own order.": "No s’ha pogut carregar el vostre ordre, per això la llista es mostra en el seu ordre original."
     },
     "nplurals=2; plural=(n != 1);"
 )

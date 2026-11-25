@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ne može se provjeriti ima li publikacija u ovoj kategoriji, pa se ne skriva.",
         "Move the %s publications filed under this category before hiding it.": "Premjestite %s publikacija iz ove kategorije prije nego što je sakrijete.",
         "Woo requests are handled by dossiq, which is not installed.": "Woo zahtjeve obrađuje dossiq, koji nije instaliran.",
-        "Install dossiq from the app store": "Instalirajte dossiq iz trgovine aplikacija"
+        "Install dossiq from the app store": "Instalirajte dossiq iz trgovine aplikacija",
+        "Order of the kinds of handling": "Redoslijed vrsta radnji",
+        "Order of the document types": "Redoslijed vrsta dokumenata",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Vaš redoslijed nije moguće učitati, pa je lista prikazana u izvornom redoslijedu."
     },
     "nplurals=2; plural=(n != 1);"
 )

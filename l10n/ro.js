@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Nu se poate verifica dacă există publicații în această categorie, așa că nu este ascunsă.",
         "Move the %s publications filed under this category before hiding it.": "Mutați cele %s publicații din această categorie înainte de a o ascunde.",
         "Woo requests are handled by dossiq, which is not installed.": "Cererile Woo sunt gestionate de dossiq, care nu este instalat.",
-        "Install dossiq from the app store": "Instalați dossiq din magazinul de aplicații"
+        "Install dossiq from the app store": "Instalați dossiq din magazinul de aplicații",
+        "Order of the kinds of handling": "Ordinea tipurilor de acțiuni",
+        "Order of the document types": "Ordinea tipurilor de documente",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Ordinea dvs. nu a putut fi încărcată, așa că lista este afișată în ordinea ei inițială."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

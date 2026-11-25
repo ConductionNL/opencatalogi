@@ -879,7 +879,10 @@
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Не може се проверити да ли има публикација у овој категорији, па се не скрива.",
         "Move the %s publications filed under this category before hiding it.": "Преместите %s публикација из ове категорије пре него што је сакријете.",
         "Woo requests are handled by dossiq, which is not installed.": "Woo захтеве обрађује dossiq, који није инсталиран.",
-        "Install dossiq from the app store": "Инсталирајте dossiq из продавнице апликација"
+        "Install dossiq from the app store": "Инсталирајте dossiq из продавнице апликација",
+        "Order of the kinds of handling": "Редослед врста радњи",
+        "Order of the document types": "Редослед врста докумената",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Ваш редослед није могуће учитати, па је списак приказан у изворном редоследу."
     },
     "plurals": {}
 }

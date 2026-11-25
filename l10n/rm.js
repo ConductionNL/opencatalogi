@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "I na po betg vegnir controllà sch’i dat publicaziuns en questa categoria, perquai na vegn ella betg zuppentada.",
         "Move the %s publications filed under this category before hiding it.": "Spustai las %s publicaziuns da questa categoria avant che la zuppentar.",
         "Woo requests are handled by dossiq, which is not installed.": "Las dumondas Woo vegnan tractadas da dossiq, che n'è betg installà.",
-        "Install dossiq from the app store": "Installar dossiq da la butia d'apps"
+        "Install dossiq from the app store": "Installar dossiq da la butia d'apps",
+        "Order of the kinds of handling": "Urden da las sorts d’acziun",
+        "Order of the document types": "Urden da las sorts da documents",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Voss agen urden n’ha betg pudì vegnir chargià, perquai vegn la glista mussada en ses agen urden."
     },
     "nplurals=2; plural=(n != 1);"
 )

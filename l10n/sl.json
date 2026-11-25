@@ -879,7 +879,10 @@
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Ni mogoče preveriti, ali so v tej kategoriji objave, zato ni skrita.",
         "Move the %s publications filed under this category before hiding it.": "Premaknite %s objav iz te kategorije, preden jo skrijete.",
         "Woo requests are handled by dossiq, which is not installed.": "Zahteve Woo obravnava dossiq, ki ni nameščen.",
-        "Install dossiq from the app store": "Namestite dossiq iz trgovine z aplikacijami"
+        "Install dossiq from the app store": "Namestite dossiq iz trgovine z aplikacijami",
+        "Order of the kinds of handling": "Vrstni red vrst dejanj",
+        "Order of the document types": "Vrstni red vrst dokumentov",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Vašega vrstnega reda ni bilo mogoče naložiti, zato je seznam prikazan v izvirnem vrstnem redu."
     },
     "plurals": {}
 }

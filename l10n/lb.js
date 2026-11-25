@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Et kann net gepréift ginn, ob Publikatiounen ënner dëser Kategorie sinn, dofir gëtt se net verstoppt.",
         "Move the %s publications filed under this category before hiding it.": "Réckelt déi %s Publikatiounen ënner dëser Kategorie, ier Dir se verstoppt.",
         "Woo requests are handled by dossiq, which is not installed.": "Woo-Ufroe gi vun dossiq behandelt, dat net installéiert ass.",
-        "Install dossiq from the app store": "dossiq aus dem App Store installéieren"
+        "Install dossiq from the app store": "dossiq aus dem App Store installéieren",
+        "Order of the kinds of handling": "Reiefolleg vun den Handlungsaarten",
+        "Order of the document types": "Reiefolleg vun den Dokumentaarten",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Är eege Reiefolleg konnt net geluede ginn, dofir gëtt d’Lëscht an hirer eegener Reiefolleg gewisen."
     },
     "nplurals=2; plural=(n != 1);"
 )

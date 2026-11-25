@@ -879,7 +879,10 @@
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Det går inte att kontrollera om det finns publikationer i den här kategorin, så den döljs inte.",
         "Move the %s publications filed under this category before hiding it.": "Flytta de %s publikationerna i den här kategorin innan du döljer den.",
         "Woo requests are handled by dossiq, which is not installed.": "Woo-förfrågningar hanteras av dossiq, som inte är installerat.",
-        "Install dossiq from the app store": "Installera dossiq från appbutiken"
+        "Install dossiq from the app store": "Installera dossiq från appbutiken",
+        "Order of the kinds of handling": "Ordning för handlingstyper",
+        "Order of the document types": "Ordning för dokumenttyper",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Er egen ordning kunde inte läsas in, så listan visas i sin egen ordning."
     },
     "plurals": {}
 }

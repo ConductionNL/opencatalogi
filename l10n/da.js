@@ -880,7 +880,10 @@ OC.L10N.register(
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Det kan ikke kontrolleres, om der er publikationer i denne kategori, så den skjules ikke.",
         "Move the %s publications filed under this category before hiding it.": "Flyt de %s publikationer i denne kategori, før du skjuler den.",
         "Woo requests are handled by dossiq, which is not installed.": "Woo-anmodninger håndteres af dossiq, som ikke er installeret.",
-        "Install dossiq from the app store": "Installer dossiq fra app-butikken"
+        "Install dossiq from the app store": "Installer dossiq fra app-butikken",
+        "Order of the kinds of handling": "Rækkefølge af handlingstyper",
+        "Order of the document types": "Rækkefølge af dokumenttyper",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Jeres egen rækkefølge kunne ikke indlæses, så listen vises i sin egen rækkefølge."
     },
     "nplurals=2; plural=(n != 1);"
 )

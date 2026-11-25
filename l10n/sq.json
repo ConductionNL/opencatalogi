@@ -879,7 +879,10 @@
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Nuk mund të kontrollohet nëse ka botime në këtë kategori, prandaj nuk fshihet.",
         "Move the %s publications filed under this category before hiding it.": "Zhvendosni %s botimet e kësaj kategorie para se ta fshihni.",
         "Woo requests are handled by dossiq, which is not installed.": "Kërkesat Woo trajtohen nga dossiq, i cili nuk është i instaluar.",
-        "Install dossiq from the app store": "Instaloni dossiq nga dyqani i aplikacioneve"
+        "Install dossiq from the app store": "Instaloni dossiq nga dyqani i aplikacioneve",
+        "Order of the kinds of handling": "Renditja e llojeve të veprimeve",
+        "Order of the document types": "Renditja e llojeve të dokumenteve",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Renditja juaj nuk mund të ngarkohej, prandaj lista shfaqet në renditjen e saj origjinale."
     },
     "plurals": {}
 }

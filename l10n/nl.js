@@ -2209,7 +2209,10 @@ OC.L10N.register(
         "Name the list and its entries in their new order.": "Noem de lijst en de items in hun nieuwe volgorde.",
         "Hide from pick lists": "Verbergen in keuzelijsten",
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Of er publicaties onder deze categorie vallen kan niet worden nagegaan, dus wordt ze niet verborgen.",
-        "Move the %s publications filed under this category before hiding it.": "Verplaats de %s publicaties onder deze categorie voordat u haar verbergt."
+        "Move the %s publications filed under this category before hiding it.": "Verplaats de %s publicaties onder deze categorie voordat u haar verbergt.",
+        "Order of the kinds of handling": "Volgorde van de soorten handeling",
+        "Order of the document types": "Volgorde van de documentsoorten",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Uw eigen volgorde kon niet worden geladen, daarom wordt de lijst in zijn eigen volgorde getoond."
     },
     "nplurals=2; plural=(n != 1);"
 )

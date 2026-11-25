@@ -879,7 +879,10 @@
         "Whether publications are filed under this category cannot be checked, so it is not hidden.": "Impossible de vérifier si des publications relèvent de cette catégorie ; elle n'est donc pas masquée.",
         "Move the %s publications filed under this category before hiding it.": "Déplacez les %s publications de cette catégorie avant de la masquer.",
         "Woo requests are handled by dossiq, which is not installed.": "Les demandes Woo sont traitées par dossiq, qui n'est pas installé.",
-        "Install dossiq from the app store": "Installer dossiq depuis le magasin d'applications"
+        "Install dossiq from the app store": "Installer dossiq depuis le magasin d'applications",
+        "Order of the kinds of handling": "Ordre des types d’action",
+        "Order of the document types": "Ordre des types de documents",
+        "Your own order could not be loaded, so the list is shown in its own order.": "Votre propre ordre n’a pas pu être chargé, la liste est donc affichée dans son ordre d’origine."
     },
     "plurals": {}
 }
