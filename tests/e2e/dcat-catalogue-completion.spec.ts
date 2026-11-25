@@ -44,9 +44,10 @@ test.describe('DCAT catalogue completion', () => {
 			const field = block.getByRole('combobox')
 			await field.click()
 			await field.fill('vrij te gebruiken')
-			await expect(page.getByRole('option', { name: 'vrij te gebruiken', exact: true })).toHaveCount(0)
+			// NcSelect options carry no accessible name of their own: find them by their text.
+			await expect(page.getByRole('option').filter({ hasText: 'vrij te gebruiken' })).toHaveCount(0)
 			await field.fill(chosen.label)
-			await page.getByRole('option', { name: chosen.label, exact: true }).first().click()
+			await page.getByRole('option').filter({ hasText: chosen.label }).first().click()
 			await expect(block.getByTestId('dcat-default-licence-message')).toContainText('Default licence saved.')
 
 			const after = await admin.get(`${API_BASE}/settings`)
