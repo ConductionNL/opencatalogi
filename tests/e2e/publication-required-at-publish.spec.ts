@@ -19,7 +19,7 @@
  */
 import type { Page } from '@playwright/test'
 
-import { expect, test } from '@playwright/test'
+import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog, publicationScope } from './publication-catalog.ts'
 import { APP, dismissOverlays } from './spec-coverage/_nav.ts'
 
@@ -66,6 +66,16 @@ test.describe('Publication required at publish', () => {
 			)
 			expect(res.ok(), `seed ${title}`).toBe(true)
 			created.set(title, String((await res.json()).id))
+		}
+
+		// The complete one went through review, as a reviewer would move it: an
+		// instance that requires review refuses publishing a draft directly.
+		for (const action of ['submit', 'approve']) {
+			const moved = await request.post(
+				`${OR_API}/objects/${created.get(complete)}/transition`,
+				{ data: { action, data: {} } },
+			)
+			expect(moved.ok(), `${action}: ${await moved.text()}`).toBe(true)
 		}
 	})
 
