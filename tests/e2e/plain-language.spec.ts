@@ -28,7 +28,8 @@ import { APP, dismissOverlays } from './spec-coverage/_nav.ts'
 const OR_API = '/index.php/apps/openregister/api'
 const API = '/index.php/apps/opencatalogi/api'
 const RUN_ID = `ppl-${Date.now()}`
-const SUMMARY = 'U kreeg geen parkeervergunning. U maakte bezwaar. De gemeente blijft bij het besluit.'
+const SUMMARY =
+	'U kreeg geen parkeervergunning. U maakte bezwaar. De gemeente blijft bij het besluit.'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -44,7 +45,9 @@ test.describe('A plain language summary on a publication', () => {
 
 	test.afterAll(async ({ request }) => {
 		for (const id of created) {
-			await request.delete(`${OR_API}/objects/${scope.register}/${scope.schema}/${id}`)
+			await request.delete(
+				`${OR_API}/objects/${scope.register}/${scope.schema}/${id}`,
+			)
 		}
 	})
 
@@ -56,29 +59,55 @@ test.describe('A plain language summary on a publication', () => {
 	 * @return Its id.
 	 */
 	async function publication(request: any, title: string): Promise<string> {
-		const res = await request.post(`${OR_API}/objects/${scope.register}/${scope.schema}`, {
-			data: {
-				description: 'Created by the plain language e2e spec.',
-				publicationDate: new Date(Date.now() - 86_400_000).toISOString(),
-				summary: 'Fixture publication',
-				title: `${RUN_ID} ${title}`,
+		const res = await request.post(
+			`${OR_API}/objects/${scope.register}/${scope.schema}`,
+			{
+				data: {
+					description: 'Created by the plain language e2e spec.',
+					publicationDate: new Date(Date.now() - 86_400_000).toISOString(),
+					summary: 'Fixture publication',
+					title: `${RUN_ID} ${title}`,
+				},
 			},
-		})
+		)
 		expect(res.ok(), `seed ${title}: HTTP ${res.status()}`).toBe(true)
 		const id = String((await res.json()).id)
 		created.push(id)
+		// A new publication starts as a draft: take it through review to published.
+		for (const status of ['in_review', 'approved', 'published']) {
+			const moved = await request.patch(
+				`${OR_API}/objects/${scope.register}/${scope.schema}/${id}`,
+				{
+					data: { status },
+				},
+			)
+			expect(moved.ok(), `${title} to ${status}: HTTP ${moved.status()}`).toBe(
+				true,
+			)
+		}
 		return id
 	}
 
-	test('an officer writes a B1 summary and the reader sees it', async ({ page, playwright, request }) => {
+	test('an officer writes a B1 summary and the reader sees it', async ({
+		page,
+		playwright,
+		request,
+	}) => {
 		const id = await publication(request, 'Besluit op bezwaar parkeervergunning')
 
 		const saved = await request.post(`${API}/publications/${id}/plain-summary`, {
 			data: { level: 'B1', text: SUMMARY },
 		})
-		expect(saved.ok(), `accept: HTTP ${saved.status()} ${await saved.text()}`).toBe(true)
+		expect(
+			saved.ok(),
+			`accept: HTTP ${saved.status()} ${await saved.text()}`,
+		).toBe(true)
 
-		const stored = await (await request.get(`${OR_API}/objects/${scope.register}/${scope.schema}/${id}`)).json()
+		const stored = await (
+			await request.get(
+				`${OR_API}/objects/${scope.register}/${scope.schema}/${id}`,
+			)
+		).json()
 		expect(stored.plainSummary).toBe(SUMMARY)
 		expect(stored.plainSummaryLevel).toBe('B1')
 		expect(stored.plainSummaryProvenance?.generatedBy).toBe('person')
@@ -87,7 +116,21 @@ test.describe('A plain language summary on a publication', () => {
 		await page.goto(`${APP}/publications/${encodeURIComponent(slug)}/${id}`)
 		await dismissOverlays(page)
 		const main = page.locator('main, .app-content').first()
-		await expect(main.getByText(SUMMARY).first()).toBeVisible({ timeout: 30_000 })
+		// The data card shows its first fields and folds the rest behind "Show all N fields".
+		const showAll = main
+			.getByRole('button', {
+				name: /Show all \d+ fields|Toon alle \d+ velden/,
+			})
+			.first()
+		await showAll
+			.waitFor({ state: 'visible', timeout: 30_000 })
+			.catch(() => undefined)
+		if (await showAll.isVisible()) {
+			await showAll.click()
+		}
+		await expect(main.getByText(SUMMARY).first()).toBeVisible({
+			timeout: 30_000,
+		})
 		await expect(main.getByText('B1', { exact: true }).first()).toBeVisible()
 
 		const anonymous = await playwright.request.newContext({
@@ -102,7 +145,9 @@ test.describe('A plain language summary on a publication', () => {
 		await anonymous.dispose()
 	})
 
-	test('a summary without its level is refused naming the level', async ({ request }) => {
+	test('a summary without its level is refused naming the level', async ({
+		request,
+	}) => {
 		const id = await publication(request, 'Zonder niveau')
 		const url = `${OR_API}/objects/${scope.register}/${scope.schema}/${id}`
 		const current = await (await request.get(url)).json()
@@ -120,7 +165,9 @@ test.describe('A plain language summary on a publication', () => {
 	test('a draft is a suggestion until accepted', async ({ page, request }) => {
 		const id = await publication(request, 'Concept')
 		const url = `${OR_API}/objects/${scope.register}/${scope.schema}/${id}`
-		const assistant = await (await request.get(`${API}/plain-summary/assistant`)).json()
+		const assistant = await (
+			await request.get(`${API}/plain-summary/assistant`)
+		).json()
 
 		await page.goto(`${APP}/publications/${encodeURIComponent(slug)}/${id}`)
 		await dismissOverlays(page)
@@ -129,9 +176,15 @@ test.describe('A plain language summary on a publication', () => {
 
 		if (assistant.available !== true) {
 			// No text assistant: no Draft, the page says why, and the route refuses.
-			await expect(page.getByTestId('plain-summary-no-assistant')).toBeVisible()
-			await expect(page.getByTestId('plain-summary-draft-start')).toHaveCount(0)
-			const refused = await request.post(`${API}/publications/${id}/plain-summary-draft`)
+			await expect(
+				page.getByTestId('plain-summary-no-assistant'),
+			).toBeVisible()
+			await expect(page.getByTestId('plain-summary-draft-start')).toHaveCount(
+				0,
+			)
+			const refused = await request.post(
+				`${API}/publications/${id}/plain-summary-draft`,
+			)
 			expect(refused.status()).toBe(409)
 			expect((await refused.json()).error).toBe('no-provider')
 			return
@@ -145,7 +198,9 @@ test.describe('A plain language summary on a publication', () => {
 		const edited = `${(await text.inputValue()).trim()} (nagekeken)`
 		await text.fill(edited)
 		await page.getByTestId('plain-summary-draft-accept').click()
-		await expect(page.getByTestId('plain-summary-draft-message')).toBeVisible({ timeout: 30_000 })
+		await expect(page.getByTestId('plain-summary-draft-message')).toBeVisible({
+			timeout: 30_000,
+		})
 
 		const stored = await (await request.get(url)).json()
 		expect(stored.plainSummary).toBe(edited)
