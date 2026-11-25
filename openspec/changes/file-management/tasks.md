@@ -67,8 +67,13 @@
 
 - **Status**: todo
 - **Acceptance criteria**:
-  - [ ] 6.1 In a running dev environment, upload a file attachment to a publication via the OpenCatalogi UI and confirm the file appears under `Publicaties/{id} {title}/Bijlagen/` in Nextcloud Files. (live pass, decision 139)
-  - [ ] 6.2 Confirm a public share link is generated and accessible in a browser (unauthenticated). (live pass, decision 139)
+  - [x] 6.1 In a running dev environment, upload a file attachment to a publication via the OpenCatalogi UI and confirm the file appears under `Publicaties/{id} {title}/Bijlagen/` in Nextcloud Files. (live pass, decision 139)
+    - Done 25 Nov 2026 (live lane, NC 34 + MariaDB, nginx): attachments no longer go through OpenCatalogi's `FileService::handleFile()` (no caller left); the UI uploads through OpenRegister's file endpoint, and the file lands at `Open Registers/Publication Register/{uuid}/{name}` in Nextcloud Files (e.g. `.../4765de8c-…/baggerplan-kaart.txt`). The `Publicaties/{id} {title}/Bijlagen/` folder of this task is the old path; `Bijlagen/` survives as the folder inside the ZIP (6.4).
+  - [x] 6.2 Confirm a public share link is generated and accessible in a browser (unauthenticated). (live pass, decision 139)
+    - Done 25 Nov 2026: `accessUrl` `/index.php/s/<token>` answers 200 anonymously; `/download` redirects (303) to `/public.php/dav/files/<token>` and serves the file (200, text/plain).
   - [ ] 6.3 Run WOO sitemap generation as a background job and confirm share URLs are correctly formed (not empty or `://example.nl/...` artifacts from missing `$_SERVER`). (live pass, decision 139)
-  - [ ] 6.4 Download a publication as ZIP and confirm the archive contains the expected files and the temp file is deleted after download. (live pass, decision 139)
+    - 25 Nov 2026 (live lane): not run. A sitemap needs a Woo publication, and the sandbox refuses one: `publisher: organisation has no TOOI identifier`. OpenRegister's organisation PATCH drops `tooi`, and with `tooi` set in the database the TOOI vocabulary (not loaded in the sandbox) still does not resolve it. Needs an instance with the TOOI vocabulary loaded.
+  - [x] 6.4 Download a publication as ZIP and confirm the archive contains the expected files and the temp file is deleted after download. (live pass, decision 139)
+    - Done 25 Nov 2026: `GET /api/publications/{id}/download` answers 200 `application/zip` holding `Kwikstaartvijver: baggerplan 2026.pdf` (44,669 bytes), `Bijlagen/baggerplan-kaart.txt` and `Bijlagen/toelichting.txt`; no ZIP is left in the temp directory afterwards (only mPDF's own `/tmp/mpdf` cache).
   - [ ] 6.5 Tail the Nextcloud log during all operations and confirm no PHP warnings, `ini_set` failures, or Mpdf class-not-found errors appear. (live pass, decision 139)
+    - 25 Nov 2026 (live lane): no `ini_set` failure and no mPDF class-not-found. Not ticked: Nextcloud logs `Undefined array key 1 at .../ControllerMethodReflector.php#57` on every OpenRegister object read (636 in this run), because OpenRegister controller methods carry `@SuppressWarnings(PHPMD.…)`, which Nextcloud's annotation reader splits on `=`. OpenRegister-side.
