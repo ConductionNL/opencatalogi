@@ -4,7 +4,13 @@ Read `openspec/woo-build-rules.md` first. Never `pkill -f playwright`; kill by P
 
 ## 1. Axe gate
 
-- [ ] 1.1 Add `@axe-core/playwright` and `tests/e2e/officer-accessibility.spec.ts` reading the page list from `src/manifest.json`, with the stale-entry and load-failure checks (REQ-OFA-001). Verify: the spec run locally against the dev instance; record the first run's violations per page in the PR body. It fails today on any page with a serious or critical violation; that first red is the proof it measures.
+- [x] 1.1 Add `@axe-core/playwright` and `tests/e2e/officer-accessibility.spec.ts` reading the page list from `src/manifest.json`, with the stale-entry and load-failure checks (REQ-OFA-001). Verify: the spec run locally against the dev instance; record the first run's violations per page in the PR body. It fails today on any page with a serious or critical violation; that first red is the proof it measures.
+  - Built 25 Nov 2026 (b-opencatalogi). The spec injects `axe-core`, already a dependency of the app, from node_modules instead of adding `@axe-core/playwright`: the same engine and no new package in the lock. It reads the 26 pages from `src/manifest.json` at load time and generates one check per page. A page with route parameters opens on an object the instance holds, found through OpenRegister's objects API. axe runs with wcag2a, wcag2aa, wcag21a, wcag21aa and wcag22aa on `#content-vue`. Each page fails on a serious or critical violation outside `tests/e2e/a11y-allowlist.json` (empty for now), on an allowlist entry that no longer occurs on it, on a load failure, and when there is no object to open; a separate check refuses an allowlist entry for a page the manifest no longer has.
+    First run, 25 Nov 2026, on Nextcloud 34.0.6 + PostgreSQL 16 with OpenRegister main and the Zuiddrecht set: 21 of 27 checks pass. Red:
+    - CatalogDetail: `aria-input-field-name` (serious, 1 node) and `scrollable-region-focusable` (serious, 3 nodes).
+    - FlowDetail: `color-contrast` (serious, 1 node).
+    - WooBatchDetail, WooRedaction, FederatedPublication and GlossaryDetail: no object to open, because the sandbox has no Woo batch, federated publication or glossary entry; the CI seed must hold one.
+    1.2 fixes or allowlists the violations.
 - [ ] 1.2 Fix the violations in OpenCatalogi's own components (labels, contrast through CSS variables only, landmarks, names on icon buttons) and put only the ones outside OpenCatalogi's code in `tests/e2e/a11y-allowlist.json`, each with an issue (upstream for `@nextcloud/vue` or server) (REQ-OFA-001). Verify: `tests/e2e/officer-accessibility.spec.ts` green; the allowlist count in the PR body.
 - [ ] 1.3 Confirm the spec runs in CI: it sits under `tests/e2e`, which the shared workflow runs; name the CI job and the spec's line in its log in the PR body (REQ-OFA-001). Verify: the cited job.
 

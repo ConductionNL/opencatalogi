@@ -106,10 +106,15 @@ async function audit(page: Page): Promise<Finding[]> {
 	}, TAGS)
 }
 
-test.describe.serial('Officer pages pass axe (REQ-OFA-001)', () => {
+test.describe('Officer pages pass axe (REQ-OFA-001)', () => {
 	test.setTimeout(90_000)
-	const checked: string[] = []
-	const seen = new Set<string>()
+
+	test('one check per manifest page, and every allowlist entry names a manifest page', () => {
+		const ids = MANIFEST.pages.map((manifestPage) => manifestPage.id)
+		expect(new Set(ids).size, 'page ids are unique, so each page gets its own check').toBe(ids.length)
+		const unknown = ALLOWLIST.filter((entry) => !ids.includes(entry.page))
+		expect(unknown, 'allowlist entries for a page the manifest no longer has').toEqual([])
+	})
 
 	for (const manifestPage of MANIFEST.pages) {
 		test(`${manifestPage.id} (${manifestPage.route})`, async ({ page, request }, testInfo) => {
@@ -121,22 +126,14 @@ test.describe.serial('Officer pages pass axe (REQ-OFA-001)', () => {
 			await dismissOverlays(page)
 			await expect(page.locator('#content-vue, #content').first()).toBeVisible({ timeout: 30_000 })
 			await page.waitForLoadState('networkidle').catch(() => undefined)
-			checked.push(manifestPage.id)
 
 			const findings = await audit(page)
 			await testInfo.attach('axe', { body: JSON.stringify(findings, null, 2), contentType: 'application/json' })
-			const outside = findings.filter((finding) => {
-				const allowed = ALLOWLIST.some((entry) => entry.page === manifestPage.id && entry.rule === finding.rule)
-				if (allowed) seen.add(`${manifestPage.id}:${finding.rule}`)
-				return !allowed
-			})
+			const allowed = ALLOWLIST.filter((entry) => entry.page === manifestPage.id)
+			const outside = findings.filter((finding) => !allowed.some((entry) => entry.rule === finding.rule))
+			const stale = allowed.filter((entry) => !findings.some((finding) => finding.rule === entry.rule))
 			expect(outside, `serious or critical violations on ${manifestPage.id}`).toEqual([])
+			expect(stale, `allowlist entries that no longer occur on ${manifestPage.id}`).toEqual([])
 		})
 	}
-
-	test('every manifest page was checked and every allowlist entry still occurs', () => {
-		expect(checked.length, 'pages checked').toBe(MANIFEST.pages.length)
-		const stale = ALLOWLIST.filter((entry) => !seen.has(`${entry.page}:${entry.rule}`))
-		expect(stale, 'allowlist entries that no longer occur').toEqual([])
-	})
 })
