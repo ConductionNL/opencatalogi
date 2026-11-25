@@ -20,7 +20,8 @@
   - [x] 2.2 Update `lib/AppInfo/Application.php` (or the DI container configuration) if `FileService` is registered manually — verify that `IURLGenerator` is auto-wired by Nextcloud's DI; if not, register it. — obsolete: see 2.1.
   - [x] 2.3 Rewrite `getShareLink()` (or `getCurrentDomain()`) to call `$this->urlGenerator->getAbsoluteURL("/index.php/s/{$share->getToken()}")` instead of reading `$_SERVER`. — obsolete: `getShareLink()` was removed; the URL comes from OpenRegister.
   - [x] 2.4 Remove the `getCurrentDomain()` method entirely if it is no longer needed after the refactor, or mark it `@deprecated` if other callers exist (grep `lib/` to confirm). — done: `getCurrentDomain()` and every `$_SERVER` read are gone from `lib/Service/FileService.php`.
-  - [ ] 2.5 Verify that the returned URL is correct in a running dev environment by creating a share and comparing the URL.
+  - [x] 2.5 Verify that the returned URL is correct in a running dev environment by creating a share and comparing the URL.
+    - Done 25 Nov 2026 (live lane, sandbox reference stack: NC 34, nginx, php-fpm, MariaDB, Redis): a file uploaded with `share=true` to a publication answered `accessUrl` `http://localhost:8080/index.php/s/<token>` and `downloadUrl` `.../s/<token>/download`. Nextcloud's own share row for that file (`oc_share`: share_type 3, the same token, file_source = the file id) gives the same URL with `overwrite.cli.url` as the host. Anonymous: the share page answers 200 and `/download` serves the file's content (200).
 
 ## Task 3: Fix mPDF use-statement typo
 
@@ -30,7 +31,8 @@
 - **Acceptance criteria**:
   - [x] 3.1 Change `use Mpdf\MpMpdfdf;` to `use Mpdf\Mpdf;`. — done: `use Mpdf\Mpdf;` on development.
   - [x] 3.2 Run `composer check:strict` (PHPCS / PHPMD / Psalm / PHPStan) and confirm zero errors related to this file. — done: the file is in the `lib/` set `composer check:strict` runs on.
-  - [ ] 3.3 Run `createPdf()` in a dev environment and confirm a PDF is generated without errors.
+  - [x] 3.3 Run `createPdf()` in a dev environment and confirm a PDF is generated without errors.
+    - Done 25 Nov 2026 (live lane, same stack): `GET /api/publications/{id}/download` (DownloadService -> `FileService::createPdf('publication.html.twig', …)`) answered 200 `application/zip` holding `Live file probe.pdf` (44,563 bytes, starts with `%PDF-`) and `Bijlagen/toelichting.txt`. Nextcloud logged nothing during the call, and no ZIP was left in the temp directory.
 
 ## Task 4: Add @spec PHPDoc traceability tags
 
@@ -77,3 +79,4 @@
     - Done 25 Nov 2026: `GET /api/publications/{id}/download` answers 200 `application/zip` holding `Kwikstaartvijver: baggerplan 2026.pdf` (44,669 bytes), `Bijlagen/baggerplan-kaart.txt` and `Bijlagen/toelichting.txt`; no ZIP is left in the temp directory afterwards (only mPDF's own `/tmp/mpdf` cache).
   - [ ] 6.5 Tail the Nextcloud log during all operations and confirm no PHP warnings, `ini_set` failures, or Mpdf class-not-found errors appear. (live pass, decision 139)
     - 25 Nov 2026 (live lane): no `ini_set` failure and no mPDF class-not-found. Not ticked: Nextcloud logs `Undefined array key 1 at .../ControllerMethodReflector.php#57` on every OpenRegister object read (636 in this run), because OpenRegister controller methods carry `@SuppressWarnings(PHPMD.…)`, which Nextcloud's annotation reader splits on `=`. OpenRegister-side.
+    - 25 Nov 2026, second live run (OpenRegister main plus #11225): still no `ini_set` failure, no mPDF class-not-found, and no OpenCatalogi PHP warning. OpenRegister still logs `Undefined array key 1 at .../ControllerMethodReflector.php#57` (755 in this run), plus `[Observability] request metrics flush failed … Column not found` (739). Both are OpenRegister-side, so this task stays open.

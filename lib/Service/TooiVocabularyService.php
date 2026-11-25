@@ -32,6 +32,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
+use OCA\OpenCatalogi\Contract\OrganisationActivationInterface;
 
 /**
  * Resolves the three DIWOO metadata axes to official TOOI/DiWoo value-list URIs.
@@ -53,6 +54,33 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 * @var string
 	 */
 	public const ORG_ID_BASE = 'https://identifier.overheid.nl/tooi/id/';
+
+	/**
+	 * The activated TOOI organisations, once read in this request: null while activation is not in use.
+	 *
+	 * @var list<string>|null
+	 */
+	private ?array $activated = null;
+
+	/**
+	 * Whether the activated organisations were read in this request.
+	 *
+	 * @var bool
+	 */
+	private bool $activatedRead = false;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param OrganisationActivationInterface|null $activation The organisations the administrator activated (REQ-WVL-005);
+	 *                                                         without it every organisation counts as activated.
+	 *
+	 * @spec exclude pure framework plumbing: constructor dependency injection.
+	 */
+	public function __construct(
+		private readonly ?OrganisationActivationInterface $activation = null,
+	) {
+	}//end __construct()
 
 	/**
 	 * The bundled value lists.
@@ -269,6 +297,53 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 
 		return $uri;
 	}//end resolveOrganisatie()
+
+	/**
+	 * Whether a TOOI organisation may be named in DiWoo: activation is not in use, or it is activated.
+	 *
+	 * Activation is in use once an administrator activated one organisation;
+	 * until then every organisation counts as activated, so an upgrade does not
+	 * take the publisher out of every existing record. An unreadable choice list
+	 * counts as not in use, as for the categories: no organisation is withheld
+	 * by an error.
+	 *
+	 * @param string $uri A TOOI organisatie uri, as resolveOrganisatie() answers it.
+	 *
+	 * @return bool True when it may be named.
+	 *
+	 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrator-activates-the-organisations-the-installation-publishes-for-req-wvl-005
+	 */
+	public function isActivatedOrganisatie(string $uri): bool {
+		if ($this->activatedRead === false) {
+			$this->activatedRead = true;
+			$this->activated = $this->readActivated();
+		}
+
+		return $this->activated === null || in_array($uri, $this->activated, true) === true;
+	}//end isActivatedOrganisatie()
+
+	/**
+	 * The activated TOOI organisations, or null when activation is not in use or cannot be read.
+	 *
+	 * @return list<string>|null The identifiers.
+	 */
+	private function readActivated(): ?array {
+		if ($this->activation === null) {
+			return null;
+		}
+
+		try {
+			$activated = $this->activation->activeEntries();
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		if ($activated === []) {
+			return null;
+		}
+
+		return $activated;
+	}//end readActivated()
 
 	/**
 	 * The bundled informatiecategorie value list (code → uri + label).

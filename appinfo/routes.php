@@ -87,6 +87,10 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// The organisation type and the categories proposed for hiding for it, for an administrator (REQ-WVL-004).
 		['name' => 'valueListChoices#organisationType', 'url' => '/api/woo/organisation-type', 'verb' => 'GET'],
 		['name' => 'valueListChoices#setOrganisationType', 'url' => '/api/woo/organisation-type', 'verb' => 'PUT'],
+		// The organisations this installation publishes for, activated out of the TOOI registers (REQ-WVL-005).
+		['name' => 'organisationActivation#index', 'url' => '/api/woo/organisations', 'verb' => 'GET'],
+		['name' => 'organisationActivation#active', 'url' => '/api/woo/organisations/active', 'verb' => 'GET'],
+		['name' => 'organisationActivation#update', 'url' => '/api/woo/organisations/activation', 'verb' => 'PUT'],
 		// The annual report's availability (woo-annual-report, REQ-WAR-002).
 		['name' => 'annualReport#availability', 'url' => '/api/reports/annual', 'verb' => 'GET'],
 		// Every controlled-list entry, public: declared before `/api/{catalogSlug}`, which would match it.

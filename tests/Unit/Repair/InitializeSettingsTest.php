@@ -9,10 +9,12 @@ declare(strict_types=1);
 
 namespace Unit\Repair;
 
+use OCA\OpenCatalogi\BackgroundJob\FinishUpgradeAfterOpenRegister;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Repair\InitializeSettings;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCP\App\IAppManager;
+use OCP\BackgroundJob\IJobList;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
@@ -118,6 +120,94 @@ class InitializeSettingsTest extends TestCase {
 			->with($this->stringContains('did not land'));
 
 		$this->repairStep->run($output);
+	}
+
+	/**
+	 * A configured instance and a settings service whose import call is recorded in `$order`.
+	 *
+	 * @param list<string> $order The calls in the order they happen.
+	 * @param IJobList     $jobs  The job list the step may queue on.
+	 *
+	 * @return void
+	 */
+	private function importRecordedIn(array &$order, IJobList $jobs): void {
+		$settingsService = $this->createMock(originalClassName: SettingsService::class);
+		$settingsService->method('loadSettings')->willReturnCallback(
+			function () use (&$order): array {
+				$order[] = 'import';
+				return ['registers' => [1], 'schemas' => [1], 'objects' => []];
+			}
+		);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister', 'opencatalogi']);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				IJobList::class => $jobs,
+				default => $settingsService,
+			}
+		);
+		$this->config->method('getValueString')->willReturn('15');
+	}
+
+	/**
+	 * OpenRegister waiting for its own upgrade defers the import to a queued job (REQ-PLC-007).
+	 *
+	 * `occ upgrade` takes opencatalogi before openregister; importing now would land
+	 * on OpenRegister's old tables and leave the new schemas out for good.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 *
+	 * @return void
+	 */
+	public function testOpenRegisterWaitingForItsUpgradeDefersTheImportToAJob(): void {
+		$order = [];
+		$jobs = $this->createMock(originalClassName: IJobList::class);
+		$jobs->expects($this->once())->method('add')->with(FinishUpgradeAfterOpenRegister::class);
+		$this->importRecordedIn(order: $order, jobs: $jobs);
+		$this->appManager->method('isUpgradeRequired')->with('openregister')->willReturn(true);
+		$output = $this->createMock(originalClassName: IOutput::class);
+		$output->expects($this->once())->method('warning')->with($this->stringContains(string: 'run cron to finish the upgrade'));
+
+		$this->repairStep->run(output: $output);
+
+		$this->assertSame(expected: [], actual: $order);
+	}
+
+	/**
+	 * A current OpenRegister imports at once and queues nothing.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 *
+	 * @return void
+	 */
+	public function testACurrentOpenRegisterImportsAtOnce(): void {
+		$order = [];
+		$jobs = $this->createMock(originalClassName: IJobList::class);
+		$jobs->expects($this->never())->method('add');
+		$this->importRecordedIn(order: $order, jobs: $jobs);
+		$this->appManager->method('isUpgradeRequired')->willReturn(false);
+
+		$this->repairStep->run(output: $this->createMock(originalClassName: IOutput::class));
+
+		$this->assertSame(expected: ['import'], actual: $order);
+	}
+
+	/**
+	 * When the job cannot be queued, the import runs as before rather than not at all.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 *
+	 * @return void
+	 */
+	public function testAJobThatCannotBeQueuedLeavesTheImportRunning(): void {
+		$order = [];
+		$jobs = $this->createMock(originalClassName: IJobList::class);
+		$jobs->method('add')->willThrowException(new \RuntimeException('job list unavailable'));
+		$this->importRecordedIn(order: $order, jobs: $jobs);
+		$this->appManager->method('isUpgradeRequired')->willReturn(true);
+
+		$this->repairStep->run(output: $this->createMock(originalClassName: IOutput::class));
+
+		$this->assertSame(expected: ['import'], actual: $order);
 	}
 
 	public function testRunHandlesExceptionGracefully(): void {

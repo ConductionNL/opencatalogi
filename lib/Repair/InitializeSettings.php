@@ -24,9 +24,11 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Repair;
 
+use OCA\OpenCatalogi\BackgroundJob\FinishUpgradeAfterOpenRegister;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCP\App\IAppManager;
+use OCP\BackgroundJob\IJobList;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -102,6 +104,12 @@ class InitializeSettings implements IRepairStep {
 			return;
 		}
 
+		if ($this->openRegisterWaits(output: $output) === true) {
+			$output->advance(2);
+			$output->finishProgress();
+			return;
+		}
+
 		$output->info('Loading OpenCatalogi configuration...');
 		$output->advance(1);
 
@@ -112,6 +120,48 @@ class InitializeSettings implements IRepairStep {
 		$output->finishProgress();
 
 	}//end run()
+
+	/**
+	 * Whether OpenRegister still waits for its own upgrade in this run; if so, finish later.
+	 *
+	 * `occ upgrade` takes the apps of one type in alphabetical order, so opencatalogi
+	 * is upgraded before openregister. Importing then wrote against OpenRegister's
+	 * old tables and recorded this app's new version, so every later import skipped:
+	 * the schemas this version added never landed and the post-migration steps after
+	 * this one failed on them (measured: 6 public publications before an upgrade from
+	 * 2.1.0, 0 after). Upgrading OpenRegister from here is no way out: Nextcloud's
+	 * repair runner is shared, and a nested upgrade runs this step again without end.
+	 * So the import waits, and FinishUpgradeAfterOpenRegister runs this app's
+	 * post-migration steps once OpenRegister is current.
+	 *
+	 * @param IOutput $output Repair output.
+	 *
+	 * @return bool True when the import was deferred.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 */
+	private function openRegisterWaits(IOutput $output): bool {
+		try {
+			if ($this->appManager->isUpgradeRequired(appId: 'openregister') === false) {
+				return false;
+			}
+
+			$this->container->get(IJobList::class)->add(job: FinishUpgradeAfterOpenRegister::class);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'OpenCatalogi could not defer its configuration import until OpenRegister is upgraded',
+				['app' => AppIdentity::APP_ID, 'exception' => $e]
+			);
+			return false;
+		}
+
+		$output->warning(
+			'OpenRegister is upgraded after this app in this run. The configuration import and the '
+			. 'publication backfills run from a background job once it is; run cron to finish the upgrade.'
+		);
+		return true;
+
+	}//end openRegisterWaits()
 
 	/**
 	 * Import the app's registers, schemas and objects, reporting a failure without throwing.
@@ -176,8 +226,8 @@ class InitializeSettings implements IRepairStep {
 		if ($this->configuredAlready() === false) {
 			$output->warning(
 				'OpenCatalogi configuration did not land; the app has no register or schema '
-				. 'configuration. Run `occ opencatalogi:settings:load --force`, or use '
-				. 'Settings -> OpenCatalogi -> Reload configuration.'
+				. 'configuration. Use Settings -> OpenCatalogi -> Reload configuration, or '
+				. 'POST /index.php/apps/opencatalogi/api/settings/import with {"force": true}.'
 			);
 			$this->logger->error(
 				'OpenCatalogi install completed with no register configuration — '

@@ -900,7 +900,16 @@ OC.L10N.register(
         "Hide the checked categories": "Ukryj zaznaczone kategorie",
         "The checked categories are hidden.": "Zaznaczone kategorie są ukryte.",
         "Choose one of the listed organisation types.": "Wybierz jeden z wymienionych typów organizacji.",
-        "Legal basis": "Podstawa prawna"
+        "Legal basis": "Podstawa prawna",
+        "Organisations you publish for": "Organizacje, w imieniu których publikujesz",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Aktywuj z krajowego rejestru TOOI organizacje, w imieniu których publikuje ta instalacja. Gdy aktywna jest choć jedna, mapa witryny podaje jako wydawcę lub organizację odpowiedzialną tylko aktywowane organizacje.",
+        "Search by name or code": "Szukaj według nazwy lub kodu",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Nie aktywowano jeszcze żadnej organizacji, więc mapa witryny podaje każdą organizację.",
+        "No organisation in the TOOI register matches this search.": "Żadna organizacja z rejestru TOOI nie pasuje do tego wyszukiwania.",
+        "Name the organisation and whether it is active.": "Podaj organizację i czy jest aktywna.",
+        "This organisation cannot be activated: %s": "Tej organizacji nie można aktywować: %s",
+        "The organisation could not be saved: %s": "Nie udało się zapisać organizacji: %s",
+        "The organisation registers could not be read: %s": "Nie udało się odczytać rejestrów organizacji: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

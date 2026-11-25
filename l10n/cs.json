@@ -899,7 +899,16 @@
         "Hide the checked categories": "Skrýt zaškrtnuté kategorie",
         "The checked categories are hidden.": "Zaškrtnuté kategorie jsou skryté.",
         "Choose one of the listed organisation types.": "Zvolte jeden z uvedených typů organizace.",
-        "Legal basis": "Právní základ"
+        "Legal basis": "Právní základ",
+        "Organisations you publish for": "Organizace, za které publikujete",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Aktivujte z národního registru TOOI organizace, za které tato instalace publikuje. Jakmile je aktivována jedna, mapa webu uvádí jako vydavatele nebo odpovědnou organizaci jen aktivované organizace.",
+        "Search by name or code": "Hledat podle názvu nebo kódu",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Zatím není aktivována žádná organizace, proto mapa webu uvádí každou organizaci.",
+        "No organisation in the TOOI register matches this search.": "Tomuto hledání neodpovídá žádná organizace z registru TOOI.",
+        "Name the organisation and whether it is active.": "Uveďte organizaci a zda je aktivní.",
+        "This organisation cannot be activated: %s": "Tuto organizaci nelze aktivovat: %s",
+        "The organisation could not be saved: %s": "Organizaci se nepodařilo uložit: %s",
+        "The organisation registers could not be read: %s": "Registry organizací se nepodařilo načíst: %s"
     },
     "plurals": {}
 }

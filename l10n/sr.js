@@ -900,7 +900,16 @@ OC.L10N.register(
         "Hide the checked categories": "Сакриј означене категорије",
         "The checked categories are hidden.": "Означене категорије су скривене.",
         "Choose one of the listed organisation types.": "Изаберите једну од наведених врста организације.",
-        "Legal basis": "Правни основ"
+        "Legal basis": "Правни основ",
+        "Organisations you publish for": "Организације за које објављујете",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Активирајте из националног регистра TOOI организације за које ова инсталација објављује. Чим је једна активирана, мапа сајта као издавача или одговорну организацију наводи само активиране организације.",
+        "Search by name or code": "Претражи по називу или коду",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Још ниједна организација није активирана, па мапа сајта наводи сваку организацију.",
+        "No organisation in the TOOI register matches this search.": "Ниједна организација у регистру TOOI не одговара овој претрази.",
+        "Name the organisation and whether it is active.": "Наведите организацију и да ли је активна.",
+        "This organisation cannot be activated: %s": "Ова организација не може да се активира: %s",
+        "The organisation could not be saved: %s": "Организацију није било могуће сачувати: %s",
+        "The organisation registers could not be read: %s": "Регистре организација није било могуће прочитати: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

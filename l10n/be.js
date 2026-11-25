@@ -900,7 +900,16 @@ OC.L10N.register(
         "Hide the checked categories": "Схаваць адзначаныя катэгорыі",
         "The checked categories are hidden.": "Адзначаныя катэгорыі схаваны.",
         "Choose one of the listed organisation types.": "Абярыце адзін з пералічаных тыпаў арганізацыі.",
-        "Legal basis": "Прававая падстава"
+        "Legal basis": "Прававая падстава",
+        "Organisations you publish for": "Арганізацыі, ад імя якіх вы публікуеце",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Актывуйце з нацыянальнага рэестра TOOI арганізацыі, ад імя якіх публікуе гэтая ўсталёўка. Як толькі адна актываваная, карта сайта называе выдаўцом або адказнай арганізацыяй толькі актываваныя арганізацыі.",
+        "Search by name or code": "Пошук па назве або кодзе",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Ніводная арганізацыя яшчэ не актываваная, таму карта сайта называе кожную арганізацыю.",
+        "No organisation in the TOOI register matches this search.": "Ніводная арганізацыя рэестра TOOI не адпавядае гэтаму пошуку.",
+        "Name the organisation and whether it is active.": "Пазначце арганізацыю і ці актыўная яна.",
+        "This organisation cannot be activated: %s": "Гэтую арганізацыю нельга актываваць: %s",
+        "The organisation could not be saved: %s": "Не ўдалося захаваць арганізацыю: %s",
+        "The organisation registers could not be read: %s": "Не ўдалося прачытаць рэестры арганізацый: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

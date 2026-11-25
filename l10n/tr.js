@@ -900,7 +900,16 @@ OC.L10N.register(
         "Hide the checked categories": "İşaretli kategorileri gizle",
         "The checked categories are hidden.": "İşaretli kategoriler gizlendi.",
         "Choose one of the listed organisation types.": "Listelenen kuruluş türlerinden birini seçin.",
-        "Legal basis": "Hukuki dayanak"
+        "Legal basis": "Hukuki dayanak",
+        "Organisations you publish for": "Adına yayımladığınız kuruluşlar",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Bu kurulumun adına yayımladığı kuruluşları ulusal TOOI sicilinden etkinleştirin. Biri etkinleştirildiğinde site haritası yayıncı veya sorumlu kuruluş olarak yalnızca etkinleştirilmiş kuruluşları belirtir.",
+        "Search by name or code": "Ada veya koda göre ara",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Henüz etkinleştirilmiş bir kuruluş yok, bu yüzden site haritası her kuruluşu belirtir.",
+        "No organisation in the TOOI register matches this search.": "TOOI sicilindeki hiçbir kuruluş bu aramayla eşleşmiyor.",
+        "Name the organisation and whether it is active.": "Kuruluşu ve etkin olup olmadığını belirtin.",
+        "This organisation cannot be activated: %s": "Bu kuruluş etkinleştirilemez: %s",
+        "The organisation could not be saved: %s": "Kuruluş kaydedilemedi: %s",
+        "The organisation registers could not be read: %s": "Kuruluş sicilleri okunamadı: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

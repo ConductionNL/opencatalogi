@@ -899,7 +899,16 @@
         "Hide the checked categories": "Déi markéiert Kategorien verstoppen",
         "The checked categories are hidden.": "Déi markéiert Kategorie si verstoppt.",
         "Choose one of the listed organisation types.": "Wielt ee vun den opgezielten Organisatiounstypen.",
-        "Legal basis": "Rechtsgrondlag"
+        "Legal basis": "Rechtsgrondlag",
+        "Organisations you publish for": "Organisatiounen, fir déi Dir publizéiert",
+        "Activate the organisations this installation publishes for, out of the national TOOI register. Once one is activated, the sitemap names only activated organisations as publisher or responsible organisation.": "Aktivéiert aus dem nationale TOOI-Register d’Organisatiounen, fir déi dës Installatioun publizéiert. Soubal eng aktivéiert ass, nennt d’Sitemap nëmmen aktivéiert Organisatiounen als Editeur oder verantwortlech Organisatioun.",
+        "Search by name or code": "No Numm oder Code sichen",
+        "No organisation is activated yet, so every organisation is named in the sitemap.": "Nach keng Organisatioun ass aktivéiert, dofir gëtt all Organisatioun an der Sitemap genannt.",
+        "No organisation in the TOOI register matches this search.": "Keng Organisatioun am TOOI-Register passt op dës Sich.",
+        "Name the organisation and whether it is active.": "Nennt d’Organisatioun an ob se aktiv ass.",
+        "This organisation cannot be activated: %s": "Dës Organisatioun kann net aktivéiert ginn: %s",
+        "The organisation could not be saved: %s": "D’Organisatioun konnt net gespäichert ginn: %s",
+        "The organisation registers could not be read: %s": "D’Organisatiounsregisteren konnten net gelies ginn: %s"
     },
     "plurals": {}
 }

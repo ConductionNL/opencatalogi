@@ -263,6 +263,8 @@
 
 				<OrganisationTypeProposal @hidden="$refs.categoryExplanations && $refs.categoryExplanations.load()" />
 
+				<ActivatedOrganisations />
+
 				<CategoryExplanations ref="categoryExplanations" />
 
 				<ValueListOrder
@@ -758,6 +760,7 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import ActivatedOrganisations from './ActivatedOrganisations.vue'
 import CapabilityRightsSection from './CapabilityRightsSection.vue'
 import CategoryExplanations from './CategoryExplanations.vue'
 import CouncilHarvest from './CouncilHarvest.vue'
@@ -902,6 +905,7 @@ export default defineComponent({
 		RefusalGroundsSource,
 		CategoryExplanations,
 		OrganisationTypeProposal,
+		ActivatedOrganisations,
 		ValueListOrder,
 		WooIndexConnection,
 		WooIncidents,

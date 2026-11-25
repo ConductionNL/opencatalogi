@@ -1381,10 +1381,11 @@ class SettingsService implements SettingsServiceInterface {
 	 */
 	public function loadSettings(bool $force = false): array {
 		try {
-			$result = $this->importConfiguration(
-				data: $this->readRegisterConfiguration(appPath: $this->appManager->getAppPath(AppIdentity::APP_ID)),
-				force: $force
-			);
+			$data = $this->readRegisterConfiguration(appPath: $this->appManager->getAppPath(AppIdentity::APP_ID));
+			$result = $this->importConfiguration(data: $data, force: $force);
+			if ($force === false) {
+				$result = $this->withMissingSchemas(data: $data, result: $result);
+			}
 
 			// Update app configuration with imported schema and register IDs.
 			$this->updateObjectTypeConfiguration(importResult: $result);
@@ -1405,6 +1406,40 @@ class SettingsService implements SettingsServiceInterface {
 		}//end try
 
 	}//end loadSettings()
+
+	/**
+	 * Import the schemas of the payload this instance does not have yet, and add them to the result.
+	 *
+	 * A non-forced import on an existing install leaves out the schemas this version
+	 * added (see RegisterSchemaLinkService::missingSchemas()). Only those are imported,
+	 * forced, without the register and without objects, so nothing already on the
+	 * instance is overwritten; the reconcile below then links them to the register.
+	 *
+	 * @param array $data   The full import payload.
+	 * @param array $result The result of the regular import.
+	 *
+	 * @return array The result with the added schemas.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 */
+	private function withMissingSchemas(array $data, array $result): array {
+		$missing = $this->registerSchemaLink->missingSchemas(data: $data);
+		if ($missing === []) {
+			return $result;
+		}
+
+		$additive = $data;
+		$additive['components'] = ['schemas' => array_intersect_key((array)$data['components']['schemas'], array_flip($missing))];
+		$added = $this->importConfiguration(data: $additive, force: true);
+		$this->logger->info(
+			'OpenCatalogi imported ' . count($missing) . ' schema(s) this instance did not have yet: ' . implode(', ', $missing),
+			['app' => AppIdentity::APP_ID]
+		);
+		$result['schemas'] = array_merge((array)($result['schemas'] ?? []), (array)($added['schemas'] ?? []));
+
+		return $result;
+
+	}//end withMissingSchemas()
 
 	/**
 	 * Import the configuration payload into OpenRegister for this app.
