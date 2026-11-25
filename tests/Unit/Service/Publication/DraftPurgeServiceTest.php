@@ -410,15 +410,14 @@ class DraftPurgeServiceTest extends TestCase {
 			/**
 			 * Create audit trail.
 			 *
-			 * @param ?object $old The old.
-			 * @param ?object $new The new.
-			 * @param ?string $action The action.
-			 * @param ?array $cascadeContext The cascade context.
+			 * @param object               $object  The publication, as it was.
+			 * @param string               $action  The action.
+			 * @param array<string, mixed> $context The context, stored as the entry's changes.
 			 *
 			 * @return object
 			 */
-			public function createAuditTrail(?object $old = null, ?object $new = null, ?string $action = null, ?array $cascadeContext = null): object {
-				$this->test->recordAudit(entry: ['old' => $old, 'new' => $new, 'action' => $action, 'context' => $cascadeContext]);
+			public function createAuditTrailEntry(object $object, string $action, array $context = []): object {
+				$this->test->recordAudit(entry: ['object' => $object, 'action' => $action, 'context' => $context]);
 				return new \stdClass();
 			}
 		};
@@ -521,7 +520,7 @@ class DraftPurgeServiceTest extends TestCase {
 		$this->assertSame(expected: ['kind' => 'documentReference', 'id' => 'ref-1', 'name' => 'Case file'], actual: $removed[0]);
 		$this->assertCount(expectedCount: 1, haystack: $this->audits, message: 'One summary audit entry.');
 		$this->assertSame(expected: DraftPurgeService::ACTION, actual: $this->audits[0]['action']);
-		$this->assertNull(actual: $this->audits[0]['new']);
+		$this->assertIsObject(actual: $this->audits[0]['object']);
 		$this->assertSame(expected: ['id' => 'pub-1', 'title' => 'Draft decision'], actual: $this->audits[0]['context']['publication']);
 		$this->assertSame(expected: $removed, actual: $this->audits[0]['context']['removed']);
 	}//end testADraftAndEverythingOnItGoes()
