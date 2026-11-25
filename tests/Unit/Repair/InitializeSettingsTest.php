@@ -120,6 +120,92 @@ class InitializeSettingsTest extends TestCase {
 		$this->repairStep->run($output);
 	}
 
+	/**
+	 * A configured instance and a settings service whose import call is recorded in `$order`.
+	 *
+	 * @param list<string> $order The calls in the order they happen.
+	 *
+	 * @return void
+	 */
+	private function importRecordedIn(array &$order): void {
+		$settingsService = $this->createMock(originalClassName: SettingsService::class);
+		$settingsService->method('loadSettings')->willReturnCallback(
+			function () use (&$order): array {
+				$order[] = 'import';
+				return ['registers' => [1], 'schemas' => [1], 'objects' => []];
+			}
+		);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister', 'opencatalogi']);
+		$this->container->method('get')->willReturn($settingsService);
+		$this->config->method('getValueString')->willReturn('15');
+	}
+
+	/**
+	 * OpenRegister waiting for its own upgrade is upgraded before the import (REQ-PLC-007).
+	 *
+	 * `occ upgrade` takes opencatalogi before openregister; importing first would
+	 * land on OpenRegister's old tables and leave the new schemas out for good.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 *
+	 * @return void
+	 */
+	public function testOpenRegisterWaitingForItsUpgradeIsUpgradedBeforeTheImport(): void {
+		$order = [];
+		$this->importRecordedIn(order: $order);
+		$this->appManager->method('isUpgradeRequired')->with('openregister')->willReturn(true);
+		$this->appManager->expects($this->once())->method('upgradeApp')->with('openregister')
+			->willReturnCallback(
+				function () use (&$order): bool {
+					$order[] = 'upgrade openregister';
+					return true;
+				}
+			);
+
+		$this->repairStep->run(output: $this->createMock(originalClassName: IOutput::class));
+
+		$this->assertSame(expected: ['upgrade openregister', 'import'], actual: $order);
+	}
+
+	/**
+	 * A current OpenRegister is left alone.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 *
+	 * @return void
+	 */
+	public function testACurrentOpenRegisterIsNotUpgraded(): void {
+		$order = [];
+		$this->importRecordedIn(order: $order);
+		$this->appManager->method('isUpgradeRequired')->willReturn(false);
+		$this->appManager->expects($this->never())->method('upgradeApp');
+
+		$this->repairStep->run(output: $this->createMock(originalClassName: IOutput::class));
+
+		$this->assertSame(expected: ['import'], actual: $order);
+	}
+
+	/**
+	 * A failed OpenRegister upgrade is reported and the import still runs.
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 *
+	 * @return void
+	 */
+	public function testAFailedOpenRegisterUpgradeIsReportedAndTheImportStillRuns(): void {
+		$order = [];
+		$this->importRecordedIn(order: $order);
+		$this->appManager->method('isUpgradeRequired')->willReturn(true);
+		$this->appManager->method('upgradeApp')->willThrowException(new \RuntimeException('migration failed'));
+		$output = $this->createMock(originalClassName: IOutput::class);
+		$output->expects($this->once())->method('warning')
+			->with($this->stringContains('OpenRegister could not be upgraded first: migration failed'));
+
+		$this->repairStep->run(output: $output);
+
+		$this->assertSame(expected: ['import'], actual: $order);
+	}
+
 	public function testRunHandlesExceptionGracefully(): void {
 		$output = $this->createMock(IOutput::class);
 		$settingsService = $this->createMock(SettingsService::class);

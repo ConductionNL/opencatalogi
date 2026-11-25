@@ -102,6 +102,8 @@ class InitializeSettings implements IRepairStep {
 			return;
 		}
 
+		$this->upgradeOpenRegisterFirst(output: $output);
+
 		$output->info('Loading OpenCatalogi configuration...');
 		$output->advance(1);
 
@@ -112,6 +114,40 @@ class InitializeSettings implements IRepairStep {
 		$output->finishProgress();
 
 	}//end run()
+
+	/**
+	 * Upgrade OpenRegister before importing when it still waits for its own upgrade in this run.
+	 *
+	 * `occ upgrade` takes the apps of one type in alphabetical order, so opencatalogi
+	 * is upgraded before openregister. Importing then writes against OpenRegister's
+	 * old tables and records this app's new version, so every later import skips:
+	 * the schemas this version added never land and the post-migration steps after
+	 * this one fail on them. Measured upgrading opencatalogi 2.1.0 with OpenRegister
+	 * 2.1.0 to development: 6 public publications before, 0 after.
+	 *
+	 * @param IOutput $output Repair output.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
+	 */
+	private function upgradeOpenRegisterFirst(IOutput $output): void {
+		try {
+			if ($this->appManager->isUpgradeRequired(appId: 'openregister') === false) {
+				return;
+			}
+
+			$output->info('OpenRegister waits for its own upgrade; upgrading it first so the configuration lands on its new tables');
+			$this->appManager->upgradeApp(appId: 'openregister');
+		} catch (\Throwable $e) {
+			$output->warning('OpenRegister could not be upgraded first: ' . $e->getMessage());
+			$this->logger->error(
+				'OpenCatalogi could not upgrade OpenRegister before importing its configuration',
+				['app' => AppIdentity::APP_ID, 'exception' => $e]
+			);
+		}
+
+	}//end upgradeOpenRegisterFirst()
 
 	/**
 	 * Import the app's registers, schemas and objects, reporting a failure without throwing.
@@ -176,8 +212,8 @@ class InitializeSettings implements IRepairStep {
 		if ($this->configuredAlready() === false) {
 			$output->warning(
 				'OpenCatalogi configuration did not land; the app has no register or schema '
-				. 'configuration. Run `occ opencatalogi:settings:load --force`, or use '
-				. 'Settings -> OpenCatalogi -> Reload configuration.'
+				. 'configuration. Use Settings -> OpenCatalogi -> Reload configuration, or '
+				. 'POST /index.php/apps/opencatalogi/api/settings/import with {"force": true}.'
 			);
 			$this->logger->error(
 				'OpenCatalogi install completed with no register configuration — '
