@@ -2,21 +2,21 @@
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
  *
- * Component test for `WooAnnualReportWidget.vue`: Generate annual report is
+ * Component test for `AnnualReportWidget.vue`: Generate annual report is
  * offered only when OpenRegister can generate it, and calls its generator with
  * the shipped template (REQ-WAR-002).
  *
- * @spec openspec/changes/woo-annual-report/specs/woo-compliance/spec.md#requirement-an-officer-generates-the-annual-report-from-the-publications-report-req-war-002
+ * @spec openspec/changes/annual-report/specs/woo-compliance/spec.md#requirement-an-officer-generates-the-annual-report-from-the-publications-report-req-war-002
  */
 
 import axios from '@nextcloud/axios'
 import { flushPromises, mount } from '@vue/test-utils'
-import WooAnnualReportWidget from './WooAnnualReportWidget.vue'
+import AnnualReportWidget from './AnnualReportWidget.vue'
 import {
 	filenameFrom,
 	generateAnnualReport,
 	reportYears,
-} from '../../services/wooAnnualReport.js'
+} from '../../services/annualReport.js'
 
 jest.mock('@nextcloud/axios', () => ({ get: jest.fn(), post: jest.fn() }))
 jest.mock('@nextcloud/router', () => ({ generateUrl: (path) => path }))
@@ -29,7 +29,7 @@ jest.mock('@nextcloud/l10n', () => ({
  * @return {Promise<object>} the wrapper.
  */
 async function mountWidget() {
-	const wrapper = mount(WooAnnualReportWidget, {
+	const wrapper = mount(AnnualReportWidget, {
 		global: {
 			stubs: {
 				NcLoadingIcon: true,
@@ -50,7 +50,7 @@ beforeEach(() => {
 	axios.post.mockReset()
 })
 
-describe('WooAnnualReportWidget', () => {
+describe('AnnualReportWidget', () => {
 	it('has no action and says why when OpenRegister cannot generate the report', async () => {
 		axios.get.mockResolvedValue({
 			data: {
@@ -63,13 +63,13 @@ describe('WooAnnualReportWidget', () => {
 		const wrapper = await mountWidget()
 
 		expect(axios.get).toHaveBeenCalledWith(
-			'/apps/opencatalogi/api/woo/annual-report',
+			'/apps/opencatalogi/api/reports/annual',
+		)
+		expect(wrapper.find('[data-testid="annual-report-generate"]').exists()).toBe(
+			false,
 		)
 		expect(
-			wrapper.find('[data-testid="woo-annual-report-generate"]').exists(),
-		).toBe(false)
-		expect(
-			wrapper.find('[data-testid="woo-annual-report-unavailable"]').text(),
+			wrapper.find('[data-testid="annual-report-unavailable"]').text(),
 		).toBe('The Woo annual report needs a newer OpenRegister.')
 	})
 
@@ -77,9 +77,9 @@ describe('WooAnnualReportWidget', () => {
 		axios.get.mockRejectedValue(new Error('offline'))
 		const wrapper = await mountWidget()
 
-		expect(
-			wrapper.find('[data-testid="woo-annual-report-generate"]').exists(),
-		).toBe(false)
+		expect(wrapper.find('[data-testid="annual-report-generate"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('generates the chosen year from the shipped template', async () => {
@@ -105,9 +105,7 @@ describe('WooAnnualReportWidget', () => {
 			.mockImplementation(() => {})
 		const wrapper = await mountWidget()
 
-		await wrapper
-			.find('[data-testid="woo-annual-report-generate"]')
-			.trigger('click')
+		await wrapper.find('[data-testid="annual-report-generate"]').trigger('click')
 		await flushPromises()
 
 		expect(axios.post).toHaveBeenCalledWith(
@@ -120,9 +118,9 @@ describe('WooAnnualReportWidget', () => {
 			{ responseType: 'blob' },
 		)
 		expect(click).toHaveBeenCalled()
-		expect(
-			wrapper.find('[data-testid="woo-annual-report-failed"]').exists(),
-		).toBe(false)
+		expect(wrapper.find('[data-testid="annual-report-failed"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('says so when the generation fails', async () => {
@@ -137,18 +135,16 @@ describe('WooAnnualReportWidget', () => {
 		axios.post.mockRejectedValue(new Error('403'))
 		const wrapper = await mountWidget()
 
-		await wrapper
-			.find('[data-testid="woo-annual-report-generate"]')
-			.trigger('click')
+		await wrapper.find('[data-testid="annual-report-generate"]').trigger('click')
 		await flushPromises()
 
-		expect(
-			wrapper.find('[data-testid="woo-annual-report-failed"]').exists(),
-		).toBe(true)
+		expect(wrapper.find('[data-testid="annual-report-failed"]').exists()).toBe(
+			true,
+		)
 	})
 })
 
-describe('wooAnnualReport service', () => {
+describe('annualReport service', () => {
 	it('offers this year and the four before it', () => {
 		expect(reportYears(new Date('2026-11-25'))).toEqual([
 			2026, 2025, 2024, 2023, 2022,

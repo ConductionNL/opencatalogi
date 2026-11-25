@@ -1988,7 +1988,7 @@
 					{
 						"id": "pub-annual-report",
 						"title": "Woo annual report",
-						"type": "woo-annual-report",
+						"type": "annual-report",
 						"content": {}
 					}
 				],

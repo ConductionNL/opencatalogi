@@ -3,12 +3,12 @@
   - SPDX-License-Identifier: EUPL-1.2
 -->
 <template>
-	<div class="woo-annual-report" data-testid="woo-annual-report">
+	<div class="annual-report" data-testid="annual-report">
 		<NcLoadingIcon v-if="loading" :size="20" />
 		<NcNoteCard
 			v-else-if="!available"
 			type="info"
-			data-testid="woo-annual-report-unavailable">
+			data-testid="annual-report-unavailable">
 			<p>
 				{{
 					t(
@@ -27,7 +27,7 @@
 					)
 				}}
 			</p>
-			<div class="woo-annual-report__fields">
+			<div class="annual-report__fields">
 				<NcSelect
 					v-model="year"
 					:options="years"
@@ -44,7 +44,7 @@
 			<NcButton
 				variant="primary"
 				:disabled="generating"
-				data-testid="woo-annual-report-generate"
+				data-testid="annual-report-generate"
 				@click="generate">
 				<template #icon>
 					<NcLoadingIcon v-if="generating" :size="20" />
@@ -54,7 +54,7 @@
 			<NcNoteCard
 				v-if="failed"
 				type="error"
-				data-testid="woo-annual-report-failed">
+				data-testid="annual-report-failed">
 				<p>
 					{{
 						t(
@@ -75,16 +75,16 @@ import {
 	fetchAnnualReportAvailability,
 	generateAnnualReport,
 	reportYears,
-} from '../../services/wooAnnualReport.js'
+} from '../../services/annualReport.js'
 
 /**
- * WooAnnualReportWidget: Generate annual report on the publications report,
+ * AnnualReportWidget: Generate annual report on the publications report,
  * offered only when OpenRegister can generate it, else saying why (REQ-WAR-002).
  *
- * @spec openspec/changes/woo-annual-report/specs/woo-compliance/spec.md#requirement-an-officer-generates-the-annual-report-from-the-publications-report-req-war-002
+ * @spec openspec/changes/annual-report/specs/woo-compliance/spec.md#requirement-an-officer-generates-the-annual-report-from-the-publications-report-req-war-002
  */
 export default {
-	name: 'WooAnnualReportWidget',
+	name: 'AnnualReportWidget',
 	components: { NcButton, NcLoadingIcon, NcNoteCard, NcSelect },
 	inheritAttrs: false,
 
@@ -114,7 +114,7 @@ export default {
 		 * Ask whether the report can be generated.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/woo-annual-report/specs/woo-compliance/spec.md#requirement-an-officer-generates-the-annual-report-from-the-publications-report-req-war-002
+		 * @spec openspec/changes/annual-report/specs/woo-compliance/spec.md#requirement-an-officer-generates-the-annual-report-from-the-publications-report-req-war-002
 		 */
 		async load() {
 			this.loading = true
@@ -135,7 +135,7 @@ export default {
 		 * Generate the chosen year in the chosen format.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/woo-annual-report/specs/woo-compliance/spec.md#requirement-an-officer-generates-the-annual-report-from-the-publications-report-req-war-002
+		 * @spec openspec/changes/annual-report/specs/woo-compliance/spec.md#requirement-an-officer-generates-the-annual-report-from-the-publications-report-req-war-002
 		 */
 		async generate() {
 			this.generating = true
@@ -157,13 +157,13 @@ export default {
 </script>
 
 <style scoped>
-.woo-annual-report {
+.annual-report {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
 }
 
-.woo-annual-report__fields {
+.annual-report__fields {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;

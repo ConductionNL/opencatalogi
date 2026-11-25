@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Whether the Woo annual report can be generated on this instance.
+ * Whether the publications report can offer Generate annual report.
  *
- * The report is OpenRegister's to render: the `woo-jaarverslag` template is a
- * seed object of its `report-templates` schema, and `POST /api/reports/generate`
- * renders it. Both arrive with a newer OpenRegister. This class answers whether
- * both are here, so the publications report offers the action only when it can
- * work and otherwise says why. It never produces a partial report.
+ * The report is OpenRegister's to render: the shipped annual report template is
+ * a seed object of its `report-templates` schema, and `POST /api/reports/generate`
+ * renders it. Both arrive with a newer OpenRegister. This endpoint answers whether
+ * both are here, so the page offers the action only when it can work and
+ * otherwise says why. It never produces a partial report.
  *
- * @category Service
- * @package  OCA\OpenCatalogi\Service\Woo
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -28,16 +28,20 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCP\AppFramework\Controller;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
+use OCP\AppFramework\Http\JSONResponse;
+use OCP\IRequest;
 use Throwable;
 
 /**
- * Answers whether OpenRegister can generate the Woo annual report.
+ * GET /api/reports/annual: the annual report's availability and template.
  */
-class WooAnnualReport {
+class AnnualReportController extends Controller {
 	/**
 	 * The register and schema OpenRegister keeps report templates in.
 	 *
@@ -46,7 +50,7 @@ class WooAnnualReport {
 	public const TEMPLATE_REGISTER = 'report-templates';
 
 	/**
-	 * The slug of the template OpenCatalogi ships.
+	 * The slug of the template this app ships.
 	 *
 	 * @var string
 	 */
@@ -69,31 +73,38 @@ class WooAnnualReport {
 	/**
 	 * Constructor.
 	 *
+	 * @param string                        $appName      The app name.
+	 * @param IRequest                      $request      The request.
 	 * @param OpenRegisterServicesInterface $openRegister Reaches OpenRegister's object service.
 	 */
 	public function __construct(
+		$appName,
+		IRequest $request,
 		private readonly OpenRegisterServicesInterface $openRegister,
 	) {
+		parent::__construct(appName: $appName, request: $request);
 	}//end __construct()
 
 	/**
-	 * Whether the report can be generated, with the template to generate it from.
+	 * Whether the report can be generated, with the template to generate it from. It
+	 * names no data; the counting happens in OpenRegister with the caller's rights.
 	 *
-	 * @return array{available: bool, templateId: string|null, reason: string|null, formats: list<string>}
+	 * @return JSONResponse `{available, templateId, reason, formats}`.
 	 *
 	 * @spec openspec/changes/woo-annual-report/specs/woo-compliance/spec.md#requirement-an-officer-generates-the-annual-report-from-the-publications-report-req-war-002
 	 */
-	public function availability(): array {
+	#[NoAdminRequired]
+	public function availability(): JSONResponse {
 		$templateId = null;
 		if (class_exists(self::GENERATOR_CLASS) === true) {
 			$templateId = $this->templateId();
 		}
 
 		if ($templateId === null) {
-			return ['available' => false, 'templateId' => null, 'reason' => self::NEEDS_NEWER_OPENREGISTER, 'formats' => []];
+			return new JSONResponse(['available' => false, 'templateId' => null, 'reason' => self::NEEDS_NEWER_OPENREGISTER, 'formats' => []]);
 		}
 
-		return ['available' => true, 'templateId' => $templateId, 'reason' => null, 'formats' => ['pdf', 'ods', 'csv']];
+		return new JSONResponse(['available' => true, 'templateId' => $templateId, 'reason' => null, 'formats' => ['pdf', 'ods', 'csv']]);
 	}//end availability()
 
 	/**

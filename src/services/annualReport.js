@@ -14,7 +14,7 @@ import { generateUrl } from '@nextcloud/router'
  */
 export async function fetchAnnualReportAvailability() {
 	const { data } = await axios.get(
-		generateUrl('/apps/opencatalogi/api/woo/annual-report'),
+		generateUrl('/apps/opencatalogi/api/reports/annual'),
 	)
 	return {
 		available: data?.available === true,

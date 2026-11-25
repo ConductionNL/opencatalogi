@@ -16,7 +16,7 @@
  *
  * Base URL and credentials come from the environment (playwright.config.ts).
  *
- * @e2e openspec/changes/woo-annual-report/specs/woo-compliance/spec.md#scenario-an-officer-generates-the-2026-woo-annual-report
+ * @e2e openspec/changes/annual-report/specs/woo-compliance/spec.md#scenario-an-officer-generates-the-2026-annual-report
  */
 import type { SeededObject } from './workflows/_fixtures.ts'
 
@@ -60,11 +60,11 @@ test.describe('Woo annual report @e2e REQ-WAR-002', () => {
 		await bootApp(page)
 		await navToRoute(page, '/reports/publications')
 
-		const widget = page.locator('[data-testid="woo-annual-report"]')
+		const widget = page.locator('[data-testid="annual-report"]')
 		await expect(widget).toBeVisible({ timeout: 20000 })
 
 		const unavailable = widget.locator(
-			'[data-testid="woo-annual-report-unavailable"]',
+			'[data-testid="annual-report-unavailable"]',
 		)
 		if (await unavailable.isVisible()) {
 			await expect(unavailable).toHaveText(NEEDS_NEWER)
@@ -80,7 +80,7 @@ test.describe('Woo annual report @e2e REQ-WAR-002', () => {
 
 		expect(file.suggestedFilename()).toMatch(/2026.*\.pdf$/)
 		await expect(
-			widget.locator('[data-testid="woo-annual-report-failed"]'),
+			widget.locator('[data-testid="annual-report-failed"]'),
 		).toHaveCount(0)
 	})
 })

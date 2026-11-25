@@ -26,6 +26,7 @@ import hljs from 'highlight.js'
 import { createApp, h } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
+import AnnualReportWidget from './components/widgets/AnnualReportWidget.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import MetadataSuggestionsWidget from './components/widgets/MetadataSuggestionsWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
@@ -36,7 +37,6 @@ import PublicationQualityWidget from './components/widgets/PublicationQualityWid
 import PublicationTablesWidget from './components/widgets/PublicationTablesWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
-import WooAnnualReportWidget from './components/widgets/WooAnnualReportWidget.vue'
 import appIcons from './icons.js'
 import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
@@ -149,9 +149,9 @@ registerDashboardWidget('publication-quality', {
 })
 // Generate annual report on the publications report (woo-annual-report,
 // REQ-WAR-002): renders OpenRegister's woo-jaarverslag template, offered only
-// when OpenRegister can generate it (GET /api/woo/annual-report).
-registerDashboardWidget('woo-annual-report', {
-	renderer: WooAnnualReportWidget,
+// when OpenRegister can generate it (GET /api/reports/annual).
+registerDashboardWidget('annual-report', {
+	renderer: AnnualReportWidget,
 	form: null,
 	defaultContent: {},
 	displayName: 'Woo annual report',

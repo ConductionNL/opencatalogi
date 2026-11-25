@@ -25,15 +25,14 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
 
 use OCA\OpenCatalogi\Contract\OpenRegisterServicesInterface;
-use OCA\OpenCatalogi\Controller\WooAnnualReportController;
-use OCA\OpenCatalogi\Service\Woo\WooAnnualReport;
+use OCA\OpenCatalogi\Controller\AnnualReportController;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 /**
- * WooAnnualReport::availability() and its endpoint.
+ * AnnualReportController::availability().
  */
 class WooAnnualReportCapabilityTest extends TestCase {
 
@@ -43,7 +42,7 @@ class WooAnnualReportCapabilityTest extends TestCase {
 	 * @return void
 	 */
 	private function withGenerator(): void {
-		if (class_exists(WooAnnualReport::GENERATOR_CLASS) === false) {
+		if (class_exists(AnnualReportController::GENERATOR_CLASS) === false) {
 			eval('namespace OCA\OpenRegister\Search\Controller; class ReportTemplateController {}');
 		}
 	}//end withGenerator()
@@ -108,17 +107,26 @@ class WooAnnualReportCapabilityTest extends TestCase {
 	}//end template()
 
 	/**
+	 * The availability the endpoint answers for an OpenRegister double.
+	 *
+	 * @param OpenRegisterServicesInterface $openRegister The double.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function availability(OpenRegisterServicesInterface $openRegister): array {
+		return (new AnnualReportController('opencatalogi', $this->createMock(IRequest::class), $openRegister))->availability()->getData();
+	}//end availability()
+
+	/**
 	 * Without OpenRegister's report templates the action is absent and the page is told why.
 	 *
 	 * @return void
 	 */
 	public function testWithoutReportGenerationTheActionIsAbsent(): void {
 		$this->withGenerator();
-		$report = new WooAnnualReport($this->openRegister(null, new RuntimeException('no register report-templates')));
-
 		$this->assertSame(
 			['available' => false, 'templateId' => null, 'reason' => 'needs-newer-openregister', 'formats' => []],
-			$report->availability()
+			$this->availability($this->openRegister(null, new RuntimeException('no register report-templates')))
 		);
 	}//end testWithoutReportGenerationTheActionIsAbsent()
 
@@ -130,8 +138,8 @@ class WooAnnualReportCapabilityTest extends TestCase {
 	public function testWithoutTheTemplateTheActionIsAbsent(): void {
 		$this->withGenerator();
 
-		$this->assertFalse((new WooAnnualReport($this->openRegister(null)))->availability()['available']);
-		$this->assertFalse((new WooAnnualReport($this->openRegister($this->template(''))))->availability()['available']);
+		$this->assertFalse($this->availability($this->openRegister(null))['available']);
+		$this->assertFalse($this->availability($this->openRegister($this->template('')))['available']);
 	}//end testWithoutTheTemplateTheActionIsAbsent()
 
 	/**
@@ -142,25 +150,9 @@ class WooAnnualReportCapabilityTest extends TestCase {
 	public function testWithReportGenerationTheActionNamesTheTemplate(): void {
 		$this->withGenerator();
 		$seen = null;
-		$availability = (new WooAnnualReport($this->openRegister($this->template('t-1'), null, $seen)))->availability();
+		$availability = $this->availability($this->openRegister($this->template('t-1'), null, $seen));
 
 		$this->assertSame(['available' => true, 'templateId' => 't-1', 'reason' => null, 'formats' => ['pdf', 'ods', 'csv']], $availability);
 		$this->assertSame(['id' => 'woo-jaarverslag', 'register' => 'report-templates', 'schema' => 'report-templates'], $seen);
 	}//end testWithReportGenerationTheActionNamesTheTemplate()
-
-	/**
-	 * The endpoint answers the availability as it is.
-	 *
-	 * @return void
-	 */
-	public function testTheEndpointAnswersTheAvailability(): void {
-		$this->withGenerator();
-		$controller = new WooAnnualReportController(
-			'opencatalogi',
-			$this->createMock(IRequest::class),
-			new WooAnnualReport($this->openRegister($this->template('t-2')))
-		);
-
-		$this->assertSame('t-2', $controller->availability()->getData()['templateId']);
-	}//end testTheEndpointAnswersTheAvailability()
 }//end class
