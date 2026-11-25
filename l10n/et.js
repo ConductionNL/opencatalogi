@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Tundmatu väärtusloend.",
         "Name the entry the choice is about.": "Nimetage kirje, mida valik puudutab.",
         "An explanation is at most %s characters.": "Selgitus on kuni %s märki.",
-        "The choice could not be saved: %s": "Valikut ei õnnestunud salvestada: %s"
+        "The choice could not be saved: %s": "Valikut ei õnnestunud salvestada: %s",
+        "Move {label} up": "Liiguta {label} üles",
+        "Move {label} down": "Liiguta {label} alla",
+        "{label} is now at position {position}.": "{label} on nüüd kohal {position}.",
+        "Name the list and its entries in their new order.": "Nimetage loend ja selle kirjed uues järjekorras."
     },
     "nplurals=2; plural=(n != 1);"
 )

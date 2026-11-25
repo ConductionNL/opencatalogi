@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Listă de valori necunoscută.",
         "Name the entry the choice is about.": "Indicați intrarea la care se referă alegerea.",
         "An explanation is at most %s characters.": "O explicație are cel mult %s caractere.",
-        "The choice could not be saved: %s": "Alegerea nu a putut fi salvată: %s"
+        "The choice could not be saved: %s": "Alegerea nu a putut fi salvată: %s",
+        "Move {label} up": "Mută {label} în sus",
+        "Move {label} down": "Mută {label} în jos",
+        "{label} is now at position {position}.": "{label} este acum pe poziția {position}.",
+        "Name the list and its entries in their new order.": "Indicați lista și intrările ei în noua ordine."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

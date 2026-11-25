@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Nezināms vērtību saraksts.",
         "Name the entry the choice is about.": "Norādiet ierakstu, uz kuru attiecas izvēle.",
         "An explanation is at most %s characters.": "Skaidrojumā ir ne vairāk kā %s rakstzīmes.",
-        "The choice could not be saved: %s": "Izvēli neizdevās saglabāt: %s"
+        "The choice could not be saved: %s": "Izvēli neizdevās saglabāt: %s",
+        "Move {label} up": "Pārvietot {label} uz augšu",
+        "Move {label} down": "Pārvietot {label} uz leju",
+        "{label} is now at position {position}.": "{label} tagad ir {position}. vietā.",
+        "Name the list and its entries in their new order.": "Norādiet sarakstu un tā ierakstus jaunajā secībā."
     },
     "nplurals=2; plural=(n != 1);"
 )

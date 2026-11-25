@@ -2249,7 +2249,11 @@ OC.L10N.register(
         "The value list the entry belongs to, by the name the value-lists page uses, e.g. informatiecategorieen.": "The value list the entry belongs to, by the name the value-lists page uses, e.g. informatiecategorieen.",
         "Value list choice": "Value list choice",
         "What the entry means, in this organisation's words, for a citizen choosing a filter.": "What the entry means, in this organisation's words, for a citizen choosing a filter.",
-        "Where the entry is offered in pick lists, lowest first. Entries without an order follow in the list's own order.": "Where the entry is offered in pick lists, lowest first. Entries without an order follow in the list's own order."
+        "Where the entry is offered in pick lists, lowest first. Entries without an order follow in the list's own order.": "Where the entry is offered in pick lists, lowest first. Entries without an order follow in the list's own order.",
+        "Move {label} up": "Move {label} up",
+        "Move {label} down": "Move {label} down",
+        "{label} is now at position {position}.": "{label} is now at position {position}.",
+        "Name the list and its entries in their new order.": "Name the list and its entries in their new order."
     },
     "nplurals=2; plural=(n != 1);"
 )

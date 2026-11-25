@@ -2203,7 +2203,11 @@
         "The value list the entry belongs to, by the name the value-lists page uses, e.g. informatiecategorieen.": "De waardelijst waartoe het item hoort, met de naam die de pagina met waardelijsten gebruikt, bijvoorbeeld informatiecategorieen.",
         "Value list choice": "Keuze in een waardelijst",
         "What the entry means, in this organisation's words, for a citizen choosing a filter.": "Wat het item betekent, in de woorden van deze organisatie, voor een inwoner die een filter kiest.",
-        "Where the entry is offered in pick lists, lowest first. Entries without an order follow in the list's own order.": "Waar het item in keuzelijsten wordt aangeboden, laagste eerst. Items zonder volgorde volgen in de volgorde van de lijst zelf."
+        "Where the entry is offered in pick lists, lowest first. Entries without an order follow in the list's own order.": "Waar het item in keuzelijsten wordt aangeboden, laagste eerst. Items zonder volgorde volgen in de volgorde van de lijst zelf.",
+        "Move {label} up": "{label} omhoog verplaatsen",
+        "Move {label} down": "{label} omlaag verplaatsen",
+        "{label} is now at position {position}.": "{label} staat nu op plaats {position}.",
+        "Name the list and its entries in their new order.": "Noem de lijst en de items in hun nieuwe volgorde."
     },
     "plurals": {}
 }

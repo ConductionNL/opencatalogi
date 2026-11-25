@@ -32,9 +32,15 @@
 				)
 			}}
 		</NcNoteCard>
+		<p
+			class="hidden-visually"
+			aria-live="polite"
+			data-testid="category-order-announcement">
+			{{ announcement }}
+		</p>
 		<ul class="category-explanations__list">
 			<li
-				v-for="entry in entries"
+				v-for="(entry, index) in entries"
 				:key="entry.uri"
 				class="category-explanations__row"
 				:data-testid="'category-explanation-' + entry.code">
@@ -52,6 +58,26 @@
 					@click="save(entry)">
 					{{ t('opencatalogi', 'Save explanation') }}
 				</NcButton>
+				<NcButton
+					:aria-label="
+						t('opencatalogi', 'Move {label} up', { label: entry.label })
+					"
+					:disabled="reordering || index === 0"
+					:data-testid="'category-move-up-' + entry.code"
+					@click="move(index, -1)">
+					{{ t('opencatalogi', 'Move up') }}
+				</NcButton>
+				<NcButton
+					:aria-label="
+						t('opencatalogi', 'Move {label} down', {
+							label: entry.label,
+						})
+					"
+					:disabled="reordering || index === entries.length - 1"
+					:data-testid="'category-move-down-' + entry.code"
+					@click="move(index, 1)">
+					{{ t('opencatalogi', 'Move down') }}
+				</NcButton>
 			</li>
 		</ul>
 	</div>
@@ -60,6 +86,7 @@
 <script>
 import axios from '@nextcloud/axios'
 import { showSuccess } from '@nextcloud/dialogs'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard, NcTextArea } from '@nextcloud/vue'
 
@@ -72,6 +99,11 @@ export const CHOICES_URL = '/apps/opencatalogi/api/woo/value-list-choices'
  * The list the information categories are.
  */
 export const SCHEME = 'informatiecategorieen'
+
+/**
+ * The URL that saves the order of a list.
+ */
+export const ORDER_URL = '/apps/opencatalogi/api/woo/value-list-choices/order'
 
 /**
  * The administrator writes an explanation per information category (REQ-WVL-003).
@@ -94,6 +126,8 @@ export default {
 			choicesUnavailable: false,
 			error: null,
 			saving: null,
+			reordering: false,
+			announcement: '',
 			maxLength: 1000,
 		}
 	},
@@ -148,6 +182,46 @@ export default {
 		},
 
 		/**
+		 * Move a category one place up (-1) or down (1) and save the new order.
+		 *
+		 * The order drives the officer pick lists and the public category list
+		 * (REQ-WVL-002); the live region says where the category is now.
+		 *
+		 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrators-order-drives-every-pick-list-req-wvl-002
+		 * @param {number} index The category's place.
+		 * @param {number} delta -1 for up, 1 for down.
+		 * @return {Promise<void>}
+		 */
+		async move(index, delta) {
+			const moved = moveEntry(this.entries, index, delta)
+			if (moved === null) {
+				return
+			}
+			this.error = null
+			this.reordering = true
+			const entry = this.entries[index]
+			try {
+				const { data } = await axios.put(generateUrl(ORDER_URL), {
+					scheme: SCHEME,
+					entries: moved.map((item) => item.uri),
+				})
+				this.apply(data)
+				this.announcement = t(
+					'opencatalogi',
+					'{label} is now at position {position}.',
+					{
+						label: entry.label,
+						position: index + delta + 1,
+					},
+				)
+			} catch (err) {
+				this.error = err.response?.data?.error || err.message
+			} finally {
+				this.reordering = false
+			}
+		},
+
+		/**
 		 * Keep the list the server answered and drop the drafts it now holds.
 		 *
 		 * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-a-category-explanation-is-served-publicly-req-wvl-003
@@ -183,6 +257,31 @@ export default {
 			this.drafts = { ...this.drafts, [entry.uri]: value }
 		},
 	},
+}
+
+/**
+ * The entries with one moved a place up or down, or null when it cannot move.
+ *
+ * @spec openspec/changes/woo-value-list-curation/specs/woo-compliance/spec.md#requirement-the-administrators-order-drives-every-pick-list-req-wvl-002
+ * @param {Array<object>} entries The entries in their current order.
+ * @param {number} index The place of the entry to move.
+ * @param {number} delta -1 for up, 1 for down.
+ * @return {Array<object>|null} The entries in their new order.
+ */
+export function moveEntry(entries, index, delta) {
+	const target = index + delta
+	if (
+		index < 0
+		|| index >= entries.length
+		|| target < 0
+		|| target >= entries.length
+	) {
+		return null
+	}
+	const moved = [...entries]
+	const [entry] = moved.splice(index, 1)
+	moved.splice(target, 0, entry)
+	return moved
 }
 
 /**

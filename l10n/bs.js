@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Nepoznata lista vrijednosti.",
         "Name the entry the choice is about.": "Navedite stavku na koju se izbor odnosi.",
         "An explanation is at most %s characters.": "Objašnjenje ima najviše %s znakova.",
-        "The choice could not be saved: %s": "Izbor nije sačuvan: %s"
+        "The choice could not be saved: %s": "Izbor nije sačuvan: %s",
+        "Move {label} up": "Pomjeri {label} gore",
+        "Move {label} down": "Pomjeri {label} dolje",
+        "{label} is now at position {position}.": "{label} je sada na mjestu {position}.",
+        "Name the list and its entries in their new order.": "Navedite listu i njene stavke novim redoslijedom."
     },
     "nplurals=2; plural=(n != 1);"
 )

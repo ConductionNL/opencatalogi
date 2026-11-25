@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Ukendt værdiliste.",
         "Name the entry the choice is about.": "Angiv det element, valget handler om.",
         "An explanation is at most %s characters.": "En forklaring er højst %s tegn.",
-        "The choice could not be saved: %s": "Valget kunne ikke gemmes: %s"
+        "The choice could not be saved: %s": "Valget kunne ikke gemmes: %s",
+        "Move {label} up": "Flyt {label} op",
+        "Move {label} down": "Flyt {label} ned",
+        "{label} is now at position {position}.": "{label} er nu på plads {position}.",
+        "Name the list and its entries in their new order.": "Angiv listen og dens elementer i den nye rækkefølge."
     },
     "nplurals=2; plural=(n != 1);"
 )

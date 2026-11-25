@@ -872,7 +872,11 @@
         "Unknown value list.": "Onbekannt Wäertlëscht.",
         "Name the entry the choice is about.": "Nennt den Antrag, ëm deen et beim Choix geet.",
         "An explanation is at most %s characters.": "Eng Erklärung huet héchstens %s Zeechen.",
-        "The choice could not be saved: %s": "De Choix konnt net gespäichert ginn: %s"
+        "The choice could not be saved: %s": "De Choix konnt net gespäichert ginn: %s",
+        "Move {label} up": "{label} no uewen réckelen",
+        "Move {label} down": "{label} no ënne réckelen",
+        "{label} is now at position {position}.": "{label} ass elo op der Plaz {position}.",
+        "Name the list and its entries in their new order.": "Nennt d’Lëscht an hir Antréeën an der neier Reiefolleg."
     },
     "plurals": {}
 }

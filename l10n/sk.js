@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Neznámy zoznam hodnôt.",
         "Name the entry the choice is about.": "Uveďte položku, ktorej sa voľba týka.",
         "An explanation is at most %s characters.": "Vysvetlenie má najviac %s znakov.",
-        "The choice could not be saved: %s": "Voľbu sa nepodarilo uložiť: %s"
+        "The choice could not be saved: %s": "Voľbu sa nepodarilo uložiť: %s",
+        "Move {label} up": "Posunúť {label} nahor",
+        "Move {label} down": "Posunúť {label} nadol",
+        "{label} is now at position {position}.": "{label} je teraz na pozícii {position}.",
+        "Name the list and its entries in their new order.": "Uveďte zoznam a jeho položky v novom poradí."
     },
     "nplurals=2; plural=(n != 1);"
 )

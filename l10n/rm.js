@@ -873,7 +873,11 @@ OC.L10N.register(
         "Unknown value list.": "Glista da valurs nunenconuschenta.",
         "Name the entry the choice is about.": "Numnai l’endataziun che la tscherna pertutga.",
         "An explanation is at most %s characters.": "Ina explicaziun ha maximalmain %s caracters.",
-        "The choice could not be saved: %s": "La tscherna n’ha betg pudì vegnir memorisada: %s"
+        "The choice could not be saved: %s": "La tscherna n’ha betg pudì vegnir memorisada: %s",
+        "Move {label} up": "Spustar {label} ensi",
+        "Move {label} down": "Spustar {label} engiu",
+        "{label} is now at position {position}.": "{label} è ussa sin la posiziun {position}.",
+        "Name the list and its entries in their new order.": "Numnai la glista e sias endataziuns en la nova successiun."
     },
     "nplurals=2; plural=(n != 1);"
 )

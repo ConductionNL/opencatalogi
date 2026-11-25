@@ -872,7 +872,11 @@
         "Unknown value list.": "Ismeretlen értéklista.",
         "Name the entry the choice is about.": "Nevezze meg a tételt, amelyre a választás vonatkozik.",
         "An explanation is at most %s characters.": "Egy magyarázat legfeljebb %s karakter.",
-        "The choice could not be saved: %s": "A választást nem sikerült menteni: %s"
+        "The choice could not be saved: %s": "A választást nem sikerült menteni: %s",
+        "Move {label} up": "{label} feljebb helyezése",
+        "Move {label} down": "{label} lejjebb helyezése",
+        "{label} is now at position {position}.": "{label} most a(z) {position}. helyen áll.",
+        "Name the list and its entries in their new order.": "Adja meg a listát és tételeit az új sorrendben."
     },
     "plurals": {}
 }
