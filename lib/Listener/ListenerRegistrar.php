@@ -223,6 +223,12 @@ class ListenerRegistrar {
 			event: BeforeTemplateRenderedEvent::class,
 			listener: ProvideManifestConfigStateListener::class
 		);
+		// The setup status and walkthrough preferences ride along on the same
+		// render, so the shell does not ask for them on every page open.
+		$context->registerEventListener(
+			event: BeforeTemplateRenderedEvent::class,
+			listener: ProvideShellStateListener::class
+		);
 
 	}//end register()
 
