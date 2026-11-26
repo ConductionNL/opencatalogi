@@ -409,7 +409,7 @@ count MUST be sourced from OR's generic ad-hoc aggregation endpoint
 from a bespoke, page-capped count query — landed via
 `dashboard-consume-or-aggregations`.
 
-The status-breakdown KPIs follow the publication matrix. The status is
+The status-breakdown KPIs count each publication under one status. The status is
 COMPUTED from `publicationDate` (P) and `depublicationDate` (D) against "now",
 not stored:
 

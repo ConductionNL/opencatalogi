@@ -106,7 +106,7 @@ describe('statusCountFilters', () => {
 })
 
 describe('deriveStatusCounts', () => {
-	it('splits the total over the statuses of the publication matrix', () => {
+	it('splits the total over concept, scheduled, published, depublished and invalid', () => {
 		expect(deriveStatusCounts({ total: 20, live: 9, ended: 2, withdrawn: 4, undated: 6, undatedWithdrawn: 1, invalid: 1 })).toEqual({
 			total: 20,
 			concept: 5,

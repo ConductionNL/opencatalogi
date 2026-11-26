@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Unit tests for src/services/publicationStatus.js: the status of a
- * publication for every row of the publication matrix.
+ * publication for every combination of its publication and depublication
+ * date: not set, on or before now, or after now. The numbers name the cases.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {

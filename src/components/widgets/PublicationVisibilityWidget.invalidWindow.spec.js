@@ -4,7 +4,7 @@
  *
  * The Visibility card shows an error while the publication's depublication
  * date falls on or before its coming publication date, because it then never
- * goes live (publication matrix row 6).
+ * goes live.
  *
  * @spec openspec/specs/publications/spec.md
  */

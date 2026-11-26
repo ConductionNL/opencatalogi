@@ -9,7 +9,7 @@
  *   publicationDate   – the date the publication goes (or went) live
  *   depublicationDate – the date the publication was (or will be) withdrawn
  *
- * Rules (the publication matrix):
+ * Rules, checked in this order:
  *   depublished → depublicationDate ≤ now, whatever publicationDate is
  *   concept     → no publicationDate (and no depublicationDate ≤ now)
  *   published   → publicationDate ≤ now (and no depublicationDate ≤ now)
@@ -30,7 +30,7 @@ function toDate(value) {
 
 /**
  * Whether the publication window closes on or before it opens while it has
- * not opened yet, so the publication never goes live (matrix row 6). Stays
+ * not opened yet, so the publication never goes live. Stays
  * true once the depublication date has passed, when the status is depublished.
  *
  * @param {object} obj Publication object

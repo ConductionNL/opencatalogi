@@ -426,7 +426,7 @@ export default {
 
 		/**
 		 * Whether the publication's depublication date falls on or before its
-		 * coming publication date, so it never goes live (matrix row 6).
+		 * coming publication date, so it never goes live.
 		 *
 		 * @return {boolean}
 		 * @spec openspec/specs/publications/spec.md
