@@ -50,6 +50,6 @@ class SettingsLoadFailedException extends RuntimeException {
 	 * @spec openspec/changes/admin-settings/tasks.md#task-4
 	 */
 	public function __construct(Throwable $previous) {
-		parent::__construct(self::MESSAGE, 0, $previous);
+		parent::__construct(message: self::MESSAGE, code: 0, previous: $previous);
 	}//end __construct()
 }//end class

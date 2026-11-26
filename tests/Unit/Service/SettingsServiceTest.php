@@ -1078,7 +1078,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		$result = $this->service->manualImport(true);
 
-		// loadSettings() logs the failure once and throws; manualImport() does not log
+		// The load logs the failure once and throws; manualImport() does not log
 		// it again, and the caller gets a generic failure without the exception's text.
 		$this->assertFalse($result['success']);
 		$this->assertSame(expected: 'Import failed. The details are in the Nextcloud log.', actual: $result['error']);
@@ -1169,6 +1169,8 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	/**
 	 * A failed load is logged with the full exception, and the caller's exception names no path.
 	 *
+	 * @return void
+	 *
 	 * @spec openspec/changes/admin-settings/tasks.md#task-4
 	 */
 	public function testAFailedLoadIsLoggedAndTheCallerGetsNoDetails(): void {
@@ -1187,7 +1189,7 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 		try {
 			$this->service->loadSettings();
-			$this->fail('A missing configuration file must fail the load.');
+			$this->fail(message: 'A missing configuration file must fail the load.');
 		} catch (SettingsLoadFailedException $e) {
 			$this->assertSame(expected: SettingsLoadFailedException::MESSAGE, actual: $e->getMessage());
 			$this->assertStringNotContainsString(needle: 'nonexistent-app-path', haystack: $e->getMessage());

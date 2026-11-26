@@ -2669,7 +2669,7 @@ class SettingsService implements SettingsServiceInterface {
 				'versionInfo' => $updatedVersionInfo,
 			];
 		} catch (SettingsLoadFailedException $e) {
-			// loadSettings() logged it already.
+			// The failure was logged by loadSettings() already.
 			return self::importFailed();
 		} catch (\Exception $e) {
 			// The exception's text can name paths or OpenRegister internals:
