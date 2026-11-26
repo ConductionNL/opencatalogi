@@ -53,7 +53,12 @@ class ValueListsControllerTest extends TestCase {
 	 *
 	 * @return ValueListsController
 	 */
-	private function controller(array $params = [], string $refreshState = '{}', string $snapshotPath = RefusalGrounds::SNAPSHOT_PATH): ValueListsController {
+	private function controller(
+		array $params = [],
+		string $refreshState = '{}',
+		string $snapshotPath = RefusalGrounds::SNAPSHOT_PATH,
+		?\OCA\OpenCatalogi\Service\TooiVocabularyService $tooi = null
+	): ValueListsController {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParam')->willReturnCallback(
 			static fn (string $key, $default = null) => ($params[$key] ?? $default)
@@ -65,7 +70,7 @@ class ValueListsControllerTest extends TestCase {
 			->willReturn($refreshState);
 
 		$service = new ValueListsService(
-			tooi: new TooiVocabularyService(),
+			tooi: ($tooi ?? \Unit\Support\RecordedTooiRegister::service()),
 			dcat: new DcatVocabularyService(),
 			grounds: new RefusalGrounds(snapshotPath: $snapshotPath),
 			appConfig: $config
@@ -111,6 +116,22 @@ class ValueListsControllerTest extends TestCase {
 			$infocat[0]
 		);
 	}//end testEveryUsedSchemeIsListedWithUris()
+
+	/**
+	 * REQ-WVC-001: lists the vocabulary register cannot answer are named unavailable, never served from a copy.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testListsTheRegisterCannotAnswerAreUnavailable(): void {
+		$data = $this->controller(tooi: \Unit\Support\RecordedTooiRegister::unreadableService())->index()->getData();
+
+		$this->assertSame(['informatiecategorieen', 'soortHandeling', 'documentsoorten', 'talen'], $data['unavailable']);
+		$served = array_values(array_unique(array_column($data['results'], 'scheme')));
+		$this->assertSame([], array_intersect($served, $data['unavailable']));
+		$this->assertContains('dataThemes', $served);
+	}//end testListsTheRegisterCannotAnswerAreUnavailable()
 
 	/**
 	 * A scheme filter answers that scheme only, with the refresh moment a refresh recorded.

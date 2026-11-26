@@ -151,7 +151,7 @@ class MoveDocumentsoortOutOfSummaryTest extends TestCase {
 			}
 		);
 
-		(new MoveDocumentsoortOutOfSummary($settings, new TooiVocabularyService(), $config, $this->createMock(LoggerInterface::class)))->run($output);
+		(new MoveDocumentsoortOutOfSummary($settings, \Unit\Support\RecordedTooiRegister::service(), $config, $this->createMock(LoggerInterface::class)))->run($output);
 	}//end runStep()
 
 	/**

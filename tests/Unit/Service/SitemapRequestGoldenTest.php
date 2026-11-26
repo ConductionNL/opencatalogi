@@ -238,7 +238,7 @@ class SitemapRequestGoldenTest extends TestCase {
 			new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)),
 			$settingsService,
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
-			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new TooiVocabularyService(), $categories, new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(\Unit\Support\RecordedTooiRegister::service(), $categories, new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
 			$this->createMock(PublicationQueryService::class),
 			$categories
 		);

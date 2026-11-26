@@ -128,10 +128,10 @@ class WooCreateBatchTest extends TestCase {
 		$l10n->method('t')->willReturnArgument(0);
 
 		$categories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
-			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			\Unit\Support\RecordedTooiRegister::service(),
 			$this->createMock(\OCA\OpenCatalogi\Service\SettingsService::class),
 			$this->createMock(\Psr\Log\LoggerInterface::class),
-			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
+			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service()),
 		);
 
 		return new WooController('opencatalogi', $request, $service, $l10n, $this->createMock(IUserSession::class), $categories, capabilities: new \Unit\Support\AllowingCapabilityRights());

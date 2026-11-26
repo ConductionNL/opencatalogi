@@ -117,12 +117,12 @@ class SitemapCategoryMappingTest extends TestCase {
 		$apps->method('getInstalledApps')->willReturn(['openregister']);
 		$settings = $this->createMock(SettingsService::class);
 		$lookup = new OpenRegisterLookup($container, $apps);
-		$categories = new WooCategoryRegistry(new TooiVocabularyService(), $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission(new TooiVocabularyService()));
+		$categories = new WooCategoryRegistry(\Unit\Support\RecordedTooiRegister::service(), $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service()));
 		$service = new SitemapService(
 			$lookup,
 			$settings,
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
-			new SitemapDocumentMapper(new TooiVocabularyService(), $categories, $lookup, FileFactsByExtension::make($this)),
+			new SitemapDocumentMapper(\Unit\Support\RecordedTooiRegister::service(), $categories, $lookup, FileFactsByExtension::make($this)),
 			$this->createMock(PublicationQueryService::class),
 			$categories
 		);
@@ -248,7 +248,7 @@ class SitemapCategoryMappingTest extends TestCase {
 		$fragment = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/register.d/woo-category-mapping-intake.json'), true);
 		$rows = $fragment['components']['objects'];
 		$members = [];
-		foreach ((new TooiVocabularyService())->informatiecategorieList() as $member) {
+		foreach ((\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList() as $member) {
 			$members[$member['uri']] = $member['label'];
 		}
 

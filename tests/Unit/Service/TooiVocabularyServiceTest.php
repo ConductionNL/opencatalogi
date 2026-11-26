@@ -29,6 +29,7 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use PHPUnit\Framework\TestCase;
+use Unit\Support\RecordedTooiRegister;
 
 /**
  * Unit tests for TooiVocabularyService.
@@ -43,7 +44,7 @@ class TooiVocabularyServiceTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$this->service = new TooiVocabularyService();
+		$this->service = \Unit\Support\RecordedTooiRegister::service();
 
 	}//end setUp()
 
@@ -77,7 +78,7 @@ class TooiVocabularyServiceTest extends TestCase {
 	}//end testResolveInformatiecategorieFailsClosed()
 
 	/**
-	 * The bundled list contains all 18 Woo categories.
+	 * The register holds all 18 Woo categories.
 	 *
 	 * @return void
 	 */
@@ -192,36 +193,124 @@ class TooiVocabularyServiceTest extends TestCase {
 	}//end memberLabel()
 
 	/**
-	 * REQ-DWP-002: the bundled documentsoorten are exactly the members the
-	 * declared DiWoo 0.9.8 value-list XSD enumerates, with their code, label
-	 * and URI, and the bundle names that XSD as its source.
+	 * A list as the XSD sorts nothing: by label, as the service answers it.
+	 *
+	 * @param array<int, array{code: string, label: string, uri: string}> $members The members.
+	 *
+	 * @return array<int, array{code: string, label: string, uri: string}> The members by label.
+	 */
+	private static function byLabel(array $members): array {
+		usort($members, static fn (array $a, array $b): int => strcasecmp($a['label'], $b['label']));
+		return $members;
+
+	}//end byLabel()
+
+	/**
+	 * REQ-DWP-002: the documentsoorten the refreshed register holds (the
+	 * recorded TOOI download of the version DiWoo 0.9.8 binds) are exactly the
+	 * members the declared value-list XSD enumerates, with code, label and URI.
 	 *
 	 * @return void
 	 */
-	public function testTheBundledDocumentsoortenMatchTheDeclaredXsd(): void {
+	public function testTheRegisteredDocumentsoortenMatchTheDeclaredXsd(): void {
 		$expected = $this->xsdMembers(typeName: 'documentsoortlijst');
 
 		$this->assertCount(91, $expected, 'the XSD copy enumerates 91 documentsoorten');
-		$this->assertSame($expected, $this->service->documentsoortList());
+		$this->assertSame(self::byLabel(members: $expected), $this->service->documentsoortList());
 
-		$bundle = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/tooi_waardelijsten.json'), true);
-		$this->assertSame(StandardsVersionService::DIWOO_LISTS_XSD, $bundle['documentsoorten']['source']);
-		$this->assertSame(StandardsVersionService::DIWOO_VERSION, $bundle['documentsoorten']['xsdVersion']);
-
-	}//end testTheBundledDocumentsoortenMatchTheDeclaredXsd()
+	}//end testTheRegisteredDocumentsoortenMatchTheDeclaredXsd()
 
 	/**
-	 * REQ-DWP-002: the bundled languages are the members of the XSD's language list.
+	 * REQ-DWP-002: the languages the refreshed register holds are the members of the XSD's language list.
 	 *
 	 * @return void
 	 */
-	public function testTheBundledLanguagesMatchTheDeclaredXsd(): void {
-		$this->assertSame($this->xsdMembers(typeName: 'taallijst'), $this->service->languageList());
+	public function testTheRegisteredLanguagesMatchTheDeclaredXsd(): void {
+		$this->assertSame(self::byLabel(members: $this->xsdMembers(typeName: 'taallijst')), $this->service->languageList());
 
-		$bundle = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/tooi_waardelijsten.json'), true);
-		$this->assertSame(StandardsVersionService::DIWOO_LISTS_XSD, $bundle['talen']['source']);
+	}//end testTheRegisteredLanguagesMatchTheDeclaredXsd()
 
-	}//end testTheBundledLanguagesMatchTheDeclaredXsd()
+	/**
+	 * REQ-WVC-001: a category resolves from the register: its URI is a concept
+	 * the register holds, and a register without that concept resolves nothing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testTheCategoryResolvesFromTheVocabularyRegister(): void {
+		$register = new RecordedTooiRegister();
+		$service = new TooiVocabularyService(register: $register);
+
+		$this->assertSame(
+			['uri' => 'https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213', 'label' => 'Jaarplannen en jaarverslagen'],
+			$service->resolveInformatiecategorie('infocat012')
+		);
+		$this->assertSame([TooiVocabularyService::CATEGORIES_SCHEME], $register->reads);
+		// The register's own label names the category too.
+		$this->assertSame('https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213', $service->resolveInformatiecategorie('jaarplan of jaarverslag')['uri']);
+		// One read per request.
+		$service->informatiecategorieList();
+		$this->assertCount(1, $register->reads);
+
+		$empty = new TooiVocabularyService(register: new RecordedTooiRegister(empty: [TooiVocabularyService::CATEGORIES_SCHEME]));
+		$this->assertNull($empty->resolveInformatiecategorie('infocat012'));
+		$this->assertSame([], $empty->informatiecategorieList());
+
+	}//end testTheCategoryResolvesFromTheVocabularyRegister()
+
+	/**
+	 * REQ-WVC-001: an unreadable register throws on every list; no bundled copy stands in.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testAnUnreadableRegisterThrows(): void {
+		$service = RecordedTooiRegister::unreadableService();
+		$calls = [
+			'category' => static fn () => $service->resolveInformatiecategorie('infocat012'),
+			'handling' => static fn () => $service->resolveSoortHandeling(null),
+			'document type' => static fn () => $service->resolveDocumentsoort('c_852da199'),
+			'language' => static fn () => $service->resolveLanguage('NLD'),
+			'category list' => static fn () => $service->informatiecategorieList(),
+			'handling list' => static fn () => $service->soortHandelingList(),
+			'new value' => static fn () => $service->acceptsNewValue('https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213'),
+		];
+
+		foreach ($calls as $name => $call) {
+			try {
+				$call();
+				$this->fail($name . ' answered from no register.');
+			} catch (\RuntimeException $e) {
+				$this->assertStringContainsString('cannot be read', $e->getMessage(), $name);
+				$this->assertInstanceOf(\RuntimeException::class, $e->getPrevious(), $name);
+			}
+		}
+
+		$this->expectException(\RuntimeException::class);
+		(new TooiVocabularyService())->resolveDocumentsoort('c_852da199');
+
+	}//end testAnUnreadableRegisterThrows()
+
+	/**
+	 * REQ-WVC-001: a deprecated concept still resolves for a stored record and is refused as a new value.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testADeprecatedConceptResolvesButIsRefusedForANewValue(): void {
+		$advies = 'https://identifier.overheid.nl/tooi/def/thes/kern/c_99a836c7';
+		$service = new TooiVocabularyService(register: new RecordedTooiRegister(deprecated: [$advies]));
+
+		$this->assertSame($advies, $service->resolveInformatiecategorie('infocat010')['uri']);
+		$this->assertFalse($service->acceptsNewValue($advies));
+		$this->assertTrue($service->acceptsNewValue('https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213'));
+		$this->assertTrue($service->acceptsNewValue('http://publications.europa.eu/resource/authority/language/NLD'));
+		$this->assertFalse($service->acceptsNewValue('https://example.com/not-a-member'));
+
+	}//end testADeprecatedConceptResolvesButIsRefusedForANewValue()
 
 	/**
 	 * REQ-DWP-003: the mandatory-element fixture is what the declared metadata

@@ -288,7 +288,7 @@ class SitemapIndexGoldenTest extends TestCase {
 			new OpenRegisterLookup($container, $apps),
 			$settings,
 			new InstanceSettings($urls, $config),
-			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new TooiVocabularyService(), $categories, new OpenRegisterLookup($container, $apps), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(\Unit\Support\RecordedTooiRegister::service(), $categories, new OpenRegisterLookup($container, $apps), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
 			$queryService,
 			$categories
 		);

@@ -204,13 +204,13 @@ class SitemapPublisherGoldenTest extends TestCase {
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('getInstalledApps')->willReturn(['openregister']);
 		$settings = $this->createMock(SettingsService::class);
-		$categories = new WooCategoryRegistry(new TooiVocabularyService(), $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission(new TooiVocabularyService()));
+		$categories = new WooCategoryRegistry(\Unit\Support\RecordedTooiRegister::service(), $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service()));
 
 		return new SitemapService(
 			new OpenRegisterLookup($container, $apps),
 			$settings,
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
-			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new TooiVocabularyService(), $categories, new OpenRegisterLookup($container, $apps), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(\Unit\Support\RecordedTooiRegister::service(), $categories, new OpenRegisterLookup($container, $apps), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
 			$this->createMock(PublicationQueryService::class),
 			$categories
 		);

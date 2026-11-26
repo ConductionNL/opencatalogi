@@ -106,10 +106,10 @@ class WooRegistrationServiceTest extends TestCase {
 		$urls->method('getBaseUrl')->willReturn($baseUrl);
 
 		$categories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
-			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			\Unit\Support\RecordedTooiRegister::service(),
 			$this->createMock(\OCA\OpenCatalogi\Service\SettingsService::class),
 			$this->createMock(\Psr\Log\LoggerInterface::class),
-			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
+			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service()),
 		);
 
 		return new WooRegistrationService($this->readiness, $this->index, $settings, $this->config, $urls, $categories);

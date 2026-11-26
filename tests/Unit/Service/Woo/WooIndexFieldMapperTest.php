@@ -245,7 +245,7 @@ class WooIndexFieldMapperTest extends TestCase {
 	 * @return SitemapDocumentMapper
 	 */
 	private function documentMapper(?WooIndexFieldMapper $fieldMapper): SitemapDocumentMapper {
-		$tooi = new TooiVocabularyService();
+		$tooi = \Unit\Support\RecordedTooiRegister::service();
 
 		return new SitemapDocumentMapper(
 			tooiVocabulary: $tooi,

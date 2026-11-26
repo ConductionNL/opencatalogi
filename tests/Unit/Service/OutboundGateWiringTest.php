@@ -375,10 +375,10 @@ final class OutboundGateWiringTest extends TestCase {
 		$urls = $this->createMock(IURLGenerator::class);
 		$urls->method('getBaseUrl')->willReturn('https://woo.example.nl');
 		$categories = new WooCategoryRegistry(
-			new TooiVocabularyService(),
+			\Unit\Support\RecordedTooiRegister::service(),
 			$this->createMock(SettingsService::class),
 			$this->createMock(LoggerInterface::class),
-			new LocalCategoryAdmission(new TooiVocabularyService()),
+			new LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service()),
 		);
 
 		return new WooRegistrationService($readiness, $index, $this->createMock(SettingsService::class), $config, $urls, $categories);

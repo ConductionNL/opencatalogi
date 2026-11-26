@@ -179,7 +179,7 @@ class WooCategoryRegistryTest extends TestCase {
 	 * @return WooCategoryRegistry The registry.
 	 */
 	private function registryOver(SettingsService $settings): WooCategoryRegistry {
-		$tooi = new TooiVocabularyService();
+		$tooi = \Unit\Support\RecordedTooiRegister::service();
 
 		return new WooCategoryRegistry(
 			$tooi,

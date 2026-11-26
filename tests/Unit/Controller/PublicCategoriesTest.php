@@ -70,7 +70,7 @@ class PublicCategoriesTest extends TestCase {
 		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturn('{}');
 		$lists = new ValueListsService(
-			tooi: new TooiVocabularyService(),
+			tooi: \Unit\Support\RecordedTooiRegister::service(),
 			dcat: new DcatVocabularyService(),
 			grounds: new RefusalGrounds(),
 			appConfig: $config

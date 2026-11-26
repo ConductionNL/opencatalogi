@@ -113,7 +113,7 @@ class GuardChainsGoldenTest extends TestCase {
 	 */
 	#[DataProvider('handlings')]
 	public function testResolveSoortHandeling(?string $value, ?string $label): void {
-		$resolved = (new TooiVocabularyService())->resolveSoortHandeling($value);
+		$resolved = (\Unit\Support\RecordedTooiRegister::service())->resolveSoortHandeling($value);
 		if ($label === null) {
 			$this->assertNull($resolved);
 			return;

@@ -48,7 +48,7 @@ class SitemapDocumentFieldsTest extends TestCase {
 			static fn (string $app, string $key, string $default = ''): string => ($key === 'diwoo_fields_introduced_at' ? $introducedAt : $default)
 		);
 
-		return new SitemapDocumentFields(new TooiVocabularyService(), new InstanceSettings($this->createMock(IURLGenerator::class), $config));
+		return new SitemapDocumentFields(\Unit\Support\RecordedTooiRegister::service(), new InstanceSettings($this->createMock(IURLGenerator::class), $config));
 	}//end fields()
 
 	/**

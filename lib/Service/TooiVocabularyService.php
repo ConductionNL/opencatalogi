@@ -3,16 +3,15 @@
 /**
  * OpenCatalogi TOOI / DiWoo controlled-vocabulary binding service.
  *
- * Bundled reference data for the three DIWOO metadata axes the national Woo-index
- * (KOOP/DiWoo) requires as official value-list URIs rather than free text:
- * `informatiecategorie` (the 18 Woo categories), `publisher` (a TOOI organisatie
- * identifier), and `soortHandeling` (the DiWoo handling-type list). Values are the
- * official TOOI kern-thesaurus identifiers
- * (`https://identifier.overheid.nl/tooi/def/thes/kern/c_…`) and organisatie
- * identifiers (`https://identifier.overheid.nl/tooi/id/…`) sourced from the
- * `scw_woo_informatiecategorieen` and DiWoo documenthandelingen waardelijsten. The
- * resolvers fail closed: an input that does not map to a value-list member returns
- * null so the caller omits the axis rather than leaking a literal `@resource`.
+ * Resolves the DiWoo metadata axes the national Woo-index (KOOP/DiWoo) requires
+ * as official value-list URIs rather than free text: `informatiecategorie`,
+ * `soortHandeling`, `documentsoort`, `taal` and `publisher` (a TOOI organisatie
+ * identifier). The lists are read from OpenRegister's vocabulary register, which
+ * the daily refresh keeps in step with the TOOI publication (REQ-WVC-001,
+ * REQ-WVC-002); there is no bundled copy. The resolvers fail closed: an input
+ * that does not map to a value-list member returns null so the caller omits the
+ * axis rather than leaking a literal `@resource`, and an unreadable register
+ * throws, so no stale list is ever used.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service
@@ -33,11 +32,15 @@ namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
 use OCA\OpenCatalogi\Contract\OrganisationActivationInterface;
+use OCA\OpenCatalogi\Contract\VocabularyRegisterInterface;
+use RuntimeException;
+use Throwable;
 
 /**
- * Resolves the three DIWOO metadata axes to official TOOI/DiWoo value-list URIs.
+ * Resolves the DiWoo metadata axes to official TOOI/DiWoo value-list URIs, from the vocabulary register.
  *
  * @spec openspec/specs/woo-compliance/spec.md
+ * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
  */
 class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 
@@ -70,38 +73,68 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	private bool $activatedRead = false;
 
 	/**
+	 * The scheme of the Woo informatiecategorieën in the vocabulary register.
+	 *
+	 * @var string
+	 */
+	public const CATEGORIES_SCHEME = 'https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen';
+
+	/**
+	 * The scheme of the DiWoo documenthandelingen (soort handeling).
+	 *
+	 * @var string
+	 */
+	public const HANDLING_SCHEME = 'https://identifier.overheid.nl/tooi/set/ccw_plooi_documenthandelingen';
+
+	/**
+	 * The scheme of the DiWoo documentsoorten.
+	 *
+	 * @var string
+	 */
+	public const DOCUMENT_TYPE_SCHEME = 'https://identifier.overheid.nl/tooi/set/ccw_plooi_documentsoorten';
+
+	/**
+	 * The scheme of the DiWoo talen.
+	 *
+	 * @var string
+	 */
+	public const LANGUAGE_SCHEME = 'https://identifier.overheid.nl/tooi/def/thes/xtrn/taal';
+
+	/**
+	 * The concepts of each scheme, once read in this request.
+	 *
+	 * @var array<string, array<string, array{label: string, notation: string, deprecated: bool}>>
+	 */
+	private array $schemes = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param OrganisationActivationInterface|null $activation The organisations the administrator activated (REQ-WVL-005);
 	 *                                                         without it every organisation counts as activated.
+	 * @param VocabularyRegisterInterface|null     $register   OpenRegister's vocabulary register, which holds the lists;
+	 *                                                         without it every list read throws.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
 		private readonly ?OrganisationActivationInterface $activation = null,
+		private readonly ?VocabularyRegisterInterface $register = null,
 	) {
 	}//end __construct()
 
 	/**
-	 * The bundled value lists.
+	 * The sitemap route code of each Woo informatiecategorie (WOO-003), with
+	 * the labels a stored record may still carry.
 	 *
-	 * @var string
-	 */
-	private const BUNDLE_PATH = __DIR__ . '/../Settings/tooi_waardelijsten.json';
-
-	/**
-	 * The 18 Woo informatiecategorieën → official TOOI kern identifier + canonical
-	 * label, keyed by the sitemap route code (WOO-003). Sourced from version 4 of
-	 * the `scw_woo_informatiecategorieen` waardelijst, which is the version DiWoo
-	 * 0.9.8 binds in `diwoo-metadata-lijsten.xsd` (`informatiecategorielijst`).
-	 *
-	 * Version 4 is where `inspanningsverplichting art 3.1 Woo` (`c_816e508d`,
-	 * `infocat018`) comes from. The list held 17 members while we declared DiWoo
-	 * 0.9.8, so a publication filed under the art 3.1 category had nowhere to go.
-	 *
-	 * Each entry's `aliases` carry the version 1 and version 2 `skos:prefLabel`
-	 * forms as well as the current one, because a label written into a stored
-	 * record years ago must keep resolving.
+	 * The route codes are this app's: the TOOI concepts carry no code. Whether
+	 * a category exists, and whether it is deprecated, comes from the
+	 * vocabulary register: a code whose concept the register does not hold is
+	 * left out. `label` is the heading the app shows and a legacy register's
+	 * schema titles match (TOOI's `skos:prefLabel` is the singular, lower-case
+	 * form and is accepted as a name too); `aliases` are the version 1 and 2
+	 * `skos:prefLabel` forms, so a label written into a stored record years ago
+	 * keeps resolving.
 	 *
 	 * @var array<string, array{id: string, label: string, aliases: array<int, string>}>
 	 */
@@ -159,18 +192,6 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	];
 
 	/**
-	 * The DiWoo soortHandeling waardelijst → official TOOI kern identifier.
-	 * Sourced from the DiWoo documenthandelingen value list.
-	 *
-	 * @var array<string, string>
-	 */
-	private const SOORTHANDELINGEN = [
-		'ontvangst' => 'c_dfcee535',
-		'vaststelling' => 'c_641ecd76',
-		'ondertekening' => 'c_e1ec050e',
-	];
-
-	/**
 	 * The value-list member used when a publication declares no handling type.
 	 *
 	 * @var string
@@ -178,40 +199,39 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	public const DEFAULT_SOORTHANDELING = 'ontvangst';
 
 	/**
-	 * The bundled value lists, read from `lib/Settings/tooi_waardelijsten.json`
-	 * once per request. The documentsoorten and the languages live there and not
-	 * in a constant: they are copied from the DiWoo value-list XSD with their
-	 * codes, labels and URIs, so the file is the one place they change.
-	 *
-	 * @var array<string, mixed>|null
-	 */
-	private ?array $bundle = null;
-
-	/**
 	 * Resolve a category value to an official TOOI informatiecategorie member.
 	 *
-	 * Accepts the sitemap route code (`infocatNNN`), the canonical or alias label,
-	 * a bare `c_…` identifier, or a full kern URI. Returns null when the value maps
-	 * to no value-list member (the caller then omits the axis).
+	 * Accepts the sitemap route code (`infocatNNN`), the heading, the register's
+	 * label, an earlier label, a bare `c_…` identifier, or a full kern URI.
+	 * Returns null when the value maps to no member the register holds (the
+	 * caller then omits the axis). The label answered is the heading. A deprecated member still resolves: existing records keep
+	 * their category; {@see self::acceptsNewValue()} refuses it for a new one.
 	 *
 	 * @param string|null $value The publication's category value.
 	 *
 	 * @return array{uri: string, label: string}|null The resolved member, or null.
 	 *
+	 * @throws RuntimeException When the vocabulary register cannot be read.
+	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function resolveInformatiecategorie(?string $value): ?array {
 		if ($value === null || trim($value) === '') {
 			return null;
 		}
 
-		$needle = strtolower(trim($value));
-
+		$needle = mb_strtolower(trim($value));
+		$concepts = $this->conceptsOf(scheme: self::CATEGORIES_SCHEME);
 		foreach (self::INFORMATIECATEGORIEEN as $code => $entry) {
-			$known = [$code, $entry['label'], $entry['id'], self::KERN_BASE . $entry['id']];
-			$candidates = array_map('strtolower', array_merge($known, $entry['aliases']));
-			if (in_array($needle, $candidates, true) === true) {
-				return ['uri' => self::KERN_BASE . $entry['id'], 'label' => $entry['label']];
+			$uri = self::KERN_BASE . $entry['id'];
+			if (isset($concepts[$uri]) === false) {
+				continue;
+			}
+
+			$names = array_merge([$code, $entry['id'], $uri, $entry['label'], $concepts[$uri]['label']], $entry['aliases']);
+			if (in_array($needle, array_map('mb_strtolower', $names), true) === true) {
+				return ['uri' => $uri, 'label' => $entry['label']];
 			}
 		}
 
@@ -222,19 +242,23 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 * Resolve a handling-type value to an official DiWoo soortHandeling member.
 	 *
 	 * Defaults to `ontvangst` when no value is supplied. Returns null when a
-	 * supplied value is not a value-list member.
+	 * supplied value is not a member the register holds.
 	 *
 	 * @param string|null $value The declared handling type, or null for the default.
 	 *
 	 * @return array{uri: string, label: string}|null The resolved member, or null.
 	 *
+	 * @throws RuntimeException When the vocabulary register cannot be read.
+	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function resolveSoortHandeling(?string $value): ?array {
 		$needle = $this->soortHandelingNeedle(value: $value);
-		foreach (self::SOORTHANDELINGEN as $label => $id) {
-			if ($this->namesSoortHandeling(needle: $needle, member: [$label, $id]) === true) {
-				return ['uri' => self::KERN_BASE . $id, 'label' => $label];
+		foreach ($this->conceptsOf(scheme: self::HANDLING_SCHEME) as $uri => $concept) {
+			$names = [mb_strtolower($concept['label']), mb_strtolower(self::codeOf(uri: $uri)), mb_strtolower($uri)];
+			if (in_array($needle, $names, true) === true) {
+				return ['uri' => $uri, 'label' => $concept['label']];
 			}
 		}
 
@@ -250,27 +274,13 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 * @return string The needle.
 	 */
 	private function soortHandelingNeedle(?string $value): string {
-		$needle = strtolower(trim((string)($value ?? self::DEFAULT_SOORTHANDELING)));
+		$needle = mb_strtolower(trim((string)($value ?? self::DEFAULT_SOORTHANDELING)));
 		if ($needle === '') {
 			return self::DEFAULT_SOORTHANDELING;
 		}
 
 		return $needle;
 	}//end soortHandelingNeedle()
-
-	/**
-	 * Whether a needle names a handling type: by its label, its bare c_… id or
-	 * its full kern URI.
-	 *
-	 * @param string $needle The lower-cased declared handling type.
-	 * @param array{0: string, 1: string} $member The member's label and id.
-	 *
-	 * @return bool True when the needle names the member.
-	 */
-	private function namesSoortHandeling(string $needle, array $member): bool {
-		[$label, $id] = $member;
-		return $needle === $label || $needle === $id || $needle === strtolower(self::KERN_BASE . $id);
-	}//end namesSoortHandeling()
 
 	/**
 	 * Validate a candidate TOOI organisatie identifier.
@@ -346,16 +356,48 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	}//end readActivated()
 
 	/**
-	 * The bundled informatiecategorie value list (code → uri + label).
+	 * Whether a list member may be given as a new value: the register holds it and it is not deprecated.
+	 *
+	 * A deprecated concept still resolves, so a stored record keeps its value
+	 * and its DiWoo axis; a save that sets the value anew is refused.
+	 *
+	 * @param string $uri The member's URI, as a resolver answers it.
+	 *
+	 * @return bool True when it may be set.
+	 *
+	 * @throws RuntimeException When the vocabulary register cannot be read.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function acceptsNewValue(string $uri): bool {
+		foreach ([self::CATEGORIES_SCHEME, self::HANDLING_SCHEME, self::DOCUMENT_TYPE_SCHEME, self::LANGUAGE_SCHEME] as $scheme) {
+			$concepts = $this->conceptsOf(scheme: $scheme);
+			if (isset($concepts[$uri]) === true) {
+				return $concepts[$uri]['deprecated'] === false;
+			}
+		}
+
+		return false;
+	}//end acceptsNewValue()
+
+	/**
+	 * The informatiecategorie value list (code → uri + heading), in code order: the members the register holds.
 	 *
 	 * @return array<string, array{uri: string, label: string}> The value list.
 	 *
+	 * @throws RuntimeException When the vocabulary register cannot be read.
+	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function informatiecategorieList(): array {
+		$concepts = $this->conceptsOf(scheme: self::CATEGORIES_SCHEME);
 		$out = [];
 		foreach (self::INFORMATIECATEGORIEEN as $code => $entry) {
-			$out[$code] = ['uri' => self::KERN_BASE . $entry['id'], 'label' => $entry['label']];
+			$uri = self::KERN_BASE . $entry['id'];
+			if (isset($concepts[$uri]) === true) {
+				$out[$code] = ['uri' => $uri, 'label' => $entry['label']];
+			}
 		}
 
 		return $out;
@@ -372,21 +414,27 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 *
 	 * @return array{code: string, label: string, uri: string}|null The member, or null.
 	 *
+	 * @throws RuntimeException When the vocabulary register cannot be read.
+	 *
 	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function resolveDocumentsoort(?string $value): ?array {
 		return $this->resolveMember(list: $this->documentsoortList(), value: $value);
 	}//end resolveDocumentsoort()
 
 	/**
-	 * The bundled DiWoo documentsoorten list, in the order of the XSD.
+	 * The DiWoo documentsoorten list, by label.
 	 *
 	 * @return array<int, array{code: string, label: string, uri: string}> The members.
 	 *
+	 * @throws RuntimeException When the vocabulary register cannot be read.
+	 *
 	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function documentsoortList(): array {
-		return $this->bundledMembers(key: 'documentsoorten');
+		return $this->membersOf(scheme: self::DOCUMENT_TYPE_SCHEME);
 	}//end documentsoortList()
 
 	/**
@@ -399,22 +447,47 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 *
 	 * @return array{code: string, label: string, uri: string}|null The member, or null.
 	 *
+	 * @throws RuntimeException When the vocabulary register cannot be read.
+	 *
 	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function resolveLanguage(?string $value): ?array {
 		return $this->resolveMember(list: $this->languageList(), value: $value);
 	}//end resolveLanguage()
 
 	/**
-	 * The bundled DiWoo language list, in the order of the XSD.
+	 * The DiWoo language list, by label.
 	 *
 	 * @return array<int, array{code: string, label: string, uri: string}> The members.
 	 *
+	 * @throws RuntimeException When the vocabulary register cannot be read.
+	 *
 	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function languageList(): array {
-		return $this->bundledMembers(key: 'talen');
+		return $this->membersOf(scheme: self::LANGUAGE_SCHEME);
 	}//end languageList()
+
+	/**
+	 * The soortHandeling value list (label → uri), by label.
+	 *
+	 * @return array<string, string> The value list.
+	 *
+	 * @throws RuntimeException When the vocabulary register cannot be read.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function soortHandelingList(): array {
+		$out = [];
+		foreach ($this->membersOf(scheme: self::HANDLING_SCHEME) as $member) {
+			$out[$member['label']] = $member['uri'];
+		}
+
+		return $out;
+	}//end soortHandelingList()
 
 	/**
 	 * The member of a list a value names by URI, code or label, case-insensitive.
@@ -441,69 +514,65 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	}//end resolveMember()
 
 	/**
-	 * The well-formed members of one bundled list: none when the file or the
-	 * list cannot be read, so every lookup fails closed.
+	 * The members of a scheme as `{code, label, uri}`, by label; the code is the last segment of the URI.
 	 *
-	 * @param string $key The list's key in the bundle.
+	 * @param string $scheme The scheme's URI.
 	 *
 	 * @return array<int, array{code: string, label: string, uri: string}> The members.
+	 *
+	 * @throws RuntimeException When the vocabulary register cannot be read.
 	 */
-	private function bundledMembers(string $key): array {
-		$members = ($this->bundle()[$key]['members'] ?? []);
-		if (is_array($members) === false) {
-			return [];
+	private function membersOf(string $scheme): array {
+		$members = [];
+		foreach ($this->conceptsOf(scheme: $scheme) as $uri => $concept) {
+			$members[] = ['code' => self::codeOf(uri: $uri), 'label' => $concept['label'], 'uri' => $uri];
 		}
 
-		$out = [];
-		foreach ($members as $member) {
-			if (is_array($member) === true
-				&& is_string($member['code'] ?? null) === true
-				&& is_string($member['label'] ?? null) === true
-				&& is_string($member['uri'] ?? null) === true
-			) {
-				$out[] = ['code' => $member['code'], 'label' => $member['label'], 'uri' => $member['uri']];
-			}
-		}
-
-		return $out;
-	}//end bundledMembers()
+		usort($members, static fn (array $a, array $b): int => strcasecmp($a['label'], $b['label']));
+		return $members;
+	}//end membersOf()
 
 	/**
-	 * The bundled value lists, read once.
+	 * The last path segment of a concept URI: `c_852da199`, `NLD`.
 	 *
-	 * @return array<string, mixed> The decoded file, empty when it cannot be read.
+	 * @param string $uri The URI.
+	 *
+	 * @return string The code.
 	 */
-	private function bundle(): array {
-		if ($this->bundle !== null) {
-			return $this->bundle;
+	private static function codeOf(string $uri): string {
+		$slash = strrpos($uri, '/');
+		if ($slash === false) {
+			return $uri;
 		}
 
-		$this->bundle = [];
-		if (is_readable(self::BUNDLE_PATH) === false) {
-			return $this->bundle;
-		}
-
-		$decoded = json_decode((string)file_get_contents(self::BUNDLE_PATH), true);
-		if (is_array($decoded) === true) {
-			$this->bundle = $decoded;
-		}
-
-		return $this->bundle;
-	}//end bundle()
+		return substr($uri, $slash + 1);
+	}//end codeOf()
 
 	/**
-	 * The bundled soortHandeling value list (label → uri).
+	 * The concepts of a scheme, read from the vocabulary register once per request.
 	 *
-	 * @return array<string, string> The value list.
+	 * @param string $scheme The scheme's URI.
 	 *
-	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @return array<string, array{label: string, notation: string, deprecated: bool}> Keyed by concept URI.
+	 *
+	 * @throws RuntimeException When the vocabulary register cannot be read; no bundled copy stands in.
 	 */
-	public function soortHandelingList(): array {
-		$out = [];
-		foreach (self::SOORTHANDELINGEN as $label => $id) {
-			$out[$label] = self::KERN_BASE . $id;
+	private function conceptsOf(string $scheme): array {
+		if (isset($this->schemes[$scheme]) === true) {
+			return $this->schemes[$scheme];
 		}
 
-		return $out;
-	}//end soortHandelingList()
+		if ($this->register === null) {
+			throw new RuntimeException('The value lists cannot be read: OpenRegister\'s vocabulary register is not available.');
+		}
+
+		try {
+			$concepts = $this->register->concepts(schemeUri: $scheme);
+		} catch (Throwable $e) {
+			throw new RuntimeException('The value list ' . $scheme . ' cannot be read from the vocabulary register.', 0, $e);
+		}
+
+		$this->schemes[$scheme] = $concepts;
+		return $concepts;
+	}//end conceptsOf()
 }//end class

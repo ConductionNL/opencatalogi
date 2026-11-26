@@ -108,7 +108,7 @@ class DiwooCompletenessListenerTest extends TestCase {
 	 * @return DiwooCompletenessListener The listener.
 	 */
 	private function listener(?string $tooi = self::TOOI, ?WooCategoryRegistry $categories = null, ?CatalogiServiceInterface $catalogi = null): DiwooCompletenessListener {
-		$vocabulary = new TooiVocabularyService();
+		$vocabulary = \Unit\Support\RecordedTooiRegister::service();
 		$settings = $this->createMock(SettingsService::class);
 		$categories ??= new WooCategoryRegistry(
 			$vocabulary,

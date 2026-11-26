@@ -176,7 +176,7 @@ final class MetadataSuggestionControllerTest extends TestCase {
 		$rights = $this->createMock(PublicationRights::class);
 		$rights->method('mayUpdate')->willReturn($mayUpdate);
 
-		$tooi = new TooiVocabularyService();
+		$tooi = \Unit\Support\RecordedTooiRegister::service();
 		$records = [];
 		foreach ($tooi->informatiecategorieList() as $code => $member) {
 			$records[$code] = ['code' => $code, 'label' => $member['label'], 'tooiUri' => $member['uri']];
@@ -314,7 +314,7 @@ final class MetadataSuggestionControllerTest extends TestCase {
 	}
 
 	public function testHermiqOnlyAddsCheckedSuggestionsAndLeavesTheRulesOnesAlone(): void {
-		$list = (new TooiVocabularyService())->informatiecategorieList();
+		$list = (\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList();
 		$other = (string)array_keys($list)[1];
 		$this->hermiq->method('isAvailable')->willReturn(true);
 		$this->hermiq->expects($this->once())->method('propose')

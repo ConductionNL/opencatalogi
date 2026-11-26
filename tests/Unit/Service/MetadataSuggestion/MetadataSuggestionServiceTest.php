@@ -49,7 +49,7 @@ class MetadataSuggestionServiceTest extends TestCase {
 	 * @return MetadataSuggestionService
 	 */
 	private function service(array $categories=[]): MetadataSuggestionService {
-		$tooi = new TooiVocabularyService();
+		$tooi = \Unit\Support\RecordedTooiRegister::service();
 		$records = [];
 		foreach ($tooi->informatiecategorieList() as $code => $member) {
 			$records[$code] = [
@@ -80,7 +80,7 @@ class MetadataSuggestionServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheOnlyCategoryOfTheSchemaIsProposed(): void {
-		$code = array_key_first((new TooiVocabularyService())->informatiecategorieList());
+		$code = array_key_first((\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList());
 		$proposals = $this->service([$code => ['schemas' => ['besluit']]])->suggestFromRules(
 			publication: ['title' => 'Besluit'],
 			context: ['schemaSlug' => 'besluit']
@@ -100,7 +100,7 @@ class MetadataSuggestionServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAnAmbiguousOrUnknownSchemaProposesNoCategory(): void {
-		$codes = array_slice(array_keys((new TooiVocabularyService())->informatiecategorieList()), 0, 2);
+		$codes = array_slice(array_keys((\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList()), 0, 2);
 		$service = $this->service([$codes[0] => ['schemas' => ['besluit']], $codes[1] => ['schemas' => ['besluit']]]);
 
 		$this->assertSame(expected: [], actual: $service->suggestFromRules(publication: [], context: ['schemaSlug' => 'besluit']));
@@ -177,7 +177,7 @@ class MetadataSuggestionServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testAFieldAlreadySetGetsNoProposal(): void {
-		$code = array_key_first((new TooiVocabularyService())->informatiecategorieList());
+		$code = array_key_first((\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList());
 		$proposals = $this->service([$code => ['schemas' => ['besluit']]])->suggestFromRules(
 			publication: ['soortHandeling' => 'vaststelling', 'wooCategory' => $code, 'organization' => 'org-9'],
 			context: [
@@ -215,7 +215,7 @@ class MetadataSuggestionServiceTest extends TestCase {
 	 */
 	public function testHermiqIsAskedOnlyAboutMissingValueListFields(): void {
 		$service = $this->service();
-		$labels = array_column((new TooiVocabularyService())->informatiecategorieList(), 'label');
+		$labels = array_column((\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList(), 'label');
 
 		$fields = $service->hermiqFields(publication: ['title' => 'Besluit', 'soortHandeling' => 'vaststelling']);
 
@@ -226,7 +226,7 @@ class MetadataSuggestionServiceTest extends TestCase {
 
 		$both = $service->hermiqFields(publication: []);
 		$this->assertSame(['wooCategory', 'soortHandeling'], array_column($both, 'key'));
-		$this->assertSame(['ontvangst', 'vaststelling', 'ondertekening'], $both[1]['options']);
+		$this->assertEqualsCanonicalizing(['ontvangst', 'vaststelling', 'ondertekening'], $both[1]['options']);
 
 		$this->assertSame([], $service->hermiqFields(publication: ['wooCategory' => 'infocat001', 'soortHandeling' => 'ontvangst']));
 	}
@@ -239,7 +239,7 @@ class MetadataSuggestionServiceTest extends TestCase {
 	 */
 	public function testHermiqValuesAreCheckedAgainstTheValueListsAndOnlyAdded(): void {
 		$service = $this->service();
-		$list = (new TooiVocabularyService())->informatiecategorieList();
+		$list = (\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList();
 		$code = (string)array_key_first($list);
 		$label = $list[$code]['label'];
 

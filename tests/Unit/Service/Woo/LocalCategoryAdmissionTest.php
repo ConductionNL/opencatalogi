@@ -49,7 +49,7 @@ class LocalCategoryAdmissionTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$this->admission = new LocalCategoryAdmission(new TooiVocabularyService());
+		$this->admission = new LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service());
 	}
 
 	public function testARowWithNoCodeIsRefusedUnderAPlaceholder(): void {
