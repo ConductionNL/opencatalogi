@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Посочете организацията и дали е активна.",
         "This organisation cannot be activated: %s": "Тази организация не може да бъде активирана: %s",
         "The organisation could not be saved: %s": "Организацията не можа да бъде запазена: %s",
-        "The organisation registers could not be read: %s": "Регистрите на организациите не можаха да бъдат прочетени: %s"
+        "The organisation registers could not be read: %s": "Регистрите на организациите не можаха да бъдат прочетени: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Твърде много качвания за кратко време: сървърът позволява ограничен брой на минута. Изчакайте минута, след което опитайте отново с неуспелите файлове."
     },
     "nplurals=2; plural=(n != 1);"
 )

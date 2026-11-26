@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Tilgreindu stofnunina og hvort hún sé virk.",
         "This organisation cannot be activated: %s": "Ekki er hægt að virkja þessa stofnun: %s",
         "The organisation could not be saved: %s": "Ekki tókst að vista stofnunina: %s",
-        "The organisation registers could not be read: %s": "Ekki tókst að lesa stofnanaskrárnar: %s"
+        "The organisation registers could not be read: %s": "Ekki tókst að lesa stofnanaskrárnar: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Of margar upphleðslur á stuttum tíma: þjónninn leyfir takmarkaðan fjölda á mínútu. Bíddu í mínútu og reyndu svo aftur við skrárnar sem mistókust."
     },
     "plurals": {}
 }

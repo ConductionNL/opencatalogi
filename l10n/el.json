@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Αναφέρετε τον οργανισμό και αν είναι ενεργός.",
         "This organisation cannot be activated: %s": "Αυτός ο οργανισμός δεν μπορεί να ενεργοποιηθεί: %s",
         "The organisation could not be saved: %s": "Ο οργανισμός δεν ήταν δυνατό να αποθηκευτεί: %s",
-        "The organisation registers could not be read: %s": "Τα μητρώα οργανισμών δεν ήταν δυνατό να διαβαστούν: %s"
+        "The organisation registers could not be read: %s": "Τα μητρώα οργανισμών δεν ήταν δυνατό να διαβαστούν: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Πάρα πολλές μεταφορτώσεις σε σύντομο χρόνο: ο διακομιστής επιτρέπει περιορισμένο αριθμό ανά λεπτό. Περιμένετε ένα λεπτό και δοκιμάστε ξανά τα αρχεία που απέτυχαν."
     },
     "plurals": {}
 }

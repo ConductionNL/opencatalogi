@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Navedite organizaciju i je li aktivna.",
         "This organisation cannot be activated: %s": "Ova se organizacija ne može aktivirati: %s",
         "The organisation could not be saved: %s": "Organizaciju nije bilo moguće spremiti: %s",
-        "The organisation registers could not be read: %s": "Registre organizacija nije bilo moguće pročitati: %s"
+        "The organisation registers could not be read: %s": "Registre organizacija nije bilo moguće pročitati: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Previše prijenosa u kratkom vremenu: poslužitelj dopušta ograničen broj u minuti. Pričekajte minutu, a zatim ponovno pokušajte s datotekama koje nisu uspjele."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -16,12 +16,27 @@ import {
 	notifyPublicationChanged,
 	publicationFilesUrl,
 	recordCreatedId,
+	uploadErrorMessage,
 } from './uploadSteps.js'
 
 jest.mock('@conduction/nextcloud-vue', () => ({ dispatchObjectsChanged: jest.fn() }))
 jest.mock('@nextcloud/router', () => ({
 	generateUrl: (path, params = {}) => path.replace(/\{(\w+)\}/g, (_, key) => String(params[key])),
 }))
+jest.mock('@nextcloud/l10n', () => ({ translate: (app, text) => text }))
+
+describe('uploadErrorMessage', () => {
+	it('says a 429 is a rate limit', () => {
+		expect(uploadErrorMessage({ response: { status: 429 } })).toBe(
+			'Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.',
+		)
+	})
+
+	it('keeps the server\'s own error, else the error itself', () => {
+		expect(uploadErrorMessage({ response: { status: 400, data: { error: 'File type not allowed' } } })).toBe('File type not allowed')
+		expect(uploadErrorMessage(new Error('Network Error'))).toBe('Error: Network Error')
+	})
+})
 
 afterEach(() => {
 	delete global.fetch

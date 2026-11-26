@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Indicați organizația și dacă este activă.",
         "This organisation cannot be activated: %s": "Această organizație nu poate fi activată: %s",
         "The organisation could not be saved: %s": "Organizația nu a putut fi salvată: %s",
-        "The organisation registers could not be read: %s": "Registrele de organizații nu au putut fi citite: %s"
+        "The organisation registers could not be read: %s": "Registrele de organizații nu au putut fi citite: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Prea multe încărcări într-un timp scurt: serverul permite doar un număr limitat pe minut. Așteptați un minut, apoi reîncercați fișierele care au eșuat."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

@@ -386,6 +386,7 @@ import {
 	notifyPublicationChanged,
 	publicationFilesUrl,
 	recordCreatedId,
+	uploadErrorMessage,
 } from './uploadSteps.js'
 
 const dropZoneRef = ref()
@@ -1047,7 +1048,7 @@ export default {
 				this.updateUploadCounts()
 				if (specificFile) return idMap
 			} catch (err) {
-				this.error = err.response?.data?.error ?? err
+				this.error = uploadErrorMessage(err)
 			} finally {
 				this.loading = false
 				this.tagsLoading = false
@@ -1146,12 +1147,13 @@ export default {
 		 * @param {Array} results - The settled uploads
 		 * @param {object} publication - The publication
 		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
 		 */
 		reportUploadResults(results, publication) {
 			const rejected = results.filter((r) => r.status === 'rejected')
 			if (rejected.length > 0) {
 				const firstError = rejected[0].reason
-				this.error = firstError?.response?.data?.error ?? String(firstError)
+				this.error = uploadErrorMessage(firstError)
 			} else {
 				this.success = true
 			}

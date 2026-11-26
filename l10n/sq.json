@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Tregoni organizatën dhe nëse është aktive.",
         "This organisation cannot be activated: %s": "Kjo organizatë nuk mund të aktivizohet: %s",
         "The organisation could not be saved: %s": "Organizata nuk mund të ruhej: %s",
-        "The organisation registers could not be read: %s": "Regjistrat e organizatave nuk mund të lexoheshin: %s"
+        "The organisation registers could not be read: %s": "Regjistrat e organizatave nuk mund të lexoheshin: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Shumë ngarkime në një kohë të shkurtër: serveri lejon një numër të kufizuar në minutë. Prisni një minutë, pastaj provoni përsëri skedarët që dështuan."
     },
     "plurals": {}
 }

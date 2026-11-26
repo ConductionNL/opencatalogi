@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Uveďte organizaci a zda je aktivní.",
         "This organisation cannot be activated: %s": "Tuto organizaci nelze aktivovat: %s",
         "The organisation could not be saved: %s": "Organizaci se nepodařilo uložit: %s",
-        "The organisation registers could not be read: %s": "Registry organizací se nepodařilo načíst: %s"
+        "The organisation registers could not be read: %s": "Registry organizací se nepodařilo načíst: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Příliš mnoho nahrávání v krátké době: server povoluje jen omezený počet za minutu. Počkejte minutu a pak zkuste znovu nahrát soubory, které selhaly."
     },
     "plurals": {}
 }

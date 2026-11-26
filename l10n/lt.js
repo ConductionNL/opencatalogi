@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Nurodykite organizaciją ir ar ji aktyvi.",
         "This organisation cannot be activated: %s": "Šios organizacijos negalima aktyvinti: %s",
         "The organisation could not be saved: %s": "Organizacijos išsaugoti nepavyko: %s",
-        "The organisation registers could not be read: %s": "Organizacijų registrų perskaityti nepavyko: %s"
+        "The organisation registers could not be read: %s": "Organizacijų registrų perskaityti nepavyko: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Per daug įkėlimų per trumpą laiką: serveris leidžia tik ribotą skaičių per minutę. Palaukite minutę, tada pakartokite nepavykusių failų įkėlimą."
     },
     "nplurals=2; plural=(n != 1);"
 )

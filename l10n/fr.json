@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Indiquez l’organisation et si elle est active.",
         "This organisation cannot be activated: %s": "Cette organisation ne peut pas être activée : %s",
         "The organisation could not be saved: %s": "L’organisation n’a pas pu être enregistrée : %s",
-        "The organisation registers could not be read: %s": "Les registres des organisations n’ont pas pu être lus : %s"
+        "The organisation registers could not be read: %s": "Les registres des organisations n’ont pas pu être lus : %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Trop de téléversements en peu de temps : le serveur n'en autorise qu'un nombre limité par minute. Attendez une minute, puis réessayez les fichiers qui ont échoué."
     },
     "plurals": {}
 }
