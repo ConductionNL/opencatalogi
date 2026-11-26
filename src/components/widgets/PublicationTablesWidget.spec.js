@@ -7,6 +7,7 @@
  */
 
 import axios from '@nextcloud/axios'
+import { translate } from '@nextcloud/l10n'
 import { flushPromises, mount } from '@vue/test-utils'
 import PublicationTablesWidget from './PublicationTablesWidget.vue'
 
@@ -53,11 +54,11 @@ function answerReads(tables, files) {
  *
  * @return {Promise<object>} The wrapper.
  */
-async function mountWidget() {
+async function mountWidget(t = T) {
 	const wrapper = mount(PublicationTablesWidget, {
 		props: { objectId: 'pub-1', register: 'reg-1', schema: 'pubs', content: { catalogSlug: 'speeltuinen' } },
 		global: {
-			mocks: { t: T, n: N },
+			mocks: { t, n: N },
 			stubs: { NcTextField: { props: ['modelValue', 'label'], template: '<input :aria-label="label" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)">' } },
 		},
 	})
@@ -104,6 +105,17 @@ describe('PublicationTablesWidget', () => {
 		await flushPromises()
 
 		expect(wrapper.find('[data-testid="publication-tables-message"]').text()).toBe('Not published: Row 350: not a number')
+	})
+
+	it('shows the refused row in the server words, not HTML-escaped twice', async () => {
+		answerReads([], [{ id: 78, name: 'parkeren.csv' }])
+		axios.post.mockResolvedValue({ data: { status: 'failed', lastError: "Row 202: Property 'bedrag' should be type 'integer'" } })
+		const wrapper = await mountWidget(translate)
+
+		await wrapper.find('[data-testid="publication-table-publish-78"]').trigger('click')
+		await flushPromises()
+
+		expect(wrapper.find('[data-testid="publication-tables-message"]').text()).toBe("Not published: Row 202: Property 'bedrag' should be type 'integer'")
 	})
 
 	describe('a failed table (REQ-DFA-004)', () => {
