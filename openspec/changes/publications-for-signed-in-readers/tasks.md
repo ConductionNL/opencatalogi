@@ -33,7 +33,8 @@ Start after `integration-feed-consumer-credentials` is merged: task 2.2 adds a f
 
 ## 5. Verification
 
-- [ ] 5.1 `openspec validate publications-for-signed-in-readers --strict`, `composer check:strict`, `npm run lint`.
+- [x] 5.1 `openspec validate publications-for-signed-in-readers --strict`, `composer check:strict`, `npm run lint`.
   - Run 17 Nov: phpstan clean; phpmd's two findings in this change's own files fixed (`SignedInReadService::read()` complexity, `count()` in the repair step's loop). Left red, not this change's: psalm's UndefinedClass on openregister main classes absent from the vendored stub, phpcs errors in FederationController, SettingsService and PublishedTableService, phpmd findings elsewhere, eslint errors in `DashboardSideBar.vue`; `openspec validate --strict` warns only on the spec's `status:` front matter, which every change in this repo carries. Unit suite: no failures beyond the branch's own baseline.
+  - Run 2026-11-26: `openspec validate publications-for-signed-in-readers --strict` answers valid (openspec 2.2.0), and the archive no longer refuses its delta: the requirements an earlier sync appended after `## Dependencies` in `openspec/specs/publications/spec.md` are moved into its `## Requirements` section (the REQ- count is the same before and after). `composer check:strict` and `npm run lint` give the same result as on `development`: phpmd and psalm red on findings outside this change, phpcs and phpstan clean, eslint 0 errors.
 - [x] 5.2 Live: create a `signedIn` publication, show the anonymous 404 and the trusted read with a key, and paste both in the PR body. (live pass, decision 139)
 - [ ] 5.3 Set `pub-restricted` in `openspec/parity/capabilities.json` to `built` once the portaliq tasks land.
