@@ -274,4 +274,73 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 			$this->writes
 		);
 	}
+
+	/**
+	 * A load writes the type keys from what the import created, after the import.
+	 *
+	 * @spec openspec/changes/admin-settings/specs/admin-settings.md#req-set-003-load-configuration-from-publication_registerjson
+	 *
+	 * @return void
+	 */
+	public function testLoadSettingsWritesTheTypeKeysFromTheImport(): void {
+		$appDir = sys_get_temp_dir() . '/opencatalogi_load_' . uniqid();
+		mkdir($appDir . '/lib/Settings', 0777, true);
+		file_put_contents($appDir . '/lib/Settings/publication_register.json', json_encode(['components' => ['schemas' => []]]));
+
+		$order = [];
+		$configService = $this->createMock(originalClassName: \OCA\OpenRegister\Service\ConfigurationService::class);
+		$configService->expects($this->once())->method('importFromApp')->willReturnCallback(
+			function () use (&$order): array {
+				$order[] = 'import with ' . count($this->writes) . ' writes';
+				return [
+					'registers' => [['slug' => 'publication', 'id' => 3]],
+					'schemas' => [['slug' => 'catalog', 'id' => 7], ['slug' => 'glossary', 'id' => 8]],
+				];
+			}
+		);
+		$this->container->method('get')->willReturnCallback(
+			static function (string $name) use ($configService): object {
+				if ($name === 'OCA\\OpenRegister\\Service\\ConfigurationService') {
+					return $configService;
+				}
+
+				throw new RuntimeException('not available: ' . $name);
+			}
+		);
+
+		$config = $this->createMock(originalClassName: IAppConfig::class);
+		$config->method('setValueString')->willReturnCallback(
+			function (string $app, string $key, string $value): bool {
+				$this->writes[] = $key . '=' . $value;
+				return true;
+			}
+		);
+		$appManager = $this->createMock(originalClassName: IAppManager::class);
+		$appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$appManager->method('getAppPath')->willReturn($appDir);
+		$appManager->method('getAppVersion')->willReturn('1.0.0');
+		$service = new SettingsService(
+			$config,
+			$this->container,
+			$appManager,
+			$this->logger,
+			$this->createMock(originalClassName: RegisterSchemaLinkService::class)
+		);
+
+		try {
+			$result = $service->loadSettings();
+		} finally {
+			unlink($appDir . '/lib/Settings/publication_register.json');
+			rmdir($appDir . '/lib/Settings');
+			rmdir($appDir . '/lib');
+			rmdir($appDir);
+		}
+
+		$this->assertSame(expected: ['import with 0 writes'], actual: $order);
+		$this->assertSame(expected: [['slug' => 'catalog', 'id' => 7], ['slug' => 'glossary', 'id' => 8]], actual: $result['schemas']);
+		$this->assertContains(needle: 'catalog_schema=7', haystack: $this->writes);
+		$this->assertContains(needle: 'catalog_register=3', haystack: $this->writes);
+		$this->assertContains(needle: 'glossary_schema=8', haystack: $this->writes);
+		$this->assertContains(needle: 'glossary_register=3', haystack: $this->writes);
+	}
 }
