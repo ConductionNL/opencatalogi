@@ -31,8 +31,29 @@ const GENERATE = /^\s*(Generate annual report|Jaarverslag maken)\s*$/
 const NEEDS_NEWER =
 	/(The Woo annual report needs a newer OpenRegister\.|Het Woo-jaarverslag vraagt een nieuwere OpenRegister\.)/
 
+/** The TOOI the active organisation had before this file gave it one; undefined when untouched. */
+let previousTooi: string | null | undefined
+let organisationUuid = ''
+
 test.beforeAll(async () => {
 	await fx.init()
+	// A Woo publication cannot be made public without a publisher, and the publisher is the
+	// active organisation's TOOI. A fresh instance has none, so give it the municipality's
+	// TOOI through the organisation object (OpenRegister's directory source), and put the
+	// old value back afterwards.
+	const active = await (await fx.api.get('/index.php/apps/openregister/api/organisations/active')).json()
+	organisationUuid = String(active?.activeOrganisation?.uuid ?? '')
+	expect(organisationUuid, 'an active organisation').not.toBe('')
+	const organisation = await (await fx.api.get(`/index.php/apps/openregister/api/organisations/${organisationUuid}`)).json()
+	const tooi = (organisation?.organisation ?? organisation)?.tooi ?? null
+	if (typeof tooi !== 'string' || tooi === '') {
+		const set = await fx.api.patch(
+			`/index.php/apps/openregister/api/objects/directory/nc-organisation/${organisationUuid}`,
+			{ data: { tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0505' } },
+		)
+		expect(set.ok(), `the organisation gets a TOOI: ${await set.text()}`).toBe(true)
+		previousTooi = tooi
+	}
 	seeded.push(
 		await fx.createPublication('annual 2025', {
 			status: 'published',
@@ -52,6 +73,12 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
 	await fx.cleanupAll()
+	if (previousTooi !== undefined && organisationUuid !== '') {
+		await fx.api.patch(
+			`/index.php/apps/openregister/api/objects/directory/nc-organisation/${organisationUuid}`,
+			{ data: { tooi: previousTooi } },
+		).catch(() => undefined)
+	}
 	await fx.dispose()
 })
 
@@ -74,11 +101,16 @@ test.describe('Woo annual report @e2e REQ-WAR-002', () => {
 			return
 		}
 
+		// PDF needs an office server (Collabora or Euro-Office) to convert the document,
+		// which a test instance does not run (OpenRegister answers 501
+		// office_server_required). The spreadsheet is the same report without one.
+		await widget.getByRole('combobox', { name: 'Format' }).click()
+		await page.getByRole('option', { name: 'ods', exact: true }).click()
 		const download = page.waitForEvent('download')
 		await widget.getByRole('button', { name: GENERATE }).click()
 		const file = await download
 
-		expect(file.suggestedFilename()).toMatch(/2026.*\.pdf$/)
+		expect(file.suggestedFilename()).toMatch(/2026.*\.ods$/)
 		await expect(
 			widget.locator('[data-testid="annual-report-failed"]'),
 		).toHaveCount(0)
