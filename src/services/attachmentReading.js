@@ -8,6 +8,7 @@
  * only reads them, names them, and asks for a new reading.
  */
 
+import { getRequestToken } from '@nextcloud/auth'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 
@@ -69,7 +70,9 @@ export async function fetchAttachmentReadings(publicationId, fetchFn = (...args)
 	try {
 		const response = await fetchFn(
 			generateUrl('/apps/opencatalogi/api/publications/{id}/attachment-readings', { id: publicationId }),
-			{ headers: { Accept: 'application/json' } },
+			// The route checks the session's request token on a read too; without it
+			// the answer is 412 and the Text column stays empty (live, 25 Nov 2026).
+			{ headers: { Accept: 'application/json', requesttoken: getRequestToken() ?? '' } },
 		)
 		if (!response.ok) {
 			return empty
