@@ -17,7 +17,7 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use OCA\OpenCatalogi\Exception\SettingsLoadFailedException;
+use OCA\OpenCatalogi\Service\SettingsLoadFailedException;
 use RuntimeException;
 
 /**

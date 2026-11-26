@@ -40,7 +40,6 @@ use DateTimeZone;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
-use OCA\OpenCatalogi\Exception\SettingsLoadFailedException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;

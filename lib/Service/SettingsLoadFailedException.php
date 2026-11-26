@@ -3,8 +3,8 @@
 /**
  * The configuration import failed; the failure is already in the log.
  *
- * @category Exception
- * @package  OCA\OpenCatalogi\Exception
+ * @category Service
+ * @package  OCA\OpenCatalogi\Service
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Exception;
+namespace OCA\OpenCatalogi\Service;
 
 use RuntimeException;
 use Throwable;

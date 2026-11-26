@@ -1,6 +1,6 @@
 {
     "no file": {
-        "error": "OCA\\OpenCatalogi\\Exception\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
+        "error": "OCA\\OpenCatalogi\\Service\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
         "log": {
             "imported": [],
             "reconciled": [],
@@ -9,7 +9,7 @@
         }
     },
     "invalid json": {
-        "error": "OCA\\OpenCatalogi\\Exception\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
+        "error": "OCA\\OpenCatalogi\\Service\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
         "log": {
             "imported": [],
             "reconciled": [],
@@ -1438,7 +1438,7 @@
         }
     },
     "no openregister": {
-        "error": "OCA\\OpenCatalogi\\Exception\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
+        "error": "OCA\\OpenCatalogi\\Service\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
         "log": {
             "imported": [],
             "reconciled": [],
@@ -1447,7 +1447,7 @@
         }
     },
     "import fails": {
-        "error": "OCA\\OpenCatalogi\\Exception\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
+        "error": "OCA\\OpenCatalogi\\Service\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
         "log": {
             "imported": [
                 {
