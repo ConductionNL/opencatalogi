@@ -44,13 +44,31 @@
  * @spec openspec/changes/publication-schedule-guards/specs/publications/spec.md
  */
 
-import type { APIRequestContext } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
 
 import { randomBytes } from 'node:crypto'
 import { expect, test } from './authenticated-request.ts'
 import { publicationCatalog } from './publication-catalog.ts'
 
 const APP_BASE = '/index.php/apps/opencatalogi'
+
+/**
+ * Open a publication's page and bring its Visibility card into view. The card sits
+ * below the fold and the detail grid mounts a widget only when it scrolls into view.
+ *
+ * @param page The page.
+ * @param path The publication page path.
+ */
+async function openVisibility(page: Page, path: string): Promise<void> {
+	await page.goto(path)
+	const card = page.getByTestId('publication-visibility')
+	await expect(page.locator('[gs-id]').first()).toBeAttached({ timeout: 30_000 })
+	await page.mouse.move(800, 400)
+	await expect(async () => {
+		await page.mouse.wheel(0, 400)
+		await expect(card).toBeVisible({ timeout: 500 })
+	}).toPass({ timeout: 30_000 })
+}
 const APP_API = `${APP_BASE}/api`
 const OBJECTS = '/index.php/apps/openregister/api/objects/publication/publication'
 const PUBLISHERS = 'opencatalogi-publishers'
@@ -73,7 +91,7 @@ test.describe('Publication schedule guards', () => {
 	test.setTimeout(120_000)
 
 	const created: string[] = []
-	let publisher: { uid: string, ctx: APIRequestContext }
+	let publisher: { uid: string, password: string, ctx: APIRequestContext }
 	let catalogSlug = ''
 
 	/**
@@ -86,7 +104,7 @@ test.describe('Publication schedule guards', () => {
 	 */
 	async function publication(ctx: APIRequestContext, name: string, extra: Record<string, unknown> = {}): Promise<string> {
 		const res = await ctx.post(OBJECTS, {
-			data: { title: `E2E schedule ${name} ${RUN}`, summary: 'A publication for the schedule-guards check.', ...extra },
+			data: { title: `E2E schedule ${name} ${RUN}`, summary: 'A publication for the schedule-guards check.', description: 'Created by publication-schedule-guards.spec.ts; review requires a description.', ...extra },
 		})
 		expect(res.ok(), `creating ${name}: ${await res.text()}`).toBe(true)
 		const id = idOf(await res.json())
@@ -98,6 +116,23 @@ test.describe('Publication schedule guards', () => {
 				const moved = await ctx.patch(`${OBJECTS}/${id}`, { data: { status } })
 				expect(moved.ok(), `${name} to ${status}: ${await moved.text()}`).toBe(true)
 			}
+		}
+		return id
+	}
+
+	/**
+	 * Create a publication and take it through review to approved, so Publish is a
+	 * transition it may make (a draft is refused with transition-not-allowed).
+	 *
+	 * @param ctx The caller.
+	 * @param name A name suffix.
+	 * @return The publication id.
+	 */
+	async function approvedPublication(ctx: APIRequestContext, name: string): Promise<string> {
+		const id = await publication(ctx, name)
+		for (const status of ['in_review', 'approved']) {
+			const moved = await ctx.patch(`${OBJECTS}/${id}`, { data: { status } })
+			expect(moved.ok(), `${name} to ${status}: ${await moved.text()}`).toBe(true)
 		}
 		return id
 	}
@@ -131,6 +166,7 @@ test.describe('Publication schedule guards', () => {
 		expect(made.ok(), `provisioning ${uid}: ${await made.text()}`).toBe(true)
 		publisher = {
 			uid,
+			password,
 			ctx: await playwright.request.newContext({
 				baseURL,
 				storageState: { cookies: [], origins: [] },
@@ -198,7 +234,7 @@ test.describe('Publication schedule guards', () => {
 
 	test('an administrator lifts the embargo from the publication page', async ({ page, request, playwright, baseURL }) => {
 		const id = await publication(request, 'page-lift', { publicationDate: NEXT_WEEK })
-		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+		await openVisibility(page, `${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
 
 		const lift = page.getByTestId('publication-lift-embargo')
 		await expect(lift).toBeVisible()
@@ -224,11 +260,22 @@ test.describe('Publication schedule guards', () => {
 		expect(answer.state).toBe('scheduled')
 		expect(answer.canLiftEmbargo).toBe(false)
 
-		const credentials = await publisher.ctx.storageState()
-		const context = await browser.newContext({ baseURL, storageState: credentials })
+		// An API context's storage state holds no browser session (basic auth does not sign in on a page
+		// load), so the publisher signs in through the form, without the first-visit dialogs global-setup
+		// switches off for the administrator.
+		const context = await browser.newContext({ baseURL, storageState: { cookies: [], origins: [] } })
+		await context.addInitScript(() => {
+			window.localStorage.setItem('cn-support-dialog-shown:opencatalogi', '1')
+			window.localStorage.setItem('cn-walkthrough-seen:opencatalogi', '999.0.0')
+		})
 		try {
 			const page = await context.newPage()
-			await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+			await page.goto('/index.php/login')
+			await page.locator('input[name="user"]').fill(publisher.uid)
+			await page.locator('input[name="password"]').fill(publisher.password)
+			await page.locator('button[type="submit"]').first().click()
+			await page.waitForSelector('#header, header.header', { timeout: 20_000 })
+			await openVisibility(page, `${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
 			await expect(page.getByTestId('publication-visibility-state')).toBeVisible()
 			await expect(page.getByTestId('publication-lift-embargo')).toHaveCount(0)
 			await expect(page.getByTestId('publication-publish-now')).toHaveCount(0)
@@ -249,7 +296,7 @@ test.describe('Publication schedule guards', () => {
 		const row = page.getByRole('row').filter({ hasText: title })
 		await expect(row).toContainText('until')
 
-		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+		await openVisibility(page, `${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
 		await expect(page.getByTestId('publication-visibility-auto-depublication')).toContainText('Automatic depublication on')
 	})
 
@@ -257,7 +304,7 @@ test.describe('Publication schedule guards', () => {
 		const id = await publication(request, 'warned-at-save', {
 			publicationDate: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
 		})
-		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+		await openVisibility(page, `${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
 		await expect(page.getByTestId('publication-visibility-state')).toBeVisible()
 		await expect(page.getByTestId('publication-visibility-depublication-notice')).toHaveCount(0)
 
@@ -271,11 +318,12 @@ test.describe('Publication schedule guards', () => {
 	})
 
 	test('publishing with no documents asks twice', async ({ request, playwright, baseURL }) => {
-		const id = await publication(request, 'no-documents')
+		const id = await approvedPublication(request, 'no-documents')
 
 		const first = await request.post(`${APP_API}/publications/${id}/publish`)
 		expect(first.status(), await first.text()).toBe(409)
-		expect(await first.json()).toEqual({ error: 'no-documents', documents: 0 })
+		// The refusal is a problem-details answer (type, title, status, detail) carrying these two fields.
+		expect(await first.json()).toMatchObject({ error: 'no-documents', documents: 0 })
 		expect(await anonymousStatus(playwright, baseURL, id), 'refused, it is not public').toBe(404)
 
 		const confirmed = await request.post(`${APP_API}/publications/${id}/publish`, {
@@ -288,7 +336,7 @@ test.describe('Publication schedule guards', () => {
 	test('a reference counts as a document', async ({ page, request }) => {
 		const id = await publication(request, 'one-reference')
 		const ref = await request.post('/index.php/apps/openregister/api/objects/publication/documentReference', {
-			data: { title: `E2E reference ${RUN}`, url: 'https://example.org/besluit.pdf', publication: id },
+			data: { title: `E2E reference ${RUN}`, url: 'https://example.org/besluit.pdf', format: 'pdf', publication: id },
 		})
 		expect(ref.ok(), await ref.text()).toBe(true)
 		const refId = idOf(await ref.json())
@@ -297,7 +345,7 @@ test.describe('Publication schedule guards', () => {
 		expect(visibility.ok(), await visibility.text()).toBe(true)
 		expect((await visibility.json()).documents).toBe(1)
 
-		await page.goto(`${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
+		await openVisibility(page, `${APP_BASE}/publications/${encodeURIComponent(catalogSlug)}/${id}`)
 		await expect(page.getByTestId('publication-visibility-documents')).toHaveText('Documents to publish: 1')
 
 		await request.delete(`/index.php/apps/openregister/api/objects/publication/documentReference/${refId}`).catch(() => undefined)
