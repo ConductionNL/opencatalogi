@@ -354,7 +354,10 @@ seed_boundary_fixture publication '{"title":"Boundary fixture: draft publication
 seed_boundary_fixture publication "{\"title\":\"Boundary fixture: scheduled publication\",\"publicationDate\":\"${FUTURE}\"}" title
 seed_boundary_fixture publication "{\"title\":\"Boundary fixture: withdrawn publication\",\"publicationDate\":\"${LONG_PAST}\",\"depublicationDate\":\"${PAST}\"}" title
 WITHDRAWN_ID="$BOUNDARY_LAST_ID"
-seed_boundary_fixture publication '{"title":"Boundary fixture: archived publication","audience":"public"}' title
+# The archived fixture is walked through review, so it carries what the publication schema
+# requires from in_review on (publication-required-at-publish: summary and description;
+# OpenRegister fills organization from the admin's active organisation).
+seed_boundary_fixture publication '{"title":"Boundary fixture: archived publication","summary":"Archived boundary fixture.","description":"Walked to archived by the CI seed so public-boundary.spec.ts can prove an archived publication is never public.","audience":"public"}' title
 if [ "$BOUNDARY_CREATED" = 1 ]; then
 	boundary_publish "$BOUNDARY_LAST_ID" "$LONG_PAST"
 	boundary_transition "$BOUNDARY_LAST_ID" archive
@@ -362,7 +365,7 @@ fi
 seed_boundary_fixture wooAssessment '{"documentReference":"Boundary fixture: woo assessment","assessment":"niet_openbaar"}' documentReference
 seed_boundary_fixture wooBatch '{"caseReference":"Boundary fixture: woo batch","status":"in_progress"}' caseReference
 seed_boundary_fixture wooRequest "{\"reference\":\"Boundary fixture: woo request\",\"receivedAt\":\"${PAST}\",\"requestedInformation\":\"Boundary fixture: what was asked\",\"status\":\"received\"}" reference
-seed_boundary_fixture publication '{"title":"Boundary fixture: public publication with a withdrawn file","audience":"public"}' title
+seed_boundary_fixture publication '{"title":"Boundary fixture: public publication with a withdrawn file","summary":"Public boundary fixture with a withdrawn file.","description":"Published by the CI seed so public-boundary.spec.ts can prove a withdrawn file stays private on a public publication.","audience":"public"}' title
 PUBLIC_WITH_FILE="$BOUNDARY_LAST_ID"
 if [ "$BOUNDARY_CREATED" = 1 ]; then
 	boundary_publish "$PUBLIC_WITH_FILE" "$LONG_PAST"
