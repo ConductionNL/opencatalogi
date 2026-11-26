@@ -12,6 +12,7 @@ import { dispatchObjectsChanged } from '@conduction/nextcloud-vue'
 import {
 	countSettled,
 	embeddedSchemaConfiguration,
+	failedUploadsMessage,
 	fetchSchemaConfiguration,
 	notifyPublicationChanged,
 	publicationFilesUrl,
@@ -35,6 +36,23 @@ describe('uploadErrorMessage', () => {
 	it('keeps the server\'s own error, else the error itself', () => {
 		expect(uploadErrorMessage({ response: { status: 400, data: { error: 'File type not allowed' } } })).toBe('File type not allowed')
 		expect(uploadErrorMessage(new Error('Network Error'))).toBe('Error: Network Error')
+	})
+})
+
+describe('failedUploadsMessage', () => {
+	const typeRefused = { status: 'rejected', reason: { response: { status: 400, data: { error: 'File type not allowed' } } } }
+	const rateLimited = { status: 'rejected', reason: { response: { status: 429 } } }
+	const uploaded = { status: 'fulfilled', value: {} }
+
+	it('names a rate limit in a batch even when another failure comes first', () => {
+		expect(failedUploadsMessage([uploaded, typeRefused, rateLimited])).toBe(uploadErrorMessage(rateLimited.reason))
+	})
+
+	it('names the first failure without a rate limit, and nothing when none failed', () => {
+		const offline = { status: 'rejected', reason: new Error('Network Error') }
+
+		expect(failedUploadsMessage([typeRefused, offline])).toBe('File type not allowed')
+		expect(failedUploadsMessage([uploaded])).toBeNull()
 	})
 })
 

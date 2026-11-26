@@ -32,6 +32,23 @@ export function uploadErrorMessage(error) {
 }
 
 /**
+ * What the dialog says about the failed uploads of a batch: a rate limit when
+ * one of them hit it, else the first failure's message.
+ *
+ * @param {Array} results - The settled uploads
+ * @return {string|null} The message, or null when none failed
+ * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+ */
+export function failedUploadsMessage(results) {
+	const rejected = results.filter((r) => r.status === 'rejected')
+	if (rejected.length === 0) {
+		return null
+	}
+	const shown = rejected.find((r) => r.reason?.response?.status === 429) ?? rejected[0]
+	return uploadErrorMessage(shown.reason)
+}
+
+/**
  * The id of the first attachment an upload answer lists as created.
  *
  * @param {object} response - The upload answer
