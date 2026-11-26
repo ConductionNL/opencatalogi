@@ -362,7 +362,7 @@ import {
 	isDepublished,
 	isPublished,
 } from '../../services/publicationStatus.js'
-import { fetchPublicationStatusCounts } from '../../services/publicationStatusCounts.js'
+import { catalogPairs, fetchPairCounts, fetchPublicationStatusCounts } from '../../services/publicationStatusCounts.js'
 import { countingStartNote, fetchInstanceSeries } from '../../services/usageStats.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 
@@ -519,6 +519,33 @@ function listedSchemaName(schemaRef) {
 		(s) => Number(s.id) === Number(schemaRef),
 	)
 	return match?.title || match?.name || String(schemaRef)
+}
+
+/**
+ * The counted publications per category: each pair's count under the name of
+ * its schema, named as the listed publications name it, else as the listed
+ * schemas do. Pairs without publications are left out.
+ *
+ * @param {Array<{schema: string, count: number}>} pairCounts - The counted pairs
+ * @param {Array<object>} publications - The listed publications, for the schema names
+ * @return {object} The count per category name
+ */
+function countedCategories(pairCounts, publications) {
+	const names = {}
+	for (const pub of publications) {
+		const ref = pub['@self']?.schema
+		if (typeof ref === 'object' && ref && ref.id !== undefined) {
+			names[String(ref.id)] = embeddedSchemaName(ref)
+		}
+	}
+	const counts = {}
+	for (const { schema, count } of pairCounts) {
+		if (count > 0) {
+			const name = names[String(schema)] || listedSchemaName(schema)
+			counts[name] = (counts[name] || 0) + count
+		}
+	}
+	return counts
 }
 
 /**
@@ -699,6 +726,7 @@ export default {
 			publicationTotal: 0,
 			// Per-status totals from OR's ad-hoc aggregation; null until they load.
 			statusCounts: null,
+			categoryCounts: null,
 			// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 			// attachmentsList: [],
 		}
@@ -797,10 +825,14 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		publicationsByCategoryData() {
-			const counts = {}
-			for (const pub of this.allPublications) {
-				const name = publicationCategory(pub)
-				counts[name] = (counts[name] || 0) + 1
+			const counts = this.categoryCounts
+				? countedCategories(this.categoryCounts, this.allPublications)
+				: {}
+			if (Object.keys(counts).length === 0) {
+				for (const pub of this.allPublications) {
+					const name = publicationCategory(pub)
+					counts[name] = (counts[name] || 0) + 1
+				}
 			}
 			return {
 				labels: Object.keys(counts),
@@ -900,6 +932,7 @@ export default {
 					this.fetchUsageChart(),
 					this.fetchPopularSearchTerms(),
 				])
+				await this.fetchCategoryCounts()
 			} catch (err) {
 				this.error =
 					err.message || t('opencatalogi', 'Failed to load dashboard data')
@@ -942,6 +975,24 @@ export default {
 			}
 			this.statusCounts = counts
 			this.publicationTotal = counts.total
+		},
+
+		/**
+		 * Count the publications of each catalogue pair with OpenRegister's uncapped
+		 * count, so the category chart is not cut off at the 1,000 publications the
+		 * list page holds. When no count can be read the chart counts that page.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
+		 */
+		async fetchCategoryCounts() {
+			this.categoryCounts = await fetchPairCounts({
+				pairs: catalogPairs(this.catalogs),
+				prefix: window.location.pathname.includes('/index.php')
+					? '/index.php'
+					: '',
+				headers: buildHeaders(),
+			})
 		},
 
 		/**

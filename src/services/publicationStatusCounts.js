@@ -123,3 +123,63 @@ export async function fetchPublicationStatusCounts({
 		return null
 	}
 }
+
+/**
+ * The distinct (register, schema) pairs the catalogues show publications from.
+ *
+ * @param {Array<object>} catalogs - The catalogues, each with `registers` and `schemas`
+ * @return {Array<{register: string, schema: string}>} The pairs, each once
+ * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
+ */
+export function catalogPairs(catalogs) {
+	const pairs = new Map()
+	for (const catalog of Array.isArray(catalogs) ? catalogs : []) {
+		for (const register of Array.isArray(catalog?.registers) ? catalog.registers : []) {
+			for (const schema of Array.isArray(catalog?.schemas) ? catalog.schemas : []) {
+				const key = `${register}-${schema}`
+				if (String(register) !== '' && String(schema) !== '' && !pairs.has(key)) {
+					pairs.set(key, { register: String(register), schema: String(schema) })
+				}
+			}
+		}
+	}
+	return [...pairs.values()]
+}
+
+/**
+ * The publication count of each pair from OpenRegister's uncapped count endpoint.
+ *
+ * A pair whose count cannot be read is left out; when none can be read the
+ * answer is null, so the caller keeps its own (possibly truncated) counts.
+ *
+ * @param {object} options - The options
+ * @param {Array<{register: string, schema: string}>} options.pairs - The pairs to count
+ * @param {string} [options.prefix] - `/index.php` when the app runs behind it
+ * @param {object} [options.headers] - The request headers
+ * @param {function(string, object): Promise<Response>} [options.fetchFn] - The fetch implementation
+ * @return {Promise<Array<{register: string, schema: string, count: number}>|null>} The counts
+ * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
+ */
+export async function fetchPairCounts({
+	pairs,
+	prefix = '',
+	headers = {},
+	fetchFn = (...args) => fetch(...args),
+}) {
+	if (!Array.isArray(pairs) || pairs.length === 0) {
+		return null
+	}
+	const counts = await Promise.all(
+		pairs.map(({ register, schema }) =>
+			readCount(
+				fetchFn,
+				`${prefix}/apps/openregister/api/objects/aggregations/${encodeURIComponent(register)}/${encodeURIComponent(schema)}/value?${countQuery()}`,
+				headers,
+			).catch(() => null),
+		),
+	)
+	const read = pairs
+		.map((pair, index) => ({ ...pair, count: counts[index] }))
+		.filter(({ count }) => Number.isInteger(count) && count >= 0)
+	return read.length > 0 ? read : null
+}
