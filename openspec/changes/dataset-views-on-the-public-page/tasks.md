@@ -26,6 +26,7 @@ Start after `open-data-table-query-and-dictionary` is merged: every task here re
 - [x] 4.2 Render `bar` and `line` as SVG with NL Design System tokens and a "Show as table" toggle; render `map` with the portal's map component when present, else the table of points (REQ-DSV-003).
   - Built in ConductionNL/portaliq#2560 (branch `quality/build-dataset-views-on-the-public-page`): `PublicationDetailBlock.vue` loads `PublicationDatasetViews.vue` on demand when a table carries views; `PublicationDatasetView.vue` draws the paged table (later pages through the table's `rowsUrl`), the SVG bar and line charts and the map on the portal's `NlLocationMap`, each chart and map with "Show as table". Logic in `src/site/lib/datasetViews.js`, covered by `tests/dataset-views.spec.mjs`.
 - [ ] 4.3 Add `tests/e2e/publication-dataset-views.spec.ts` "a reader switches a chart to a table" (REQ-DSV-003).
+  - Lives in ConductionNL/portaliq, not here: the spec's scenario names portaliq's `tests/e2e/publication-dataset-views.spec.ts` (cross-repo).
 
 ## 5. Docs and strings
 
@@ -34,8 +35,9 @@ Start after `open-data-table-query-and-dictionary` is merged: every task here re
 
 ## 6. Verification
 
-- [ ] 6.1 `openspec validate dataset-views-on-the-public-page --strict`, `composer check:strict`, `npm run lint`.
+- [x] 6.1 `openspec validate dataset-views-on-the-public-page --strict`, `composer check:strict`, `npm run lint`.
   - Run 2026-11-17: `composer phpstan` on the whole tree is clean, phpcs on the changed lib files is clean, `npm run lint` reports 13 errors, all in `src/sidebars/dashboard/DashboardSideBar.vue`, which this change does not touch (inherited). `openspec validate --strict` still refuses on three warnings in `specs/open-data-tables/spec.md` (text above the first section, two requirements over 500 characters): the spec text needs a rewrite by its author, so this stays open.
+  - Run 2026-11-26: the two long requirements now state the rule and leave the cases to scenarios (a sum over a text column, a map over text coordinates, more than 200 groups; each names the unit test that proves it), and `openspec validate dataset-views-on-the-public-page --strict` answers valid (openspec 2.2.0). `composer check:strict` and `npm run lint` give the same result as on `development` (phpmd and psalm red on inherited findings, lint 0 errors).
 - [x] 6.2 Live: publish a CSV as a table on the dev instance, add a bar view and a map view, and paste both data answers in the PR body. (live pass, decision 139)
   - Ran 2026-11-25 on a sandbox Nextcloud 34 + MariaDB: a 6-row CSV published as a table, a bar view (sum of `aantal` per `wijk`) and a map view (`lat`/`lon`, label `naam`). The map answered 6 points to an anonymous reader; the bar answered `points: []` to an anonymous reader and the right groups to the administrator: OpenRegister's ad-hoc aggregation skips the read rule for `bypassRbac` but still narrows to the caller's organisation, and an anonymous caller has none. Fixed in the same PR: the chart aggregation runs through `PublishedTableService::overAllRows()` in OpenRegister's system context, over the same rows `rows()` serves with `_multitenancy: false` (`DatasetViewControllerTest::testABarViewAggregatesOverEveryRowOfTheTable`, `PublishedTableServiceTest::testAReadOverEveryRowRunsInTheSystemContext`). After it: Centrum 5, Haven 3, West 9 anonymously. Answers in the PR body.
 - [x] 6.3 Set `od-visualise` in `openspec/parity/capabilities.json` to `building` while portaliq tasks are open, `built` once they land.
