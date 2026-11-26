@@ -500,7 +500,7 @@
             "autoConfigured": false,
             "settingsLoaded": true,
             "errors": [
-                "Failed to load settings: Configuration file not found: /lib/Settings/publication_register.json"
+                "Failed to load settings. The details are in the Nextcloud log."
             ]
         },
         "enabled": [],
@@ -517,7 +517,7 @@
             "autoConfigured": true,
             "settingsLoaded": true,
             "errors": [
-                "Failed to load settings: Configuration file not found: /lib/Settings/publication_register.json"
+                "Failed to load settings. The details are in the Nextcloud log."
             ]
         },
         "enabled": [],
@@ -577,7 +577,7 @@
             "autoConfigured": false,
             "settingsLoaded": true,
             "errors": [
-                "Failed to load settings: Configuration file not found: /lib/Settings/publication_register.json"
+                "Failed to load settings. The details are in the Nextcloud log."
             ]
         },
         "enabled": [

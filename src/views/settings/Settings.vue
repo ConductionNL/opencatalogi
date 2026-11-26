@@ -801,6 +801,7 @@ import {
 	schemaNamedLike,
 	schemaOptionsOf,
 } from './settingsSchemas.js'
+import { initialVersionInfo } from './versionInfoState.js'
 
 import '@nextcloud/dialogs/style.css'
 
@@ -946,13 +947,7 @@ export default defineComponent({
 				publicationReviewRequired: true,
 			},
 
-			versionInfo: {
-				appName: '',
-				appVersion: '',
-				configuredVersion: null,
-				versionsMatch: false,
-				needsUpdate: false,
-			},
+			versionInfo: initialVersionInfo(),
 
 			importResult: null,
 			wooReadinessReport: null,
