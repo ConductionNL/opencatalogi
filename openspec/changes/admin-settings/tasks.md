@@ -41,7 +41,8 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - [ ] 2.1 Inject `IAppConfig`, `RegisterMapper`, `SchemaMapper`, `IAppManager` via constructor
 - [x] 2.2 Add `getSettings(): array` — reads all 21 `{type}_{field}` config keys plus 3 publishing keys
 - [x] 2.3 Detect OpenRegister availability via `IAppManager::isInstalled('openregister')` and minimum version check (0.1.7)
-- [ ] 2.4 Call `RegisterMapper::findAll()` to get available registers; for each, call `SchemaMapper::find()` for each schema ID to build the enriched `schemas` array
+- [x] 2.4 Call `RegisterMapper::findAll()` to get available registers; for each, call `SchemaMapper::find()` for each schema ID to build the enriched `schemas` array
+  - 26 Nov: verified. `getSettings()` reads `RegisterMapper::findAll()` and `enrichRegistersWithSchemas()` replaces each schema id with the schema `SchemaMapper::find()` answers (skipping ids it cannot find). Pinned by `SettingsServiceTest::testEnrichRegistersWithSchemas*` (eight cases).
 - [x] 2.5 Return the assembled array with `objectTypes`, `openRegisters`, `availableRegisters`, `configuration` (verified: lib/Service/SettingsService.php, tests/Unit/Service/SettingsServiceTest.php)
 - [x] 2.6 Add SPDX header to `SettingsService.php`
 
@@ -56,7 +57,8 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - **acceptance_criteria:**
   - GIVEN a POST body with `catalog_schema: "10"` WHEN `updateSettings()` is called THEN `IAppConfig::setValueString('opencatalogi', 'catalog_schema', '10')` is called AND existing non-updated keys are preserved
 - [x] 3.1 Add `updateSettings(array $data): array` — iterates over allowed keys, calls `IAppConfig::setValueString()` for each present key, then returns `getSettings()`
-- [ ] 3.2 Allowed keys: `{type}_schema` and `{type}_register` for all 7 types (14 writable keys)
+- [x] 3.2 Allowed keys: `{type}_schema` and `{type}_register` for all 7 types (14 writable keys)
+  - 26 Nov: verified, wider than written. `writableSettingKeys()` allows `{type}_source`, `{type}_schema` and `{type}_register` for every writable type (the 7 of this task plus the OOAPI ones) and the named settings in `WRITABLE_SETTINGS`; anything else is filtered. Pinned by `SettingsServiceTest::testUpdateSettingsSuccess` and `::testUpdateSettingsUnknownKeyIsSilentlyFiltered`.
 - [x] 3.3 Silently ignore any unknown keys in `$data` (do not throw for extra fields) (verified: lib/Service/SettingsService.php, tests/Unit/Service/SettingsServiceTest.php)
 
 ---
@@ -70,8 +72,10 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - **acceptance_criteria:**
   - GIVEN `publication_register.json` exists WHEN `loadSettings(force: false)` is called and `shouldLoadSettings()` is true THEN `ConfigurationService::importFromApp()` runs AND slug-to-ID mapping populates all 7 type config keys
 - [x] 4.1 Add `loadSettings(bool $force = false): array` — checks `shouldLoadSettings()` unless `force: true`, reads JSON from `lib/Settings/publication_register.json`, injects `x-openregister.sourceUrl` and `sourceType` if absent, calls `ConfigurationService::importFromApp()`
-- [ ] 4.2 After import, call `updateObjectTypeConfiguration()` to match schema slugs to IDs and persist to `IAppConfig`
-- [ ] 4.3 Return import result array with `registers`, `schemas`, `objects` counts
+- [x] 4.2 After import, call `updateObjectTypeConfiguration()` to match schema slugs to IDs and persist to `IAppConfig`
+  - 26 Nov: verified and pinned. `loadSettings()` calls `updateObjectTypeConfiguration()` with the import result; `SettingsObjectTypeConfigurationTest::testLoadSettingsWritesTheTypeKeysFromTheImport` runs a load against a mocked `ConfigurationService` and asserts the import comes first and `catalog_schema`, `catalog_register`, `glossary_schema` and `glossary_register` are then written from what it created. The key-by-key mapping is pinned by the other cases of that file.
+- [x] 4.3 Return import result array with `registers`, `schemas`, `objects` counts
+  - 26 Nov: verified. `loadSettings()` returns OpenRegister's import result (`registers`, `schemas`, `objects`, as `importFromApp()` answers them, with the schemas a non-forced load added); the repair step counts them into "Configuration loaded: N registers, N schemas, N objects" (`InitializeSettingsTest::testRunWhenOpenRegisterInstalled`). `testLoadSettingsWritesTheTypeKeysFromTheImport` asserts the schemas come back.
 - [ ] 4.4 Catch any exception from `ConfigurationService`; log with `$this->logger->error()` and return a failure indicator — never propagate `$e->getMessage()` to callers
   - 24 Nov: no caller sees an exception's text any more. `SettingsController` logs every 500 through `SettingsService::recordFailure()` and answers with a generic message, and `manualImport()` logs and returns a generic failure (`SettingsControllerTest::testAServerFailureIsLoggedAndAnsweredGenerically`, `SettingsServiceTest::testManualImportForced`). Left unticked: `loadSettings()` itself still rethrows as a `RuntimeException` carrying the message to its in-process callers (controller, `InitializeSettings`, `FirstRunSettings`) instead of returning a failure indicator.
 
@@ -133,7 +137,8 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - [x] 8.1 Create `InitializeSettings` implementing `IRepairStep`
 - [x] 8.2 In `getName()` return `"Initialize OpenCatalogi settings"`
 - [x] 8.3 In `run(IOutput $output)`: check `IAppManager::isInstalled('openregister')`; if yes call `SettingsService::loadSettings(force: false)` and output result counts; if no output a warning and return cleanly
-- [ ] 8.4 Register in `Application::register()` via `$context->registerRepairStep(InitializeSettings::class)`
+- [x] 8.4 Register in `Application::register()` via `$context->registerRepairStep(InitializeSettings::class)`
+  - 26 Nov: registered the way Nextcloud registers repair steps: in `appinfo/info.xml`, first under `<install>` (a fresh install runs only that) and first under `<post-migration>` (an upgrade). `IRegistrationContext` has no repair-step method, so the call this task names does not exist. Pinned by `tests/Unit/Repair/InitializeSettingsRegistrationTest.php`.
 - [x] 8.5 Add SPDX header to `InitializeSettings.php`
 
 ---
@@ -228,7 +233,8 @@ Before implementation, verify no overlap with existing OpenRegister services:
   - Live pass 25 Nov 2026 (Chromium against the same instance): the first section under the page title is "Version information" (`cn-version-info`: name, version, configured version); no page errors; the Register select shows "Publication" and the schema selects are filled; "Auto publish attachments" + Save Publishing Options posts `/api/settings/publishing` 200 and survives a reload, and the revert does too. Seen: the Register select's floating label overlaps its help line.
 - [x] 13.7 Run `npm run check:l10n` — zero MISSING, zero UNWRAPPED (verified 2026-11-24 on development after #2914: all clean)
 - [x] 13.8 Verify `AdminRoot.vue` is absent from the vue-router: `grep -rn "AdminRoot" src/router/` must return no results (verified 2026-11-24: there is no `src/router/` and no `AdminRoot` anywhere in `src/`; `src/settings.js` mounts `Settings.vue` with `createApp` and no router)
-- [ ] 13.9 Run all Hydra gates: `hydra-gate-route-auth`, `hydra-gate-semantic-auth`, `hydra-gate-spdx`, `hydra-gate-forbidden-patterns`, `hydra-gate-admin-router`, `hydra-gate-nc-input-labels`
+- [x] 13.9 Run all Hydra gates: `hydra-gate-route-auth`, `hydra-gate-semantic-auth`, `hydra-gate-spdx`, `hydra-gate-forbidden-patterns`, `hydra-gate-admin-router`, `hydra-gate-nc-input-labels`
+  - 26 Nov: `run-hydra-gates.sh --full` on development: spdx-headers (gate-1), forbidden-patterns (gate-2), route-auth (gate-5), semantic-auth (gate-9), admin-router (gate-11) and nc-input-labels (gate-12) all PASS; 85 of 85 applicable gates ran.
 
 ## Verification checklist
 
