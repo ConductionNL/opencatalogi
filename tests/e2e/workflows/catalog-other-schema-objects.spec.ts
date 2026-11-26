@@ -205,10 +205,11 @@ test.describe('objects of another schema in a catalog', () => {
 				modifiers: ['ControlOrMeta'],
 			}),
 		])
-		await tab.waitForLoadState('domcontentloaded')
-		expect(tab.url()).toContain(
-			`/publications/${slug}/${REG_PUBLICATION}/${SCHEMA_PUBLICCODE}/${component.id}`,
-		)
+		// The new tab starts on about:blank and navigates after it is opened, so
+		// wait for its address rather than for the first document to load.
+		const detail = `/publications/${slug}/${REG_PUBLICATION}/${SCHEMA_PUBLICCODE}/${component.id}`
+		await tab.waitForURL((url) => url.href.includes(detail), { timeout: 30_000 })
+		expect(tab.url()).toContain(detail)
 		expect(page.url()).toBe(listUrl)
 		await tab.close()
 		expect(fatalErrors(errors)).toHaveLength(0)
