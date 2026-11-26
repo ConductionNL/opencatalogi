@@ -2667,32 +2667,22 @@ class SettingsService implements SettingsServiceInterface {
 				'importResult' => $importResult,
 				'versionInfo' => $updatedVersionInfo,
 			];
-		} catch (SettingsLoadFailedException $e) {
-			// The failure was logged by loadSettings() already.
-			return self::importFailed();
 		} catch (\Exception $e) {
 			// The exception's text can name paths or OpenRegister internals:
 			// the log gets it, the caller gets a generic failure (admin-settings, Security).
-			$this->recordFailure(context: 'importing the configuration', exception: $e);
-			return self::importFailed();
+			// A failed load was logged by loadSettings() already.
+			if (($e instanceof SettingsLoadFailedException) === false) {
+				$this->recordFailure(context: 'importing the configuration', exception: $e);
+			}
+
+			return [
+				'success' => false,
+				'message' => 'Import failed. The details are in the Nextcloud log.',
+				'error' => 'Import failed. The details are in the Nextcloud log.',
+			];
 		}//end try
 
 	}//end manualImport()
-
-	/**
-	 * The answer of a failed manual import: generic, the details are in the log.
-	 *
-	 * @return array{success: false, message: string, error: string} The answer.
-	 *
-	 * @spec openspec/changes/admin-settings/tasks.md#task-4
-	 */
-	private static function importFailed(): array {
-		return [
-			'success' => false,
-			'message' => 'Import failed. The details are in the Nextcloud log.',
-			'error' => 'Import failed. The details are in the Nextcloud log.',
-		];
-	}//end importFailed()
 
 	/**
 	 * Log why a settings request failed, with the exception, on the server only.
