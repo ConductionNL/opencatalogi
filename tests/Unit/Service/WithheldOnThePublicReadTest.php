@@ -91,6 +91,7 @@ class PublicReadObjectService {
  *
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
+ * @uses \OCA\OpenCatalogi\Service\Woo\RefusalGrounds
  * @uses \OCA\OpenCatalogi\Service\JsonList
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
@@ -346,4 +347,94 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$this->assertSame(200, $status);
 		$this->assertArrayNotHasKey('withheld', $data);
 	}//end testAnUnreadableListGivesNoKeyRatherThanAnEmptyOne()
+
+	/**
+	 * The service over the same OpenRegister, with batch entries resolved through a grounds snapshot.
+	 *
+	 * @param string $snapshotPath The snapshot RefusalGrounds reads (dossiq is not installed here).
+	 *
+	 * @return void
+	 */
+	private function resolvingThrough(string $snapshotPath): void {
+		// Pub-1 was also published from a Woo batch: the first document withheld on 5.1.2.e,
+		// the second on a code the grounds list does not hold.
+		$this->objects->rows['sch-withheld'] = [];
+		$this->objects->rows['sch-batch'] = [
+			['id' => 'b-1', 'documents' => ['a-1', 'a-2'], 'wooPublication' => ['publication' => 'pub-1']],
+		];
+		$this->objects->objects = [
+			'a-1' => ['id' => 'a-1', 'assessment' => 'niet_openbaar', 'weigeringsgronden' => ['5.1.2.e']],
+			'a-2' => ['id' => 'a-2', 'assessment' => 'niet_openbaar', 'weigeringsgronden' => ['9.9.9']],
+		];
+		$config = $this->createMock(originalClassName: IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => (self::CONFIG[$key] ?? $default)
+		);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willReturn($this->objects);
+		$appManager = $this->createMock(originalClassName: IAppManager::class);
+		$appManager->method('isInstalled')->willReturn(true);
+
+		$this->withheld = new WithheldFromPublication(
+			store: new WithheldFromPublicationStore(config: $config, openRegister: new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager)),
+			logger: new NullLogger(),
+			refusalGrounds: new \OCA\OpenCatalogi\Service\Woo\RefusalGrounds(snapshotPath: $snapshotPath),
+		);
+	}//end resolvingThrough()
+
+	/**
+	 * A batch entry's codes get the article and label of the grounds list; an unknown code gets neither.
+	 *
+	 * @return void
+	 */
+	public function testBatchEntriesGainGroundDetailsAndUnknownCodesAreNotGuessed(): void {
+		$snapshot = tempnam(sys_get_temp_dir(), 'grounds');
+		file_put_contents(
+			$snapshot,
+			json_encode(
+				[
+					'version' => 'test',
+					'grounds' => [
+						['code' => '5.1.2', 'article' => '5.1', 'label' => '', 'status' => 'active', 'citable' => false],
+						['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'Eerbiediging van de persoonlijke levenssfeer', 'status' => 'active'],
+						['code' => '5.1.2.f', 'article' => '5.1', 'label' => 'Bedrijfsgegevens', 'status' => 'retired'],
+					],
+				]
+			)
+		);
+		$this->resolvingThrough(snapshotPath: $snapshot);
+
+		try {
+			[$status, $data] = $this->show(optIn: true);
+		} finally {
+			unlink($snapshot);
+		}
+
+		$this->assertSame(expected: 200, actual: $status);
+		$privacy = ['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'Eerbiediging van de persoonlijke levenssfeer'];
+		$this->assertSame(
+			expected: [
+				['position' => 1, 'grounds' => ['5.1.2.e'], 'groundDetails' => [$privacy]],
+				['position' => 2, 'grounds' => ['9.9.9'], 'groundDetails' => [['code' => '9.9.9', 'article' => '', 'label' => '']]],
+			],
+			actual: $data['withheld']
+		);
+	}//end testBatchEntriesGainGroundDetailsAndUnknownCodesAreNotGuessed()
+
+	/**
+	 * An unreadable grounds list leaves every batch code unlabelled, and the withheld list still answers.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableGroundsListLeavesTheBatchCodesUnlabelledAndTheListReadable(): void {
+		$this->resolvingThrough(snapshotPath: sys_get_temp_dir() . '/no-such-grounds-' . uniqid() . '.json');
+
+		[$status, $data] = $this->show(optIn: true);
+
+		$this->assertSame(expected: 200, actual: $status);
+		$this->assertSame(
+			expected: [[['code' => '5.1.2.e', 'article' => '', 'label' => '']], [['code' => '9.9.9', 'article' => '', 'label' => '']]],
+			actual: array_column($data['withheld'], 'groundDetails')
+		);
+	}//end testAnUnreadableGroundsListLeavesTheBatchCodesUnlabelledAndTheListReadable()
 }//end class

@@ -149,4 +149,67 @@ class WithheldForPublicationTest extends TestCase {
 			$entries
 		);
 	}//end testTheEntriesOfTheBatchAndTheStoredRows()
+
+	/**
+	 * The grounds list is not read for a batch that withheld nothing, nor without a batch.
+	 *
+	 * @return void
+	 */
+	public function testTheGroundsAreNotReadWhenNoBatchDocumentIsWithheld(): void {
+		$store = $this->createMock(originalClassName: WithheldFromPublicationStore::class);
+		$store->method('batchAssessments')->willReturnOnConsecutiveCalls(
+			[['assessment' => 'openbaar', 'fileName' => 'open.pdf']],
+			[]
+		);
+		$store->method('storedEntries')->willReturn(self::STORED);
+		$grounds = $this->createMock(originalClassName: \OCA\OpenCatalogi\Service\Woo\RefusalGrounds::class);
+		$grounds->expects($this->never())->method('list');
+
+		$service = new WithheldFromPublication(
+			store: $store,
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			refusalGrounds: $grounds
+		);
+
+		$this->assertSame(expected: [2], actual: array_column($service->entries(publicationId: 'pub-1'), 'position'));
+		$this->assertSame(expected: [2], actual: array_column($service->entries(publicationId: 'pub-1'), 'position'));
+	}//end testTheGroundsAreNotReadWhenNoBatchDocumentIsWithheld()
+
+	/**
+	 * A ground without a code or a label resolves nothing; the first entry of a code wins.
+	 *
+	 * @return void
+	 */
+	public function testOnlyGroundsWithACodeAndALabelResolve(): void {
+		$store = $this->createMock(originalClassName: WithheldFromPublicationStore::class);
+		$store->method('batchAssessments')->willReturn(
+			[['assessment' => 'niet_openbaar', 'weigeringsgronden' => ['5.1', '5.2', '5.1.2.e']]]
+		);
+		$store->method('storedEntries')->willReturn([]);
+		$grounds = $this->createMock(originalClassName: \OCA\OpenCatalogi\Service\Woo\RefusalGrounds::class);
+		$grounds->expects($this->once())->method('list')->willReturn(
+			[
+				['code' => '5.1', 'article' => '5.1', 'label' => ''],
+				['code' => '', 'article' => '5.2', 'label' => 'Zonder code'],
+				['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'Privacy'],
+				['code' => '5.1.2.e', 'article' => '9.9', 'label' => 'Later'],
+			]
+		);
+
+		$service = new WithheldFromPublication(
+			store: $store,
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			refusalGrounds: $grounds
+		);
+		$entries = $service->entries(publicationId: 'pub-1');
+
+		$this->assertSame(
+			expected: [
+				['code' => '5.1', 'article' => '', 'label' => ''],
+				['code' => '5.2', 'article' => '', 'label' => ''],
+				['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'Privacy'],
+			],
+			actual: $entries[0]['groundDetails']
+		);
+	}//end testOnlyGroundsWithACodeAndALabelResolve()
 }//end class
