@@ -1,0 +1,19 @@
+{
+	"components": {
+		"schemas": {
+			"publication": {
+				"slug": "publication",
+				"authorization": {
+					"create": [
+						{"group": "opencatalogi-publishers"},
+						{"group": "opencatalogi-editors"}
+					],
+					"update": [
+						{"group": "opencatalogi-publishers"},
+						{"group": "opencatalogi-editors"}
+					]
+				}
+			}
+		}
+	}
+}

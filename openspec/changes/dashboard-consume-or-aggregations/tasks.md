@@ -67,10 +67,11 @@
       OR's current aggregation feature; see the note above. Not implemented.
 - [ ] ~~Add `x-openregister-aggregations.countByStatus` to the `attachment`
       schema~~ — NO SUCH SCHEMA EXISTS; see the note above. Not implemented. SUPERSEDED by `publications-unpublished-overview`.
-- [ ] Confirm the register import picks up the new annotation on a clean (live pass, decision 139)
+- [x] Confirm the register import picks up the new annotation on a clean (live pass, decision 139)
       install / `reload-settings` — DEFERRED, needs a live instance
       (`SettingsService::loadSettings()` round-trip); not verifiable from an
       isolated worktree with no running Nextcloud.
+      - Done 25 Nov 2026 (live lane, sandbox reference stack NC 34, nginx, php-fpm, MariaDB, Redis, OpenRegister main): on a clean install the installed `publication` schema carries `x-openregister-aggregations.countByStatus` (`groupBy.field: status`, `metric: count`), and `GET /apps/openregister/api/objects/aggregations/{register}/{schema}/countByStatus` answers `truncated: false` with groups archived/draft/published.
 
 ## 2. Frontend: Dashboard.vue KPI counts
 
@@ -143,8 +144,9 @@
       claiming full "Status: Implemented" compliance.
 - [x] No new user-facing strings were introduced by the KPI aggregation change
       — nothing to register via `scripts/l10n-ai.js`.
-- [ ] Manual verify against a >1000-publication catalog — DEFERRED, needs a (live pass, decision 139)
+- [x] Manual verify against a >1000-publication catalog — DEFERRED, needs a (live pass, decision 139)
       live instance / Postgres seed script not available from this isolated
       worktree.
+      - Done 25 Nov 2026 (same stack): 1,150 publications added, 1,178 not deleted in the publication table. The dashboard's Publications KPI shows **1,178**, read from `aggregations/.../value?metric=count` (answers `{"value":1178}`), so the headline total no longer stops at 1,000. Still truncated, as the note above expects: the "Publications by Category" donut shows Total **1000** (the cross-schema groupBy gap in OpenRegister).
 - [ ] Verify `UnpublishedAttachmentsWidget`/`UnpublishedPublicationsWidget` on (live pass, decision 139)
       `/apps/dashboard/` — DEFERRED, moot until task 4 is unblocked.

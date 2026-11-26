@@ -10,6 +10,8 @@
  */
 
 import axios from '@nextcloud/axios'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import WooBatchDetail from './WooBatchDetail.vue'
 import { objectStore } from '../../store/store.js'
 
@@ -179,6 +181,19 @@ describe('the queue', () => {
 			name: 'WooRedaction',
 			params: { id: 'batch-1', docId: 'a2' },
 		})
+	})
+
+	it('closes a card menu once a move or Redact is chosen, so the dialog it opens is not covered', () => {
+		// A menu left open sits over the grounds dialog and takes its clicks (live, 25 Nov 2026).
+		const source = readFileSync(join(__dirname, 'WooBatchDetail.vue'), 'utf8')
+		const card = source.indexOf("'Actions for {name}'")
+		const menu = source.slice(source.lastIndexOf('<NcActions', card), source.indexOf('</NcActions>', card))
+		const buttons = menu.split('<NcActionButton').slice(1)
+
+		expect(buttons.length).toBeGreaterThan(0)
+		for (const button of buttons) {
+			expect(button.slice(0, button.indexOf('@click'))).toContain('closeAfterClick')
+		}
 	})
 
 	it('links a numeric document reference to its file', () => {

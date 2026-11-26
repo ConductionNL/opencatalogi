@@ -298,7 +298,7 @@ class BackfillPublicationLifecycleStateTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public function testThePublishedPublicationsMissingARequiredFieldAreCounted(): void {
 		$this->store = [
@@ -321,7 +321,7 @@ class BackfillPublicationLifecycleStateTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public function testABackfilledPublicationIsSavedWithItsGapsRecorded(): void {
 		$this->store = [

@@ -77,6 +77,7 @@ test.describe('CORS on the public publication endpoints', () => {
 			data: {
 				title: `E2E CORS ${RUN}`,
 				summary: 'A public publication for the CORS check.',
+				description: 'Created by publications-cors.spec.ts; review requires a description.',
 				publicationDate: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
 			},
 		})

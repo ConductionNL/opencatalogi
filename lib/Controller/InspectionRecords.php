@@ -127,7 +127,9 @@ class InspectionRecords {
 	 * Read a stored inspection as a flat array, without RBAC.
 	 *
 	 * The inspection schema is readable by administrators only, and the link is
-	 * followed anonymously, so the read skips RBAC. The caller must not answer
+	 * followed anonymously, so the read skips RBAC. An anonymous reader belongs to
+	 * no organisation, so the read is not scoped to one either; an
+	 * organisation-scoped read answered every valid link with 404. The caller must not answer
 	 * anything from the result before the presented token matched it
 	 * (see resolveLink()).
 	 *
@@ -146,7 +148,8 @@ class InspectionRecords {
 				found: $this->registers->getObjectService()->find(
 					id: $id,
 					options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
-					_rbac: false
+					_rbac: false,
+					_multitenancy: false
 				),
 				config: $config
 			)

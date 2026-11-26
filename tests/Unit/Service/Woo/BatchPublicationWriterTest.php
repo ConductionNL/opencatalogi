@@ -246,7 +246,7 @@ class BatchPublicationWriterTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-publishing-refuses-a-publication-missing-a-required-field-req-prp-002
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-publishing-refuses-a-publication-missing-a-required-field-req-prp-002
 	 */
 	public function testABatchPublicationGoesThroughTheTransition(): void {
 		$now = '2026-11-17T10:00:00+00:00';

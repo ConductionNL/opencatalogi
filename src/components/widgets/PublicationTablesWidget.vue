@@ -311,7 +311,7 @@ export default {
 				return this.t('opencatalogi', 'Rows: {count}', { count: table.rowCount || 0 })
 			}
 			if (table.status === 'failed') {
-				return this.t('opencatalogi', 'Not published: {error}', { error: table.lastError || '' })
+				return this.t('opencatalogi', 'Not published: {error}', { error: table.lastError || '' }, undefined, { escape: false })
 			}
 			return this.t('opencatalogi', 'Importing the rows…')
 		},
@@ -373,9 +373,11 @@ export default {
 		 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#requirement-the-publication-page-shows-a-failed-table-req-dfa-004
 		 */
 		reportImport(data) {
+			// The text is rendered with {{ }}, which escapes it; t() must not escape the
+			// server's words a second time (they showed as &#39; live, 25 Nov 2026).
 			this.messageType = data.status === 'failed' ? 'error' : 'success'
 			this.message = data.status === 'failed'
-				? this.t('opencatalogi', 'Not published: {error}', { error: data.lastError || '' })
+				? this.t('opencatalogi', 'Not published: {error}', { error: data.lastError || '' }, undefined, { escape: false })
 				: this.t('opencatalogi', 'The table is published.')
 		},
 

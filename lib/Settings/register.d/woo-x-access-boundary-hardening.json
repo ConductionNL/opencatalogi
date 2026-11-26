@@ -1,5 +1,5 @@
 {
-	"_note": "woo-access-boundary-hardening REQ-WAB-001: reads of the five Woo schemas write an OpenRegister processing log entry attributed to the activity opencatalogi-woo-records, seeded by the SeedWooProcessingActivity repair step. OpenRegister reads `attribution.default`; `activity` names the same code as the spec does. The file name sorts after every other fragment so these version bumps win the scalar merge. The publication version 0.0.12 also carries the depublication reminder of publication-schedule-guards.json. The publication version 0.0.16 takes back the required-to-publish states that 0.0.15 declared (publication-required-at-publish 1.1 is on hold until the upgrade repair steps can save incomplete legacy publications). The publication version 0.0.17 carries `publisherRsin` of publications-name-their-responsible-organisation.json. The publication version 0.0.18 declares the required-to-publish states again, with the not-supplied reason the upgrade repair steps record for legacy publications (publication-required-at-publish 1.1).",
+	"_note": "woo-access-boundary-hardening REQ-WAB-001: reads of the five Woo schemas write an OpenRegister processing log entry attributed to the activity opencatalogi-woo-records, seeded by the SeedWooProcessingActivity repair step. OpenRegister reads `attribution.default`; `activity` names the same code as the spec does. The file name sorts after every other fragment so these version bumps win the scalar merge. The publication version 0.0.12 also carries the depublication reminder of publication-schedule-guards.json. The publication version 0.0.16 takes back the required-to-publish states that 0.0.15 declared (publication-required-at-publish 1.1 is on hold until the upgrade repair steps can save incomplete legacy publications). The publication version 0.0.17 carries `publisherRsin` of publications-name-their-responsible-organisation.json. The publication version 0.0.18 declares the required-to-publish states again, with the not-supplied reason the upgrade repair steps record for legacy publications (publication-required-at-publish 1.1). The publication version 0.0.19 declares `license` of dcat-publication-licence.json (dcat-catalogue-completion 1.4).",
 	"components": {
 		"schemas": {
 			"wooAssessment": {
@@ -27,7 +27,7 @@
 				}
 			},
 			"depublication": {
-				"version": "0.2.5",
+				"version": "0.2.6",
 				"configuration": {
 					"x-openregister-processing": {
 						"logReads": true,
@@ -51,7 +51,7 @@
 				}
 			},
 			"publication": {
-				"version": "0.0.18",
+				"version": "0.0.19",
 				"configuration": {
 					"x-openregister-processing": {
 						"logReads": true,

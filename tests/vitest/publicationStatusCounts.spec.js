@@ -8,8 +8,10 @@
  */
 import { describe, expect, it, vi } from 'vitest'
 import {
+	catalogPairs,
 	countQuery,
 	deriveStatusCounts,
+	fetchPairCounts,
 	fetchPublicationStatusCounts,
 	statusCountFilters,
 } from '../../src/services/publicationStatusCounts.js'
@@ -153,5 +155,50 @@ describe('fetchPublicationStatusCounts', () => {
 		})
 
 		expect(await fetchPublicationStatusCounts({ register: 'r1', schema: 's1', now: NOW, fetchFn })).toBeNull()
+	})
+})
+
+describe('catalogPairs', () => {
+	it('lists every register and schema pair of the catalogues once', () => {
+		expect(catalogPairs([
+			{ registers: ['26'], schemas: ['40', '41'] },
+			{ registers: [26], schemas: [40] },
+			{ registers: [], schemas: ['42'] },
+		])).toEqual([
+			{ register: '26', schema: '40' },
+			{ register: '26', schema: '41' },
+		])
+	})
+
+	it('answers no pairs for no catalogues', () => {
+		expect(catalogPairs(undefined)).toEqual([])
+	})
+})
+
+describe('fetchPairCounts', () => {
+	it('reads each pair from the uncapped count endpoint', async () => {
+		const fetchFn = vi.fn(async (url) => ({ ok: true, json: async () => ({ value: url.includes('/40/') ? 1178 : 3 }) }))
+
+		const counts = await fetchPairCounts({
+			pairs: [{ register: '26', schema: '40' }, { register: '26', schema: '41' }],
+			prefix: '/index.php',
+			fetchFn,
+		})
+
+		expect(fetchFn).toHaveBeenCalledWith('/index.php/apps/openregister/api/objects/aggregations/26/40/value?metric=count', { method: 'GET', headers: {} })
+		expect(counts).toEqual([
+			{ register: '26', schema: '40', count: 1178 },
+			{ register: '26', schema: '41', count: 3 },
+		])
+	})
+
+	it('leaves out a pair whose count fails and answers null when none can be read', async () => {
+		const failing = vi.fn(async (url) => (url.includes('/41/') ? { ok: false, json: async () => ({}) } : { ok: true, json: async () => ({ value: 7 }) }))
+		expect(await fetchPairCounts({ pairs: [{ register: '26', schema: '40' }, { register: '26', schema: '41' }], fetchFn: failing }))
+			.toEqual([{ register: '26', schema: '40', count: 7 }])
+
+		const down = vi.fn(async () => { throw new Error('offline') })
+		expect(await fetchPairCounts({ pairs: [{ register: '26', schema: '40' }], fetchFn: down })).toBeNull()
+		expect(await fetchPairCounts({ pairs: [] })).toBeNull()
 	})
 })

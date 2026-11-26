@@ -128,18 +128,29 @@ describe('federation search store state', () => {
 		expect(store.getActiveFacets).toEqual({})
 	})
 
-	it('discovers facetable fields before loading the first page', async () => {
+	it('discovers facetable fields and loads the first page at the same time', async () => {
 		const calls: string[] = []
-		vi.spyOn(store, 'discoverFacetableFields').mockImplementation(async () => {
-			calls.push('discover')
+		let finishDiscover: () => void = () => {}
+		vi.spyOn(store, 'discoverFacetableFields').mockImplementation(() => {
+			calls.push('discover:start')
+			return new Promise<void>((resolve) => {
+				finishDiscover = () => {
+					calls.push('discover:end')
+					resolve()
+				}
+			})
 		})
 		const search = vi.spyOn(store, 'searchPublications').mockImplementation(async () => {
 			calls.push('search')
 		})
 
-		await store.loadInitialResults()
+		const loading = store.loadInitialResults()
+		// The first page is requested while the facet discovery is still open.
+		expect(calls).toEqual(['discover:start', 'search'])
+		finishDiscover()
+		await loading
 
-		expect(calls).toEqual(['discover', 'search'])
+		expect(calls).toEqual(['discover:start', 'search', 'discover:end'])
 		expect(search).toHaveBeenCalledWith({ _limit: 20, _page: 1 })
 	})
 })

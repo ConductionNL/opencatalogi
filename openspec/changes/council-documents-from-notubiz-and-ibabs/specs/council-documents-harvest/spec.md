@@ -8,7 +8,7 @@ status: proposed
 
 ### Requirement: An administrator sets up the council documents harvest (REQ-CDH-001)
 
-OpenCatalogi SHALL declare a flow "Council documents harvest" on the publication schema in `lib/Settings/register.d/council-documents-harvest.json`, shipped `enabled: false`, with a nightly schedule and a manual trigger. The admin settings SHALL show a "Council documents" section with Source, Publish on arrival, Last run, Set up, Run now, Switch off and Open the source in integriq. `setUp()` MUST refuse with a message naming the missing piece when integriq is not installed or the chosen source has no credentials it needs.
+OpenCatalogi SHALL declare a flow "Council documents harvest" on the publication schema in `lib/Settings/register.d/council-documents-harvest.json`, shipped `enabled: false`, with a nightly schedule and a manual trigger. The admin settings SHALL show a "Council documents" section with Source, Publish on arrival, Last run, Set up, Run now, Switch off and Open the source in integriq. `setUp()` MUST refuse, naming the missing piece, when a piece it needs is missing.
 
 #### Scenario: Setting up from a Notubiz source
 <!-- @e2e exclude Settings section not yet on the canvas board; proven by tests/e2e/council-documents-harvest.spec.ts once task 3.1 lands, and by CouncilHarvestServiceTest::testSetUpWritesTheSynchronizationAndRuleForNotubiz. -->
@@ -23,6 +23,13 @@ OpenCatalogi SHALL declare a flow "Council documents harvest" on the publication
 - **GIVEN** the source `ibabs-ris-v1` with an empty key
 - **WHEN** an administrator presses Set up
 - **THEN** set up is refused with "Fill in the iBabs key in integriq first"
+
+#### Scenario: Without integriq set up is refused
+<!-- @e2e exclude Fail-closed path; proven by CouncilHarvestServiceTest::testSetUpRefusesWithoutIntegriq. -->
+
+- **GIVEN** an instance where integriq is not installed
+- **WHEN** an administrator presses Set up
+- **THEN** set up is refused with a message that it needs integriq, and nothing is written
 
 ### Requirement: Each public council document becomes a publication with its file (REQ-CDH-002)
 

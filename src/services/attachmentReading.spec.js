@@ -13,6 +13,7 @@ import {
 	requestReadAgain,
 } from './attachmentReading.js'
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'session-token' }))
 jest.mock('@nextcloud/l10n', () => ({ translate: (app, text) => text }))
 jest.mock('@nextcloud/router', () => ({
 	generateUrl: (path, params = {}) => '/nc' + path.replace(/{(\w+)}/g, (_, k) => params[k]),
@@ -67,7 +68,7 @@ describe('attachmentReading', () => {
 		const result = await fetchAttachmentReadings('pub-1', fetchFn)
 
 		expect(fetchFn).toHaveBeenCalledWith('/nc/apps/opencatalogi/api/publications/pub-1/attachment-readings', {
-			headers: { Accept: 'application/json' },
+			headers: { Accept: 'application/json', requesttoken: 'session-token' },
 		})
 		expect(result).toEqual({
 			readings: {

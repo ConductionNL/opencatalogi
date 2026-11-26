@@ -179,6 +179,7 @@ test.describe('Subjects', () => {
 			byDate[publicationDate] = await create(request, 'publication', {
 				title: `E2E Sporthal besluit ${index + 1} ${RUN}`,
 				summary: 'Filed under the sporthal subject.',
+				description: 'Created by subjects.spec.ts; review requires a description.',
 				themes: [subject],
 				publicationDate,
 			})

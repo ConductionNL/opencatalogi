@@ -392,7 +392,7 @@ class BatchPublicationWriter {
 	 * @return array<string, mixed>
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
-	 * @spec openspec/changes/publication-required-at-publish/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/tasks.md#task-1.1
 	 */
 	public function payload(array $batch, string $now): array {
 		$caseReference = (string)($batch['caseReference'] ?? '');
@@ -431,7 +431,7 @@ class BatchPublicationWriter {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/tasks.md#task-1.1
 	 */
 	private static function summaryOf(array $batch, string $title): string {
 		$summary = trim((string)($batch['summary'] ?? ''));
@@ -453,7 +453,7 @@ class BatchPublicationWriter {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/tasks.md#task-1.1
 	 */
 	private static function descriptionOf(array $batch, string $title, string $caseReference): string {
 		$description = trim((string)($batch['description'] ?? ''));
@@ -477,7 +477,7 @@ class BatchPublicationWriter {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/tasks.md#task-1.1
 	 */
 	private static function organisationOf(array $batch): string {
 		foreach ([($batch['organization'] ?? null), ($batch['@self']['organisation'] ?? null)] as $candidate) {

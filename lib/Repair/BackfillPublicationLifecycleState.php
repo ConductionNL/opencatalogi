@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
  * many need a fix on their next edit; nothing is moved back to draft.
  *
  * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
- * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+ * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
  */
 class BackfillPublicationLifecycleState implements IRepairStep {
 
@@ -105,7 +105,7 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 	 * @return void
 	 *
 	 * @spec openspec/changes/publication-lifecycle-on-or/specs/publications/spec.md#requirement-existing-publications-get-a-stored-state-on-upgrade-req-plc-007
-	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
 	 */
 	public function run(IOutput $output): void {
 		$objects = $this->settings->getObjectService();
@@ -185,7 +185,7 @@ class BackfillPublicationLifecycleState implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/publication-required-at-publish/design.md#d2-existing-publications
+	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
 	 * @SuppressWarnings(PHPMD.StaticAccess) RequiredToPublish::missing() is a pure field check.
 	 */
 	private function backfillOne(array $publication, array $scope): void {

@@ -146,9 +146,10 @@ class DcatController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Lookup, visibility, format and conditional GET are each one guard.
+	 * @SuppressWarnings(PHPMD.NPathComplexity) Same guards as above.
 	 *
+	 * @spec openspec/changes/file-management/tasks.md#task-6.5
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-content-negotiation-across-rdf-serializations-dcat-007

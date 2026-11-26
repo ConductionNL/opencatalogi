@@ -194,7 +194,21 @@ import '../../css/json-highlight.css'
 										v-for="(prop, key) in schemaProperties"
 										:key="key"
 										class="form-field">
-										<template v-if="prop.type === 'string'">
+										<LicencePicker
+											v-if="isLicenceField(prop)"
+											:modelValue="getFieldValue(key)"
+											:inputLabel="prop.title || key"
+											:placeholder="
+												t(
+													'opencatalogi',
+													'The catalogue or instance default licence',
+												)
+											"
+											:data-testid="'licence-picker-' + key"
+											@update:modelValue="
+												(value) => setFieldValue(key, value)
+											" />
+										<template v-else-if="prop.type === 'string'">
 											<!-- v9 NcTextField takes `modelValue` / emits `update:modelValue`;
 											     the old `value` / `update:value` pair no longer exists. -->
 											<NcTextField
@@ -357,6 +371,7 @@ import {
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
+import { defineAsyncComponent } from 'vue'
 import CodeMirror from 'vue-codemirror6'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 // Icons
@@ -378,6 +393,9 @@ import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 function optionOf(entry) {
 	return { id: entry.id, label: entry.title }
 }
+
+// Loaded when a licence field renders, so the form does not fetch the list for schemas without one.
+const LicencePicker = defineAsyncComponent(() => import('../../components/LicencePicker.vue'))
 
 /**
  * Whether the navigation transfer data opens the modal to create an object.
@@ -472,6 +490,7 @@ export default {
 		AppTabs,
 		AppTab,
 		CodeMirror,
+		LicencePicker,
 		// Icons
 		ContentSaveOutline,
 		Cancel,
@@ -564,7 +583,7 @@ export default {
 		/**
 		 * The fields the schema's lifecycle requires to publish; each gets the hint "Required to publish".
 		 *
-		 * @spec openspec/changes/publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
+		 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
 		 */
 		requiredToPublish() {
 			return requiredToPublishFields(this.fullSelectedSchema)
@@ -645,6 +664,17 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Whether a schema property takes its value from the EU licences list (`x-value-list: licence`).
+		 *
+		 * @param {object} prop The property definition.
+		 * @return {boolean} True for a licence field.
+		 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+		 */
+		isLicenceField(prop) {
+			return prop?.['x-value-list'] === 'licence'
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		initializeData() {
 			const activeCatalog = objectStore.getActiveObject('catalog')
