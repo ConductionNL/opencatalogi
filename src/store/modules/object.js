@@ -79,6 +79,8 @@ const MENU_CATALOGS_MAX_PAGES = 50
 let menuCatalogsSequence = 0
 /** @type {{started: number, promise: Promise<void>}|null} */
 let menuCatalogsWalk = null
+// The settings read in flight, so concurrent callers at boot share one request.
+let settingsRequest = null
 
 /**
  * The query for a related-data request: the caller's params, and for `uses`
@@ -2139,7 +2141,23 @@ export const useObjectStore = defineStore('object', {
 		 * @return {Promise<void>}
 		 */
 		/** @spec openspec/specs/generic-object-modals/spec.md */
-		async fetchSettings() {
+		fetchSettings() {
+			if (!settingsRequest) {
+				settingsRequest = this._loadSettings().finally(() => {
+					settingsRequest = null
+				})
+			}
+			return settingsRequest
+		},
+
+		/**
+		 * One settings read; callers go through fetchSettings.
+		 *
+		 * @return {Promise<void>}
+		 * @private
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		async _loadSettings() {
 			try {
 				const response = await fetch(
 					'/index.php/apps/opencatalogi/api/settings',
