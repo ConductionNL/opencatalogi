@@ -70,7 +70,8 @@ final class CreatePublishersGroupTest extends TestCase {
 	public function testAnExistingPublishersGroupIsLeftAloneAndTheEditorsGroupAdded(): void {
 		$groups = $this->createMock(IGroupManager::class);
 		$groups->method('groupExists')->willReturnCallback(static fn (string $gid): bool => $gid === 'opencatalogi-publishers');
-		$groups->expects($this->once())->method('createGroup')->with('opencatalogi-editors')->willReturn($this->createMock(IGroup::class));
+		$editors = $this->createMock(originalClassName: IGroup::class);
+		$groups->expects($this->once())->method('createGroup')->with('opencatalogi-editors')->willReturn($editors);
 
 		$info = [];
 		$output = $this->createMock(IOutput::class);
@@ -121,7 +122,7 @@ final class CreatePublishersGroupTest extends TestCase {
 		$groups->method('groupExists')->willThrowException(new RuntimeException('LDAP down'));
 
 		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects($this->exactly(2))->method('warning')->with($this->stringContains('LDAP down'));
+		$logger->expects($this->exactly(count: 2))->method('warning')->with($this->stringContains(string: 'LDAP down'));
 		$warnings = [];
 		$output = $this->createMock(IOutput::class);
 		$output->method('warning')->willReturnCallback(static function (string $message) use (&$warnings): void {
