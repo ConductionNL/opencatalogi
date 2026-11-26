@@ -288,7 +288,7 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 		file_put_contents($appDir . '/lib/Settings/publication_register.json', json_encode(['components' => ['schemas' => []]]));
 
 		$order = [];
-		$configService = $this->createMock(\OCA\OpenRegister\Service\ConfigurationService::class);
+		$configService = $this->createMock(originalClassName: \OCA\OpenRegister\Service\ConfigurationService::class);
 		$configService->expects($this->once())->method('importFromApp')->willReturnCallback(
 			function () use (&$order): array {
 				$order[] = 'import with ' . count($this->writes) . ' writes';
@@ -308,18 +308,24 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 			}
 		);
 
-		$config = $this->createMock(IAppConfig::class);
+		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('setValueString')->willReturnCallback(
 			function (string $app, string $key, string $value): bool {
 				$this->writes[] = $key . '=' . $value;
 				return true;
 			}
 		);
-		$appManager = $this->createMock(IAppManager::class);
+		$appManager = $this->createMock(originalClassName: IAppManager::class);
 		$appManager->method('getInstalledApps')->willReturn(['openregister']);
 		$appManager->method('getAppPath')->willReturn($appDir);
 		$appManager->method('getAppVersion')->willReturn('1.0.0');
-		$service = new SettingsService($config, $this->container, $appManager, $this->logger, $this->createMock(RegisterSchemaLinkService::class));
+		$service = new SettingsService(
+			$config,
+			$this->container,
+			$appManager,
+			$this->logger,
+			$this->createMock(originalClassName: RegisterSchemaLinkService::class)
+		);
 
 		try {
 			$result = $service->loadSettings();
@@ -330,11 +336,11 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 			rmdir($appDir);
 		}
 
-		$this->assertSame(['import with 0 writes'], $order);
-		$this->assertSame([['slug' => 'catalog', 'id' => 7], ['slug' => 'glossary', 'id' => 8]], $result['schemas']);
-		$this->assertContains('catalog_schema=7', $this->writes);
-		$this->assertContains('catalog_register=3', $this->writes);
-		$this->assertContains('glossary_schema=8', $this->writes);
-		$this->assertContains('glossary_register=3', $this->writes);
+		$this->assertSame(expected: ['import with 0 writes'], actual: $order);
+		$this->assertSame(expected: [['slug' => 'catalog', 'id' => 7], ['slug' => 'glossary', 'id' => 8]], actual: $result['schemas']);
+		$this->assertContains(needle: 'catalog_schema=7', haystack: $this->writes);
+		$this->assertContains(needle: 'catalog_register=3', haystack: $this->writes);
+		$this->assertContains(needle: 'glossary_schema=8', haystack: $this->writes);
+		$this->assertContains(needle: 'glossary_register=3', haystack: $this->writes);
 	}
 }

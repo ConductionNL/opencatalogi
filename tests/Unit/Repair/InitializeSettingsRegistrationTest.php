@@ -33,8 +33,8 @@ class InitializeSettingsRegistrationTest extends TestCase {
 	 */
 	private function repairSteps(): SimpleXMLElement {
 		$info = simplexml_load_file(__DIR__ . '/../../../appinfo/info.xml');
-		$this->assertInstanceOf(SimpleXMLElement::class, $info);
-		$this->assertTrue(isset($info->{'repair-steps'}));
+		$this->assertInstanceOf(expected: SimpleXMLElement::class, actual: $info);
+		$this->assertTrue(condition: isset($info->{'repair-steps'}));
 
 		return $info->{'repair-steps'};
 	}
@@ -55,15 +55,30 @@ class InitializeSettingsRegistrationTest extends TestCase {
 		return $steps;
 	}
 
+	/**
+	 * An upgrade runs the step before every other post-migration step.
+	 *
+	 * @return void
+	 */
 	public function testTheStepIsTheFirstPostMigrationStep(): void {
-		$this->assertSame(InitializeSettings::class, $this->stepsOf(phase: 'post-migration')[0] ?? null);
+		$this->assertSame(expected: InitializeSettings::class, actual: ($this->stepsOf(phase: 'post-migration')[0] ?? null));
 	}
 
+	/**
+	 * A fresh install, which runs no migration steps, runs the step first.
+	 *
+	 * @return void
+	 */
 	public function testTheStepIsTheFirstInstallStep(): void {
-		$this->assertSame(InitializeSettings::class, $this->stepsOf(phase: 'install')[0] ?? null);
+		$this->assertSame(expected: InitializeSettings::class, actual: ($this->stepsOf(phase: 'install')[0] ?? null));
 	}
 
+	/**
+	 * The registered class is one Nextcloud can run as a repair step.
+	 *
+	 * @return void
+	 */
 	public function testTheRegisteredClassIsARepairStep(): void {
-		$this->assertTrue(is_subclass_of(InitializeSettings::class, IRepairStep::class));
+		$this->assertTrue(condition: is_subclass_of(InitializeSettings::class, IRepairStep::class));
 	}
 }
