@@ -21,7 +21,7 @@
 import { expect, test } from './authenticated-request.ts'
 import {
 	Fixtures,
-	REG_OPENCATALOGI,
+	REG_PUBLICATION,
 	SCHEMA_PUBLICATION,
 } from './workflows/_fixtures.ts'
 
@@ -46,19 +46,19 @@ test.describe('Permanent delete of a draft', () => {
 		const slug = `purge-${Date.now().toString(36)}`
 		await fx.createCatalog('purge', {
 			slug,
-			registers: [REG_OPENCATALOGI],
+			registers: [REG_PUBLICATION],
 			schemas: [SCHEMA_PUBLICATION],
 		})
 		const publication = await fx.createPublication(
 			'purge',
 			{ status: 'draft' },
-			REG_OPENCATALOGI,
+			REG_PUBLICATION,
 		)
 		const files = []
 		for (const name of ['Besluit', 'Bijlage']) {
 			files.push(
 				await fx.attachFile(
-					REG_OPENCATALOGI,
+					REG_PUBLICATION,
 					SCHEMA_PUBLICATION,
 					publication.id,
 					`${name}.txt`,
@@ -84,14 +84,23 @@ test.describe('Permanent delete of a draft', () => {
 		const referenceId = String((await reference.json())?.id ?? '')
 
 		await page.goto(`${APP_BASE}/publications/${slug}/${publication.id}`)
-		await page.getByRole('button', { name: DELETE_PERMANENTLY }).click()
+		// The action sits on the Visibility card, below the fold; the detail grid
+		// mounts a widget when it scrolls into view.
+		const purge = page.getByRole('button', { name: DELETE_PERMANENTLY })
+		await expect(page.locator('[gs-id]').first()).toBeAttached({ timeout: 30_000 })
+		await page.mouse.move(800, 400)
+		await expect(async () => {
+			await page.mouse.wheel(0, 400)
+			await expect(purge).toBeVisible({ timeout: 500 })
+		}).toPass({ timeout: 30_000 })
+		await purge.click()
 		const dialog = page.getByRole('dialog')
 		await expect(dialog).toBeVisible()
 		await dialog.getByRole('button', { name: DELETE_PERMANENTLY }).click()
 		await expect(dialog).toBeHidden()
 
 		const gone = await admin.get(
-			`${OBJECTS}/${REG_OPENCATALOGI}/${SCHEMA_PUBLICATION}/${publication.id}`,
+			`${OBJECTS}/${REG_PUBLICATION}/${SCHEMA_PUBLICATION}/${publication.id}`,
 		)
 		expect(gone.status(), 'the publication cannot be read or restored').toBe(404)
 		const referenceGone = await admin.get(
