@@ -2465,7 +2465,8 @@
         "This organisation cannot be activated: %s": "This organisation cannot be activated: %s",
         "The organisation could not be saved: %s": "The organisation could not be saved: %s",
         "The organisation registers could not be read: %s": "The organisation registers could not be read: %s",
-        "The licence of this publication's data, from the EU licences list. Empty: the catalogue's or the instance's default licence applies.": "The licence of this publication's data, from the EU licences list. Empty: the catalogue's or the instance's default licence applies."
+        "The licence of this publication's data, from the EU licences list. Empty: the catalogue's or the instance's default licence applies.": "The licence of this publication's data, from the EU licences list. Empty: the catalogue's or the instance's default licence applies.",
+        "Failed to save settings": "Failed to save settings"
     },
     "plurals": {}
 }

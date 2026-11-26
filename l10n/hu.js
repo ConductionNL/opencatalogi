@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Adja meg a szervezetet, és hogy aktív-e.",
         "This organisation cannot be activated: %s": "Ez a szervezet nem aktiválható: %s",
         "The organisation could not be saved: %s": "A szervezetet nem sikerült menteni: %s",
-        "The organisation registers could not be read: %s": "A szervezeti nyilvántartásokat nem sikerült beolvasni: %s"
+        "The organisation registers could not be read: %s": "A szervezeti nyilvántartásokat nem sikerült beolvasni: %s",
+        "Failed to save settings": "Nem sikerült menteni a beállításokat"
     },
     "nplurals=2; plural=(n != 1);"
 )

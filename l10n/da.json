@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Angiv organisationen og om den er aktiv.",
         "This organisation cannot be activated: %s": "Denne organisation kan ikke aktiveres: %s",
         "The organisation could not be saved: %s": "Organisationen kunne ikke gemmes: %s",
-        "The organisation registers could not be read: %s": "Organisationsregistrene kunne ikke læses: %s"
+        "The organisation registers could not be read: %s": "Organisationsregistrene kunne ikke læses: %s",
+        "Failed to save settings": "Indstillingerne kunne ikke gemmes"
     },
     "plurals": {}
 }

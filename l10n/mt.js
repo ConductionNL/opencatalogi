@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Semmi l-organizzazzjoni u jekk hijiex attiva.",
         "This organisation cannot be activated: %s": "Din l-organizzazzjoni ma tistax tiġi attivata: %s",
         "The organisation could not be saved: %s": "L-organizzazzjoni ma setgħetx tiġi ssejvjata: %s",
-        "The organisation registers could not be read: %s": "Ir-reġistri tal-organizzazzjonijiet ma setgħux jinqraw: %s"
+        "The organisation registers could not be read: %s": "Ir-reġistri tal-organizzazzjonijiet ma setgħux jinqraw: %s",
+        "Failed to save settings": "Ma rnexxielux jiġu salvati l-issettjar"
     },
     "nplurals=2; plural=(n != 1);"
 )

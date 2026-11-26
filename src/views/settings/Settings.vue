@@ -1457,7 +1457,10 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
+		/**
+		 * @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1
+		 * @spec openspec/changes/admin-settings/tasks.md#11-frontend--adminrootvue-and-settingsvue
+		 */
 		async saveAll() {
 			if (!this.selectedRegister || !this.hasSchemas) {
 				return
@@ -1479,6 +1482,7 @@ export default defineComponent({
 			} catch (error) {
 				// eslint-disable-next-line no-console
 				console.error('Failed to save settings:', error)
+				showError(this.t('opencatalogi', 'Failed to save settings'))
 			} finally {
 				this.saving = false
 			}
@@ -1530,7 +1534,10 @@ export default defineComponent({
 		 * @async
 		 * @return {Promise<void>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
+		/**
+		 * @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1
+		 * @spec openspec/changes/admin-settings/tasks.md#11-frontend--adminrootvue-and-settingsvue
+		 */
 		async savePublishingOptions() {
 			this.saving = true
 			try {
@@ -1545,6 +1552,7 @@ export default defineComponent({
 				if (result.error) {
 					// eslint-disable-next-line no-console
 					console.error('Failed to save publishing options:', result.error)
+					showError(this.t('opencatalogi', 'Failed to save settings'))
 				} else {
 					// Update local state with the response from the backend
 					this.publishingOptions = publishingOptionsFrom(result)
@@ -1552,6 +1560,7 @@ export default defineComponent({
 			} catch (error) {
 				// eslint-disable-next-line no-console
 				console.error('Failed to save publishing options:', error)
+				showError(this.t('opencatalogi', 'Failed to save settings'))
 			} finally {
 				this.saving = false
 			}

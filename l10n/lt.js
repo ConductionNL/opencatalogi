@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Nurodykite organizaciją ir ar ji aktyvi.",
         "This organisation cannot be activated: %s": "Šios organizacijos negalima aktyvinti: %s",
         "The organisation could not be saved: %s": "Organizacijos išsaugoti nepavyko: %s",
-        "The organisation registers could not be read: %s": "Organizacijų registrų perskaityti nepavyko: %s"
+        "The organisation registers could not be read: %s": "Organizacijų registrų perskaityti nepavyko: %s",
+        "Failed to save settings": "Nepavyko išsaugoti nustatymų"
     },
     "nplurals=2; plural=(n != 1);"
 )

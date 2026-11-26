@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Kuruluşu ve etkin olup olmadığını belirtin.",
         "This organisation cannot be activated: %s": "Bu kuruluş etkinleştirilemez: %s",
         "The organisation could not be saved: %s": "Kuruluş kaydedilemedi: %s",
-        "The organisation registers could not be read: %s": "Kuruluş sicilleri okunamadı: %s"
+        "The organisation registers could not be read: %s": "Kuruluş sicilleri okunamadı: %s",
+        "Failed to save settings": "Ayarlar kaydedilemedi"
     },
     "plurals": {}
 }

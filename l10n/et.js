@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Nimetage organisatsioon ja kas see on aktiivne.",
         "This organisation cannot be activated: %s": "Seda organisatsiooni ei saa aktiveerida: %s",
         "The organisation could not be saved: %s": "Organisatsiooni ei saanud salvestada: %s",
-        "The organisation registers could not be read: %s": "Organisatsioonide registreid ei saanud lugeda: %s"
+        "The organisation registers could not be read: %s": "Organisatsioonide registreid ei saanud lugeda: %s",
+        "Failed to save settings": "Seadeid ei õnnestunud salvestada"
     },
     "nplurals=2; plural=(n != 1);"
 )

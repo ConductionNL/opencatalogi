@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Numnai l’organisaziun e sch’ella è activa.",
         "This organisation cannot be activated: %s": "Questa organisaziun na po betg vegnir activada: %s",
         "The organisation could not be saved: %s": "L’organisaziun n’ha betg pudì vegnir memorisada: %s",
-        "The organisation registers could not be read: %s": "Ils registers da las organisaziuns n’han betg pudì vegnir legids: %s"
+        "The organisation registers could not be read: %s": "Ils registers da las organisaziuns n’han betg pudì vegnir legids: %s",
+        "Failed to save settings": "Betg reussì da memorisar las configuraziuns"
     },
     "nplurals=2; plural=(n != 1);"
 )

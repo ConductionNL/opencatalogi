@@ -193,7 +193,8 @@ Before implementation, verify no overlap with existing OpenRegister services:
   - `NcButton` "Save settings" that calls `POST /api/settings` via `@nextcloud/axios`
   - `NcButton` "Import configuration" that calls `POST /api/settings/import`
 - [x] 11.4 All user-visible strings use `t('opencatalogi', '...')` — no hardcoded Dutch or English text (verified 2026-11-24: `npm run find:unwrapped -- src/views/settings/Settings.vue` reports 0 candidates; `npm run check:l10n` reports 0 MISSING and 0 UNWRAPPED)
-- [ ] 11.5 All `await axios.post(...)` calls are wrapped in `try/catch` with `showError(t('opencatalogi', 'Failed to save settings'))` feedback
+- [x] 11.5 All `await axios.post(...)` calls are wrapped in `try/catch` with `showError(t('opencatalogi', 'Failed to save settings'))` feedback
+  - 26 Nov: the two saves that only logged a failure now tell the administrator too: `saveAll()` (the register and schema mapping) and `savePublishingOptions()` (a rejected request or an `error` answer) call `showError(t('opencatalogi', 'Failed to save settings'))`. The other settings sections already show their own error under the field. The string is in all 37 locales. Tests: `SettingsChecks.spec.js` "logs a failed save and tells the administrator" and "shows no error after a save that succeeded"; `SettingsLogic.spec.js` "logs a failed publishing save" (both outcomes) and the successful save showing nothing.
 - [x] 11.6 `Settings.vue` imports ALL used components in `components: {}` — no implicit global registration (verified 2026-11-24: every PascalCase tag of the template is registered; pinned by tests/vitest/settingsComponentsRegistered.spec.js)
 - [x] 11.7 Add SPDX header `<!-- SPDX-License-Identifier: EUPL-1.2 -->` to both `.vue` files
 

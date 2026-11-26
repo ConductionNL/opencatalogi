@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Uveďte organizáciu a či je aktívna.",
         "This organisation cannot be activated: %s": "Túto organizáciu nemožno aktivovať: %s",
         "The organisation could not be saved: %s": "Organizáciu sa nepodarilo uložiť: %s",
-        "The organisation registers could not be read: %s": "Registre organizácií sa nepodarilo načítať: %s"
+        "The organisation registers could not be read: %s": "Registre organizácií sa nepodarilo načítať: %s",
+        "Failed to save settings": "Nastavenia sa nepodarilo uložiť"
     },
     "nplurals=2; plural=(n != 1);"
 )

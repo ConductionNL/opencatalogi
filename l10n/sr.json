@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Наведите организацију и да ли је активна.",
         "This organisation cannot be activated: %s": "Ова организација не може да се активира: %s",
         "The organisation could not be saved: %s": "Организацију није било могуће сачувати: %s",
-        "The organisation registers could not be read: %s": "Регистре организација није било могуће прочитати: %s"
+        "The organisation registers could not be read: %s": "Регистре организација није било могуће прочитати: %s",
+        "Failed to save settings": "Чување подешавања није успело"
     },
     "plurals": {}
 }
