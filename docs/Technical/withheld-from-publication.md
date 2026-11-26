@@ -29,7 +29,7 @@ Both answer the same list. The federation route has no catalogue in its path, so
 
 - `position`: the document's place in the publication, from 1. Entries are ordered by it.
 - `grounds`: the refusal ground codes.
-- `groundDetails`: `{code, article, label}` per code. For a record an app wrote (dossiq records them through `WithheldDocuments::record()`), these are the values stored when it was recorded. For an entry from a publication batch, `article` and `label` are empty until the grounds list is read through `RefusalGrounds`; a code is never given a guessed label.
+- `groundDetails`: `{code, article, label}` per code. For a record an app wrote (dossiq records them through `WithheldDocuments::record()`), these are the values stored when it was recorded. For an entry from a publication batch, they are read from the refusal grounds list through `RefusalGrounds` (dossiq's list, or the vendored snapshot when dossiq is not installed) when the publication is read. A code the list does not hold, or every code when the list cannot be read, is answered with its code and empty `article` and `label`; a code is never given a guessed label.
 - `title`: only on a batch entry whose assessment has `titlePublic` on.
 
 ## When the key is missing
