@@ -137,8 +137,9 @@ class SetupController extends Controller {
 	 *
 	 * @return JSONResponse The action result.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) One match arm per setup action.
 	 *
+	 * @spec openspec/changes/file-management/tasks.md#task-6.5
 	 * @spec openspec/specs/first-time-setup/spec.md#requirement-create-first-catalog-privileged-action-onb-006
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
