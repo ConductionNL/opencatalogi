@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Numnai l’organisaziun e sch’ella è activa.",
         "This organisation cannot be activated: %s": "Questa organisaziun na po betg vegnir activada: %s",
         "The organisation could not be saved: %s": "L’organisaziun n’ha betg pudì vegnir memorisada: %s",
-        "The organisation registers could not be read: %s": "Ils registers da las organisaziuns n’han betg pudì vegnir legids: %s"
+        "The organisation registers could not be read: %s": "Ils registers da las organisaziuns n’han betg pudì vegnir legids: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Memia blers upload en curt temp: il server permetta mo in dumber limità per minuta. Spetgai ina minuta e empruvai lura danovamain las datotecas che n'han betg funcziunà."
     },
     "plurals": {}
 }

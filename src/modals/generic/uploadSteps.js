@@ -4,6 +4,7 @@
  */
 
 import { dispatchObjectsChanged } from '@conduction/nextcloud-vue'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 
 /**
@@ -11,6 +12,41 @@ import { generateUrl } from '@nextcloud/router'
  * reading an upload answer, counting settled uploads, the publication's
  * files URL and change notice, and the schema's auto-share configuration.
  */
+
+/**
+ * What the dialog says about a failed upload: a rate limit (429) in words,
+ * else the server's own error, else the error itself.
+ *
+ * @param {object} error - The failed upload's error
+ * @return {string} The message
+ * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+ */
+export function uploadErrorMessage(error) {
+	if (error?.response?.status === 429) {
+		return t(
+			'opencatalogi',
+			'Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.',
+		)
+	}
+	return error?.response?.data?.error ?? String(error)
+}
+
+/**
+ * What the dialog says about the failed uploads of a batch: a rate limit when
+ * one of them hit it, else the first failure's message.
+ *
+ * @param {Array} results - The settled uploads
+ * @return {string|null} The message, or null when none failed
+ * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+ */
+export function failedUploadsMessage(results) {
+	const rejected = results.filter((r) => r.status === 'rejected')
+	if (rejected.length === 0) {
+		return null
+	}
+	const shown = rejected.find((r) => r.reason?.response?.status === 429) ?? rejected[0]
+	return uploadErrorMessage(shown.reason)
+}
 
 /**
  * The id of the first attachment an upload answer lists as created.

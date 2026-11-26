@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Ange organisationen och om den är aktiv.",
         "This organisation cannot be activated: %s": "Den här organisationen kan inte aktiveras: %s",
         "The organisation could not be saved: %s": "Organisationen kunde inte sparas: %s",
-        "The organisation registers could not be read: %s": "Organisationsregistren kunde inte läsas: %s"
+        "The organisation registers could not be read: %s": "Organisationsregistren kunde inte läsas: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "För många uppladdningar på kort tid: servern tillåter ett begränsat antal per minut. Vänta en minut och försök sedan igen med filerna som misslyckades."
     },
     "plurals": {}
 }

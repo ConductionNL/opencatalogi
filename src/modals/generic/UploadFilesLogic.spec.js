@@ -175,6 +175,19 @@ describe('UploadFiles addAttachments', () => {
 		expect(ctx.error).toBe('Error: plain')
 	})
 
+	it('says the rate limit was hit when another failure comes first in the batch', async () => {
+		const files = [{ name: 'exe', status: 'pending', size: 1 }, { name: 'late', status: 'pending', size: 1 }]
+		const ctx = vm({ files: { value: files } })
+		ctx.createPublicationAttachment = uploader({
+			exe: Object.assign(new Error('400'), { response: { status: 400, data: { error: 'File type not allowed' } } }),
+			late: Object.assign(new Error('429'), { response: { status: 429 } }),
+		})
+		global.fetch = jest.fn(async () => ({ json: async () => ({}) }))
+		await ctx.addAttachments()
+		expect(ctx.error).toMatch(/^Too many uploads in a short time/)
+		expect(ctx.success).toBeNull()
+	})
+
 	it('ignores an answer without a created id', async () => {
 		const file = { name: 'n', status: 'pending', size: 1 }
 		const ctx = vm({ files: { value: [file] } })
@@ -260,6 +273,27 @@ describe('UploadFiles retryAllFailed', () => {
 		third.createPublicationAttachment = uploader({ a: { status: 200 } })
 		await expect(third.retryAllFailed()).resolves.toBeUndefined()
 		expect(third.retryLoading).toBe(false)
+	})
+
+	it('replaces the rate-limit message with success once the retried files go through', async () => {
+		const ctx = vm({ files: { value: [{ name: 'a', status: 'failed' }] }, error: 'Too many uploads in a short time' })
+		ctx.createPublicationAttachment = uploader({ a: { status: 200 } })
+		global.fetch = jest.fn(async () => ({ json: async () => ({}) }))
+		await ctx.retryAllFailed()
+		expect(ctx.error).toBeNull()
+		expect(ctx.success).toBe(true)
+	})
+
+	it('shows the retry\'s own failure, a rate limit first, instead of the earlier one', async () => {
+		const ctx = vm({ files: { value: [{ name: 'a', status: 'failed' }, { name: 'b', status: 'failed' }] }, error: 'File type not allowed' })
+		ctx.createPublicationAttachment = uploader({
+			a: Object.assign(new Error('500'), { response: { status: 500, data: { error: 'Disk full' } } }),
+			b: Object.assign(new Error('429'), { response: { status: 429 } }),
+		})
+		global.fetch = jest.fn()
+		await ctx.retryAllFailed()
+		expect(ctx.error).toMatch(/^Too many uploads in a short time/)
+		expect(ctx.success).toBeNull()
 	})
 
 	it('reports nothing without an active publication', async () => {

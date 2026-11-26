@@ -382,10 +382,12 @@ import { useFileSelection } from './../../composables/UseFileSelection.js'
 import {
 	countSettled,
 	embeddedSchemaConfiguration,
+	failedUploadsMessage,
 	fetchSchemaConfiguration,
 	notifyPublicationChanged,
 	publicationFilesUrl,
 	recordCreatedId,
+	uploadErrorMessage,
 } from './uploadSteps.js'
 
 const dropZoneRef = ref()
@@ -1047,7 +1049,7 @@ export default {
 				this.updateUploadCounts()
 				if (specificFile) return idMap
 			} catch (err) {
-				this.error = err.response?.data?.error ?? err
+				this.error = uploadErrorMessage(err)
 			} finally {
 				this.loading = false
 				this.tagsLoading = false
@@ -1140,27 +1142,33 @@ export default {
 		},
 
 		/**
-		 * Show the first rejected upload's error, or success, and announce
-		 * the counts.
+		 * Show the outcome and announce the counts.
 		 *
 		 * @param {Array} results - The settled uploads
 		 * @param {object} publication - The publication
 		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
 		 */
 		reportUploadResults(results, publication) {
-			const rejected = results.filter((r) => r.status === 'rejected')
-			if (rejected.length > 0) {
-				const firstError = rejected[0].reason
-				this.error = firstError?.response?.data?.error ?? String(firstError)
-			} else {
-				this.success = true
-			}
-
+			this.showUploadOutcome(results)
 			EventBus.$emit('upload-files:uploaded', {
 				publicationId: publication.id,
 				uploadedCount: countSettled(results, 'fulfilled'),
-				failedCount: rejected.length,
+				failedCount: countSettled(results, 'rejected'),
 			})
+		},
+
+		/**
+		 * Show what went wrong in a batch, preferring a rate limit, or success.
+		 *
+		 * @param {Array} results - The settled uploads
+		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+		 */
+		showUploadOutcome(results) {
+			const message = failedUploadsMessage(results)
+			this.error = message
+			this.success = message === null ? true : null
 		},
 
 		// Utility method to get register and schema IDs from publication object
@@ -1250,6 +1258,8 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
 		async retryAllFailed() {
 			this.retryLoading = true
+			this.error = null
+			this.success = null
 			const uploadPromises = this.files.value
 				.filter((file) => file.status === 'failed')
 				.map((file) => {
@@ -1269,12 +1279,13 @@ export default {
 		},
 
 		/**
-		 * After a retry: refresh when an upload succeeded, then announce the
-		 * counts.
+		 * After a retry: refresh when an upload succeeded, then show the
+		 * outcome and announce the counts.
 		 *
 		 * @param {Array} results - The settled uploads
 		 * @param {object} publication - The publication
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
 		 */
 		async afterRetry(results, publication) {
 			const fulfilledCount = countSettled(results, 'fulfilled')
@@ -1282,6 +1293,7 @@ export default {
 			if (fulfilledCount > 0) {
 				await this.refreshAfterRetry(publication)
 			}
+			this.showUploadOutcome(results)
 			EventBus.$emit('upload-files:uploaded', {
 				publicationId: publication.id,
 				uploadedCount: fulfilledCount,

@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Norādiet organizāciju un vai tā ir aktīva.",
         "This organisation cannot be activated: %s": "Šo organizāciju nevar aktivizēt: %s",
         "The organisation could not be saved: %s": "Organizāciju neizdevās saglabāt: %s",
-        "The organisation registers could not be read: %s": "Organizāciju reģistrus neizdevās nolasīt: %s"
+        "The organisation registers could not be read: %s": "Organizāciju reģistrus neizdevās nolasīt: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Pārāk daudz augšupielāžu īsā laikā: serveris atļauj ierobežotu skaitu minūtē. Pagaidiet minūti un pēc tam mēģiniet vēlreiz augšupielādēt neizdevušos failus."
     },
     "plurals": {}
 }

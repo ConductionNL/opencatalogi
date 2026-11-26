@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Kuruluşu ve etkin olup olmadığını belirtin.",
         "This organisation cannot be activated: %s": "Bu kuruluş etkinleştirilemez: %s",
         "The organisation could not be saved: %s": "Kuruluş kaydedilemedi: %s",
-        "The organisation registers could not be read: %s": "Kuruluş sicilleri okunamadı: %s"
+        "The organisation registers could not be read: %s": "Kuruluş sicilleri okunamadı: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Kısa sürede çok fazla yükleme: sunucu dakikada sınırlı sayıda yüklemeye izin veriyor. Bir dakika bekleyin, ardından başarısız olan dosyaları yeniden deneyin."
     },
     "nplurals=2; plural=(n != 1);"
 )

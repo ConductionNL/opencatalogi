@@ -2463,7 +2463,8 @@
         "Name the organisation and whether it is active.": "Name the organisation and whether it is active.",
         "This organisation cannot be activated: %s": "This organisation cannot be activated: %s",
         "The organisation could not be saved: %s": "The organisation could not be saved: %s",
-        "The organisation registers could not be read: %s": "The organisation registers could not be read: %s"
+        "The organisation registers could not be read: %s": "The organisation registers could not be read: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed."
     },
     "plurals": {}
 }

@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Indiqueu l’organització i si està activa.",
         "This organisation cannot be activated: %s": "Aquesta organització no es pot activar: %s",
         "The organisation could not be saved: %s": "No s’ha pogut desar l’organització: %s",
-        "The organisation registers could not be read: %s": "No s’han pogut llegir els registres d’organitzacions: %s"
+        "The organisation registers could not be read: %s": "No s’han pogut llegir els registres d’organitzacions: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Massa pujades en poc temps: el servidor només permet un nombre limitat per minut. Espereu un minut i torneu a provar els fitxers que han fallat."
     },
     "nplurals=2; plural=(n != 1);"
 )

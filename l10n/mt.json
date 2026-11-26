@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Semmi l-organizzazzjoni u jekk hijiex attiva.",
         "This organisation cannot be activated: %s": "Din l-organizzazzjoni ma tistax tiġi attivata: %s",
         "The organisation could not be saved: %s": "L-organizzazzjoni ma setgħetx tiġi ssejvjata: %s",
-        "The organisation registers could not be read: %s": "Ir-reġistri tal-organizzazzjonijiet ma setgħux jinqraw: %s"
+        "The organisation registers could not be read: %s": "Ir-reġistri tal-organizzazzjonijiet ma setgħux jinqraw: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Wisq uploads f'ħin qasir: is-server jippermetti numru limitat kull minuta. Stenna minuta, imbagħad erġa' pprova l-fajls li fallew."
     },
     "plurals": {}
 }

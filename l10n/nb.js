@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Oppgi organisasjonen og om den er aktiv.",
         "This organisation cannot be activated: %s": "Denne organisasjonen kan ikke aktiveres: %s",
         "The organisation could not be saved: %s": "Organisasjonen kunne ikke lagres: %s",
-        "The organisation registers could not be read: %s": "Organisasjonsregistrene kunne ikke leses: %s"
+        "The organisation registers could not be read: %s": "Organisasjonsregistrene kunne ikke leses: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "For mange opplastinger på kort tid: serveren tillater et begrenset antall per minutt. Vent et minutt, og prøv deretter filene som mislyktes på nytt."
     },
     "nplurals=2; plural=(n != 1);"
 )

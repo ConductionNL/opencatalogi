@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Наведите организацију и да ли је активна.",
         "This organisation cannot be activated: %s": "Ова организација не може да се активира: %s",
         "The organisation could not be saved: %s": "Организацију није било могуће сачувати: %s",
-        "The organisation registers could not be read: %s": "Регистре организација није било могуће прочитати: %s"
+        "The organisation registers could not be read: %s": "Регистре организација није било могуће прочитати: %s",
+        "Too many uploads in a short time: the server allows a limited number per minute. Wait a minute, then retry the files that failed.": "Превише отпремања у кратком времену: сервер дозвољава ограничен број у минути. Сачекајте минут, а затим поново покушајте са датотекама које нису успеле."
     },
     "plurals": {}
 }
