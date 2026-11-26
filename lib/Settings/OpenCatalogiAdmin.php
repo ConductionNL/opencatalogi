@@ -20,11 +20,8 @@
 
 namespace OCA\OpenCatalogi\Settings;
 
-use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCP\AppFramework\Http\TemplateResponse;
-use OCP\AppFramework\Services\IInitialState;
 use OCP\IConfig;
-use Throwable;
 use OCP\Settings\IDelegatedSettings;
 
 /**
@@ -45,26 +42,11 @@ class OpenCatalogiAdmin implements IDelegatedSettings {
 	private IConfig $config;
 
 	/**
-	 * The initial-state key the settings page reads its version information from.
-	 *
-	 * @var string
-	 */
-	public const VERSION_INFO_STATE = 'version-info';
-
-	/**
 	 * Constructor.
 	 *
-	 * @param IConfig                       $config       System configuration.
-	 * @param IInitialState|null            $initialState Hands values to the settings page with the page itself.
-	 * @param SettingsServiceInterface|null $settings     Reads the app and configuration versions.
-	 *
-	 * @spec exclude pure framework plumbing: constructor dependency injection.
+	 * @param IConfig $config System configuration.
 	 */
-	public function __construct(
-		IConfig $config,
-		private readonly ?IInitialState $initialState = null,
-		private readonly ?SettingsServiceInterface $settings = null,
-	) {
+	public function __construct(IConfig $config) {
 		$this->config = $config;
 
 	}//end __construct()
@@ -72,16 +54,9 @@ class OpenCatalogiAdmin implements IDelegatedSettings {
 	/**
 	 * Get the admin settings form.
 	 *
-	 * The version information goes with the page as initial state, so the
-	 * version card is filled before the page's own requests answer.
-	 *
 	 * @return TemplateResponse
-	 *
-	 * @spec openspec/changes/admin-settings/tasks.md#task-10
 	 */
 	public function getForm() {
-		$this->provideVersionInfo();
-
 		$parameters = [
 			'mySetting' => $this->config->getSystemValue(key: 'open_catalogi_setting', default: true),
 		];
@@ -94,32 +69,6 @@ class OpenCatalogiAdmin implements IDelegatedSettings {
 		);
 
 	}//end getForm()
-
-	/**
-	 * Hand the version information to the page, when it can be read.
-	 *
-	 * Without it the page asks `GET /api/settings/version` itself, as before,
-	 * so a failing read here leaves the page working and only costs a request.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/admin-settings/tasks.md#task-10
-	 */
-	private function provideVersionInfo(): void {
-		if ($this->initialState === null || $this->settings === null) {
-			return;
-		}
-
-		try {
-			$versionInfo = $this->settings->getVersionInfo();
-		} catch (Throwable) {
-			// The page reads the version itself when no initial state is provided.
-			return;
-		}
-
-		$this->initialState->provideInitialState(self::VERSION_INFO_STATE, $versionInfo);
-
-	}//end provideVersionInfo()
 
 	/**
 	 * Get the settings section name.

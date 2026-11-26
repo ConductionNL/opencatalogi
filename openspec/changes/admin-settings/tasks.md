@@ -171,8 +171,8 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - **acceptance_criteria:**
   - GIVEN an admin user navigates to Nextcloud admin settings WHEN the OpenCatalogi section is opened THEN the settings page renders via `settings.js` without errors
 - [x] 10.1 Create `OpenCatalogiAdmin` implementing `ISettings`; `getSection()` returns `'opencatalogi'`; `getPriority()` returns an appropriate integer
-- [x] 10.2 In `getPanel()` use `IInitialState::provideInitialState()` for any values needed by the frontend
-  - 26 Nov (b-opencatalogi): `OpenCatalogiAdmin::getForm()` (Nextcloud's name for the panel method) provides `version-info` from `SettingsService::getVersionInfo()`; an unreadable version provides nothing and the page renders as before. `Settings.vue` starts its version card from it (`src/views/settings/versionInfoState.js`) and still refreshes it from `GET /api/settings/version`. Tests: `OpenCatalogiAdminTest::testTheFormHandsTheVersionInfoToThePage`, `::testAnUnreadableVersionProvidesNothingAndStillRendersThePage`; `versionInfoState.spec.js`.
+- [ ] 10.2 In `getPanel()` use `IInitialState::provideInitialState()` for any values needed by the frontend
+  - 26 Nov (b-opencatalogi): built and backed out. Handing the version information to the page from `OpenCatalogiAdmin::getForm()` needs `SettingsServiceInterface` in the Settings component, and that one cross-component dependency lowers php component independence from 85.78% to 85.76% (gate-123 sig-floor, already below its 93.7% limit on development, fails any further drop). The page reads every value it needs from its own routes today. Left open for a decision: drop this task, provide the state and accept the gate-123 drop, or first move the settings page class into the Service component.
 - [x] 10.3 Register `settings` entry point in `webpack.config.js` pointing to `src/settings.js`
 - [x] 10.4 Register the admin settings section in `appinfo/info.xml` under `<settings><admin>…</admin></settings>`
 - [x] 10.5 Add SPDX header to `OpenCatalogiAdmin.php`
