@@ -365,6 +365,11 @@ fi
 seed_boundary_fixture wooAssessment '{"documentReference":"Boundary fixture: woo assessment","assessment":"niet_openbaar"}' documentReference
 seed_boundary_fixture wooBatch '{"caseReference":"Boundary fixture: woo batch","status":"in_progress"}' caseReference
 seed_boundary_fixture wooRequest "{\"reference\":\"Boundary fixture: woo request\",\"receivedAt\":\"${PAST}\",\"requestedInformation\":\"Boundary fixture: what was asked\",\"status\":\"received\"}" reference
+# officer-accessibility.spec.ts opens every manifest detail page on an object
+# the instance holds; nothing else seeds a glossary term. A glossary term is
+# public, so its title stays clear of the `Boundary fixture:` prefix the
+# public-boundary check looks for.
+seed_boundary_fixture glossary '{"title":"Accessibility fixture: glossary term","summary":"A term the accessibility check opens."}' title
 seed_boundary_fixture publication '{"title":"Boundary fixture: public publication with a withdrawn file","summary":"Public boundary fixture with a withdrawn file.","description":"Published by the CI seed so public-boundary.spec.ts can prove a withdrawn file stays private on a public publication.","audience":"public"}' title
 PUBLIC_WITH_FILE="$BOUNDARY_LAST_ID"
 if [ "$BOUNDARY_CREATED" = 1 ]; then

@@ -181,6 +181,42 @@ export function comingDepublication(publication, now = new Date()) {
 }
 
 /**
+ * The parts of a publication record that change what can be done with it: its
+ * lifecycle state and its publication and depublication dates. The status card
+ * reads its state from the server, so a change here (a lifecycle move from the
+ * page's Actions menu) means it reads again.
+ *
+ * @param {object|null} publication The loaded record.
+ * @return {string|null} `<id>|<state>|<publicationDate>|<depublicationDate>`, or null without an id.
+ * @spec openspec/changes/officer-flow-accessibility/specs/officer-accessibility/spec.md#requirement-the-officer-flow-works-from-the-keyboard-alone-req-ofa-002
+ */
+export function lifecycleKeyOf(publication) {
+	const id = recordIdOf(publication)
+	if (id === null) {
+		return null
+	}
+	const self = publication['@self'] || {}
+	const state = publication.status || self.state || self.status || ''
+	return [id, state, publication.publicationDate || '', publication.depublicationDate || ''].join('|')
+}
+
+/**
+ * The id of a loaded publication record, or null when there is none.
+ *
+ * @param {object|null} publication The publication's properties.
+ * @return {string|null} The id.
+ * @spec openspec/changes/officer-flow-accessibility/specs/officer-accessibility/spec.md#requirement-the-officer-flow-works-from-the-keyboard-alone-req-ofa-002
+ */
+function recordIdOf(publication) {
+	if (!publication || typeof publication !== 'object') {
+		return null
+	}
+	const self = publication['@self'] || {}
+	const id = String(publication.id ?? self.id ?? publication.uuid ?? '')
+	return id === '' ? null : id
+}
+
+/**
  * A record's id and depublication date as one key, or null when there is no
  * loaded record yet (REQ-PSG-003).
  *
@@ -189,12 +225,8 @@ export function comingDepublication(publication, now = new Date()) {
  * @spec openspec/changes/publication-schedule-guards/tasks.md#task-3.1
  */
 export function depublicationKeyOf(publication) {
-	if (!publication || typeof publication !== 'object') {
-		return null
-	}
-	const self = publication['@self'] || {}
-	const id = String(publication.id ?? self.id ?? publication.uuid ?? '')
-	if (id === '') {
+	const id = recordIdOf(publication)
+	if (id === null) {
 		return null
 	}
 	return id + '|' + String(publication.depublicationDate ?? '')
