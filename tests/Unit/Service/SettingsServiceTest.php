@@ -17,6 +17,7 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Service\SettingsLoadFailedException;
 use RuntimeException;
 
 /**
@@ -1071,14 +1072,14 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->logger->expects($this->once())
 			->method('error')
 			->with(
-				'OpenCatalogi settings: importing the configuration failed',
+				'OpenCatalogi settings: loading the configuration failed',
 				$this->callback(callback: static fn (array $context): bool => $context['exception'] instanceof \Exception)
 			);
 
 		$result = $this->service->manualImport(true);
 
-		// The loadSettings() call throws and manualImport() catches it: logged, and the
-		// caller gets a generic failure without the exception's text.
+		// The load logs the failure once and throws; manualImport() does not log
+		// it again, and the caller gets a generic failure without the exception's text.
 		$this->assertFalse($result['success']);
 		$this->assertSame(expected: 'Import failed. The details are in the Nextcloud log.', actual: $result['error']);
 		$this->assertStringNotContainsString(needle: 'App path not found', haystack: json_encode($result));
@@ -1164,6 +1165,38 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->service->loadSettings();
 
 	}//end testLoadSettingsFileNotFound()
+
+	/**
+	 * A failed load is logged with the full exception, and the caller's exception names no path.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-settings/tasks.md#task-4
+	 */
+	public function testAFailedLoadIsLoggedAndTheCallerGetsNoDetails(): void {
+		$this->appManager->method('getAppPath')
+			->with('opencatalogi')
+			->willReturn('/tmp/nonexistent-app-path');
+
+		$this->logger->expects($this->once())
+			->method('error')
+			->with(
+				'OpenCatalogi settings: loading the configuration failed',
+				$this->callback(
+					callback: static fn (array $context): bool => str_contains((string)$context['exception']->getMessage(), '/tmp/nonexistent-app-path')
+				)
+			);
+
+		try {
+			$this->service->loadSettings();
+			$this->fail(message: 'A missing configuration file must fail the load.');
+		} catch (SettingsLoadFailedException $e) {
+			$this->assertSame(expected: SettingsLoadFailedException::MESSAGE, actual: $e->getMessage());
+			$this->assertStringNotContainsString(needle: 'nonexistent-app-path', haystack: $e->getMessage());
+			$this->assertStringContainsString(needle: 'nonexistent-app-path', haystack: (string)$e->getPrevious()?->getMessage());
+		}
+
+	}//end testAFailedLoadIsLoggedAndTheCallerGetsNoDetails()
 
 	public function testLoadSettingsInvalidJson(): void {
 		$tmpDir = sys_get_temp_dir() . '/opencatalogi_test_' . uniqid();

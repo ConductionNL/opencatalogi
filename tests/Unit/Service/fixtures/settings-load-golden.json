@@ -1,6 +1,6 @@
 {
     "no file": {
-        "error": "RuntimeException: Failed to load settings: Configuration file not found: <root>/apps-extra/opencatalogi/lib/Settings/publication_register.json",
+        "error": "OCA\\OpenCatalogi\\Service\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
         "log": {
             "imported": [],
             "reconciled": [],
@@ -9,7 +9,7 @@
         }
     },
     "invalid json": {
-        "error": "RuntimeException: Failed to load settings: Invalid JSON in configuration file: Syntax error",
+        "error": "OCA\\OpenCatalogi\\Service\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
         "log": {
             "imported": [],
             "reconciled": [],
@@ -1438,7 +1438,7 @@
         }
     },
     "no openregister": {
-        "error": "RuntimeException: Failed to load settings: Configuration service is not available.",
+        "error": "OCA\\OpenCatalogi\\Service\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
         "log": {
             "imported": [],
             "reconciled": [],
@@ -1447,7 +1447,7 @@
         }
     },
     "import fails": {
-        "error": "RuntimeException: Failed to load settings: import broke",
+        "error": "OCA\\OpenCatalogi\\Service\\SettingsLoadFailedException: Failed to load settings. The details are in the Nextcloud log.",
         "log": {
             "imported": [
                 {

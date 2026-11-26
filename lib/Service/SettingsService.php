@@ -1372,12 +1372,17 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @param boolean $force Whether to force the import regardless of version checks.
 	 *
+	 * A failure is logged here with the full exception, and the caller gets a
+	 * RuntimeException whose message names no path or OpenRegister internal: the
+	 * original is its previous exception, for a caller that logs it.
+	 *
 	 * @return array The loaded settings configuration.
-	 * @throws \RuntimeException If settings loading fails.
+	 * @throws SettingsLoadFailedException If settings loading fails, with a generic message.
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md
+	 * @spec openspec/changes/admin-settings/tasks.md#task-4
 	 */
 	public function loadSettings(bool $force = false): array {
 		try {
@@ -1402,7 +1407,8 @@ class SettingsService implements SettingsServiceInterface {
 
 			return $result;
 		} catch (\Exception $e) {
-			throw new RuntimeException('Failed to load settings: ' . $e->getMessage());
+			$this->recordFailure(context: 'loading the configuration', exception: $e);
+			throw new SettingsLoadFailedException(previous: $e);
 		}//end try
 
 	}//end loadSettings()
@@ -2633,6 +2639,7 @@ class SettingsService implements SettingsServiceInterface {
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md
+	 * @spec openspec/changes/admin-settings/tasks.md#task-4
 	 */
 	public function manualImport(bool $forceImport = false): array {
 		try {
@@ -2663,7 +2670,11 @@ class SettingsService implements SettingsServiceInterface {
 		} catch (\Exception $e) {
 			// The exception's text can name paths or OpenRegister internals:
 			// the log gets it, the caller gets a generic failure (admin-settings, Security).
-			$this->recordFailure(context: 'importing the configuration', exception: $e);
+			// A failed load was logged by loadSettings() already.
+			if (($e instanceof SettingsLoadFailedException) === false) {
+				$this->recordFailure(context: 'importing the configuration', exception: $e);
+			}
+
 			return [
 				'success' => false,
 				'message' => 'Import failed. The details are in the Nextcloud log.',

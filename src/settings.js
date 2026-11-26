@@ -5,17 +5,17 @@
 import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
 import { translatePlural as n, translate as t } from '@nextcloud/l10n'
 /**
- * Admin settings bundle entry-point — mounts Settings.vue on #settings. The
- * markdown editor loads on demand (components/markdownEditorSetup.js).
+ * Admin settings bundle entry-point — mounts AdminRoot.vue (which renders
+ * Settings.vue) on #opencatalogi-settings. The markdown editor loads on demand
+ * (components/markdownEditorSetup.js).
  *
  * @spec openspec/specs/admin-settings/spec.md
+ * @spec openspec/changes/admin-settings/tasks.md#task-11
  */
 import { createApp } from 'vue'
-import AdminSettings from './views/settings/Settings.vue'
+import AdminRoot from './views/settings/AdminRoot.vue'
 
-
-
-const app = createApp(AdminSettings)
+const app = createApp(AdminRoot)
 
 // Vue 3 has no `Vue.prototype`; per-app globals live on
 // `app.config.globalProperties`. The old `beforeCreate` mixin existed only to

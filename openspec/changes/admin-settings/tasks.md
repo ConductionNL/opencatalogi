@@ -39,6 +39,7 @@ Before implementation, verify no overlap with existing OpenRegister services:
   - GIVEN OpenRegister is installed WHEN `getSettings()` is called THEN it returns all 7 object type configs, `openRegisters: true`, and `availableRegisters` enriched with full schema objects
   - GIVEN OpenRegister is absent WHEN `getSettings()` is called THEN `openRegisters: false`, `availableRegisters: []`
 - [ ] 2.1 Inject `IAppConfig`, `RegisterMapper`, `SchemaMapper`, `IAppManager` via constructor
+  - 26 Nov (b-opencatalogi): `IAppConfig` and `IAppManager` are constructor-injected. `RegisterMapper` and `SchemaMapper` are OpenRegister classes, and OpenCatalogi must load (and answer `openRegisters: false`, REQ-SET-013) without OpenRegister installed; a constructor that type-hints them makes the container fail to build `SettingsService` on such an instance. So they are resolved on use through `getRegisterMapper()` / `getSchemaMapper()`. Left open for a decision: drop the two mappers from this task, or require OpenRegister for the settings service.
 - [x] 2.2 Add `getSettings(): array` — reads all 21 `{type}_{field}` config keys plus 3 publishing keys
 - [x] 2.3 Detect OpenRegister availability via `IAppManager::isInstalled('openregister')` and minimum version check (0.1.7)
 - [x] 2.4 Call `RegisterMapper::findAll()` to get available registers; for each, call `SchemaMapper::find()` for each schema ID to build the enriched `schemas` array
@@ -76,8 +77,9 @@ Before implementation, verify no overlap with existing OpenRegister services:
   - 26 Nov: verified and pinned. `loadSettings()` calls `updateObjectTypeConfiguration()` with the import result; `SettingsObjectTypeConfigurationTest::testLoadSettingsWritesTheTypeKeysFromTheImport` runs a load against a mocked `ConfigurationService` and asserts the import comes first and `catalog_schema`, `catalog_register`, `glossary_schema` and `glossary_register` are then written from what it created. The key-by-key mapping is pinned by the other cases of that file.
 - [x] 4.3 Return import result array with `registers`, `schemas`, `objects` counts
   - 26 Nov: verified. `loadSettings()` returns OpenRegister's import result (`registers`, `schemas`, `objects`, as `importFromApp()` answers them, with the schemas a non-forced load added); the repair step counts them into "Configuration loaded: N registers, N schemas, N objects" (`InitializeSettingsTest::testRunWhenOpenRegisterInstalled`). `testLoadSettingsWritesTheTypeKeysFromTheImport` asserts the schemas come back.
-- [ ] 4.4 Catch any exception from `ConfigurationService`; log with `$this->logger->error()` and return a failure indicator — never propagate `$e->getMessage()` to callers
+- [x] 4.4 Catch any exception from `ConfigurationService`; log with `$this->logger->error()` and return a failure indicator — never propagate `$e->getMessage()` to callers
   - 24 Nov: no caller sees an exception's text any more. `SettingsController` logs every 500 through `SettingsService::recordFailure()` and answers with a generic message, and `manualImport()` logs and returns a generic failure (`SettingsControllerTest::testAServerFailureIsLoggedAndAnsweredGenerically`, `SettingsServiceTest::testManualImportForced`). Left unticked: `loadSettings()` itself still rethrows as a `RuntimeException` carrying the message to its in-process callers (controller, `InitializeSettings`, `FirstRunSettings`) instead of returning a failure indicator.
+  - 26 Nov (b-opencatalogi): `loadSettings()` logs the failure itself (`recordFailure()`, `logger->error()` with the exception) and throws `SettingsLoadFailedException`, whose message is the generic "Failed to load settings. The details are in the Nextcloud log." and whose previous exception is the original. The failure indicator stays an exception, not a return value: `InitializeSettings`, `FirstRunSettings`, `SetupSettingsStep` and the controller tell success from failure by it, and a returned array would read as an import of nothing. `manualImport()` does not log it a second time. `initialize()`'s `errors` and the repair step's warning now carry the generic text. Tests: `SettingsServiceTest::testAFailedLoadIsLoggedAndTheCallerGetsNoDetails`, `::testManualImportForced` (one log line), the re-recorded `settings-load-golden.json` and `settings-read-golden.json`.
 
 ---
 
@@ -93,6 +95,7 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - [x] 5.1 Add `shouldLoadSettings(): bool` — compares app version (from `IAppManager` or `\OCP\App::getAppVersion()`) with `configuredVersion` from `IAppConfig` using `version_compare()`
 - [x] 5.2 Add `getVersionInfo(): array` — returns `['appVersion' => ..., 'configuredVersion' => ..., 'match' => ...]`
 - [ ] 5.3 After successful import, call `IAppConfig::setValueString('opencatalogi', 'configuredVersion', $appVersion)` to persist the new version
+  - 26 Nov (b-opencatalogi): not built on purpose. The configured version is OpenRegister's: `importFromApp()` records it and `getVersionInfo()` reads it back through `ConfigurationService::getConfiguredAppVersion()` (13.4 and 13.5 passed live on that). A second `configuredVersion` key in OpenCatalogi's app config would be written and read by nothing, and could disagree with OpenRegister's. Left open for a decision: drop this task, or move the source of truth to OpenCatalogi.
 
 ---
 
@@ -169,6 +172,7 @@ Before implementation, verify no overlap with existing OpenRegister services:
   - GIVEN an admin user navigates to Nextcloud admin settings WHEN the OpenCatalogi section is opened THEN the settings page renders via `settings.js` without errors
 - [x] 10.1 Create `OpenCatalogiAdmin` implementing `ISettings`; `getSection()` returns `'opencatalogi'`; `getPriority()` returns an appropriate integer
 - [ ] 10.2 In `getPanel()` use `IInitialState::provideInitialState()` for any values needed by the frontend
+  - 26 Nov (b-opencatalogi): built and backed out. Handing the version information to the page from `OpenCatalogiAdmin::getForm()` needs `SettingsServiceInterface` in the Settings component, and that one cross-component dependency lowers php component independence from 85.78% to 85.76% (gate-123 sig-floor, already below its 93.7% limit on development, fails any further drop). The page reads every value it needs from its own routes today. Left open for a decision: drop this task, provide the state and accept the gate-123 drop, or first move the settings page class into the Service component.
 - [x] 10.3 Register `settings` entry point in `webpack.config.js` pointing to `src/settings.js`
 - [x] 10.4 Register the admin settings section in `appinfo/info.xml` under `<settings><admin>…</admin></settings>`
 - [x] 10.5 Add SPDX header to `OpenCatalogiAdmin.php`
@@ -185,7 +189,8 @@ Before implementation, verify no overlap with existing OpenRegister services:
   - GIVEN the admin settings page is opened WHEN `Settings.vue` mounts THEN it calls `GET /api/settings`, populates all dropdowns, and saves changes via `POST /api/settings`
   - GIVEN `AdminRoot.vue` is the settings entry root WHEN the vue-router initializes THEN `AdminRoot.vue` is NOT registered as a route
 - [x] 11.1 Create `src/settings.js` entry point that mounts `AdminRoot.vue` (not `App.vue`) — no vue-router, no Pinia store init for catalogs, etc.
-- [ ] 11.2 Create `AdminRoot.vue` as a minimal wrapper that renders `Settings.vue`; add SPDX header
+- [x] 11.2 Create `AdminRoot.vue` as a minimal wrapper that renders `Settings.vue`; add SPDX header
+  - 26 Nov (b-opencatalogi): `src/views/settings/AdminRoot.vue` renders `Settings.vue` only, and `src/settings.js` mounts it on `#opencatalogi-settings` with no router. Tests: `AdminRoot.spec.js` (renders the page, registers it locally), `tests/vitest/mainEntry.spec.js` (the bundle mounts `AdminRoot`).
 - [ ] 11.3 Create `Settings.vue` with:
   - `CnVersionInfoCard` as the first element (required, ADR-004)
   - `CnRegisterMapping` component for the 7 object type → register/schema mappings

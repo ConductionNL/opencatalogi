@@ -61,7 +61,7 @@ vi.mock('vue', async (importOriginal) => ({
 }))
 vi.mock('../../src/App.vue', () => ({ default: { name: 'App' } }))
 vi.mock('../../src/registry.js', () => ({ default: { FederationDirectory: { name: 'FederationDirectory' } } }))
-vi.mock('../../src/views/settings/Settings.vue', () => ({ default: { name: 'AdminSettings' } }))
+vi.mock('../../src/views/settings/AdminRoot.vue', () => ({ default: { name: 'AdminRoot' } }))
 vi.mock('../../src/components/widgets/AnnualReportWidget.vue', () => ({ default: { name: 'AnnualReportWidget' } }))
 vi.mock('../../src/components/widgets/AuditTrailWidget.vue', () => ({ default: { name: 'AuditTrailWidget' } }))
 vi.mock('../../src/components/widgets/MetadataSuggestionsWidget.vue', () => ({ default: { name: 'MetadataSuggestionsWidget' } }))
@@ -254,11 +254,11 @@ describe('src/main.js', () => {
 })
 
 describe('src/settings.js', () => {
-	it('mounts the admin settings on its own host, without loading the markdown editor', async () => {
+	it('mounts the admin root on its own host, without loading the markdown editor', async () => {
 		await import('../../src/settings.js')
 		const app = vueApp.apps[vueApp.apps.length - 1]
 
-		expect(app.root).toEqual({ name: 'AdminSettings' })
+		expect(app.root).toEqual({ name: 'AdminRoot' })
 		expect(app.config.globalProperties.$vMdEditorLang).toBe('en-US')
 		expect(app.use).not.toHaveBeenCalled()
 		expect(editor.use).not.toHaveBeenCalled()
