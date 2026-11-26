@@ -878,11 +878,12 @@ export const useSearchStore = defineStore('search', {
 		async loadInitialResults() {
 			console.log('Loading initial search results with facets...')
 
-			// First discover facetable fields
-			await this.discoverFacetableFields()
-
-			// Then load results
-			await this.searchPublications({ _limit: 20, _page: 1 })
+			// Facet discovery and the first page are independent requests: send
+			// both at once instead of waiting a full round trip for the facets.
+			await Promise.all([
+				this.discoverFacetableFields(),
+				this.searchPublications({ _limit: 20, _page: 1 }),
+			])
 		},
 
 		/**
