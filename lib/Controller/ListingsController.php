@@ -163,8 +163,9 @@ class ListingsController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each optional filter is one guarded branch.
 	 *
+	 * @spec openspec/changes/file-management/tasks.md#task-6.5
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	public function index(): JSONResponse {
