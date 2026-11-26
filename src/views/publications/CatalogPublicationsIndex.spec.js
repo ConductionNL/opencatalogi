@@ -384,6 +384,28 @@ describe('CatalogPublicationsIndex', () => {
 		).toBeNull()
 	})
 
+	it('starts each publication row with its status icon, colored by status, and leaves other rows plain', async () => {
+		objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
+		const { wrapper } = mountPage()
+		await flushPromises()
+
+		const { rowIcon, rowClass } = indexPage(wrapper).vm.$attrs
+		const self = { register: 19, schema: 173 }
+		const published = { '@self': self, publicationDate: '2020-01-01' }
+		const depublished = { ...published, depublicationDate: '2021-01-01' }
+		const concept = { '@self': self }
+		const other = { '@self': { register: 19, schema: 184 }, publicationDate: '2020-01-01' }
+
+		expect(rowIcon(published)).toBe('ListBoxOutline')
+		expect(rowClass(published)).toBe('publication-row--success')
+		expect(rowIcon(depublished)).toBe('AlertOutline')
+		expect(rowClass(depublished)).toBe('publication-row--error')
+		expect(rowIcon(concept)).toBe('Pencil')
+		expect(rowClass(concept)).toBe('publication-row--warning')
+		expect(rowIcon(other)).toBe('')
+		expect(rowClass(other)).toBe('')
+	})
+
 	it('uses the first pair, with the other-pair config, for a catalog without the publication pair', async () => {
 		objectStore.menuCatalogs = [catalog('code', [19], [184])]
 		const otherPairConfig = { columns: ['@self.name', '@self.summary'] }

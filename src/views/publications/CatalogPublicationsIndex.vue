@@ -60,6 +60,8 @@
 		:rowClickToView="true"
 		:viewTo="rowTarget"
 		:cardAccent="cardAccent"
+		:rowIcon="rowStatusIcon"
+		:rowClass="rowStatusClass"
 		:editOpensDetail="true"
 		@vue:mounted="followDeleteTarget"
 		@rowClick="onRowOpen"
@@ -556,6 +558,30 @@ export default {
 		},
 
 		/**
+		 * The status icon a publication row starts with, the one its card shows;
+		 * other rows get none.
+		 *
+		 * @param {object} row The table row.
+		 * @return {string} The icon name, or '' for none.
+		 * @spec openspec/changes/publication-list-status-icons/specs/publications/spec.md#requirement-a-publication-row-starts-with-its-status-icon-req-psi-001
+		 */
+		rowStatusIcon(row) {
+			return this.cardAccent(row)?.icon ?? ''
+		},
+
+		/**
+		 * The class that colors a publication row's status icon by its status.
+		 *
+		 * @param {object} row The table row.
+		 * @return {string} The class, or '' for none.
+		 * @spec openspec/changes/publication-list-status-icons/specs/publications/spec.md#requirement-a-publication-row-starts-with-its-status-icon-req-psi-001
+		 */
+		rowStatusClass(row) {
+			const variant = this.cardAccent(row)?.variant
+			return variant ? `publication-row--${variant}` : ''
+		},
+
+		/**
 		 * A publication card's status color and icon; other rows get none.
 		 *
 		 * @param {object} row The card's object.
@@ -703,5 +729,18 @@ export default {
 	display: flex;
 	justify-content: center;
 	padding: calc(var(--default-grid-baseline) * 10);
+}
+
+/* A publication row's status icon, in the colors the card view uses. */
+:deep(.publication-row--success .cn-table-col--icon .material-design-icon) {
+	color: var(--color-element-success);
+}
+
+:deep(.publication-row--warning .cn-table-col--icon .material-design-icon) {
+	color: var(--color-element-warning);
+}
+
+:deep(.publication-row--error .cn-table-col--icon .material-design-icon) {
+	color: var(--color-element-error);
 }
 </style>
