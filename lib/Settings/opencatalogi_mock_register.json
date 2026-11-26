@@ -43,9 +43,7 @@
         "title": "Omgevingsplannen",
         "titleEn": "Environment plans",
         "mapsTo": "infocat002",
-        "schemas": [
-          "publication"
-        ]
+        "schemas": []
       },
       {
         "@self": {
