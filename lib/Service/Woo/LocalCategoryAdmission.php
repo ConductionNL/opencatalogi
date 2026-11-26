@@ -70,6 +70,7 @@ class LocalCategoryAdmission {
 	 * Returns: The code, the record when admitted, and the reason when refused.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-locally-added-category-publishes-under-a-waardelijst-member-req-wic-002
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function admit(array $stored, array $bundled): array {
 		$code = strtolower(trim((string)($stored['code'] ?? '')));
@@ -86,7 +87,12 @@ class LocalCategoryAdmission {
 			return $this->refused(code: $code, reason: 'the code is already a waardelijst member');
 		}
 
-		$member = $this->tooiVocabulary->resolveInformatiecategorie($this->text(value: ($stored['mapsTo'] ?? null)));
+		try {
+			$member = $this->tooiVocabulary->resolveInformatiecategorie($this->text(value: ($stored['mapsTo'] ?? null)));
+		} catch (\RuntimeException) {
+			return $this->refused(code: $code, reason: 'the informatiecategorieen waardelijst cannot be read from the vocabulary register');
+		}
+
 		if ($member === null) {
 			return $this->refused(code: $code, reason: 'mapsTo names no member of the informatiecategorieen waardelijst');
 		}

@@ -723,6 +723,8 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @param string               $slug The publication schema's slug.
 	 *
 	 * @return array{uri: string, label: string}|null The member, or null.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function activeMappingCategory(array $row, string $slug): ?array {
 		if (($row['active'] ?? false) !== true
@@ -732,7 +734,12 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 			return null;
 		}
 
-		return $this->tooiVocabulary->resolveInformatiecategorie($this->stringOrNull(value: ($row['informatiecategorie'] ?? null)));
+		try {
+			return $this->tooiVocabulary->resolveInformatiecategorie($this->stringOrNull(value: ($row['informatiecategorie'] ?? null)));
+		} catch (\RuntimeException) {
+			// An unreadable vocabulary register resolves no category: the axis is omitted.
+			return null;
+		}
 	}//end activeMappingCategory()
 
 	/**
@@ -764,9 +771,16 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @return array|null The documenthandelingen element, or null.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function handlingElement(array $publication, string $handlingTime): ?array {
-		$handling = $this->tooiVocabulary->resolveSoortHandeling($this->stringOrNull(value: $publication['soortHandeling'] ?? null));
+		try {
+			$handling = $this->tooiVocabulary->resolveSoortHandeling($this->stringOrNull(value: $publication['soortHandeling'] ?? null));
+		} catch (\RuntimeException) {
+			// An unreadable vocabulary register resolves no handling type: the element is omitted.
+			$handling = null;
+		}
+
 		if ($handling === null) {
 			return null;
 		}

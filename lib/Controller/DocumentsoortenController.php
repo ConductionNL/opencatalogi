@@ -48,7 +48,7 @@ class DocumentsoortenController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The current user session.
-	 * @param DocumentTypeVocabularyInterface $vocabulary The bundled DiWoo value lists.
+	 * @param DocumentTypeVocabularyInterface $vocabulary The DiWoo value lists from the vocabulary register.
 	 */
 	public function __construct(
 		$appName,

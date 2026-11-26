@@ -189,6 +189,37 @@ class WooCategoryRegistryTest extends TestCase {
 		);
 	}
 
+	/**
+	 * REQ-WVC-001: without a readable vocabulary register no category is served from a copy:
+	 * the waardelijst members are gone, a local category is refused, a document resolves to nothing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testAnUnreadableRegisterServesNoCategory(): void {
+		$row = $this->createMock(ObjectEntity::class);
+		$row->method('jsonSerialize')->willReturn(['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat018']);
+		$schema = $this->environmentAwareDouble(Schema::class, ['getId']);
+		$schema->method('getId')->willReturn(42);
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn($schema);
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturn(['results' => [$row], 'total' => 1]);
+		$settings = $this->createMock(SettingsService::class);
+		$settings->method('getObjectService')->willReturn($objectService);
+		$settings->method('getSchemaMapper')->willReturn($schemaMapper);
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->atLeastOnce())->method('warning');
+		$tooi = \Unit\Support\RecordedTooiRegister::unreadableService();
+		$registry = new WooCategoryRegistry($tooi, $settings, $logger, new LocalCategoryAdmission($tooi));
+
+		$this->assertSame([], $registry->all());
+		$this->assertStringContainsString('cannot be read', $registry->rejected()['aanbestedingen']);
+		$this->assertNull($registry->resolveForDocument('infocat012'));
+		$this->assertNull($registry->resolveForDocument('aanbestedingen'));
+	}
+
 	public function testTheEighteenWaardelijstMembersNeedNoStoredRow(): void {
 		$all = $this->registry()->all();
 

@@ -272,6 +272,7 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 * @param string|null $value The declared handling type, or null for the default.
 	 *
 	 * @return string The needle.
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function soortHandelingNeedle(?string $value): string {
 		$needle = mb_strtolower(trim((string)($value ?? self::DEFAULT_SOORTHANDELING)));
@@ -496,6 +497,7 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 * @param string|null $value The value as given.
 	 *
 	 * @return array{code: string, label: string, uri: string}|null The member, or null.
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function resolveMember(array $list, ?string $value): ?array {
 		$needle = mb_strtolower(trim((string)$value));
@@ -521,6 +523,7 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 * @return array<int, array{code: string, label: string, uri: string}> The members.
 	 *
 	 * @throws RuntimeException When the vocabulary register cannot be read.
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function membersOf(string $scheme): array {
 		$members = [];
@@ -538,6 +541,7 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 * @param string $uri The URI.
 	 *
 	 * @return string The code.
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private static function codeOf(string $uri): string {
 		$slash = strrpos($uri, '/');
@@ -556,6 +560,7 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 * @return array<string, array{label: string, notation: string, deprecated: bool}> Keyed by concept URI.
 	 *
 	 * @throws RuntimeException When the vocabulary register cannot be read; no bundled copy stands in.
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function conceptsOf(string $scheme): array {
 		if (isset($this->schemes[$scheme]) === true) {

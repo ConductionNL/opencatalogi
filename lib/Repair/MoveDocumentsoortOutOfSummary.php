@@ -221,6 +221,7 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	 *
 	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
 	 * @SuppressWarnings(PHPMD.StaticAccess) RequiredToPublish::recordGaps() is a pure record transform.
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function moveOne(array $publication, array $scope): void {
 		$summary = trim((string)($publication['summary'] ?? ''));
@@ -229,7 +230,13 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 			return;
 		}
 
-		$member = $this->vocabulary->resolveDocumentsoort($summary);
+		try {
+			$member = $this->vocabulary->resolveDocumentsoort($summary);
+		} catch (\RuntimeException) {
+			// Without the documentsoorten list nothing can be matched; a later run moves it.
+			$member = null;
+		}
+
 		if ($member === null || $stored !== '') {
 			$this->counts['left']++;
 			return;

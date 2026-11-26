@@ -103,9 +103,11 @@ class MoveDocumentsoortOutOfSummaryTest extends TestCase {
 	/**
 	 * Run the step once over the store.
 	 *
+	 * @param \OCA\OpenCatalogi\Service\TooiVocabularyService|null $vocabulary The value lists; the recorded ones by default.
+	 *
 	 * @return void
 	 */
-	private function runStep(): void {
+	private function runStep(?\OCA\OpenCatalogi\Service\TooiVocabularyService $vocabulary = null): void {
 		$objects = $this->environmentAwareDouble(\OCA\OpenRegister\Service\ObjectService::class, ['searchObjectsPaginated', 'saveObject']);
 		$objects->method('searchObjectsPaginated')->willReturnCallback(
 			fn (array $query = []): array => ($query['@self'] === ['register' => '7', 'schema' => '12'] && $query['_page'] === 1)
@@ -151,8 +153,25 @@ class MoveDocumentsoortOutOfSummaryTest extends TestCase {
 			}
 		);
 
-		(new MoveDocumentsoortOutOfSummary($settings, \Unit\Support\RecordedTooiRegister::service(), $config, $this->createMock(LoggerInterface::class)))->run($output);
+		(new MoveDocumentsoortOutOfSummary($settings, ($vocabulary ?? \Unit\Support\RecordedTooiRegister::service()), $config, $this->createMock(LoggerInterface::class)))->run($output);
 	}//end runStep()
+
+	/**
+	 * REQ-WVC-001: without a readable vocabulary register nothing is moved; the summary stays for a later run.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testAnUnreadableRegisterMovesNothing(): void {
+		$this->store = ['pub-1' => ['id' => 'pub-1', 'title' => 'Besluit', 'summary' => ' besluit ', '@self' => ['id' => 'pub-1']]];
+		$this->runStep(vocabulary: \Unit\Support\RecordedTooiRegister::unreadableService());
+
+		$this->assertSame(' besluit ', $this->store['pub-1']['summary']);
+		$this->assertArrayNotHasKey('documentsoort', $this->store['pub-1']);
+		$this->assertSame([], $this->saves);
+		$this->assertStringContainsString('0 publication(s) moved, 1 summary(ies) left', $this->info[0]);
+	}//end testAnUnreadableRegisterMovesNothing()
 
 	/**
 	 * REQ-DWP-005: a summary that is a document type moves to its field and the summary is emptied.

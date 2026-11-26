@@ -121,7 +121,7 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 	/**
 	 * Constructor for WooCategoryRegistry.
 	 *
-	 * @param TooiVocabularyService $tooiVocabulary The waardelijst resolver, which owns the bundled 18.
+	 * @param TooiVocabularyService $tooiVocabulary The waardelijst resolver, which reads the 18 from the vocabulary register.
 	 * @param SettingsService $settingsService The settings service, used to reach OpenRegister.
 	 * @param LoggerInterface $logger The logger, which records every refused local category.
 	 * @param LocalCategoryAdmission $admission The decision about one stored category.
@@ -310,9 +310,16 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 	 * @return array{uri: string, label: string}|null The waardelijst member, or null.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-locally-added-category-publishes-under-a-waardelijst-member-req-wic-002
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function resolveForDocument(?string $value): ?array {
-		$member = $this->tooiVocabulary->resolveInformatiecategorie($value);
+		try {
+			$member = $this->tooiVocabulary->resolveInformatiecategorie($value);
+		} catch (\RuntimeException) {
+			// Without the waardelijst no category resolves, a local one neither: it maps onto a member.
+			return null;
+		}
+
 		if ($member !== null) {
 			return $member;
 		}
@@ -359,16 +366,27 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 	}//end refuse()
 
 	/**
-	 * The 18 waardelijst members as category records.
+	 * The waardelijst members the vocabulary register holds, as category records.
 	 *
-	 * @return array<string, array<string, mixed>> The records, keyed by code.
+	 * @return array<string, array<string, mixed>> The records, keyed by code; none when the register cannot be read.
 	 *
-	 * @spec exclude Shapes the already-resolved waardelijst into the record this class returns.
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function bundled(): array {
 		$english = WooCategory::ALL;
 		$records = [];
-		foreach ($this->tooiVocabulary->informatiecategorieList() as $code => $member) {
+		try {
+			$members = $this->tooiVocabulary->informatiecategorieList();
+		} catch (\RuntimeException $e) {
+			// No stale copy: without the register there are no waardelijst categories until it answers again.
+			$this->logger->warning(
+				'OpenCatalogi cannot read the information categories from the vocabulary register: ' . $e->getMessage(),
+				['app' => 'opencatalogi', 'exception' => $e]
+			);
+			$members = [];
+		}
+
+		foreach ($members as $code => $member) {
 			$records[$code] = [
 				'code' => $code,
 				'label' => $member['label'],

@@ -62,6 +62,22 @@ class LocalCategoryAdmissionTest extends TestCase {
 		$this->assertSame('the category stores no code', $decision['reason']);
 	}
 
+	/**
+	 * REQ-WVC-001: a local category is refused while the waardelijst it maps onto cannot be read.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testARowIsRefusedWhileTheRegisterCannotBeRead(): void {
+		$admission = new LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::unreadableService());
+		$decision = $admission->admit(stored: ['code' => 'aanbestedingen', 'mapsTo' => 'infocat010'], bundled: []);
+
+		$this->assertNull($decision['record']);
+		$this->assertSame('aanbestedingen', $decision['code']);
+		$this->assertSame('the informatiecategorieen waardelijst cannot be read from the vocabulary register', $decision['reason']);
+	}
+
 	public function testABlankCodeIsTheSameAsNoCode(): void {
 		$decision = $this->admission->admit(stored: ['code' => '   ', 'mapsTo' => 'infocat010'], bundled: []);
 

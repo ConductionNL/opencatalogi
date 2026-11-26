@@ -150,6 +150,7 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 	 * @return array<int, array{key: string, label: string, type: string, options: array<int, string>}> The fields.
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function hermiqFields(array $publication): array {
 		$fields = [];
@@ -158,12 +159,13 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 			$fields[] = ['key' => 'wooCategory', 'label' => 'Woo information category', 'type' => 'select', 'options' => $categories];
 		}
 
-		if ($this->isSet(value: ($publication['soortHandeling'] ?? null)) === false) {
+		$handlings = $this->handlingLabels();
+		if ($this->isSet(value: ($publication['soortHandeling'] ?? null)) === false && $handlings !== []) {
 			$fields[] = [
 				'key' => 'soortHandeling',
 				'label' => 'Handling type of the document',
 				'type' => 'select',
-				'options' => array_keys($this->tooiVocabulary->soortHandelingList()),
+				'options' => $handlings,
 			];
 		}
 
@@ -254,9 +256,10 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 	 * @return array{field: string, value: string, valueLabel: string, source: string, reason: string}|null The proposal.
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-hermiq-may-add-suggestions-never-replace-them-req-wms-002
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function hermiqHandlingProposal(string $field, string $value): ?array {
-		$member = $this->tooiVocabulary->resolveSoortHandeling(trim($value));
+		$member = $this->handlingMember(value: trim($value));
 		if ($member === null || trim($value) === '') {
 			return null;
 		}
@@ -274,14 +277,52 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 	 * @return array<string, mixed>|null The TOOI member.
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function resolvedCategory(?array $record): ?array {
 		if ($record === null) {
 			return null;
 		}
 
-		return $this->tooiVocabulary->resolveInformatiecategorie((string)($record['tooiUri'] ?? ''));
+		try {
+			return $this->tooiVocabulary->resolveInformatiecategorie((string)($record['tooiUri'] ?? ''));
+		} catch (\RuntimeException) {
+			// An unreadable vocabulary register resolves no category, so none is proposed.
+			return null;
+		}
 	}//end resolvedCategory()
+
+	/**
+	 * The handling-type member a value names, or null when it names none or the register cannot be read.
+	 *
+	 * @param string $value The handling type.
+	 *
+	 * @return array{uri: string, label: string}|null The member.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	private function handlingMember(string $value): ?array {
+		try {
+			return $this->tooiVocabulary->resolveSoortHandeling($value);
+		} catch (\RuntimeException) {
+			return null;
+		}
+	}//end handlingMember()
+
+	/**
+	 * The handling-type labels a person or Hermiq may choose from: none when the register cannot be read.
+	 *
+	 * @return array<int, string> The labels.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	private function handlingLabels(): array {
+		try {
+			return array_keys($this->tooiVocabulary->soortHandelingList());
+		} catch (\RuntimeException) {
+			return [];
+		}
+	}//end handlingLabels()
 
 	/**
 	 * The information categories by label.
@@ -406,13 +447,14 @@ class MetadataSuggestionService implements MetadataRuleSuggesterInterface {
 	 * @return array{field: string, value: string, valueLabel: string, source: string, reason: string}|null The proposal.
 	 *
 	 * @spec openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions/spec.md#requirement-missing-woo-metadata-is-proposed-from-data-the-instance-holds-req-wms-001
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function handlingProposal(array $publication, ?string $origin): ?array {
 		if ($this->isSet(value: ($publication['soortHandeling'] ?? null)) === true || isset(self::HANDLING_BY_ORIGIN[$origin ?? '']) === false) {
 			return null;
 		}
 
-		$member = $this->tooiVocabulary->resolveSoortHandeling(self::HANDLING_BY_ORIGIN[$origin]);
+		$member = $this->handlingMember(value: self::HANDLING_BY_ORIGIN[$origin]);
 		if ($member === null) {
 			return null;
 		}

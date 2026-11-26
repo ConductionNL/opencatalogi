@@ -48,7 +48,7 @@ class MetadataSuggestionServiceTest extends TestCase {
 	 *
 	 * @return MetadataSuggestionService
 	 */
-	private function service(array $categories=[]): MetadataSuggestionService {
+	private function service(array $categories=[], ?\OCA\OpenCatalogi\Service\TooiVocabularyService $vocabulary=null): MetadataSuggestionService {
 		$tooi = \Unit\Support\RecordedTooiRegister::service();
 		$records = [];
 		foreach ($tooi->informatiecategorieList() as $code => $member) {
@@ -70,7 +70,23 @@ class MetadataSuggestionServiceTest extends TestCase {
 			static fn (string $code): array => (array)($records[$code]['schemas'] ?? [])
 		);
 
-		return new MetadataSuggestionService(tooiVocabulary: $tooi, categories: $registry);
+		return new MetadataSuggestionService(tooiVocabulary: ($vocabulary ?? $tooi), categories: $registry);
+	}
+
+	/**
+	 * REQ-WVC-001: without a readable vocabulary register nothing from the value lists is proposed or offered.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testAnUnreadableRegisterProposesNoValueListValue(): void {
+		$code = (string)array_key_first((\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList());
+		$service = $this->service(categories: [$code => ['schemas' => ['besluit']]], vocabulary: \Unit\Support\RecordedTooiRegister::unreadableService());
+
+		$this->assertSame([], $service->suggestFromRules(publication: ['title' => 'Besluit'], context: ['schemaSlug' => 'besluit', 'origin' => 'synchronisation']));
+		$this->assertSame(['wooCategory'], array_column($service->hermiqFields(publication: []), 'key'));
+		$this->assertSame([], $service->fromHermiq(publication: ['wooCategory' => $code], values: ['soortHandeling' => 'Vaststelling']));
 	}
 
 	/**

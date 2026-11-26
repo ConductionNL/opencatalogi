@@ -70,10 +70,11 @@ class SitemapCategoryMappingTest extends TestCase {
 	 *
 	 * @param array<string, mixed>             $publication The publication.
 	 * @param array<int, array<string, mixed>> $rows        The mapping rows the query answers.
+	 * @param \OCA\OpenCatalogi\Service\TooiVocabularyService|null $tooi The mapper's value lists; the recorded ones by default.
 	 *
 	 * @return array{document: array<string, mixed>, violations: array<int, array<string, string>>}
 	 */
-	private function map(array $publication, array $rows): array {
+	private function map(array $publication, array $rows, ?\OCA\OpenCatalogi\Service\TooiVocabularyService $tooi = null): array {
 		$objects = new class($rows, $this->queries) {
 			/**
 			 * @param array<int, array<string, mixed>> $rows    The rows.
@@ -122,7 +123,7 @@ class SitemapCategoryMappingTest extends TestCase {
 			$lookup,
 			$settings,
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
-			new SitemapDocumentMapper(\Unit\Support\RecordedTooiRegister::service(), $categories, $lookup, FileFactsByExtension::make($this)),
+			new SitemapDocumentMapper(($tooi ?? \Unit\Support\RecordedTooiRegister::service()), $categories, $lookup, FileFactsByExtension::make($this)),
 			$this->createMock(PublicationQueryService::class),
 			$categories
 		);
@@ -210,6 +211,26 @@ class SitemapCategoryMappingTest extends TestCase {
 			$this->assertNull(self::category($result['document']));
 			$this->assertTrue(self::categoryReported($result['violations']));
 		}
+	}
+
+	/**
+	 * REQ-WVC-001: when the mapper cannot read the vocabulary register, the mapping's category and the handling type are omitted and reported.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testAnUnreadableRegisterOmitsTheMappedCategoryAndTheHandling(): void {
+		$result = $this->map(self::publication(['soortHandeling' => 'vaststelling']), [self::row()], \Unit\Support\RecordedTooiRegister::unreadableService());
+
+		$this->assertNull(self::category($result['document']));
+		$this->assertTrue(self::categoryReported($result['violations']));
+		$this->assertStringNotContainsString('diwoo:soortHandeling', (string)json_encode($result['document']));
+
+		// With the register read, the same publication carries both.
+		$readable = $this->map(self::publication(['soortHandeling' => 'vaststelling']), [self::row()]);
+		$this->assertNotNull(self::category($readable['document']));
+		$this->assertStringContainsString('diwoo:soortHandeling', (string)json_encode($readable['document']));
 	}
 
 	/**

@@ -48,7 +48,7 @@ class SitemapDocumentFields {
 	/**
 	 * Constructor.
 	 *
-	 * @param TooiVocabularyService $tooiVocabulary The bundled document type and language lists.
+	 * @param TooiVocabularyService $tooiVocabulary The document type and language lists from the vocabulary register.
 	 * @param InstanceSettings|null $instance Holds the moment the DiWoo fields were introduced; without it every record is legacy.
 	 */
 	public function __construct(
@@ -66,6 +66,7 @@ class SitemapDocumentFields {
 	 * @return array|false|null The element, false when the stored type resolves to no member, null when none is stored.
 	 *
 	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function documentTypeElement(array $publication, array $file): array|false|null {
 		$perFile = $publication['fileDocumentsoorten'] ?? [];
@@ -79,7 +80,13 @@ class SitemapDocumentFields {
 			return null;
 		}
 
-		$member = $this->tooiVocabulary->resolveDocumentsoort($value);
+		try {
+			$member = $this->tooiVocabulary->resolveDocumentsoort($value);
+		} catch (\RuntimeException) {
+			// An unreadable vocabulary register leaves the type unresolved: omitted and reported.
+			$member = null;
+		}
+
 		if ($member === null) {
 			return false;
 		}
@@ -140,6 +147,7 @@ class SitemapDocumentFields {
 	 * @param bool $legacy Whether the record predates the DiWoo fields.
 	 *
 	 * @return array|null The element, or null when there is none or it resolves to no member.
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function languageElement(array $publication, bool $legacy): ?array {
 		$value = $this->stringOrNull(value: $publication['language'] ?? null);
@@ -151,7 +159,13 @@ class SitemapDocumentFields {
 			return null;
 		}
 
-		$member = $this->tooiVocabulary->resolveLanguage(self::LANGUAGE_CODES[strtolower(trim($value))] ?? $value);
+		try {
+			$member = $this->tooiVocabulary->resolveLanguage(self::LANGUAGE_CODES[strtolower(trim($value))] ?? $value);
+		} catch (\RuntimeException) {
+			// An unreadable vocabulary register leaves the language unresolved, so it is omitted.
+			$member = null;
+		}
+
 		if ($member === null) {
 			return null;
 		}

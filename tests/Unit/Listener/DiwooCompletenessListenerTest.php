@@ -104,17 +104,19 @@ class DiwooCompletenessListenerTest extends TestCase {
 	 * @param string|null $tooi The organisation's TOOI identifier, or null for none.
 	 * @param WooCategoryRegistry|null $categories The category registry; the bundled one by default.
 	 * @param CatalogiServiceInterface|null $catalogi Reaches the schema mapper; none by default.
+	 * @param \OCA\OpenCatalogi\Service\TooiVocabularyService|null $vocabulary The listener's value lists; the recorded ones by default.
 	 *
 	 * @return DiwooCompletenessListener The listener.
 	 */
-	private function listener(?string $tooi = self::TOOI, ?WooCategoryRegistry $categories = null, ?CatalogiServiceInterface $catalogi = null): DiwooCompletenessListener {
-		$vocabulary = \Unit\Support\RecordedTooiRegister::service();
+	private function listener(?string $tooi = self::TOOI, ?WooCategoryRegistry $categories = null, ?CatalogiServiceInterface $catalogi = null, ?\OCA\OpenCatalogi\Service\TooiVocabularyService $vocabulary = null): DiwooCompletenessListener {
+		$lists = \Unit\Support\RecordedTooiRegister::service();
+		$vocabulary ??= $lists;
 		$settings = $this->createMock(SettingsService::class);
 		$categories ??= new WooCategoryRegistry(
-			$vocabulary,
+			$lists,
 			$settings,
 			$this->createMock(LoggerInterface::class),
-			new LocalCategoryAdmission($vocabulary),
+			new LocalCategoryAdmission($lists),
 		);
 
 		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuidFollowingMerge']);
@@ -133,7 +135,7 @@ class DiwooCompletenessListenerTest extends TestCase {
 
 		return new DiwooCompletenessListener(
 			$vocabulary,
-			new SitemapDocumentMapper($vocabulary, $categories, new OpenRegisterLookup($container, $appManager)),
+			new SitemapDocumentMapper($lists, $categories, new OpenRegisterLookup($container, $appManager)),
 			$categories,
 			$catalogi ?? $this->createMock(CatalogiServiceInterface::class),
 			$config,
@@ -347,6 +349,21 @@ class DiwooCompletenessListenerTest extends TestCase {
 		$this->listener()->handle($perFile);
 		$this->assertSame(['fileDocumentsoorten'], array_keys($perFile->getErrors()['fields']));
 	}//end testAnUnknownDocumentsoortIsRefused()
+
+	/**
+	 * REQ-WVC-001: while the vocabulary register cannot be read, a document type is refused, never waved through.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testADocumentsoortIsRefusedWhileTheRegisterCannotBeRead(): void {
+		$event = $this->creating(data: self::publication(['documentsoort' => 'besluit', 'publicationDate' => null]));
+		$this->listener(vocabulary: \Unit\Support\RecordedTooiRegister::unreadableService())->handle($event);
+
+		$this->assertTrue($event->isPropagationStopped());
+		$this->assertSame(['documentsoort'], array_keys($event->getErrors()['fields']));
+	}//end testADocumentsoortIsRefusedWhileTheRegisterCannotBeRead()
 
 	/**
 	 * The publication filinq hands over, as recorded in tests/fixtures/filinq-handoff-publication.json.
