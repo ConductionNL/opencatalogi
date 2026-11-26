@@ -133,6 +133,13 @@ class ValueListRefresh implements ValueListRefreshInterface {
 	public const ORGANISATION_SOURCE_PREFIX = 'organisaties-';
 
 	/**
+	 * The Woo information categories, refreshed only while OpenRegister keeps audit trails (REQ-WVC-005).
+	 *
+	 * @var string
+	 */
+	public const CATEGORIES_SCHEME = 'https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ValueListDownload           $download   Fetches a list as an import document.
@@ -221,11 +228,14 @@ class ValueListRefresh implements ValueListRefreshInterface {
 	 * @param array{key: string, scheme: string, url: string} $source The source.
 	 *
 	 * @return array{lastRefreshAt: string, created: int, updated: int, deprecated: int, error: string|null} The result.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-woo-information-categories-are-audited-data-not-a-constant-req-wvc-005
 	 */
 	private function refresh(array $source): array {
 		$result = ['lastRefreshAt' => $this->state->now(), 'created' => 0, 'updated' => 0, 'deprecated' => 0, 'error' => null];
 
 		try {
+			$this->guardAuditTrails(schemeUri: $source['scheme']);
 			$built = $this->download->fetch(url: $source['url'], schemeUri: $source['scheme']);
 			$this->guardMassDeprecation(schemeUri: $source['scheme'], incoming: $built['conceptUris']);
 			$counts = $this->vocabulary->import(jsonLd: $built['jsonLd']);
@@ -245,6 +255,29 @@ class ValueListRefresh implements ValueListRefreshInterface {
 
 		return $result;
 	}//end refresh()
+
+	/**
+	 * Refuse the Woo information categories while OpenRegister keeps no audit trails.
+	 *
+	 * A category change nobody can trace is what REQ-WVC-005 forbids, so the scheme
+	 * stays as it is and the refusal is raised like any other failed refresh. The
+	 * other schemes are refreshed as usual.
+	 *
+	 * @param string $schemeUri The scheme about to be refreshed.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When it is the categories scheme and audit trails are off.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-woo-information-categories-are-audited-data-not-a-constant-req-wvc-005
+	 */
+	private function guardAuditTrails(string $schemeUri): void {
+		if ($schemeUri === self::CATEGORIES_SCHEME && $this->state->auditTrailsOn() === false) {
+			throw new RuntimeException(
+				'OpenRegister keeps no audit trails, so a change to a Woo category could not be traced; the categories are not refreshed'
+			);
+		}
+	}//end guardAuditTrails()
 
 	/**
 	 * Refuse an import that would deprecate more than a third of the active concepts.
