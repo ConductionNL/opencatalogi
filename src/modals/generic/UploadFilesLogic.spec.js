@@ -391,3 +391,46 @@ describe('UploadFiles applySchemaDefaults', () => {
 		expect(ctx.share).toBe(false)
 	})
 })
+
+describe('UploadFiles refreshAttachments', () => {
+	it('stores the publication\'s current files, so a deleted name no longer counts as a duplicate', async () => {
+		global.fetch = jest.fn(async (url) => {
+			log.push(['fetch', url])
+			return { ok: true, json: async () => ({ results: ['current'] }) }
+		})
+
+		await vm().refreshAttachments()
+
+		expect(log).toEqual([
+			['fetch', '/nc/apps/openregister/api/objects/7/9/p1/files'],
+			['setCollection', 'publicationAttachments', ['current']],
+		])
+	})
+
+	it('keeps the stored files when they cannot be read', async () => {
+		global.fetch = jest.fn(async () => ({ ok: false, json: async () => ({}) }))
+
+		await vm().refreshAttachments()
+
+		expect(log).toEqual([])
+	})
+
+	it('reads nothing without a publication', async () => {
+		objectStore.getActiveObject.mockReturnValue(null)
+		global.fetch = jest.fn()
+
+		await vm().refreshAttachments()
+
+		expect(global.fetch).not.toHaveBeenCalled()
+	})
+
+	it('runs when the dialog opens', () => {
+		const ctx = vm({ labelOptions: { value: [] } })
+		ctx.applySchemaDefaults = jest.fn()
+		ctx.refreshAttachments = jest.fn()
+
+		ctx.onOpenModal()
+
+		expect(ctx.refreshAttachments).toHaveBeenCalledTimes(1)
+	})
+})

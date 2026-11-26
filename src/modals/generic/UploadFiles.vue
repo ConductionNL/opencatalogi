@@ -829,6 +829,28 @@ export default {
 			EventBus.$emit('upload-files:opened')
 			this.getAllTags()
 			this.applySchemaDefaults()
+			this.refreshAttachments()
+		},
+
+		/**
+		 * Store the active publication's current files, so the duplicate-name
+		 * check does not block a file that was deleted after an earlier upload.
+		 * When they cannot be read, the stored files are kept.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/file-management/spec.md
+		 */
+		async refreshAttachments() {
+			const publication = objectStore.getActiveObject('publication')
+			if (!publication?.id) return
+			try {
+				const ids = this.getRegisterSchemaIds(publication)
+				const response = await fetch(publicationFilesUrl(ids, publication))
+				if (!response.ok) return
+				storeAttachments(await response.json())
+			} catch {
+				// The stored files stay as they were.
+			}
 		},
 
 		/**
