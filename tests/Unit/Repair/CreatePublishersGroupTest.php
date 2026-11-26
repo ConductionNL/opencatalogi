@@ -34,24 +34,24 @@ use RuntimeException;
 final class CreatePublishersGroupTest extends TestCase {
 
 	/**
-	 * REQ-OPR-004 "A repair on an existing instance": run twice, the group is
+	 * REQ-OPR-004 "A repair on an existing instance": run twice, each group is
 	 * created once and nobody is added to it.
 	 *
 	 * @return void
 	 */
-	public function testRunningTwiceCreatesTheGroupOnceWithoutMembers(): void {
-		$exists = false;
+	public function testRunningTwiceCreatesEachGroupOnceWithoutMembers(): void {
+		$existing = [];
 		$created = [];
 		$group = $this->createMock(IGroup::class);
 		$group->expects($this->never())->method('addUser');
 
 		$groups = $this->createMock(IGroupManager::class);
-		$groups->method('groupExists')->willReturnCallback(static function (string $gid) use (&$exists): bool {
-			return $exists && $gid === 'opencatalogi-publishers';
+		$groups->method('groupExists')->willReturnCallback(static function (string $gid) use (&$existing): bool {
+			return in_array($gid, $existing, true);
 		});
-		$groups->method('createGroup')->willReturnCallback(static function (string $gid) use (&$exists, &$created, $group): IGroup {
+		$groups->method('createGroup')->willReturnCallback(static function (string $gid) use (&$existing, &$created, $group): IGroup {
 			$created[] = $gid;
-			$exists = true;
+			$existing[] = $gid;
 			return $group;
 		});
 
@@ -59,46 +59,80 @@ final class CreatePublishersGroupTest extends TestCase {
 		$step->run($this->createMock(IOutput::class));
 		$step->run($this->createMock(IOutput::class));
 
-		$this->assertSame(['opencatalogi-publishers'], $created);
+		$this->assertSame(expected: ['opencatalogi-publishers', 'opencatalogi-editors'], actual: $created);
 	}
 
-	public function testAnExistingGroupIsLeftAlone(): void {
+	/**
+	 * Decision 25 Nov 2026 21:50 CET: an instance that has the publishers group gets the editors group.
+	 *
+	 * @return void
+	 */
+	public function testAnExistingPublishersGroupIsLeftAloneAndTheEditorsGroupAdded(): void {
 		$groups = $this->createMock(IGroupManager::class);
-		$groups->method('groupExists')->with('opencatalogi-publishers')->willReturn(true);
-		$groups->expects($this->never())->method('createGroup');
+		$groups->method('groupExists')->willReturnCallback(static fn (string $gid): bool => $gid === 'opencatalogi-publishers');
+		$groups->expects($this->once())->method('createGroup')->with('opencatalogi-editors')->willReturn($this->createMock(IGroup::class));
 
+		$info = [];
 		$output = $this->createMock(IOutput::class);
-		$output->expects($this->once())->method('info')->with('The group opencatalogi-publishers exists.');
+		$output->method('info')->willReturnCallback(static function (string $message) use (&$info): void {
+			$info[] = $message;
+		});
 
 		(new CreatePublishersGroup($groups, $this->createMock(LoggerInterface::class)))->run($output);
+
+		$this->assertSame(
+			expected: ['The group opencatalogi-publishers exists.', 'Created the group opencatalogi-editors.'],
+			actual: $info
+		);
 	}
 
+	/**
+	 * A group backend that refuses is reported per group, not raised.
+	 *
+	 * @return void
+	 */
 	public function testAGroupBackendThatRefusesIsReportedNotRaised(): void {
 		$groups = $this->createMock(IGroupManager::class);
 		$groups->method('groupExists')->willReturn(false);
 		$groups->method('createGroup')->willReturn(null);
 
+		$warnings = [];
 		$output = $this->createMock(IOutput::class);
-		$output->expects($this->once())->method('warning')->with('The group opencatalogi-publishers could not be created.');
+		$output->method('warning')->willReturnCallback(static function (string $message) use (&$warnings): void {
+			$warnings[] = $message;
+		});
 		$output->expects($this->never())->method('info');
 
 		(new CreatePublishersGroup($groups, $this->createMock(LoggerInterface::class)))->run($output);
+
+		$this->assertSame(
+			expected: ['The group opencatalogi-publishers could not be created.', 'The group opencatalogi-editors could not be created.'],
+			actual: $warnings
+		);
 	}
 
+	/**
+	 * An exception is logged and reported, and the next group is still tried.
+	 *
+	 * @return void
+	 */
 	public function testAnExceptionIsLoggedAndReportedNotRaised(): void {
 		$groups = $this->createMock(IGroupManager::class);
 		$groups->method('groupExists')->willThrowException(new RuntimeException('LDAP down'));
 
 		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects($this->once())->method('warning')->with($this->stringContains('LDAP down'));
+		$logger->expects($this->exactly(2))->method('warning')->with($this->stringContains('LDAP down'));
+		$warnings = [];
 		$output = $this->createMock(IOutput::class);
-		$output->expects($this->once())->method('warning')->with('Could not create the group opencatalogi-publishers: LDAP down');
+		$output->method('warning')->willReturnCallback(static function (string $message) use (&$warnings): void {
+			$warnings[] = $message;
+		});
 
 		(new CreatePublishersGroup($groups, $logger))->run($output);
-	}
 
-	public function testItNamesItselfForOccUpgrade(): void {
-		$step = new CreatePublishersGroup($this->createMock(IGroupManager::class), $this->createMock(LoggerInterface::class));
-		$this->assertSame('Create the OpenCatalogi publishers group', $step->getName());
+		$this->assertSame(
+			expected: ['Could not create the group opencatalogi-publishers: LDAP down', 'Could not create the group opencatalogi-editors: LDAP down'],
+			actual: $warnings
+		);
 	}
 }

@@ -32,8 +32,10 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
- * Creates the group `opencatalogi-publishers` when it is missing, and adds no
- * one to it.
+ * Creates the groups `opencatalogi-publishers` and `opencatalogi-editors` when
+ * they are missing, and adds no one to them. Editors may create and edit
+ * publications; publishers may also publish and withdraw (decision 25 Nov 2026
+ * 21:50 CET).
  *
  * An existing instance keeps working: until the group has a member, only
  * administrators can publish. Adding members implicitly would hand the publish
@@ -68,7 +70,7 @@ class CreatePublishersGroup implements IRepairStep {
 	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
 	 */
 	public function getName(): string {
-		return 'Create the OpenCatalogi publishers group';
+		return 'Create the OpenCatalogi publishers and editors groups';
 	}//end getName()
 
 	/**
@@ -81,25 +83,42 @@ class CreatePublishersGroup implements IRepairStep {
 	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
 	 */
 	public function run(IOutput $output): void {
-		try {
-			if ($this->groupManager->groupExists(PublishRight::GROUP) === true) {
-				$output->info('The group ' . PublishRight::GROUP . ' exists.');
-				return;
-			}
-
-			if ($this->groupManager->createGroup(PublishRight::GROUP) === null) {
-				$output->warning('The group ' . PublishRight::GROUP . ' could not be created.');
-				return;
-			}
-
-			$output->info('Created the group ' . PublishRight::GROUP . '.');
-		} catch (Throwable $e) {
-			$this->logger->warning(
-				'[CreatePublishersGroup] Could not create ' . PublishRight::GROUP . ': ' . $e->getMessage(),
-				['app' => 'opencatalogi', 'exception' => $e]
-			);
-			$output->warning('Could not create the group ' . PublishRight::GROUP . ': ' . $e->getMessage());
+		foreach (PublishRight::GROUPS as $gid) {
+			$this->ensure(gid: $gid, output: $output);
 		}
 
 	}//end run()
+
+	/**
+	 * Create one group when it is missing.
+	 *
+	 * @param string  $gid    The group id.
+	 * @param IOutput $output The upgrade output.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#requirement-the-group-exists-and-the-administrator-can-see-it-req-opr-004
+	 */
+	private function ensure(string $gid, IOutput $output): void {
+		try {
+			if ($this->groupManager->groupExists($gid) === true) {
+				$output->info('The group ' . $gid . ' exists.');
+				return;
+			}
+
+			if ($this->groupManager->createGroup($gid) === null) {
+				$output->warning('The group ' . $gid . ' could not be created.');
+				return;
+			}
+
+			$output->info('Created the group ' . $gid . '.');
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'[CreatePublishersGroup] Could not create ' . $gid . ': ' . $e->getMessage(),
+				['app' => 'opencatalogi', 'exception' => $e]
+			);
+			$output->warning('Could not create the group ' . $gid . ': ' . $e->getMessage());
+		}
+
+	}//end ensure()
 }//end class
