@@ -52,6 +52,38 @@ async function anonymous(baseURL: string): Promise<APIRequestContext> {
 	return await request.newContext({ baseURL, storageState: undefined })
 }
 
+/**
+ * A real, published publication to take down. The depublish endpoint refuses an
+ * id it cannot find (404 publication-not-found) and one it cannot take down, so
+ * the withdrawal tests start from a publication that went through the lifecycle.
+ *
+ * @param admin The signed-in request context.
+ * @param label A word for the title.
+ * @return The publication id.
+ */
+async function publishedPublication(admin: APIRequestContext, label: string): Promise<string> {
+	const created = await admin.post('/index.php/apps/openregister/api/objects/publication/publication', {
+		data: {
+			title: `E2E depublish ${label} ${Date.now().toString(36)}`,
+			summary: 'Published to be taken down by the national-channels e2e tests.',
+			description: 'Created by publication-inspection-and-the-national-indexes.spec.ts.',
+		},
+	})
+	expect(created.ok(), `create: ${await created.text()}`).toBe(true)
+	const id = String((await created.json()).id)
+	for (const action of ['submit', 'approve']) {
+		const moved = await admin.post(`/index.php/apps/openregister/api/objects/${id}/transition`, {
+			data: { action, data: {} },
+		})
+		expect(moved.ok(), `${action}: ${await moved.text()}`).toBe(true)
+	}
+	const published = await admin.post(`${API_BASE}/publications/${id}/publish`, {
+		data: { confirmNoDocuments: true },
+	})
+	expect(published.ok(), `publish: ${await published.text()}`).toBe(true)
+	return id
+}
+
 /** A besluit with a property no anonymous reader may read. */
 const RECORD_WITH_A_SECRET = {
 	'@type': 'besluit',
@@ -302,7 +334,7 @@ test.describe('The national channels', () => {
 	}) => {
 		const response = await admin.post(`${API_BASE}/publications/depublish`, {
 			data: {
-				publication: { id: 'e2e-p1' },
+				publication: { id: await publishedPublication(admin, 'outstanding') },
 				reason: 'E2E: publicatiefout.',
 				channels: ['national-woo-index'],
 			},
@@ -347,7 +379,7 @@ test.describe('The national channels', () => {
 	}) => {
 		const made = await admin.post(`${API_BASE}/publications/depublish`, {
 			data: {
-				publication: { id: 'e2e-p-ack' },
+				publication: { id: await publishedPublication(admin, 'acknowledged') },
 				reason: 'E2E: publicatiefout.',
 				channels: ['local-channel'],
 			},
@@ -386,7 +418,7 @@ test.describe('The national channels', () => {
 	}) => {
 		const made = await admin.post(`${API_BASE}/publications/depublish`, {
 			data: {
-				publication: { id: 'e2e-p-ack2' },
+				publication: { id: await publishedPublication(admin, 'unknown-channel') },
 				reason: 'E2E: publicatiefout.',
 				channels: ['local-channel'],
 			},
