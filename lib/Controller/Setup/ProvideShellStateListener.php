@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * @category Listener
- * @package  OCA\OpenCatalogi\Listener
+ * @package  OCA\OpenCatalogi\Controller\Setup
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -20,17 +20,15 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Listener;
+namespace OCA\OpenCatalogi\Controller\Setup;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
-use OCA\OpenCatalogi\Controller\Setup\SetupStatusReport;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IConfig;
 use OCP\IUserSession;
-use Psr\Log\LoggerInterface;
 use Throwable;
 
 /**
@@ -59,14 +57,12 @@ class ProvideShellStateListener implements IEventListener
      * @param SetupStatusReport $setupStatus  The document GET /api/setup/status answers.
      * @param IConfig           $config       The user values the preferences live in.
      * @param IUserSession      $userSession  The signed-in user.
-     * @param LoggerInterface   $logger       Where a failed setup report is noted.
      */
     public function __construct(
         private readonly IInitialState $initialState,
         private readonly SetupStatusReport $setupStatus,
         private readonly IConfig $config,
         private readonly IUserSession $userSession,
-        private readonly LoggerInterface $logger,
     ) {
 
     }//end __construct()
@@ -101,11 +97,8 @@ class ProvideShellStateListener implements IEventListener
 
         try {
             $this->initialState->provideInitialState('setup_status', $this->setupStatus->payload());
-        } catch (Throwable $e) {
-            $this->logger->warning(
-                'The page carries no setup status; the app asks for it instead: '.$e->getMessage(),
-                ['app' => AppIdentity::APP_ID]
-            );
+        } catch (Throwable) {
+            // The shell then asks GET /api/setup/status itself, which reports the error.
         }
 
         $this->initialState->provideInitialState(

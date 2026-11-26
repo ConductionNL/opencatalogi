@@ -56,7 +56,7 @@ use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
 use OCA\OpenCatalogi\Listener\SourceAbsenceListener;
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
-use OCA\OpenCatalogi\Listener\ProvideShellStateListener;
+use OCA\OpenCatalogi\Controller\Setup\ProvideShellStateListener;
 use OCA\OpenCatalogi\Listener\PublicationLinksListener;
 use OCA\OpenCatalogi\Listener\RuleCategoryListener;
 use OCA\OpenCatalogi\Listener\PublicationRelationsListener;
