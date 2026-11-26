@@ -382,18 +382,23 @@ import { useFileSelection } from './../../composables/UseFileSelection.js'
 import {
 	countSettled,
 	embeddedSchemaConfiguration,
+	fetchPublicationFiles,
 	fetchSchemaConfiguration,
 	notifyPublicationChanged,
-	publicationFilesUrl,
 	recordCreatedId,
 } from './uploadSteps.js'
 
 const dropZoneRef = ref()
 
+// The read of the attached files started when the dialog opened; a drop
+// waits for it, so it is not checked against the files of before.
+let attachmentsRead = null
+
 const { openFileUpload, files, reset, setTags, rejectedDuplicates } =
 	useFileSelection({
 		allowMultiple: true,
 		dropzone: dropZoneRef,
+		namesReady: () => attachmentsRead,
 	})
 
 /**
@@ -835,21 +840,33 @@ export default {
 		/**
 		 * Store the active publication's current files, so the duplicate-name
 		 * check does not block a file that was deleted after an earlier upload.
-		 * When they cannot be read, the stored files are kept.
+		 * A drop waits for this read. When the files cannot be read, the
+		 * stored files are kept.
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/file-management/spec.md
 		 */
-		async refreshAttachments() {
+		refreshAttachments() {
 			const publication = objectStore.getActiveObject('publication')
-			if (!publication?.id) return
-			try {
-				const ids = this.getRegisterSchemaIds(publication)
-				const response = await fetch(publicationFilesUrl(ids, publication))
-				if (!response.ok) return
-				storeAttachments(await response.json())
-			} catch {
-				// The stored files stay as they were.
+			attachmentsRead = publication?.id
+				? this.readAttachments(publication).catch(() => {})
+				: null
+			return attachmentsRead ?? Promise.resolve()
+		},
+
+		/**
+		 * Store every file of the publication, all pages, so the duplicate-name
+		 * check sees each attached name. When a page cannot be read, the stored
+		 * files are kept rather than emptied.
+		 *
+		 * @param {object} publication - The publication
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/file-management/spec.md
+		 */
+		async readAttachments(publication) {
+			const files = await fetchPublicationFiles(this.getRegisterSchemaIds(publication), publication)
+			if (files) {
+				storeAttachments(files)
 			}
 		},
 
@@ -989,11 +1006,7 @@ export default {
 				file.tags = Array.isArray(editedTags) ? [...editedTags] : []
 			} catch (_) {}
 
-			const getAttachments = await fetch(filesUrl)
-			const attachments = await getAttachments.json().catch(() => null)
-			try {
-				storeAttachments(attachments)
-			} catch (_) {}
+			await this.readAttachments(publication)
 			catalogStore.fetchPublications()
 
 			this.success = 'File labels updated successfully'
@@ -1153,8 +1166,7 @@ export default {
 
 			await this.getAllTags()
 
-			const getAttachments = await fetch(publicationFilesUrl(ids, publication))
-			storeAttachments(await getAttachments.json())
+			await this.readAttachments(publication)
 
 			catalogStore.fetchPublications()
 
@@ -1320,13 +1332,8 @@ export default {
 		 */
 		async refreshAfterRetry(publication) {
 			try {
-				const ids = this.getRegisterSchemaIds(publication)
-				notifyPublicationChanged(ids, publication)
-				const getAttachments = await fetch(
-					publicationFilesUrl(ids, publication),
-				)
-				const attachments = await getAttachments.json().catch(() => null)
-				storeAttachments(attachments)
+				notifyPublicationChanged(this.getRegisterSchemaIds(publication), publication)
+				await this.readAttachments(publication)
 			} catch (_) {
 				/* ignore */
 			}
