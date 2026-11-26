@@ -377,6 +377,16 @@ describe('CatalogPublicationsIndex', () => {
 			icon: 'Pencil',
 		})
 		expect(
+			cardAccent({ '@self': self, publicationDate: '2999-01-01' }),
+		).toMatchObject({ variant: 'info', icon: 'CalendarClock' })
+		expect(
+			cardAccent({
+				'@self': self,
+				publicationDate: '2999-01-02',
+				depublicationDate: '2999-01-01',
+			}),
+		).toMatchObject({ variant: 'error', icon: 'AlertCircleOutline' })
+		expect(
 			cardAccent({
 				'@self': { register: 19, schema: 184 },
 				publicationDate: '2020-01-01',

@@ -36,10 +36,19 @@ describe('PublishedIcon', () => {
 		expect(rendered.props('title')).toBe('Depublished: This publication has been withdrawn from public access')
 	})
 
-	it('shows the draft icon without a publication date, or a future one', () => {
+	it('shows the draft icon without a publication date', () => {
 		expect(icon({ object: {} }).classes()).toContain('unpublished-icon')
-		expect(icon({ object: { publicationDate: FUTURE } }).classes()).toContain('unpublished-icon')
 		expect(icon({ object: {} }).props('title')).toBe('Draft: This publication is not yet published')
+	})
+
+	it('shows the scheduled icon for a future publication date', () => {
+		expect(icon({ object: { publicationDate: FUTURE } }).classes()).toContain('scheduled-icon')
+	})
+
+	it('shows an error for a window that closes before it opens', () => {
+		const closesEarly = new Date(new Date(FUTURE).getTime() - 1000).toISOString()
+
+		expect(icon({ object: { publicationDate: FUTURE, depublicationDate: closesEarly } }).classes()).toContain('depublished-icon')
 	})
 
 	it('passes its size, extra class and own tooltips through', () => {

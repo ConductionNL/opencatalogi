@@ -908,7 +908,14 @@
         "Name the organisation and whether it is active.": "Tregoni organizatën dhe nëse është aktive.",
         "This organisation cannot be activated: %s": "Kjo organizatë nuk mund të aktivizohet: %s",
         "The organisation could not be saved: %s": "Organizata nuk mund të ruhej: %s",
-        "The organisation registers could not be read: %s": "Regjistrat e organizatave nuk mund të lexoheshin: %s"
+        "The organisation registers could not be read: %s": "Regjistrat e organizatave nuk mund të lexoheshin: %s",
+        "Scheduled": "Planifikuar",
+        "scheduled": "planifikuar",
+        "Scheduled Publications": "Botime të Planifikuara",
+        "No scheduled publications": "Asnjë botim i planifikuar",
+        "Never goes live: the depublication date is on or before the publication date": "Nuk do të botohet kurrë: data e heqjes nga botimi është në të njëjtën ditë ose para datës së botimit",
+        "Scheduled: This publication goes live on its publication date": "Planifikuar: Ky botim bëhet publik në datën e botimit",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ky botim nuk do të bëhet kurrë publik: data e heqjes nga botimi është në të njëjtën ditë ose para datës së botimit. Ndryshoni njërën nga datat."
     },
     "plurals": {}
 }

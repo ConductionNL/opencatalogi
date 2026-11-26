@@ -33,6 +33,7 @@ describe('Dashboard widgetDefs', () => {
 		expect(Dashboard.computed.widgetDefs.call({})).toEqual([
 			{ id: 'count-publications', title: 'Publications', type: 'custom' },
 			{ id: 'count-concept-publications', title: 'Concept Publications', type: 'custom' },
+			{ id: 'count-scheduled-publications', title: 'Scheduled Publications', type: 'custom' },
 			{ id: 'count-published-publications', title: 'Published Publications', type: 'custom' },
 			{ id: 'count-depublished-publications', title: 'Depublished Publications', type: 'custom' },
 			{ id: 'count-catalogs', title: 'Catalogs', type: 'custom' },
@@ -42,6 +43,7 @@ describe('Dashboard widgetDefs', () => {
 			{ id: 'usage', title: 'Publication views', type: 'custom' },
 			{ id: 'popular-searches', title: 'Popular Search Terms', type: 'custom' },
 			{ id: 'concept-publications', title: 'Concept Publications', type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-warning)' },
+			{ id: 'scheduled-publications', title: 'Scheduled Publications', type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-primary-element)' },
 			{ id: 'published-publications', title: 'Published Publications', type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-success)' },
 			{ id: 'depublished-publications', title: 'Depublished Publications', type: 'custom', titleIconPosition: 'left', titleIconColor: 'var(--color-error)' },
 		])
@@ -50,7 +52,7 @@ describe('Dashboard widgetDefs', () => {
 	it('keeps the key order of each definition', () => {
 		const defs = Dashboard.computed.widgetDefs.call({})
 		expect(Object.keys(defs[0])).toEqual(['id', 'title', 'type'])
-		expect(Object.keys(defs[10])).toEqual(['id', 'title', 'type', 'titleIconPosition', 'titleIconColor'])
+		expect(Object.keys(defs[11])).toEqual(['id', 'title', 'type', 'titleIconPosition', 'titleIconColor'])
 	})
 })
 
@@ -100,6 +102,7 @@ describe('Dashboard counts', () => {
 			publicationTotal: 40,
 			allPublications: [{ '@self': { files: 90 } }, { '@self': { files: 5 } }],
 			conceptPublications: [],
+			scheduledPublications: [],
 			publishedPublications: [],
 			depublishedPublications: [],
 		})
@@ -114,6 +117,7 @@ describe('Dashboard counts', () => {
 			publicationTotal: 0,
 			allPublications: [],
 			conceptPublications: [],
+			scheduledPublications: [],
 			publishedPublications: [],
 			depublishedPublications: [],
 		})

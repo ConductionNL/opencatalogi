@@ -908,7 +908,14 @@
         "Name the organisation and whether it is active.": "Indique a organização e se está ativa.",
         "This organisation cannot be activated: %s": "Esta organização não pode ser ativada: %s",
         "The organisation could not be saved: %s": "Não foi possível guardar a organização: %s",
-        "The organisation registers could not be read: %s": "Não foi possível ler os registos de organizações: %s"
+        "The organisation registers could not be read: %s": "Não foi possível ler os registos de organizações: %s",
+        "Scheduled": "Agendado",
+        "scheduled": "agendado",
+        "Scheduled Publications": "Publicações Agendadas",
+        "No scheduled publications": "Nenhuma publicação agendada",
+        "Never goes live: the depublication date is on or before the publication date": "Nunca será publicada: a data de despublicação é igual ou anterior à data de publicação",
+        "Scheduled: This publication goes live on its publication date": "Agendado: esta publicação fica disponível na sua data de publicação",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Esta publicação nunca ficará disponível: a sua data de despublicação é igual ou anterior à data de publicação. Altere uma das datas."
     },
     "plurals": {}
 }

@@ -909,7 +909,14 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Ange organisationen och om den är aktiv.",
         "This organisation cannot be activated: %s": "Den här organisationen kan inte aktiveras: %s",
         "The organisation could not be saved: %s": "Organisationen kunde inte sparas: %s",
-        "The organisation registers could not be read: %s": "Organisationsregistren kunde inte läsas: %s"
+        "The organisation registers could not be read: %s": "Organisationsregistren kunde inte läsas: %s",
+        "Scheduled": "Schemalagd",
+        "scheduled": "schemalagd",
+        "Scheduled Publications": "Schemalagda publikationer",
+        "No scheduled publications": "Inga schemalagda publikationer",
+        "Never goes live: the depublication date is on or before the publication date": "Publiceras aldrig: avpubliceringsdatumet är samma dag som eller före publiceringsdatumet",
+        "Scheduled: This publication goes live on its publication date": "Schemalagd: Denna publikation publiceras på sitt publiceringsdatum",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Denna publikation publiceras aldrig: dess avpubliceringsdatum är samma dag som eller före publiceringsdatumet. Ändra ett av datumen."
     },
     "nplurals=2; plural=(n != 1);"
 )

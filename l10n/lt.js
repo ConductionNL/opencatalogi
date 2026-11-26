@@ -909,7 +909,14 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Nurodykite organizaciją ir ar ji aktyvi.",
         "This organisation cannot be activated: %s": "Šios organizacijos negalima aktyvinti: %s",
         "The organisation could not be saved: %s": "Organizacijos išsaugoti nepavyko: %s",
-        "The organisation registers could not be read: %s": "Organizacijų registrų perskaityti nepavyko: %s"
+        "The organisation registers could not be read: %s": "Organizacijų registrų perskaityti nepavyko: %s",
+        "Scheduled": "Suplanuota",
+        "scheduled": "suplanuota",
+        "Scheduled Publications": "Suplanuotos publikacijos",
+        "No scheduled publications": "Nėra suplanuotų publikacijų",
+        "Never goes live: the depublication date is on or before the publication date": "Niekada nebus paskelbta: paskelbimo atšaukimo data sutampa su paskelbimo data arba yra ankstesnė",
+        "Scheduled: This publication goes live on its publication date": "Suplanuota: ši publikacija bus paskelbta jos paskelbimo dieną",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ši publikacija niekada nebus paskelbta: jos paskelbimo atšaukimo data sutampa su paskelbimo data arba yra ankstesnė. Pakeiskite vieną iš datų."
     },
     "nplurals=2; plural=(n != 1);"
 )

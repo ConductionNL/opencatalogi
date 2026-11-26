@@ -909,7 +909,14 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Numnai l’organisaziun e sch’ella è activa.",
         "This organisation cannot be activated: %s": "Questa organisaziun na po betg vegnir activada: %s",
         "The organisation could not be saved: %s": "L’organisaziun n’ha betg pudì vegnir memorisada: %s",
-        "The organisation registers could not be read: %s": "Ils registers da las organisaziuns n’han betg pudì vegnir legids: %s"
+        "The organisation registers could not be read: %s": "Ils registers da las organisaziuns n’han betg pudì vegnir legids: %s",
+        "Scheduled": "Planisà",
+        "scheduled": "planisà",
+        "Scheduled Publications": "Publicaziuns planisadas",
+        "No scheduled publications": "Naginas publicaziuns planisadas",
+        "Never goes live: the depublication date is on or before the publication date": "Na vegn mai publitgada: la data da depublicaziun è il medem di u avant la data da publicaziun",
+        "Scheduled: This publication goes live on its publication date": "Planisà: Questa publicaziun vegn publitgada a sia data da publicaziun",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Questa publicaziun na vegn mai publitgada: sia data da depublicaziun è il medem di u avant la data da publicaziun. Midai ina da las datas."
     },
     "nplurals=2; plural=(n != 1);"
 )

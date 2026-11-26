@@ -908,7 +908,14 @@
         "Name the organisation and whether it is active.": "Nimeä organisaatio ja kerro, onko se aktiivinen.",
         "This organisation cannot be activated: %s": "Tätä organisaatiota ei voi aktivoida: %s",
         "The organisation could not be saved: %s": "Organisaatiota ei voitu tallentaa: %s",
-        "The organisation registers could not be read: %s": "Organisaatiorekistereitä ei voitu lukea: %s"
+        "The organisation registers could not be read: %s": "Organisaatiorekistereitä ei voitu lukea: %s",
+        "Scheduled": "Ajastettu",
+        "scheduled": "ajastettu",
+        "Scheduled Publications": "Ajastetut julkaisut",
+        "No scheduled publications": "Ei ajastettuja julkaisuja",
+        "Never goes live: the depublication date is on or before the publication date": "Ei koskaan julkaista: julkaisun poistopäivä on sama tai aiempi kuin julkaisupäivä",
+        "Scheduled: This publication goes live on its publication date": "Ajastettu: tämä julkaisu julkaistaan julkaisupäivänään",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Tätä julkaisua ei koskaan julkaista: sen poistopäivä on sama tai aiempi kuin sen julkaisupäivä. Muuta jompaakumpaa päivämäärää."
     },
     "plurals": {}
 }

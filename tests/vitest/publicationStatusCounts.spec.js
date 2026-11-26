@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Unit tests for src/services/publicationStatusCounts.js: the ad-hoc count
- * queries, the derivation of the concept / published / depublished totals
- * from three counts, and the requests made to OpenRegister.
+ * queries, the derivation of the per-status totals from those counts, and the
+ * requests made to OpenRegister.
  */
 import { describe, expect, it, vi } from 'vitest'
 import {
@@ -17,108 +17,163 @@ import {
 const NOW = new Date('2026-11-13T12:00:00.000Z')
 const NOW_ISO = '2026-11-13T12:00:00.000Z'
 
+const param = (field, op, value) => `${encodeURIComponent(`filter[${field}][${op}]`)}=${encodeURIComponent(value)}`
+const PUB_LTE = param('publicationDate', 'lte', NOW_ISO)
+const DEPUB_LTE = param('depublicationDate', 'lte', NOW_ISO)
+const PUB_NULL = param('publicationDate', 'isnull', 'true')
+
+const TOTAL = 'metric=count'
+const LIVE = `metric=count&${PUB_LTE}`
+const ENDED = `${LIVE}&${DEPUB_LTE}`
+const WITHDRAWN = `metric=count&${DEPUB_LTE}`
+const UNDATED = `metric=count&${PUB_NULL}`
+const UNDATED_WITHDRAWN = `${UNDATED}&${DEPUB_LTE}`
+const UPCOMING = `${param('publicationDate', 'gt', NOW_ISO)}&${param('depublicationDate', 'gt', NOW_ISO)}`
+
 /**
- * A fetch that answers each query with the count mapped to it.
+ * One page of the upcoming-window list.
  *
- * @param {object<string, *>} counts Query string → answer: a count, or `{ status }` for a failure.
+ * @param {Array<Array<string>>} windows [publicationDate, depublicationDate] per publication.
+ * @param {number} pages The number of pages.
+ * @return {object} The response body.
+ */
+function listPage(windows, pages = 1) {
+	return {
+		results: windows.map(([publicationDate, depublicationDate]) => ({ publicationDate, depublicationDate })),
+		total: windows.length * pages,
+		pages,
+	}
+}
+
+/**
+ * A fetch that answers each count query with the count mapped to it, and each
+ * list page with the body mapped to its page number.
+ *
+ * @param {object<string, *>} counts Query string → a count, or `{ status }` for a failure.
+ * @param {object<number, object>} pages Page number → list body.
  * @return {Function} The fetch mock.
  */
-function fetchAnswering(counts) {
+function fetchAnswering(counts, pages = { 1: listPage([]) }) {
 	return vi.fn(async (url) => {
-		const answer = counts[url.split('?')[1]]
-		if (answer && typeof answer === 'object') {
-			return { ok: false, status: answer.status, json: async () => ({}) }
+		const query = url.split('?')[1]
+		if (url.includes('/aggregations/')) {
+			const answer = counts[query]
+			if (answer && typeof answer === 'object') {
+				return { ok: false, status: answer.status, json: async () => ({}) }
+			}
+			return { ok: true, json: async () => ({ value: answer }) }
 		}
-		return { ok: true, json: async () => ({ value: answer }) }
+		const page = Number(new URLSearchParams(query).get('_page'))
+		return { ok: true, json: async () => pages[page] }
 	})
 }
 
-const TOTAL = 'metric=count'
-const LIVE = `metric=count&${encodeURIComponent('filter[publicationDate][lte]')}=${encodeURIComponent(NOW_ISO)}`
-const ENDED = `${LIVE}&${encodeURIComponent('filter[depublicationDate][lte]')}=${encodeURIComponent(NOW_ISO)}`
+const COUNTS = { [TOTAL]: 20, [LIVE]: 9, [ENDED]: 2, [WITHDRAWN]: 4, [UNDATED]: 6, [UNDATED_WITHDRAWN]: 1 }
 
 describe('countQuery', () => {
 	it('asks for a plain count without filters', () => {
 		expect(countQuery()).toBe('metric=count')
 	})
 
-	it('adds one lte filter per field', () => {
-		const params = new URLSearchParams(countQuery({ publicationDate: NOW_ISO, depublicationDate: NOW_ISO }))
+	it('adds one filter per field and operator', () => {
+		const params = new URLSearchParams(countQuery({
+			publicationDate: { isnull: 'true' },
+			depublicationDate: { lte: NOW_ISO },
+		}))
 
 		expect([...params.entries()]).toEqual([
 			['metric', 'count'],
-			['filter[publicationDate][lte]', NOW_ISO],
+			['filter[publicationDate][isnull]', 'true'],
 			['filter[depublicationDate][lte]', NOW_ISO],
 		])
 	})
 })
 
 describe('statusCountFilters', () => {
-	it('bounds live by the publication date and ended by both dates', () => {
+	it('bounds every count at the same moment', () => {
+		const lte = { lte: NOW_ISO }
+		const isnull = { isnull: 'true' }
+
 		expect(statusCountFilters(NOW_ISO)).toEqual({
 			total: {},
-			live: { publicationDate: NOW_ISO },
-			ended: { publicationDate: NOW_ISO, depublicationDate: NOW_ISO },
+			live: { publicationDate: lte },
+			ended: { publicationDate: lte, depublicationDate: lte },
+			withdrawn: { depublicationDate: lte },
+			undated: { publicationDate: isnull },
+			undatedWithdrawn: { publicationDate: isnull, depublicationDate: lte },
 		})
 	})
 })
 
 describe('deriveStatusCounts', () => {
-	it('splits the total into concept, published and depublished', () => {
-		expect(deriveStatusCounts({ total: 1500, live: 1200, ended: 200 })).toEqual({
-			total: 1500,
-			concept: 300,
-			published: 1000,
-			depublished: 200,
+	it('splits the total over the statuses of the publication matrix', () => {
+		expect(deriveStatusCounts({ total: 20, live: 9, ended: 2, withdrawn: 4, undated: 6, undatedWithdrawn: 1, invalid: 1 })).toEqual({
+			total: 20,
+			concept: 5,
+			scheduled: 3,
+			published: 7,
+			depublished: 4,
+			invalid: 1,
 		})
 	})
 
 	it('allows every count to be zero', () => {
-		expect(deriveStatusCounts({ total: 0, live: 0, ended: 0 })).toEqual({
+		expect(deriveStatusCounts({ total: 0, live: 0, ended: 0, withdrawn: 0, undated: 0, undatedWithdrawn: 0, invalid: 0 })).toEqual({
 			total: 0,
 			concept: 0,
+			scheduled: 0,
 			published: 0,
 			depublished: 0,
+			invalid: 0,
 		})
 	})
 
+	const valid = { total: 20, live: 9, ended: 2, withdrawn: 4, undated: 6, undatedWithdrawn: 1, invalid: 1 }
+
 	it.each([
-		[{ total: null, live: 1, ended: 0 }],
-		[{ total: 3, live: undefined, ended: 0 }],
-		[{ total: 3, live: 1, ended: 1.5 }],
-		[{ total: 3, live: -1, ended: 0 }],
+		[{ ...valid, total: null }],
+		[{ ...valid, live: undefined }],
+		[{ ...valid, ended: 1.5 }],
+		[{ ...valid, invalid: -1 }],
+		[{ ...valid, invalid: null }],
 	])('refuses a missing or invalid count %o', (counts) => {
 		expect(deriveStatusCounts(counts)).toBeNull()
 	})
 
 	it.each([
-		[{ total: 3, live: 4, ended: 0 }],
-		[{ total: 5, live: 2, ended: 3 }],
+		[{ ...valid, ended: 10 }],
+		[{ ...valid, ended: 5 }],
+		[{ ...valid, undatedWithdrawn: 7 }],
+		[{ ...valid, invalid: 8 }],
 	])('refuses counts that contradict each other %o', (counts) => {
 		expect(deriveStatusCounts(counts)).toBeNull()
 	})
 })
 
 describe('fetchPublicationStatusCounts', () => {
-	it('counts total, live and ended at the same moment and derives the statuses', async () => {
-		const fetchFn = fetchAnswering({ [TOTAL]: 10, [LIVE]: 7, [ENDED]: 2 })
+	const options = { register: 'r 1', schema: 's1', prefix: '/index.php', headers: { requesttoken: 'x' }, now: NOW }
 
-		const counts = await fetchPublicationStatusCounts({
-			register: 'r 1',
-			schema: 's1',
-			prefix: '/index.php',
-			headers: { requesttoken: 'x' },
-			now: NOW,
-			fetchFn,
+	it('counts at one moment, reads the upcoming windows and derives the statuses', async () => {
+		const fetchFn = fetchAnswering(COUNTS, {
+			1: listPage([['2026-12-01', '2026-12-10'], ['2026-12-01', '2026-11-30']], 2),
+			2: listPage([['2026-12-05', '2026-12-05'], ['2026-12-05', '2026-12-06']], 2),
 		})
 
-		expect(counts).toEqual({ total: 10, concept: 3, published: 5, depublished: 2 })
-		expect(fetchFn).toHaveBeenCalledTimes(3)
-		const base = '/index.php/apps/openregister/api/objects/aggregations/r%201/s1/value'
+		const counts = await fetchPublicationStatusCounts({ ...options, fetchFn })
+
+		expect(counts).toEqual({ total: 20, concept: 5, scheduled: 2, published: 7, depublished: 4, invalid: 2 })
+		const base = '/index.php/apps/openregister/api/objects'
+		const aggregation = `${base}/aggregations/r%201/s1/value`
+		const list = `${base}/r%201/s1?${UPCOMING}&_fields=publicationDate%2CdepublicationDate&_limit=500`
 		expect(fetchFn.mock.calls.map(([url]) => url)).toEqual([
-			`${base}?${TOTAL}`,
-			`${base}?${LIVE}`,
-			`${base}?${ENDED}`,
+			`${aggregation}?${TOTAL}`,
+			`${aggregation}?${LIVE}`,
+			`${aggregation}?${ENDED}`,
+			`${aggregation}?${WITHDRAWN}`,
+			`${aggregation}?${UNDATED}`,
+			`${aggregation}?${UNDATED_WITHDRAWN}`,
+			`${list}&_page=1`,
+			`${list}&_page=2`,
 		])
 		for (const [, init] of fetchFn.mock.calls) {
 			expect(init).toEqual({ method: 'GET', headers: { requesttoken: 'x' } })
@@ -136,15 +191,21 @@ describe('fetchPublicationStatusCounts', () => {
 	})
 
 	it('gives up when one count is refused', async () => {
-		const fetchFn = fetchAnswering({ [TOTAL]: 10, [LIVE]: { status: 500 }, [ENDED]: 2 })
+		const fetchFn = fetchAnswering({ ...COUNTS, [LIVE]: { status: 500 } })
 
-		expect(await fetchPublicationStatusCounts({ register: 'r1', schema: 's1', now: NOW, fetchFn })).toBeNull()
+		expect(await fetchPublicationStatusCounts({ ...options, fetchFn })).toBeNull()
 	})
 
 	it('gives up when a count is not a number', async () => {
-		const fetchFn = fetchAnswering({ [TOTAL]: '10', [LIVE]: 7, [ENDED]: 2 })
+		const fetchFn = fetchAnswering({ ...COUNTS, [TOTAL]: '20' })
 
-		expect(await fetchPublicationStatusCounts({ register: 'r1', schema: 's1', now: NOW, fetchFn })).toBeNull()
+		expect(await fetchPublicationStatusCounts({ ...options, fetchFn })).toBeNull()
+	})
+
+	it('gives up when the upcoming windows cannot be read', async () => {
+		const fetchFn = fetchAnswering(COUNTS, { 1: { total: 3 } })
+
+		expect(await fetchPublicationStatusCounts({ ...options, fetchFn })).toBeNull()
 	})
 
 	it('gives up when the network fails', async () => {
@@ -152,6 +213,6 @@ describe('fetchPublicationStatusCounts', () => {
 			throw new Error('offline')
 		})
 
-		expect(await fetchPublicationStatusCounts({ register: 'r1', schema: 's1', now: NOW, fetchFn })).toBeNull()
+		expect(await fetchPublicationStatusCounts({ ...options, fetchFn })).toBeNull()
 	})
 })

@@ -909,7 +909,14 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Indica l’organizzazione e se è attiva.",
         "This organisation cannot be activated: %s": "Questa organizzazione non può essere attivata: %s",
         "The organisation could not be saved: %s": "Impossibile salvare l’organizzazione: %s",
-        "The organisation registers could not be read: %s": "Impossibile leggere i registri delle organizzazioni: %s"
+        "The organisation registers could not be read: %s": "Impossibile leggere i registri delle organizzazioni: %s",
+        "Scheduled": "Programmato",
+        "scheduled": "programmato",
+        "Scheduled Publications": "Pubblicazioni programmate",
+        "No scheduled publications": "Nessuna pubblicazione programmata",
+        "Never goes live: the depublication date is on or before the publication date": "Non verrà mai pubblicata: la data di ritiro è uguale o precedente alla data di pubblicazione",
+        "Scheduled: This publication goes live on its publication date": "Programmato: questa pubblicazione va online alla sua data di pubblicazione",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Questa pubblicazione non andrà mai online: la sua data di ritiro è uguale o precedente alla data di pubblicazione. Modifica una delle date."
     },
     "nplurals=2; plural=(n != 1);"
 )

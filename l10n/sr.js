@@ -909,7 +909,14 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Наведите организацију и да ли је активна.",
         "This organisation cannot be activated: %s": "Ова организација не може да се активира: %s",
         "The organisation could not be saved: %s": "Организацију није било могуће сачувати: %s",
-        "The organisation registers could not be read: %s": "Регистре организација није било могуће прочитати: %s"
+        "The organisation registers could not be read: %s": "Регистре организација није било могуће прочитати: %s",
+        "Scheduled": "Заказано",
+        "scheduled": "заказано",
+        "Scheduled Publications": "Заказане Објаве",
+        "No scheduled publications": "Нема заказаних објава",
+        "Never goes live: the depublication date is on or before the publication date": "Никада неће бити објављено: датум повлачења је на датум објаве или пре њега",
+        "Scheduled: This publication goes live on its publication date": "Заказано: ова објава постаје јавна на датум објаве",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ова објава никада неће постати јавна: њен датум повлачења је на датум објаве или пре њега. Промените један од датума."
     },
     "nplurals=2; plural=(n != 1);"
 )

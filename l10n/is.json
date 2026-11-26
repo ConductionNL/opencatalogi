@@ -908,7 +908,14 @@
         "Name the organisation and whether it is active.": "Tilgreindu stofnunina og hvort hún sé virk.",
         "This organisation cannot be activated: %s": "Ekki er hægt að virkja þessa stofnun: %s",
         "The organisation could not be saved: %s": "Ekki tókst að vista stofnunina: %s",
-        "The organisation registers could not be read: %s": "Ekki tókst að lesa stofnanaskrárnar: %s"
+        "The organisation registers could not be read: %s": "Ekki tókst að lesa stofnanaskrárnar: %s",
+        "Scheduled": "Áætlað",
+        "scheduled": "áætlað",
+        "Scheduled Publications": "Áætlaðar Útgáfur",
+        "No scheduled publications": "Engar áætlaðar útgáfur",
+        "Never goes live: the depublication date is on or before the publication date": "Verður aldrei birt: afbirtingardagsetningin er á eða fyrir birtingardagsetninguna",
+        "Scheduled: This publication goes live on its publication date": "Áætlað: Þessi útgáfa verður birt á birtingardagsetningu sinni",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Þessi útgáfa verður aldrei birt: afbirtingardagsetning hennar er á eða fyrir birtingardagsetningu hennar. Breyttu annarri dagsetningunni."
     },
     "plurals": {}
 }

@@ -909,7 +909,14 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Ainmnigh an eagraíocht agus cé acu atá sí gníomhach nó nach bhfuil.",
         "This organisation cannot be activated: %s": "Ní féidir an eagraíocht seo a ghníomhachtú: %s",
         "The organisation could not be saved: %s": "Níorbh fhéidir an eagraíocht a shábháil: %s",
-        "The organisation registers could not be read: %s": "Níorbh fhéidir cláir na n-eagraíochtaí a léamh: %s"
+        "The organisation registers could not be read: %s": "Níorbh fhéidir cláir na n-eagraíochtaí a léamh: %s",
+        "Scheduled": "Sceidealta",
+        "scheduled": "sceidealta",
+        "Scheduled Publications": "Foilseacháin Sceidealta",
+        "No scheduled publications": "Níl aon fhoilseachán sceidealta ann",
+        "Never goes live: the depublication date is on or before the publication date": "Ní fhoilseofar riamh é: tá an dáta dífhoilsithe ar an dáta foilsithe nó roimhe",
+        "Scheduled: This publication goes live on its publication date": "Sceidealta: foilseofar an foilseachán seo ar a dháta foilsithe",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ní fhoilseofar an foilseachán seo riamh: tá a dháta dífhoilsithe ar a dháta foilsithe nó roimhe. Athraigh ceann de na dátaí."
     },
     "nplurals=2; plural=(n != 1);"
 )

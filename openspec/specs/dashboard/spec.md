@@ -409,16 +409,25 @@ count MUST be sourced from OR's generic ad-hoc aggregation endpoint
 from a bespoke, page-capped count query — landed via
 `dashboard-consume-or-aggregations`.
 
-The three status-breakdown KPIs (concept/published/depublished) remain
-list-derived from a bounded publication fetch: that status is COMPUTED from a
-date comparison against "now" (`publicatiedatum`/`depublicatiedatum`), not a
-stored field, so it cannot be grouped by via OR's field-based aggregation
-without either a materialized status field or confirmed null-safe date-range
-filter support (unconfirmed — see the implementation note in
-`openspec/changes/dashboard-consume-or-aggregations/tasks.md`). This is a
-known, tracked gap, not an oversight.
+The status-breakdown KPIs follow the publication matrix. The status is
+COMPUTED from `publicationDate` (P) and `depublicationDate` (D) against "now",
+not stored:
 
-**Priority:** Should **Status:** Partially implemented — total count fixed via ad-hoc aggregation; status-breakdown KPIs remain list-derived (tracked gap)
+- **Concept**: P not set, and D not set or after now
+- **Scheduled**: P after now, and D not set or after P
+- **Published**: P on or before now, and D not set or after now
+- **Depublished**: D on or before now, whatever P is
+- **Invalid window**: P after now and D on or before P, while D is after now.
+  It never goes live. The dashboard counts it in no status KPI (it is in the
+  total); the publication page shows it as an error instead.
+
+The KPIs are differences of ad-hoc counts with `lte` / `isnull` date filters,
+so they have no row cap. An invalid window compares two fields, which no
+filter can, so the publications with both dates ahead are read and checked in
+the browser (`services/publicationStatusCounts.js`). When a count fails, the
+KPIs fall back to the bounded publication fetch.
+
+**Priority:** Should **Status:** Implemented — total and status-breakdown KPIs come from the ad-hoc aggregation
 
 #### Scenario: dashboard overview shows the publication count
 - GIVEN `Dashboard.vue` renders the overview

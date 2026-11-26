@@ -909,7 +909,14 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Nimetage organisatsioon ja kas see on aktiivne.",
         "This organisation cannot be activated: %s": "Seda organisatsiooni ei saa aktiveerida: %s",
         "The organisation could not be saved: %s": "Organisatsiooni ei saanud salvestada: %s",
-        "The organisation registers could not be read: %s": "Organisatsioonide registreid ei saanud lugeda: %s"
+        "The organisation registers could not be read: %s": "Organisatsioonide registreid ei saanud lugeda: %s",
+        "Scheduled": "Kavandatud",
+        "scheduled": "kavandatud",
+        "Scheduled Publications": "Kavandatud väljaanded",
+        "No scheduled publications": "Kavandatud väljaandeid pole",
+        "Never goes live: the depublication date is on or before the publication date": "Ei avaldata kunagi: avaldamise lõpetamise kuupäev on avaldamise kuupäeval või varem",
+        "Scheduled: This publication goes live on its publication date": "Kavandatud: see väljaanne avaldatakse avaldamise kuupäeval",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Seda väljaannet ei avaldata kunagi: avaldamise lõpetamise kuupäev on avaldamise kuupäeval või varem. Muutke üht kuupäevadest."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -909,7 +909,14 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Uveďte organizáciu a či je aktívna.",
         "This organisation cannot be activated: %s": "Túto organizáciu nemožno aktivovať: %s",
         "The organisation could not be saved: %s": "Organizáciu sa nepodarilo uložiť: %s",
-        "The organisation registers could not be read: %s": "Registre organizácií sa nepodarilo načítať: %s"
+        "The organisation registers could not be read: %s": "Registre organizácií sa nepodarilo načítať: %s",
+        "Scheduled": "Naplánované",
+        "scheduled": "naplánované",
+        "Scheduled Publications": "Naplánované publikácie",
+        "No scheduled publications": "Žiadne naplánované publikácie",
+        "Never goes live: the depublication date is on or before the publication date": "Nikdy nebude zverejnené: dátum stiahnutia je rovnaký alebo skorší ako dátum zverejnenia",
+        "Scheduled: This publication goes live on its publication date": "Naplánované: táto publikácia bude zverejnená v deň zverejnenia",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Táto publikácia nebude nikdy zverejnená: jej dátum stiahnutia je rovnaký alebo skorší ako dátum zverejnenia. Zmeňte jeden z dátumov."
     },
     "nplurals=2; plural=(n != 1);"
 )
