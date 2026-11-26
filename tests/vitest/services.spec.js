@@ -74,10 +74,10 @@ describe('publicationStatus', () => {
 	const past = '2026-01-01T00:00:00Z'
 	const future = '2026-12-31T00:00:00Z'
 
-	it('isConcept: no publicationDate or a future one', () => {
+	it('isConcept: no publicationDate; a future one is scheduled', () => {
 		freezeNow()
 		expect(isConcept({})).toBe(true)
-		expect(isConcept({ publicationDate: future })).toBe(true)
+		expect(isConcept({ publicationDate: future })).toBe(false)
 		expect(isConcept({ publicationDate: past })).toBe(false)
 	})
 
@@ -94,7 +94,7 @@ describe('publicationStatus', () => {
 		expect(isPublished({})).toBe(false)
 	})
 
-	it('isDepublished: past publish AND past depublish', () => {
+	it('isDepublished: a past depublish, whatever the publish date', () => {
 		freezeNow()
 		expect(
 			isDepublished({ publicationDate: past, depublicationDate: past }),
@@ -102,13 +102,14 @@ describe('publicationStatus', () => {
 		expect(isDepublished({ publicationDate: past })).toBe(false)
 		expect(
 			isDepublished({ publicationDate: future, depublicationDate: past }),
-		).toBe(false)
+		).toBe(true)
+		expect(isDepublished({ depublicationDate: past })).toBe(true)
 	})
 
-	it('getPublicationStatus: resolves the three states by priority', () => {
+	it('getPublicationStatus: resolves the states by priority', () => {
 		freezeNow()
 		expect(getPublicationStatus({})).toBe('concept')
-		expect(getPublicationStatus({ publicationDate: future })).toBe('concept')
+		expect(getPublicationStatus({ publicationDate: future })).toBe('scheduled')
 		expect(getPublicationStatus({ publicationDate: past })).toBe('published')
 		expect(
 			getPublicationStatus({ publicationDate: past, depublicationDate: past }),

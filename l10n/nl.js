@@ -2419,7 +2419,14 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Noem de organisatie en of zij actief is.",
         "This organisation cannot be activated: %s": "Deze organisatie kan niet worden geactiveerd: %s",
         "The organisation could not be saved: %s": "De organisatie kon niet worden opgeslagen: %s",
-        "The organisation registers could not be read: %s": "De organisatieregisters konden niet worden gelezen: %s"
+        "The organisation registers could not be read: %s": "De organisatieregisters konden niet worden gelezen: %s",
+        "scheduled": "gepland",
+        "Scheduled Publications": "Geplande publicaties",
+        "No scheduled publications": "Geen geplande publicaties",
+        "Never goes live: the depublication date is on or before the publication date": "Gaat nooit live: de depublicatiedatum valt op of vóór de publicatiedatum",
+        "Scheduled: This publication goes live on its publication date": "Gepland: deze publicatie gaat live op de publicatiedatum",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Deze publicatie gaat nooit live: de depublicatiedatum valt op of vóór de publicatiedatum. Pas een van de datums aan.",
+        "Never go live": "Gaan nooit live"
     },
     "nplurals=2; plural=(n != 1);"
 )

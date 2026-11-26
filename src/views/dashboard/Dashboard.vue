@@ -78,6 +78,7 @@
 					:title="t('opencatalogi', 'Publications')"
 					:count="kpis.publicationCount"
 					:countLabel="t('opencatalogi', 'publications')"
+					:breakdown="publicationBreakdown"
 					:icon="DatabaseEyeOutline"
 					variant="primary"
 					horizontal
@@ -93,6 +94,19 @@
 					:countLabel="t('opencatalogi', 'concept')"
 					:icon="FileDocumentEditOutline"
 					variant="warning"
+					horizontal
+					:clickable="true"
+					@click="navigateToPublications()" />
+			</template>
+
+			<!-- Scheduled Publications count widget -->
+			<template #widget-count-scheduled-publications>
+				<CnStatsBlock
+					:title="t('opencatalogi', 'Scheduled')"
+					:count="kpis.scheduledPublicationCount"
+					:countLabel="t('opencatalogi', 'scheduled')"
+					:icon="CalendarClock"
+					variant="primary"
 					horizontal
 					:clickable="true"
 					@click="navigateToPublications()" />
@@ -294,6 +308,11 @@
 			</template>
 			-->
 
+			<!-- Scheduled Publications widget -->
+			<template #widget-scheduled-publications-title-icon>
+				<CalendarClock :size="20" />
+			</template>
+
 			<!-- Published Publications widget -->
 			<template #widget-published-publications-title-icon>
 				<FileDocumentCheckOutline :size="20" />
@@ -347,6 +366,7 @@ import { loadState } from '@nextcloud/initial-state'
 import { NcButton } from '@nextcloud/vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import Bookshelf from 'vue-material-design-icons/Bookshelf.vue'
+import CalendarClock from 'vue-material-design-icons/CalendarClock.vue'
 import ChartAreaspline from 'vue-material-design-icons/ChartAreaspline.vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 import FileDocumentCheckOutline from 'vue-material-design-icons/FileDocumentCheckOutline.vue'
@@ -358,9 +378,11 @@ import {
 	useCategoricalChartColors,
 } from '../../composables/useChartColors.js'
 import {
+	hasInvalidWindow,
 	isConcept,
 	isDepublished,
 	isPublished,
+	isScheduled,
 } from '../../services/publicationStatus.js'
 import { fetchPublicationStatusCounts } from '../../services/publicationStatusCounts.js'
 import { countingStartNote, fetchInstanceSeries } from '../../services/usageStats.js'
@@ -375,10 +397,11 @@ const PUBLICATION_SCHEMA = loadState('opencatalogi', 'publication_schema', '')
 
 /**
  * Default dashboard layout:
- * - 2×2 KPI grid (left half, rows 0-5)
+ * - KPI grid (left half, rows 0-5): totals, then the four statuses 2×2
  * - Publications by category donut (right half, rows 0-5)
  * - Activity chart (full width, rows 6-10)
- * - Three publication lists (each 4 cols, rows 11-15)
+ * - Usage and popular searches (rows 11-15)
+ * - Four publication lists (each 3 cols, rows 16-20)
  */
 const DEFAULT_LAYOUT = [
 	{
@@ -386,15 +409,42 @@ const DEFAULT_LAYOUT = [
 		widgetId: 'count-publications',
 		gridX: 0,
 		gridY: 0,
-		gridWidth: 3,
+		gridWidth: 2,
+		gridHeight: 2,
+		showTitle: false,
+	},
+	{
+		id: 13,
+		widgetId: 'count-catalogs',
+		gridX: 2,
+		gridY: 0,
+		gridWidth: 2,
+		gridHeight: 2,
+		showTitle: false,
+	},
+	{
+		id: 14,
+		widgetId: 'count-attachments',
+		gridX: 4,
+		gridY: 0,
+		gridWidth: 2,
 		gridHeight: 2,
 		showTitle: false,
 	},
 	{
 		id: 2,
 		widgetId: 'count-concept-publications',
+		gridX: 0,
+		gridY: 2,
+		gridWidth: 3,
+		gridHeight: 2,
+		showTitle: false,
+	},
+	{
+		id: 15,
+		widgetId: 'count-scheduled-publications',
 		gridX: 3,
-		gridY: 0,
+		gridY: 2,
 		gridWidth: 3,
 		gridHeight: 2,
 		showTitle: false,
@@ -403,7 +453,7 @@ const DEFAULT_LAYOUT = [
 		id: 3,
 		widgetId: 'count-published-publications',
 		gridX: 0,
-		gridY: 2,
+		gridY: 4,
 		gridWidth: 3,
 		gridHeight: 2,
 		showTitle: false,
@@ -411,24 +461,6 @@ const DEFAULT_LAYOUT = [
 	{
 		id: 9,
 		widgetId: 'count-depublished-publications',
-		gridX: 3,
-		gridY: 2,
-		gridWidth: 3,
-		gridHeight: 2,
-		showTitle: false,
-	},
-	{
-		id: 13,
-		widgetId: 'count-catalogs',
-		gridX: 0,
-		gridY: 4,
-		gridWidth: 3,
-		gridHeight: 2,
-		showTitle: false,
-	},
-	{
-		id: 14,
-		widgetId: 'count-attachments',
 		gridX: 3,
 		gridY: 4,
 		gridWidth: 3,
@@ -474,23 +506,31 @@ const DEFAULT_LAYOUT = [
 		widgetId: 'concept-publications',
 		gridX: 0,
 		gridY: 16,
-		gridWidth: 4,
+		gridWidth: 3,
+		gridHeight: 5,
+	},
+	{
+		id: 16,
+		widgetId: 'scheduled-publications',
+		gridX: 3,
+		gridY: 16,
+		gridWidth: 3,
 		gridHeight: 5,
 	},
 	{
 		id: 8,
 		widgetId: 'published-publications',
-		gridX: 4,
+		gridX: 6,
 		gridY: 16,
-		gridWidth: 4,
+		gridWidth: 3,
 		gridHeight: 5,
 	},
 	{
 		id: 10,
 		widgetId: 'depublished-publications',
-		gridX: 8,
+		gridX: 9,
 		gridY: 16,
-		gridWidth: 4,
+		gridWidth: 3,
 		gridHeight: 5,
 	},
 	// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
@@ -597,6 +637,10 @@ function countWidgetDefs() {
 			t('opencatalogi', 'Concept Publications'),
 		),
 		customWidget(
+			'count-scheduled-publications',
+			t('opencatalogi', 'Scheduled Publications'),
+		),
+		customWidget(
 			'count-published-publications',
 			t('opencatalogi', 'Published Publications'),
 		),
@@ -642,6 +686,10 @@ function statusListWidgetDefs() {
 			title: t('opencatalogi', 'Concept Publications'),
 			color: 'var(--color-warning)',
 		}),
+		statusListWidget('scheduled-publications', {
+			title: t('opencatalogi', 'Scheduled Publications'),
+			color: 'var(--color-primary-element)',
+		}),
 		statusListWidget('published-publications', {
 			title: t('opencatalogi', 'Published Publications'),
 			color: 'var(--color-success)',
@@ -670,6 +718,7 @@ export default {
 		Plus,
 		DatabaseEyeOutline,
 		FileDocumentEditOutline,
+		CalendarClock,
 		FileDocumentCheckOutline,
 		AlertOutline,
 		ChartAreaspline,
@@ -682,6 +731,7 @@ export default {
 			// Icon components for CnStatsBlock :icon prop
 			DatabaseEyeOutline,
 			FileDocumentEditOutline,
+			CalendarClock,
 			FileDocumentCheckOutline,
 			AlertOutline,
 			Bookshelf,
@@ -758,6 +808,11 @@ export default {
 			return this.allPublications.filter((p) => isConcept(p))
 		},
 
+		/** @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010 */
+		scheduledPublications() {
+			return this.allPublications.filter((p) => isScheduled(p))
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		publishedPublications() {
 			return this.allPublications.filter((p) => isPublished(p))
@@ -783,16 +838,34 @@ export default {
 				conceptPublicationCount:
 					this.statusCounts?.concept ?? this.conceptPublications.length,
 
+				scheduledPublicationCount:
+					this.statusCounts?.scheduled ?? this.scheduledPublications.length,
+
 				publishedPublicationCount:
 					this.statusCounts?.published ?? this.publishedPublications.length,
 
 				depublishedPublicationCount:
 					this.statusCounts?.depublished ?? this.depublishedPublications.length,
 
+				invalidPublicationCount:
+					this.statusCounts?.invalid ?? this.allPublications.filter((p) => hasInvalidWindow(p)).length,
+
 				attachmentCount: attachmentCount(this.allPublications),
 				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 				// conceptAttachmentCount: this.conceptAttachments.length,
 			}
+		},
+
+		/**
+		 * The publications in no status tile, because their window closes
+		 * before it opens, shown on the total tile so the tiles add up to it.
+		 *
+		 * @return {object|null} Label → count, or null when there are none.
+		 * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
+		 */
+		publicationBreakdown() {
+			const invalid = this.kpis.invalidPublicationCount
+			return invalid > 0 ? { [t('opencatalogi', 'Never go live')]: invalid } : null
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
@@ -827,6 +900,7 @@ export default {
 		 * without any, and the class and label of their status badge.
 		 *
 		 * @return {Array<object>} The lists
+		 * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
 		 */
 		statusPublicationLists() {
 			return [
@@ -836,6 +910,13 @@ export default {
 					emptyText: t('opencatalogi', 'No concept publications'),
 					statusClass: 'concept-item-status',
 					statusLabel: t('opencatalogi', 'Concept'),
+				},
+				{
+					id: 'scheduled-publications',
+					publications: this.scheduledPublications,
+					emptyText: t('opencatalogi', 'No scheduled publications'),
+					statusClass: 'scheduled-item-status',
+					statusLabel: t('opencatalogi', 'Scheduled'),
 				},
 				{
 					id: 'published-publications',
@@ -916,10 +997,9 @@ export default {
 		 * (DSH-010 / DSH-OR-001). The endpoint needs no schema-level
 		 * `x-openregister-aggregations` declaration and has no row cap.
 		 *
-		 * The concept / published / depublished states are derived from
-		 * `publicationDate` / `depublicationDate` against "now", not stored, so
-		 * they are counted with date filters: total, live (published on or before
-		 * now) and ended (also depublished on or before now) — see
+		 * The concept / scheduled / published / depublished states are derived
+		 * from `publicationDate` / `depublicationDate` against "now", not stored,
+		 * so they are counted with date filters — see
 		 * `services/publicationStatusCounts.js`. When the register or schema is
 		 * not configured or a count fails, the KPIs keep the list-derived counts.
 		 *
@@ -945,8 +1025,8 @@ export default {
 		},
 
 		/**
-		 * Fetch a bounded page of publication objects to power the concept /
-		 * published / depublished side-panel lists and the category chart. The KPI
+		 * Fetch a bounded page of publication objects to power the per-status
+		 * side-panel lists and the category chart. The KPI
 		 * counts are sourced separately by `fetchPublicationAggregations()`; this
 		 * page only stands in for them when that aggregation is unavailable.
 		 *
@@ -1327,6 +1407,17 @@ function areaChartOptions(colors) {
 	background: var(--color-warning-hover, rgba(233, 163, 0, 0.1));
 	/* stylelint-disable-next-line color-no-hex -- var() fallback, see stylelint.config.js */
 	color: var(--color-warning-text, #7a5700);
+	flex-shrink: 0;
+}
+
+.scheduled-item-status {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 4px;
+	font-size: 11px;
+	font-weight: 600;
+	background: var(--color-primary-element-light);
+	color: var(--color-primary-element-light-text);
 	flex-shrink: 0;
 }
 

@@ -908,7 +908,15 @@
         "Name the organisation and whether it is active.": "Indicați organizația și dacă este activă.",
         "This organisation cannot be activated: %s": "Această organizație nu poate fi activată: %s",
         "The organisation could not be saved: %s": "Organizația nu a putut fi salvată: %s",
-        "The organisation registers could not be read: %s": "Registrele de organizații nu au putut fi citite: %s"
+        "The organisation registers could not be read: %s": "Registrele de organizații nu au putut fi citite: %s",
+        "Scheduled": "Programat",
+        "scheduled": "programat",
+        "Scheduled Publications": "Publicații Programate",
+        "No scheduled publications": "Nicio publicație programată",
+        "Never goes live: the depublication date is on or before the publication date": "Nu va fi publicată niciodată: data de depublicare este aceeași sau anterioară datei de publicare",
+        "Scheduled: This publication goes live on its publication date": "Programat: această publicație devine publică la data publicării",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Această publicație nu va deveni niciodată publică: data de depublicare este aceeași sau anterioară datei de publicare. Modificați una dintre date.",
+        "Never go live": "Nu vor fi publicate niciodată"
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

@@ -579,6 +579,18 @@ export default {
 						icon: 'AlertOutline',
 						label: t('opencatalogi', 'Depublished'),
 					}
+				case 'scheduled':
+					return {
+						variant: 'info',
+						icon: 'CalendarClock',
+						label: t('opencatalogi', 'Scheduled'),
+					}
+				case 'invalid':
+					return {
+						variant: 'error',
+						icon: 'AlertCircleOutline',
+						label: t('opencatalogi', 'Never goes live: the depublication date is on or before the publication date'),
+					}
 				default:
 					return {
 						variant: 'warning',

@@ -909,7 +909,15 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Пазначце арганізацыю і ці актыўная яна.",
         "This organisation cannot be activated: %s": "Гэтую арганізацыю нельга актываваць: %s",
         "The organisation could not be saved: %s": "Не ўдалося захаваць арганізацыю: %s",
-        "The organisation registers could not be read: %s": "Не ўдалося прачытаць рэестры арганізацый: %s"
+        "The organisation registers could not be read: %s": "Не ўдалося прачытаць рэестры арганізацый: %s",
+        "Scheduled": "Запланавана",
+        "scheduled": "запланавана",
+        "Scheduled Publications": "Запланаваныя публікацыі",
+        "No scheduled publications": "Няма запланаваных публікацый",
+        "Never goes live: the depublication date is on or before the publication date": "Ніколі не стане даступнай: дата дэпублікацыі не пазней за дату публікацыі",
+        "Scheduled: This publication goes live on its publication date": "Запланавана: гэтая публікацыя стане даступнай у дзень публікацыі",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Гэтая публікацыя ніколі не стане даступнай: яе дата дэпублікацыі не пазней за дату публікацыі. Змяніце адну з дат.",
+        "Never go live": "Ніколі не публікуюцца"
     },
     "nplurals=2; plural=(n != 1);"
 )

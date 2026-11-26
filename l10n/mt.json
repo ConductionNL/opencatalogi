@@ -908,7 +908,15 @@
         "Name the organisation and whether it is active.": "Semmi l-organizzazzjoni u jekk hijiex attiva.",
         "This organisation cannot be activated: %s": "Din l-organizzazzjoni ma tistax tiġi attivata: %s",
         "The organisation could not be saved: %s": "L-organizzazzjoni ma setgħetx tiġi ssejvjata: %s",
-        "The organisation registers could not be read: %s": "Ir-reġistri tal-organizzazzjonijiet ma setgħux jinqraw: %s"
+        "The organisation registers could not be read: %s": "Ir-reġistri tal-organizzazzjonijiet ma setgħux jinqraw: %s",
+        "Scheduled": "Skedat",
+        "scheduled": "skedat",
+        "Scheduled Publications": "Pubblikazzjonijiet Skedati",
+        "No scheduled publications": "L-ebda pubblikazzjoni skedata",
+        "Never goes live: the depublication date is on or before the publication date": "Qatt mhu se tiġi ppubblikata: id-data tad-depubblikazzjoni hija fl-istess jum jew qabel id-data tal-pubblikazzjoni",
+        "Scheduled: This publication goes live on its publication date": "Skedat: Din il-pubblikazzjoni tiġi ppubblikata fid-data tal-pubblikazzjoni tagħha",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Din il-pubblikazzjoni qatt mhu se tiġi ppubblikata: id-data tad-depubblikazzjoni tagħha hija fl-istess jum jew qabel id-data tal-pubblikazzjoni. Ibdel waħda mid-dati.",
+        "Never go live": "Qatt ma jiġu ppubblikati"
     },
     "plurals": {}
 }

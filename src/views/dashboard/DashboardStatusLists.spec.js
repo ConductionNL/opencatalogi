@@ -20,10 +20,11 @@ jest.mock('../../store/store.js', () => ({ navigationStore: {}, objectStore: {} 
 global.t = (app, text) => text
 
 describe('Dashboard statusPublicationLists', () => {
-	it('lists the concept, published and depublished publications with their badges', () => {
-		const ctx = { conceptPublications: ['c'], publishedPublications: ['p'], depublishedPublications: ['d'] }
+	it('lists the concept, scheduled, published and depublished publications with their badges', () => {
+		const ctx = { conceptPublications: ['c'], scheduledPublications: ['s'], publishedPublications: ['p'], depublishedPublications: ['d'] }
 		expect(Dashboard.computed.statusPublicationLists.call(ctx)).toEqual([
 			{ id: 'concept-publications', publications: ['c'], emptyText: 'No concept publications', statusClass: 'concept-item-status', statusLabel: 'Concept' },
+			{ id: 'scheduled-publications', publications: ['s'], emptyText: 'No scheduled publications', statusClass: 'scheduled-item-status', statusLabel: 'Scheduled' },
 			{ id: 'published-publications', publications: ['p'], emptyText: 'No published publications', statusClass: 'published-item-status', statusLabel: 'Published' },
 			{ id: 'depublished-publications', publications: ['d'], emptyText: 'No depublished publications', statusClass: 'depublished-item-status', statusLabel: 'Depublished' },
 		])

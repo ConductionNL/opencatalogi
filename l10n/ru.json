@@ -908,7 +908,15 @@
         "Name the organisation and whether it is active.": "Укажите организацию и активна ли она.",
         "This organisation cannot be activated: %s": "Эту организацию нельзя активировать: %s",
         "The organisation could not be saved: %s": "Не удалось сохранить организацию: %s",
-        "The organisation registers could not be read: %s": "Не удалось прочитать реестры организаций: %s"
+        "The organisation registers could not be read: %s": "Не удалось прочитать реестры организаций: %s",
+        "Scheduled": "Запланировано",
+        "scheduled": "запланировано",
+        "Scheduled Publications": "Запланированные публикации",
+        "No scheduled publications": "Нет запланированных публикаций",
+        "Never goes live: the depublication date is on or before the publication date": "Никогда не будет опубликовано: дата снятия с публикации совпадает с датой публикации или предшествует ей",
+        "Scheduled: This publication goes live on its publication date": "Запланировано: эта публикация станет доступной в дату публикации",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Эта публикация никогда не станет доступной: дата снятия с публикации совпадает с датой публикации или предшествует ей. Измените одну из дат.",
+        "Never go live": "Никогда не будут опубликованы"
     },
     "plurals": {}
 }

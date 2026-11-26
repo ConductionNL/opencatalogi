@@ -908,7 +908,15 @@
         "Name the organisation and whether it is active.": "Наведете ја организацијата и дали е активна.",
         "This organisation cannot be activated: %s": "Оваа организација не може да се активира: %s",
         "The organisation could not be saved: %s": "Организацијата не можеше да се зачува: %s",
-        "The organisation registers could not be read: %s": "Регистрите на организации не можеа да се прочитаат: %s"
+        "The organisation registers could not be read: %s": "Регистрите на организации не можеа да се прочитаат: %s",
+        "Scheduled": "Закажано",
+        "scheduled": "закажано",
+        "Scheduled Publications": "Закажани објави",
+        "No scheduled publications": "Нема закажани објави",
+        "Never goes live: the depublication date is on or before the publication date": "Никогаш нема да биде објавено: датумот на повлекување е на или пред датумот на објавување",
+        "Scheduled: This publication goes live on its publication date": "Закажано: оваа објава станува јавна на датумот на објавување",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Оваа објава никогаш нема да стане јавна: нејзиниот датум на повлекување е на или пред датумот на објавување. Променете еден од датумите.",
+        "Never go live": "Никогаш не се објавуваат"
     },
     "plurals": {}
 }

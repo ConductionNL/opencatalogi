@@ -37,11 +37,14 @@
 			<div class="publication-card__metadata">
 				<div class="publication-card__status">
 					<template v-if="status === 'concept'">
-						<span v-if="object.publicationDate">
-							{{ t('opencatalogi', 'Scheduled for') }}
-							{{ formatDate(object.publicationDate) }}
-						</span>
-						<span v-else>{{ t('opencatalogi', 'Concept') }}</span>
+						{{ t('opencatalogi', 'Concept') }}
+					</template>
+					<template v-else-if="status === 'scheduled'">
+						{{ t('opencatalogi', 'Scheduled for') }}
+						{{ formatDate(object.publicationDate) }}
+					</template>
+					<template v-else-if="status === 'invalid'">
+						{{ t('opencatalogi', 'Never goes live: the depublication date is on or before the publication date') }}
 					</template>
 					<template v-else-if="status === 'published'">
 						{{ t('opencatalogi', 'Published on') }}
@@ -201,8 +204,13 @@ export default {
 	border-inline-start-color: var(--color-warning);
 }
 
-.publication-card--depublished {
+.publication-card--depublished,
+.publication-card--invalid {
 	border-inline-start-color: var(--color-error);
+}
+
+.publication-card--scheduled {
+	border-inline-start-color: var(--color-primary-element);
 }
 
 .publication-card--selected {

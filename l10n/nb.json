@@ -908,7 +908,15 @@
         "Name the organisation and whether it is active.": "Oppgi organisasjonen og om den er aktiv.",
         "This organisation cannot be activated: %s": "Denne organisasjonen kan ikke aktiveres: %s",
         "The organisation could not be saved: %s": "Organisasjonen kunne ikke lagres: %s",
-        "The organisation registers could not be read: %s": "Organisasjonsregistrene kunne ikke leses: %s"
+        "The organisation registers could not be read: %s": "Organisasjonsregistrene kunne ikke leses: %s",
+        "Scheduled": "Planlagt",
+        "scheduled": "planlagt",
+        "Scheduled Publications": "Planlagte publikasjoner",
+        "No scheduled publications": "Ingen planlagte publikasjoner",
+        "Never goes live: the depublication date is on or before the publication date": "Blir aldri publisert: avpubliseringsdatoen er på eller før publiseringsdatoen",
+        "Scheduled: This publication goes live on its publication date": "Planlagt: Denne publikasjonen publiseres på publiseringsdatoen sin",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Denne publikasjonen blir aldri publisert: avpubliseringsdatoen er på eller før publiseringsdatoen. Endre en av datoene.",
+        "Never go live": "Publiseres aldri"
     },
     "plurals": {}
 }

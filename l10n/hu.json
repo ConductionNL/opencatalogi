@@ -908,7 +908,15 @@
         "Name the organisation and whether it is active.": "Adja meg a szervezetet, és hogy aktív-e.",
         "This organisation cannot be activated: %s": "Ez a szervezet nem aktiválható: %s",
         "The organisation could not be saved: %s": "A szervezetet nem sikerült menteni: %s",
-        "The organisation registers could not be read: %s": "A szervezeti nyilvántartásokat nem sikerült beolvasni: %s"
+        "The organisation registers could not be read: %s": "A szervezeti nyilvántartásokat nem sikerült beolvasni: %s",
+        "Scheduled": "Ütemezve",
+        "scheduled": "ütemezve",
+        "Scheduled Publications": "Ütemezett közzétételek",
+        "No scheduled publications": "Nincsenek ütemezett közzétételek",
+        "Never goes live: the depublication date is on or before the publication date": "Soha nem lesz közzétéve: a visszavonás dátuma megegyezik a közzététel dátumával vagy korábbi annál",
+        "Scheduled: This publication goes live on its publication date": "Ütemezve: ez a közzététel a közzététel dátumán válik elérhetővé",
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ez a közzététel soha nem válik elérhetővé: a visszavonás dátuma megegyezik a közzététel dátumával vagy korábbi annál. Módosítsa az egyik dátumot.",
+        "Never go live": "Soha nem jelennek meg"
     },
     "plurals": {}
 }

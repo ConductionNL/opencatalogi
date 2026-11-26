@@ -18,6 +18,18 @@
 		:size="size"
 		class="depublished-icon"
 		:class="[iconClass]" />
+	<CalendarClock
+		v-else-if="status === 'scheduled'"
+		:title="t('opencatalogi', 'Scheduled: This publication goes live on its publication date')"
+		:size="size"
+		class="scheduled-icon"
+		:class="[iconClass]" />
+	<AlertCircleOutline
+		v-else-if="status === 'invalid'"
+		:title="t('opencatalogi', 'Never goes live: the depublication date is on or before the publication date')"
+		:size="size"
+		class="depublished-icon"
+		:class="[iconClass]" />
 	<Pencil
 		v-else
 		:title="draftTooltip"
@@ -27,10 +39,13 @@
 </template>
 
 <script>
+import { translate as t } from '@nextcloud/l10n'
+import AlertCircleOutline from 'vue-material-design-icons/AlertCircleOutline.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
+import CalendarClock from 'vue-material-design-icons/CalendarClock.vue'
 import ListBoxOutline from 'vue-material-design-icons/ListBoxOutline.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
-import { isDepublished, isPublished } from '../services/publicationStatus.js'
+import { getPublicationStatus } from '../services/publicationStatus.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -41,6 +56,8 @@ export default {
 		ListBoxOutline,
 		Pencil,
 		AlertOutline,
+		AlertCircleOutline,
+		CalendarClock,
 	},
 
 	props: {
@@ -107,13 +124,22 @@ export default {
 	},
 
 	computed: {
+		/** @spec openspec/specs/publications/spec.md */
+		status() {
+			return getPublicationStatus(this.object)
+		},
+
 		isPublished() {
-			return isPublished(this.object)
+			return this.status === 'published'
 		},
 
 		isDepublished() {
-			return isDepublished(this.object)
+			return this.status === 'depublished'
 		},
+	},
+
+	methods: {
+		t,
 	},
 }
 </script>
@@ -130,5 +156,9 @@ export default {
 
 .depublished-icon {
 	color: var(--color-element-error);
+}
+
+.scheduled-icon {
+	color: var(--color-primary-element);
 }
 </style>

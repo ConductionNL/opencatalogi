@@ -9,6 +9,12 @@
 			data-testid="publication-visibility-state">
 			{{ stateLabel }}
 		</p>
+		<NcNoteCard
+			v-if="invalidWindow"
+			type="error"
+			data-testid="publication-visibility-invalid-window">
+			{{ t('opencatalogi', 'This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.') }}
+		</NcNoteCard>
 		<p
 			v-if="automaticDepublicationNote"
 			class="publication-visibility__state"
@@ -213,6 +219,7 @@ import ReasonDialog from '../../dialogs/publication/ReasonDialog.vue'
 import RepublishDocumentDialog from '../../dialogs/publication/RepublishDocumentDialog.vue'
 import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublicationDialog.vue'
 import { frozenMarker } from '../../services/frozenMarker.js'
+import { hasInvalidWindow } from '../../services/publicationStatus.js'
 import {
 	archiveHotspotOf,
 	canDeletePermanently,
@@ -418,6 +425,17 @@ export default {
 		},
 
 		/**
+		 * Whether the publication's depublication date falls on or before its
+		 * coming publication date, so it never goes live.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/publications/spec.md
+		 */
+		invalidWindow() {
+			return hasInvalidWindow(this.ctx.object || this.content || null)
+		},
+
+		/**
 		 * "Automatic depublication on <date>" while the publication's
 		 * depublication date lies ahead (REQ-PSG-003).
 		 *
@@ -426,7 +444,7 @@ export default {
 		 */
 		automaticDepublicationNote() {
 			const date = comingDepublication(this.ctx.object || this.content || null)
-			if (date === null) {
+			if (date === null || this.invalidWindow) {
 				return ''
 			}
 			return this.t('opencatalogi', 'Automatic depublication on {date}', {
