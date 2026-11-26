@@ -2146,6 +2146,7 @@
         "The licence list could not be loaded.": "De licentielijst kon niet worden geladen.",
         "Licence of the datasets in the feed": "Licentie van de datasets in de feed",
         "The instance default licence": "De standaardlicentie van deze installatie",
+        "The catalogue or instance default licence": "De standaardlicentie van de catalogus of van deze installatie",
         "Default licence": "Standaardlicentie",
         "The licence the DCAT feed gives a catalogue that names none. Chosen from the EU licences list; with none chosen the feed carries no default licence.": "De licentie die de DCAT-feed geeft aan een catalogus die er zelf geen noemt. Gekozen uit de EU-licentielijst; zonder keuze heeft de feed geen standaardlicentie.",
         "The default licence could not be read.": "De standaardlicentie kon niet worden gelezen.",
@@ -2418,7 +2419,8 @@
         "Name the organisation and whether it is active.": "Noem de organisatie en of zij actief is.",
         "This organisation cannot be activated: %s": "Deze organisatie kan niet worden geactiveerd: %s",
         "The organisation could not be saved: %s": "De organisatie kon niet worden opgeslagen: %s",
-        "The organisation registers could not be read: %s": "De organisatieregisters konden niet worden gelezen: %s"
+        "The organisation registers could not be read: %s": "De organisatieregisters konden niet worden gelezen: %s",
+        "The licence of this publication's data, from the EU licences list. Empty: the catalogue's or the instance's default licence applies.": "De licentie van de gegevens van deze publicatie, uit de lijst met EU-licenties. Leeg: de standaardlicentie van de catalogus of de installatie geldt."
     },
     "plurals": {}
 }

@@ -125,3 +125,16 @@ describe('ObjectModal and the fields required to publish', () => {
 		).toEqual([])
 	})
 })
+
+describe('ObjectModal and the licence field', () => {
+	it('offers the licence picker for a field that takes the EU licences list', () => {
+		const { isLicenceField } = ObjectModal.methods
+		expect(isLicenceField({ type: 'string', 'x-value-list': 'licence' })).toBe(true)
+		expect(isLicenceField({ type: 'string', format: 'uri' })).toBe(false)
+		expect(isLicenceField(undefined)).toBe(false)
+	})
+
+	it('registers the picker it renders', () => {
+		expect(Object.keys(ObjectModal.components)).toContain('LicencePicker')
+	})
+})

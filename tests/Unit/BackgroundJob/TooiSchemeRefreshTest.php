@@ -37,6 +37,7 @@ use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use RuntimeException;
 
 /**
@@ -95,10 +96,11 @@ class TooiSchemeRefreshTest extends TestCase {
 	 *
 	 * @param array<int, string>    $active   The scheme's active concept uris in the register.
 	 * @param string|RuntimeException $download The download body, or the transport failure.
+	 * @param bool                    $auditTrails Whether OpenRegister keeps audit trails.
 	 *
 	 * @return ValueListRefresh
 	 */
-	private function refresh(array $active, string|RuntimeException $download): ValueListRefresh {
+	private function refresh(array $active, string|RuntimeException $download, bool $auditTrails = true): ValueListRefresh {
 		$this->stored = [
 			ValueListRefresh::SOURCES_KEY => (string)json_encode(
 				[['key' => 'informatiecategorieen', 'scheme' => self::SCHEME, 'url' => 'https://example.test/ic.json']]
@@ -150,10 +152,68 @@ class TooiSchemeRefreshTest extends TestCase {
 		return new ValueListRefresh(
 			download: new ValueListDownload(clients: $clients, graph: new TooiValueListGraph()),
 			vocabulary: $vocabulary,
-			state: new ValueListRefreshState(config: $config, time: $time),
+			state: new ValueListRefreshState(config: $config, time: $time, container: self::openRegister(auditTrails: $auditTrails)),
 			incidents: $incidents,
 		);
 	}//end refresh()
+
+	/**
+	 * A container holding OpenRegister's settings service with the given audit trail switch.
+	 *
+	 * @param bool $auditTrails Whether audit trails are on.
+	 *
+	 * @return ContainerInterface The container.
+	 */
+	private static function openRegister(bool $auditTrails): ContainerInterface {
+		$settings = new class($auditTrails) {
+			/**
+			 * Constructor.
+			 *
+			 * @param bool $on Whether audit trails are on.
+			 */
+			public function __construct(private bool $on) {
+			}
+
+			/**
+			 * @return array<string, mixed>
+			 */
+			public function getRetentionSettingsOnly(): array {
+				return ['auditTrailsEnabled' => $this->on];
+			}
+		};
+
+		return new class($settings) implements ContainerInterface {
+			/**
+			 * Constructor.
+			 *
+			 * @param object $settings The settings service double.
+			 */
+			public function __construct(private object $settings) {
+			}
+
+			/**
+			 * @param string $id The service id.
+			 *
+			 * @return mixed
+			 */
+			public function get(string $id): mixed {
+				if ($id !== ValueListRefreshState::OPENREGISTER_SETTINGS) {
+					throw new RuntimeException(message: 'Unexpected service ' . $id);
+				}
+
+				return $this->settings;
+			}
+
+			/**
+			 * @param string $id The service id.
+			 *
+			 * @return bool
+			 */
+			public function has(string $id): bool {
+				return $id === ValueListRefreshState::OPENREGISTER_SETTINGS;
+			}
+		};
+	}//end openRegister()
 
 	/**
 	 * The 17 concepts the register holds before the source added infocat018.
@@ -254,6 +314,51 @@ class TooiSchemeRefreshTest extends TestCase {
 		$this->assertStringContainsString(needle: 'not JSON', haystack: (string)$state['informatiecategorieen']['error']);
 		$this->assertCount(expectedCount: 1, haystack: $this->raised);
 	}//end testAFailedDownloadKeepsTheScheme()
+
+	/**
+	 * REQ-WVC-005: with OpenRegister's audit trails switched off the categories are not imported, the scheme stays as
+	 * it is and the refusal is raised; switched on, the same refresh imports.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-woo-information-categories-are-audited-data-not-a-constant-req-wvc-005
+	 */
+	public function testWithoutAuditTrailsTheCategoriesAreNotRefreshed(): void {
+		$state = $this->refresh(active: self::seventeen(), download: self::recorded(), auditTrails: false)->refreshAll();
+
+		$this->assertSame(expected: [], actual: $this->imported);
+		$this->assertStringContainsString(needle: 'no audit trails', haystack: (string)$state['informatiecategorieen']['error']);
+		$this->assertCount(expectedCount: 1, haystack: $this->raised);
+		$this->assertSame(expected: 'informatiecategorieen', actual: $this->raised[0]['subject']);
+
+		$this->raised = [];
+		$state = $this->refresh(active: self::seventeen(), download: self::recorded(), auditTrails: true)->refreshAll();
+		$this->assertCount(expectedCount: 1, haystack: $this->imported);
+		$this->assertNull(actual: $state['informatiecategorieen']['error']);
+	}//end testWithoutAuditTrailsTheCategoriesAreNotRefreshed()
+
+	/**
+	 * The switch is OpenRegister's `auditTrailsEnabled`; without OpenRegister's settings, or when they cannot be read,
+	 * the answer is OpenRegister's own default (on), as OpenRegister's save assumes in the same case.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-woo-information-categories-are-audited-data-not-a-constant-req-wvc-005
+	 */
+	public function testTheAuditTrailSwitchIsReadFromOpenRegister(): void {
+		$config = $this->createMock(originalClassName: IAppConfig::class);
+		$time = $this->createMock(originalClassName: ITimeFactory::class);
+		$unreadable = $this->createMock(originalClassName: ContainerInterface::class);
+		$unreadable->method('get')->willThrowException(new RuntimeException(message: 'not installed'));
+
+		$off = new ValueListRefreshState(config: $config, time: $time, container: self::openRegister(auditTrails: false));
+		$on  = new ValueListRefreshState(config: $config, time: $time, container: self::openRegister(auditTrails: true));
+
+		$this->assertFalse(condition: $off->auditTrailsOn());
+		$this->assertTrue(condition: $on->auditTrailsOn());
+		$this->assertTrue(condition: (new ValueListRefreshState(config: $config, time: $time, container: $unreadable))->auditTrailsOn());
+		$this->assertTrue(condition: (new ValueListRefreshState(config: $config, time: $time))->auditTrailsOn());
+	}//end testTheAuditTrailSwitchIsReadFromOpenRegister()
 
 	/**
 	 * Without configured sources the seeded TOOI downloads are used.
