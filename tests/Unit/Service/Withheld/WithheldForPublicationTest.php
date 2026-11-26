@@ -156,19 +156,23 @@ class WithheldForPublicationTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheGroundsAreNotReadWhenNoBatchDocumentIsWithheld(): void {
-		$store = $this->createMock(WithheldFromPublicationStore::class);
+		$store = $this->createMock(originalClassName: WithheldFromPublicationStore::class);
 		$store->method('batchAssessments')->willReturnOnConsecutiveCalls(
 			[['assessment' => 'openbaar', 'fileName' => 'open.pdf']],
 			[]
 		);
 		$store->method('storedEntries')->willReturn(self::STORED);
-		$grounds = $this->createMock(\OCA\OpenCatalogi\Service\Woo\RefusalGrounds::class);
+		$grounds = $this->createMock(originalClassName: \OCA\OpenCatalogi\Service\Woo\RefusalGrounds::class);
 		$grounds->expects($this->never())->method('list');
 
-		$service = new WithheldFromPublication(store: $store, logger: $this->createMock(LoggerInterface::class), refusalGrounds: $grounds);
+		$service = new WithheldFromPublication(
+			store: $store,
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			refusalGrounds: $grounds
+		);
 
-		$this->assertSame([2], array_column($service->entries(publicationId: 'pub-1'), 'position'));
-		$this->assertSame([2], array_column($service->entries(publicationId: 'pub-1'), 'position'));
+		$this->assertSame(expected: [2], actual: array_column($service->entries(publicationId: 'pub-1'), 'position'));
+		$this->assertSame(expected: [2], actual: array_column($service->entries(publicationId: 'pub-1'), 'position'));
 	}//end testTheGroundsAreNotReadWhenNoBatchDocumentIsWithheld()
 
 	/**
@@ -177,12 +181,12 @@ class WithheldForPublicationTest extends TestCase {
 	 * @return void
 	 */
 	public function testOnlyGroundsWithACodeAndALabelResolve(): void {
-		$store = $this->createMock(WithheldFromPublicationStore::class);
+		$store = $this->createMock(originalClassName: WithheldFromPublicationStore::class);
 		$store->method('batchAssessments')->willReturn(
 			[['assessment' => 'niet_openbaar', 'weigeringsgronden' => ['5.1', '5.2', '5.1.2.e']]]
 		);
 		$store->method('storedEntries')->willReturn([]);
-		$grounds = $this->createMock(\OCA\OpenCatalogi\Service\Woo\RefusalGrounds::class);
+		$grounds = $this->createMock(originalClassName: \OCA\OpenCatalogi\Service\Woo\RefusalGrounds::class);
 		$grounds->expects($this->once())->method('list')->willReturn(
 			[
 				['code' => '5.1', 'article' => '5.1', 'label' => ''],
@@ -192,15 +196,20 @@ class WithheldForPublicationTest extends TestCase {
 			]
 		);
 
-		$entries = (new WithheldFromPublication(store: $store, logger: $this->createMock(LoggerInterface::class), refusalGrounds: $grounds))->entries(publicationId: 'pub-1');
+		$service = new WithheldFromPublication(
+			store: $store,
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			refusalGrounds: $grounds
+		);
+		$entries = $service->entries(publicationId: 'pub-1');
 
 		$this->assertSame(
-			[
+			expected: [
 				['code' => '5.1', 'article' => '', 'label' => ''],
 				['code' => '5.2', 'article' => '', 'label' => ''],
 				['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'Privacy'],
 			],
-			$entries[0]['groundDetails']
+			actual: $entries[0]['groundDetails']
 		);
 	}//end testOnlyGroundsWithACodeAndALabelResolve()
 }//end class

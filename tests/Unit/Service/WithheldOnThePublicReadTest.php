@@ -356,7 +356,7 @@ class WithheldOnThePublicReadTest extends TestCase {
 	 * @return void
 	 */
 	private function resolvingThrough(string $snapshotPath): void {
-		// pub-1 was also published from a Woo batch: the first document withheld on 5.1.2.e,
+		// Pub-1 was also published from a Woo batch: the first document withheld on 5.1.2.e,
 		// the second on a code the grounds list does not hold.
 		$this->objects->rows['sch-withheld'] = [];
 		$this->objects->rows['sch-batch'] = [
@@ -366,13 +366,13 @@ class WithheldOnThePublicReadTest extends TestCase {
 			'a-1' => ['id' => 'a-1', 'assessment' => 'niet_openbaar', 'weigeringsgronden' => ['5.1.2.e']],
 			'a-2' => ['id' => 'a-2', 'assessment' => 'niet_openbaar', 'weigeringsgronden' => ['9.9.9']],
 		];
-		$config = $this->createMock(IAppConfig::class);
+		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
 			static fn (string $app, string $key, string $default = ''): string => (self::CONFIG[$key] ?? $default)
 		);
-		$container = $this->createMock(ContainerInterface::class);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->method('get')->willReturn($this->objects);
-		$appManager = $this->createMock(IAppManager::class);
+		$appManager = $this->createMock(originalClassName: IAppManager::class);
 		$appManager->method('isInstalled')->willReturn(true);
 
 		$this->withheld = new WithheldFromPublication(
@@ -382,6 +382,11 @@ class WithheldOnThePublicReadTest extends TestCase {
 		);
 	}//end resolvingThrough()
 
+	/**
+	 * A batch entry's codes get the article and label of the grounds list; an unknown code gets neither.
+	 *
+	 * @return void
+	 */
 	public function testBatchEntriesGainGroundDetailsAndUnknownCodesAreNotGuessed(): void {
 		$snapshot = tempnam(sys_get_temp_dir(), 'grounds');
 		file_put_contents(
@@ -405,25 +410,31 @@ class WithheldOnThePublicReadTest extends TestCase {
 			unlink($snapshot);
 		}
 
-		$this->assertSame(200, $status);
+		$this->assertSame(expected: 200, actual: $status);
+		$privacy = ['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'Eerbiediging van de persoonlijke levenssfeer'];
 		$this->assertSame(
-			[
-				['position' => 1, 'grounds' => ['5.1.2.e'], 'groundDetails' => [['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'Eerbiediging van de persoonlijke levenssfeer']]],
+			expected: [
+				['position' => 1, 'grounds' => ['5.1.2.e'], 'groundDetails' => [$privacy]],
 				['position' => 2, 'grounds' => ['9.9.9'], 'groundDetails' => [['code' => '9.9.9', 'article' => '', 'label' => '']]],
 			],
-			$data['withheld']
+			actual: $data['withheld']
 		);
 	}//end testBatchEntriesGainGroundDetailsAndUnknownCodesAreNotGuessed()
 
+	/**
+	 * An unreadable grounds list leaves every batch code unlabelled, and the withheld list still answers.
+	 *
+	 * @return void
+	 */
 	public function testAnUnreadableGroundsListLeavesTheBatchCodesUnlabelledAndTheListReadable(): void {
 		$this->resolvingThrough(snapshotPath: sys_get_temp_dir() . '/no-such-grounds-' . uniqid() . '.json');
 
 		[$status, $data] = $this->show(optIn: true);
 
-		$this->assertSame(200, $status);
+		$this->assertSame(expected: 200, actual: $status);
 		$this->assertSame(
-			[[['code' => '5.1.2.e', 'article' => '', 'label' => '']], [['code' => '9.9.9', 'article' => '', 'label' => '']]],
-			array_column($data['withheld'], 'groundDetails')
+			expected: [[['code' => '5.1.2.e', 'article' => '', 'label' => '']], [['code' => '9.9.9', 'article' => '', 'label' => '']]],
+			actual: array_column($data['withheld'], 'groundDetails')
 		);
 	}//end testAnUnreadableGroundsListLeavesTheBatchCodesUnlabelledAndTheListReadable()
 }//end class
