@@ -23,7 +23,8 @@ Search only finds OCR text once `add-document-content-search` is merged; tasks 1
 
 ## 4. Verification
 
-- [ ] 4.1 `openspec validate scanned-attachments-become-searchable --strict`, `composer check:strict`, `npm run lint`.
+- [x] 4.1 `openspec validate scanned-attachments-become-searchable --strict`, `composer check:strict`, `npm run lint`.
+  - Run 2026-11-26: `openspec validate scanned-attachments-become-searchable --strict` answers valid (openspec 2.2.0). `composer check:strict` and `npm run lint` give the same result as on `development`: phpmd and psalm red on findings outside this change, phpcs and phpstan clean, eslint 0 errors; no new finding (hydra diff check).
 - [ ] 4.2 Live, on an instance with filinq and Tesseract: publish a scan, wait for the job, and paste the `_content` search answer that finds it in the PR body. (live pass, decision 139)
 - [ ] 4.3 Set `srch-ocr` in `openspec/parity/capabilities.json` to `built` with this change, and correct its evidence (filinq's fallback and OpenRegister's seam exist).
   - 22 Nov: row set to `building` with owner `ConductionNL/opencatalogi` and the evidence corrected (the job, filinq's fallback, OpenRegister's seam, the Text column). Left unticked: `built` waits for `tests/e2e/attachment-reading.spec.ts` and the live pass of 4.2.
