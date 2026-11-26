@@ -4104,7 +4104,8 @@
                     "id": "id-1",
                     "register": "res-reg",
                     "schema": "res-sch",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_multitenancy": false
                 }
             },
             {
@@ -4172,7 +4173,8 @@
                     "id": "id-1",
                     "register": "cfg-publication_register",
                     "schema": "cfg-inspection_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_multitenancy": false
                 }
             },
             {
@@ -4317,7 +4319,8 @@
                     "id": "id-1",
                     "register": "res-reg",
                     "schema": "res-sch",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_multitenancy": false
                 }
             },
             {
