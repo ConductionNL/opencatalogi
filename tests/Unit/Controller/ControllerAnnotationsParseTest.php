@@ -48,7 +48,7 @@ class ControllerAnnotationsParseTest extends TestCase {
 			}
 		}
 
-		$this->assertSame([], $offending, 'Add a reason after the closing parenthesis of these annotations.');
+		$this->assertSame(expected: [], actual: $offending, message: 'Add a reason after the closing parenthesis of these annotations.');
 	}//end testNoActionDocblockMakesNextcloudWarn()
 
 	/**
@@ -72,7 +72,7 @@ class ControllerAnnotationsParseTest extends TestCase {
 			}
 		}
 
-		$this->assertSame(['bad'], $found);
+		$this->assertSame(expected: ['bad'], actual: $found);
 	}//end testTheCheckFindsTheWarningShape()
 
 	/**
