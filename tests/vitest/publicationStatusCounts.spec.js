@@ -21,6 +21,7 @@ const param = (field, op, value) => `${encodeURIComponent(`filter[${field}][${op
 const PUB_LTE = param('publicationDate', 'lte', NOW_ISO)
 const DEPUB_LTE = param('depublicationDate', 'lte', NOW_ISO)
 const PUB_NULL = param('publicationDate', 'isnull', 'true')
+const PUB_GT = param('publicationDate', 'gt', NOW_ISO)
 
 const TOTAL = 'metric=count'
 const LIVE = `metric=count&${PUB_LTE}`
@@ -28,7 +29,9 @@ const ENDED = `${LIVE}&${DEPUB_LTE}`
 const WITHDRAWN = `metric=count&${DEPUB_LTE}`
 const UNDATED = `metric=count&${PUB_NULL}`
 const UNDATED_WITHDRAWN = `${UNDATED}&${DEPUB_LTE}`
-const UPCOMING = `${param('publicationDate', 'gt', NOW_ISO)}&${param('depublicationDate', 'gt', NOW_ISO)}`
+const UPCOMING = `metric=count&${PUB_GT}`
+const UPCOMING_WITHDRAWN = `${UPCOMING}&${DEPUB_LTE}`
+const WINDOWS = `${PUB_GT}&${param('depublicationDate', 'gt', NOW_ISO)}`
 
 /**
  * One page of the upcoming-window list.
@@ -68,7 +71,16 @@ function fetchAnswering(counts, pages = { 1: listPage([]) }) {
 	})
 }
 
-const COUNTS = { [TOTAL]: 20, [LIVE]: 9, [ENDED]: 2, [WITHDRAWN]: 4, [UNDATED]: 6, [UNDATED_WITHDRAWN]: 1 }
+const COUNTS = {
+	[TOTAL]: 20,
+	[LIVE]: 9,
+	[ENDED]: 2,
+	[WITHDRAWN]: 4,
+	[UNDATED]: 6,
+	[UNDATED_WITHDRAWN]: 1,
+	[UPCOMING]: 5,
+	[UPCOMING_WITHDRAWN]: 1,
+}
 
 describe('countQuery', () => {
 	it('asks for a plain count without filters', () => {
@@ -93,6 +105,7 @@ describe('statusCountFilters', () => {
 	it('bounds every count at the same moment', () => {
 		const lte = { lte: NOW_ISO }
 		const isnull = { isnull: 'true' }
+		const gt = { gt: NOW_ISO }
 
 		expect(statusCountFilters(NOW_ISO)).toEqual({
 			total: {},
@@ -101,13 +114,17 @@ describe('statusCountFilters', () => {
 			withdrawn: { depublicationDate: lte },
 			undated: { publicationDate: isnull },
 			undatedWithdrawn: { publicationDate: isnull, depublicationDate: lte },
+			upcoming: { publicationDate: gt },
+			upcomingWithdrawn: { publicationDate: gt, depublicationDate: lte },
 		})
 	})
 })
 
 describe('deriveStatusCounts', () => {
+	const valid = { total: 20, live: 9, ended: 2, withdrawn: 4, undated: 6, undatedWithdrawn: 1, upcoming: 5, upcomingWithdrawn: 1, invalid: 1 }
+
 	it('splits the total over concept, scheduled, published, depublished and invalid', () => {
-		expect(deriveStatusCounts({ total: 20, live: 9, ended: 2, withdrawn: 4, undated: 6, undatedWithdrawn: 1, invalid: 1 })).toEqual({
+		expect(deriveStatusCounts(valid)).toEqual({
 			total: 20,
 			concept: 5,
 			scheduled: 3,
@@ -118,7 +135,9 @@ describe('deriveStatusCounts', () => {
 	})
 
 	it('allows every count to be zero', () => {
-		expect(deriveStatusCounts({ total: 0, live: 0, ended: 0, withdrawn: 0, undated: 0, undatedWithdrawn: 0, invalid: 0 })).toEqual({
+		const zero = Object.fromEntries(Object.keys(valid).map((name) => [name, 0]))
+
+		expect(deriveStatusCounts(zero)).toEqual({
 			total: 0,
 			concept: 0,
 			scheduled: 0,
@@ -128,14 +147,23 @@ describe('deriveStatusCounts', () => {
 		})
 	})
 
-	const valid = { total: 20, live: 9, ended: 2, withdrawn: 4, undated: 6, undatedWithdrawn: 1, invalid: 1 }
+	it('keeps the other statuses without the invalid-window count', () => {
+		expect(deriveStatusCounts({ ...valid, invalid: null })).toEqual({
+			total: 20,
+			concept: 5,
+			scheduled: null,
+			published: 7,
+			depublished: 4,
+			invalid: null,
+		})
+	})
 
 	it.each([
 		[{ ...valid, total: null }],
 		[{ ...valid, live: undefined }],
+		[{ ...valid, upcoming: undefined }],
 		[{ ...valid, ended: 1.5 }],
 		[{ ...valid, invalid: -1 }],
-		[{ ...valid, invalid: null }],
 	])('refuses a missing or invalid count %o', (counts) => {
 		expect(deriveStatusCounts(counts)).toBeNull()
 	})
@@ -144,9 +172,14 @@ describe('deriveStatusCounts', () => {
 		[{ ...valid, ended: 10 }],
 		[{ ...valid, ended: 5 }],
 		[{ ...valid, undatedWithdrawn: 7 }],
-		[{ ...valid, invalid: 8 }],
+		[{ ...valid, upcomingWithdrawn: 6 }],
+		[{ ...valid, invalid: 5 }],
 	])('refuses counts that contradict each other %o', (counts) => {
 		expect(deriveStatusCounts(counts)).toBeNull()
+	})
+
+	it('refuses statuses that do not add up to the total, as with a publication date the filters cannot place', () => {
+		expect(deriveStatusCounts({ ...valid, total: 21 })).toBeNull()
 	})
 })
 
@@ -164,7 +197,7 @@ describe('fetchPublicationStatusCounts', () => {
 		expect(counts).toEqual({ total: 20, concept: 5, scheduled: 2, published: 7, depublished: 4, invalid: 2 })
 		const base = '/index.php/apps/openregister/api/objects'
 		const aggregation = `${base}/aggregations/r%201/s1/value`
-		const list = `${base}/r%201/s1?${UPCOMING}&_fields=publicationDate%2CdepublicationDate&_limit=500`
+		const list = `${base}/r%201/s1?${WINDOWS}&_fields=publicationDate%2CdepublicationDate&_limit=500`
 		expect(fetchFn.mock.calls.map(([url]) => url)).toEqual([
 			`${aggregation}?${TOTAL}`,
 			`${aggregation}?${LIVE}`,
@@ -172,6 +205,8 @@ describe('fetchPublicationStatusCounts', () => {
 			`${aggregation}?${WITHDRAWN}`,
 			`${aggregation}?${UNDATED}`,
 			`${aggregation}?${UNDATED_WITHDRAWN}`,
+			`${aggregation}?${UPCOMING}`,
+			`${aggregation}?${UPCOMING_WITHDRAWN}`,
 			`${list}&_page=1`,
 			`${list}&_page=2`,
 		])
@@ -202,10 +237,17 @@ describe('fetchPublicationStatusCounts', () => {
 		expect(await fetchPublicationStatusCounts({ ...options, fetchFn })).toBeNull()
 	})
 
-	it('gives up when the upcoming windows cannot be read', async () => {
+	it('keeps the other statuses when the upcoming windows cannot be read', async () => {
 		const fetchFn = fetchAnswering(COUNTS, { 1: { total: 3 } })
 
-		expect(await fetchPublicationStatusCounts({ ...options, fetchFn })).toBeNull()
+		expect(await fetchPublicationStatusCounts({ ...options, fetchFn })).toEqual({
+			total: 20,
+			concept: 5,
+			scheduled: null,
+			published: 7,
+			depublished: 4,
+			invalid: null,
+		})
 	})
 
 	it('gives up when the network fails', async () => {

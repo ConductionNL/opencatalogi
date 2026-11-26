@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Zamanlanmış yayın yok",
         "Never goes live: the depublication date is on or before the publication date": "Hiçbir zaman yayımlanmayacak: yayından kaldırma tarihi yayım tarihiyle aynı ya da daha önce",
         "Scheduled: This publication goes live on its publication date": "Zamanlandı: Bu yayın, yayım tarihinde yayımlanır",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Bu yayın hiçbir zaman yayımlanmayacak: yayından kaldırma tarihi yayım tarihiyle aynı ya da daha önce. Tarihlerden birini değiştirin."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Bu yayın hiçbir zaman yayımlanmayacak: yayından kaldırma tarihi yayım tarihiyle aynı ya da daha önce. Tarihlerden birini değiştirin.",
+        "Never go live": "Hiç yayınlanmayacak"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -418,14 +418,18 @@ not stored:
 - **Published**: P on or before now, and D not set or after now
 - **Depublished**: D on or before now, whatever P is
 - **Invalid window**: P after now and D on or before P, while D is after now.
-  It never goes live. The dashboard counts it in no status KPI (it is in the
-  total); the publication page shows it as an error instead.
+  It never goes live. The dashboard counts it in no status KPI; the total
+  tile names how many there are ("Never go live"), and the publication page
+  shows it as an error.
 
-The KPIs are differences of ad-hoc counts with `lte` / `isnull` date filters,
-so they have no row cap. An invalid window compares two fields, which no
-filter can, so the publications with both dates ahead are read and checked in
-the browser (`services/publicationStatusCounts.js`). When a count fails, the
-KPIs fall back to the bounded publication fetch.
+The KPIs are differences of ad-hoc counts with `lte` / `gt` / `isnull` date
+filters, so they have no row cap. An invalid window compares two fields, which
+no filter can, so the publications with both dates ahead are read and checked
+in the browser (`services/publicationStatusCounts.js`); that read stops after
+20 pages of 500. When a count fails, or the statuses do not add up to the
+total (a date the filters cannot place, such as an empty one), the KPIs fall
+back to the bounded publication fetch. When only the invalid-window read
+fails, only Scheduled and the invalid windows fall back to it.
 
 **Priority:** Should **Status:** Implemented — total and status-breakdown KPIs come from the ad-hoc aggregation
 

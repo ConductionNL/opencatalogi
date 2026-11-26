@@ -29,18 +29,17 @@ function toDate(value) {
 }
 
 /**
- * Whether the publication window closes on or before it opens while it has
- * not opened yet, so the publication never goes live. Stays
- * true once the depublication date has passed, when the status is depublished.
+ * Whether the publication window closes on or before it opens while both
+ * dates lie ahead, so the publication never goes live. Once the depublication
+ * date has passed the publication is depublished instead, as after taking a
+ * scheduled publication down.
  *
  * @param {object} obj Publication object
  * @return {boolean} True for an invalid window.
  * @spec openspec/specs/publications/spec.md
  */
 export function hasInvalidWindow(obj) {
-	const pub = toDate(obj?.publicationDate)
-	const depub = toDate(obj?.depublicationDate)
-	return !!(pub && depub && pub > new Date() && depub <= pub)
+	return getPublicationStatus(obj) === 'invalid'
 }
 
 /**

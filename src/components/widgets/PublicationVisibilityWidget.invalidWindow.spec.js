@@ -62,4 +62,10 @@ describe('PublicationVisibilityWidget invalid window', () => {
 		expect(wrapper.find(ERROR).exists()).toBe(false)
 		expect(wrapper.find(AUTO_DEPUBLICATION).exists()).toBe(true)
 	})
+
+	it('says nothing once a scheduled publication was taken down', async () => {
+		const wrapper = await mountWidget({ publicationDate: '2999-12-01T00:00:00Z', depublicationDate: '2020-01-01T00:00:00Z' })
+
+		expect(wrapper.find(ERROR).exists()).toBe(false)
+	})
 })

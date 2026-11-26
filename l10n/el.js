@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Δεν υπάρχουν προγραμματισμένες δημοσιεύσεις",
         "Never goes live: the depublication date is on or before the publication date": "Δεν θα δημοσιευτεί ποτέ: η ημερομηνία αποδημοσίευσης είναι ίδια ή προγενέστερη της ημερομηνίας δημοσίευσης",
         "Scheduled: This publication goes live on its publication date": "Προγραμματισμένο: Αυτή η δημοσίευση γίνεται διαθέσιμη την ημερομηνία δημοσίευσής της",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Αυτή η δημοσίευση δεν θα γίνει ποτέ διαθέσιμη: η ημερομηνία αποδημοσίευσης είναι ίδια ή προγενέστερη της ημερομηνίας δημοσίευσης. Αλλάξτε μία από τις ημερομηνίες."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Αυτή η δημοσίευση δεν θα γίνει ποτέ διαθέσιμη: η ημερομηνία αποδημοσίευσης είναι ίδια ή προγενέστερη της ημερομηνίας δημοσίευσης. Αλλάξτε μία από τις ημερομηνίες.",
+        "Never go live": "Δεν δημοσιεύονται ποτέ"
     },
     "nplurals=2; plural=(n != 1);"
 )

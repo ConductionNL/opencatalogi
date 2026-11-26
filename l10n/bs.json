@@ -915,7 +915,8 @@
         "No scheduled publications": "Nema zakazanih objava",
         "Never goes live: the depublication date is on or before the publication date": "Nikada neće biti objavljeno: datum povlačenja je na ili prije datuma objave",
         "Scheduled: This publication goes live on its publication date": "Zakazano: ova objava postaje javna na datum objave",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ova objava nikada neće postati javna: njen datum povlačenja je na ili prije datuma objave. Promijenite jedan od datuma."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ova objava nikada neće postati javna: njen datum povlačenja je na ili prije datuma objave. Promijenite jedan od datuma.",
+        "Never go live": "Nikada ne budu objavljene"
     },
     "plurals": {}
 }

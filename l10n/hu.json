@@ -915,7 +915,8 @@
         "No scheduled publications": "Nincsenek ütemezett közzétételek",
         "Never goes live: the depublication date is on or before the publication date": "Soha nem lesz közzétéve: a visszavonás dátuma megegyezik a közzététel dátumával vagy korábbi annál",
         "Scheduled: This publication goes live on its publication date": "Ütemezve: ez a közzététel a közzététel dátumán válik elérhetővé",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ez a közzététel soha nem válik elérhetővé: a visszavonás dátuma megegyezik a közzététel dátumával vagy korábbi annál. Módosítsa az egyik dátumot."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ez a közzététel soha nem válik elérhetővé: a visszavonás dátuma megegyezik a közzététel dátumával vagy korábbi annál. Módosítsa az egyik dátumot.",
+        "Never go live": "Soha nem jelennek meg"
     },
     "plurals": {}
 }

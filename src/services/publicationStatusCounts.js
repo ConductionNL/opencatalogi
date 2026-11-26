@@ -11,9 +11,11 @@
  *   depublished = withdrawn (depublicationDate ≤ now)
  *   published   = live (publicationDate ≤ now) − ended (live and withdrawn)
  *   concept     = undated (no publicationDate) − undated and withdrawn
- *   scheduled   = what is left, minus the invalid windows
+ *   scheduled   = upcoming (publicationDate > now) − upcoming and withdrawn − invalid
  * An invalid window (depublicationDate ≤ publicationDate, both ahead) compares two
  * fields, which no filter can, so those few publications are read and checked here.
+ * When the statuses do not add up to the total, a date the filters cannot place
+ * (an empty or unparsable one) is in none of them, and the counts are refused.
  */
 
 /** The most pages of upcoming windows read before giving up. */
@@ -64,30 +66,38 @@ export function statusCountFilters(nowIso) {
 		withdrawn: { depublicationDate: passed },
 		undated: { publicationDate: absent },
 		undatedWithdrawn: { publicationDate: absent, depublicationDate: passed },
+		upcoming: { publicationDate: { gt: nowIso } },
+		upcomingWithdrawn: { publicationDate: { gt: nowIso }, depublicationDate: passed },
 	}
 }
 
 /**
  * Derive the per-status totals from the counts.
  *
+ * Without the invalid-window count (`invalid: null`) the other statuses still
+ * hold, and only scheduled and invalid are left null.
+ *
  * @param {Object<string, ?number>} counts The counts of `statusCountFilters`, plus `invalid`.
- * @return {{total: number, concept: number, scheduled: number, published: number, depublished: number, invalid: number}|null}
+ * @return {{total: number, concept: number, scheduled: ?number, published: number, depublished: number, invalid: ?number}|null}
  *   The totals, or null when a count is missing or the counts contradict each other.
- * @spec openspec/changes/dashboard-consume-or-aggregations/tasks.md
+ * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
  */
 export function deriveStatusCounts(counts) {
-	const { total, live, ended, withdrawn, undated, undatedWithdrawn, invalid } = counts
-	const valid = [total, live, ended, withdrawn, undated, undatedWithdrawn, invalid]
-		.every((n) => Number.isInteger(n) && n >= 0)
-	if (!valid || ended > live || ended > withdrawn || undatedWithdrawn > undated || undatedWithdrawn > withdrawn) {
+	const { total, live, ended, withdrawn, undated, undatedWithdrawn, upcoming, upcomingWithdrawn, invalid } = counts
+	const isCount = (n) => Number.isInteger(n) && n >= 0
+	const valid = [total, live, ended, withdrawn, undated, undatedWithdrawn, upcoming, upcomingWithdrawn].every(isCount)
+		&& (invalid === null || isCount(invalid))
+	if (!valid || ended > live || undatedWithdrawn > undated || upcomingWithdrawn > upcoming
+		|| ended + undatedWithdrawn + upcomingWithdrawn > withdrawn) {
 		return null
 	}
 	const published = live - ended
 	const concept = undated - undatedWithdrawn
-	const scheduled = total - withdrawn - published - concept - invalid
-	if (scheduled < 0) {
+	const notYetLive = upcoming - upcomingWithdrawn
+	if (concept + notYetLive + published + withdrawn !== total || invalid > notYetLive) {
 		return null
 	}
+	const scheduled = invalid === null ? null : notYetLive - invalid
 	return { total, concept, scheduled, published, depublished: withdrawn, invalid }
 }
 
@@ -163,7 +173,7 @@ async function countInvalidWindows(fetchFn, listUrl, nowIso, headers) {
  * @param {object} [options.headers] Request headers.
  * @param {Date} [options.now] The moment to measure at.
  * @param {function(string, object): Promise<Response>} [options.fetchFn] The fetch implementation.
- * @return {Promise<{total: number, concept: number, scheduled: number, published: number, depublished: number, invalid: number}|null>}
+ * @return {Promise<{total: number, concept: number, scheduled: ?number, published: number, depublished: number, invalid: ?number}|null>}
  *   The totals, or null when the register or schema is unknown or a count fails.
  * @spec openspec/changes/dashboard-consume-or-aggregations/tasks.md
  */

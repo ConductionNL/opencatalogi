@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Няма планирани публикации",
         "Never goes live: the depublication date is on or before the publication date": "Никога няма да бъде публикувано: датата на депубликуване е на или преди датата на публикуване",
         "Scheduled: This publication goes live on its publication date": "Планирано: тази публикация ще бъде публикувана на датата си на публикуване",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Тази публикация никога няма да бъде публикувана: датата на депубликуване е на или преди датата на публикуване. Променете една от датите."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Тази публикация никога няма да бъде публикувана: датата на депубликуване е на или преди датата на публикуване. Променете една от датите.",
+        "Never go live": "Никога не се публикуват"
     },
     "nplurals=2; plural=(n != 1);"
 )

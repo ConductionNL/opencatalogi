@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Keng geplangte Verëffentlechungen",
         "Never goes live: the depublication date is on or before the publication date": "Gëtt ni verëffentlecht: den Depublikatiounsdatum ass um oder virum Verëffentlechungsdatum",
         "Scheduled: This publication goes live on its publication date": "Geplangt: Dës Verëffentlechung geet un hirem Verëffentlechungsdatum online",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Dës Verëffentlechung geet ni online: hiren Depublikatiounsdatum ass um oder virum Verëffentlechungsdatum. Ännert ee vun den Datumer."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Dës Verëffentlechung geet ni online: hiren Depublikatiounsdatum ass um oder virum Verëffentlechungsdatum. Ännert ee vun den Datumer.",
+        "Never go live": "Ginn ni publizéiert"
     },
     "nplurals=2; plural=(n != 1);"
 )

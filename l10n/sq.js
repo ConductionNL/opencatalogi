@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Asnjë botim i planifikuar",
         "Never goes live: the depublication date is on or before the publication date": "Nuk do të botohet kurrë: data e heqjes nga botimi është në të njëjtën ditë ose para datës së botimit",
         "Scheduled: This publication goes live on its publication date": "Planifikuar: Ky botim bëhet publik në datën e botimit",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ky botim nuk do të bëhet kurrë publik: data e heqjes nga botimi është në të njëjtën ditë ose para datës së botimit. Ndryshoni njërën nga datat."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ky botim nuk do të bëhet kurrë publik: data e heqjes nga botimi është në të njëjtën ditë ose para datës së botimit. Ndryshoni njërën nga datat.",
+        "Never go live": "Nuk publikohen kurrë"
     },
     "nplurals=2; plural=(n != 1);"
 )

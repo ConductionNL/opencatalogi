@@ -62,7 +62,17 @@ describe('Dashboard publication KPIs', () => {
 			scheduledPublicationCount: 40,
 			publishedPublicationCount: 1000,
 			depublishedPublicationCount: 200,
+			invalidPublicationCount: 10,
 		})
+	})
+
+	it('takes Scheduled and invalid windows from the fetched page when only their split is unknown', () => {
+		const result = kpis({
+			allPublications: ['a', { publicationDate: '2999-12-02T00:00:00Z', depublicationDate: '2999-12-01T00:00:00Z' }],
+			statusCounts: { total: 1500, concept: 250, scheduled: null, published: 1000, depublished: 200, invalid: null },
+		})
+
+		expect(result).toMatchObject({ conceptPublicationCount: 250, scheduledPublicationCount: 1, invalidPublicationCount: 1 })
 	})
 
 	it('keeps a zero aggregation count instead of the list count', () => {
@@ -80,7 +90,15 @@ describe('Dashboard publication KPIs', () => {
 			scheduledPublicationCount: 1,
 			publishedPublicationCount: 2,
 			depublishedPublicationCount: 1,
+			invalidPublicationCount: 0,
 		})
+	})
+
+	it('names the publications that never go live on the total tile, and only when there are any', () => {
+		const breakdown = (invalidPublicationCount) => Dashboard.computed.publicationBreakdown.call({ kpis: { invalidPublicationCount } })
+
+		expect(breakdown(3)).toEqual({ 'Never go live': 3 })
+		expect(breakdown(0)).toBeNull()
 	})
 
 	it('stores the aggregation totals for the configured register and schema', async () => {

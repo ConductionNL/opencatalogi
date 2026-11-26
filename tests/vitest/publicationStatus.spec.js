@@ -72,12 +72,13 @@ describe('the status predicates', () => {
 })
 
 describe('hasInvalidWindow', () => {
-	it('flags a coming publication that ends on or before it starts, also once the end has passed', () => {
+	it('flags a coming publication that ends on or before it starts', () => {
 		expect(hasInvalidWindow({ publicationDate: FUTURE, depublicationDate: SOONER })).toBe(true)
-		expect(hasInvalidWindow({ publicationDate: FUTURE, depublicationDate: PAST })).toBe(true)
+		expect(hasInvalidWindow({ publicationDate: FUTURE, depublicationDate: FUTURE })).toBe(true)
 	})
 
-	it('leaves a valid or finished window alone', () => {
+	it('leaves a valid, finished or taken-down window alone', () => {
+		expect(hasInvalidWindow({ publicationDate: FUTURE, depublicationDate: PAST })).toBe(false)
 		expect(hasInvalidWindow({ publicationDate: FUTURE, depublicationDate: LATER })).toBe(false)
 		expect(hasInvalidWindow({ publicationDate: FUTURE })).toBe(false)
 		expect(hasInvalidWindow({ publicationDate: PAST, depublicationDate: EARLIER })).toBe(false)

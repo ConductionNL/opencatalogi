@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Nėra suplanuotų publikacijų",
         "Never goes live: the depublication date is on or before the publication date": "Niekada nebus paskelbta: paskelbimo atšaukimo data sutampa su paskelbimo data arba yra ankstesnė",
         "Scheduled: This publication goes live on its publication date": "Suplanuota: ši publikacija bus paskelbta jos paskelbimo dieną",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ši publikacija niekada nebus paskelbta: jos paskelbimo atšaukimo data sutampa su paskelbimo data arba yra ankstesnė. Pakeiskite vieną iš datų."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ši publikacija niekada nebus paskelbta: jos paskelbimo atšaukimo data sutampa su paskelbimo data arba yra ankstesnė. Pakeiskite vieną iš datų.",
+        "Never go live": "Niekada nebus paskelbti"
     },
     "nplurals=2; plural=(n != 1);"
 )

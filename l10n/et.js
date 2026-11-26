@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Kavandatud väljaandeid pole",
         "Never goes live: the depublication date is on or before the publication date": "Ei avaldata kunagi: avaldamise lõpetamise kuupäev on avaldamise kuupäeval või varem",
         "Scheduled: This publication goes live on its publication date": "Kavandatud: see väljaanne avaldatakse avaldamise kuupäeval",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Seda väljaannet ei avaldata kunagi: avaldamise lõpetamise kuupäev on avaldamise kuupäeval või varem. Muutke üht kuupäevadest."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Seda väljaannet ei avaldata kunagi: avaldamise lõpetamise kuupäev on avaldamise kuupäeval või varem. Muutke üht kuupäevadest.",
+        "Never go live": "Ei avaldata kunagi"
     },
     "nplurals=2; plural=(n != 1);"
 )

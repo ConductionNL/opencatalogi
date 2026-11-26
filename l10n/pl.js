@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Brak zaplanowanych publikacji",
         "Never goes live: the depublication date is on or before the publication date": "Nigdy nie zostanie opublikowana: data wycofania jest taka sama jak data publikacji lub wcześniejsza",
         "Scheduled: This publication goes live on its publication date": "Zaplanowano: ta publikacja zostanie opublikowana w dniu publikacji",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ta publikacja nigdy nie zostanie opublikowana: jej data wycofania jest taka sama jak data publikacji lub wcześniejsza. Zmień jedną z dat."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ta publikacja nigdy nie zostanie opublikowana: jej data wycofania jest taka sama jak data publikacji lub wcześniejsza. Zmień jedną z dat.",
+        "Never go live": "Nigdy nie zostaną opublikowane"
     },
     "nplurals=2; plural=(n != 1);"
 )

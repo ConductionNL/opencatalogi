@@ -915,7 +915,8 @@
         "No scheduled publications": "Naginas publicaziuns planisadas",
         "Never goes live: the depublication date is on or before the publication date": "Na vegn mai publitgada: la data da depublicaziun è il medem di u avant la data da publicaziun",
         "Scheduled: This publication goes live on its publication date": "Planisà: Questa publicaziun vegn publitgada a sia data da publicaziun",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Questa publicaziun na vegn mai publitgada: sia data da depublicaziun è il medem di u avant la data da publicaziun. Midai ina da las datas."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Questa publicaziun na vegn mai publitgada: sia data da depublicaziun è il medem di u avant la data da publicaziun. Midai ina da las datas.",
+        "Never go live": "Na vegnan mai publitgadas"
     },
     "plurals": {}
 }

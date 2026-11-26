@@ -915,7 +915,8 @@
         "No scheduled publications": "Ingen planlagte publikationer",
         "Never goes live: the depublication date is on or before the publication date": "Bliver aldrig offentlig: afpubliceringsdatoen er på eller før publiceringsdatoen",
         "Scheduled: This publication goes live on its publication date": "Planlagt: Denne publikation bliver offentlig på sin publiceringsdato",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Denne publikation bliver aldrig offentlig: dens afpubliceringsdato er på eller før dens publiceringsdato. Ændr en af datoerne."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Denne publikation bliver aldrig offentlig: dens afpubliceringsdato er på eller før dens publiceringsdato. Ændr en af datoerne.",
+        "Never go live": "Udgives aldrig"
     },
     "plurals": {}
 }

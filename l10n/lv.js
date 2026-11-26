@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Nav ieplānotu publikāciju",
         "Never goes live: the depublication date is on or before the publication date": "Nekad netiks publicēts: publicēšanas atsaukšanas datums ir tajā pašā dienā vai pirms publicēšanas datuma",
         "Scheduled: This publication goes live on its publication date": "Ieplānots: šī publikācija tiks publicēta tās publicēšanas datumā",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Šī publikācija nekad netiks publicēta: tās publicēšanas atsaukšanas datums ir tajā pašā dienā vai pirms publicēšanas datuma. Mainiet vienu no datumiem."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Šī publikācija nekad netiks publicēta: tās publicēšanas atsaukšanas datums ir tajā pašā dienā vai pirms publicēšanas datuma. Mainiet vienu no datumiem.",
+        "Never go live": "Nekad netiks publicētas"
     },
     "nplurals=2; plural=(n != 1);"
 )

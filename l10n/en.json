@@ -2469,7 +2469,8 @@
         "No scheduled publications": "No scheduled publications",
         "Never goes live: the depublication date is on or before the publication date": "Never goes live: the depublication date is on or before the publication date",
         "Scheduled: This publication goes live on its publication date": "Scheduled: This publication goes live on its publication date",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.",
+        "Never go live": "Never go live"
     },
     "plurals": {}
 }

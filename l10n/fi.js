@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Ei ajastettuja julkaisuja",
         "Never goes live: the depublication date is on or before the publication date": "Ei koskaan julkaista: julkaisun poistopäivä on sama tai aiempi kuin julkaisupäivä",
         "Scheduled: This publication goes live on its publication date": "Ajastettu: tämä julkaisu julkaistaan julkaisupäivänään",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Tätä julkaisua ei koskaan julkaista: sen poistopäivä on sama tai aiempi kuin sen julkaisupäivä. Muuta jompaakumpaa päivämäärää."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Tätä julkaisua ei koskaan julkaista: sen poistopäivä on sama tai aiempi kuin sen julkaisupäivä. Muuta jompaakumpaa päivämäärää.",
+        "Never go live": "Ei julkaista koskaan"
     },
     "nplurals=2; plural=(n != 1);"
 )

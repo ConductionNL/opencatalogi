@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "No hi ha publicacions programades",
         "Never goes live: the depublication date is on or before the publication date": "No es publicarà mai: la data de despublicació és igual o anterior a la data de publicació",
         "Scheduled: This publication goes live on its publication date": "Programat: aquesta publicació es publica en la seva data de publicació",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Aquesta publicació no es publicarà mai: la seva data de despublicació és igual o anterior a la data de publicació. Canvieu una de les dates."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Aquesta publicació no es publicarà mai: la seva data de despublicació és igual o anterior a la data de publicació. Canvieu una de les dates.",
+        "Never go live": "No es publiquen mai"
     },
     "nplurals=2; plural=(n != 1);"
 )

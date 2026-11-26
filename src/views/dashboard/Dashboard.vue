@@ -78,6 +78,7 @@
 					:title="t('opencatalogi', 'Publications')"
 					:count="kpis.publicationCount"
 					:countLabel="t('opencatalogi', 'publications')"
+					:breakdown="publicationBreakdown"
 					:icon="DatabaseEyeOutline"
 					variant="primary"
 					horizontal
@@ -377,6 +378,7 @@ import {
 	useCategoricalChartColors,
 } from '../../composables/useChartColors.js'
 import {
+	hasInvalidWindow,
 	isConcept,
 	isDepublished,
 	isPublished,
@@ -845,10 +847,25 @@ export default {
 				depublishedPublicationCount:
 					this.statusCounts?.depublished ?? this.depublishedPublications.length,
 
+				invalidPublicationCount:
+					this.statusCounts?.invalid ?? this.allPublications.filter((p) => hasInvalidWindow(p)).length,
+
 				attachmentCount: attachmentCount(this.allPublications),
 				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 				// conceptAttachmentCount: this.conceptAttachments.length,
 			}
+		},
+
+		/**
+		 * The publications in no status tile, because their window closes
+		 * before it opens, shown on the total tile so the tiles add up to it.
+		 *
+		 * @return {object|null} Label → count, or null when there are none.
+		 * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
+		 */
+		publicationBreakdown() {
+			const invalid = this.kpis.invalidPublicationCount
+			return invalid > 0 ? { [t('opencatalogi', 'Never go live')]: invalid } : null
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */

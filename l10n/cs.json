@@ -915,7 +915,8 @@
         "No scheduled publications": "Žádné naplánované publikace",
         "Never goes live: the depublication date is on or before the publication date": "Nikdy nebude zveřejněno: datum stažení je stejné nebo dřívější než datum zveřejnění",
         "Scheduled: This publication goes live on its publication date": "Naplánováno: tato publikace bude zveřejněna v den zveřejnění",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Tato publikace nebude nikdy zveřejněna: její datum stažení je stejné nebo dřívější než datum zveřejnění. Změňte jedno z dat."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Tato publikace nebude nikdy zveřejněna: její datum stažení je stejné nebo dřívější než datum zveřejnění. Změňte jedno z dat.",
+        "Never go live": "Nikdy nebudou zveřejněny"
     },
     "plurals": {}
 }

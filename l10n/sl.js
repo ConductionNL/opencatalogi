@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Ni načrtovanih objav",
         "Never goes live: the depublication date is on or before the publication date": "Nikoli ne bo objavljeno: datum umika je na dan objave ali pred njim",
         "Scheduled: This publication goes live on its publication date": "Načrtovano: ta objava bo objavljena na datum objave",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ta objava ne bo nikoli objavljena: njen datum umika je na dan objave ali pred njim. Spremenite enega od datumov."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Ta objava ne bo nikoli objavljena: njen datum umika je na dan objave ali pred njim. Spremenite enega od datumov.",
+        "Never go live": "Nikoli ne bodo objavljene"
     },
     "nplurals=2; plural=(n != 1);"
 )

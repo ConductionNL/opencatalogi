@@ -916,7 +916,8 @@ OC.L10N.register(
         "No scheduled publications": "Engar áætlaðar útgáfur",
         "Never goes live: the depublication date is on or before the publication date": "Verður aldrei birt: afbirtingardagsetningin er á eða fyrir birtingardagsetninguna",
         "Scheduled: This publication goes live on its publication date": "Áætlað: Þessi útgáfa verður birt á birtingardagsetningu sinni",
-        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Þessi útgáfa verður aldrei birt: afbirtingardagsetning hennar er á eða fyrir birtingardagsetningu hennar. Breyttu annarri dagsetningunni."
+        "This publication never goes live: its depublication date is on or before its publication date. Change one of the dates.": "Þessi útgáfa verður aldrei birt: afbirtingardagsetning hennar er á eða fyrir birtingardagsetningu hennar. Breyttu annarri dagsetningunni.",
+        "Never go live": "Birtast aldrei"
     },
     "nplurals=2; plural=(n != 1);"
 )
