@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Αναφέρετε τον οργανισμό και αν είναι ενεργός.",
         "This organisation cannot be activated: %s": "Αυτός ο οργανισμός δεν μπορεί να ενεργοποιηθεί: %s",
         "The organisation could not be saved: %s": "Ο οργανισμός δεν ήταν δυνατό να αποθηκευτεί: %s",
-        "The organisation registers could not be read: %s": "Τα μητρώα οργανισμών δεν ήταν δυνατό να διαβαστούν: %s"
+        "The organisation registers could not be read: %s": "Τα μητρώα οργανισμών δεν ήταν δυνατό να διαβαστούν: %s",
+        "Failed to save settings": "Δεν ήταν δυνατή η αποθήκευση των ρυθμίσεων"
     },
     "plurals": {}
 }

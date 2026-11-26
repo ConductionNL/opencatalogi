@@ -10,7 +10,8 @@
 
 import Settings from './Settings.vue'
 
-jest.mock('@nextcloud/dialogs', () => ({ showError: () => {}, showSuccess: () => {} }), { virtual: true })
+const mockErrors = []
+jest.mock('@nextcloud/dialogs', () => ({ showError: (message) => mockErrors.push(message), showSuccess: () => {} }), { virtual: true })
 jest.mock('@nextcloud/dialogs/style.css', () => ({}), { virtual: true })
 jest.mock('@nextcloud/axios', () => ({ post: jest.fn(), put: jest.fn(), get: jest.fn() }))
 jest.mock('@nextcloud/router', () => ({ generateUrl: (path) => '/nc' + path }))
@@ -138,11 +139,21 @@ describe('Settings saveAll', () => {
 		expect(axios.put).not.toHaveBeenCalled()
 	})
 
-	it('logs a failed save', async () => {
+	it('logs a failed save and tells the administrator', async () => {
+		mockErrors.length = 0
 		axios.put.mockRejectedValue(new Error('denied'))
 		const ctx = vm({ selectedRegister: { value: '5' }, hasSchemas: true, configuration: {} })
 		await ctx.saveAll()
 		expect(console.error).toHaveBeenCalledWith('Failed to save settings:', expect.any(Error))
+		expect(mockErrors).toEqual(['[Failed to save settings]'])
 		expect(ctx.saving).toBe(false)
+	})
+
+	it('shows no error after a save that succeeded', async () => {
+		mockErrors.length = 0
+		axios.put.mockResolvedValue({})
+		const ctx = vm({ selectedRegister: { value: '5' }, hasSchemas: true, configuration: {} })
+		await ctx.saveAll()
+		expect(mockErrors).toEqual([])
 	})
 })

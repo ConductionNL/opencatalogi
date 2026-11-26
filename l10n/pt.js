@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Indique a organização e se está ativa.",
         "This organisation cannot be activated: %s": "Esta organização não pode ser ativada: %s",
         "The organisation could not be saved: %s": "Não foi possível guardar a organização: %s",
-        "The organisation registers could not be read: %s": "Não foi possível ler os registos de organizações: %s"
+        "The organisation registers could not be read: %s": "Não foi possível ler os registos de organizações: %s",
+        "Failed to save settings": "Não foi possível guardar as definições"
     },
     "nplurals=2; plural=(n != 1);"
 )

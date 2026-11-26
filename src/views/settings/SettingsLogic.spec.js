@@ -268,6 +268,7 @@ describe('Settings save and sync actions', () => {
 		})
 		// publication_review_required is absent from the answer, so review stays on.
 		expect(ctx.publishingOptions).toEqual({ autoPublishAttachments: false, autoPublishObjects: true, useOldStylePublishingView: false, publicationReviewRequired: true })
+		expect(mockToasts).toEqual([])
 		expect(ctx.saving).toBe(false)
 	})
 
@@ -280,6 +281,7 @@ describe('Settings save and sync actions', () => {
 		const ctx = vm({ publishingOptions: { kept: true } })
 		await ctx.savePublishingOptions()
 		expect(console.error).toHaveBeenCalledWith('Failed to save publishing options:', logged)
+		expect(mockToasts).toEqual([['error', 'Failed to save settings']])
 		expect(ctx.publishingOptions).toEqual({ kept: true })
 		expect(ctx.saving).toBe(false)
 	})

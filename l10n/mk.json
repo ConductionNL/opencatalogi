@@ -908,7 +908,8 @@
         "Name the organisation and whether it is active.": "Наведете ја организацијата и дали е активна.",
         "This organisation cannot be activated: %s": "Оваа организација не може да се активира: %s",
         "The organisation could not be saved: %s": "Организацијата не можеше да се зачува: %s",
-        "The organisation registers could not be read: %s": "Регистрите на организации не можеа да се прочитаат: %s"
+        "The organisation registers could not be read: %s": "Регистрите на организации не можеа да се прочитаат: %s",
+        "Failed to save settings": "Поставките не можеа да се зачуваат"
     },
     "plurals": {}
 }

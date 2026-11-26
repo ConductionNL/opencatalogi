@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Tregoni organizatën dhe nëse është aktive.",
         "This organisation cannot be activated: %s": "Kjo organizatë nuk mund të aktivizohet: %s",
         "The organisation could not be saved: %s": "Organizata nuk mund të ruhej: %s",
-        "The organisation registers could not be read: %s": "Regjistrat e organizatave nuk mund të lexoheshin: %s"
+        "The organisation registers could not be read: %s": "Regjistrat e organizatave nuk mund të lexoheshin: %s",
+        "Failed to save settings": "Ruajtja e cilësimeve dështoi"
     },
     "nplurals=2; plural=(n != 1);"
 )

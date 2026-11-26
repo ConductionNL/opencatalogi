@@ -909,7 +909,8 @@ OC.L10N.register(
         "Name the organisation and whether it is active.": "Norādiet organizāciju un vai tā ir aktīva.",
         "This organisation cannot be activated: %s": "Šo organizāciju nevar aktivizēt: %s",
         "The organisation could not be saved: %s": "Organizāciju neizdevās saglabāt: %s",
-        "The organisation registers could not be read: %s": "Organizāciju reģistrus neizdevās nolasīt: %s"
+        "The organisation registers could not be read: %s": "Organizāciju reģistrus neizdevās nolasīt: %s",
+        "Failed to save settings": "Neizdevās saglabāt iestatījumus"
     },
     "nplurals=2; plural=(n != 1);"
 )
