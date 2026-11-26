@@ -50,6 +50,19 @@ class PublishRight {
 	public const GROUP = 'opencatalogi-publishers';
 
 	/**
+	 * The Nextcloud group whose members may create and edit publications without publishing them.
+	 *
+	 * Together with GROUP it is the `authorization.create` and `authorization.update` of the
+	 * publication schema (lib/Settings/register.d/publication-editors-write.json, decision 25 Nov 2026 21:50 CET).
+	 */
+	public const EDITORS_GROUP = 'opencatalogi-editors';
+
+	/**
+	 * The groups the repair step makes sure exist.
+	 */
+	public const GROUPS = [self::GROUP, self::EDITORS_GROUP];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IUserSession $userSession The current session.

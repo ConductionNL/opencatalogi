@@ -19,6 +19,7 @@
  *
  * @e2e openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md#scenario-the-editor-follows-the-notification
  */
+import type { Locator, Page } from '@playwright/test'
 import type { SeededObject } from './workflows/_fixtures.ts'
 
 import { expect, test } from './authenticated-request.ts'
@@ -70,6 +71,24 @@ test.afterAll(async () => {
 	await fx.cleanupAll()
 	await fx.dispose()
 })
+
+/**
+ * Scroll the publication page until a widget below the fold has mounted and shows.
+ *
+ * The detail grid mounts a widget when it scrolls into view; the Tables
+ * section sits below the fold.
+ *
+ * @param page   The page.
+ * @param target The element inside the widget.
+ */
+async function scrollTo(page: Page, target: Locator): Promise<void> {
+	await expect(page.locator('[gs-id]').first()).toBeAttached({ timeout: 30_000 })
+	await page.mouse.move(800, 400)
+	await expect(async () => {
+		await page.mouse.wheel(0, 400)
+		await expect(target).toBeVisible({ timeout: 500 })
+	}).toPass({ timeout: 30_000 })
+}
 
 test.describe('a table import that fails', () => {
 	test('the editor follows the notification to the failed table', async ({
@@ -123,7 +142,7 @@ test.describe('a table import that fails', () => {
 		const failure = page.locator(
 			`[data-testid="publication-table-failure-${table.id}"]`,
 		)
-		await expect(failure).toBeVisible({ timeout: 15000 })
+		await scrollTo(page, failure)
 		await expect(failure).toContainText(FAILED)
 		await expect(failure).toContainText(String(table.lastError))
 		await expect(failure).toContainText(/Failed on|Mislukt op/)
@@ -151,7 +170,7 @@ test.describe('a table import that fails', () => {
 		const failure = page.locator(
 			`[data-testid="publication-table-failure-${failed.id}"]`,
 		)
-		await expect(failure).toBeVisible({ timeout: 15000 })
+		await scrollTo(page, failure)
 		const retried = page.waitForResponse(
 			(response) =>
 				response.url().includes(`/tables/${failed.id}/retry`) &&

@@ -465,14 +465,16 @@
 								},
 								"acknowledgedAt": {
 									"type": "string",
+									"nullable": true,
 									"format": "date-time",
 									"title": "Acknowledged at",
 									"description": "When the channel confirmed it. Empty means the withdrawal is still outstanding."
 								},
 								"answer": {
 									"type": "string",
+									"nullable": true,
 									"title": "Answer",
-									"description": "What the channel answered."
+									"description": "What the channel answered. Empty while it has not answered."
 								}
 							}
 						},

@@ -214,6 +214,20 @@ describe('object store fetchCollection', () => {
 		expect(menu).toHaveBeenCalledTimes(1)
 		expect(typeof menu.mock.calls[0][0]).toBe('number')
 	})
+
+	it('shares one settings read between concurrent callers', async () => {
+		const store = useObjectStore()
+		store.settings = null
+		vi.spyOn(store, '_registerTypesFromSettings').mockImplementation(() => {})
+		fetchMock.mockResolvedValue(answer({ objectTypes: [], configuration: {} }))
+
+		await Promise.all([store.fetchSettings(), store.fetchSettings()])
+		expect(fetchMock).toHaveBeenCalledTimes(1)
+
+		// A later call reads again.
+		await store.fetchSettings()
+		expect(fetchMock).toHaveBeenCalledTimes(2)
+	})
 })
 
 describe('object store menu catalogs', () => {

@@ -113,6 +113,12 @@ test.describe('Federation directory: last successful sync', () => {
 			baseURL,
 			storageState: { cookies: [], origins: [] },
 		})
+		// A new account sees the support dialog and the walkthrough once; they cover
+		// the Actions button. global-setup sets the same flags for the administrator.
+		await context.addInitScript(() => {
+			window.localStorage.setItem('cn-support-dialog-shown:opencatalogi', '1')
+			window.localStorage.setItem('cn-walkthrough-seen:opencatalogi', '999.0.0')
+		})
 		const page = await context.newPage()
 		await page.goto('/index.php/login')
 		await page.fill('#user', READER.id)

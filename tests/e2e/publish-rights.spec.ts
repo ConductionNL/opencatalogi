@@ -4,7 +4,8 @@
  *
  * operations-publish-rights 2.1 and 3.1: only members of
  * `opencatalogi-publishers` (and administrators) change whether a publication
- * is public; an editor outside the group edits everything else, is not offered
+ * is public; an editor (in `opencatalogi-editors`, not in the publishers group)
+ * edits everything else, is not offered
  * the publish actions and is refused by the publish endpoints.
  *
  * 🔴 EACH PRINCIPAL IS A REAL ACCOUNT. The editor and the publisher are two
@@ -14,7 +15,9 @@
  * session riding along.
  *
  * WHAT IT CREATES AND REMOVES. The two accounts (the publisher in
- * `opencatalogi-publishers`) and one draft publication each of them creates.
+ * `opencatalogi-publishers`, the editor in `opencatalogi-editors`: since the
+ * 25 Nov 2026 21:50 CET decision only those two groups may create and edit a
+ * publication) and one draft publication each of them creates.
  * The publications are deleted and the accounts removed in afterAll.
  *
  * @e2e openspec/changes/archive/2026-11-24-operations-publish-rights/specs/publications/spec.md#scenario-an-editor-tries-to-publish
@@ -28,11 +31,12 @@ import type { APIRequestContext } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
 import { randomBytes } from 'node:crypto'
-import { publicationCatalog, publicationScope } from './publication-catalog.ts'
+import { publicationCatalog } from './publication-catalog.ts'
 
 const APP_API = '/index.php/apps/opencatalogi/api'
 const OBJECTS = '/index.php/apps/openregister/api/objects/publication/publication'
 const PUBLISHERS = 'opencatalogi-publishers'
+const EDITORS = 'opencatalogi-editors'
 const RUN = Date.now().toString(36)
 
 interface Principal {
@@ -52,7 +56,7 @@ test.describe('Publish rights', () => {
 		for (const role of ['editor', 'publisher'] as const) {
 			const uid = `oc-e2e-${role}-${RUN}`
 			const password = `Oc-${randomBytes(12).toString('hex')}-Pw1!`
-			const groups = role === 'publisher' ? [PUBLISHERS] : []
+			const groups = role === 'publisher' ? [PUBLISHERS] : [EDITORS]
 			const made = await request.post('/ocs/v2.php/cloud/users?format=json', {
 				headers: { 'OCS-APIRequest': 'true' },
 				data: { userid: uid, password, groups },
@@ -66,7 +70,12 @@ test.describe('Publish rights', () => {
 				extraHTTPHeaders: { 'OCS-APIRequest': 'true', Accept: 'application/json' },
 			})
 			const created = await ctx.post(OBJECTS, {
-				data: { title: `E2E ${role} draft ${RUN}`, summary: 'A draft for the publish-rights check.' },
+				data: {
+					title: `E2E ${role} draft ${RUN}`,
+					summary: 'A draft for the publish-rights check.',
+					// Required from review on (publication-required-at-publish), so the publisher's publish is not refused for it.
+					description: 'Created by the publish-rights e2e check and removed afterwards.',
+				},
 			})
 			expect(created.ok(), `${role} creates a draft: ${await created.text()}`).toBe(true)
 			const body = await created.json()
@@ -126,22 +135,43 @@ test.describe('Publish rights', () => {
 
 	test('the publisher publishes her own draft', async () => {
 		const { ctx, publicationId } = principals.publisher
-		const res = await ctx.post(`${APP_API}/publications/${publicationId}/publish`)
+		// A draft is not published directly: it goes through review first, as a reviewer would move it.
+		for (const action of ['submit', 'approve']) {
+			const moved = await ctx.post(`/index.php/apps/openregister/api/objects/${publicationId}/transition`, { data: { action, data: {} } })
+			expect(moved.ok(), `${action}: ${await moved.text()}`).toBe(true)
+		}
+		// The draft carries no document; publishing one without documents is confirmed explicitly (409 no-documents otherwise).
+		const res = await ctx.post(`${APP_API}/publications/${publicationId}/publish`, { data: { confirmNoDocuments: true } })
 		expect(res.status(), await res.text()).toBeLessThan(300)
 	})
 
 	test('on the page the editor sees no Publish now', async ({ browser, request, baseURL }) => {
 		const catalog = await publicationCatalog(request, `pr-${RUN}`)
-		const scope = await publicationScope(request)
 		const editor = principals.editor
-		const context = await browser.newContext({
-			baseURL,
-			storageState: { cookies: [], origins: [] },
-			httpCredentials: { username: editor.uid, password: editor.password, send: 'always' },
+		const context = await browser.newContext({ baseURL, storageState: { cookies: [], origins: [] } })
+		// A new account sees the support dialog and the walkthrough once; global-setup sets the same flags for the administrator.
+		await context.addInitScript(() => {
+			window.localStorage.setItem('cn-support-dialog-shown:opencatalogi', '1')
+			window.localStorage.setItem('cn-walkthrough-seen:opencatalogi', '999.0.0')
 		})
 		const page = await context.newPage()
-		await page.goto(`/index.php/apps/opencatalogi/publications/${catalog.slug}/${scope.register}/${scope.schema}/${editor.publicationId}`)
-		await expect(page.getByTestId('publication-visibility')).toBeVisible({ timeout: 45_000 })
+		// A page load does not sign in with basic auth (Nextcloud answers with its login form), so the editor
+		// signs in through the form, as global-setup does for the administrator.
+		await page.goto('/index.php/login')
+		await page.locator('input[name="user"]').fill(editor.uid)
+		await page.locator('input[name="password"]').fill(editor.password)
+		await page.locator('button[type="submit"]').first().click()
+		await page.waitForSelector('#header, header.header', { timeout: 20_000 })
+		// The publication detail page (manifest route /publications/:catalogSlug/:id); the four-part route is the generic object page.
+		await page.goto(`/index.php/apps/opencatalogi/publications/${catalog.slug}/${editor.publicationId}`)
+		// The Visibility card sits below the fold; the detail grid mounts a widget when it scrolls into view.
+		const visibility = page.getByTestId('publication-visibility')
+		await expect(page.locator('[gs-id]').first()).toBeAttached({ timeout: 45_000 })
+		await page.mouse.move(800, 400)
+		await expect(async () => {
+			await page.mouse.wheel(0, 400)
+			await expect(visibility).toBeVisible({ timeout: 500 })
+		}).toPass({ timeout: 45_000 })
 		await expect(page.getByTestId('publication-publish-now'), 'no Publish now for an editor').toHaveCount(0)
 		await context.close()
 	})

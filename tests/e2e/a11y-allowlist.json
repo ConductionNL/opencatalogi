@@ -1,0 +1,4 @@
+{
+	"$comment": "Serious or critical axe violations that are outside OpenCatalogi's own code, read by tests/e2e/officer-accessibility.spec.ts (REQ-OFA-001). Each entry names the rule, the manifest page id, the reason and the upstream issue (@nextcloud/vue, @conduction/nextcloud-vue or Nextcloud server). An entry that no longer occurs fails the run, so remove it when upstream is fixed.",
+	"entries": []
+}

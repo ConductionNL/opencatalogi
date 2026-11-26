@@ -998,6 +998,7 @@ import {
 	requestReadAgain,
 } from '../../services/attachmentReading.js'
 import { fileSizeLabel } from '../../services/fileSizeLabel.js'
+import { focusFirstTab } from '../../services/focusAfterCreate.js'
 import { formValue } from '../../services/formValue.js'
 import {
 	hasTranslatableFields,
@@ -2209,9 +2210,11 @@ export default {
 
 		/**
 		 * Save the form: create the new object once its selections are made,
-		 * or update the current one and close the modal a second later.
+		 * or update the current one and close the modal a second later. After a
+		 * create, focus moves to the dialog's first tab (REQ-OFA-002).
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/officer-flow-accessibility/specs/officer-accessibility/spec.md#requirement-the-officer-flow-works-from-the-keyboard-alone-req-ofa-002
 		 */
 		async saveCurrentForm() {
 			const isCreating = this.isNewObject
@@ -2223,6 +2226,10 @@ export default {
 
 			const result = await this.sendSave(this.saveRequest(isCreating))
 			this.applySavedObject(result)
+			if (isCreating) {
+				// The create form gives way to the edit tabs; keep focus in the dialog.
+				this.$nextTick(() => focusFirstTab(document))
+			}
 
 			// Close modal for edit mode, keep open for create mode (which transitions to edit mode)
 			if (!isCreating) {

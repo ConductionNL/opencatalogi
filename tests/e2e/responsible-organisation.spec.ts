@@ -94,10 +94,14 @@ test.describe('Responsible organisation', () => {
 				.delete(`${PUBLICATIONS}/${publicationId}`)
 				.catch(() => undefined)
 		}
+		// OpenRegister offers no organisation delete (405), so the admin leaves
+		// the two it made. Left a member, the admin belongs to several
+		// organisations, the "member of one organisation" rule fills no
+		// organisation any more, and later publications in the run are refused.
 		for (const uuid of [responsibleId, publisherId]) {
 			if (uuid !== '') {
 				await request
-					.delete(`${OR_API}/organisations/${uuid}`)
+					.post(`${OR_API}/organisations/${uuid}/leave`, { data: {} })
 					.catch(() => undefined)
 			}
 		}

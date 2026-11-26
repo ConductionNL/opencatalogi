@@ -172,7 +172,13 @@ test.describe('A plain language summary on a publication', () => {
 		await page.goto(`${APP}/publications/${encodeURIComponent(slug)}/${id}`)
 		await dismissOverlays(page)
 		const widget = page.getByTestId('plain-summary-draft')
-		await expect(widget).toBeVisible({ timeout: 30_000 })
+		// The card sits low on the page; the detail grid mounts a widget only when it scrolls into view.
+		await expect(page.locator('[gs-id]').first()).toBeAttached({ timeout: 30_000 })
+		await page.mouse.move(800, 400)
+		await expect(async () => {
+			await page.mouse.wheel(0, 400)
+			await expect(widget).toBeVisible({ timeout: 500 })
+		}).toPass({ timeout: 30_000 })
 
 		if (assistant.available !== true) {
 			// No text assistant: no Draft, the page says why, and the route refuses.

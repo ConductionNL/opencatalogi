@@ -152,6 +152,13 @@ class InspectionControllerTest extends TestCase {
 			 */
 			public array $reads = [];
 
+			/**
+			 * The multitenancy flag of every find() call, in order.
+			 *
+			 * @var array<int, bool>
+			 */
+			public array $multitenancy = [];
+
 			public function __construct(
 				private readonly ?array $inspection,
 			) {
@@ -161,6 +168,7 @@ class InspectionControllerTest extends TestCase {
 				$register = $options?->register;
 				$schema = $options?->schema;
 				$this->reads[] = ['id' => $id, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac];
+				$this->multitenancy[] = $_multitenancy;
 				if ($this->inspection === null) {
 					throw new \RuntimeException('Object not found');
 				}
@@ -282,6 +290,32 @@ class InspectionControllerTest extends TestCase {
 		$this->assertSame([['id' => 'inspection-1', 'register' => '42', 'schema' => '42', 'rbac' => false]], $this->store->reads);
 
 	}//end testTheLinkIsReadWithoutRbac()
+
+	/**
+	 * The link is read across organisations: an anonymous reader belongs to none, so an
+	 * organisation-scoped read found nothing and every valid link answered 404. The token
+	 * is what lets the reader in.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 */
+	public function testTheLinkIsReadAcrossOrganisations(): void {
+		$this->storedInspection(
+			inspection: [
+				'record' => 'besluit-1',
+				'documents' => ['doc-1'],
+				'startDate' => '2026-09-01T00:00:00+00:00',
+				'endDate' => '2099-01-01T00:00:00+00:00',
+				'token' => 'the-token',
+			]
+		);
+		$this->withToken(token: 'the-token');
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $this->controller->follow(id: 'inspection-1')->getStatus());
+		$this->assertSame(expected: [false], actual: $this->store->multitenancy);
+
+	}//end testTheLinkIsReadAcrossOrganisations()
 
 	/**
 	 * An object found in another schema is not an inspection, even with the right token.

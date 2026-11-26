@@ -68,9 +68,11 @@ test.describe('Organizations: the shared organisation', () => {
 	test.afterAll(async ({ request: admin }) => {
 		await admin.delete(`/ocs/v2.php/cloud/users/${MEMBER.id}`, { headers: OCS })
 		if (uuid !== '') {
-			// The projection refuses delete (an organisation is merged, not
-			// deleted); the organisation API is the fixture's own way out.
-			await admin.delete(`${OR_API}/organisations/${uuid}`)
+			// Neither the projection nor OpenRegister's organisation API deletes an
+			// organisation (405), so the admin leaves it. Left a member, the admin
+			// belongs to several organisations and the "member of one organisation"
+			// rule fills no organisation for the publications later in the run.
+			await admin.post(`${OR_API}/organisations/${uuid}/leave`, { data: {} })
 		}
 	})
 

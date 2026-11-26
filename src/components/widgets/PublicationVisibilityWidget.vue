@@ -224,6 +224,7 @@ import {
 	draftPurgeMessage,
 	filesRouteParams,
 	isNoDocumentsRefusal,
+	lifecycleKeyOf,
 	listActions,
 	mayLiftEmbargo,
 	publishRefusalMessage,
@@ -445,6 +446,11 @@ export default {
 			return depublicationKeyOf(this.ctx.object || this.content || null)
 		},
 
+		/** @spec openspec/changes/officer-flow-accessibility/specs/officer-accessibility/spec.md#requirement-the-officer-flow-works-from-the-keyboard-alone-req-ofa-002 */
+		lifecycleKey() {
+			return lifecycleKeyOf(this.ctx.object || this.content || null)
+		},
+
 		/**
 		 * How many documents a publish would carry, shown beside the publish
 		 * buttons (REQ-PSG-004); empty when no publish move shows.
@@ -579,6 +585,21 @@ export default {
 						date: step.date.toLocaleDateString(),
 					})
 			},
+		},
+
+		/**
+		 * Read the state again when the record's lifecycle state or dates
+		 * change under the card, as a move from the page's Actions menu does;
+		 * otherwise the card keeps offering the moves of the state before.
+		 *
+		 * @param {string|null} key The new lifecycle key.
+		 * @param {string|null} previous The key before.
+		 * @spec openspec/changes/officer-flow-accessibility/specs/officer-accessibility/spec.md#requirement-the-officer-flow-works-from-the-keyboard-alone-req-ofa-002
+		 */
+		lifecycleKey(key, previous) {
+			if (key && previous && key !== previous && this.resolvedObjectId) {
+				this.load()
+			}
 		},
 
 		resolvedObjectId: {
