@@ -69,6 +69,25 @@ test.describe('Value list curation (REQ-WVL-002)', () => {
 		page,
 		request: admin,
 	}) => {
+		// Start from a known order with the category last, so the moves are made
+		// whatever order the instance had (afterAll puts the original back).
+		const list = await (
+			await admin.get(`${API_BASE}/woo/value-list-choices?scheme=${SCHEME}`)
+		).json()
+		const entries: Array<{ uri: string, code: string }> = list.entries ?? []
+		const subsidies = entries.find((entry) => entry.code === SUBSIDIES)
+		expect(subsidies, `${SUBSIDIES} is in the list`).toBeTruthy()
+		const start = await admin.put(`${API_BASE}/woo/value-list-choices/order`, {
+			data: {
+				scheme: SCHEME,
+				entries: [
+					...entries.filter((entry) => entry.code !== SUBSIDIES).map((entry) => entry.uri),
+					subsidies!.uri,
+				],
+			},
+		})
+		expect(start.ok(), 'the starting order is saved').toBe(true)
+
 		await page.goto(SETTINGS_PAGE)
 		const section = page.getByTestId('category-explanations')
 		await expect(section).toBeVisible()
@@ -236,7 +255,8 @@ test.describe('Activated organisations (REQ-WVL-005)', () => {
 		await expect(section.getByTestId('activated-organisations-empty')).toBeVisible()
 
 		for (const [name, code] of [['Dordrecht', 'gm0505'], ['Zwijndrecht', 'gm0642']]) {
-			await section.getByTestId('activated-organisations-query').getByRole('textbox').fill(name)
+			// NcTextField puts the testid on the input itself, so the field is found by its label.
+			await section.getByRole('textbox', { name: 'Search by name or code' }).fill(name)
 			await section.getByTestId('activated-organisations-search').click()
 			const row = section.getByTestId(`activated-organisation-${code}`)
 			await expect(row).toBeVisible()
@@ -245,7 +265,9 @@ test.describe('Activated organisations (REQ-WVL-005)', () => {
 					response.url().endsWith('/woo/organisations/activation')
 					&& response.request().method() === 'PUT',
 			)
-			await row.getByRole('switch').click()
+			// nc-vue's switch label lies over the input and takes the pointer, so the switch is toggled by keyboard.
+			await row.getByRole('switch').focus()
+			await page.keyboard.press('Space')
 			expect((await saved).ok()).toBe(true)
 		}
 
