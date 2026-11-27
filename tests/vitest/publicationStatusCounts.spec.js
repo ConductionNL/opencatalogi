@@ -201,4 +201,11 @@ describe('fetchPairCounts', () => {
 		expect(await fetchPairCounts({ pairs: [{ register: '26', schema: '40' }], fetchFn: down })).toBeNull()
 		expect(await fetchPairCounts({ pairs: [] })).toBeNull()
 	})
+
+	it('reads the body of a refused count, so the browser closes the request', async () => {
+		const text = vi.fn(async () => '{"status":404}')
+		const refused = vi.fn(async () => ({ ok: false, status: 404, text, json: async () => ({}) }))
+		expect(await fetchPairCounts({ pairs: [{ register: 'stackiq', schema: 'module' }], fetchFn: refused })).toBeNull()
+		expect(text).toHaveBeenCalledTimes(1)
+	})
 })

@@ -75,10 +75,15 @@ export function deriveStatusCounts({ total, live, ended }) {
  * @param {string} url The aggregation URL, query included.
  * @param {object} headers The request headers.
  * @return {Promise<number|null>} The count, or null when the request or its answer fails.
+ * @spec openspec/changes/dashboard-consume-or-aggregations/tasks.md
  */
 async function readCount(fetchFn, url, headers) {
 	const response = await fetchFn(url, { method: 'GET', headers })
 	if (!response.ok) {
+		// Read the refusal's body: left unread, the browser keeps the request
+		// open until the page is collected (a 404 for a missing register stayed
+		// "in flight" for the whole visit).
+		await response.text?.().catch(() => {})
 		return null
 	}
 	const data = await response.json()
