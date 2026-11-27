@@ -25,19 +25,15 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCP\IL10N;
+
 /**
  * The verdict OpenRegister's `anonymizeDocument()` reports through
- * `FileService::getLastVerification()` (REQ-RRS-001), reduced to its verdict,
+ * `FileService::getLastVerification()` (REQ-RRS-001), or the summary an
+ * assessment stored earlier, reduced to its verdict, the release flag, the
  * output mode, the routes it checked, and per finding the route and the count.
  * Nothing else is kept, so a value that was meant to be redacted can never
- * reach the assessment.
- *
- * @phpstan-type VerdictSummary array{
- *     verdict: string,
- *     outputMode: string,
- *     routesChecked: array<int, string>,
- *     findings: array<int, array{route: string, count: int}>
- * }
+ * reach the assessment. Reading a stored summary again gives the same summary.
  *
  * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
  */
@@ -54,17 +50,21 @@ final class RedactionVerdict {
 	public const UNVERIFIABLE = 'unverifiable';
 
 	/**
-	 * The verdict as it may be stored: routes and counts, never values.
+	 * The summary.
 	 *
-	 * An answer that is not a list with a verdict reads as `unverifiable`.
+	 * @var array{verdict: string, mayBePublished: bool, outputMode: string, routesChecked: array<int, string>, findings: array<int, array{route: string, count: int}>}
+	 */
+	private array $summary;
+
+	/**
+	 * Read a verdict. Anything that is not a list with a verdict reads as
+	 * `unverifiable`, and `clean` counts only with the engine's own release flag.
 	 *
-	 * @param mixed $verification What `getLastVerification()` returned.
-	 *
-	 * @return VerdictSummary
+	 * @param mixed $verification What `getLastVerification()` returned, or a stored summary.
 	 *
 	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
 	 */
-	public static function summary(mixed $verification): array {
+	public function __construct(mixed $verification) {
 		if (is_array($verification) === false) {
 			$verification = [];
 		}
@@ -74,66 +74,85 @@ final class RedactionVerdict {
 			$verdict = self::UNVERIFIABLE;
 		}
 
-		// A clean verdict counts only with the engine's own release flag.
-		if ($verdict === self::CLEAN && ($verification['mayBePublished'] ?? false) !== true) {
+		$releasable = (($verification['mayBePublished'] ?? false) === true);
+		if ($verdict === self::CLEAN && $releasable === false) {
 			$verdict = self::UNVERIFIABLE;
 		}
 
-		return [
+		$this->summary = [
 			'verdict' => $verdict,
-			'outputMode' => self::text(value: ($verification['outputMode'] ?? '')),
-			'routesChecked' => self::routesChecked(routes: ($verification['routesChecked'] ?? [])),
-			'findings' => self::findings(findings: ($verification['findings'] ?? [])),
+			'mayBePublished' => ($releasable === true && $verdict === self::CLEAN),
+			'outputMode' => $this->text(value: ($verification['outputMode'] ?? '')),
+			'routesChecked' => $this->routesChecked(routes: ($verification['routesChecked'] ?? [])),
+			'findings' => $this->findings(findings: ($verification['findings'] ?? [])),
 		];
+	}//end __construct()
+
+	/**
+	 * The verdict as it may be stored: routes and counts, never values.
+	 *
+	 * @return array{verdict: string, mayBePublished: bool, outputMode: string, routesChecked: array<int, string>, findings: array<int, array{route: string, count: int}>}
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 */
+	public function summary(): array {
+		return $this->summary;
 	}//end summary()
 
 	/**
-	 * Whether a stored summary is a clean verdict.
+	 * The verdict: clean, leaking, unverifiable or another the engine names.
 	 *
-	 * @param mixed $summary The stored summary.
+	 * @return string
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 */
+	public function verdict(): string {
+		return $this->summary['verdict'];
+	}//end verdict()
+
+	/**
+	 * Whether the verdict is clean, so the redaction may be verified.
 	 *
 	 * @return bool
 	 *
 	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
 	 */
-	public static function isClean(mixed $summary): bool {
-		return is_array($summary) === true && ($summary['verdict'] ?? '') === self::CLEAN;
+	public function isClean(): bool {
+		return $this->summary['verdict'] === self::CLEAN;
 	}//end isClean()
 
 	/**
-	 * The verdict of a stored summary, or an empty string when there is none.
+	 * Why this verdict refuses the redaction, naming the routes and counts and
+	 * never a value; null when it is clean.
 	 *
-	 * @param mixed $summary The stored summary.
+	 * @param IL10N $l10n The officer-facing reasons.
 	 *
-	 * @return string
+	 * @return string|null
 	 *
 	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
 	 */
-	public static function verdictOf(mixed $summary): string {
-		if (is_array($summary) === false) {
-			return '';
+	public function refusal(IL10N $l10n): ?string {
+		if ($this->isClean() === true) {
+			return null;
 		}
 
-		return self::text(value: ($summary['verdict'] ?? ''));
-	}//end verdictOf()
-
-	/**
-	 * The findings of a summary as "route (count)", comma separated.
-	 *
-	 * @param VerdictSummary $summary The summary.
-	 *
-	 * @return string
-	 *
-	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
-	 */
-	public static function routeCounts(array $summary): string {
 		$parts = [];
-		foreach ($summary['findings'] as $finding) {
+		foreach ($this->summary['findings'] as $finding) {
 			$parts[] = $finding['route'] . ' (' . $finding['count'] . ')';
 		}
 
-		return implode(', ', $parts);
-	}//end routeCounts()
+		if ($this->summary['verdict'] === self::UNVERIFIABLE || $parts === []) {
+			return $l10n->t(
+				'OpenRegister could not confirm that the redacted values are gone (verdict: %s). The document stays unpublished.',
+				[$this->summary['verdict']]
+			);
+		}
+
+		return $l10n->t(
+			'OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished.',
+			[implode(', ', $parts)]
+		);
+	}//end refusal()
 
 	/**
 	 * The checked routes, as strings.
@@ -142,7 +161,7 @@ final class RedactionVerdict {
 	 *
 	 * @return array<int, string>
 	 */
-	private static function routesChecked(mixed $routes): array {
+	private function routesChecked(mixed $routes): array {
 		$out = [];
 		foreach ((array)$routes as $route) {
 			if (is_string($route) === true && $route !== '') {
@@ -160,7 +179,7 @@ final class RedactionVerdict {
 	 *
 	 * @return array<int, array{route: string, count: int}>
 	 */
-	private static function findings(mixed $findings): array {
+	private function findings(mixed $findings): array {
 		$out = [];
 		foreach ((array)$findings as $finding) {
 			if (is_array($finding) === false) {
@@ -168,7 +187,7 @@ final class RedactionVerdict {
 			}
 
 			$out[] = [
-				'route' => self::text(value: ($finding['route'] ?? '')),
+				'route' => $this->text(value: ($finding['route'] ?? '')),
 				'count' => (int)($finding['count'] ?? 0),
 			];
 		}
@@ -183,7 +202,7 @@ final class RedactionVerdict {
 	 *
 	 * @return string
 	 */
-	private static function text(mixed $value): string {
+	private function text(mixed $value): string {
 		if (is_scalar($value) === false) {
 			return '';
 		}

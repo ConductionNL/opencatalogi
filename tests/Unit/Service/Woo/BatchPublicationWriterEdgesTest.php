@@ -323,13 +323,13 @@ class BatchPublicationWriterEdgesTest extends TestCase {
 	 */
 	public function testTheListingCarriesTheVerdict(): void {
 		$listings = $this->writer()->listings([
-			['assessment' => 'deels_openbaar', 'documentReference' => 'a.pdf', 'redactionVerification' => ['verdict' => 'clean', 'findings' => []]],
+			['assessment' => 'deels_openbaar', 'documentReference' => 'a.pdf', 'redactionVerification' => ['verdict' => 'clean', 'mayBePublished' => true, 'findings' => []]],
 			['assessment' => 'deels_openbaar', 'documentReference' => 'b.pdf'],
 			['assessment' => 'openbaar', 'documentReference' => 'c.pdf', 'redactionVerification' => ['verdict' => 'clean']],
 		]);
 
 		$this->assertSame('clean', $listings[0]['redactionVerdict']);
-		$this->assertSame('', $listings[1]['redactionVerdict']);
+		$this->assertSame('unverifiable', $listings[1]['redactionVerdict']);
 		$this->assertArrayNotHasKey('redactionVerdict', $listings[2]);
 	}//end testTheListingCarriesTheVerdict()
 }//end class

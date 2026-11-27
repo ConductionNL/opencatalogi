@@ -231,7 +231,7 @@ class DocumentRedactor {
 			'original' => (string)($assessment['documentReference'] ?? ''),
 			'redactionStatus' => self::VERIFIED,
 			'redactionHash' => (string)($assessment['anonymizedDocumentHash'] ?? ''),
-			'redactionVerdict' => RedactionVerdict::verdictOf(summary: ($assessment['redactionVerification'] ?? null)),
+			'redactionVerdict' => (new RedactionVerdict(verification: ($assessment['redactionVerification'] ?? null)))->verdict(),
 		];
 		if ($this->isVerified(listing: $listing, owner: $this->ownerOf(batchId: $batchId, fallback: $fallbackOwner)) === false) {
 			return $this->l10n->t('The redacted file no longer matches the version that was verified.');
@@ -256,7 +256,7 @@ class DocumentRedactor {
 		}
 
 		$status = (string)($assessment['redactionStatus'] ?? '');
-		if ($status === self::VERIFIED && RedactionVerdict::isClean(summary: ($assessment['redactionVerification'] ?? null)) === false) {
+		if ($status === self::VERIFIED && (new RedactionVerdict(verification: ($assessment['redactionVerification'] ?? null)))->isClean() === false) {
 			return $this->l10n->t('OpenRegister has not confirmed that the redacted values are gone from the redacted file.');
 		}
 
@@ -400,7 +400,11 @@ class DocumentRedactor {
 		try {
 			$redacted = $run->files->anonymizeDocument(node: $run->original, entities: $entities);
 			$residuals = $run->files->getLastResidualEntities();
-			$verification = $this->lastVerification(files: $run->files);
+			// An OpenRegister without the verifier reports no verdict, which no redaction passes.
+			$verification = null;
+			if (method_exists($run->files, 'getLastVerification') === true) {
+				$verification = $run->files->getLastVerification();
+			}
 		} catch (Throwable $e) {
 			// Log the class only: an exception message may quote the text
 			// that was meant to be redacted.
@@ -416,24 +420,6 @@ class DocumentRedactor {
 
 		return $this->withRedactionLog(run: $run, result: $result);
 	}//end anonymize()
-
-	/**
-	 * OpenRegister's verdict on the copy it just wrote, or null when this
-	 * OpenRegister reports none (which no redaction can pass).
-	 *
-	 * @param object $files OpenRegister's FileService.
-	 *
-	 * @return mixed
-	 *
-	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
-	 */
-	private function lastVerification(object $files): mixed {
-		if (method_exists($files, 'getLastVerification') === false) {
-			return null;
-		}
-
-		return $files->getLastVerification();
-	}//end lastVerification()
 
 	/**
 	 * A verified redaction with its log: what OpenRegister removed from the
@@ -557,10 +543,11 @@ class DocumentRedactor {
 			return $this->failed(reason: $this->l10n->t('The redacted file cannot be verified.'));
 		}
 
-		$summary = RedactionVerdict::summary(verification: $verification);
-		if (RedactionVerdict::isClean(summary: $summary) === false) {
-			$result = $this->failed(reason: $this->verdictRefusal(summary: $summary));
-			$result['redactionVerification'] = $summary;
+		$verdict = new RedactionVerdict(verification: $verification);
+		$refusal = $verdict->refusal(l10n: $this->l10n);
+		if ($refusal !== null) {
+			$result = $this->failed(reason: $refusal);
+			$result['redactionVerification'] = $verdict->summary();
 			return $result;
 		}
 
@@ -570,29 +557,10 @@ class DocumentRedactor {
 			'redactionStatus' => self::VERIFIED,
 			'redactionMessage' => '',
 			'redactionLog' => [],
-			'redactionVerification' => $summary,
+			'redactionVerification' => $verdict->summary(),
 		];
 
 	}//end verify()
-
-	/**
-	 * Why a verdict other than `clean` refuses the redaction, naming the
-	 * routes and counts and never a value.
-	 *
-	 * @param array{verdict: string, outputMode: string, routesChecked: array<int, string>, findings: array<int, array{route: string, count: int}>} $summary The verdict.
-	 *
-	 * @return string The officer's reason.
-	 *
-	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
-	 */
-	private function verdictRefusal(array $summary): string {
-		$routes = RedactionVerdict::routeCounts(summary: $summary);
-		if ($summary['verdict'] === RedactionVerdict::UNVERIFIABLE || $routes === '') {
-			return $this->l10n->t('OpenRegister could not confirm that the redacted values are gone (verdict: %s). The document stays unpublished.', [$summary['verdict']]);
-		}
-
-		return $this->l10n->t('OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished.', [$routes]);
-	}//end verdictRefusal()
 
 	/**
 	 * Why the findings OpenRegister could not remove refuse the redaction:

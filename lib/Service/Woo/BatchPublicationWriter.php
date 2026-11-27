@@ -121,7 +121,7 @@ class BatchPublicationWriter {
 				$listing['redactionStatus'] = (string)($assessment['redactionStatus'] ?? '');
 				$listing['redactionHash'] = (string)($assessment['anonymizedDocumentHash'] ?? '');
 				// Only the verdict, so the publish gate can require it clean (REQ-WRT-002).
-				$listing['redactionVerdict'] = RedactionVerdict::verdictOf(summary: ($assessment['redactionVerification'] ?? null));
+				$listing['redactionVerdict'] = (new RedactionVerdict(verification: ($assessment['redactionVerification'] ?? null)))->verdict();
 				// Only whether the log may carry a publish; its values stay on the assessment.
 				$listing['redactionLogState'] = DocumentRedactor::redactionLogState(log: ($assessment['redactionLog'] ?? null));
 				$listing['redactionVerifiedBy'] = (string)($assessment['redactionVerifiedBy'] ?? '');

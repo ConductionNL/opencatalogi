@@ -541,7 +541,7 @@ class DocumentRedactorTest extends TestCase {
 			'anonymizedDocument' => '12',
 			'anonymizedDocumentHash' => hash('sha256', 'gelakt'),
 			'redactionStatus' => DocumentRedactor::VERIFIED,
-			'redactionVerification' => ['verdict' => 'clean', 'outputMode' => 'pdf', 'routesChecked' => [], 'findings' => []],
+			'redactionVerification' => ['verdict' => 'clean', 'mayBePublished' => true, 'outputMode' => 'pdf', 'routesChecked' => [], 'findings' => []],
 		];
 		$redactor = $this->redactor();
 
@@ -629,6 +629,7 @@ class DocumentRedactorTest extends TestCase {
 		$this->assertSame(
 			[
 				'verdict' => 'leaking',
+				'mayBePublished' => false,
 				'outputMode' => 'pdf',
 				'routesChecked' => ['text', 'metadata'],
 				'findings' => [['route' => 'text', 'count' => 2], ['route' => 'metadata', 'count' => 1]],
@@ -688,7 +689,7 @@ class DocumentRedactorTest extends TestCase {
 
 		$this->assertSame(DocumentRedactor::VERIFIED, $result['redactionStatus']);
 		$this->assertSame(
-			['verdict' => 'clean', 'outputMode' => 'pdf', 'routesChecked' => ['text', 'metadata'], 'findings' => []],
+			['verdict' => 'clean', 'mayBePublished' => true, 'outputMode' => 'pdf', 'routesChecked' => ['text', 'metadata'], 'findings' => []],
 			$result['redactionVerification']
 		);
 	}//end testAVerifiedRedactionKeepsTheCleanVerdict()
