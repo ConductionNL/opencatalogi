@@ -24,7 +24,8 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - [x] 1.2 Scaffold `SettingsController` with 7 methods: `index()`, `update()`, `load()`, `publishing()`, `savePublishing()`, `version()`, `import()`
 - [x] 1.3 Annotate write methods with `#[AuthorizedAdminSetting(Application::APP_ID)]`
 - [x] 1.4 Annotate read methods `index()`, `publishing()`, `version()` with `#[NoAdminRequired]`
-- [ ] 1.5 Each method delegates entirely to `SettingsService`; controller body must not exceed ~10 lines per method
+- [x] 1.5 Each method delegates entirely to `SettingsService`; controller body must not exceed ~10 lines per method
+  - 27 Nov 2026 (b-opencatalogi): `update()` was the one method doing work of its own: it read the link settings, asked integriq to look again and queued the page rewrite. That is now `SettingsService::saveSettings()` (on `SettingsServiceInterface`), which writes through `updateSettings()`, then calls the connection reporter and queues `PublicationLinksRewrite` when a link setting changed, both resolved from the container on use. The controller lost its reporter, job list and app-config collaborators. `manualImport()` is shortened to the same shape; every method body is 10 lines or fewer, and each answers exactly as before (status codes, payloads, the generic 500). Tests: `SettingsSaveTest` (a changed link setting queues one rewrite, a save hands the written keys to the reporter, a refused value asks and queues nothing, a save without integriq or a job list still saves); `SettingsControllerTest` and `ConnectionReportCallersTest` now pin that `update()` hands the request to `saveSettings()`.
 - [x] 1.6 Add SPDX header `// SPDX-License-Identifier: EUPL-1.2` to both files
 
 ---

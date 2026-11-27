@@ -222,6 +222,27 @@ interface SettingsServiceInterface {
 	public function updateSettings(array $data): array;
 
 	/**
+	 * Save the settings an administrator submitted, with everything a save sets off.
+	 *
+	 * Writes through {@see updateSettings()}, then asks integriq to resolve every
+	 * connection whose keys the save wrote, and queues one rewrite of every
+	 * publication's pages when a link setting changed. The settings controller
+	 * hands a save here and nothing else.
+	 *
+	 * @param array $data The settings data to save.
+	 *
+	 * @return array The persisted values by key.
+	 * @throws \InvalidArgumentException If a value is refused; nothing is written.
+	 * @throws \RuntimeException If the write fails.
+	 *
+	 * @contract-shift internal-only — SettingsService is its only implementation and SettingsController its only caller;
+	 *                 a GitHub code search of ConductionNL finds no other implementer.
+	 *
+	 * @spec openspec/changes/admin-settings/tasks.md#task-1.5
+	 */
+	public function saveSettings(array $data): array;
+
+	/**
 	 * Get the current publishing options.
 	 *
 	 * @return array The current publishing options configuration.
