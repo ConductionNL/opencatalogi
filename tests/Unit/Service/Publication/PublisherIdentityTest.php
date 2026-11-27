@@ -426,7 +426,8 @@ final class PublisherIdentityTest extends TestCase {
 		);
 		self::assertCount(expectedCount: 1, haystack: $this->publications->saves);
 		self::assertSame(expected: '002220647', actual: $this->publications->saves[0]['object']['publisherRsin']);
-		self::assertSame(expected: ['5', '7'], actual: [$this->publications->saves[0]['options']->target->register, $this->publications->saves[0]['options']->target->schema]);
+		$target = $this->publications->saves[0]['options']->target;
+		self::assertSame(expected: ['5', '7'], actual: [$target->register, $target->schema]);
 	}//end testAnUploadedFileIsStampedAndTheRsinStored()
 
 	/**
@@ -455,7 +456,10 @@ final class PublisherIdentityTest extends TestCase {
 
 		$failing->stampUploaded(publicationId: 'pub-1', fileId: 42, register: '5', schema: '7');
 
-		self::assertSame(expected: ['[PublisherFileStamp] The publisher was not stamped on file 42 of publication pub-1: not registered'], actual: $warnings);
+		self::assertSame(
+			expected: ['[PublisherFileStamp] The publisher was not stamped on file 42 of publication pub-1: not registered'],
+			actual: $warnings
+		);
 	}//end testAnUploadStampWithoutOpenRegisterOrWithAFailureDoesNotThrow()
 
 	/**

@@ -147,10 +147,7 @@ class ListenerRegistrar {
 		$context->registerEventListener(CustomScopeEvaluatingEvent::class, CapabilityScopeListener::class);
 
 		$this->registerWriteGuards(context: $context);
-		$this->registerTableImports(context: $context);
-
-		// A file uploaded to a publication carries the publisher's labels too (REQ-PRO-002, task 2.2d).
-		$context->registerEventListener(PublisherStampListener::FILE_ADDED_EVENT, PublisherStampListener::class);
+		$this->registerFileListeners(context: $context);
 
 		// Refuse a self-relation and mirror caseReference into sourceIdentifiers (REQ-PRS-001, REQ-PRS-003).
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationRelationsListener::class);
@@ -277,21 +274,25 @@ class ListenerRegistrar {
 	}//end registerWriteGuards()
 
 	/**
-	 * The listeners that re-import a published table when its file is replaced
-	 * (data-file-import-failure-alert, REQ-DFA-003): Nextcloud's write of the
-	 * file's content and OpenRegister's restore of an older version.
+	 * The listeners on files: re-import a published table when its file is
+	 * replaced (data-file-import-failure-alert, REQ-DFA-003), on Nextcloud's
+	 * write of the file's content and OpenRegister's restore of an older
+	 * version; and stamp the publisher onto a file uploaded to a publication
+	 * (REQ-PRO-002, task 2.2d).
 	 *
 	 * @param IRegistrationContext $context The registration context.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/data-file-import-failure-alert/tasks.md#1.4
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2d
 	 */
-	private function registerTableImports(IRegistrationContext $context): void {
+	private function registerFileListeners(IRegistrationContext $context): void {
 		$context->registerEventListener(event: NodeWrittenEvent::class, listener: PublishedTableReimportListener::class);
 		$context->registerEventListener(
 			event: PublishedTableReimportListener::VERSION_RESTORED_EVENT,
 			listener: PublishedTableReimportListener::class
 		);
-	}//end registerTableImports()
+		$context->registerEventListener(event: PublisherStampListener::FILE_ADDED_EVENT, listener: PublisherStampListener::class);
+	}//end registerFileListeners()
 }//end class
