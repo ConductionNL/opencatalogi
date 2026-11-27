@@ -354,6 +354,8 @@ export default {
 						item.redactionMessage
 						|| t('opencatalogi', 'Redaction failed')
 					)
+				case 'review':
+					return t('opencatalogi', 'Findings must be checked first')
 				case 'pending':
 					return t('opencatalogi', 'Redacting')
 				case 'unchecked':

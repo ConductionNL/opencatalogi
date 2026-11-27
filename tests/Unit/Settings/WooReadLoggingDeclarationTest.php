@@ -79,15 +79,27 @@ class WooReadLoggingDeclarationTest extends TestCase {
 	}//end testTheFiveSchemasOptIn()
 
 	/**
-	 * The fragment sorts last, so no later fragment's version overwrites the bump.
+	 * No later fragment's version overwrites the bump with a lower one: a fragment
+	 * that sorts after this one may only raise a schema's version further.
 	 *
 	 * @return void
 	 */
 	public function testTheFragmentIsMergedLast(): void {
-		$files = glob(dirname(__DIR__, 3).'/lib/Settings/register.d/*.json');
-		sort($files);
+		$directory = dirname(__DIR__, 3).'/lib/Settings/register.d/';
+		$fragment  = json_decode((string) file_get_contents($directory.'woo-x-access-boundary-hardening.json'), true, 512, JSON_THROW_ON_ERROR);
+		$schemas   = self::mergedRegister()['components']['schemas'];
 
-		$this->assertStringEndsWith('/woo-x-access-boundary-hardening.json', (string) end($files));
+		foreach ($fragment['components']['schemas'] as $slug => $schema) {
+			$this->assertTrue(
+				condition: version_compare($schemas[$slug]['version'], $schema['version'], '>='),
+				message: $slug.' merged at '.$schemas[$slug]['version'].', below this fragment\'s '.$schema['version']
+			);
+			$this->assertSame(
+				expected: $schema['configuration']['x-openregister-processing'],
+				actual: $schemas[$slug]['configuration']['x-openregister-processing'],
+				message: $slug
+			);
+		}
 
 	}//end testTheFragmentIsMergedLast()
 }//end class

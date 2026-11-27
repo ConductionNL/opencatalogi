@@ -151,6 +151,7 @@ class DocumentRedactorPublishTest extends TestCase {
 			'document' => 'gelakt.pdf',
 			'redactionStatus' => DocumentRedactor::VERIFIED,
 			'redactionHash' => $hash,
+			'redactionVerdict' => 'clean',
 			'redactionLogState' => DocumentRedactor::LOG_GROUNDED,
 			'redactionVerifiedBy' => 'bob',
 		];
@@ -204,7 +205,14 @@ class DocumentRedactorPublishTest extends TestCase {
 		$container->expects($this->never())->method('get');
 
 		$this->assertSame(
-			['anonymizedDocument' => '', 'anonymizedDocumentHash' => '', 'redactionStatus' => '', 'redactionMessage' => '', 'redactionLog' => []],
+			[
+				'anonymizedDocument' => '',
+				'anonymizedDocumentHash' => '',
+				'redactionStatus' => '',
+				'redactionMessage' => '',
+				'redactionLog' => [],
+				'redactionVerification' => [],
+			],
 			$this->redactor($container)->forAssessment(assessment: ['assessment' => 'openbaar'], batchId: 'b1', fallbackOwner: 'bob')
 		);
 	}//end testANonPartlyPublicAssessmentNeedsNoRedaction()

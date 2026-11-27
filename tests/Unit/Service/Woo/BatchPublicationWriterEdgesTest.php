@@ -313,4 +313,27 @@ class BatchPublicationWriterEdgesTest extends TestCase {
 		$this->assertArrayNotHasKey('redactionLogState', $listings[2]);
 		$this->assertStringNotContainsString('Jan Jansen', json_encode($listings));
 	}//end testTheListingCarriesTheLogStateNotItsValues()
+	/**
+	 * A partly public listing carries the engine's verdict and nothing else of it,
+	 * so the publish gate can require it clean (REQ-WRT-002).
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 *
+	 * @return void
+	 */
+	public function testTheListingCarriesTheVerdict(): void {
+		$listings = $this->writer()->listings([
+			[
+				'assessment' => 'deels_openbaar',
+				'documentReference' => 'a.pdf',
+				'redactionVerification' => ['verdict' => 'clean', 'mayBePublished' => true, 'findings' => []],
+			],
+			['assessment' => 'deels_openbaar', 'documentReference' => 'b.pdf'],
+			['assessment' => 'openbaar', 'documentReference' => 'c.pdf', 'redactionVerification' => ['verdict' => 'clean']],
+		]);
+
+		$this->assertSame(expected: 'clean', actual: $listings[0]['redactionVerdict']);
+		$this->assertSame(expected: 'unverifiable', actual: $listings[1]['redactionVerdict']);
+		$this->assertArrayNotHasKey(key: 'redactionVerdict', array: $listings[2]);
+	}//end testTheListingCarriesTheVerdict()
 }//end class

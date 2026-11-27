@@ -110,10 +110,12 @@ export function replaceAssessment(assessments, updated) {
 
 /**
  * The redaction state of a partly public card, as a key the page labels:
- * `failed`, `unchecked`, `checked` or `pending`. Null for any other card.
+ * `failed`, `review` (OpenRegister's review gate wants a person to check the
+ * findings first), `unchecked`, `checked` or `pending`. Null for any other card.
  *
  * @param {object} item The assessment.
  * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+ * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
  * @return {string|null} The state key.
  */
 export function redactionState(item) {
@@ -122,6 +124,9 @@ export function redactionState(item) {
 	}
 	if (item.redactionStatus === 'failed') {
 		return 'failed'
+	}
+	if (item.redactionStatus === 'awaiting-review') {
+		return 'review'
 	}
 	if (item.redactionStatus !== 'verified') {
 		return 'pending'

@@ -2466,7 +2466,12 @@
         "The organisation could not be saved: %s": "The organisation could not be saved: %s",
         "The organisation registers could not be read: %s": "The organisation registers could not be read: %s",
         "The licence of this publication's data, from the EU licences list. Empty: the catalogue's or the instance's default licence applies.": "The licence of this publication's data, from the EU licences list. Empty: the catalogue's or the instance's default licence applies.",
-        "Failed to save settings": "Failed to save settings"
+        "Failed to save settings": "Failed to save settings",
+        "Findings must be checked first": "Findings must be checked first",
+        "A person must check the findings before this document can be redacted.": "A person must check the findings before this document can be redacted.",
+        "OpenRegister has not confirmed that the redacted values are gone from the redacted file.": "OpenRegister has not confirmed that the redacted values are gone from the redacted file.",
+        "OpenRegister could not confirm that the redacted values are gone (verdict: %s). The document stays unpublished.": "OpenRegister could not confirm that the redacted values are gone (verdict: %s). The document stays unpublished.",
+        "OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished.": "OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished."
     },
     "plurals": {}
 }

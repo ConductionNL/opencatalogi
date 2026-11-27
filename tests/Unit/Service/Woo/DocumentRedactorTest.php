@@ -70,6 +70,28 @@ class RedactorFakeFileService {
 	public function getLastResidualEntities(): array {
 		return $this->residuals;
 	}//end getLastResidualEntities()
+
+	/**
+	 * The verdict of openregister FileService::getLastVerification() (REQ-RRS-001).
+	 *
+	 * @var array<string, mixed>|null
+	 */
+	public ?array $verification = [
+		'verdict' => 'clean',
+		'outputMode' => 'pdf',
+		'routesChecked' => ['text', 'metadata'],
+		'findings' => [],
+		'mayBePublished' => true,
+	];
+
+	/**
+	 * Mirrors openregister FileService::getLastVerification().
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	public function getLastVerification(): ?array {
+		return $this->verification;
+	}//end getLastVerification()
 }//end class
 
 /**
@@ -483,6 +505,7 @@ class DocumentRedactorTest extends TestCase {
 			'document' => '12',
 			'redactionStatus' => DocumentRedactor::VERIFIED,
 			'redactionHash' => hash('sha256', 'gelakt'),
+			'redactionVerdict' => 'clean',
 			'redactionVerifiedBy' => '',
 			'redactionLogState' => DocumentRedactor::LOG_GROUNDED,
 		];
@@ -533,6 +556,7 @@ class DocumentRedactorTest extends TestCase {
 			'anonymizedDocument' => '12',
 			'anonymizedDocumentHash' => hash('sha256', 'gelakt'),
 			'redactionStatus' => DocumentRedactor::VERIFIED,
+			'redactionVerification' => ['verdict' => 'clean', 'mayBePublished' => true, 'outputMode' => 'pdf', 'routesChecked' => [], 'findings' => []],
 		];
 		$redactor = $this->redactor();
 
@@ -546,12 +570,227 @@ class DocumentRedactorTest extends TestCase {
 			$redactor->verificationRefusal(array_merge($assessment, ['redactionStatus' => '']), null, 'alice')
 		);
 		$this->assertSame(
-			'Only a partly public document has a redaction to verify.',
-			$redactor->verificationRefusal(array_merge($assessment, ['assessment' => 'openbaar']), null, 'alice')
+			expected: 'Only a partly public document has a redaction to verify.',
+			actual: $redactor->verificationRefusal(array_merge($assessment, ['assessment' => 'openbaar']), null, 'alice')
 		);
 		$this->assertSame(
-			'The redacted file no longer matches the version that was verified.',
-			$redactor->verificationRefusal(array_merge($assessment, ['anonymizedDocumentHash' => hash('sha256', 'anders')]), null, 'alice')
+			expected: 'The redacted file no longer matches the version that was verified.',
+			actual: $redactor->verificationRefusal(array_merge($assessment, ['anonymizedDocumentHash' => hash('sha256', 'anders')]), null, 'alice')
 		);
 	}//end testOnlyAnIntactVerifiedRedactionCanBeMarkedVerified()
+	/**
+	 * REQ-WRT-002: changed bytes are not enough. An answer whose bytes changed
+	 * but whose verdict is unverifiable is not verified, and the publish is blocked.
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 *
+	 * @return void
+	 */
+	public function testAnUnverifiableVerdictIsNotVerifiedEvenWhenTheBytesChanged(): void {
+		$this->files->verification = [
+			'verdict' => 'unverifiable',
+			'outputMode' => 'raster',
+			'routesChecked' => [],
+			'findings' => [],
+			'mayBePublished' => false,
+		];
+
+		$result = $this->redact();
+
+		$this->assertFailedClosed(result: $result, reason: 'could not confirm that the redacted values are gone (verdict: unverifiable)');
+		$this->assertSame(expected: 'unverifiable', actual: $result['redactionVerification']['verdict']);
+		$this->assertSame(expected: [], actual: $this->relations->logAsked, message: 'a refused redaction reads no log');
+
+		// The publish gate refuses it too, even with the recorded hash of the changed file.
+		$this->withRedactedFile(redactedContent: 'gelakt');
+		$listing = [
+			'assessment' => 'deels_openbaar',
+			'title' => 'Brief',
+			'original' => 'doc-c',
+			'document' => '12',
+			'redactionStatus' => DocumentRedactor::VERIFIED,
+			'redactionHash' => hash('sha256', 'gelakt'),
+			'redactionVerdict' => 'unverifiable',
+			'redactionVerifiedBy' => 'bob',
+			'redactionLogState' => DocumentRedactor::LOG_GROUNDED,
+		];
+		try {
+			$this->redactor()->assertPublishable(listings: [$listing], owner: 'alice');
+			$this->fail(message: 'an unverifiable verdict must block the publish');
+		} catch (\RuntimeException $e) {
+			$this->assertStringContainsString(needle: 'no verified redacted version: Brief', haystack: $e->getMessage());
+		}
+
+		unset($listing['redactionVerdict']);
+		$this->expectException(exception: \RuntimeException::class);
+		$this->redactor()->assertPublishable(listings: [$listing], owner: 'alice');
+	}//end testAnUnverifiableVerdictIsNotVerifiedEvenWhenTheBytesChanged()
+
+	/**
+	 * REQ-WRT-002: a leaking verdict is stored as failed with the routes and
+	 * counts, never with a value, whatever else the engine's answer carries.
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 *
+	 * @return void
+	 */
+	public function testALeakingVerdictStoresRoutesNotValues(): void {
+		$this->files->verification = [
+			'verdict' => 'leaking',
+			'outputMode' => 'pdf',
+			'routesChecked' => ['text', 'metadata', ['nested' => 'Jan Jansen']],
+			'findings' => [
+				['route' => 'text', 'description' => 'Extractable text', 'count' => 2, 'value' => 'Jan Jansen'],
+				['route' => 'metadata', 'count' => 1, 'sample' => '0612345678'],
+				'Jan Jansen',
+			],
+			'mayBePublished' => false,
+			'values' => ['Jan Jansen'],
+		];
+
+		$result = $this->redact();
+
+		$this->assertFailedClosed(result: $result, reason: 'still recoverable in the redacted file: text (2), metadata (1)');
+		$this->assertSame(
+			expected: [
+				'verdict' => 'leaking',
+				'mayBePublished' => false,
+				'outputMode' => 'pdf',
+				'routesChecked' => ['text', 'metadata'],
+				'findings' => [['route' => 'text', 'count' => 2], ['route' => 'metadata', 'count' => 1]],
+			],
+			actual: $result['redactionVerification']
+		);
+		$this->assertStringNotContainsString(needle: 'Jan Jansen', haystack: json_encode($result));
+		$this->assertStringNotContainsString(needle: '0612345678', haystack: json_encode($result));
+	}//end testALeakingVerdictStoresRoutesNotValues()
+
+	/**
+	 * REQ-WRT-002: a clean verdict without the engine's own release flag, and
+	 * an OpenRegister that reports no verdict at all, are never verified.
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 *
+	 * @return void
+	 */
+	public function testOnlyACleanReleasableVerdictIsVerified(): void {
+		$this->files->verification = ['verdict' => 'clean', 'findings' => []];
+		$this->assertFailedClosed(result: $this->redact(), reason: 'verdict: unverifiable');
+
+		$this->files->verification = null;
+		$this->assertFailedClosed(result: $this->redact(), reason: 'verdict: unverifiable');
+
+		// An OpenRegister without getLastVerification() reports nothing either.
+		$withoutVerdict = new class {
+
+			/**
+			 * The redacted file.
+			 *
+			 * @var mixed
+			 */
+			public mixed $result = null;
+
+			/**
+			 * Mirrors openregister FileService::anonymizeDocument().
+			 *
+			 * @param Node $node The original.
+			 * @param array $entities The entities.
+			 *
+			 * @return Node
+			 */
+			public function anonymizeDocument(Node $node, array $entities): Node {
+				return $this->result;
+			}//end anonymizeDocument()
+
+			/**
+			 * Mirrors openregister FileService::getLastResidualEntities().
+			 *
+			 * @return array
+			 */
+			public function getLastResidualEntities(): array {
+				return [];
+			}//end getLastResidualEntities()
+		};
+		$withoutVerdict->result = $this->file(id: 12, content: '[PERSOON: 1]');
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			fn (string $id): object => match ($id) {
+				'OCA\OpenRegister\Service\FileService' => $withoutVerdict,
+				'OCA\OpenRegister\Db\EntityRelationMapper' => $this->relations,
+			}
+		);
+		$redactor = new DocumentRedactor($this->writer, $container, $this->l10n, $this->createMock(originalClassName: LoggerInterface::class));
+
+		$this->assertFailedClosed(result: $redactor->redact(['documentReference' => 'doc-c'], 'alice'), reason: 'verdict: unverifiable');
+	}//end testOnlyACleanReleasableVerdictIsVerified()
+
+	/**
+	 * REQ-WRT-002: a verified redaction keeps the clean verdict on the assessment.
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 *
+	 * @return void
+	 */
+	public function testAVerifiedRedactionKeepsTheCleanVerdict(): void {
+		$result = $this->redact();
+
+		$this->assertSame(expected: DocumentRedactor::VERIFIED, actual: $result['redactionStatus']);
+		$this->assertSame(
+			expected: ['verdict' => 'clean', 'mayBePublished' => true, 'outputMode' => 'pdf', 'routesChecked' => ['text', 'metadata'], 'findings' => []],
+			actual: $result['redactionVerification']
+		);
+	}//end testAVerifiedRedactionKeepsTheCleanVerdict()
+
+	/**
+	 * REQ-WRT-002: OpenRegister's review gate refusal is stored as
+	 * awaiting-review with its message; nothing was written and nothing is publishable.
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 *
+	 * @return void
+	 */
+	public function testAReviewGateRefusalIsAwaitingReview(): void {
+		$message = 'This document must be checked before it is anonymised: 2 of its detections have no decision yet.';
+		$this->files->throw = new \OCA\OpenRegister\Exception\ReviewRequiredException(reason: 'undecided-entities', undecided: 2, message: $message);
+
+		$result = $this->redact();
+
+		$this->assertSame(expected: DocumentRedactor::AWAITING_REVIEW, actual: $result['redactionStatus']);
+		$this->assertSame(expected: $message, actual: $result['redactionMessage']);
+		$this->assertSame(expected: '', actual: $result['anonymizedDocument']);
+		$this->assertSame(expected: '', actual: $result['anonymizedDocumentHash']);
+		$this->assertSame(expected: [], actual: $result['redactionVerification']);
+
+		// The batch names it with OpenRegister's message, and a person cannot mark it verified.
+		$assessment = array_merge(['assessment' => 'deels_openbaar', 'fileName' => 'c.pdf'], $result);
+		$this->assertSame(expected: [['fileName' => 'c.pdf', 'reason' => $message]], actual: $this->redactor()->unredacted([$assessment]));
+		$this->assertSame(
+			expected: 'The redaction status is awaiting-review, not verified.',
+			actual: $this->redactor()->verificationRefusal($assessment, null, 'alice')
+		);
+	}//end testAReviewGateRefusalIsAwaitingReview()
+
+	/**
+	 * REQ-WRT-002: a person cannot mark a redaction verified whose stored
+	 * verdict is not clean, such as one verified before the verdict was kept.
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 *
+	 * @return void
+	 */
+	public function testARedactionWithoutACleanVerdictCannotBeMarkedVerified(): void {
+		$this->withRedactedFile(redactedContent: 'gelakt');
+		$assessment = [
+			'assessment' => 'deels_openbaar',
+			'documentReference' => 'doc-c',
+			'anonymizedDocument' => '12',
+			'anonymizedDocumentHash' => hash('sha256', 'gelakt'),
+			'redactionStatus' => DocumentRedactor::VERIFIED,
+		];
+
+		$this->assertSame(
+			expected: 'OpenRegister has not confirmed that the redacted values are gone from the redacted file.',
+			actual: $this->redactor()->verificationRefusal($assessment, null, 'alice')
+		);
+	}//end testARedactionWithoutACleanVerdictCannotBeMarkedVerified()
 }//end class

@@ -372,6 +372,19 @@ export default {
 					|| t('opencatalogi', 'Redaction failed')
 				}}
 			</NcNoteCard>
+			<NcNoteCard v-else-if="state === 'review'" type="warning">
+				<p>
+					{{
+						t(
+							'opencatalogi',
+							'A person must check the findings before this document can be redacted.',
+						)
+					}}
+				</p>
+				<p v-if="assessment.redactionMessage">
+					{{ assessment.redactionMessage }}
+				</p>
+			</NcNoteCard>
 			<NcNoteCard v-else-if="state !== 'checked'" type="warning">
 				{{
 					t(

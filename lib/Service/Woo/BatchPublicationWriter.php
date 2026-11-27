@@ -37,6 +37,7 @@ use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\Publication\FrozenRecord;
 use OCA\OpenCatalogi\Service\Publication\PublisherFileStamp;
+use OCA\OpenCatalogi\Service\Publication\RedactionVerdict;
 use OCA\OpenCatalogi\Service\WooCategory;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
@@ -94,6 +95,7 @@ class BatchPublicationWriter {
 	 * @return array<int, array<string, string>>
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
 	 */
 	public function listings(array $assessments): array {
 		$publishable = array_values(
@@ -119,6 +121,8 @@ class BatchPublicationWriter {
 				$listing['original'] = $document;
 				$listing['redactionStatus'] = (string)($assessment['redactionStatus'] ?? '');
 				$listing['redactionHash'] = (string)($assessment['anonymizedDocumentHash'] ?? '');
+				// Only the verdict, so the publish gate can require it clean (REQ-WRT-002).
+				$listing['redactionVerdict'] = (new RedactionVerdict(verification: ($assessment['redactionVerification'] ?? null)))->verdict();
 				// Only whether the log may carry a publish; its values stay on the assessment.
 				$listing['redactionLogState'] = DocumentRedactor::redactionLogState(log: ($assessment['redactionLog'] ?? null));
 				$listing['redactionVerifiedBy'] = (string)($assessment['redactionVerifiedBy'] ?? '');

@@ -83,6 +83,12 @@ describe('redactionState', () => {
 		expect(
 			redactionState({
 				assessment: 'deels_openbaar',
+				redactionStatus: 'awaiting-review',
+			}),
+		).toBe('review')
+		expect(
+			redactionState({
+				assessment: 'deels_openbaar',
 				redactionStatus: 'verified',
 			}),
 		).toBe('unchecked')

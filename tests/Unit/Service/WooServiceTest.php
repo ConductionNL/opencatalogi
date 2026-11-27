@@ -178,6 +178,15 @@ class WooFakeFileService {
 	public function getLastResidualEntities(): array {
 		return [];
 	}//end getLastResidualEntities()
+
+	/**
+	 * Mirrors openregister FileService::getLastVerification (REQ-RRS-001).
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	public function getLastVerification(): ?array {
+		return ['verdict' => 'clean', 'outputMode' => 'pdf', 'routesChecked' => ['text'], 'findings' => [], 'mayBePublished' => true];
+	}//end getLastVerification()
 }//end class
 
 /**
@@ -1707,6 +1716,7 @@ class WooServiceTest extends TestCase {
 				'anonymizedDocument' => 'doc-c-anon',
 				'anonymizedDocumentHash' => hash('sha256', 'inhoud van c-gelakt.pdf'),
 				'redactionStatus' => 'verified',
+				'redactionVerification' => ['verdict' => 'clean', 'mayBePublished' => true, 'outputMode' => 'pdf', 'routesChecked' => ['text'], 'findings' => []],
 				'redactionLog' => [['relationId' => 1, 'entityType' => 'PERSON', 'positionStart' => 0, 'positionEnd' => 10, 'value' => 'Jan Jansen', 'grounds' => ['5.2.e']]],
 				'redactionVerifiedBy' => 'bob',
 				'redactionVerifiedAt' => '2026-11-01T10:00:00+00:00',
