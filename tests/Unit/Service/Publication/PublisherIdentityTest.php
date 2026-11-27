@@ -405,6 +405,83 @@ final class PublisherIdentityTest extends TestCase {
 	}//end testTheTitleWriterGetsThePublisherAndTheRsin()
 
 	/**
+	 * Task 2.2d: a file uploaded to a publication is stamped like an attached
+	 * batch document, and the publication stores the RSIN; the publication is
+	 * read past RBAC in its own register and schema.
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2d
+	 *
+	 * @return void
+	 */
+	public function testAnUploadedFileIsStampedAndTheRsinStored(): void {
+		$files = new StampFakeFileService();
+		$stamp = $this->uploadStamp(files: $files);
+
+		$stamp->stampUploaded(publicationId: 'pub-1', fileId: 42, register: '5', schema: '7');
+
+		self::assertSame(expected: ['changeFileMetadata 42'], actual: $files->log);
+		self::assertSame(
+			expected: ['rsin:002220647', 'publisherName:Gemeente Zuiddrecht', 'publisherTooi:gm9999'],
+			actual: $files->changes[0]->labels
+		);
+		self::assertCount(expectedCount: 1, haystack: $this->publications->saves);
+		self::assertSame(expected: '002220647', actual: $this->publications->saves[0]['object']['publisherRsin']);
+		self::assertSame(expected: ['5', '7'], actual: [$this->publications->saves[0]['options']->target->register, $this->publications->saves[0]['options']->target->schema]);
+	}//end testAnUploadedFileIsStampedAndTheRsinStored()
+
+	/**
+	 * Task 2.2d: without OpenRegister's services nothing happens, and a
+	 * failure is logged without undoing the upload.
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2d
+	 *
+	 * @return void
+	 */
+	public function testAnUploadStampWithoutOpenRegisterOrWithAFailureDoesNotThrow(): void {
+		$withoutContainer = new PublisherFileStamp(identity: $this->identity(organisation: ['rsin' => '002220647']));
+		$withoutContainer->stampUploaded(publicationId: 'pub-1', fileId: 42, register: '5', schema: '7');
+		self::assertSame(expected: [], actual: $this->publications->finds);
+
+		$warnings = [];
+		$logger = $this->createMock(originalClassName: \Psr\Log\LoggerInterface::class);
+		$logger->method('warning')->willReturnCallback(
+			static function (string $message, array $context = []) use (&$warnings): void {
+				$warnings[] = strtr($message, ['{file}' => (string)$context['file'], '{id}' => $context['id'], '{error}' => $context['error']]);
+			}
+		);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willThrowException(new RuntimeException(message: 'not registered'));
+		$failing = new PublisherFileStamp(identity: $this->identity(organisation: ['rsin' => '002220647']), logger: $logger, container: $container);
+
+		$failing->stampUploaded(publicationId: 'pub-1', fileId: 42, register: '5', schema: '7');
+
+		self::assertSame(expected: ['[PublisherFileStamp] The publisher was not stamped on file 42 of publication pub-1: not registered'], actual: $warnings);
+	}//end testAnUploadStampWithoutOpenRegisterOrWithAFailureDoesNotThrow()
+
+	/**
+	 * A stamp over a valid RSIN whose container answers this file service and the publication store.
+	 *
+	 * @param StampFakeFileService $files The file service double.
+	 *
+	 * @return PublisherFileStamp The stamp.
+	 */
+	private function uploadStamp(StampFakeFileService $files): PublisherFileStamp {
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			fn (string $id): object => match ($id) {
+				'OCA\OpenRegister\Service\ObjectService' => $this->publications,
+				'OCA\OpenRegister\Service\FileService' => $files,
+			}
+		);
+
+		return new PublisherFileStamp(
+			identity: $this->identity(organisation: ['name' => 'Gemeente Zuiddrecht', 'tooi' => 'gm9999', 'rsin' => '002220647']),
+			logger: new NullLogger(),
+			container: $container
+		);
+	}//end uploadStamp()
+
+	/**
 	 * A stamp over an organisation with a valid RSIN.
 	 *
 	 * @return PublisherFileStamp The stamp.

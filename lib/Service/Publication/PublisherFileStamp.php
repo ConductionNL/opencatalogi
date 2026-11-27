@@ -31,10 +31,12 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
+use OCA\OpenCatalogi\Contract\PublisherFileStampInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -43,7 +45,7 @@ use Throwable;
  *
  * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-the-publishers-rsin-travels-with-every-stored-document-req-pro-002
  */
-class PublisherFileStamp {
+class PublisherFileStamp implements PublisherFileStampInterface {
 	use ReadsObjectProperties;
 
 	/**
@@ -70,12 +72,14 @@ class PublisherFileStamp {
 	/**
 	 * Constructor.
 	 *
-	 * @param PublisherIdentity    $identity Resolves the publisher of a publication.
-	 * @param LoggerInterface|null $logger   Says why the RSIN could not be stored on the publication.
+	 * @param PublisherIdentity       $identity  Resolves the publisher of a publication.
+	 * @param LoggerInterface|null    $logger    Says why the RSIN could not be stored on the publication.
+	 * @param ContainerInterface|null $container Resolves OpenRegister's file and object services for an upload.
 	 */
 	public function __construct(
 		private readonly PublisherIdentity $identity,
 		private readonly ?LoggerInterface $logger=null,
+		private readonly ?ContainerInterface $container=null,
 	) {
 
 	}//end __construct()
@@ -105,6 +109,46 @@ class PublisherFileStamp {
 
 		return $labels;
 	}//end stamp()
+
+	/**
+	 * Stamp a file uploaded to a publication, the same way an attached batch
+	 * document is: the labels on the file, the RSIN on the publication. The
+	 * publication is read past RBAC, as the batch path writes it.
+	 *
+	 * @param string $publicationId The publication's uuid.
+	 * @param int    $fileId        The uploaded file.
+	 * @param string $register      The publication register.
+	 * @param string $schema        The publication schema.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2d
+	 */
+	public function stampUploaded(string $publicationId, int $fileId, string $register, string $schema): void {
+		try {
+			$objects = $this->container?->get('OCA\OpenRegister\Service\ObjectService');
+			$files = $this->container?->get('OCA\OpenRegister\Service\FileService');
+			if (is_object($objects) === false || is_object($files) === false) {
+				return;
+			}
+
+			$publication = $objects->find(
+				id: $publicationId,
+				options: new ObjectFindOptions(register: $register, schema: $schema),
+				_rbac: false,
+				_multitenancy: false
+			);
+			$labels = $this->stamp(files: $files, publication: $publication, fileId: $fileId);
+			if ($labels !== null) {
+				$this->record(objects: $objects, publicationId: $publicationId, labels: $labels, register: $register, schema: $schema);
+			}
+		} catch (Throwable $e) {
+			$this->logger?->warning(
+				'[PublisherFileStamp] The publisher was not stamped on file {file} of publication {id}: {error}',
+				['file' => $fileId, 'id' => $publicationId, 'error' => $e->getMessage()]
+			);
+		}
+	}//end stampUploaded()
 
 	/**
 	 * The labels for a publisher's identity.

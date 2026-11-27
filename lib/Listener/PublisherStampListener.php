@@ -28,21 +28,16 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\Publication\PublisherFileStamp;
-use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenCatalogi\Contract\PublisherFileStampInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
- * Stamps the publisher's labels onto a file OpenRegister's files API added to
- * a publication (`FileAddedEvent`, dispatched by `files#create`,
- * `files#createMultipart` and the create-from-URL route), and stores the
- * publisher's RSIN on the publication. Files added to any other object are
- * left alone. A failure is logged and never undoes the upload.
+ * Hands a file OpenRegister's files API added to a publication
+ * (`FileAddedEvent`, dispatched by `files#create`, `files#createMultipart`
+ * and the create-from-URL route) to the publisher stamp. Files added to any
+ * other object are left alone.
  *
  * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-the-publishers-rsin-travels-with-every-stored-document-req-pro-002
  *
@@ -61,18 +56,14 @@ class PublisherStampListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig         $config    Names the publication register and schema.
-	 * @param PublisherFileStamp $stamp     Writes the labels and stores the RSIN.
-	 * @param ContainerInterface $container Resolves OpenRegister's file and object services.
-	 * @param LoggerInterface    $logger    Logs a stamp that failed.
+	 * @param IAppConfig                  $config Names the publication register and schema.
+	 * @param PublisherFileStampInterface $stamp  Writes the labels and stores the RSIN.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly PublisherFileStamp $stamp,
-		private readonly ContainerInterface $container,
-		private readonly LoggerInterface $logger,
+		private readonly PublisherFileStampInterface $stamp,
 	) {
 
 	}//end __construct()
@@ -87,67 +78,37 @@ class PublisherStampListener implements IEventListener {
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2d
 	 */
 	public function handle(Event $event): void {
-		$target = $this->publicationFile(event: $event);
-		if ($target === null) {
-			return;
-		}
-
-		[$uuid, $fileId, $register, $schema] = $target;
-		try {
-			$objects = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$publication = $objects->find(
-				id: $uuid,
-				options: new ObjectFindOptions(register: $register, schema: $schema),
-				_rbac: false,
-				_multitenancy: false
-			);
-			$labels = $this->stamp->stamp(
-				files: $this->container->get('OCA\OpenRegister\Service\FileService'),
-				publication: $publication,
-				fileId: $fileId
-			);
-			if ($labels !== null) {
-				$this->stamp->record(objects: $objects, publicationId: $uuid, labels: $labels, register: $register, schema: $schema);
-			}
-		} catch (Throwable $e) {
-			$this->logger->warning(
-				'[PublisherStampListener] The publisher was not stamped on file {file} of publication {id}: {error}',
-				['file' => $fileId, 'id' => $uuid, 'error' => $e->getMessage()]
-			);
-		}
-
-	}//end handle()
-
-	/**
-	 * The publication uuid, file id, register and schema of an added file, or
-	 * null when the event is not a file added to a publication.
-	 *
-	 * @param Event $event The event.
-	 *
-	 * @return array{0: string, 1: int, 2: string, 3: string}|null
-	 *
-	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2d
-	 */
-	private function publicationFile(Event $event): ?array {
 		if (is_a($event, self::FILE_ADDED_EVENT) === false) {
-			return null;
+			return;
 		}
 
 		$data = $event->getData();
 		$register = (string)($data['register'] ?? '');
 		$schema = (string)($data['schema'] ?? '');
-		$configuredRegister = trim($this->config->getValueString('opencatalogi', 'publication_register', ''));
-		$configuredSchema = trim($this->config->getValueString('opencatalogi', 'publication_schema', ''));
-		if ($schema === '' || $schema !== $configuredSchema || $register !== $configuredRegister) {
-			return null;
-		}
-
 		$uuid = (string)$event->getObjectUuid();
 		$fileId = (int)$event->getFileId();
-		if ($uuid === '' || $fileId <= 0) {
-			return null;
+		if ($this->isPublication(register: $register, schema: $schema) === false || $uuid === '' || $fileId <= 0) {
+			return;
 		}
 
-		return [$uuid, $fileId, $register, $schema];
-	}//end publicationFile()
+		$this->stamp->stampUploaded(publicationId: $uuid, fileId: $fileId, register: $register, schema: $schema);
+
+	}//end handle()
+
+	/**
+	 * Whether the object the file was added to is in the publication register and schema.
+	 *
+	 * @param string $register The object's register id.
+	 * @param string $schema   The object's schema id.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2d
+	 */
+	private function isPublication(string $register, string $schema): bool {
+		$configuredRegister = trim($this->config->getValueString('opencatalogi', 'publication_register', ''));
+		$configuredSchema = trim($this->config->getValueString('opencatalogi', 'publication_schema', ''));
+
+		return $schema !== '' && $schema === $configuredSchema && $register === $configuredRegister;
+	}//end isPublication()
 }//end class

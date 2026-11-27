@@ -50,6 +50,7 @@ use OCA\OpenCatalogi\Service\MetadataSuggestion\SingleLawfulValue;
 use OCA\OpenCatalogi\Contract\RedactedOriginalGuardInterface;
 use OCA\OpenCatalogi\Contract\DraftPurgeServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\DraftPurgeService;
+use OCA\OpenCatalogi\Service\Publication\PublisherFileStamp;
 use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingOverview;
 use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingStore;
 use OCA\OpenCatalogi\Service\AttachmentReading\RedactedOriginalGuard;
@@ -105,6 +106,7 @@ use OCA\OpenCatalogi\Contract\PubliccodeHarvestServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedCollectionsServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\PublicationVersionServiceInterface;
+use OCA\OpenCatalogi\Contract\PublisherFileStampInterface;
 use OCA\OpenCatalogi\Contract\QualityServiceInterface;
 use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCA\OpenCatalogi\Contract\SavedSearchMatcherInterface;
@@ -276,6 +278,7 @@ final class ServiceBindings {
 		PublishedCollectionsServiceInterface::class => PublishedCollectionsService::class,
 		PublishedRecordViewInterface::class => PublishedRecordView::class,
 		PublicationVersionServiceInterface::class => PublicationVersionService::class,
+		PublisherFileStampInterface::class => PublisherFileStamp::class,
 		SitemapServiceInterface::class => SitemapService::class,
 		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
 		OpenRegisterServicesInterface::class => OpenRegisterLookup::class,
