@@ -258,4 +258,24 @@ webpackConfig.optimization = {
 // css-loader maps off (they doubled the 1.4 MB library stylesheet inside the
 // JS) and every cache group above narrowed to initial chunks, so the
 // library's lazy chunks stay lazy. See nextcloud-vue docs/tooling/lean-bundles.md.
+// nextcloud-vue's stylesheet goes to css/nextcloud-vue.css, which every page
+// loading the -shared-nc-vue chunk links (templates/index.php,
+// templates/settings/admin.php, the dashboard widgets' load()) instead of the
+// bundle inserting ~1.1 MB of CSS text: a linked sheet stays parsed between
+// page loads. The file is what '@conduction/nextcloud-vue/css/index.css' @imports.
+class LibraryStylesheetCopy {
+
+	apply(compiler) {
+		compiler.hooks.afterEmit.tap('LibraryStylesheetCopy', () => {
+			const entry = require.resolve('@conduction/nextcloud-vue/css/index.css')
+			const imported = /@import\s+['"]([^'"]+)['"]/.exec(fs.readFileSync(entry, 'utf8'))
+			const source = imported ? path.resolve(path.dirname(entry), imported[1]) : entry
+			fs.mkdirSync(path.join(__dirname, 'css'), { recursive: true })
+			fs.copyFileSync(source, path.join(__dirname, 'css', 'nextcloud-vue.css'))
+		})
+	}
+
+}
+webpackConfig.plugins.push(new LibraryStylesheetCopy())
+
 module.exports = withLeanBundles(webpackConfig)

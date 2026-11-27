@@ -15,6 +15,8 @@ $appId = OCA\OpenCatalogi\AppInfo\Application::APP_ID;
 // chunk references modules that live in the shared chunks.
 Util::addScript($appId, $appId . '-shared-vendor');
 Util::addScript($appId, $appId . '-shared-nc-vue');
+// nextcloud-vue's stylesheet, copied to css/ by the build (webpack.config.js).
+Util::addStyle($appId, 'nextcloud-vue');
 Util::addScript($appId, $appId . '-main');
 Util::addStyle($appId, 'main');
 ?>

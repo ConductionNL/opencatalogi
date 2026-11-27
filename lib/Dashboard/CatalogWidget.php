@@ -100,6 +100,8 @@ class CatalogWidget implements IWidget {
 		// Shared vendor chunks emitted by webpack splitChunks (see webpack.config.js).
 		Util::addScript(application: AppIdentity::APP_ID, file: AppIdentity::APP_ID . '-shared-vendor');
 		Util::addScript(application: AppIdentity::APP_ID, file: AppIdentity::APP_ID . '-shared-nc-vue');
+		// nextcloud-vue's stylesheet, copied to css/ by the build (webpack.config.js).
+		Util::addStyle(application: AppIdentity::APP_ID, file: 'nextcloud-vue');
 		Util::addScript(application: AppIdentity::APP_ID, file: AppIdentity::APP_ID . '-catalogiWidget');
 		Util::addStyle(application: AppIdentity::APP_ID, file: 'dashboardWidgets');
 
