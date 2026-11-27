@@ -909,7 +909,8 @@
         "This organisation cannot be activated: %s": "Ova organizacija se ne može aktivirati: %s",
         "The organisation could not be saved: %s": "Organizaciju nije bilo moguće sačuvati: %s",
         "The organisation registers could not be read: %s": "Registre organizacija nije bilo moguće pročitati: %s",
-        "Failed to save settings": "Spremanje postavki nije uspjelo"
+        "Failed to save settings": "Spremanje postavki nije uspjelo",
+        "Title not written: the redaction check did not pass": "Naslov nije upisan: provjera zatamnjenja nije prošla"
     },
     "plurals": {}
 }

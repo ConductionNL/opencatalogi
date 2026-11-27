@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Ez a szervezet nem aktiválható: %s",
         "The organisation could not be saved: %s": "A szervezetet nem sikerült menteni: %s",
         "The organisation registers could not be read: %s": "A szervezeti nyilvántartásokat nem sikerült beolvasni: %s",
-        "Failed to save settings": "Nem sikerült menteni a beállításokat"
+        "Failed to save settings": "Nem sikerült menteni a beállításokat",
+        "Title not written: the redaction check did not pass": "A cím nincs beírva: a kitakarás ellenőrzése nem sikerült"
     },
     "nplurals=2; plural=(n != 1);"
 )

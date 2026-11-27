@@ -26,6 +26,7 @@ use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate;
 use OCA\OpenCatalogi\Service\Publication\PdfTitleUpdate;
+use OCA\OpenCatalogi\Service\Publication\RedactedValues;
 use OCP\Files\File;
 use OCP\Files\NotPermittedException;
 use PHPUnit\Framework\TestCase;
@@ -45,6 +46,7 @@ require_once __DIR__ . '/PdfReadBack.php';
  * @covers \OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate
  * @covers \OCA\OpenCatalogi\Service\Publication\TitleNotWritten
  * @covers \OCA\OpenCatalogi\Service\Publication\EmbeddedTitle
+ * @covers \OCA\OpenCatalogi\Service\Publication\RedactedValues
  */
 class EmbeddedTitleWriterTest extends TestCase {
 
@@ -69,7 +71,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 	 *
 	 * @return EmbeddedTitleWriter
 	 */
-	private function writer(): EmbeddedTitleWriter {
+	private function writer(?\Psr\Container\ContainerInterface $container = null): EmbeddedTitleWriter {
 		$logger = $this->createMock(LoggerInterface::class);
 		$logger->method('warning')->willReturnCallback(
 			function (string $message, array $context = []): void {
@@ -77,7 +79,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 			}
 		);
 
-		return new EmbeddedTitleWriter(new PdfTitleUpdate(), new OfficeTitleUpdate(), $logger);
+		return new EmbeddedTitleWriter(new PdfTitleUpdate(), new OfficeTitleUpdate(), $logger, $container);
 	}//end writer()
 
 	/**
@@ -91,6 +93,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 	private function file(string $bytes, ?\Throwable $putFails = null): File {
 		$file = $this->createMock(File::class);
 		$file->method('getName')->willReturn('besluit.pdf');
+		$file->method('getId')->willReturn(200);
 		$file->method('getContent')->willReturn($bytes);
 		$file->method('putContent')->willReturnCallback(
 			function (string $data) use ($putFails): void {
@@ -490,4 +493,194 @@ class EmbeddedTitleWriterTest extends TestCase {
 
 		return $texts;
 	}//end texts()
+	/**
+	 * A container with OpenRegister's real verifier and a verdict store double
+	 * that records what it keeps.
+	 *
+	 * @param bool $keeps Whether the store keeps the verdict.
+	 *
+	 * @return \Psr\Container\ContainerInterface
+	 */
+	private function withVerifier(bool $keeps = true): \Psr\Container\ContainerInterface {
+		$class = 'OCA\\OpenRegister\\Service\\Anonymisation\\RedactionIrreversibilityVerifier';
+		if (class_exists(class: $class) === false) {
+			$this->markTestSkipped(message: 'OpenRegister\'s RedactionIrreversibilityVerifier is not on the autoload path.');
+		}
+
+		$store = new class ($keeps) {
+
+			/**
+			 * What record() received.
+			 *
+			 * @var array<int, array{fileId: int, verification: array<string, mixed>}>
+			 */
+			public array $kept = [];
+
+			/**
+			 * Constructor.
+			 *
+			 * @param bool $keeps Whether a verdict is kept.
+			 */
+			public function __construct(private readonly bool $keeps) {
+			}//end __construct()
+
+			/**
+			 * Mirrors OpenRegister RedactionVerdictStore::record().
+			 *
+			 * @param int   $fileId       The copy.
+			 * @param array $verification The verdict.
+			 *
+			 * @return bool
+			 */
+			public function record(int $fileId, array $verification): bool {
+				$this->kept[] = ['fileId' => $fileId, 'verification' => $verification];
+				return $this->keeps;
+			}//end record()
+		};
+		$this->store = $store;
+
+		$container = $this->createMock(originalClassName: \Psr\Container\ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static fn (string $id): object => match ($id) {
+				$class => new $class(),
+				'OCA\\OpenRegister\\Service\\Anonymisation\\RedactionVerdictStore' => $store,
+			}
+		);
+
+		return $container;
+	}//end withVerifier()
+
+	/**
+	 * The verdict store double of the last withVerifier().
+	 *
+	 * @var object|null
+	 */
+	private ?object $store = null;
+
+	/**
+	 * What a redacted copy is verified against.
+	 *
+	 * @param array<int, string> $values The redacted values.
+	 * @param string             $mode   The output mode.
+	 *
+	 * @return RedactedValues
+	 */
+	private static function redacted(array $values, string $mode): RedactedValues {
+		return new RedactedValues(
+			redactionLog: array_map(static fn (string $value): array => ['value' => $value], $values),
+			verification: ['outputMode' => $mode]
+		);
+	}//end redacted()
+
+	/**
+	 * Task 2.2b: OpenRegister's verifier runs again on the bytes with the
+	 * title, against the redacted values; a clean verdict writes them and is
+	 * kept on the copy.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 *
+	 * @return void
+	 */
+	public function testTheVerifierRunsAgainOnTheWrittenBytes(): void {
+		$writer = $this->writer(container: $this->withVerifier());
+
+		$outcome = $writer->write(
+			file: $this->file(bytes: self::fixture(name: 'plain')),
+			facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER),
+			redaction: self::redacted(values: ['Jan Jansen', '0612345678'], mode: 'pdf')
+		);
+
+		$this->assertSame(expected: EmbeddedTitleWriter::WRITTEN, actual: $outcome['status']);
+		$this->assertSame(expected: 'clean', actual: $outcome['verdict']);
+		$this->assertNotNull(actual: $this->written);
+		$this->assertCount(expectedCount: 1, haystack: $this->store->kept);
+		$this->assertSame(expected: 200, actual: $this->store->kept[0]['fileId']);
+		$this->assertSame(expected: 'clean', actual: $this->store->kept[0]['verification']['verdict']);
+		$this->assertTrue(condition: $this->store->kept[0]['verification']['mayBePublished']);
+	}//end testTheVerifierRunsAgainOnTheWrittenBytes()
+
+	/**
+	 * Task 2.2b: a title that brings a redacted value back is found by the
+	 * verifier, and the verified bytes are left as they were.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 *
+	 * @return void
+	 */
+	public function testATitleThatBringsBackARedactedValueIsNotWritten(): void {
+		$plain = self::fixture(name: 'plain');
+		$writer = $this->writer(container: $this->withVerifier());
+
+		$outcome = $writer->write(
+			file: $this->file(bytes: $plain),
+			facts: new EmbeddedTitle(title: 'Besluit op het verzoek van Jan Jansen', identifier: self::IDENTIFIER),
+			redaction: self::redacted(values: ['Jan Jansen'], mode: 'pdf')
+		);
+
+		$this->assertSame(expected: EmbeddedTitleWriter::SKIPPED, actual: $outcome['status']);
+		$this->assertSame(expected: EmbeddedTitleWriter::VERIFIER, actual: $outcome['reason']);
+		$this->assertSame(expected: 'leaking', actual: $outcome['verdict']);
+		$this->assertSame(expected: hash('sha256', $plain), actual: $outcome['hashAfter']);
+		$this->assertNull(actual: $this->written, message: 'nothing is written');
+		$this->assertSame(expected: [], actual: $this->store->kept);
+	}//end testATitleThatBringsBackARedactedValueIsNotWritten()
+
+	/**
+	 * Task 2.2b: without the verifier, or with an output mode it cannot read,
+	 * a redacted copy is not written to; a document that was not redacted is.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 *
+	 * @return void
+	 */
+	public function testWithoutAVerdictARedactedCopyIsNotWritten(): void {
+		$facts = new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER);
+		$redaction = self::redacted(values: ['Jan Jansen'], mode: 'pdf');
+
+		$outcome = $this->writer()->write(file: $this->file(bytes: self::fixture(name: 'plain')), facts: $facts, redaction: $redaction);
+		$this->assertSame(
+			expected: [EmbeddedTitleWriter::SKIPPED, EmbeddedTitleWriter::VERIFIER, 'unverifiable'],
+			actual: [$outcome['status'], $outcome['reason'], $outcome['verdict']]
+		);
+
+		$broken = $this->createMock(originalClassName: \Psr\Container\ContainerInterface::class);
+		$broken->method('get')->willThrowException(new \RuntimeException('not registered'));
+		$outcome = $this->writer(container: $broken)->write(file: $this->file(bytes: self::fixture(name: 'plain')), facts: $facts, redaction: $redaction);
+		$this->assertSame(expected: 'unverifiable', actual: $outcome['verdict']);
+		$this->assertSame(expected: ['[EmbeddedTitleWriter] The redaction could not be verified again: RuntimeException'], actual: $this->warnings);
+
+		$outcome = $this->writer(container: $this->withVerifier())->write(
+			file: $this->file(bytes: self::fixture(name: 'plain')),
+			facts: $facts,
+			redaction: self::redacted(values: [], mode: 'pdf')
+		);
+		$this->assertSame(expected: 'unverifiable', actual: $outcome['verdict'], message: 'no redacted values is nothing to verify against');
+		$this->assertNull(actual: $this->written);
+
+		// An assessment from before the output mode was kept reads a PDF as a PDF.
+		$outcome = $this->writer(container: $this->withVerifier())->write(
+			file: $this->file(bytes: self::fixture(name: 'plain')),
+			facts: $facts,
+			redaction: self::redacted(values: ['Jan Jansen'], mode: '')
+		);
+		$this->assertSame(expected: EmbeddedTitleWriter::WRITTEN, actual: $outcome['status']);
+	}//end testWithoutAVerdictARedactedCopyIsNotWritten()
+
+	/**
+	 * Task 2.2b: a clean verdict the store cannot keep is logged; the title is written.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 *
+	 * @return void
+	 */
+	public function testAVerdictThatCannotBeKeptIsLogged(): void {
+		$outcome = $this->writer(container: $this->withVerifier(keeps: false))->write(
+			file: $this->file(bytes: self::fixture(name: 'plain')),
+			facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER),
+			redaction: self::redacted(values: ['Jan Jansen'], mode: 'pdf')
+		);
+
+		$this->assertSame(expected: EmbeddedTitleWriter::WRITTEN, actual: $outcome['status']);
+		$this->assertSame(expected: ['[EmbeddedTitleWriter] The verdict of besluit.pdf was not kept'], actual: $this->warnings);
+	}//end testAVerdictThatCannotBeKeptIsLogged()
 }//end class

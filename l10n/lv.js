@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Šo organizāciju nevar aktivizēt: %s",
         "The organisation could not be saved: %s": "Organizāciju neizdevās saglabāt: %s",
         "The organisation registers could not be read: %s": "Organizāciju reģistrus neizdevās nolasīt: %s",
-        "Failed to save settings": "Neizdevās saglabāt iestatījumus"
+        "Failed to save settings": "Neizdevās saglabāt iestatījumus",
+        "Title not written: the redaction check did not pass": "Nosaukums netika ierakstīts: aizklāšanas pārbaude neizdevās"
     },
     "nplurals=2; plural=(n != 1);"
 )

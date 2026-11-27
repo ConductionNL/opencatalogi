@@ -1511,6 +1511,65 @@ class WooServiceTest extends TestCase {
 	}//end testAVerifiedRedactionIsWhatGetsPublished()
 
 	/**
+	 * Task 2.2b: the publish hands each redacted document's values and output
+	 * mode to the attach, by the redacted document's reference, so the title
+	 * writer can have OpenRegister verify the copy again.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 *
+	 * @return void
+	 */
+	public function testThePublishHandsEachRedactedDocumentsValuesToTheAttach(): void {
+		$this->approvedBatch();
+		$writer = new class (
+			$this->rootFolder,
+			$this->container,
+			$this->createMock(originalClassName: \OCA\OpenCatalogi\Service\Portal\PublicationLinker::class),
+			$this->l10n
+		) extends \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter {
+
+			/**
+			 * The redacted values each listing carried into publishDocuments(), by its document.
+			 *
+			 * @var array<string, mixed>
+			 */
+			public array $handed = [];
+
+			/**
+			 * Records the redacted values, then publishes as usual.
+			 *
+			 * @param array    $batch        The batch.
+			 * @param array    $listings     The listings.
+			 * @param string   $now          The moment.
+			 * @param callable $keepProgress Stores progress.
+			 *
+			 * @return array
+			 */
+			public function publishDocuments(array $batch, array $listings, string $now, callable $keepProgress): array {
+				foreach ($listings as $listing) {
+					if (isset($listing['redaction']) === true) {
+						$this->handed[$listing['document']] = [$listing['redaction']->values(), $listing['redaction']->outputMode()];
+					}
+				}
+
+				return parent::publishDocuments(batch: $batch, listings: $listings, now: $now, keepProgress: $keepProgress);
+			}//end publishDocuments()
+		};
+		$service = new WooService(
+			new RegisterBindings($this->config, $this->container),
+			$this->userSession,
+			$this->logger,
+			$this->l10n,
+			$writer,
+			new \OCA\OpenCatalogi\Service\Woo\DocumentRedactor($writer, $this->container, $this->l10n, $this->logger)
+		);
+
+		$service->publishBatch('batch-1');
+
+		$this->assertSame(expected: ['doc-c-anon' => [['Jan Jansen'], 'pdf']], actual: $writer->handed);
+	}//end testThePublishHandsEachRedactedDocumentsValuesToTheAttach()
+
+	/**
 	 * REQ-WRP-001: a redacted file whose bytes changed since it was verified blocks the publish.
 	 *
 	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001

@@ -909,7 +909,8 @@
         "This organisation cannot be activated: %s": "Kjo organizatë nuk mund të aktivizohet: %s",
         "The organisation could not be saved: %s": "Organizata nuk mund të ruhej: %s",
         "The organisation registers could not be read: %s": "Regjistrat e organizatave nuk mund të lexoheshin: %s",
-        "Failed to save settings": "Ruajtja e cilësimeve dështoi"
+        "Failed to save settings": "Ruajtja e cilësimeve dështoi",
+        "Title not written: the redaction check did not pass": "Titulli nuk u shkrua: kontrolli i errësimit nuk kaloi"
     },
     "plurals": {}
 }

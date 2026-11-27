@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Esta organização não pode ser ativada: %s",
         "The organisation could not be saved: %s": "Não foi possível guardar a organização: %s",
         "The organisation registers could not be read: %s": "Não foi possível ler os registos de organizações: %s",
-        "Failed to save settings": "Não foi possível guardar as definições"
+        "Failed to save settings": "Não foi possível guardar as definições",
+        "Title not written: the redaction check did not pass": "Título não escrito: a verificação da ocultação não foi aprovada"
     },
     "nplurals=2; plural=(n != 1);"
 )

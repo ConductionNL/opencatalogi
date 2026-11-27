@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Dës Organisatioun kann net aktivéiert ginn: %s",
         "The organisation could not be saved: %s": "D’Organisatioun konnt net gespäichert ginn: %s",
         "The organisation registers could not be read: %s": "D’Organisatiounsregisteren konnten net gelies ginn: %s",
-        "Failed to save settings": "D'Astellunge konnten net gespäichert ginn"
+        "Failed to save settings": "D'Astellunge konnten net gespäichert ginn",
+        "Title not written: the redaction check did not pass": "Titel net geschriwwen: d’Kontroll vun der Schwäerzung ass net bestanen"
     },
     "nplurals=2; plural=(n != 1);"
 )

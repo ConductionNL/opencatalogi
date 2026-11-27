@@ -909,7 +909,8 @@
         "This organisation cannot be activated: %s": "Această organizație nu poate fi activată: %s",
         "The organisation could not be saved: %s": "Organizația nu a putut fi salvată: %s",
         "The organisation registers could not be read: %s": "Registrele de organizații nu au putut fi citite: %s",
-        "Failed to save settings": "Setările nu au putut fi salvate"
+        "Failed to save settings": "Setările nu au putut fi salvate",
+        "Title not written: the redaction check did not pass": "Titlul nu a fost scris: verificarea anonimizării nu a trecut"
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

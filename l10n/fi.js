@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Tätä organisaatiota ei voi aktivoida: %s",
         "The organisation could not be saved: %s": "Organisaatiota ei voitu tallentaa: %s",
         "The organisation registers could not be read: %s": "Organisaatiorekistereitä ei voitu lukea: %s",
-        "Failed to save settings": "Asetusten tallentaminen epäonnistui"
+        "Failed to save settings": "Asetusten tallentaminen epäonnistui",
+        "Title not written: the redaction check did not pass": "Otsikkoa ei kirjoitettu: peittämisen tarkistus ei mennyt läpi"
     },
     "nplurals=2; plural=(n != 1);"
 )

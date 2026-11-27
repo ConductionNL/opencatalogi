@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Te organizacije ni mogoče aktivirati: %s",
         "The organisation could not be saved: %s": "Organizacije ni bilo mogoče shraniti: %s",
         "The organisation registers could not be read: %s": "Registrov organizacij ni bilo mogoče prebrati: %s",
-        "Failed to save settings": "Nastavitev ni bilo mogoče shraniti"
+        "Failed to save settings": "Nastavitev ni bilo mogoče shraniti",
+        "Title not written: the redaction check did not pass": "Naslov ni zapisan: preverjanje prekrivanja ni uspelo"
     },
     "nplurals=2; plural=(n != 1);"
 )

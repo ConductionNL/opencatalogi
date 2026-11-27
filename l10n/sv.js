@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Den här organisationen kan inte aktiveras: %s",
         "The organisation could not be saved: %s": "Organisationen kunde inte sparas: %s",
         "The organisation registers could not be read: %s": "Organisationsregistren kunde inte läsas: %s",
-        "Failed to save settings": "Det gick inte att spara inställningarna"
+        "Failed to save settings": "Det gick inte att spara inställningarna",
+        "Title not written: the redaction check did not pass": "Titeln skrevs inte: kontrollen av maskeringen godkändes inte"
     },
     "nplurals=2; plural=(n != 1);"
 )

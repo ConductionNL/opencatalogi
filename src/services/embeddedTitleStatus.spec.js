@@ -26,6 +26,7 @@ describe('embeddedTitleLabel', () => {
 
 	it('names the reason a title was not written', () => {
 		expect(embeddedTitleLabel({ status: 'skipped', reason: 'signed' })).toBe('Title not written: the file is signed')
+		expect(embeddedTitleLabel({ status: 'skipped', reason: 'verifier', verdict: 'leaking' })).toBe('Title not written: the redaction check did not pass')
 		expect(embeddedTitleLabel({ status: 'skipped', reason: 'encrypted' })).toBe('Title not written: the file is encrypted')
 		expect(embeddedTitleLabel({ status: 'skipped', reason: 'unparseable' })).toBe('Title not written: the file could not be read')
 		expect(embeddedTitleLabel({ status: 'skipped', reason: 'unsupported-type' })).toBe('Title not written: this file type has no title')

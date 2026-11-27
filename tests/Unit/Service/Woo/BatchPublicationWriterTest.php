@@ -24,6 +24,7 @@ namespace Unit\Service\Woo;
 
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
+use OCA\OpenCatalogi\Service\Publication\RedactedValues;
 use OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate;
 use OCA\OpenCatalogi\Service\Publication\PdfTitleUpdate;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
@@ -301,7 +302,15 @@ class BatchPublicationWriterTest extends TestCase {
 		$this->assertArrayNotHasKey(key: 'organization', array: $payload);
 	}//end testWithoutAnOrganisationNoneIsInvented()
 
-	private function writer(bool $withTitles = true): BatchPublicationWriter {
+	/**
+	 * The writer under test.
+	 *
+	 * @param bool                     $withTitles Whether it writes titles.
+	 * @param EmbeddedTitleWriter|null $titles     The title writer, when not the default one.
+	 *
+	 * @return BatchPublicationWriter
+	 */
+	private function writer(bool $withTitles = true, ?EmbeddedTitleWriter $titles = null): BatchPublicationWriter {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			fn (string $id): object => match ($id) {
@@ -323,8 +332,7 @@ class BatchPublicationWriterTest extends TestCase {
 		);
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('isInstalled')->willReturn(true);
-		$titles = null;
-		if ($withTitles === true) {
+		if ($titles === null && $withTitles === true) {
 			$titles = new EmbeddedTitleWriter(new PdfTitleUpdate(), new OfficeTitleUpdate(), $this->createMock(LoggerInterface::class));
 		}
 
@@ -428,4 +436,97 @@ class BatchPublicationWriterTest extends TestCase {
 		$this->assertSame([], $result['embeddedTitles']);
 		$this->assertSame(['addFile besluit.pdf', 'publishFile 200'], $this->files->log);
 	}//end testAnEarlierPublicationGivesItsOwnTitleAndNoWriterRecordsNothing()
+	/**
+	 * Task 2.2b: a redacted document's values and output mode reach the title
+	 * writer with its own copy only, so the verifier runs again on that copy.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 *
+	 * @return void
+	 */
+	public function testARedactedCopyIsVerifiedAgainWithItsOwnValues(): void {
+		$verifier = new class {
+
+			/**
+			 * What verify() received.
+			 *
+			 * @var array<int, array{values: array<int, string>, outputMode: string}>
+			 */
+			public array $calls = [];
+
+			/**
+			 * Mirrors OpenRegister RedactionIrreversibilityVerifier::verify().
+			 *
+			 * @param string $bytes          The bytes.
+			 * @param array  $redactedValues The values.
+			 * @param string $outputMode     The mode.
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function verify(string $bytes, array $redactedValues, string $outputMode): array {
+				$this->calls[] = ['values' => $redactedValues, 'outputMode' => $outputMode];
+				return ['verdict' => 'leaking', 'mayBePublished' => false];
+			}//end verify()
+		};
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willReturn($verifier);
+		$titles = new EmbeddedTitleWriter(
+			new PdfTitleUpdate(),
+			new OfficeTitleUpdate(),
+			$this->createMock(originalClassName: LoggerInterface::class),
+			$container
+		);
+
+		[$batch, $listings] = self::batch(documents: ['Woo/besluit.pdf', 'Woo/ondertekend.pdf']);
+		$listings[0]['redaction'] = new RedactedValues(redactionLog: [['value' => 'Jan Jansen']], verification: ['outputMode' => 'pdf']);
+		$result = $this->writer(titles: $titles)->publishDocuments(
+			batch: $batch,
+			listings: $listings,
+			now: '2026-11-15T10:00:00+00:00',
+			keepProgress: static fn (): null => null
+		);
+
+		$this->assertSame(expected: [['values' => ['Jan Jansen'], 'outputMode' => 'pdf']], actual: $verifier->calls);
+		$besluit = $result['embeddedTitles']['besluit.pdf'];
+		$this->assertSame(expected: ['skipped', 'verifier'], actual: [$besluit['status'], $besluit['reason']]);
+		$this->assertSame(
+			expected: $this->documents['Woo/besluit.pdf']->getContent(),
+			actual: $this->files->copies[200],
+			message: 'the verified bytes are published as they were'
+		);
+		$this->assertSame(
+			expected: 'signed',
+			actual: $result['embeddedTitles']['ondertekend.pdf']['reason'],
+			message: 'a document that was not redacted is not verified'
+		);
+	}//end testARedactedCopyIsVerifiedAgainWithItsOwnValues()
+
+	/**
+	 * Task 2.2b: a partly public listing carries what its copy is verified
+	 * against, read from its redaction log, and serialises without the values.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 *
+	 * @return void
+	 */
+	public function testAPartlyPublicListingCarriesItsRedactedValues(): void {
+		$listings = $this->writer()->listings(
+			assessments: [
+				[
+					'assessment' => 'deels_openbaar',
+					'documentReference' => 'origineel.pdf',
+					'anonymizedDocument' => '12',
+					'redactionLog' => [['value' => 'Jan Jansen'], ['value' => '0612345678']],
+					'redactionVerification' => ['verdict' => 'clean', 'mayBePublished' => true, 'outputMode' => 'pdf'],
+				],
+				['assessment' => 'openbaar', 'documentReference' => 'open.pdf'],
+			]
+		);
+
+		$this->assertInstanceOf(expected: RedactedValues::class, actual: $listings[0]['redaction']);
+		$this->assertSame(expected: ['Jan Jansen', '0612345678'], actual: $listings[0]['redaction']->values());
+		$this->assertSame(expected: 'pdf', actual: $listings[0]['redaction']->outputMode());
+		$this->assertArrayNotHasKey(key: 'redaction', array: $listings[1]);
+		$this->assertStringNotContainsString(needle: 'Jan Jansen', haystack: (string)json_encode($listings));
+	}//end testAPartlyPublicListingCarriesItsRedactedValues()
 }//end class
