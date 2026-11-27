@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Αυτός ο οργανισμός δεν μπορεί να ενεργοποιηθεί: %s",
         "The organisation could not be saved: %s": "Ο οργανισμός δεν ήταν δυνατό να αποθηκευτεί: %s",
         "The organisation registers could not be read: %s": "Τα μητρώα οργανισμών δεν ήταν δυνατό να διαβαστούν: %s",
-        "Failed to save settings": "Δεν ήταν δυνατή η αποθήκευση των ρυθμίσεων"
+        "Failed to save settings": "Δεν ήταν δυνατή η αποθήκευση των ρυθμίσεων",
+        "Title not written: the redaction check did not pass": "Ο τίτλος δεν γράφτηκε: ο έλεγχος της απόκρυψης δεν πέρασε"
     },
     "nplurals=2; plural=(n != 1);"
 )

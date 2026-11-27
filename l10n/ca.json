@@ -909,7 +909,8 @@
         "This organisation cannot be activated: %s": "Aquesta organització no es pot activar: %s",
         "The organisation could not be saved: %s": "No s’ha pogut desar l’organització: %s",
         "The organisation registers could not be read: %s": "No s’han pogut llegir els registres d’organitzacions: %s",
-        "Failed to save settings": "No s'ha pogut desar la configuració"
+        "Failed to save settings": "No s'ha pogut desar la configuració",
+        "Title not written: the redaction check did not pass": "Títol no escrit: la comprovació de l’anonimització no ha passat"
     },
     "plurals": {}
 }

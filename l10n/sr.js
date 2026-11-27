@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Ова организација не може да се активира: %s",
         "The organisation could not be saved: %s": "Организацију није било могуће сачувати: %s",
         "The organisation registers could not be read: %s": "Регистре организација није било могуће прочитати: %s",
-        "Failed to save settings": "Чување подешавања није успело"
+        "Failed to save settings": "Чување подешавања није успело",
+        "Title not written: the redaction check did not pass": "Наслов није уписан: провера затамњења није прошла"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -909,7 +909,8 @@
         "This organisation cannot be activated: %s": "Tuto organizaci nelze aktivovat: %s",
         "The organisation could not be saved: %s": "Organizaci se nepodařilo uložit: %s",
         "The organisation registers could not be read: %s": "Registry organizací se nepodařilo načíst: %s",
-        "Failed to save settings": "Nastavení se nepodařilo uložit"
+        "Failed to save settings": "Nastavení se nepodařilo uložit",
+        "Title not written: the redaction check did not pass": "Název nebyl zapsán: kontrola začernění neprošla"
     },
     "plurals": {}
 }

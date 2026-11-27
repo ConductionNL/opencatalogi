@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Bu kuruluş etkinleştirilemez: %s",
         "The organisation could not be saved: %s": "Kuruluş kaydedilemedi: %s",
         "The organisation registers could not be read: %s": "Kuruluş sicilleri okunamadı: %s",
-        "Failed to save settings": "Ayarlar kaydedilemedi"
+        "Failed to save settings": "Ayarlar kaydedilemedi",
+        "Title not written: the redaction check did not pass": "Başlık yazılmadı: karartma denetimi geçmedi"
     },
     "nplurals=2; plural=(n != 1);"
 )

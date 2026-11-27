@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Ekki er hægt að virkja þessa stofnun: %s",
         "The organisation could not be saved: %s": "Ekki tókst að vista stofnunina: %s",
         "The organisation registers could not be read: %s": "Ekki tókst að lesa stofnanaskrárnar: %s",
-        "Failed to save settings": "Ekki tókst að vista stillingarnar"
+        "Failed to save settings": "Ekki tókst að vista stillingarnar",
+        "Title not written: the redaction check did not pass": "Titill ekki skrifaður: athugun á yfirstrikun stóðst ekki"
     },
     "nplurals=2; plural=(n != 1);"
 )

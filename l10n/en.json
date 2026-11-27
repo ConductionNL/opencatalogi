@@ -2471,7 +2471,8 @@
         "A person must check the findings before this document can be redacted.": "A person must check the findings before this document can be redacted.",
         "OpenRegister has not confirmed that the redacted values are gone from the redacted file.": "OpenRegister has not confirmed that the redacted values are gone from the redacted file.",
         "OpenRegister could not confirm that the redacted values are gone (verdict: %s). The document stays unpublished.": "OpenRegister could not confirm that the redacted values are gone (verdict: %s). The document stays unpublished.",
-        "OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished.": "OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished."
+        "OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished.": "OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished.",
+        "Title not written: the redaction check did not pass": "Title not written: the redaction check did not pass"
     },
     "plurals": {}
 }

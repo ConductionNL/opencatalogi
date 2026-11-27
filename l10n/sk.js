@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Túto organizáciu nemožno aktivovať: %s",
         "The organisation could not be saved: %s": "Organizáciu sa nepodarilo uložiť: %s",
         "The organisation registers could not be read: %s": "Registre organizácií sa nepodarilo načítať: %s",
-        "Failed to save settings": "Nastavenia sa nepodarilo uložiť"
+        "Failed to save settings": "Nastavenia sa nepodarilo uložiť",
+        "Title not written: the redaction check did not pass": "Názov nebol zapísaný: kontrola začiernenia neprešla"
     },
     "nplurals=2; plural=(n != 1);"
 )

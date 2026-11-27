@@ -2427,7 +2427,8 @@ OC.L10N.register(
         "A person must check the findings before this document can be redacted.": "Een persoon moet de bevindingen controleren voordat dit document kan worden gelakt.",
         "OpenRegister has not confirmed that the redacted values are gone from the redacted file.": "OpenRegister heeft niet bevestigd dat de gelakte waarden uit het gelakte bestand zijn verdwenen.",
         "OpenRegister could not confirm that the redacted values are gone (verdict: %s). The document stays unpublished.": "OpenRegister kon niet bevestigen dat de gelakte waarden zijn verdwenen (oordeel: %s). Het document blijft ongepubliceerd.",
-        "OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished.": "OpenRegister vond gelakte waarden die nog te herstellen zijn in het gelakte bestand: %s. Het document blijft ongepubliceerd."
+        "OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished.": "OpenRegister vond gelakte waarden die nog te herstellen zijn in het gelakte bestand: %s. Het document blijft ongepubliceerd.",
+        "Title not written: the redaction check did not pass": "Titel niet geschreven: de lakcontrole is niet geslaagd"
     },
     "nplurals=2; plural=(n != 1);"
 )

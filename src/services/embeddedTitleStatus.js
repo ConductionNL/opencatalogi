@@ -29,6 +29,7 @@ export function embeddedTitleLabel(outcome) {
 		encrypted: t('opencatalogi', 'Title not written: the file is encrypted'),
 		unparseable: t('opencatalogi', 'Title not written: the file could not be read'),
 		'unsupported-type': t('opencatalogi', 'Title not written: this file type has no title'),
+		verifier: t('opencatalogi', 'Title not written: the redaction check did not pass'),
 	}
 	const reason = outcome && typeof outcome === 'object' ? String(outcome.reason || '') : ''
 

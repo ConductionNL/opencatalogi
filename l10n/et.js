@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Seda organisatsiooni ei saa aktiveerida: %s",
         "The organisation could not be saved: %s": "Organisatsiooni ei saanud salvestada: %s",
         "The organisation registers could not be read: %s": "Organisatsioonide registreid ei saanud lugeda: %s",
-        "Failed to save settings": "Seadeid ei õnnestunud salvestada"
+        "Failed to save settings": "Seadeid ei õnnestunud salvestada",
+        "Title not written: the redaction check did not pass": "Pealkirja ei kirjutatud: varjamise kontroll ei läbinud"
     },
     "nplurals=2; plural=(n != 1);"
 )

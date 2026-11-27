@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Цю організацію не можна активувати: %s",
         "The organisation could not be saved: %s": "Не вдалося зберегти організацію: %s",
         "The organisation registers could not be read: %s": "Не вдалося прочитати реєстри організацій: %s",
-        "Failed to save settings": "Не вдалося зберегти налаштування"
+        "Failed to save settings": "Не вдалося зберегти налаштування",
+        "Title not written: the redaction check did not pass": "Назву не записано: перевірку затемнення не пройдено"
     },
     "nplurals=2; plural=(n != 1);"
 )

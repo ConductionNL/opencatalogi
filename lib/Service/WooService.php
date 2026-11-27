@@ -1308,6 +1308,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 				batchId: $batchId,
 				batch: $batch,
 				listings: $listings,
+				redactions: $this->publications->redactions(assessments: $assessments),
 				objectService: $objectService,
 				register: $register,
 				batchSchema: $batchSchema
@@ -1326,6 +1327,8 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @param string $batchId The batch.
 	 * @param array<string, mixed> $batch The batch record.
 	 * @param array<int, array<string, mixed>> $listings The documents to publish.
+	 * @param array<string, array{values: array<int, string>, outputMode: string}> $redactions What the verifier
+	 *        checks each redacted copy with its title against, in memory only.
 	 * @param object $objectService The OpenRegister object service.
 	 * @param string $register The Woo register.
 	 * @param string $batchSchema The batch schema.
@@ -1333,11 +1336,13 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @return array<string, mixed> The published batch.
 	 *
 	 * @spec openspec/changes/archive/2026-11-25-woo-national-output-assurance/specs/woo-compliance/spec.md#requirement-a-pipeline-failure-reaches-a-named-group-req-wno-004
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
 	 */
 	private function publishApprovedBatch(
 		string $batchId,
 		array $batch,
 		array $listings,
+		array $redactions,
 		object $objectService,
 		string $register,
 		string $batchSchema
@@ -1352,6 +1357,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 				batch: $batch,
 				listings: $listings,
 				now: $now,
+				redactions: $redactions,
 				keepProgress: fn (array $progress): mixed => $this->save(
 					objectService: $objectService,
 					register: $register,

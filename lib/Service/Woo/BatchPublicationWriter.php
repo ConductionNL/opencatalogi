@@ -238,25 +238,31 @@ class BatchPublicationWriter {
 	 * @param array<int, array<string, mixed>> $listings The publishable documents.
 	 * @param string $now The moment of publishing.
 	 * @param callable $keepProgress Stores the batch with its progress.
+	 * @param array<string, array{values: array<int, string>, outputMode: string}> $redactions What the verifier
+	 *        needs for each redacted document, by its reference (`redactions()`).
 	 *
 	 * @return array{id: string, url: string, wooCategory: string, attached: array<int, string>, embeddedTitles: array<string, mixed>}
 	 *
 	 * @throws RuntimeException When a document is missing or an attachment fails.
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-the-approval-gate-stays-and-a-missing-document-stops-the-publish-req-wbp-002
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
 	 */
-	public function publishDocuments(array $batch, array $listings, string $now, callable $keepProgress): array {
+	public function publishDocuments(array $batch, array $listings, string $now, callable $keepProgress, array $redactions = []): array {
 		$files = $this->resolveAll(listings: $listings, owner: (string)($batch['createdBy'] ?? ''));
 		$publication = $this->publication(batch: $batch, now: $now);
 		$progress = self::progressOf(batch: $batch, publicationId: $publication['id']);
+		// resolveAll() answers one file per listing, in order, or throws.
+		$listings = array_values($listings);
 
-		foreach ($files as $file) {
+		foreach ($files as $index => $file) {
 			if (in_array($file->getName(), $progress['attached'], true) === true) {
 				continue;
 			}
 
+			$redaction = ($redactions[(string)($listings[$index]['document'] ?? '')] ?? null);
 			try {
-				$title = $this->attach(publication: $publication, file: $file);
+				$title = $this->attach(publication: $publication, file: $file, redaction: $redaction);
 			} catch (Throwable $e) {
 				$batch['wooPublication'] = array_merge((array)($batch['wooPublication'] ?? []), $progress);
 				unset($batch['documentSummary']);
@@ -279,6 +285,42 @@ class BatchPublicationWriter {
 		];
 
 	}//end publishDocuments()
+
+	/**
+	 * What OpenRegister's verifier needs to check a redacted document again
+	 * once the title is in it: the values that were redacted, from the
+	 * redaction log, and the output mode, from the stored verdict. Keyed by
+	 * the redacted document's reference, the `document` of its listing. In
+	 * memory only: it is never stored, listed or logged.
+	 *
+	 * @param array<int, array<string, mixed>> $assessments The batch's assessments.
+	 *
+	 * @return array<string, array{values: array<int, string>, outputMode: string}>
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 */
+	public function redactions(array $assessments): array {
+		$out = [];
+		foreach ($assessments as $assessment) {
+			$reference = (string)($assessment['anonymizedDocument'] ?? '');
+			if ((string)($assessment['assessment'] ?? '') !== 'deels_openbaar' || $reference === '') {
+				continue;
+			}
+
+			$values = [];
+			foreach ((array)($assessment['redactionLog'] ?? []) as $entry) {
+				$value = (is_array($entry) === true) ? ($entry['value'] ?? '') : '';
+				if (is_string($value) === true && $value !== '') {
+					$values[$value] = $value;
+				}
+			}
+
+			$mode = ($assessment['redactionVerification']['outputMode'] ?? '');
+			$out[$reference] = ['values' => array_values($values), 'outputMode' => (is_string($mode) === true) ? $mode : ''];
+		}
+
+		return $out;
+	}//end redactions()
 
 	/**
 	 * How far an earlier attempt got: the publication, the files attached and the titles written into them.
@@ -523,6 +565,8 @@ class BatchPublicationWriter {
 	 *
 	 * @param array{id: string, entity: mixed, title?: string} $publication The publication.
 	 * @param File $file The document.
+	 * @param array{values: array<int, string>, outputMode: string}|null $redaction For a redacted document, what
+	 *        the verifier checks the copy with title against; null otherwise.
 	 *
 	 * @return array<string, mixed>|null What was written into the copy (`embeddedTitle`), null without a writer.
 	 *
@@ -532,9 +576,10 @@ class BatchPublicationWriter {
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/specs/woo-compliance/spec.md#requirement-the-publishers-rsin-travels-with-every-stored-document-req-pro-002
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2b
 	 * @spec openspec/changes/publications-name-their-responsible-organisation/tasks.md#task-2.2c
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
 	 * @SuppressWarnings(PHPMD.StaticAccess) PublisherFileStamp::rsinOf() and ::publisherOf() read labels.
 	 */
-	public function attach(array $publication, File $file): ?array {
+	public function attach(array $publication, File $file, ?array $redaction = null): ?array {
 		$this->requireOpenRegister();
 		$frozen = (new FrozenRecord())->refusal(record: ($publication['entity'] ?? null));
 		if ($frozen !== null) {
@@ -574,7 +619,7 @@ class BatchPublicationWriter {
 				publisher: PublisherFileStamp::publisherOf(labels: ($labels ?? [])),
 				rsin: PublisherFileStamp::rsinOf(labels: ($labels ?? []))
 			);
-			$embedded = $this->titles->write(file: $created, facts: $facts);
+			$embedded = $this->titles->write(file: $created, facts: $facts, redaction: $redaction);
 		}
 
 		if ($stamp !== null && $labels !== null) {

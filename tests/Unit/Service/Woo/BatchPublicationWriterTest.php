@@ -301,7 +301,7 @@ class BatchPublicationWriterTest extends TestCase {
 		$this->assertArrayNotHasKey(key: 'organization', array: $payload);
 	}//end testWithoutAnOrganisationNoneIsInvented()
 
-	private function writer(bool $withTitles = true): BatchPublicationWriter {
+	private function writer(bool $withTitles = true, ?EmbeddedTitleWriter $titles = null): BatchPublicationWriter {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			fn (string $id): object => match ($id) {
@@ -323,8 +323,7 @@ class BatchPublicationWriterTest extends TestCase {
 		);
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('isInstalled')->willReturn(true);
-		$titles = null;
-		if ($withTitles === true) {
+		if ($titles === null && $withTitles === true) {
 			$titles = new EmbeddedTitleWriter(new PdfTitleUpdate(), new OfficeTitleUpdate(), $this->createMock(LoggerInterface::class));
 		}
 
@@ -428,4 +427,86 @@ class BatchPublicationWriterTest extends TestCase {
 		$this->assertSame([], $result['embeddedTitles']);
 		$this->assertSame(['addFile besluit.pdf', 'publishFile 200'], $this->files->log);
 	}//end testAnEarlierPublicationGivesItsOwnTitleAndNoWriterRecordsNothing()
+	/**
+	 * Task 2.2b: a redacted document's values and output mode reach the title
+	 * writer with its own copy only, so the verifier runs again on that copy.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 *
+	 * @return void
+	 */
+	public function testARedactedCopyIsVerifiedAgainWithItsOwnValues(): void {
+		$verifier = new class {
+
+			/**
+			 * What verify() received.
+			 *
+			 * @var array<int, array{values: array<int, string>, outputMode: string}>
+			 */
+			public array $calls = [];
+
+			/**
+			 * Mirrors OpenRegister RedactionIrreversibilityVerifier::verify().
+			 *
+			 * @param string $bytes          The bytes.
+			 * @param array  $redactedValues The values.
+			 * @param string $outputMode     The mode.
+			 *
+			 * @return array<string, mixed>
+			 */
+			public function verify(string $bytes, array $redactedValues, string $outputMode): array {
+				$this->calls[] = ['values' => $redactedValues, 'outputMode' => $outputMode];
+				return ['verdict' => 'leaking', 'mayBePublished' => false];
+			}//end verify()
+		};
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willReturn($verifier);
+		$titles = new EmbeddedTitleWriter(new PdfTitleUpdate(), new OfficeTitleUpdate(), $this->createMock(originalClassName: LoggerInterface::class), $container);
+
+		[$batch, $listings] = self::batch(documents: ['Woo/besluit.pdf', 'Woo/ondertekend.pdf']);
+		$result = $this->writer(titles: $titles)->publishDocuments(
+			batch: $batch,
+			listings: $listings,
+			now: '2026-11-15T10:00:00+00:00',
+			keepProgress: static fn (): null => null,
+			redactions: ['Woo/besluit.pdf' => ['values' => ['Jan Jansen'], 'outputMode' => 'pdf']]
+		);
+
+		$this->assertSame(expected: [['values' => ['Jan Jansen'], 'outputMode' => 'pdf']], actual: $verifier->calls);
+		$this->assertSame(expected: ['skipped', 'verifier'], actual: [$result['embeddedTitles']['besluit.pdf']['status'], $result['embeddedTitles']['besluit.pdf']['reason']]);
+		$this->assertSame(expected: $this->documents['Woo/besluit.pdf']->getContent(), actual: $this->files->copies[200], message: 'the verified bytes are published as they were');
+		$this->assertSame(expected: 'signed', actual: $result['embeddedTitles']['ondertekend.pdf']['reason'], message: 'a document that was not redacted is not verified');
+	}//end testARedactedCopyIsVerifiedAgainWithItsOwnValues()
+
+	/**
+	 * Task 2.2b: the redacted values come from the redaction log, by the
+	 * redacted document's reference, with the stored output mode.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 *
+	 * @return void
+	 */
+	public function testTheRedactionsAreReadFromTheLogByReference(): void {
+		$redactions = $this->writer()->redactions(
+			assessments: [
+				[
+					'assessment' => 'deels_openbaar',
+					'anonymizedDocument' => '12',
+					'redactionLog' => [['value' => 'Jan Jansen'], ['value' => 'Jan Jansen'], ['value' => '0612345678'], ['value' => ''], 'noise'],
+					'redactionVerification' => ['verdict' => 'clean', 'outputMode' => 'pdf'],
+				],
+				['assessment' => 'deels_openbaar', 'anonymizedDocument' => '13', 'redactionVerification' => ['outputMode' => ['pdf']]],
+				['assessment' => 'deels_openbaar', 'anonymizedDocument' => ''],
+				['assessment' => 'openbaar', 'anonymizedDocument' => '14', 'redactionLog' => [['value' => 'Piet']]],
+			]
+		);
+
+		$this->assertSame(
+			expected: [
+				'12' => ['values' => ['Jan Jansen', '0612345678'], 'outputMode' => 'pdf'],
+				'13' => ['values' => [], 'outputMode' => ''],
+			],
+			actual: $redactions
+		);
+	}//end testTheRedactionsAreReadFromTheLogByReference()
 }//end class

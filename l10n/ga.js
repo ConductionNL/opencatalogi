@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Ní féidir an eagraíocht seo a ghníomhachtú: %s",
         "The organisation could not be saved: %s": "Níorbh fhéidir an eagraíocht a shábháil: %s",
         "The organisation registers could not be read: %s": "Níorbh fhéidir cláir na n-eagraíochtaí a léamh: %s",
-        "Failed to save settings": "Theip ar na socruithe a shábháil"
+        "Failed to save settings": "Theip ar na socruithe a shábháil",
+        "Title not written: the redaction check did not pass": "Níor scríobhadh an teideal: níor éirigh leis an seiceáil ar an dubhú"
     },
     "nplurals=2; plural=(n != 1);"
 )

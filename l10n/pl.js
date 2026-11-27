@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Tej organizacji nie można aktywować: %s",
         "The organisation could not be saved: %s": "Nie udało się zapisać organizacji: %s",
         "The organisation registers could not be read: %s": "Nie udało się odczytać rejestrów organizacji: %s",
-        "Failed to save settings": "Nie udało się zapisać ustawień"
+        "Failed to save settings": "Nie udało się zapisać ustawień",
+        "Title not written: the redaction check did not pass": "Tytuł nie został zapisany: kontrola zaczernienia nie powiodła się"
     },
     "nplurals=2; plural=(n != 1);"
 )

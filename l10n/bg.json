@@ -909,7 +909,8 @@
         "This organisation cannot be activated: %s": "Тази организация не може да бъде активирана: %s",
         "The organisation could not be saved: %s": "Организацията не можа да бъде запазена: %s",
         "The organisation registers could not be read: %s": "Регистрите на организациите не можаха да бъдат прочетени: %s",
-        "Failed to save settings": "Настройките не можаха да бъдат запазени"
+        "Failed to save settings": "Настройките не можаха да бъдат запазени",
+        "Title not written: the redaction check did not pass": "Заглавието не е записано: проверката на заличаването не е успешна"
     },
     "plurals": {}
 }

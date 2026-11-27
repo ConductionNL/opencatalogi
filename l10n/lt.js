@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Šios organizacijos negalima aktyvinti: %s",
         "The organisation could not be saved: %s": "Organizacijos išsaugoti nepavyko: %s",
         "The organisation registers could not be read: %s": "Organizacijų registrų perskaityti nepavyko: %s",
-        "Failed to save settings": "Nepavyko išsaugoti nustatymų"
+        "Failed to save settings": "Nepavyko išsaugoti nustatymų",
+        "Title not written: the redaction check did not pass": "Pavadinimas neįrašytas: užtamsinimo patikra nepavyko"
     },
     "nplurals=2; plural=(n != 1);"
 )

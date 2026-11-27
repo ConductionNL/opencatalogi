@@ -910,7 +910,8 @@ OC.L10N.register(
         "This organisation cannot be activated: %s": "Din l-organizzazzjoni ma tistax tiġi attivata: %s",
         "The organisation could not be saved: %s": "L-organizzazzjoni ma setgħetx tiġi ssejvjata: %s",
         "The organisation registers could not be read: %s": "Ir-reġistri tal-organizzazzjonijiet ma setgħux jinqraw: %s",
-        "Failed to save settings": "Ma rnexxielux jiġu salvati l-issettjar"
+        "Failed to save settings": "Ma rnexxielux jiġu salvati l-issettjar",
+        "Title not written: the redaction check did not pass": "It-titlu ma nkitebx: il-verifika tal-oskurar ma għaddietx"
     },
     "nplurals=2; plural=(n != 1);"
 )
