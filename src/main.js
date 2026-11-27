@@ -46,8 +46,9 @@ import { translateActionLabels } from './services/translateActionLabels.js'
 // Without this stylesheet every dashboard item renders 0 px wide, with no
 // error and correct heights — the height comes from JS, the width from CSS.
 import 'gridstack/dist/gridstack.min.css'
-// Library CSS — must be explicit import (webpack tree-shakes side-effect imports from aliased packages)
-import '@conduction/nextcloud-vue/css/index.css'
+// Library CSS is not imported here: the build copies it to css/nextcloud-vue.css
+// and each page that loads the -shared-nc-vue chunk links it, so the browser
+// keeps it parsed between loads instead of the bundle inserting ~1.1 MB of text.
 // The runtime public path is now set by webpack itself (`output.publicPath:
 // 'auto'` in webpack.config.js), which derives it from the loading script's own
 // URL. That covers ALL SEVEN entry points; the previous
