@@ -362,26 +362,61 @@ describe('CatalogPublicationsIndex', () => {
 
 		const { cardAccent } = indexPage(wrapper).vm.$attrs
 		const self = { register: 19, schema: 173 }
+		const expected = {
+			public: { variant: 'success', icon: 'ListBoxOutline', label: 'Public' },
+			scheduled: {
+				variant: 'warning',
+				icon: 'ClockOutline',
+				label: 'Scheduled',
+			},
+			draft: { variant: 'warning', icon: 'Pencil', label: 'Draft' },
+			in_review: { variant: 'warning', icon: 'Pencil', label: 'In review' },
+			approved: { variant: 'warning', icon: 'Pencil', label: 'Approved' },
+			withdrawn: {
+				variant: 'error',
+				icon: 'AlertOutline',
+				label: 'Withdrawn',
+			},
+			archived: { variant: 'info', icon: 'ArchiveOutline', label: 'Archived' },
+		}
+		for (const [state, accent] of Object.entries(expected)) {
+			expect(cardAccent({ '@self': self, state })).toEqual(accent)
+		}
 		expect(
 			cardAccent({ '@self': self, publicationDate: '2020-01-01' }),
-		).toMatchObject({ variant: 'success', icon: 'ListBoxOutline' })
+		).toBeNull()
+		expect(
+			cardAccent({ '@self': { register: 19, schema: 184 }, state: 'public' }),
+		).toBeNull()
+	})
+
+	it('takes the status from the server state, not from the dates', async () => {
+		objectStore.menuCatalogs = [catalog('woo', [19], [173])]
+		const { wrapper } = mountPage()
+		await flushPromises()
+
+		const { cardAccent } = indexPage(wrapper).vm.$attrs
+		const self = { register: 19, schema: 173 }
+		const pastDates = {
+			publicationDate: '2020-01-01',
+			depublicationDate: '2021-01-01',
+		}
 		expect(
 			cardAccent({
 				'@self': self,
+				state: 'draft',
 				publicationDate: '2020-01-01',
-				depublicationDate: '2021-01-01',
 			}),
-		).toMatchObject({ variant: 'error', icon: 'AlertOutline' })
-		expect(cardAccent({ '@self': self })).toMatchObject({
-			variant: 'warning',
-			icon: 'Pencil',
+		).toMatchObject({ icon: 'Pencil' })
+		expect(
+			cardAccent({ '@self': self, state: 'draft', ...pastDates }),
+		).toMatchObject({ icon: 'Pencil' })
+		expect(cardAccent({ '@self': self, state: 'scheduled' })).toMatchObject({
+			icon: 'ClockOutline',
 		})
 		expect(
-			cardAccent({
-				'@self': { register: 19, schema: 184 },
-				publicationDate: '2020-01-01',
-			}),
-		).toBeNull()
+			cardAccent({ '@self': self, state: 'archived', ...pastDates }),
+		).toMatchObject({ icon: 'ArchiveOutline' })
 	})
 
 	it('starts each publication row with its status icon, colored by status, and leaves other rows plain', async () => {
@@ -391,17 +426,24 @@ describe('CatalogPublicationsIndex', () => {
 
 		const { rowIcon, rowClass } = indexPage(wrapper).vm.$attrs
 		const self = { register: 19, schema: 173 }
-		const published = { '@self': self, publicationDate: '2020-01-01' }
-		const depublished = { ...published, depublicationDate: '2021-01-01' }
-		const concept = { '@self': self }
-		const other = { '@self': { register: 19, schema: 184 }, publicationDate: '2020-01-01' }
+		const published = { '@self': self, state: 'public' }
+		const withdrawn = { '@self': self, state: 'withdrawn' }
+		const draft = {
+			'@self': self,
+			state: 'draft',
+			publicationDate: '2020-01-01',
+		}
+		const archived = { '@self': self, state: 'archived' }
+		const other = { '@self': { register: 19, schema: 184 }, state: 'public' }
 
 		expect(rowIcon(published)).toBe('ListBoxOutline')
 		expect(rowClass(published)).toBe('publication-row--success')
-		expect(rowIcon(depublished)).toBe('AlertOutline')
-		expect(rowClass(depublished)).toBe('publication-row--error')
-		expect(rowIcon(concept)).toBe('Pencil')
-		expect(rowClass(concept)).toBe('publication-row--warning')
+		expect(rowIcon(withdrawn)).toBe('AlertOutline')
+		expect(rowClass(withdrawn)).toBe('publication-row--error')
+		expect(rowIcon(draft)).toBe('Pencil')
+		expect(rowClass(draft)).toBe('publication-row--warning')
+		expect(rowIcon(archived)).toBe('ArchiveOutline')
+		expect(rowClass(archived)).toBe('publication-row--info')
 		expect(rowIcon(other)).toBe('')
 		expect(rowClass(other)).toBe('')
 	})

@@ -15,6 +15,7 @@ no status icon; only the card view still has the icon and a colored border (`car
 ## What changes
 
 - `CatalogPublicationsIndex` passes `rowIcon` and `rowClass` to `CnIndexPage`: a publication row starts with the
-  icon its card shows, colored by the same status (`--color-element-success`, `-warning`, `-error`).
-- The status comes from the publication's dates, as on the card and in the old list. A row of another schema gets no
-  icon.
+  icon its card shows, colored by the same status (`--color-element-success`, `-warning`, `-error`, `-info`).
+- The status is the `state` the server sends per row (REQ-PLC-002), the value the State column shows. The card
+  (`cardAccent`) took it from the dates, so a draft with a past date showed as published beside a State of Draft; the
+  card and the row now both use the server's state. A row of another schema gets no icon.

@@ -84,7 +84,7 @@ import DatabaseAlertOutline from 'vue-material-design-icons/DatabaseAlertOutline
 import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
 import DatabaseOffOutline from 'vue-material-design-icons/DatabaseOffOutline.vue'
 import { catalogScopePairs, normaliseIdList } from '../../services/catalogScope.js'
-import { getPublicationStatus } from '../../services/publicationStatus.js'
+import { publicationStateLabel } from '../../services/publicationState.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 
 /** Listeners CnPageRenderer binds for its own row opening, which only works on `type:"index"` pages. */
@@ -582,35 +582,37 @@ export default {
 		},
 
 		/**
-		 * A publication card's status color and icon; other rows get none.
+		 * A publication card's status color and icon, from the state the server
+		 * sends per row (REQ-PLC-002), so they agree with the State column; other
+		 * rows, and a row without a known state, get none.
 		 *
 		 * @param {object} row The card's object.
 		 * @return {?{variant: string, icon: string, label: string}}
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-publication-card-req-tbl-005
+		 * @spec openspec/changes/publication-list-status-icons/specs/publications/spec.md#requirement-a-publication-row-starts-with-its-status-icon-req-psi-001
 		 */
 		cardAccent(row) {
 			if (!this.isPublicationRow(row)) {
 				return null
 			}
-			switch (getPublicationStatus(row)) {
-				case 'published':
-					return {
-						variant: 'success',
-						icon: 'ListBoxOutline',
-						label: t('opencatalogi', 'Published'),
-					}
-				case 'depublished':
-					return {
-						variant: 'error',
-						icon: 'AlertOutline',
-						label: t('opencatalogi', 'Depublished'),
-					}
-				default:
-					return {
-						variant: 'warning',
-						icon: 'Pencil',
-						label: t('opencatalogi', 'Concept'),
-					}
+			const accents = {
+				public: ['success', 'ListBoxOutline'],
+				scheduled: ['warning', 'ClockOutline'],
+				draft: ['warning', 'Pencil'],
+				in_review: ['warning', 'Pencil'],
+				approved: ['warning', 'Pencil'],
+				withdrawn: ['error', 'AlertOutline'],
+				archived: ['info', 'ArchiveOutline'],
+			}
+			const accent = accents[row?.state]
+			if (!accent) {
+				return null
+			}
+
+			return {
+				variant: accent[0],
+				icon: accent[1],
+				label: publicationStateLabel(row.state),
 			}
 		},
 
@@ -742,5 +744,9 @@ export default {
 
 :deep(.publication-row--error .cn-table-col--icon .material-design-icon) {
 	color: var(--color-element-error);
+}
+
+:deep(.publication-row--info .cn-table-col--icon .material-design-icon) {
+	color: var(--color-element-info);
 }
 </style>
