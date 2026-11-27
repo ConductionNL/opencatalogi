@@ -6,6 +6,72 @@ description: >-
 
 # Waardelijsten en weigeringsgronden
 
+## Waar de TOOI- en DiWoo-lijsten staan
+
+De informatiecategorieën, de soorten handeling, de documentsoorten en de talen
+staan in het vocabulaireregister van OpenRegister, niet in OpenCatalogi zelf. Er is
+geen meegeleverde kopie meer: elke keuzelijst, elke controle bij het opslaan en elk
+sitemapveld leest dezelfde lijst uit dat register.
+
+| Lijst | Schema in het register | Bron (versie die DiWoo 0.9.8 noemt) |
+| --- | --- | --- |
+| Informatiecategorieën | `https://identifier.overheid.nl/tooi/def/thes/kern/wooInformatiecategorieen` | `scw_woo_informatiecategorieen`, versie 4 |
+| Documentsoorten | `https://identifier.overheid.nl/tooi/set/ccw_plooi_documentsoorten` | `ccw_plooi_documentsoorten`, versie 7 |
+| Soort handeling | `https://identifier.overheid.nl/tooi/set/ccw_plooi_documenthandelingen` | `ccw_plooi_documenthandelingen`, versie 2 |
+| Talen | `https://identifier.overheid.nl/tooi/def/thes/xtrn/taal` | `scw_talen`, versie 1 |
+| Organisaties | `https://identifier.overheid.nl/tooi/set/rwc_..._compleet` (gemeenten, provincies, waterschappen, ministeries, zbo's) | de TOOI-registers van organisaties |
+
+De bronnen zijn de JSON-downloads van de TOOI-publicatie op
+`repository.officiele-overheidspublicaties.nl/waardelijsten/`.
+
+Een informatiecategorie houdt in OpenCatalogi haar eigen code (`infocat001` tot en
+met `infocat018`) en haar eigen kop, zoals "Jaarplannen en jaarverslagen". Of een
+categorie bestaat, en of ze vervallen is, bepaalt het register. Het label van TOOI
+zelf ("jaarplan of jaarverslag") wordt ook herkend.
+
+### Dagelijkse verversing
+
+De achtergrondtaak `TooiSchemeRefresh` draait eenmaal per dag. Per lijst downloadt
+ze de bron en importeert die in het vocabulaireregister. Een nieuwe waarde van TOOI
+is zo de volgende dag te kiezen, zonder nieuwe release van OpenCatalogi.
+
+- De bronnen staan in de app-instelling `tooi_scheme_sources`, een JSON-lijst van
+  `{key, scheme, url}`. Zonder die instelling gelden de bronnen uit de tabel hierboven.
+- Per lijst bewaart de taak het resultaat in `tooi_scheme_refresh`: het moment,
+  hoeveel waarden nieuw, bijgewerkt of vervallen zijn, en een eventuele fout. Dat
+  moment staat ook als `lastRefreshAt` bij elke regel van `GET /api/value-lists`.
+- Een download die mislukt of niet te lezen is, importeert niets. Een import die
+  meer dan een derde van de geldige waarden van een lijst zou laten vervallen, wordt
+  ook geweigerd: een afgebroken antwoord mag geen lijst leegmaken waar publicaties
+  naar verwijzen. In beide gevallen blijft de lijst zoals ze was, staat de reden in
+  `tooi_scheme_refresh` en ontstaat een incident van het soort `value-list-refresh`.
+- De informatiecategorieën worden alleen ververst zolang OpenRegister
+  audittrails bijhoudt. Elke wijziging van een categorie staat dan in de audittrail,
+  met het oude en het nieuwe label. Staan audittrails uit, dan blijft de lijst van
+  categorieën staan en meldt de taak waarom; de andere lijsten worden gewoon ververst.
+
+### Vervallen waarden
+
+Laat TOOI een waarde vervallen, dan blijft ze werken voor de publicaties die haar al
+hebben: de sitemap noemt ze nog en een oude publicatie blijft geldig. Als nieuwe
+waarde wordt een vervallen waarde geweigerd.
+
+### Als het register niet te lezen is
+
+Kan OpenCatalogi het vocabulaireregister niet lezen, bijvoorbeeld omdat
+OpenRegister niet bereikbaar is, dan valt het nergens op een kopie terug:
+
+- de sitemap laat de categorie, de documentsoort, de soort handeling of de taal
+  weg en meldt dat het veld niet is opgelost;
+- een publicatie met een documentsoort wordt bij het opslaan geweigerd;
+- `GET /api/value-lists` noemt de vier lijsten in `unavailable`;
+- `GET /api/woo/documentsoorten` antwoordt met 503 `value-list-unavailable`.
+
+Op een nieuwe installatie staan de documentsoorten en de talen pas in het register
+na de eerste run van `TooiSchemeRefresh`. Tot die tijd zijn die lijsten leeg. Draai
+de taak direct met `occ background-job:execute --force-execute <id>` om niet op cron
+te wachten.
+
 ## Weigeringsgronden
 
 De weigeringsgronden van de Woo (artikel 5.1 en 5.2) zijn van dossiq. Is dossiq
