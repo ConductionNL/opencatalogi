@@ -51,6 +51,7 @@ jest.mock('../../store/store.js', () => ({
 const { catalogStore, objectStore } = jest.requireMock('../../store/store.js')
 
 const PUBLICATION = { id: 'p1', '@self': { register: { id: 7 }, schema: '9' } }
+const FILES_PAGE_1 = '/nc/apps/openregister/api/objects/7/9/p1/files?_limit=1000&_page=1'
 
 let log
 
@@ -136,7 +137,7 @@ describe('UploadFiles addAttachments', () => {
 			['upload', 'a', 'uploading', 'function', true],
 			['upload', 'd', 'uploading', 'function', true],
 			'getAllTags',
-			['fetch', '/nc/apps/openregister/api/objects/7/9/p1/files'],
+			['fetch', FILES_PAGE_1],
 			['setCollection', 'publicationAttachments', ['x']],
 			'fetchPublications',
 		])
@@ -227,7 +228,7 @@ describe('UploadFiles retryAllFailed', () => {
 			['upload', 'a', 'uploading', 'function', false],
 			['upload', 'c', 'uploading', 'function', false],
 			['upload', 'd', 'uploading', 'function', false],
-			['fetch', '/nc/apps/openregister/api/objects/7/9/p1/files'],
+			['fetch', FILES_PAGE_1],
 			['setCollection', 'publicationAttachments', ['y']],
 		])
 		expect(files.map((f) => f.status)).toEqual(['uploaded', 'uploaded', 'failed', 'failed'])
@@ -252,13 +253,15 @@ describe('UploadFiles retryAllFailed', () => {
 			throw new Error('bad json')
 		} }))
 		await again.retryAllFailed()
-		expect(log).toContainEqual(['setCollection', 'publicationAttachments', []])
+		expect(objectStore.setCollection).not.toHaveBeenCalled()
 		objectStore.setCollection.mockImplementation(() => {
 			throw new Error('store')
 		})
 		const third = vm({ files: { value: [{ name: 'a', status: 'failed' }] } })
 		third.createPublicationAttachment = uploader({ a: { status: 200 } })
+		global.fetch = jest.fn(async () => ({ json: async () => ({ results: ['y'] }) }))
 		await expect(third.retryAllFailed()).resolves.toBeUndefined()
+		expect(objectStore.setCollection).toHaveBeenCalled()
 		expect(third.retryLoading).toBe(false)
 	})
 
@@ -288,7 +291,7 @@ describe('UploadFiles saveTags', () => {
 				headers: { requesttoken: 'test-request-token', 'Content-Type': 'application/json' },
 				body: JSON.stringify({ tags: ['a', 'b'] }),
 			}],
-			['fetch', '/index.php/apps/openregister/api/objects/7/9/p1/files', undefined],
+			['fetch', FILES_PAGE_1, undefined],
 			['setCollection', 'publicationAttachments', ['r']],
 			'fetchPublications',
 		])
@@ -308,7 +311,7 @@ describe('UploadFiles saveTags', () => {
 		} }))
 		await ctx.saveTags(file, 'not-an-array')
 		expect(file.tags).toEqual([])
-		expect(log).toContainEqual(['setCollection', 'publicationAttachments', []])
+		expect(objectStore.setCollection).not.toHaveBeenCalled()
 	})
 
 	it('reports a refused label update', async () => {
@@ -389,5 +392,88 @@ describe('UploadFiles applySchemaDefaults', () => {
 		const ctx = vm({ share: true })
 		await ctx.applySchemaDefaults()
 		expect(ctx.share).toBe(false)
+	})
+})
+
+describe('UploadFiles refreshAttachments', () => {
+	it('stores the publication\'s current files, so a deleted name no longer counts as a duplicate', async () => {
+		global.fetch = jest.fn(async (url) => {
+			log.push(['fetch', url])
+			return { ok: true, json: async () => ({ results: ['current'] }) }
+		})
+
+		await vm().refreshAttachments()
+
+		expect(log).toEqual([
+			['fetch', FILES_PAGE_1],
+			['setCollection', 'publicationAttachments', ['current']],
+		])
+	})
+
+	it('reads every page, so a file after the first page still counts as a duplicate', async () => {
+		global.fetch = jest.fn(async (url) => {
+			log.push(['fetch', url])
+			const page = Number(new URL(url, 'https://nc.test').searchParams.get('_page'))
+			return { ok: true, json: async () => ({ results: [`file-${page}`], page, pages: 2 }) }
+		})
+
+		await vm().refreshAttachments()
+
+		expect(log).toEqual([
+			['fetch', FILES_PAGE_1],
+			['fetch', FILES_PAGE_1.replace('_page=1', '_page=2')],
+			['setCollection', 'publicationAttachments', ['file-1', 'file-2']],
+		])
+	})
+
+	it('keeps the stored files when they cannot be read', async () => {
+		global.fetch = jest.fn(async () => ({ ok: false, json: async () => ({}) }))
+
+		await vm().refreshAttachments()
+
+		expect(log).toEqual([])
+	})
+
+	it('keeps the stored files when a later page cannot be read', async () => {
+		global.fetch = jest.fn(async (url) => (url.endsWith('_page=1')
+			? { ok: true, json: async () => ({ results: ['file-1'], pages: 2 }) }
+			: { ok: false }))
+
+		await vm().refreshAttachments()
+
+		expect(objectStore.setCollection).not.toHaveBeenCalled()
+	})
+
+	it('keeps every page after an upload too', async () => {
+		const file = { name: 'new', status: 'pending', size: 1 }
+		const ctx = vm({ files: { value: [file] } })
+		ctx.createPublicationAttachment = uploader({ new: { status: 200, data: [{ id: 'f9' }] } })
+		global.fetch = jest.fn(async (url) => {
+			const page = Number(new URL(url, 'https://nc.test').searchParams.get('_page'))
+			return { ok: true, json: async () => ({ results: [`file-${page}`], pages: 2 }) }
+		})
+
+		await ctx.addAttachments()
+
+		expect(log).toContainEqual(['setCollection', 'publicationAttachments', ['file-1', 'file-2']])
+	})
+
+	it('reads nothing without a publication', async () => {
+		objectStore.getActiveObject.mockReturnValue(null)
+		global.fetch = jest.fn()
+
+		await vm().refreshAttachments()
+
+		expect(global.fetch).not.toHaveBeenCalled()
+	})
+
+	it('runs when the dialog opens', () => {
+		const ctx = vm({ labelOptions: { value: [] } })
+		ctx.applySchemaDefaults = jest.fn()
+		ctx.refreshAttachments = jest.fn()
+
+		ctx.onOpenModal()
+
+		expect(ctx.refreshAttachments).toHaveBeenCalledTimes(1)
 	})
 })

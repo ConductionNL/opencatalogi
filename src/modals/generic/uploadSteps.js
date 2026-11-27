@@ -70,6 +70,37 @@ export function publicationFilesUrl({ registerId, schemaId }, publication) {
 }
 
 /**
+ * The page size for reading a publication's files. OpenRegister formats every
+ * file for any page, so one large page costs no more than its default of 30.
+ */
+const FILES_PAGE_SIZE = 1000
+
+/**
+ * Every file of a publication, read page by page. A server that does not say
+ * how many pages there are is read once.
+ *
+ * @param {{registerId: string, schemaId: string}} ids - The register and schema ids
+ * @param {object} publication - The publication
+ * @return {Promise<{results: Array}|null>} The files, or null when a page cannot be read
+ * @spec openspec/specs/file-management/spec.md
+ */
+export async function fetchPublicationFiles(ids, publication) {
+	const url = publicationFilesUrl(ids, publication)
+	const results = []
+	for (let page = 1; ; page++) {
+		const response = await fetch(`${url}?_limit=${FILES_PAGE_SIZE}&_page=${page}`)
+		const data = response.ok === false ? null : await response.json().catch(() => null)
+		if (!Array.isArray(data?.results)) {
+			return null
+		}
+		results.push(...data.results)
+		if (data.results.length === 0 || !(page < Number(data.pages))) {
+			return { results }
+		}
+	}
+}
+
+/**
  * Tell the lists that a publication's files changed.
  *
  * @param {{registerId: string, schemaId: string}} ids - The register and schema ids

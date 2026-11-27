@@ -12,6 +12,7 @@ import { dispatchObjectsChanged } from '@conduction/nextcloud-vue'
 import {
 	countSettled,
 	embeddedSchemaConfiguration,
+	fetchPublicationFiles,
 	fetchSchemaConfiguration,
 	notifyPublicationChanged,
 	publicationFilesUrl,
@@ -70,6 +71,13 @@ describe('publication files and change notice', () => {
 	it('builds the OpenRegister files URL of the publication', () => {
 		expect(publicationFilesUrl({ registerId: 5, schemaId: 9 }, { id: 'pub-1' }))
 			.toBe('/apps/openregister/api/objects/5/9/pub-1/files')
+	})
+
+	it('reads the files in large pages, and once from a server that does not count its pages', async () => {
+		global.fetch = jest.fn(async () => ({ ok: true, json: async () => ({ results: ['a', 'b'] }) }))
+
+		expect(await fetchPublicationFiles({ registerId: 5, schemaId: 9 }, { id: 'pub-1' })).toEqual({ results: ['a', 'b'] })
+		expect(global.fetch.mock.calls.map(([url]) => url)).toEqual(['/apps/openregister/api/objects/5/9/pub-1/files?_limit=1000&_page=1'])
 	})
 
 	it('announces the publication as changed with its register, schema and id', () => {

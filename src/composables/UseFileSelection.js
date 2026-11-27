@@ -150,7 +150,8 @@ function fileDialog(accept, allowMultiple) {
 /**
  * File selection composable
  *
- * @param {Array} options
+ * @param {Array} options `namesReady` may return a promise of the attached
+ *   files being read; a drop then waits for it before the duplicate check.
  *
  * Special thanks to Github user adamreisnz for creating most of this file
  * https://github.com/adamreisnz
@@ -160,7 +161,7 @@ function fileDialog(accept, allowMultiple) {
  */
 export function useFileSelection(options) {
 	// Extract options
-	const { dropzone, allowMultiple, allowedFileTypes, onFileDrop, onFileSelect } =
+	const { dropzone, allowMultiple, allowedFileTypes, onFileDrop, onFileSelect, namesReady } =
 		options
 
 	// Data types computed ref
@@ -212,17 +213,9 @@ export function useFileSelection(options) {
 		}
 	}
 
-	// Handling of files drop. The duplicate filter applies to every drop
-	// path (initial, additive, single-file) so the rule is uniform.
-	const onDrop = (files) => {
-		if (!files || files.length === 0) {
-			return
-		}
-		// Cross-session + within-session duplicate filter.
-		const { accepted, rejected } = splitDuplicates(
-			dropList(files, allowMultiple),
-			getExistingNames(),
-		)
+	// Cross-session + within-session duplicate filter, then queue the rest.
+	const acceptDrop = (dropped) => {
+		const { accepted, rejected } = splitDuplicates(dropped, getExistingNames())
 		rejectedDuplicates.value = {
 			names: rejected,
 			seq: rejectedDuplicates.value.seq + 1,
@@ -231,6 +224,24 @@ export function useFileSelection(options) {
 
 		onFileDrop && onFileDrop()
 		onFileSelect && onFileSelect()
+	}
+
+	// Handling of files drop. The duplicate filter applies to every drop
+	// path (initial, additive, single-file) so the rule is uniform.
+	const onDrop = (files) => {
+		if (!files || files.length === 0) {
+			return undefined
+		}
+		// Copied now: the file dialog clears its input as soon as this returns.
+		const dropped = dropList(files, allowMultiple)
+		const pending = namesReady && namesReady()
+		if (pending) {
+			return Promise.resolve(pending)
+				.catch(() => {})
+				.then(() => acceptDrop(dropped))
+		}
+		acceptDrop(dropped)
+		return undefined
 	}
 
 	const reset = (name = null) => {

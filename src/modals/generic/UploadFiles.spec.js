@@ -402,3 +402,64 @@ describe('UploadFiles label selection', () => {
 		})
 	})
 })
+
+describe('UploadFiles duplicate check on opening', () => {
+	let wrapper
+	let answerFiles
+
+	beforeEach(async () => {
+		jest.spyOn(console, 'info').mockImplementation(() => {})
+		global.t = t
+		// The publication's files answer only when the spec says so.
+		const filesAnswer = new Promise((resolve) => {
+			answerFiles = (results) => resolve({ ok: true, json: () => Promise.resolve({ results, pages: 1 }) })
+		})
+		global.fetch = jest.fn((url) => (String(url).includes('/files?_limit=1000')
+			? filesAnswer
+			: Promise.resolve({ ok: true, json: () => Promise.resolve(String(url).endsWith('/api/tags') ? AVAILABLE_TAGS : { results: [] }) })))
+		axios.post.mockReset().mockResolvedValue({ status: 200, data: [{ id: 'file-1' }] })
+		navigationStore.setDialog(null)
+		await objectStore.setActiveObject('publication', publicationA)
+		// What an earlier upload left: a file that has since been deleted.
+		objectStore.setCollection('publicationAttachments', [{ name: 'deleted-then-added.pdf' }])
+		wrapper = mountUploadFiles()
+		await flushPromises()
+	})
+
+	afterEach(() => {
+		wrapper.unmount()
+		navigationStore.setDialog(null)
+		objectStore.setCollection('publicationAttachments', [])
+		delete global.fetch
+		delete global.t
+		jest.restoreAllMocks()
+	})
+
+	it('waits for the current files before checking a file dropped right after opening', async () => {
+		await openDialog()
+		await selectLabels(wrapper, [NO_LABEL])
+
+		__fileDialog.onChange([new File(['content'], 'deleted-then-added.pdf')])
+		await flushPromises()
+		expect(axios.post).not.toHaveBeenCalled()
+
+		answerFiles([])
+		await flushPromises()
+
+		expect(axios.post).toHaveBeenCalledTimes(1)
+		expect(axios.post.mock.calls[0][1].getAll('files[]').map((file) => file.name)).toEqual(['deleted-then-added.pdf'])
+		expect(wrapper.vm.$data.duplicateWarning).toBeNull()
+	})
+
+	it('still refuses a file that is attached', async () => {
+		await openDialog()
+		await selectLabels(wrapper, [NO_LABEL])
+
+		__fileDialog.onChange([new File(['content'], 'still-attached.pdf')])
+		answerFiles([{ name: 'still-attached.pdf' }])
+		await flushPromises()
+
+		expect(axios.post).not.toHaveBeenCalled()
+		expect(wrapper.vm.$data.duplicateWarning).toContain('still-attached.pdf')
+	})
+})
