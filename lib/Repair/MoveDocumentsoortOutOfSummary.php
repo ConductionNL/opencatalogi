@@ -223,7 +223,7 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	private function documentsoortOf(string $summary): ?array {
 		try {
 			return $this->vocabulary->resolveDocumentsoort($summary);
-		} catch (\RuntimeException) {
+		} catch (\Throwable) {
 			return null;
 		}
 	}//end documentsoortOf()
