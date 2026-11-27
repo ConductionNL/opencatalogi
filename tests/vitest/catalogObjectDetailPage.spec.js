@@ -98,6 +98,22 @@ describe('CatalogObjectDetail page', () => {
 		}
 	})
 
+	/**
+	 * File attachment in OpenRegister is resolved by object id alone
+	 * (FileMapper::getFilesForObject()), never by a schema-declared property,
+	 * so it applies to every row this page opens regardless of schema — the
+	 * same generic `integration`/`files` widget PublicationDetail uses.
+	 */
+	it('shows an Attachments widget, the same generic integration PublicationDetail uses', () => {
+		const files = detail.config.widgets.filter((w) => w.type === 'integration' && w.integrationId === 'files')
+		expect(files.length).toBe(1)
+
+		const publicationDetail = pages.find((p) => p.id === 'PublicationDetail')
+		const pubFiles = publicationDetail.config.widgets.find((w) => w.id === 'pub-files')
+		expect(files[0].type).toBe(pubFiles.type)
+		expect(files[0].integrationId).toBe(pubFiles.integrationId)
+	})
+
 	it('lays every widget out exactly once', () => {
 		const ids = detail.config.widgets.map((w) => w.id).sort()
 		const laidOut = detail.config.layout.map((cell) => cell.widgetId).sort()
