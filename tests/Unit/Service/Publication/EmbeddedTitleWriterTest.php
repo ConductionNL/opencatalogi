@@ -638,7 +638,10 @@ class EmbeddedTitleWriterTest extends TestCase {
 		$redaction = self::redacted(values: ['Jan Jansen'], mode: 'pdf');
 
 		$outcome = $this->writer()->write(file: $this->file(bytes: self::fixture(name: 'plain')), facts: $facts, redaction: $redaction);
-		$this->assertSame(expected: [EmbeddedTitleWriter::SKIPPED, EmbeddedTitleWriter::VERIFIER, 'unverifiable'], actual: [$outcome['status'], $outcome['reason'], $outcome['verdict']]);
+		$this->assertSame(
+			expected: [EmbeddedTitleWriter::SKIPPED, EmbeddedTitleWriter::VERIFIER, 'unverifiable'],
+			actual: [$outcome['status'], $outcome['reason'], $outcome['verdict']]
+		);
 
 		$broken = $this->createMock(originalClassName: \Psr\Container\ContainerInterface::class);
 		$broken->method('get')->willThrowException(new \RuntimeException('not registered'));

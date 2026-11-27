@@ -302,6 +302,14 @@ class BatchPublicationWriterTest extends TestCase {
 		$this->assertArrayNotHasKey(key: 'organization', array: $payload);
 	}//end testWithoutAnOrganisationNoneIsInvented()
 
+	/**
+	 * The writer under test.
+	 *
+	 * @param bool                     $withTitles Whether it writes titles.
+	 * @param EmbeddedTitleWriter|null $titles     The title writer, when not the default one.
+	 *
+	 * @return BatchPublicationWriter
+	 */
 	private function writer(bool $withTitles = true, ?EmbeddedTitleWriter $titles = null): BatchPublicationWriter {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
@@ -462,7 +470,12 @@ class BatchPublicationWriterTest extends TestCase {
 		};
 		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->method('get')->willReturn($verifier);
-		$titles = new EmbeddedTitleWriter(new PdfTitleUpdate(), new OfficeTitleUpdate(), $this->createMock(originalClassName: LoggerInterface::class), $container);
+		$titles = new EmbeddedTitleWriter(
+			new PdfTitleUpdate(),
+			new OfficeTitleUpdate(),
+			$this->createMock(originalClassName: LoggerInterface::class),
+			$container
+		);
 
 		[$batch, $listings] = self::batch(documents: ['Woo/besluit.pdf', 'Woo/ondertekend.pdf']);
 		$listings[0]['redaction'] = new RedactedValues(redactionLog: [['value' => 'Jan Jansen']], verification: ['outputMode' => 'pdf']);
@@ -474,9 +487,18 @@ class BatchPublicationWriterTest extends TestCase {
 		);
 
 		$this->assertSame(expected: [['values' => ['Jan Jansen'], 'outputMode' => 'pdf']], actual: $verifier->calls);
-		$this->assertSame(expected: ['skipped', 'verifier'], actual: [$result['embeddedTitles']['besluit.pdf']['status'], $result['embeddedTitles']['besluit.pdf']['reason']]);
-		$this->assertSame(expected: $this->documents['Woo/besluit.pdf']->getContent(), actual: $this->files->copies[200], message: 'the verified bytes are published as they were');
-		$this->assertSame(expected: 'signed', actual: $result['embeddedTitles']['ondertekend.pdf']['reason'], message: 'a document that was not redacted is not verified');
+		$besluit = $result['embeddedTitles']['besluit.pdf'];
+		$this->assertSame(expected: ['skipped', 'verifier'], actual: [$besluit['status'], $besluit['reason']]);
+		$this->assertSame(
+			expected: $this->documents['Woo/besluit.pdf']->getContent(),
+			actual: $this->files->copies[200],
+			message: 'the verified bytes are published as they were'
+		);
+		$this->assertSame(
+			expected: 'signed',
+			actual: $result['embeddedTitles']['ondertekend.pdf']['reason'],
+			message: 'a document that was not redacted is not verified'
+		);
 	}//end testARedactedCopyIsVerifiedAgainWithItsOwnValues()
 
 	/**

@@ -146,7 +146,9 @@ class EmbeddedTitleWriter {
 			return $this->failed(file: $file, hash: $hash, error: $e);
 		}
 
-		return $this->written(file: $file, before: $hash, after: $after, verification: $verification);
+		$outcome = self::outcome(status: self::WRITTEN, before: $hash, after: hash('sha256', $after));
+
+		return $this->withVerdict(file: $file, outcome: $outcome, verification: $verification);
 	}//end write()
 
 	/**
@@ -178,26 +180,24 @@ class EmbeddedTitleWriter {
 	}//end checkedAgain()
 
 	/**
-	 * The outcome of a written title; a redacted copy's clean verdict is kept on it.
+	 * The outcome of a written title; a redacted copy's clean verdict is kept on the copy and named.
 	 *
 	 * @param File                      $file         The copy.
-	 * @param string                    $before       The sha256 before.
-	 * @param string                    $after        The bytes written.
+	 * @param array<string, mixed>      $outcome      The written outcome.
 	 * @param array<string, mixed>|null $verification The clean verdict of a redacted copy, null otherwise.
 	 *
 	 * @return array{status: string, hashBefore: string|null, hashAfter: string|null, reason?: string, verdict?: string}
 	 *
 	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
 	 */
-	private function written(File $file, string $before, string $after, ?array $verification): array {
-		$outcome = self::outcome(status: self::WRITTEN, before: $before, after: hash('sha256', $after));
+	private function withVerdict(File $file, array $outcome, ?array $verification): array {
 		if ($verification !== null) {
 			$this->keepVerdict(file: $file, verification: $verification);
 			$outcome['verdict'] = 'clean';
 		}
 
 		return $outcome;
-	}//end written()
+	}//end withVerdict()
 
 	/**
 	 * OpenRegister's verdict on the bytes about to be written, against the
