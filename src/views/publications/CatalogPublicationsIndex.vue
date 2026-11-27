@@ -64,6 +64,7 @@
 		@vue:mounted="followDeleteTarget"
 		@rowClick="onRowOpen"
 		@rowAuxClick="onRowOpen"
+		@select="onSelectionChange"
 		@view="onView"
 		@editOpen="onEdit"
 		@add="onAdd" />
@@ -83,6 +84,11 @@ import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue
 import DatabaseOffOutline from 'vue-material-design-icons/DatabaseOffOutline.vue'
 import { catalogScopePairs, normaliseIdList } from '../../services/catalogScope.js'
 import { getPublicationStatus } from '../../services/publicationStatus.js'
+import {
+	canDepublish,
+	canPublish,
+	todayDate,
+} from '../../services/publicationWindow.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 
 /** Listeners CnPageRenderer binds for its own row opening, which only works on `type:"index"` pages. */
@@ -105,6 +111,12 @@ function isActionVisible(action, row) {
 	return typeof action.visible === 'function'
 		? action.visible(row)
 		: action.visible !== false
+}
+
+/** Whether a row offers the dialog a row action opens; a dialog not listed always applies. */
+const ROW_DIALOG_APPLIES = {
+	massPublishObjects: (row) => canPublish(row, todayDate()),
+	massDepublishObjects: (row) => canDepublish(row, todayDate()),
 }
 
 /**
@@ -174,8 +186,13 @@ export default {
 			resolving: false,
 			failed: false,
 			resolveSequence: 0,
-			/** A bulk action opened a dialog; when it closes the list reloads. */
-			selectionActionOpen: false,
+			/**
+			 * What opened the dialog the list reloads after, 'bulk' (which also
+			 * clears the selection) or 'row', or null.
+			 */
+			selectionActionOpen: null,
+			/** The selected rows, which decide the bulk actions that apply. */
+			selectedRows: [],
 			/** The row CnIndexPage's single-delete dialog is for, or null. */
 			deleteTarget: null,
 			/** Stops following the delete target of an index page that was replaced. */
@@ -290,13 +307,10 @@ export default {
 			for (const listener of RENDERER_ROW_LISTENERS) {
 				delete attrs[listener]
 			}
-			if (!this.isPublicationPagePair) {
-				return { ...this.actionToggles, ...attrs, ...this.otherPairConfig }
-			}
 			return {
 				...this.actionToggles,
 				...attrs,
-				...this.publicationPairIndexConfig(),
+				...this.pairIndexConfig(),
 			}
 		},
 
@@ -328,10 +342,21 @@ export default {
 			if (open || !this.selectionActionOpen) {
 				return
 			}
-			this.selectionActionOpen = false
 			const index = this.$refs.index
-			index?.onSelect?.([])
+			if (this.selectionActionOpen === 'bulk') {
+				index?.onSelect?.([])
+			}
+			this.selectionActionOpen = null
 			index?.onRefreshEvent?.()
+		},
+
+		/**
+		 * A new index page (another catalog) starts without a selection.
+		 *
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
+		 */
+		indexKey() {
+			this.selectedRows = []
 		},
 
 		catalogSlug: {
@@ -358,30 +383,85 @@ export default {
 
 	methods: {
 		/**
-		 * The publication pair's config for the index page: its row actions
-		 * kept to publication rows, its bulk actions bound (none without the
-		 * delete action), and its delete dialog words only while the row being
+		 * The config of the page's pair for the index page: the publication
+		 * pair's or the other pair's. Row actions that open a dialog on their
+		 * row are bound and show on a row of any schema where they apply; the
+		 * publication pair's other row actions are kept to publication rows.
+		 * Bulk actions are bound (none without the delete action), and the
+		 * publication pair's delete dialog words apply only while the row being
 		 * deleted is a publication.
 		 *
 		 * @return {object} The config
 		 * @spec openspec/changes/archive/2026-11-25-publication-delete-says-what-it-removes/specs/publication-delete/spec.md#requirement-other-schemas-in-a-catalog-keep-the-generic-dialog-req-pdel-002
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-a-row-can-be-published-or-depublished-on-its-own-psa-005
 		 */
-		publicationPairIndexConfig() {
-			const config = { ...this.publicationPairConfig }
-			if ('deleteDialog' in config) {
+		pairIndexConfig() {
+			const publicationPair = this.isPublicationPagePair
+			const config = {
+				...(publicationPair
+					? this.publicationPairConfig
+					: this.otherPairConfig),
+			}
+			if (publicationPair && 'deleteDialog' in config) {
 				config.deleteDialog = this.isPublicationRow(this.deleteTarget)
 					? config.deleteDialog
 					: null
 			}
 			if (Array.isArray(config.actions)) {
-				config.actions = config.actions.map((action) =>
-					this.publicationRowAction(action),
-				)
+				config.actions = config.actions.map((action) => {
+					if (this.isRowDialogAction(action)) {
+						return this.bindRowDialogAction(action)
+					}
+					return publicationPair ? this.publicationRowAction(action) : action
+				})
 			}
 			if (Array.isArray(config.bulkActions)) {
 				config.bulkActions = this.boundBulkActions(config.bulkActions)
 			}
 			return config
+		},
+
+		/**
+		 * Whether a row action opens a dialog on its row: its handler is in the
+		 * app's handler map and its `props` name a dialog or modal.
+		 *
+		 * @param {object|string} action - The row action, or a built-in placeholder
+		 * @return {boolean} True when it does
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-a-row-can-be-published-or-depublished-on-its-own-psa-005
+		 */
+		isRowDialogAction(action) {
+			return Boolean(
+				action
+				&& typeof action === 'object'
+				&& typeof action.handler === 'string'
+				&& typeof this.cnCustomComponents?.[action.handler] === 'function'
+				&& (action.props?.dialog || action.props?.modal),
+			)
+		},
+
+		/**
+		 * A row action that opens its dialog on its own row, shown where that
+		 * dialog applies to the row. The list reloads when the dialog closes.
+		 *
+		 * @param {object} action - The row action
+		 * @return {object} The bound action
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-a-row-can-be-published-or-depublished-on-its-own-psa-005
+		 */
+		bindRowDialogAction(action) {
+			const handler = this.cnCustomComponents[action.handler]
+			const props = action.props
+			const applies = ROW_DIALOG_APPLIES[props.dialog || props.modal]
+			return {
+				...action,
+				visible: (row) =>
+					isActionVisible(action, row) && (!applies || applies(row)),
+
+				handler: (row) => {
+					if (handler({ objects: [row], props })) {
+						this.selectionActionOpen = 'row'
+					}
+				},
+			}
 		},
 
 		/**
@@ -409,6 +489,7 @@ export default {
 		 *
 		 * @param {object|*} action - The row action
 		 * @return {object|*} The action
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
 		publicationRowAction(action) {
 			if (!action || typeof action !== 'object') {
@@ -427,12 +508,39 @@ export default {
 		 *
 		 * @param {Array<object>} bulkActions - The bulk actions
 		 * @return {Array<object>} The bound actions
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-selection-actions-follow-the-delete-right-psa-003
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
 		 */
 		boundBulkActions(bulkActions) {
 			if (this.actionToggles.showDeleteAction === false) {
 				return []
 			}
-			return bulkActions.map((action) => this.bindBulkAction(action))
+			return bulkActions
+				.filter((action) => this.appliesToSelection(action))
+				.map((action) => this.bindBulkAction(action))
+		},
+
+		/**
+		 * Whether a bulk action applies to the selection: a dialog with a row
+		 * rule (Publish, Depublish) needs a selected row it applies to, so the
+		 * bar never offers an action every selected row would skip.
+		 *
+		 * @param {object} action - The bulk action
+		 * @return {boolean} True when it applies
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
+		 */
+		appliesToSelection(action) {
+			const applies = ROW_DIALOG_APPLIES[action?.props?.dialog || action?.props?.modal]
+			return !applies || this.selectedRows.some((row) => applies(row))
+		},
+
+		/**
+		 * Keep the selected rows when the selection changes.
+		 *
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
+		 */
+		onSelectionChange() {
+			this.selectedRows = [...(this.$refs.index?.selectedObjects || [])]
 		},
 
 		/**
@@ -518,7 +626,7 @@ export default {
 						props: action.props || {},
 					})
 					if (opened) {
-						this.selectionActionOpen = true
+						this.selectionActionOpen = 'bulk'
 					}
 				},
 			}

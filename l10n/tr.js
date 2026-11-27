@@ -911,7 +911,11 @@ OC.L10N.register(
         "The organisation could not be saved: %s": "Kuruluş kaydedilemedi: %s",
         "The organisation registers could not be read: %s": "Kuruluş sicilleri okunamadı: %s",
         "Failed to save settings": "Ayarlar kaydedilemedi",
-        "Title not written: the redaction check did not pass": "Başlık yazılmadı: karartma denetimi geçmedi"
+        "Title not written: the redaction check did not pass": "Başlık yazılmadı: karartma denetimi geçmedi",
+        "1 of the selected publications is a concept and will be skipped.": "Seçilen yayınlardan 1 tanesi taslaktır ve atlanacaktır.",
+        "{count} of the selected publications are concepts and will be skipped.": "Seçilen yayınlardan {count} tanesi taslaktır ve atlanacaktır.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "Seçilen yayınlardan 1 tanesi zamanlanmıştır ve yeniden taslak olur: yayın tarihi temizlenir.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "Seçilen yayınlardan {count} tanesi zamanlanmıştır ve yeniden taslak olur: yayın tarihleri temizlenir."
     },
     "nplurals=2; plural=(n != 1);"
 )

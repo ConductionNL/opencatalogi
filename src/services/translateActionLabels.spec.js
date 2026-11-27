@@ -39,12 +39,14 @@ describe('Publications "File list" row action', () => {
 		expect(fileList[0].icon).toBe('FormatListBulleted')
 	})
 
-	it('places File list between the built-in Edit and Copy', () => {
+	it('places File list, Publish and Depublish between the built-in Edit and Copy', () => {
 		expect(page('Publications').config.actions).toBeUndefined()
 		expect(publicationActions(manifest.pages)).toEqual([
 			'builtin:view',
 			'builtin:edit',
 			expect.objectContaining({ id: 'file-list' }),
+			expect.objectContaining({ id: 'publish' }),
+			expect.objectContaining({ id: 'depublish' }),
 			'builtin:copy',
 			'builtin:delete',
 		])

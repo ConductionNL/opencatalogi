@@ -192,7 +192,7 @@ const CnIndexPage = {
 		showTitle: { type: Boolean, default: false },
 		collectionUrl: { type: String, default: '' },
 	},
-	emits: ['row-click', 'row-aux-click', 'view', 'edit-open'],
+	emits: ['row-click', 'row-aux-click', 'view', 'edit-open', 'select'],
 	data() {
 		return {
 			formDialogItem: null,
@@ -210,6 +210,7 @@ const CnIndexPage = {
 			this.selectedObjects = this.selectedObjects.filter((row) =>
 				ids.includes(row.id),
 			)
+			this.$emit('select', ids)
 		},
 		onRefreshEvent() {
 			this.refreshCount += 1

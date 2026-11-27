@@ -911,7 +911,11 @@ OC.L10N.register(
         "The organisation could not be saved: %s": "Organizata nuk mund të ruhej: %s",
         "The organisation registers could not be read: %s": "Regjistrat e organizatave nuk mund të lexoheshin: %s",
         "Failed to save settings": "Ruajtja e cilësimeve dështoi",
-        "Title not written: the redaction check did not pass": "Titulli nuk u shkrua: kontrolli i errësimit nuk kaloi"
+        "Title not written: the redaction check did not pass": "Titulli nuk u shkrua: kontrolli i errësimit nuk kaloi",
+        "1 of the selected publications is a concept and will be skipped.": "1 nga botimet e zgjedhura është koncept dhe do të anashkalohet.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} nga botimet e zgjedhura janë koncepte dhe do të anashkalohen.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 nga botimet e zgjedhura është e planifikuar dhe kthehet në koncept: data e saj e botimit fshihet.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} nga botimet e zgjedhura janë të planifikuara dhe kthehen në koncepte: datat e tyre të botimit fshihen."
     },
     "nplurals=2; plural=(n != 1);"
 )

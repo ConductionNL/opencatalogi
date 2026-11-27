@@ -910,7 +910,11 @@
         "The organisation could not be saved: %s": "Organizacijos išsaugoti nepavyko: %s",
         "The organisation registers could not be read: %s": "Organizacijų registrų perskaityti nepavyko: %s",
         "Failed to save settings": "Nepavyko išsaugoti nustatymų",
-        "Title not written: the redaction check did not pass": "Pavadinimas neįrašytas: užtamsinimo patikra nepavyko"
+        "Title not written: the redaction check did not pass": "Pavadinimas neįrašytas: užtamsinimo patikra nepavyko",
+        "1 of the selected publications is a concept and will be skipped.": "1 pasirinkta publikacija yra juodraštis ir bus praleista.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} pasirinktų publikacijų yra juodraščiai ir bus praleistos.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 pasirinkta publikacija yra suplanuota ir vėl tampa juodraščiu: jos publikavimo data išvaloma.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} pasirinktų publikacijų yra suplanuotos ir vėl tampa juodraščiais: jų publikavimo datos išvalomos."
     },
     "plurals": {}
 }

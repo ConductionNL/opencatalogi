@@ -910,7 +910,11 @@
         "The organisation could not be saved: %s": "Organisasjonen kunne ikke lagres: %s",
         "The organisation registers could not be read: %s": "Organisasjonsregistrene kunne ikke leses: %s",
         "Failed to save settings": "Kunne ikke lagre innstillingene",
-        "Title not written: the redaction check did not pass": "Tittel ikke skrevet: kontrollen av sladdingen besto ikke"
+        "Title not written: the redaction check did not pass": "Tittel ikke skrevet: kontrollen av sladdingen besto ikke",
+        "1 of the selected publications is a concept and will be skipped.": "1 av de valgte publikasjonene er et utkast og vil bli hoppet over.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} av de valgte publikasjonene er utkast og vil bli hoppet over.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 av de valgte publikasjonene er planlagt og blir et utkast igjen: publiseringsdatoen fjernes.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} av de valgte publikasjonene er planlagt og blir utkast igjen: publiseringsdatoene deres fjernes."
     },
     "plurals": {}
 }

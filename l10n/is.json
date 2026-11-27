@@ -910,7 +910,11 @@
         "The organisation could not be saved: %s": "Ekki tókst að vista stofnunina: %s",
         "The organisation registers could not be read: %s": "Ekki tókst að lesa stofnanaskrárnar: %s",
         "Failed to save settings": "Ekki tókst að vista stillingarnar",
-        "Title not written: the redaction check did not pass": "Titill ekki skrifaður: athugun á yfirstrikun stóðst ekki"
+        "Title not written: the redaction check did not pass": "Titill ekki skrifaður: athugun á yfirstrikun stóðst ekki",
+        "1 of the selected publications is a concept and will be skipped.": "1 af völdu útgáfunum er drög og verður sleppt.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} af völdu útgáfunum eru drög og verður sleppt.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 af völdu útgáfunum er tímasett og verður aftur að drögum: útgáfudagsetning hennar er hreinsuð.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} af völdu útgáfunum eru tímasettar og verða aftur að drögum: útgáfudagsetningar þeirra eru hreinsaðar."
     },
     "plurals": {}
 }

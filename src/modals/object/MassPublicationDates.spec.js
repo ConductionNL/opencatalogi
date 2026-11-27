@@ -30,6 +30,7 @@ const { catalogStore, navigationStore, objectStore } = jest.requireMock('../../s
 const translate = (app, text, vars = {}) => text.replace(/{(\w+)}/g, (match, key) => String(vars[key] ?? match))
 
 const DATED = { properties: { publicationDate: {}, depublicationDate: {} } }
+const DUTCH = { properties: { publicatiedatum: {}, depublicatiedatum: {} } }
 
 /**
  * A selected publication.
@@ -206,7 +207,7 @@ describe('MassPublishObjects', () => {
 	it('counts several skipped items in the warnings', () => {
 		objectStore.selectedObjects = [
 			publication('p1', { publicationDate: '2026-01-01' }),
-			publication('p2', { publicationDate: '2026-01-01', depublicationDate: '2025-12-01' }),
+			publication('p2', { publicationDate: '2026-01-01', depublicationDate: '2026-12-01' }),
 			publication('n1', {}, { properties: {} }),
 			publication('n2', {}, { properties: {} }),
 		]
@@ -215,6 +216,22 @@ describe('MassPublishObjects', () => {
 		expect(wrapper.vm.unsupportedWarning).toBe('2 of the selected publications have schemas that do not support publishing and will be skipped. Ask your IT manager for help.')
 		expect(wrapper.vm.isObjectUnsupported(objectStore.selectedObjects[2])).toBe(true)
 		expect(wrapper.vm.unsupportedReason()).toBe('This schema does not support publishing. Ask your IT manager for help.')
+	})
+
+	it('publishes a Dutch schema through its own properties, also one without a depublication date', async () => {
+		objectStore.selectedObjects = [
+			publication('woo', { publicatiedatum: null, depublicatiedatum: '2026-02-01' }, DUTCH),
+			publication('wooNoEnd', {}, { properties: { publicatiedatum: {} } }),
+		]
+		const wrapper = open(MassPublishObjects)
+		expect(wrapper.vm.unsupportedCount).toBe(0)
+
+		await wrapper.vm.publishObjects()
+
+		const clones = objectStore.saveObject.mock.calls.map(([clone]) => clone)
+		expect(clones[0]).toMatchObject({ publicatiedatum: '2026-06-15', depublicatiedatum: null })
+		expect(clones[1].publicatiedatum).toBe('2026-06-15')
+		expect(clones[1]).not.toHaveProperty('depublicatiedatum')
 	})
 })
 
@@ -284,6 +301,60 @@ describe('MassDepublishObjects', () => {
 		expect(unsupported.vm.submitDisabled).toBe(true)
 		expect(unsupported.vm.unsupportedWarning).toBe('2 of the selected publications have schemas that do not support depublishing and will be skipped. Ask your IT manager for help.')
 		expect(unsupported.vm.unsupportedReason()).toBe('This schema does not support depublishing. Ask your IT manager for help.')
+	})
+
+	it('depublishes a Dutch schema through its own properties', async () => {
+		objectStore.selectedObjects = [
+			publication('woo', { publicatiedatum: '2026-01-10' }, DUTCH),
+			publication('wooNoEnd', { publicatiedatum: '2026-01-10' }, { properties: { publicatiedatum: {} } }),
+		]
+		const wrapper = open(MassDepublishObjects)
+		expect(wrapper.vm.unsupportedCount).toBe(1)
+
+		await wrapper.vm.depublishObjects()
+
+		expect(objectStore.saveObject).toHaveBeenCalledTimes(1)
+		expect(objectStore.saveObject.mock.calls[0][0]).toMatchObject({ id: 'woo', publicatiedatum: '2026-01-10', depublicatiedatum: '2026-06-15' })
+	})
+
+	it('takes a scheduled publication back to concept, and skips a concept', async () => {
+		objectStore.selectedObjects = [
+			publication('scheduled', { publicationDate: '2026-12-01' }),
+			publication('draft'),
+		]
+		const wrapper = open(MassDepublishObjects)
+		expect(wrapper.vm.conceptWarning).toBe('1 of the selected publications is a concept and will be skipped.')
+		expect(wrapper.vm.unscheduledWarning).toBe('1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.')
+
+		await wrapper.vm.depublishObjects()
+
+		expect(saved()).toEqual([['scheduled', null, null, 'r1']])
+	})
+
+	it('gives a scheduled publication a later depublication date when it falls after its publication date', async () => {
+		objectStore.selectedObjects = [
+			publication('s1', { publicationDate: '2026-07-01' }),
+			publication('s2', { publicationDate: '2026-12-01' }),
+			publication('d1'),
+			publication('d2'),
+		]
+		const wrapper = open(MassDepublishObjects)
+		wrapper.vm.$data.selectedMode = wrapper.vm.modeOptions[1]
+		wrapper.vm.handleDateInput(new Date(2026, 8, 30))
+		expect(wrapper.vm.unscheduledCount).toBe(1)
+		expect(wrapper.vm.conceptWarning).toBe('2 of the selected publications are concepts and will be skipped.')
+
+		await wrapper.vm.depublishObjects()
+
+		expect(saved()).toEqual([['s1', '2026-07-01', '2026-09-30', 'r1'], ['s2', null, null, 'r1']])
+	})
+
+	it('counts several scheduled publications going back to concept', () => {
+		objectStore.selectedObjects = [
+			publication('s1', { publicationDate: '2026-07-01' }),
+			publication('s2', { publicationDate: '2026-12-01' }),
+		]
+		expect(open(MassDepublishObjects).vm.unscheduledWarning).toBe('2 of the selected publications are scheduled and go back to concept: their publication dates are cleared.')
 	})
 
 	it('names the failures and keeps the dialog open', async () => {

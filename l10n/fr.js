@@ -911,7 +911,11 @@ OC.L10N.register(
         "The organisation could not be saved: %s": "L’organisation n’a pas pu être enregistrée : %s",
         "The organisation registers could not be read: %s": "Les registres des organisations n’ont pas pu être lus : %s",
         "Failed to save settings": "Impossible d'enregistrer les paramètres",
-        "Title not written: the redaction check did not pass": "Titre non écrit : la vérification de l’occultation a échoué"
+        "Title not written: the redaction check did not pass": "Titre non écrit : la vérification de l’occultation a échoué",
+        "1 of the selected publications is a concept and will be skipped.": "1 des publications sélectionnées est un brouillon et sera ignorée.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} des publications sélectionnées sont des brouillons et seront ignorées.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 des publications sélectionnées est planifiée et redevient un brouillon : sa date de publication est effacée.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} des publications sélectionnées sont planifiées et redeviennent des brouillons : leurs dates de publication sont effacées."
     },
     "nplurals=2; plural=(n != 1);"
 )

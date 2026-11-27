@@ -485,22 +485,16 @@
     }
   },
   "src/modals/object/MassDepublishObjects.vue": {
-    "eqeqeq": {
-      "count": 1
-    },
     "jsdoc/require-param-type": {
-      "count": 4
+      "count": 2
     },
     "no-console": {
       "count": 1
     }
   },
   "src/modals/object/MassPublishObjects.vue": {
-    "eqeqeq": {
-      "count": 1
-    },
     "jsdoc/require-param-type": {
-      "count": 5
+      "count": 2
     },
     "no-console": {
       "count": 1

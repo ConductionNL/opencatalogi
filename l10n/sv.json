@@ -910,7 +910,11 @@
         "The organisation could not be saved: %s": "Organisationen kunde inte sparas: %s",
         "The organisation registers could not be read: %s": "Organisationsregistren kunde inte läsas: %s",
         "Failed to save settings": "Det gick inte att spara inställningarna",
-        "Title not written: the redaction check did not pass": "Titeln skrevs inte: kontrollen av maskeringen godkändes inte"
+        "Title not written: the redaction check did not pass": "Titeln skrevs inte: kontrollen av maskeringen godkändes inte",
+        "1 of the selected publications is a concept and will be skipped.": "1 av de valda publikationerna är ett utkast och hoppas över.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} av de valda publikationerna är utkast och hoppas över.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 av de valda publikationerna är schemalagd och blir ett utkast igen: dess publiceringsdatum rensas.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} av de valda publikationerna är schemalagda och blir utkast igen: deras publiceringsdatum rensas."
     },
     "plurals": {}
 }

@@ -910,7 +910,11 @@
         "The organisation could not be saved: %s": "L’organisaziun n’ha betg pudì vegnir memorisada: %s",
         "The organisation registers could not be read: %s": "Ils registers da las organisaziuns n’han betg pudì vegnir legids: %s",
         "Failed to save settings": "Betg reussì da memorisar las configuraziuns",
-        "Title not written: the redaction check did not pass": "Titel betg scrit: la controlla da l’annullaziun n’è betg reussida"
+        "Title not written: the redaction check did not pass": "Titel betg scrit: la controlla da l’annullaziun n’è betg reussida",
+        "1 of the selected publications is a concept and will be skipped.": "1 da las publicaziuns tschernidas è in concept e vegn sursaglida.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} da las publicaziuns tschernidas èn concepts e vegnan sursaglidas.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 da las publicaziuns tschernidas è planisada e daventa puspè in concept: sia data da publicaziun vegn stizzada.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} da las publicaziuns tschernidas èn planisadas e daventan puspè concepts: lur datas da publicaziun vegnan stizzadas."
     },
     "plurals": {}
 }

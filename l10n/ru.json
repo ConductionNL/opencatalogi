@@ -910,7 +910,11 @@
         "The organisation could not be saved: %s": "Не удалось сохранить организацию: %s",
         "The organisation registers could not be read: %s": "Не удалось прочитать реестры организаций: %s",
         "Failed to save settings": "Не удалось сохранить настройки",
-        "Title not written: the redaction check did not pass": "Название не записано: проверка затемнения не пройдена"
+        "Title not written: the redaction check did not pass": "Название не записано: проверка затемнения не пройдена",
+        "1 of the selected publications is a concept and will be skipped.": "1 из выбранных публикаций является черновиком и будет пропущена.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} из выбранных публикаций являются черновиками и будут пропущены.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 из выбранных публикаций запланирована и снова становится черновиком: её дата публикации очищается.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} из выбранных публикаций запланированы и снова становятся черновиками: их даты публикации очищаются."
     },
     "plurals": {}
 }

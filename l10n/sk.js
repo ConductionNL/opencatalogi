@@ -911,7 +911,11 @@ OC.L10N.register(
         "The organisation could not be saved: %s": "Organizáciu sa nepodarilo uložiť: %s",
         "The organisation registers could not be read: %s": "Registre organizácií sa nepodarilo načítať: %s",
         "Failed to save settings": "Nastavenia sa nepodarilo uložiť",
-        "Title not written: the redaction check did not pass": "Názov nebol zapísaný: kontrola začiernenia neprešla"
+        "Title not written: the redaction check did not pass": "Názov nebol zapísaný: kontrola začiernenia neprešla",
+        "1 of the selected publications is a concept and will be skipped.": "1 z vybraných publikácií je koncept a bude preskočená.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} z vybraných publikácií sú koncepty a budú preskočené.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 z vybraných publikácií je naplánovaná a vracia sa do konceptu: jej dátum publikovania sa vymaže.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} z vybraných publikácií sú naplánované a vracajú sa do konceptu: ich dátumy publikovania sa vymažú."
     },
     "nplurals=2; plural=(n != 1);"
 )
