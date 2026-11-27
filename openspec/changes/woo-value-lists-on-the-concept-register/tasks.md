@@ -69,7 +69,8 @@ Read `openspec/woo-build-rules.md` first. Start once `dossiq/woo-refusal-grounds
 
 ## 5. Docs
 
-- [ ] 5.1 Document the lists, their sources and the refresh for administrators and integrators in `docs/`, and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+- [x] 5.1 Document the lists, their sources and the refresh for administrators and integrators in `docs/`, and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+  - 27 Nov 2026 (b-opencatalogi): `docs/Administrator/waardelijsten.md` names where each list lives (the scheme in the vocabulary register and its TOOI source and version), the daily `TooiSchemeRefresh` (sources in `tooi_scheme_sources`, results in `tooi_scheme_refresh`, the one-third guard, the `value-list-refresh` incident, the audit-trail condition for the categories), how a deprecated value behaves, and what happens when the register cannot be read. For integrators it already described `GET /api/value-lists`; that section now carries `lastRefreshAt` and `unavailable` in context. No new UI strings: `check:l10n` reports 0 missing (its one finding, the unused key "What the channel answered.", is inherited). No U+2014 in the doc.
 
 ## 6. Verification
 
