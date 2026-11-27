@@ -104,7 +104,7 @@ class PublicationWooCategoryTest extends TestCase {
 		$this->assertSame($expected, $property['enum']);
 		$this->assertSame(array_keys($property['x-enum-labels']), $expected);
 		foreach ($list as $code => $member) {
-			$this->assertSame($member['labelEn'], $property['x-enum-labels'][$code]);
+			$this->assertSame(expected: $member['labelEn'], actual: $property['x-enum-labels'][$code]);
 		}
 	}
 

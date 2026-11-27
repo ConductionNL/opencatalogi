@@ -223,7 +223,12 @@ class WooCategoryRegistryTest extends TestCase {
 		};
 		$tooi = new TooiVocabularyService(register: $register);
 		$settings = $this->createMock(originalClassName: SettingsService::class);
-		$registry = new WooCategoryRegistry($tooi, $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission($tooi));
+		$registry = new WooCategoryRegistry(
+			tooiVocabulary: $tooi,
+			settingsService: $settings,
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			admission: new LocalCategoryAdmission(tooiVocabulary: $tooi)
+		);
 
 		$this->assertSame(expected: ['infocat010', 'infocat011'], actual: array_keys($registry->all()));
 		$this->assertSame(expected: 'Advice', actual: $registry->find(code: 'infocat010')['labelEn']);

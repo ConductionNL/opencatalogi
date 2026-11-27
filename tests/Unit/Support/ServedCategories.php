@@ -42,11 +42,31 @@ class ServedCategories implements InformationCategoryRegistryInterface {
 		}
 
 		foreach (RecordedTooiRegister::service()->informatiecategorieList() as $code => $member) {
-			$this->records[$code] = ['code' => $code, 'label' => $member['label'], 'labelEn' => $member['labelEn'], 'tooiUri' => $member['uri'], 'tooiLabel' => $member['label'], 'mapsTo' => $code, 'origin' => WooCategoryRegistry::ORIGIN_VALUE_LIST, 'sitemapFile' => WooCategoryRegistry::sitemapFileFor(code: $code), 'schemas' => []];
+			$this->records[$code] = [
+				'code' => $code,
+				'label' => $member['label'],
+				'labelEn' => $member['labelEn'],
+				'tooiUri' => $member['uri'],
+				'tooiLabel' => $member['label'],
+				'mapsTo' => $code,
+				'origin' => WooCategoryRegistry::ORIGIN_VALUE_LIST,
+				'sitemapFile' => WooCategoryRegistry::sitemapFileFor(code: $code),
+				'schemas' => [],
+			];
 		}
 
 		foreach ($added as $code) {
-			$this->records[$code] = ['code' => $code, 'label' => $code, 'labelEn' => $code, 'tooiUri' => '', 'tooiLabel' => '', 'mapsTo' => 'infocat018', 'origin' => WooCategoryRegistry::ORIGIN_LOCAL, 'sitemapFile' => WooCategoryRegistry::sitemapFileFor(code: $code), 'schemas' => []];
+			$this->records[$code] = [
+				'code' => $code,
+				'label' => $code,
+				'labelEn' => $code,
+				'tooiUri' => '',
+				'tooiLabel' => '',
+				'mapsTo' => 'infocat018',
+				'origin' => WooCategoryRegistry::ORIGIN_LOCAL,
+				'sitemapFile' => WooCategoryRegistry::sitemapFileFor(code: $code),
+				'schemas' => [],
+			];
 		}
 	}//end __construct()
 

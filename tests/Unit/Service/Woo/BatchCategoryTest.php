@@ -45,7 +45,7 @@ class BatchCategoryTest extends TestCase {
 	 * @return BatchPublicationWriter
 	 */
 	private function writer(?InformationCategoryRegistryInterface $registry): BatchPublicationWriter {
-		$container = $this->createMock(ContainerInterface::class);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			static function (string $id) use ($registry): object {
 				if ($id === InformationCategoryRegistryInterface::class && $registry !== null) {
@@ -57,10 +57,10 @@ class BatchCategoryTest extends TestCase {
 		);
 
 		return new BatchPublicationWriter(
-			$this->createMock(IRootFolder::class),
+			$this->createMock(originalClassName: IRootFolder::class),
 			$container,
-			$this->createMock(PublicationLinker::class),
-			$this->createMock(IL10N::class)
+			$this->createMock(originalClassName: PublicationLinker::class),
+			$this->createMock(originalClassName: IL10N::class)
 		);
 	}//end writer()
 
@@ -70,7 +70,9 @@ class BatchCategoryTest extends TestCase {
 	 * @return void
 	 */
 	public function testAServedCategoryIsKept(): void {
-		$this->assertSame('infocat010', $this->writer(registry: new ServedCategories())->category(batch: ['wooCategory' => 'infocat010']));
+		$writer = $this->writer(registry: new ServedCategories());
+
+		$this->assertSame(expected: 'infocat010', actual: $writer->category(batch: ['wooCategory' => 'infocat010']));
 	}
 
 	/**
@@ -81,7 +83,7 @@ class BatchCategoryTest extends TestCase {
 	public function testAnOperatorAddedCategoryIsKept(): void {
 		$writer = $this->writer(registry: new ServedCategories(added: ['aanbestedingen']));
 
-		$this->assertSame('aanbestedingen', $writer->category(batch: ['wooCategory' => 'aanbestedingen']));
+		$this->assertSame(expected: 'aanbestedingen', actual: $writer->category(batch: ['wooCategory' => 'aanbestedingen']));
 	}
 
 	/**
@@ -92,8 +94,8 @@ class BatchCategoryTest extends TestCase {
 	public function testAnUnknownCategoryIsFiledAsAWooRequest(): void {
 		$writer = $this->writer(registry: new ServedCategories());
 
-		$this->assertSame('infocat014', $writer->category(batch: ['wooCategory' => 'infocat099']));
-		$this->assertSame('infocat014', $writer->category(batch: []));
+		$this->assertSame(expected: 'infocat014', actual: $writer->category(batch: ['wooCategory' => 'infocat099']));
+		$this->assertSame(expected: 'infocat014', actual: $writer->category(batch: []));
 	}
 
 	/**
@@ -102,7 +104,9 @@ class BatchCategoryTest extends TestCase {
 	 * @return void
 	 */
 	public function testWithoutTheRegistryTheBatchIsFiledAsAWooRequest(): void {
-		$this->assertSame('infocat014', $this->writer(registry: null)->category(batch: ['wooCategory' => 'infocat010']));
-		$this->assertSame('infocat014', $this->writer(registry: new ServedCategories(unreadable: true))->category(batch: ['wooCategory' => 'infocat010']));
+		$batch = ['wooCategory' => 'infocat010'];
+
+		$this->assertSame(expected: 'infocat014', actual: $this->writer(registry: null)->category(batch: $batch));
+		$this->assertSame(expected: 'infocat014', actual: $this->writer(registry: new ServedCategories(unreadable: true))->category(batch: $batch));
 	}
 }//end class

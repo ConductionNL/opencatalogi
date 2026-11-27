@@ -117,7 +117,7 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 */
 	public static function categoryOf(array $rule): ?string {
 		$code = ($rule['wooCategory'] ?? null);
-		if (is_string($code) === false || TooiVocabularyService::categoryHeading(code: $code) === null) {
+		if (is_string($code) === false || isset(TooiVocabularyService::INFORMATIECATEGORIEEN[$code]) === false) {
 			return null;
 		}
 
@@ -135,7 +135,7 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
 	 */
 	public static function categoryLabel(string $code): string {
-		return TooiVocabularyService::categoryHeading(code: $code) . ' (' . $code . ')';
+		return TooiVocabularyService::INFORMATIECATEGORIEEN[$code]['label'] . ' (' . $code . ')';
 	}//end categoryLabel()
 
 	/**

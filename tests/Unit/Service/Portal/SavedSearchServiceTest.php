@@ -157,9 +157,15 @@ class SavedSearchServiceTest extends TestCase {
 	 */
 	public function testAnOperatorAddedCategoryIsAKnownFilter(): void {
 		$service = new SavedSearchService(store: $this->store, categories: new \Unit\Support\ServedCategories(added: ['aanbestedingen']));
-		$saved = $service->save(owner: 'subject-1', input: ['title' => 'x', 'query' => ['filters' => ['informatiecategorie' => ['aanbestedingen', 'infocat014']]]]);
+		$saved = $service->save(
+			owner: 'subject-1',
+			input: ['title' => 'x', 'query' => ['filters' => ['informatiecategorie' => ['aanbestedingen', 'infocat014']]]]
+		);
 
-		$this->assertSame(['aanbestedingen', 'infocat014'], $this->store->objects['savedSearch'][$saved['id']]['query']['filters']['informatiecategorie']);
+		$this->assertSame(
+			expected: ['aanbestedingen', 'infocat014'],
+			actual: $this->store->objects['savedSearch'][$saved['id']]['query']['filters']['informatiecategorie']
+		);
 	}
 
 	/**
@@ -172,8 +178,8 @@ class SavedSearchServiceTest extends TestCase {
 	public function testWithoutTheRegisterACategoryFilterIsRefused(): void {
 		$service = new SavedSearchService(store: $this->store, categories: new \Unit\Support\ServedCategories(unreadable: true));
 
-		$this->expectException(PortalInputException::class);
-		$this->expectExceptionMessage('Unknown information category: infocat014');
+		$this->expectException(exception: PortalInputException::class);
+		$this->expectExceptionMessage(message: 'Unknown information category: infocat014');
 		$service->save(owner: 'subject-1', input: ['title' => 'x', 'query' => ['filters' => ['informatiecategorie' => ['infocat014']]]]);
 	}
 }
