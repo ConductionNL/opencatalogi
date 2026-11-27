@@ -71,7 +71,7 @@ class CategoryApplicabilityTableTest extends TestCase {
 	public function testEveryEntryCitesItsLegalBasis(): void {
 		$table = self::table();
 		$definitions = self::definitions();
-		$tooi = new TooiVocabularyService();
+		$tooi = \Unit\Support\RecordedTooiRegister::service();
 
 		$this->assertNotEmpty(actual: $table['entries']);
 		foreach ($table['entries'] as $entry) {

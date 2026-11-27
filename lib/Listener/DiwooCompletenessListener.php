@@ -319,13 +319,19 @@ class DiwooCompletenessListener implements IEventListener {
 	 * @param mixed $type The value given: a URI, code or label.
 	 *
 	 * @return string|null The member's URI.
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function documentsoortUri(mixed $type): ?string {
 		if (is_string($type) === false) {
 			return null;
 		}
 
-		return ($this->vocabulary->resolveDocumentsoort($type)['uri'] ?? null);
+		try {
+			return ($this->vocabulary->resolveDocumentsoort($type)['uri'] ?? null);
+		} catch (\Throwable) {
+			// An unreadable vocabulary register names no member: the save is refused, never waved through.
+			return null;
+		}
 	}//end documentsoortUri()
 
 	/**

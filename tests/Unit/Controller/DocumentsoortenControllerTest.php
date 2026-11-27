@@ -48,7 +48,7 @@ class DocumentsoortenControllerTest extends TestCase {
 			$this->createMock(IRequest::class),
 			$l10n,
 			$this->userSession,
-			new TooiVocabularyService()
+			\Unit\Support\RecordedTooiRegister::service()
 		);
 
 	}//end setUp()
@@ -64,12 +64,12 @@ class DocumentsoortenControllerTest extends TestCase {
 	}//end authenticate()
 
 	/**
-	 * REQ-DWP-002: the documentsoorten endpoint lists the bundled members as
-	 * `{code, label, uri}`.
+	 * REQ-DWP-002: the documentsoorten endpoint lists the members the
+	 * vocabulary register holds as `{code, label, uri}`.
 	 *
 	 * @return void
 	 */
-	public function testDocumentsoortenListsTheBundledMembers(): void {
+	public function testDocumentsoortenListsTheRegisteredMembers(): void {
 		$this->authenticate();
 
 		$response = $this->controller->index();
@@ -78,16 +78,41 @@ class DocumentsoortenControllerTest extends TestCase {
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame(91, $data['total']);
 		$this->assertCount(91, $data['results']);
-		$this->assertSame(
-			[
+		$this->assertContains(
+			needle: [
 				'code' => 'c_852da199',
 				'label' => 'Afkondigingsblad',
 				'uri' => 'https://identifier.overheid.nl/tooi/def/thes/kern/c_852da199',
 			],
-			$data['results'][0]
+			haystack: $data['results']
 		);
 
-	}//end testDocumentsoortenListsTheBundledMembers()
+	}//end testDocumentsoortenListsTheRegisteredMembers()
+
+	/**
+	 * REQ-WVC-001: an unreadable vocabulary register is a 503, not an empty or stale list.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testAnUnreadableRegisterIsA503(): void {
+		$this->authenticate();
+		$l10n = $this->createMock(originalClassName: IL10N::class);
+		$controller = new DocumentsoortenController(
+			'opencatalogi',
+			$this->createMock(originalClassName: IRequest::class),
+			$l10n,
+			$this->userSession,
+			\Unit\Support\RecordedTooiRegister::unreadableService()
+		);
+
+		$response = $controller->index();
+
+		$this->assertSame(expected: 503, actual: $response->getStatus());
+		$this->assertSame(expected: ['error' => 'value-list-unavailable'], actual: $response->getData());
+
+	}//end testAnUnreadableRegisterIsA503()
 
 	/**
 	 * The documentsoorten endpoint refuses an anonymous caller, like categories().

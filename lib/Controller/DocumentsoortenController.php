@@ -48,7 +48,7 @@ class DocumentsoortenController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The current user session.
-	 * @param DocumentTypeVocabularyInterface $vocabulary The bundled DiWoo value lists.
+	 * @param DocumentTypeVocabularyInterface $vocabulary The DiWoo value lists from the vocabulary register.
 	 */
 	public function __construct(
 		$appName,
@@ -73,10 +73,13 @@ class DocumentsoortenController extends Controller {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 *
-	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * A list the vocabulary register cannot answer is a 503 `value-list-unavailable`.
 	 *
-	 * @no-admin-idor-exempt Returns the national documentsoorten value list bundled
-	 *   with the app, the same rows for every caller. The endpoint takes no
+	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 *
+	 * @no-admin-idor-exempt Returns the national documentsoorten value list from the
+	 *   vocabulary register, the same rows for every caller. The endpoint takes no
 	 *   parameter, so there is no object id to scope.
 	 */
 	public function index(): JSONResponse {
@@ -84,7 +87,13 @@ class DocumentsoortenController extends Controller {
 			return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		$rows = $this->vocabulary->documentsoortList();
+		try {
+			$rows = $this->vocabulary->documentsoortList();
+		} catch (\RuntimeException) {
+			// The list lives in OpenRegister's vocabulary register; no copy stands in for it.
+			return new JSONResponse(data: ['error' => 'value-list-unavailable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
+		}
+
 		return new JSONResponse(['results' => $rows, 'total' => count($rows)]);
 	}//end index()
 }//end class

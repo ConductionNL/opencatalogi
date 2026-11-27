@@ -367,6 +367,7 @@ unset($integriqStubEvent);
 // IRequest double base for the controller tests (needs the OCP autoloader above).
 require_once __DIR__ . '/Unit/Support/ServerAwareRequest.php';
 require_once __DIR__ . '/Unit/Support/AllowingCapabilityRights.php';
+require_once __DIR__ . '/Unit/Support/RecordedTooiRegister.php';
 
 // Test helpers for OpenRegister's option objects (tests carry no PSR-4 test namespace).
 require_once __DIR__ . '/Support/ReleaseObjectSignatures.php';

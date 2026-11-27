@@ -48,7 +48,10 @@ class SitemapDocumentFieldsTest extends TestCase {
 			static fn (string $app, string $key, string $default = ''): string => ($key === 'diwoo_fields_introduced_at' ? $introducedAt : $default)
 		);
 
-		return new SitemapDocumentFields(new TooiVocabularyService(), new InstanceSettings($this->createMock(IURLGenerator::class), $config));
+		return new SitemapDocumentFields(
+			tooiVocabulary: \Unit\Support\RecordedTooiRegister::service(),
+			instance: new InstanceSettings(urlGenerator: $this->createMock(originalClassName: IURLGenerator::class), appConfig: $config)
+		);
 	}//end fields()
 
 	/**
@@ -97,6 +100,25 @@ class SitemapDocumentFieldsTest extends TestCase {
 		$this->assertFalse($fields->documentTypeElement(['documentsoort' => 'memo'], ['id' => 'f-1']));
 		$this->assertNull($fields->documentTypeElement([], ['id' => 'f-1']));
 	}//end testTheDocumentTypeOfAFile()
+
+	/**
+	 * REQ-WVC-001: an unreadable vocabulary register resolves no type and no language: omitted, never guessed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testAnUnreadableRegisterResolvesNoTypeAndNoLanguage(): void {
+		$config = $this->createMock(originalClassName: IAppConfig::class);
+		$config->method('getValueString')->willReturnArgument(2);
+		$fields = new SitemapDocumentFields(
+			tooiVocabulary: \Unit\Support\RecordedTooiRegister::unreadableService(),
+			instance: new InstanceSettings(urlGenerator: $this->createMock(originalClassName: IURLGenerator::class), appConfig: $config)
+		);
+
+		$this->assertFalse(condition: $fields->documentTypeElement(['documentsoort' => 'besluit'], ['id' => 'f-1']));
+		$this->assertNull(actual: $fields->storedElements(['language' => 'nl', '@self' => ['created' => '2024-01-15']])['diwoo:language']);
+	}//end testAnUnreadableRegisterResolvesNoTypeAndNoLanguage()
 
 	/**
 	 * The responsible organisation needs a name and a TOOI URI; the stored gaps name the creation date and an unknown type.

@@ -70,6 +70,7 @@ class LocalCategoryAdmission {
 	 * Returns: The code, the record when admitted, and the reason when refused.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-locally-added-category-publishes-under-a-waardelijst-member-req-wic-002
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function admit(array $stored, array $bundled): array {
 		$code = strtolower(trim((string)($stored['code'] ?? '')));
@@ -86,9 +87,9 @@ class LocalCategoryAdmission {
 			return $this->refused(code: $code, reason: 'the code is already a waardelijst member');
 		}
 
-		$member = $this->tooiVocabulary->resolveInformatiecategorie($this->text(value: ($stored['mapsTo'] ?? null)));
-		if ($member === null) {
-			return $this->refused(code: $code, reason: 'mapsTo names no member of the informatiecategorieen waardelijst');
+		$member = $this->mapsToMember(code: $code, stored: $stored);
+		if (array_key_exists('reason', $member) === true) {
+			return $member;
 		}
 
 		$record = ['code' => $code] + $this->labels(stored: $stored, member: $member) + $this->memberFields(member: $member, bundled: $bundled);
@@ -96,6 +97,26 @@ class LocalCategoryAdmission {
 		return ['code' => $code, 'reason' => null, 'record' => $record + $this->localFields(stored: $stored, sitemapFile: $sitemapFile)];
 
 	}//end admit()
+
+	/**
+	 * The member a stored category maps onto, or the refusal when it maps onto none.
+	 *
+	 * @param string               $code   The normalised code.
+	 * @param array<string, mixed> $stored The stored category.
+	 *
+	 * @return array<string, mixed> The member (`uri`, `label`), or a refusal (`code`, `reason`, `record`).
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	private function mapsToMember(string $code, array $stored): array {
+		try {
+			$member = $this->tooiVocabulary->resolveInformatiecategorie($this->text(value: ($stored['mapsTo'] ?? null)));
+		} catch (\RuntimeException) {
+			return $this->refused(code: $code, reason: 'the informatiecategorieen waardelijst cannot be read from the vocabulary register');
+		}
+
+		return $member ?? $this->refused(code: $code, reason: 'mapsTo names no member of the informatiecategorieen waardelijst');
+	}//end mapsToMember()
 
 	/**
 	 * The sitemap file a category code publishes under, when the code survives

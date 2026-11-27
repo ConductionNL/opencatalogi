@@ -57,10 +57,10 @@ class WooControllerTest extends TestCase {
 		$l10n->method('t')->willReturnArgument(0);
 
 		$categories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
-			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			\Unit\Support\RecordedTooiRegister::service(),
 			$this->createMock(\OCA\OpenCatalogi\Service\SettingsService::class),
 			$this->createMock(\Psr\Log\LoggerInterface::class),
-			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
+			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service()),
 		);
 
 		$this->controller = new WooController(

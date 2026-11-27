@@ -70,10 +70,11 @@ class SitemapCategoryMappingTest extends TestCase {
 	 *
 	 * @param array<string, mixed>             $publication The publication.
 	 * @param array<int, array<string, mixed>> $rows        The mapping rows the query answers.
+	 * @param \OCA\OpenCatalogi\Service\TooiVocabularyService|null $tooi The mapper's value lists; the recorded ones by default.
 	 *
 	 * @return array{document: array<string, mixed>, violations: array<int, array<string, string>>}
 	 */
-	private function map(array $publication, array $rows): array {
+	private function map(array $publication, array $rows, ?\OCA\OpenCatalogi\Service\TooiVocabularyService $tooi = null): array {
 		$objects = new class($rows, $this->queries) {
 			/**
 			 * @param array<int, array<string, mixed>> $rows    The rows.
@@ -117,12 +118,22 @@ class SitemapCategoryMappingTest extends TestCase {
 		$apps->method('getInstalledApps')->willReturn(['openregister']);
 		$settings = $this->createMock(SettingsService::class);
 		$lookup = new OpenRegisterLookup($container, $apps);
-		$categories = new WooCategoryRegistry(new TooiVocabularyService(), $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission(new TooiVocabularyService()));
+		$categories = new WooCategoryRegistry(
+			tooiVocabulary: \Unit\Support\RecordedTooiRegister::service(),
+			settingsService: $settings,
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			admission: new LocalCategoryAdmission(tooiVocabulary: \Unit\Support\RecordedTooiRegister::service())
+		);
 		$service = new SitemapService(
 			$lookup,
 			$settings,
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
-			new SitemapDocumentMapper(new TooiVocabularyService(), $categories, $lookup, FileFactsByExtension::make($this)),
+			new SitemapDocumentMapper(
+				($tooi ?? \Unit\Support\RecordedTooiRegister::service()),
+				$categories,
+				$lookup,
+				FileFactsByExtension::make($this)
+			),
 			$this->createMock(PublicationQueryService::class),
 			$categories
 		);
@@ -213,6 +224,30 @@ class SitemapCategoryMappingTest extends TestCase {
 	}
 
 	/**
+	 * REQ-WVC-001: when the mapper cannot read the vocabulary register, the mapping's category and the handling type are omitted and reported.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testAnUnreadableRegisterOmitsTheMappedCategoryAndTheHandling(): void {
+		$result = $this->map(
+			publication: self::publication(fields: ['soortHandeling' => 'vaststelling']),
+			rows: [self::row()],
+			tooi: \Unit\Support\RecordedTooiRegister::unreadableService()
+		);
+
+		$this->assertNull(actual: self::category(document: $result['document']));
+		$this->assertTrue(condition: self::categoryReported(violations: $result['violations']));
+		$this->assertStringNotContainsString(needle: 'diwoo:soortHandeling', haystack: (string)json_encode($result['document']));
+
+		// With the register read, the same publication carries both.
+		$readable = $this->map(publication: self::publication(fields: ['soortHandeling' => 'vaststelling']), rows: [self::row()]);
+		$this->assertNotNull(actual: self::category(document: $readable['document']));
+		$this->assertStringContainsString(needle: 'diwoo:soortHandeling', haystack: (string)json_encode($readable['document']));
+	}
+
+	/**
 	 * A publication's own category wins and the mapping is not consulted (3.3).
 	 *
 	 * @return void
@@ -248,7 +283,7 @@ class SitemapCategoryMappingTest extends TestCase {
 		$fragment = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/register.d/woo-category-mapping-intake.json'), true);
 		$rows = $fragment['components']['objects'];
 		$members = [];
-		foreach ((new TooiVocabularyService())->informatiecategorieList() as $member) {
+		foreach ((\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList() as $member) {
 			$members[$member['uri']] = $member['label'];
 		}
 

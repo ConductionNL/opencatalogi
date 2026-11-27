@@ -105,16 +105,24 @@ class SitemapDocumentGoldenTest extends TestCase {
 	public function testTheMappedDocumentMatchesTheRecordedOutput(array $publication, array $file): void {
 		$settings = $this->createMock(SettingsService::class);
 		$categories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
-			new TooiVocabularyService(),
+			\Unit\Support\RecordedTooiRegister::service(),
 			$settings,
 			$this->createMock(LoggerInterface::class),
-			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new TooiVocabularyService()),
+			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service()),
 		);
 		$service = new SitemapService(
 			new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)),
 			$settings,
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
-			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new TooiVocabularyService(), $categories, new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(
+				tooiVocabulary: \Unit\Support\RecordedTooiRegister::service(),
+				categories: $categories,
+				openRegister: new OpenRegisterLookup(
+					container: $this->createMock(originalClassName: ContainerInterface::class),
+					appManager: $this->createMock(originalClassName: IAppManager::class)
+				),
+				fileFacts: \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make(test: $this)
+			),
 			$this->createMock(PublicationQueryService::class),
 			$categories
 		);

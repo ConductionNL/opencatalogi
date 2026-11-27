@@ -723,6 +723,8 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @param string               $slug The publication schema's slug.
 	 *
 	 * @return array{uri: string, label: string}|null The member, or null.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function activeMappingCategory(array $row, string $slug): ?array {
 		if (($row['active'] ?? false) !== true
@@ -732,8 +734,32 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 			return null;
 		}
 
-		return $this->tooiVocabulary->resolveInformatiecategorie($this->stringOrNull(value: ($row['informatiecategorie'] ?? null)));
+		return $this->vocabularyMember(axis: 'category', value: $this->stringOrNull(value: ($row['informatiecategorie'] ?? null)));
 	}//end activeMappingCategory()
+
+	/**
+	 * The category or handling-type member a value names, or null when it names none or the register cannot be read.
+	 *
+	 * An unreadable vocabulary register resolves nothing: the axis is omitted, never guessed.
+	 *
+	 * @param string      $axis  `category` or `handling`.
+	 * @param string|null $value The stored value.
+	 *
+	 * @return array{uri: string, label: string}|null The member.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	private function vocabularyMember(string $axis, ?string $value): ?array {
+		try {
+			if ($axis === 'handling') {
+				return $this->tooiVocabulary->resolveSoortHandeling($value);
+			}
+
+			return $this->tooiVocabulary->resolveInformatiecategorie($value);
+		} catch (\Throwable) {
+			return null;
+		}
+	}//end vocabularyMember()
 
 	/**
 	 * An OpenRegister result row as an array.
@@ -764,9 +790,10 @@ class SitemapDocumentMapper implements DiwooCompletenessInterface {
 	 * @return array|null The documenthandelingen element, or null.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	private function handlingElement(array $publication, string $handlingTime): ?array {
-		$handling = $this->tooiVocabulary->resolveSoortHandeling($this->stringOrNull(value: $publication['soortHandeling'] ?? null));
+		$handling = $this->vocabularyMember(axis: 'handling', value: $this->stringOrNull(value: $publication['soortHandeling'] ?? null));
 		if ($handling === null) {
 			return null;
 		}

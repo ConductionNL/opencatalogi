@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Contract;
 
 /**
- * The bundled DiWoo documentsoorten and language lists (implemented by TooiVocabularyService).
+ * The DiWoo documentsoorten and language lists from the vocabulary register (implemented by TooiVocabularyService).
  * Callers outside Service/ depend on this interface instead of on the class.
  */
 interface DocumentTypeVocabularyInterface {
@@ -36,14 +36,18 @@ interface DocumentTypeVocabularyInterface {
 	 *
 	 * @return array{code: string, label: string, uri: string}|null The member, or null for none.
 	 *
+	 * @throws \RuntimeException When the vocabulary register cannot be read.
+	 *
 	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
 	 */
 	public function resolveDocumentsoort(?string $value): ?array;
 
 	/**
-	 * Every member of the documentsoorten list, in XSD order.
+	 * Every member of the documentsoorten list, by label.
 	 *
 	 * @return array<int, array{code: string, label: string, uri: string}> The members.
+	 *
+	 * @throws \RuntimeException When the vocabulary register cannot be read.
 	 *
 	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
 	 */
@@ -56,14 +60,18 @@ interface DocumentTypeVocabularyInterface {
 	 *
 	 * @return array{code: string, label: string, uri: string}|null The member, or null for none.
 	 *
+	 * @throws \RuntimeException When the vocabulary register cannot be read.
+	 *
 	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
 	 */
 	public function resolveLanguage(?string $value): ?array;
 
 	/**
-	 * Every member of the language list, in XSD order.
+	 * Every member of the language list, by label.
 	 *
 	 * @return array<int, array{code: string, label: string, uri: string}> The members.
+	 *
+	 * @throws \RuntimeException When the vocabulary register cannot be read.
 	 *
 	 * @spec openspec/changes/archive/2026-11-25-diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
 	 */

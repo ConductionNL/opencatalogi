@@ -97,7 +97,7 @@ class PublicationWooCategoryTest extends TestCase {
 		$this->assertArrayNotHasKey('format', $property);
 
 		// The waardelijst resolver is the one authority for the member list.
-		$expected = array_keys((new TooiVocabularyService())->informatiecategorieList());
+		$expected = array_keys((\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList());
 		$this->assertCount(18, $expected);
 		$this->assertContains('infocat018', $expected, 'The art 3.1 category is missing.');
 
@@ -112,7 +112,7 @@ class PublicationWooCategoryTest extends TestCase {
 	public function testEveryCodeRoundTripsThroughItsSitemapFileName(): void {
 		// The national harvester matches the file name, so the convention is
 		// load-bearing: a code whose file name does not parse back is not published.
-		foreach (array_keys((new TooiVocabularyService())->informatiecategorieList()) as $code) {
+		foreach (array_keys((\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList()) as $code) {
 			$file = WooCategoryRegistry::sitemapFileFor(code: $code);
 			$this->assertSame('sitemapindex-diwoo-' . $code . '.xml', $file);
 			$this->assertSame($code, WooCategoryRegistry::codeOf(sitemapFile: $file));
@@ -125,9 +125,9 @@ class PublicationWooCategoryTest extends TestCase {
 		$this->assertSame('string', $property['type']);
 
 		// The enum is the DiWoo documenthandelingen value list, nothing else.
-		$expected = array_keys((new TooiVocabularyService())->soortHandelingList());
-		$this->assertSame($expected, $property['enum']);
-		$this->assertSame($expected, array_keys($property['x-enum-labels']));
+		$expected = array_keys((\Unit\Support\RecordedTooiRegister::service())->soortHandelingList());
+		$this->assertEqualsCanonicalizing(expected: $expected, actual: $property['enum']);
+		$this->assertEqualsCanonicalizing(expected: $expected, actual: array_keys($property['x-enum-labels']));
 	}
 
 	public function testAStoredDocumenthandelingIsAccepted(): void {

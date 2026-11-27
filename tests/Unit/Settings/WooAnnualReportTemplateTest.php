@@ -91,10 +91,10 @@ class WooAnnualReportTemplateTest extends TestCase {
 	public function testEveryRegistryCategoryHasARowIncludingZero(): void {
 		$settings = $this->createMock(SettingsService::class);
 		$registry = new WooCategoryRegistry(
-			new TooiVocabularyService(),
+			\Unit\Support\RecordedTooiRegister::service(),
 			$settings,
 			$this->createMock(LoggerInterface::class),
-			new LocalCategoryAdmission(new TooiVocabularyService())
+			new LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service())
 		);
 
 		$section = $this->section('per-category');

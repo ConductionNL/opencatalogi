@@ -30,6 +30,7 @@ use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Service\Woo\RefusalGrounds;
 use OCA\OpenCatalogi\Service\Woo\RefusalGroundsUnavailableException;
 use OCP\IAppConfig;
+use RuntimeException;
 
 /**
  * Lists every controlled-list entry as `{scheme, schemeUri, code, label, uri, status, lastRefreshAt}`.
@@ -60,11 +61,6 @@ class ValueListsService {
 	 * The TOOI set of the Woo information categories.
 	 */
 	private const INFORMATIECATEGORIEEN_SET = 'https://identifier.overheid.nl/tooi/set/scw_woo_informatiecategorieen';
-
-	/**
-	 * The bundled TOOI/DiWoo lists, for the scheme URIs of documentsoorten and talen.
-	 */
-	private const TOOI_BUNDLE = __DIR__ . '/../Settings/tooi_waardelijsten.json';
 
 	/**
 	 * The EU data-theme authority table.
@@ -100,6 +96,7 @@ class ValueListsService {
 	 * @return array{results: array<int, array<string, mixed>>, total: int, schemes: array<int, string>, unavailable: array<int, string>}
 	 *
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-every-list-entry-is-on-one-page-for-integrators-req-wvc-004
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function entries(?string $scheme = null): array {
 		$schemes = self::SCHEMES;
@@ -113,7 +110,8 @@ class ValueListsService {
 		foreach ($schemes as $name) {
 			try {
 				$rows = $this->rowsOf(scheme: $name);
-			} catch (RefusalGroundsUnavailableException $e) {
+			} catch (RefusalGroundsUnavailableException | RuntimeException $e) {
+				// The refusal grounds, or a list the vocabulary register cannot answer.
 				$unavailable[] = $name;
 				continue;
 			}
@@ -140,6 +138,7 @@ class ValueListsService {
 	 * @return array<int, array<string, mixed>> The entries.
 	 *
 	 * @throws RefusalGroundsUnavailableException When the refusal grounds cannot be read.
+	 * @throws RuntimeException When the vocabulary register cannot be read.
 	 */
 	private function rowsOf(string $scheme): array {
 		return match ($scheme) {
@@ -148,15 +147,19 @@ class ValueListsService {
 				schemeUri: self::INFORMATIECATEGORIEEN_SET,
 				list: $this->tooi->informatiecategorieList()
 			),
-			'soortHandeling' => $this->uriRows(scheme: $scheme, schemeUri: '', list: $this->tooi->soortHandelingList()),
+			'soortHandeling' => $this->uriRows(
+				scheme: $scheme,
+				schemeUri: TooiVocabularyService::HANDLING_SCHEME,
+				list: $this->tooi->soortHandelingList()
+			),
 			'documentsoorten' => $this->memberRows(
 				scheme: $scheme,
-				schemeUri: $this->bundledSetUri(key: 'documentsoorten'),
+				schemeUri: TooiVocabularyService::DOCUMENT_TYPE_SCHEME,
 				list: $this->tooi->documentsoortList()
 			),
 			'talen' => $this->memberRows(
 				scheme: $scheme,
-				schemeUri: $this->bundledSetUri(key: 'talen'),
+				schemeUri: TooiVocabularyService::LANGUAGE_SCHEME,
 				list: $this->tooi->languageList()
 			),
 			'hvdCategories' => $this->keyedRows(
@@ -284,22 +287,6 @@ class ValueListsService {
 		];
 	}//end row()
 
-	/**
-	 * The set URI the bundled TOOI file records for a list, or empty.
-	 *
-	 * @param string $key The list's key in the bundle.
-	 *
-	 * @return string The set URI.
-	 */
-	private function bundledSetUri(string $key): string {
-		if (is_readable(self::TOOI_BUNDLE) === false) {
-			return '';
-		}
-
-		$bundle = json_decode((string)file_get_contents(self::TOOI_BUNDLE), true);
-
-		return (string)($bundle[$key]['list'] ?? '');
-	}//end bundledSetUri()
 
 	/**
 	 * The moment of the last refresh per scheme, as a refresh records it.

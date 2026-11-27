@@ -179,7 +179,7 @@ class WooCategoryRegistryTest extends TestCase {
 	 * @return WooCategoryRegistry The registry.
 	 */
 	private function registryOver(SettingsService $settings): WooCategoryRegistry {
-		$tooi = new TooiVocabularyService();
+		$tooi = \Unit\Support\RecordedTooiRegister::service();
 
 		return new WooCategoryRegistry(
 			$tooi,
@@ -187,6 +187,37 @@ class WooCategoryRegistryTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			new LocalCategoryAdmission($tooi),
 		);
+	}
+
+	/**
+	 * REQ-WVC-001: without a readable vocabulary register no category is served from a copy:
+	 * the waardelijst members are gone, a local category is refused, a document resolves to nothing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	public function testAnUnreadableRegisterServesNoCategory(): void {
+		$row = $this->createMock(originalClassName: ObjectEntity::class);
+		$row->method('jsonSerialize')->willReturn(['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat018']);
+		$schema = $this->environmentAwareDouble(class: Schema::class, methods: ['getId']);
+		$schema->method('getId')->willReturn(42);
+		$schemaMapper = $this->createMock(originalClassName: SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn($schema);
+		$objectService = $this->createMock(originalClassName: ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturn(['results' => [$row], 'total' => 1]);
+		$settings = $this->createMock(originalClassName: SettingsService::class);
+		$settings->method('getObjectService')->willReturn($objectService);
+		$settings->method('getSchemaMapper')->willReturn($schemaMapper);
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
+		$logger->expects($this->atLeastOnce())->method('warning');
+		$tooi = \Unit\Support\RecordedTooiRegister::unreadableService();
+		$registry = new WooCategoryRegistry($tooi, $settings, $logger, new LocalCategoryAdmission($tooi));
+
+		$this->assertSame(expected: [], actual: $registry->all());
+		$this->assertStringContainsString(needle: 'cannot be read', haystack: $registry->rejected()['aanbestedingen']);
+		$this->assertNull(actual: $registry->resolveForDocument('infocat012'));
+		$this->assertNull(actual: $registry->resolveForDocument('aanbestedingen'));
 	}
 
 	public function testTheEighteenWaardelijstMembersNeedNoStoredRow(): void {

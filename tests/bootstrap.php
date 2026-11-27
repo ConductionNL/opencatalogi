@@ -198,3 +198,4 @@ spl_autoload_register(
 // "Unit\Support\... does not exist" under this (phpunit.xml) bootstrap.
 require_once __DIR__ . '/Unit/Support/ServerAwareRequest.php';
 require_once __DIR__ . '/Unit/Support/AllowingCapabilityRights.php';
+require_once __DIR__ . '/Unit/Support/RecordedTooiRegister.php';

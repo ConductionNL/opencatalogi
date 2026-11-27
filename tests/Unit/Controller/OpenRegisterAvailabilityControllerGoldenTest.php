@@ -224,10 +224,10 @@ class OpenRegisterAvailabilityControllerGoldenTest extends TestCase {
 		$settings = $this->createMock(SettingsService::class);
 		$settings->method('getSettings')->willReturn(['configuration' => ['catalog_register' => '1', 'catalog_schema' => '2']]);
 		$categories = new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
-			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			\Unit\Support\RecordedTooiRegister::service(),
 			$this->createMock(SettingsService::class),
 			$this->createMock(LoggerInterface::class),
-			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
+			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service()),
 		);
 		$sitemaps = new \OCA\OpenCatalogi\Controller\SitemapDirectives(new OpenRegisterLookup($container, $appManager), $categories);
 		$robots = new RobotsController('opencatalogi', $request, $settings, $urls, $l10n, $sitemaps);
