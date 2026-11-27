@@ -30,6 +30,7 @@ Read `openspec/woo-build-rules.md` first. Never `pkill -f playwright`; kill by P
 ## 3. Virtual screen reader
 
 - [ ] 3.1 Add `@guidepup/virtual-screen-reader` and `tests/e2e/officer-screen-reader.spec.ts` storing the transcript as an artefact (REQ-OFA-003). Verify: the spec, and the transcript attached to the PR.
+  - 27 Nov 2026 (b-opencatalogi): written, not run. `@guidepup/virtual-screen-reader` 0.31.0 is a dev dependency; `tests/e2e/officer-screen-reader.spec.ts` walks the keyboard flow of REQ-OFA-002 with the reader started in the page over `document.body` (its browser build is loaded from a blob, so the file sets `bypassCSP`). Tab goes through the reader and every control the walk uses must be spoken with a role and its name. Enter is a real key press, because a file chooser needs a trusted event. After Publish and after Withdraw, a phrase other than the button's own must announce the outcome. The spoken log is attached as `screen-reader-transcript`. `playwright test --list` loads it. Not ticked: the spec has not run against an instance, and no transcript is attached yet.
 - [ ] 3.2 Fix missing names and unannounced state changes (live regions for publish and withdraw outcomes) (REQ-OFA-003). Verify: the spec green.
 
 ## 4. Report

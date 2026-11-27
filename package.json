@@ -77,6 +77,7 @@
     "@babel/preset-typescript": "^7.28.5",
     "@codemirror/lang-html": "^6.4.11",
     "@cyclonedx/cyclonedx-npm": "^6.0.0",
+    "@guidepup/virtual-screen-reader": "^0.31.0",
     "@nextcloud/browserslist-config": "^3.0.1",
     "@nextcloud/eslint-config": "^9.0.1",
     "@nextcloud/prettier-config": "^1.2.0",

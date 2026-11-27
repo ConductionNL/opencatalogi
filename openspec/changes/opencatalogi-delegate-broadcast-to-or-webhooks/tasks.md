@@ -13,6 +13,7 @@
 - [ ] Test
 
 ### Task 2: Wire enqueueBroadcast to OR's WebhookService::triggerWebhookForEvent
+> 27 Nov 2026 (b-opencatalogi), not built, needs a decision. OpenRegister `development` has no `WebhookService::triggerWebhookForEvent($event, $payload, $url)`. Its `dispatchEvent()` fans an event out to every stored `Webhook` row subscribed to it, each with its own fixed URL. A broadcast goes to one peer URL at a time. Options: (a) one `Webhook` row per peer directory URL, created and pruned as listings change, then `dispatchEvent()` with a filter on the peer; (b) ask OpenRegister for a per-target enqueue (`WebhookDeliveryJob` with an ad-hoc URL and the event's retry policy); (c) keep the app's own delivery, and move only the retry onto a Nextcloud queued job. Recommendation: (b), because (a) turns every federation peer into a stored webhook an administrator sees and can edit. Tasks 2, 3, 5 and 6 wait for that choice.
 - **spec_ref**: `openspec/changes/opencatalogi-delegate-broadcast-to-or-webhooks/specs/federation/spec.md#requirement-broadcast-delegates-to-or-webhooks-fed-or-001`
 - **files**: `lib/Service/BroadcastService.php`, `lib/AppInfo/Application.php`
 - **acceptance_criteria**:
