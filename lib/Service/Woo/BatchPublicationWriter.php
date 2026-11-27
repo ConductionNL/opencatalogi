@@ -37,6 +37,7 @@ use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\Publication\FrozenRecord;
 use OCA\OpenCatalogi\Service\Publication\PublisherFileStamp;
+use OCA\OpenCatalogi\Service\Publication\RedactionVerdict;
 use OCA\OpenCatalogi\Service\WooCategory;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;

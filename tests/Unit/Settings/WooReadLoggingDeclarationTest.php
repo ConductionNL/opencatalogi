@@ -91,10 +91,14 @@ class WooReadLoggingDeclarationTest extends TestCase {
 
 		foreach ($fragment['components']['schemas'] as $slug => $schema) {
 			$this->assertTrue(
-				version_compare($schemas[$slug]['version'], $schema['version'], '>='),
-				$slug.' merged at '.$schemas[$slug]['version'].', below this fragment\'s '.$schema['version']
+				condition: version_compare($schemas[$slug]['version'], $schema['version'], '>='),
+				message: $slug.' merged at '.$schemas[$slug]['version'].', below this fragment\'s '.$schema['version']
 			);
-			$this->assertSame($schema['configuration']['x-openregister-processing'], $schemas[$slug]['configuration']['x-openregister-processing'], $slug);
+			$this->assertSame(
+				expected: $schema['configuration']['x-openregister-processing'],
+				actual: $schemas[$slug]['configuration']['x-openregister-processing'],
+				message: $slug
+			);
 		}
 
 	}//end testTheFragmentIsMergedLast()

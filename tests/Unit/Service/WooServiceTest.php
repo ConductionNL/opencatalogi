@@ -179,7 +179,11 @@ class WooFakeFileService {
 		return [];
 	}//end getLastResidualEntities()
 
-	/** Mirrors openregister FileService::getLastVerification (REQ-RRS-001). */
+	/**
+	 * Mirrors openregister FileService::getLastVerification (REQ-RRS-001).
+	 *
+	 * @return array<string, mixed>|null
+	 */
 	public function getLastVerification(): ?array {
 		return ['verdict' => 'clean', 'outputMode' => 'pdf', 'routesChecked' => ['text'], 'findings' => [], 'mayBePublished' => true];
 	}//end getLastVerification()

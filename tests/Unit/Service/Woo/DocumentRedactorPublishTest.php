@@ -205,7 +205,14 @@ class DocumentRedactorPublishTest extends TestCase {
 		$container->expects($this->never())->method('get');
 
 		$this->assertSame(
-			['anonymizedDocument' => '', 'anonymizedDocumentHash' => '', 'redactionStatus' => '', 'redactionMessage' => '', 'redactionLog' => [], 'redactionVerification' => []],
+			[
+				'anonymizedDocument' => '',
+				'anonymizedDocumentHash' => '',
+				'redactionStatus' => '',
+				'redactionMessage' => '',
+				'redactionLog' => [],
+				'redactionVerification' => [],
+			],
 			$this->redactor($container)->forAssessment(assessment: ['assessment' => 'openbaar'], batchId: 'b1', fallbackOwner: 'bob')
 		);
 	}//end testANonPartlyPublicAssessmentNeedsNoRedaction()

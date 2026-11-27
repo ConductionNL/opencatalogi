@@ -31,6 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCA\OpenCatalogi\Service\Publication\RedactionVerdict;
 use OCP\App\IAppManager;
 use OCP\Files\File;
 use OCP\IL10N;

@@ -20,16 +20,16 @@
 
 declare(strict_types=1);
 
-namespace Unit\Service\Woo;
+namespace Unit\Service\Publication;
 
-use OCA\OpenCatalogi\Service\Woo\RedactionVerdict;
+use OCA\OpenCatalogi\Service\Publication\RedactionVerdict;
 use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Tests for RedactionVerdict.
  *
- * @covers \OCA\OpenCatalogi\Service\Woo\RedactionVerdict
+ * @covers \OCA\OpenCatalogi\Service\Publication\RedactionVerdict
  */
 class RedactionVerdictTest extends TestCase {
 
@@ -39,7 +39,7 @@ class RedactionVerdictTest extends TestCase {
 	 * @return IL10N
 	 */
 	private function l10n(): IL10N {
-		$l10n = $this->createMock(IL10N::class);
+		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$l10n->method('t')->willReturnCallback(
 			static fn (string $text, mixed $parameters = []): string => vsprintf($text, (array)$parameters)
 		);
@@ -54,13 +54,13 @@ class RedactionVerdictTest extends TestCase {
 	public function testAnUnreadableAnswerIsUnverifiable(): void {
 		$empty = ['verdict' => 'unverifiable', 'mayBePublished' => false, 'outputMode' => '', 'routesChecked' => [], 'findings' => []];
 
-		$this->assertSame($empty, (new RedactionVerdict(verification: null))->summary());
-		$this->assertSame($empty, (new RedactionVerdict(verification: 'clean'))->summary());
-		$this->assertSame($empty, (new RedactionVerdict(verification: ['verdict' => ['clean']]))->summary());
-		$this->assertSame($empty, (new RedactionVerdict(verification: ['verdict' => '']))->summary());
+		$this->assertSame(expected: $empty, actual: (new RedactionVerdict(verification: null))->summary());
+		$this->assertSame(expected: $empty, actual: (new RedactionVerdict(verification: 'clean'))->summary());
+		$this->assertSame(expected: $empty, actual: (new RedactionVerdict(verification: ['verdict' => ['clean']]))->summary());
+		$this->assertSame(expected: $empty, actual: (new RedactionVerdict(verification: ['verdict' => '']))->summary());
 		$this->assertSame(
-			'OpenRegister could not confirm that the redacted values are gone (verdict: unverifiable). The document stays unpublished.',
-			(new RedactionVerdict(verification: null))->refusal(l10n: $this->l10n())
+			expected: 'OpenRegister could not confirm that the redacted values are gone (verdict: unverifiable). The document stays unpublished.',
+			actual: (new RedactionVerdict(verification: null))->refusal(l10n: $this->l10n())
 		);
 	}//end testAnUnreadableAnswerIsUnverifiable()
 
@@ -71,17 +71,22 @@ class RedactionVerdictTest extends TestCase {
 	 * @return void
 	 */
 	public function testCleanNeedsTheReleaseFlag(): void {
-		$this->assertSame('unverifiable', (new RedactionVerdict(verification: ['verdict' => 'clean', 'mayBePublished' => 'yes']))->verdict());
+		$flagNotTrue = new RedactionVerdict(verification: ['verdict' => 'clean', 'mayBePublished' => 'yes']);
+		$this->assertSame(expected: 'unverifiable', actual: $flagNotTrue->verdict());
 
 		$clean = new RedactionVerdict(verification: ['verdict' => 'clean', 'mayBePublished' => true]);
-		$this->assertTrue($clean->isClean());
-		$this->assertNull($clean->refusal(l10n: $this->l10n()));
-		$this->assertTrue((new RedactionVerdict(verification: $clean->summary()))->isClean(), 'a stored summary reads the same');
+		$this->assertTrue(condition: $clean->isClean());
+		$this->assertNull(actual: $clean->refusal(l10n: $this->l10n()));
+		$this->assertTrue(condition: (new RedactionVerdict(verification: $clean->summary()))->isClean(), message: 'a stored summary reads the same');
 
 		$leaking = new RedactionVerdict(verification: ['verdict' => 'leaking', 'mayBePublished' => true]);
-		$this->assertSame('leaking', $leaking->verdict());
-		$this->assertFalse($leaking->summary()['mayBePublished']);
-		$this->assertStringContainsString('verdict: leaking', (string)$leaking->refusal(l10n: $this->l10n()), 'a leak without findings names the verdict');
+		$this->assertSame(expected: 'leaking', actual: $leaking->verdict());
+		$this->assertFalse(condition: $leaking->summary()['mayBePublished']);
+		$this->assertStringContainsString(
+			needle: 'verdict: leaking',
+			haystack: (string)$leaking->refusal(l10n: $this->l10n()),
+			message: 'a leak without findings names the verdict'
+		);
 	}//end testCleanNeedsTheReleaseFlag()
 
 	/**
@@ -100,12 +105,12 @@ class RedactionVerdictTest extends TestCase {
 		);
 
 		$summary = $verdict->summary();
-		$this->assertSame('', $summary['outputMode']);
-		$this->assertSame(['text'], $summary['routesChecked']);
-		$this->assertSame([['route' => '', 'count' => 3]], $summary['findings']);
+		$this->assertSame(expected: '', actual: $summary['outputMode']);
+		$this->assertSame(expected: ['text'], actual: $summary['routesChecked']);
+		$this->assertSame(expected: [['route' => '', 'count' => 3]], actual: $summary['findings']);
 		$this->assertSame(
-			'OpenRegister found redacted values still recoverable in the redacted file:  (3). The document stays unpublished.',
-			$verdict->refusal(l10n: $this->l10n())
+			expected: 'OpenRegister found redacted values still recoverable in the redacted file:  (3). The document stays unpublished.',
+			actual: $verdict->refusal(l10n: $this->l10n())
 		);
 	}//end testOnlyScalarsSurvive()
 }//end class

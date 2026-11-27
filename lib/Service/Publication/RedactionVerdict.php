@@ -5,7 +5,7 @@
  * may be stored.
  *
  * @category Service
- * @package  OCA\OpenCatalogi\Service\Woo
+ * @package  OCA\OpenCatalogi\Service\Publication
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -23,7 +23,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\Publication;
 
 use OCP\IL10N;
 
@@ -34,6 +34,14 @@ use OCP\IL10N;
  * output mode, the routes it checked, and per finding the route and the count.
  * Nothing else is kept, so a value that was meant to be redacted can never
  * reach the assessment. Reading a stored summary again gives the same summary.
+ *
+ * @phpstan-type VerdictSummary array{
+ *     verdict: string,
+ *     mayBePublished: bool,
+ *     outputMode: string,
+ *     routesChecked: array<int, string>,
+ *     findings: array<int, array{route: string, count: int}>
+ * }
  *
  * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
  */
@@ -52,7 +60,7 @@ final class RedactionVerdict {
 	/**
 	 * The summary.
 	 *
-	 * @var array{verdict: string, mayBePublished: bool, outputMode: string, routesChecked: array<int, string>, findings: array<int, array{route: string, count: int}>}
+	 * @var VerdictSummary
 	 */
 	private array $summary;
 
@@ -91,7 +99,7 @@ final class RedactionVerdict {
 	/**
 	 * The verdict as it may be stored: routes and counts, never values.
 	 *
-	 * @return array{verdict: string, mayBePublished: bool, outputMode: string, routesChecked: array<int, string>, findings: array<int, array{route: string, count: int}>}
+	 * @return VerdictSummary
 	 *
 	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
 	 */

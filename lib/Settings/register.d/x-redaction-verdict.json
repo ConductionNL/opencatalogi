@@ -6,6 +6,7 @@
         "version": "0.8.0",
         "properties": {
           "redactionStatus": {
+            "title": "Redaction status",
             "description": "Whether a verified redacted version exists: verified, failed, awaiting-review (a person must check the findings first), or empty when the document is not partly public"
           },
           "redactionVerification": {
