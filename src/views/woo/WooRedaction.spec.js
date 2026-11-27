@@ -199,7 +199,8 @@ describe('the redaction page', () => {
 				...unchecked,
 				redactionStatus: 'awaiting-review',
 				anonymizedDocument: '',
-				redactionMessage: 'This document must be checked before it is anonymised.',
+				redactionMessage:
+					'This document must be checked before it is anonymised.',
 			},
 		})
 
