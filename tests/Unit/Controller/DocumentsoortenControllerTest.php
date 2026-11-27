@@ -79,12 +79,12 @@ class DocumentsoortenControllerTest extends TestCase {
 		$this->assertSame(91, $data['total']);
 		$this->assertCount(91, $data['results']);
 		$this->assertContains(
-			[
+			needle: [
 				'code' => 'c_852da199',
 				'label' => 'Afkondigingsblad',
 				'uri' => 'https://identifier.overheid.nl/tooi/def/thes/kern/c_852da199',
 			],
-			$data['results']
+			haystack: $data['results']
 		);
 
 	}//end testDocumentsoortenListsTheRegisteredMembers()

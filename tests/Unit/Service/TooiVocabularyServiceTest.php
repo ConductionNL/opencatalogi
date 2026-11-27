@@ -244,14 +244,14 @@ class TooiVocabularyServiceTest extends TestCase {
 		$service = new TooiVocabularyService(register: $register);
 
 		$this->assertSame(
-			['uri' => 'https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213', 'label' => 'Jaarplannen en jaarverslagen'],
-			$service->resolveInformatiecategorie(value: 'infocat012')
+			expected: ['uri' => 'https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213', 'label' => 'Jaarplannen en jaarverslagen'],
+			actual: $service->resolveInformatiecategorie(value: 'infocat012')
 		);
 		$this->assertSame(expected: [TooiVocabularyService::CATEGORIES_SCHEME], actual: $register->reads);
 		// The register's own label names the category too.
 		$this->assertSame(
-			'https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213',
-			$service->resolveInformatiecategorie(value: 'jaarplan of jaarverslag')['uri']
+			expected: 'https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213',
+			actual: $service->resolveInformatiecategorie(value: 'jaarplan of jaarverslag')['uri']
 		);
 		// One read per request.
 		$service->informatiecategorieList();
