@@ -60,6 +60,8 @@
 		:rowClickToView="true"
 		:viewTo="rowTarget"
 		:cardAccent="cardAccent"
+		:rowIcon="rowStatusIcon"
+		:rowClass="rowStatusClass"
 		:editOpensDetail="true"
 		@vue:mounted="followDeleteTarget"
 		@rowClick="onRowOpen"
@@ -82,7 +84,7 @@ import DatabaseAlertOutline from 'vue-material-design-icons/DatabaseAlertOutline
 import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
 import DatabaseOffOutline from 'vue-material-design-icons/DatabaseOffOutline.vue'
 import { catalogScopePairs, normaliseIdList } from '../../services/catalogScope.js'
-import { getPublicationStatus } from '../../services/publicationStatus.js'
+import { publicationStateLabel } from '../../services/publicationState.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 
 /** Listeners CnPageRenderer binds for its own row opening, which only works on `type:"index"` pages. */
@@ -556,35 +558,61 @@ export default {
 		},
 
 		/**
-		 * A publication card's status color and icon; other rows get none.
+		 * The status icon a publication row starts with, the one its card shows;
+		 * other rows get none.
+		 *
+		 * @param {object} row The table row.
+		 * @return {string} The icon name, or '' for none.
+		 * @spec openspec/changes/publication-list-status-icons/specs/publications/spec.md#requirement-a-publication-row-starts-with-its-status-icon-req-psi-001
+		 */
+		rowStatusIcon(row) {
+			return this.cardAccent(row)?.icon ?? ''
+		},
+
+		/**
+		 * The class that colors a publication row's status icon by its status.
+		 *
+		 * @param {object} row The table row.
+		 * @return {string} The class, or '' for none.
+		 * @spec openspec/changes/publication-list-status-icons/specs/publications/spec.md#requirement-a-publication-row-starts-with-its-status-icon-req-psi-001
+		 */
+		rowStatusClass(row) {
+			const variant = this.cardAccent(row)?.variant
+			return variant ? `publication-row--${variant}` : ''
+		},
+
+		/**
+		 * A publication card's status color and icon, from the state the server
+		 * sends per row (REQ-PLC-002), so they agree with the State column; other
+		 * rows, and a row without a known state, get none.
 		 *
 		 * @param {object} row The card's object.
 		 * @return {?{variant: string, icon: string, label: string}}
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-publication-card-req-tbl-005
+		 * @spec openspec/changes/publication-list-status-icons/specs/publications/spec.md#requirement-a-publication-row-starts-with-its-status-icon-req-psi-001
 		 */
 		cardAccent(row) {
 			if (!this.isPublicationRow(row)) {
 				return null
 			}
-			switch (getPublicationStatus(row)) {
-				case 'published':
-					return {
-						variant: 'success',
-						icon: 'ListBoxOutline',
-						label: t('opencatalogi', 'Published'),
-					}
-				case 'depublished':
-					return {
-						variant: 'error',
-						icon: 'AlertOutline',
-						label: t('opencatalogi', 'Depublished'),
-					}
-				default:
-					return {
-						variant: 'warning',
-						icon: 'Pencil',
-						label: t('opencatalogi', 'Concept'),
-					}
+			const accents = {
+				public: ['success', 'ListBoxOutline'],
+				scheduled: ['warning', 'ClockOutline'],
+				draft: ['warning', 'Pencil'],
+				in_review: ['warning', 'Pencil'],
+				approved: ['warning', 'Pencil'],
+				withdrawn: ['error', 'AlertOutline'],
+				archived: ['info', 'ArchiveOutline'],
+			}
+			const accent = accents[row?.state]
+			if (!accent) {
+				return null
+			}
+
+			return {
+				variant: accent[0],
+				icon: accent[1],
+				label: publicationStateLabel(row.state),
 			}
 		},
 
@@ -703,5 +731,22 @@ export default {
 	display: flex;
 	justify-content: center;
 	padding: calc(var(--default-grid-baseline) * 10);
+}
+
+/* A publication row's status icon, in the colors the card view uses. */
+:deep(.publication-row--success .cn-table-col--icon .material-design-icon) {
+	color: var(--color-element-success);
+}
+
+:deep(.publication-row--warning .cn-table-col--icon .material-design-icon) {
+	color: var(--color-element-warning);
+}
+
+:deep(.publication-row--error .cn-table-col--icon .material-design-icon) {
+	color: var(--color-element-error);
+}
+
+:deep(.publication-row--info .cn-table-col--icon .material-design-icon) {
+	color: var(--color-element-info);
 }
 </style>
