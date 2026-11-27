@@ -98,10 +98,10 @@ class DocumentsoortenControllerTest extends TestCase {
 	 */
 	public function testAnUnreadableRegisterIsA503(): void {
 		$this->authenticate();
-		$l10n = $this->createMock(IL10N::class);
+		$l10n = $this->createMock(originalClassName: IL10N::class);
 		$controller = new DocumentsoortenController(
 			'opencatalogi',
-			$this->createMock(IRequest::class),
+			$this->createMock(originalClassName: IRequest::class),
 			$l10n,
 			$this->userSession,
 			\Unit\Support\RecordedTooiRegister::unreadableService()
@@ -109,8 +109,8 @@ class DocumentsoortenControllerTest extends TestCase {
 
 		$response = $controller->index();
 
-		$this->assertSame(503, $response->getStatus());
-		$this->assertSame(['error' => 'value-list-unavailable'], $response->getData());
+		$this->assertSame(expected: 503, actual: $response->getStatus());
+		$this->assertSame(expected: ['error' => 'value-list-unavailable'], actual: $response->getData());
 
 	}//end testAnUnreadableRegisterIsA503()
 

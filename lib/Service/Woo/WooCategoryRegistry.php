@@ -313,13 +313,7 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function resolveForDocument(?string $value): ?array {
-		try {
-			$member = $this->tooiVocabulary->resolveInformatiecategorie($value);
-		} catch (\RuntimeException) {
-			// Without the waardelijst no category resolves, a local one neither: it maps onto a member.
-			return null;
-		}
-
+		$member = $this->valueListMember(value: $value);
 		if ($member !== null) {
 			return $member;
 		}
@@ -343,6 +337,25 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 
 		return null;
 	}//end resolveForDocument()
+
+	/**
+	 * The waardelijst member a value names, or null when it names none or the register cannot be read.
+	 *
+	 * Without the waardelijst no local category resolves either: the registry then holds none, as each maps onto a member.
+	 *
+	 * @param string|null $value The stored category value.
+	 *
+	 * @return array{uri: string, label: string}|null The member.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	private function valueListMember(?string $value): ?array {
+		try {
+			return $this->tooiVocabulary->resolveInformatiecategorie($value);
+		} catch (\RuntimeException) {
+			return null;
+		}
+	}//end valueListMember()
 
 	/**
 	 * Record and log one refusal.

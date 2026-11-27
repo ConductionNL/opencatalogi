@@ -80,19 +80,37 @@ class SitemapDocumentFields {
 			return null;
 		}
 
-		try {
-			$member = $this->tooiVocabulary->resolveDocumentsoort($value);
-		} catch (\RuntimeException) {
-			// An unreadable vocabulary register leaves the type unresolved: omitted and reported.
-			$member = null;
-		}
-
+		$member = $this->listMember(list: 'documentsoort', value: $value);
 		if ($member === null) {
 			return false;
 		}
 
 		return ['diwoo:documentsoort' => ['#text' => $member['label'], '@resource' => $member['uri']]];
 	}//end documentTypeElement()
+
+	/**
+	 * The documentsoort or language member a value names, or null when it names none or the register cannot be read.
+	 *
+	 * An unreadable vocabulary register leaves the value unresolved: the element is omitted and reported.
+	 *
+	 * @param string $list  `documentsoort` or `language`.
+	 * @param string $value The stored value.
+	 *
+	 * @return array{code: string, label: string, uri: string}|null The member.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	private function listMember(string $list, string $value): ?array {
+		try {
+			if ($list === 'language') {
+				return $this->tooiVocabulary->resolveLanguage($value);
+			}
+
+			return $this->tooiVocabulary->resolveDocumentsoort($value);
+		} catch (\RuntimeException) {
+			return null;
+		}
+	}//end listMember()
 
 	/**
 	 * Whether the publication was created before the DiWoo fields were introduced.
@@ -159,13 +177,7 @@ class SitemapDocumentFields {
 			return null;
 		}
 
-		try {
-			$member = $this->tooiVocabulary->resolveLanguage(self::LANGUAGE_CODES[strtolower(trim($value))] ?? $value);
-		} catch (\RuntimeException) {
-			// An unreadable vocabulary register leaves the language unresolved, so it is omitted.
-			$member = null;
-		}
-
+		$member = $this->listMember(list: 'language', value: self::LANGUAGE_CODES[strtolower(trim($value))] ?? $value);
 		if ($member === null) {
 			return null;
 		}

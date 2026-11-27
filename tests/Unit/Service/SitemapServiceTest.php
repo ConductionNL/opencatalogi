@@ -122,7 +122,13 @@ class SitemapServiceTest extends TestCase {
 			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
 			$instance,
-			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(\Unit\Support\RecordedTooiRegister::service(), $this->wooCategories, new OpenRegisterLookup($this->container, $this->appManager), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this), $instance),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(
+				\Unit\Support\RecordedTooiRegister::service(),
+				$this->wooCategories,
+				new OpenRegisterLookup($this->container, $this->appManager),
+				\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this),
+				$instance
+			),
 			$this->queryService,
 			$this->wooCategories
 		);
@@ -1743,7 +1749,13 @@ class SitemapServiceTest extends TestCase {
 			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
 			$instance,
-			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(\Unit\Support\RecordedTooiRegister::service(), $this->wooCategories, new OpenRegisterLookup($this->container, $this->appManager), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this), $instance),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(
+				\Unit\Support\RecordedTooiRegister::service(),
+				$this->wooCategories,
+				new OpenRegisterLookup($this->container, $this->appManager),
+				\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this),
+				$instance
+			),
 			$this->queryService,
 			$this->wooCategories,
 			incidents: $incidents
@@ -1959,7 +1971,13 @@ class SitemapServiceTest extends TestCase {
 			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
 			$instance,
-			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(\Unit\Support\RecordedTooiRegister::service(), $this->wooCategories, new OpenRegisterLookup($this->container, $this->appManager), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this), $instance),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(
+				\Unit\Support\RecordedTooiRegister::service(),
+				$this->wooCategories,
+				new OpenRegisterLookup($this->container, $this->appManager),
+				\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this),
+				$instance
+			),
 			$this->queryService,
 			$this->wooCategories
 		);
@@ -2758,7 +2776,12 @@ class SitemapServiceTest extends TestCase {
 			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
 			new InstanceSettings($this->urlGenerator, $config),
-			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(\Unit\Support\RecordedTooiRegister::service(), $this->wooCategories, new OpenRegisterLookup($this->container, $this->appManager), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(
+				\Unit\Support\RecordedTooiRegister::service(),
+				$this->wooCategories,
+				new OpenRegisterLookup($this->container, $this->appManager),
+				\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
+			),
 			$this->queryService,
 			$this->wooCategories
 		);
@@ -2777,7 +2800,12 @@ class SitemapServiceTest extends TestCase {
 			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
 			new InstanceSettings($this->urlGenerator, $config),
-			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(\Unit\Support\RecordedTooiRegister::service(), $this->wooCategories, new OpenRegisterLookup($this->container, $this->appManager), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(
+				\Unit\Support\RecordedTooiRegister::service(),
+				$this->wooCategories,
+				new OpenRegisterLookup($this->container, $this->appManager),
+				\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
+			),
 			$this->queryService,
 			$this->wooCategories
 		);
@@ -2947,7 +2975,12 @@ class SitemapServiceTest extends TestCase {
 			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
 			new InstanceSettings($this->urlGenerator, $this->config),
-			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(\Unit\Support\RecordedTooiRegister::service(), $this->wooCategories, new OpenRegisterLookup($this->container, $this->appManager), new \OCA\OpenCatalogi\Service\FileFacts($detector, $root)),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(
+				\Unit\Support\RecordedTooiRegister::service(),
+				$this->wooCategories,
+				new OpenRegisterLookup($this->container, $this->appManager),
+				new \OCA\OpenCatalogi\Service\FileFacts($detector, $root)
+			),
 			$this->queryService,
 			$this->wooCategories
 		);

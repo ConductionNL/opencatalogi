@@ -28,6 +28,7 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
+use OCA\OpenCatalogi\Service\ValueListMembership;
 use PHPUnit\Framework\TestCase;
 use Unit\Support\RecordedTooiRegister;
 
@@ -216,7 +217,7 @@ class TooiVocabularyServiceTest extends TestCase {
 		$expected = $this->xsdMembers(typeName: 'documentsoortlijst');
 
 		$this->assertCount(91, $expected, 'the XSD copy enumerates 91 documentsoorten');
-		$this->assertSame(self::byLabel(members: $expected), $this->service->documentsoortList());
+		$this->assertSame(expected: self::byLabel(members: $expected), actual: $this->service->documentsoortList());
 
 	}//end testTheRegisteredDocumentsoortenMatchTheDeclaredXsd()
 
@@ -226,7 +227,7 @@ class TooiVocabularyServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheRegisteredLanguagesMatchTheDeclaredXsd(): void {
-		$this->assertSame(self::byLabel(members: $this->xsdMembers(typeName: 'taallijst')), $this->service->languageList());
+		$this->assertSame(expected: self::byLabel(members: $this->xsdMembers(typeName: 'taallijst')), actual: $this->service->languageList());
 
 	}//end testTheRegisteredLanguagesMatchTheDeclaredXsd()
 
@@ -244,18 +245,21 @@ class TooiVocabularyServiceTest extends TestCase {
 
 		$this->assertSame(
 			['uri' => 'https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213', 'label' => 'Jaarplannen en jaarverslagen'],
-			$service->resolveInformatiecategorie('infocat012')
+			$service->resolveInformatiecategorie(value: 'infocat012')
 		);
-		$this->assertSame([TooiVocabularyService::CATEGORIES_SCHEME], $register->reads);
+		$this->assertSame(expected: [TooiVocabularyService::CATEGORIES_SCHEME], actual: $register->reads);
 		// The register's own label names the category too.
-		$this->assertSame('https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213', $service->resolveInformatiecategorie('jaarplan of jaarverslag')['uri']);
+		$this->assertSame(
+			'https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213',
+			$service->resolveInformatiecategorie(value: 'jaarplan of jaarverslag')['uri']
+		);
 		// One read per request.
 		$service->informatiecategorieList();
-		$this->assertCount(1, $register->reads);
+		$this->assertCount(expectedCount: 1, haystack: $register->reads);
 
 		$empty = new TooiVocabularyService(register: new RecordedTooiRegister(empty: [TooiVocabularyService::CATEGORIES_SCHEME]));
-		$this->assertNull($empty->resolveInformatiecategorie('infocat012'));
-		$this->assertSame([], $empty->informatiecategorieList());
+		$this->assertNull(actual: $empty->resolveInformatiecategorie(value: 'infocat012'));
+		$this->assertSame(expected: [], actual: $empty->informatiecategorieList());
 
 	}//end testTheCategoryResolvesFromTheVocabularyRegister()
 
@@ -269,27 +273,26 @@ class TooiVocabularyServiceTest extends TestCase {
 	public function testAnUnreadableRegisterThrows(): void {
 		$service = RecordedTooiRegister::unreadableService();
 		$calls = [
-			'category' => static fn () => $service->resolveInformatiecategorie('infocat012'),
-			'handling' => static fn () => $service->resolveSoortHandeling(null),
-			'document type' => static fn () => $service->resolveDocumentsoort('c_852da199'),
-			'language' => static fn () => $service->resolveLanguage('NLD'),
+			'category' => static fn () => $service->resolveInformatiecategorie(value: 'infocat012'),
+			'handling' => static fn () => $service->resolveSoortHandeling(value: null),
+			'document type' => static fn () => $service->resolveDocumentsoort(value: 'c_852da199'),
+			'language' => static fn () => $service->resolveLanguage(value: 'NLD'),
 			'category list' => static fn () => $service->informatiecategorieList(),
 			'handling list' => static fn () => $service->soortHandelingList(),
-			'new value' => static fn () => $service->acceptsNewValue('https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213'),
 		];
 
 		foreach ($calls as $name => $call) {
 			try {
 				$call();
-				$this->fail($name . ' answered from no register.');
+				$this->fail(message: $name . ' answered from no register.');
 			} catch (\RuntimeException $e) {
-				$this->assertStringContainsString('cannot be read', $e->getMessage(), $name);
-				$this->assertInstanceOf(\RuntimeException::class, $e->getPrevious(), $name);
+				$this->assertStringContainsString(needle: 'cannot be read', haystack: $e->getMessage(), message: $name);
+				$this->assertInstanceOf(expected: \RuntimeException::class, actual: $e->getPrevious(), message: $name);
 			}
 		}
 
-		$this->expectException(\RuntimeException::class);
-		(new TooiVocabularyService())->resolveDocumentsoort('c_852da199');
+		$this->expectException(exception: \RuntimeException::class);
+		(new TooiVocabularyService())->resolveDocumentsoort(value: 'c_852da199');
 
 	}//end testAnUnreadableRegisterThrows()
 
@@ -302,13 +305,18 @@ class TooiVocabularyServiceTest extends TestCase {
 	 */
 	public function testADeprecatedConceptResolvesButIsRefusedForANewValue(): void {
 		$advies = 'https://identifier.overheid.nl/tooi/def/thes/kern/c_99a836c7';
-		$service = new TooiVocabularyService(register: new RecordedTooiRegister(deprecated: [$advies]));
+		$register = new RecordedTooiRegister(deprecated: [$advies]);
+		$service = new TooiVocabularyService(register: $register);
+		$membership = new ValueListMembership(register: $register);
 
-		$this->assertSame($advies, $service->resolveInformatiecategorie('infocat010')['uri']);
-		$this->assertFalse($service->acceptsNewValue($advies));
-		$this->assertTrue($service->acceptsNewValue('https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213'));
-		$this->assertTrue($service->acceptsNewValue('http://publications.europa.eu/resource/authority/language/NLD'));
-		$this->assertFalse($service->acceptsNewValue('https://example.com/not-a-member'));
+		$this->assertSame(expected: $advies, actual: $service->resolveInformatiecategorie(value: 'infocat010')['uri']);
+		$this->assertFalse(condition: $membership->acceptsNewValue(uri: $advies));
+		$this->assertTrue(condition: $membership->acceptsNewValue(uri: 'https://identifier.overheid.nl/tooi/def/thes/kern/c_c6cd1213'));
+		$this->assertTrue(condition: $membership->acceptsNewValue(uri: 'http://publications.europa.eu/resource/authority/language/NLD'));
+		$this->assertFalse(condition: $membership->acceptsNewValue(uri: 'https://example.com/not-a-member'));
+
+		$this->expectException(exception: \RuntimeException::class);
+		(new ValueListMembership(register: new RecordedTooiRegister(unreadable: true)))->acceptsNewValue(uri: $advies);
 
 	}//end testADeprecatedConceptResolvesButIsRefusedForANewValue()
 

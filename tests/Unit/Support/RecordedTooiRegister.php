@@ -88,7 +88,11 @@ class RecordedTooiRegister implements VocabularyRegisterInterface {
 	}//end unreadableService()
 
 	/**
-	 * {@inheritDoc}
+	 * The uris of the concepts of a scheme that are not deprecated.
+	 *
+	 * @param string $schemeUri The scheme's uri.
+	 *
+	 * @return array<int, string> The uris.
 	 */
 	public function activeConceptUris(string $schemeUri): array {
 		$uris = [];
@@ -102,14 +106,26 @@ class RecordedTooiRegister implements VocabularyRegisterInterface {
 	}//end activeConceptUris()
 
 	/**
-	 * {@inheritDoc}
+	 * Refuses: the recorded register is read-only.
+	 *
+	 * @param array<string, mixed> $jsonLd The document.
+	 *
+	 * @return array{scheme: string, created: int, updated: int, unchanged: int, deprecated: int} Never.
+	 *
+	 * @throws RuntimeException Always.
 	 */
 	public function import(array $jsonLd): array {
 		throw new RuntimeException('The recorded register is read-only.');
 	}//end import()
 
 	/**
-	 * {@inheritDoc}
+	 * The concepts of a scheme as the refresh imports them from the recorded download.
+	 *
+	 * @param string $schemeUri The scheme's uri.
+	 *
+	 * @return array<string, array{label: string, notation: string, deprecated: bool}> Keyed by concept uri.
+	 *
+	 * @throws RuntimeException When the register is made unreadable.
 	 */
 	public function concepts(string $schemeUri): array {
 		$this->reads[] = $schemeUri;

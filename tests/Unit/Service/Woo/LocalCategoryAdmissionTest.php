@@ -73,9 +73,9 @@ class LocalCategoryAdmissionTest extends TestCase {
 		$admission = new LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::unreadableService());
 		$decision = $admission->admit(stored: ['code' => 'aanbestedingen', 'mapsTo' => 'infocat010'], bundled: []);
 
-		$this->assertNull($decision['record']);
-		$this->assertSame('aanbestedingen', $decision['code']);
-		$this->assertSame('the informatiecategorieen waardelijst cannot be read from the vocabulary register', $decision['reason']);
+		$this->assertNull(actual: $decision['record']);
+		$this->assertSame(expected: 'aanbestedingen', actual: $decision['code']);
+		$this->assertSame(expected: 'the informatiecategorieen waardelijst cannot be read from the vocabulary register', actual: $decision['reason']);
 	}
 
 	public function testABlankCodeIsTheSameAsNoCode(): void {

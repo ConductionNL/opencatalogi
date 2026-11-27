@@ -378,7 +378,7 @@ final class OutboundGateWiringTest extends TestCase {
 			\Unit\Support\RecordedTooiRegister::service(),
 			$this->createMock(SettingsService::class),
 			$this->createMock(LoggerInterface::class),
-			new LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service()),
+			new LocalCategoryAdmission(tooiVocabulary: \Unit\Support\RecordedTooiRegister::service()),
 		);
 
 		return new WooRegistrationService($readiness, $index, $this->createMock(SettingsService::class), $config, $urls, $categories);

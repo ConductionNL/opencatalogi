@@ -118,12 +118,22 @@ class SitemapCategoryMappingTest extends TestCase {
 		$apps->method('getInstalledApps')->willReturn(['openregister']);
 		$settings = $this->createMock(SettingsService::class);
 		$lookup = new OpenRegisterLookup($container, $apps);
-		$categories = new WooCategoryRegistry(\Unit\Support\RecordedTooiRegister::service(), $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission(\Unit\Support\RecordedTooiRegister::service()));
+		$categories = new WooCategoryRegistry(
+			tooiVocabulary: \Unit\Support\RecordedTooiRegister::service(),
+			settingsService: $settings,
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			admission: new LocalCategoryAdmission(tooiVocabulary: \Unit\Support\RecordedTooiRegister::service())
+		);
 		$service = new SitemapService(
 			$lookup,
 			$settings,
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
-			new SitemapDocumentMapper(($tooi ?? \Unit\Support\RecordedTooiRegister::service()), $categories, $lookup, FileFactsByExtension::make($this)),
+			new SitemapDocumentMapper(
+				($tooi ?? \Unit\Support\RecordedTooiRegister::service()),
+				$categories,
+				$lookup,
+				FileFactsByExtension::make($this)
+			),
 			$this->createMock(PublicationQueryService::class),
 			$categories
 		);
@@ -221,16 +231,20 @@ class SitemapCategoryMappingTest extends TestCase {
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function testAnUnreadableRegisterOmitsTheMappedCategoryAndTheHandling(): void {
-		$result = $this->map(self::publication(['soortHandeling' => 'vaststelling']), [self::row()], \Unit\Support\RecordedTooiRegister::unreadableService());
+		$result = $this->map(
+			publication: self::publication(fields: ['soortHandeling' => 'vaststelling']),
+			rows: [self::row()],
+			tooi: \Unit\Support\RecordedTooiRegister::unreadableService()
+		);
 
-		$this->assertNull(self::category($result['document']));
-		$this->assertTrue(self::categoryReported($result['violations']));
-		$this->assertStringNotContainsString('diwoo:soortHandeling', (string)json_encode($result['document']));
+		$this->assertNull(actual: self::category(document: $result['document']));
+		$this->assertTrue(condition: self::categoryReported(violations: $result['violations']));
+		$this->assertStringNotContainsString(needle: 'diwoo:soortHandeling', haystack: (string)json_encode($result['document']));
 
 		// With the register read, the same publication carries both.
-		$readable = $this->map(self::publication(['soortHandeling' => 'vaststelling']), [self::row()]);
-		$this->assertNotNull(self::category($readable['document']));
-		$this->assertStringContainsString('diwoo:soortHandeling', (string)json_encode($readable['document']));
+		$readable = $this->map(publication: self::publication(fields: ['soortHandeling' => 'vaststelling']), rows: [self::row()]);
+		$this->assertNotNull(actual: self::category(document: $readable['document']));
+		$this->assertStringContainsString(needle: 'diwoo:soortHandeling', haystack: (string)json_encode($readable['document']));
 	}
 
 	/**

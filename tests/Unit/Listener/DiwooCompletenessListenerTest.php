@@ -108,7 +108,12 @@ class DiwooCompletenessListenerTest extends TestCase {
 	 *
 	 * @return DiwooCompletenessListener The listener.
 	 */
-	private function listener(?string $tooi = self::TOOI, ?WooCategoryRegistry $categories = null, ?CatalogiServiceInterface $catalogi = null, ?\OCA\OpenCatalogi\Service\TooiVocabularyService $vocabulary = null): DiwooCompletenessListener {
+	private function listener(
+		?string $tooi = self::TOOI,
+		?WooCategoryRegistry $categories = null,
+		?CatalogiServiceInterface $catalogi = null,
+		?\OCA\OpenCatalogi\Service\TooiVocabularyService $vocabulary = null
+	): DiwooCompletenessListener {
 		$lists = \Unit\Support\RecordedTooiRegister::service();
 		$vocabulary ??= $lists;
 		$settings = $this->createMock(SettingsService::class);
@@ -358,11 +363,11 @@ class DiwooCompletenessListenerTest extends TestCase {
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function testADocumentsoortIsRefusedWhileTheRegisterCannotBeRead(): void {
-		$event = $this->creating(data: self::publication(['documentsoort' => 'besluit', 'publicationDate' => null]));
+		$event = $this->creating(data: self::publication(override: ['documentsoort' => 'besluit', 'publicationDate' => null]));
 		$this->listener(vocabulary: \Unit\Support\RecordedTooiRegister::unreadableService())->handle($event);
 
-		$this->assertTrue($event->isPropagationStopped());
-		$this->assertSame(['documentsoort'], array_keys($event->getErrors()['fields']));
+		$this->assertTrue(condition: $event->isPropagationStopped());
+		$this->assertSame(expected: ['documentsoort'], actual: array_keys($event->getErrors()['fields']));
 	}//end testADocumentsoortIsRefusedWhileTheRegisterCannotBeRead()
 
 	/**

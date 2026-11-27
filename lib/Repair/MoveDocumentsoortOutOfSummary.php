@@ -210,6 +210,25 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	}//end moveInScope()
 
 	/**
+	 * The documentsoort a summary names, or null when it names none or the register cannot be read.
+	 *
+	 * Without the documentsoorten list nothing can be matched; a later run moves it.
+	 *
+	 * @param string $summary The summary.
+	 *
+	 * @return array{code: string, label: string, uri: string}|null The member.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	private function documentsoortOf(string $summary): ?array {
+		try {
+			return $this->vocabulary->resolveDocumentsoort($summary);
+		} catch (\RuntimeException) {
+			return null;
+		}
+	}//end documentsoortOf()
+
+	/**
 	 * Move one publication's summary when it is exactly a document type and no type is stored.
 	 *
 	 * The emptied summary of a published publication is recorded as not supplied, since the rule requires one.
@@ -220,8 +239,8 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	 * @return void
 	 *
 	 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/design.md#d2-existing-publications
-	 * @SuppressWarnings(PHPMD.StaticAccess) RequiredToPublish::recordGaps() is a pure record transform.
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 * @SuppressWarnings(PHPMD.StaticAccess) RequiredToPublish::recordGaps() is a pure record transform.
 	 */
 	private function moveOne(array $publication, array $scope): void {
 		$summary = trim((string)($publication['summary'] ?? ''));
@@ -230,13 +249,7 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 			return;
 		}
 
-		try {
-			$member = $this->vocabulary->resolveDocumentsoort($summary);
-		} catch (\RuntimeException) {
-			// Without the documentsoorten list nothing can be matched; a later run moves it.
-			$member = null;
-		}
-
+		$member = $this->documentsoortOf(summary: $summary);
 		if ($member === null || $stored !== '') {
 			$this->counts['left']++;
 			return;

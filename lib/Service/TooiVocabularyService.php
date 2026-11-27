@@ -204,8 +204,10 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 * Accepts the sitemap route code (`infocatNNN`), the heading, the register's
 	 * label, an earlier label, a bare `c_…` identifier, or a full kern URI.
 	 * Returns null when the value maps to no member the register holds (the
-	 * caller then omits the axis). The label answered is the heading. A deprecated member still resolves: existing records keep
-	 * their category; {@see self::acceptsNewValue()} refuses it for a new one.
+	 * caller then omits the axis). The label answered is the heading. A
+	 * deprecated member still resolves, so existing records keep their
+	 * category; {@see ValueListMembership::acceptsNewValue()} refuses it as a
+	 * new value.
 	 *
 	 * @param string|null $value The publication's category value.
 	 *
@@ -225,18 +227,30 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 		$concepts = $this->conceptsOf(scheme: self::CATEGORIES_SCHEME);
 		foreach (self::INFORMATIECATEGORIEEN as $code => $entry) {
 			$uri = self::KERN_BASE . $entry['id'];
-			if (isset($concepts[$uri]) === false) {
-				continue;
-			}
-
-			$names = array_merge([$code, $entry['id'], $uri, $entry['label'], $concepts[$uri]['label']], $entry['aliases']);
-			if (in_array($needle, array_map('mb_strtolower', $names), true) === true) {
+			if (isset($concepts[$uri]) === true && in_array($needle, self::categoryNames(code: $code, concept: $concepts[$uri]), true) === true) {
 				return ['uri' => $uri, 'label' => $entry['label']];
 			}
 		}
 
 		return null;
 	}//end resolveInformatiecategorie()
+
+	/**
+	 * Every name a category answers to, lower case: its code, id, URI, heading, register label and earlier labels.
+	 *
+	 * @param string                $code    The route code.
+	 * @param array{label: string}  $concept The register's concept.
+	 *
+	 * @return array<int, string> The names.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 */
+	private static function categoryNames(string $code, array $concept): array {
+		$entry = self::INFORMATIECATEGORIEEN[$code];
+		$names = array_merge([$code, $entry['id'], self::KERN_BASE . $entry['id'], $entry['label'], $concept['label']], $entry['aliases']);
+
+		return array_map('mb_strtolower', $names);
+	}//end categoryNames()
 
 	/**
 	 * Resolve a handling-type value to an official DiWoo soortHandeling member.
@@ -355,31 +369,6 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 
 		return $activated;
 	}//end readActivated()
-
-	/**
-	 * Whether a list member may be given as a new value: the register holds it and it is not deprecated.
-	 *
-	 * A deprecated concept still resolves, so a stored record keeps its value
-	 * and its DiWoo axis; a save that sets the value anew is refused.
-	 *
-	 * @param string $uri The member's URI, as a resolver answers it.
-	 *
-	 * @return bool True when it may be set.
-	 *
-	 * @throws RuntimeException When the vocabulary register cannot be read.
-	 *
-	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
-	 */
-	public function acceptsNewValue(string $uri): bool {
-		foreach ([self::CATEGORIES_SCHEME, self::HANDLING_SCHEME, self::DOCUMENT_TYPE_SCHEME, self::LANGUAGE_SCHEME] as $scheme) {
-			$concepts = $this->conceptsOf(scheme: $scheme);
-			if (isset($concepts[$uri]) === true) {
-				return $concepts[$uri]['deprecated'] === false;
-			}
-		}
-
-		return false;
-	}//end acceptsNewValue()
 
 	/**
 	 * The informatiecategorie value list (code → uri + heading), in code order: the members the register holds.

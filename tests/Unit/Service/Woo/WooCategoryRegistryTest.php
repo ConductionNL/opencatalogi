@@ -198,26 +198,26 @@ class WooCategoryRegistryTest extends TestCase {
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function testAnUnreadableRegisterServesNoCategory(): void {
-		$row = $this->createMock(ObjectEntity::class);
+		$row = $this->createMock(originalClassName: ObjectEntity::class);
 		$row->method('jsonSerialize')->willReturn(['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat018']);
-		$schema = $this->environmentAwareDouble(Schema::class, ['getId']);
+		$schema = $this->environmentAwareDouble(class: Schema::class, methods: ['getId']);
 		$schema->method('getId')->willReturn(42);
-		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper = $this->createMock(originalClassName: SchemaMapper::class);
 		$schemaMapper->method('find')->willReturn($schema);
-		$objectService = $this->createMock(ObjectService::class);
+		$objectService = $this->createMock(originalClassName: ObjectService::class);
 		$objectService->method('searchObjectsPaginated')->willReturn(['results' => [$row], 'total' => 1]);
-		$settings = $this->createMock(SettingsService::class);
+		$settings = $this->createMock(originalClassName: SettingsService::class);
 		$settings->method('getObjectService')->willReturn($objectService);
 		$settings->method('getSchemaMapper')->willReturn($schemaMapper);
-		$logger = $this->createMock(LoggerInterface::class);
+		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$logger->expects($this->atLeastOnce())->method('warning');
 		$tooi = \Unit\Support\RecordedTooiRegister::unreadableService();
 		$registry = new WooCategoryRegistry($tooi, $settings, $logger, new LocalCategoryAdmission($tooi));
 
-		$this->assertSame([], $registry->all());
-		$this->assertStringContainsString('cannot be read', $registry->rejected()['aanbestedingen']);
-		$this->assertNull($registry->resolveForDocument('infocat012'));
-		$this->assertNull($registry->resolveForDocument('aanbestedingen'));
+		$this->assertSame(expected: [], actual: $registry->all());
+		$this->assertStringContainsString(needle: 'cannot be read', haystack: $registry->rejected()['aanbestedingen']);
+		$this->assertNull(actual: $registry->resolveForDocument('infocat012'));
+		$this->assertNull(actual: $registry->resolveForDocument('aanbestedingen'));
 	}
 
 	public function testTheEighteenWaardelijstMembersNeedNoStoredRow(): void {

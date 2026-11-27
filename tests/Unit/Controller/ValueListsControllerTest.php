@@ -127,10 +127,10 @@ class ValueListsControllerTest extends TestCase {
 	public function testListsTheRegisterCannotAnswerAreUnavailable(): void {
 		$data = $this->controller(tooi: \Unit\Support\RecordedTooiRegister::unreadableService())->index()->getData();
 
-		$this->assertSame(['informatiecategorieen', 'soortHandeling', 'documentsoorten', 'talen'], $data['unavailable']);
+		$this->assertSame(expected: ['informatiecategorieen', 'soortHandeling', 'documentsoorten', 'talen'], actual: $data['unavailable']);
 		$served = array_values(array_unique(array_column($data['results'], 'scheme')));
-		$this->assertSame([], array_intersect($served, $data['unavailable']));
-		$this->assertContains('dataThemes', $served);
+		$this->assertSame(expected: [], actual: array_intersect($served, $data['unavailable']));
+		$this->assertContains(needle: 'dataThemes', haystack: $served);
 	}//end testListsTheRegisterCannotAnswerAreUnavailable()
 
 	/**

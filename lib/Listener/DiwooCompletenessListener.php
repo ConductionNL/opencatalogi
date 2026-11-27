@@ -328,7 +328,7 @@ class DiwooCompletenessListener implements IEventListener {
 
 		try {
 			return ($this->vocabulary->resolveDocumentsoort($type)['uri'] ?? null);
-		} catch (\RuntimeException) {
+		} catch (\Throwable) {
 			// An unreadable vocabulary register names no member: the save is refused, never waved through.
 			return null;
 		}

@@ -153,7 +153,14 @@ class MoveDocumentsoortOutOfSummaryTest extends TestCase {
 			}
 		);
 
-		(new MoveDocumentsoortOutOfSummary($settings, ($vocabulary ?? \Unit\Support\RecordedTooiRegister::service()), $config, $this->createMock(LoggerInterface::class)))->run($output);
+		(
+			new MoveDocumentsoortOutOfSummary(
+				settings: $settings,
+				vocabulary: ($vocabulary ?? \Unit\Support\RecordedTooiRegister::service()),
+				appConfig: $config,
+				logger: $this->createMock(originalClassName: LoggerInterface::class)
+			)
+		)->run($output);
 	}//end runStep()
 
 	/**
@@ -167,10 +174,10 @@ class MoveDocumentsoortOutOfSummaryTest extends TestCase {
 		$this->store = ['pub-1' => ['id' => 'pub-1', 'title' => 'Besluit', 'summary' => ' besluit ', '@self' => ['id' => 'pub-1']]];
 		$this->runStep(vocabulary: \Unit\Support\RecordedTooiRegister::unreadableService());
 
-		$this->assertSame(' besluit ', $this->store['pub-1']['summary']);
-		$this->assertArrayNotHasKey('documentsoort', $this->store['pub-1']);
-		$this->assertSame([], $this->saves);
-		$this->assertStringContainsString('0 publication(s) moved, 1 summary(ies) left', $this->info[0]);
+		$this->assertSame(expected: ' besluit ', actual: $this->store['pub-1']['summary']);
+		$this->assertArrayNotHasKey(key: 'documentsoort', array: $this->store['pub-1']);
+		$this->assertSame(expected: [], actual: $this->saves);
+		$this->assertStringContainsString(needle: '0 publication(s) moved, 1 summary(ies) left', haystack: $this->info[0]);
 	}//end testAnUnreadableRegisterMovesNothing()
 
 	/**

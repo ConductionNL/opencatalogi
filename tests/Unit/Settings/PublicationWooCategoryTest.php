@@ -126,8 +126,8 @@ class PublicationWooCategoryTest extends TestCase {
 
 		// The enum is the DiWoo documenthandelingen value list, nothing else.
 		$expected = array_keys((\Unit\Support\RecordedTooiRegister::service())->soortHandelingList());
-		$this->assertEqualsCanonicalizing($expected, $property['enum']);
-		$this->assertEqualsCanonicalizing($expected, array_keys($property['x-enum-labels']));
+		$this->assertEqualsCanonicalizing(expected: $expected, actual: $property['enum']);
+		$this->assertEqualsCanonicalizing(expected: $expected, actual: array_keys($property['x-enum-labels']));
 	}
 
 	public function testAStoredDocumenthandelingIsAccepted(): void {

@@ -48,7 +48,10 @@ class SitemapDocumentFieldsTest extends TestCase {
 			static fn (string $app, string $key, string $default = ''): string => ($key === 'diwoo_fields_introduced_at' ? $introducedAt : $default)
 		);
 
-		return new SitemapDocumentFields(\Unit\Support\RecordedTooiRegister::service(), new InstanceSettings($this->createMock(IURLGenerator::class), $config));
+		return new SitemapDocumentFields(
+			tooiVocabulary: \Unit\Support\RecordedTooiRegister::service(),
+			instance: new InstanceSettings(urlGenerator: $this->createMock(originalClassName: IURLGenerator::class), appConfig: $config)
+		);
 	}//end fields()
 
 	/**
@@ -106,12 +109,15 @@ class SitemapDocumentFieldsTest extends TestCase {
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
 	 */
 	public function testAnUnreadableRegisterResolvesNoTypeAndNoLanguage(): void {
-		$config = $this->createMock(IAppConfig::class);
+		$config = $this->createMock(originalClassName: IAppConfig::class);
 		$config->method('getValueString')->willReturnArgument(2);
-		$fields = new SitemapDocumentFields(\Unit\Support\RecordedTooiRegister::unreadableService(), new InstanceSettings($this->createMock(IURLGenerator::class), $config));
+		$fields = new SitemapDocumentFields(
+			tooiVocabulary: \Unit\Support\RecordedTooiRegister::unreadableService(),
+			instance: new InstanceSettings(urlGenerator: $this->createMock(originalClassName: IURLGenerator::class), appConfig: $config)
+		);
 
-		$this->assertFalse($fields->documentTypeElement(['documentsoort' => 'besluit'], ['id' => 'f-1']));
-		$this->assertNull($fields->storedElements(['language' => 'nl', '@self' => ['created' => '2024-01-15']])['diwoo:language']);
+		$this->assertFalse(condition: $fields->documentTypeElement(['documentsoort' => 'besluit'], ['id' => 'f-1']));
+		$this->assertNull(actual: $fields->storedElements(['language' => 'nl', '@self' => ['created' => '2024-01-15']])['diwoo:language']);
 	}//end testAnUnreadableRegisterResolvesNoTypeAndNoLanguage()
 
 	/**

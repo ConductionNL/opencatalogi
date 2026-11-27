@@ -82,11 +82,23 @@ class MetadataSuggestionServiceTest extends TestCase {
 	 */
 	public function testAnUnreadableRegisterProposesNoValueListValue(): void {
 		$code = (string)array_key_first((\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList());
-		$service = $this->service(categories: [$code => ['schemas' => ['besluit']]], vocabulary: \Unit\Support\RecordedTooiRegister::unreadableService());
+		$service = $this->service(
+			categories: [$code => ['schemas' => ['besluit']]],
+			vocabulary: \Unit\Support\RecordedTooiRegister::unreadableService()
+		);
 
-		$this->assertSame([], $service->suggestFromRules(publication: ['title' => 'Besluit'], context: ['schemaSlug' => 'besluit', 'origin' => 'synchronisation']));
-		$this->assertSame(['wooCategory'], array_column($service->hermiqFields(publication: []), 'key'));
-		$this->assertSame([], $service->fromHermiq(publication: ['wooCategory' => $code], values: ['soortHandeling' => 'Vaststelling']));
+		$this->assertSame(
+			expected: [],
+			actual: $service->suggestFromRules(
+				publication: ['title' => 'Besluit'],
+				context: ['schemaSlug' => 'besluit', 'origin' => 'synchronisation']
+			)
+		);
+		$this->assertSame(expected: ['wooCategory'], actual: array_column($service->hermiqFields(publication: []), 'key'));
+		$this->assertSame(
+			expected: [],
+			actual: $service->fromHermiq(publication: ['wooCategory' => $code], values: ['soortHandeling' => 'Vaststelling'])
+		);
 	}
 
 	/**
@@ -242,7 +254,7 @@ class MetadataSuggestionServiceTest extends TestCase {
 
 		$both = $service->hermiqFields(publication: []);
 		$this->assertSame(['wooCategory', 'soortHandeling'], array_column($both, 'key'));
-		$this->assertEqualsCanonicalizing(['ontvangst', 'vaststelling', 'ondertekening'], $both[1]['options']);
+		$this->assertEqualsCanonicalizing(expected: ['ontvangst', 'vaststelling', 'ondertekening'], actual: $both[1]['options']);
 
 		$this->assertSame([], $service->hermiqFields(publication: ['wooCategory' => 'infocat001', 'soortHandeling' => 'ontvangst']));
 	}
