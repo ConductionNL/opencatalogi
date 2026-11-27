@@ -90,7 +90,7 @@ class SettingsControllerTest extends TestCase {
 		$this->request->method('getParams')
 			->willReturn($params);
 
-		$this->settingsService->method('updateSettings')
+		$this->settingsService->method('saveSettings')
 			->with($params)
 			->willReturn($result);
 
@@ -104,7 +104,7 @@ class SettingsControllerTest extends TestCase {
 		$this->request->method('getParams')
 			->willReturn(['invalid' => 'data']);
 
-		$this->settingsService->method('updateSettings')
+		$this->settingsService->method('saveSettings')
 			->willThrowException(new \Exception('Update failed'));
 
 		$response = $this->controller->create();
@@ -115,7 +115,7 @@ class SettingsControllerTest extends TestCase {
 
 	/**
 	 * `update()` is the canonical write (PUT /api/settings): it passes the
-	 * request params straight to SettingsService::updateSettings() and returns
+	 * request params straight to SettingsService::saveSettings() and returns
 	 * the persisted values.
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
@@ -129,7 +129,7 @@ class SettingsControllerTest extends TestCase {
 			->willReturn($params);
 
 		$this->settingsService->expects($this->once())
-			->method('updateSettings')
+			->method('saveSettings')
 			->with($params)
 			->willReturn($result);
 
@@ -138,51 +138,6 @@ class SettingsControllerTest extends TestCase {
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(200, $response->getStatus());
 		$this->assertSame($result, $response->getData());
-	}
-
-	/**
-	 * REQ-PTS-001: changing a link setting queues one rewrite of every publication's pages; saving the same value queues none.
-	 *
-	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
-	 */
-	public function testChangingTheLinkTemplateQueuesTheRewrite(): void {
-		$stored = ['publication_url_template' => 'https://old.example/{id}', 'publication_url_catalog' => 'woo'];
-		$config = $this->createMock(\OCP\IAppConfig::class);
-		$config->method('getValueString')->willReturnCallback(
-			static function (string $app, string $key, string $default = '') use (&$stored): string {
-				return ($stored[$key] ?? $default);
-			}
-		);
-		$this->settingsService->method('updateSettings')->willReturnCallback(
-			static function (array $data) use (&$stored): array {
-				$stored = array_merge($stored, $data);
-				return $data;
-			}
-		);
-		$jobs = $this->createMock(\OCP\BackgroundJob\IJobList::class);
-		$queued = [];
-		$jobs->method('add')->willReturnCallback(
-			static function (string $job) use (&$queued): void {
-				$queued[] = $job;
-			}
-		);
-		$params = [];
-		$this->request->method('getParams')->willReturnCallback(static function () use (&$params): array {
-			return $params;
-		});
-		$controller = new SettingsController('opencatalogi', $this->request, $this->settingsService, $this->l10n, $this->userSession, null, $jobs, $config);
-
-		$params = ['publication_url_template' => 'https://new.example/{id}'];
-		$this->assertSame(200, $controller->update()->getStatus());
-		$this->assertSame([\OCA\OpenCatalogi\BackgroundJob\PublicationLinksRewrite::class], $queued);
-
-		$params = ['publication_url_template' => 'https://new.example/{id}', 'publication_url_catalog' => 'woo', 'dcat_publisher_name' => 'Gemeente'];
-		$controller->update();
-		$this->assertCount(1, $queued);
-
-		$params = ['publication_url_catalog' => ''];
-		$controller->update();
-		$this->assertCount(2, $queued);
 	}
 
 	/**
@@ -195,7 +150,7 @@ class SettingsControllerTest extends TestCase {
 		$this->request->method('getParams')
 			->willReturn(['invalid' => 'data']);
 
-		$this->settingsService->method('updateSettings')
+		$this->settingsService->method('saveSettings')
 			->willThrowException(new \Exception('Update failed'));
 
 		$response = $this->controller->update();
@@ -217,7 +172,7 @@ class SettingsControllerTest extends TestCase {
 		$this->request->method('getParams')
 			->willReturn(['ooapi_consumers' => ['alice']]);
 
-		$this->settingsService->method('updateSettings')
+		$this->settingsService->method('saveSettings')
 			->willThrowException(new \InvalidArgumentException('Setting ooapi_consumers takes a single value, not a list or an object'));
 
 		$response = $this->controller->update();
@@ -240,9 +195,9 @@ class SettingsControllerTest extends TestCase {
 			->willReturn($params);
 
 		// The single expectation is the proof of delegation: create() must
-		// reach updateSettings() exactly once, via update().
+		// reach saveSettings() exactly once, via update().
 		$this->settingsService->expects($this->once())
-			->method('updateSettings')
+			->method('saveSettings')
 			->with($params)
 			->willReturn($result);
 
@@ -266,10 +221,10 @@ class SettingsControllerTest extends TestCase {
 			->willReturn(['auto_publish_objects' => 'true']);
 
 		$this->settingsService->expects($this->once())
-			->method('updateSettings')
+			->method('saveSettings')
 			->willReturn(['auto_publish_objects' => 'true']);
 
-		// update() routes everything through updateSettings(); the dedicated
+		// The update() call routes everything through saveSettings(); the dedicated
 		// publishing-options and import entry points must stay untouched.
 		$this->settingsService->expects($this->never())
 			->method('updatePublishingOptions');
@@ -572,7 +527,7 @@ class SettingsControllerTest extends TestCase {
 	public static function failingEndpoints(): array {
 		return [
 			'index' => ['index', 'getSettings'],
-			'update' => ['update', 'updateSettings'],
+			'update' => ['update', 'saveSettings'],
 			'load' => ['load', 'loadSettings'],
 			'publishing options' => ['getPublishingOptions', 'getPublishingOptions'],
 			'save publishing options' => ['updatePublishingOptions', 'updatePublishingOptions'],

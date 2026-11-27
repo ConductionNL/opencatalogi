@@ -38,12 +38,15 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use InvalidArgumentException;
+use OCA\OpenCatalogi\BackgroundJob\PublicationLinksRewrite;
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
+use OCP\BackgroundJob\IJobList;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -995,6 +998,121 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 	}//end updateSettings()
+
+	/**
+	 * The settings whose change rewrites every publication's pages (REQ-PTS-001).
+	 *
+	 * @var array<int, string>
+	 */
+	private const LINK_SETTINGS = ['publication_url_template', 'publication_url_catalog'];
+
+	/**
+	 * Save the settings an administrator submitted, with everything a save sets off.
+	 *
+	 * After the write it asks integriq to resolve every connection whose keys
+	 * the save wrote, such as the Woo-index registration status
+	 * (adopt-connection-registry). That never throws, does nothing without
+	 * integriq, and never changes the answer. A changed link setting queues one
+	 * rewrite of every publication's pages (REQ-PTS-001). A refused value
+	 * throws before anything is written, so nothing is asked or queued.
+	 *
+	 * @param array $data The settings data to save.
+	 *
+	 * @return array The persisted values by key.
+	 * @throws InvalidArgumentException If a value is refused; nothing is written.
+	 * @throws RuntimeException If the write fails.
+	 *
+	 * @spec openspec/changes/admin-settings/tasks.md#task-1.5
+	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	public function saveSettings(array $data): array {
+		$before = $this->linkSettings();
+		$saved = $this->updateSettings(data: $data);
+		$this->connectionReporter()?->refreshFromSave(savedKeys: array_keys($saved));
+		$this->queueLinkRewrite(before: $before, saved: $saved);
+
+		return $saved;
+	}//end saveSettings()
+
+	/**
+	 * The stored settings that shape a publication's public and officer pages.
+	 *
+	 * @return array<string, string> The values by key.
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	private function linkSettings(): array {
+		$values = [];
+		foreach (self::LINK_SETTINGS as $key) {
+			$values[$key] = $this->config->getValueString($this->appName, $key, '');
+		}
+
+		return $values;
+	}//end linkSettings()
+
+	/**
+	 * Queue the rewrite of every publication's pages when a link setting changed.
+	 *
+	 * @param array<string, string> $before The link settings before the save.
+	 * @param array<string, mixed>  $saved  The persisted values by key.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	private function queueLinkRewrite(array $before, array $saved): void {
+		foreach (self::LINK_SETTINGS as $key) {
+			if (array_key_exists($key, $saved) === true && (string)$saved[$key] !== $before[$key]) {
+				$this->jobList()?->add(PublicationLinksRewrite::class);
+				return;
+			}
+		}
+	}//end queueLinkRewrite()
+
+	/**
+	 * The connection reporter, or null when it cannot be resolved (no integriq binding).
+	 *
+	 * Resolved on use, so this service's constructor keeps its collaborators.
+	 *
+	 * @return ConnectionReporterInterface|null
+	 *
+	 * @spec openspec/changes/admin-settings/tasks.md#task-1.5
+	 */
+	private function connectionReporter(): ?ConnectionReporterInterface {
+		try {
+			$reporter = $this->container->get(ConnectionReporterInterface::class);
+		} catch (\Throwable) {
+			return null;
+		}
+
+		if ($reporter instanceof ConnectionReporterInterface === false) {
+			return null;
+		}
+
+		return $reporter;
+	}//end connectionReporter()
+
+	/**
+	 * The background job list, or null when it cannot be resolved.
+	 *
+	 * @return IJobList|null
+	 *
+	 * @spec openspec/changes/admin-settings/tasks.md#task-1.5
+	 */
+	private function jobList(): ?IJobList {
+		try {
+			$jobs = $this->container->get(IJobList::class);
+		} catch (\Throwable) {
+			return null;
+		}
+
+		if ($jobs instanceof IJobList === false) {
+			return null;
+		}
+
+		return $jobs;
+	}//end jobList()
 
 	/**
 	 * Write the OOAPI read rule again when the consumer list or an OOAPI schema changed.

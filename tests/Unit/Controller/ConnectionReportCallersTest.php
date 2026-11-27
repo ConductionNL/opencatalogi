@@ -173,11 +173,10 @@ class ConnectionReportCallersTest extends TestCase {
 	 * The settings controller around a service double.
 	 *
 	 * @param SettingsService $service The settings service double.
-	 * @param ConnectionReporter|null $reporter The reporter, or none.
 	 *
 	 * @return SettingsController
 	 */
-	private function settingsController(SettingsService $service, ?ConnectionReporter $reporter): SettingsController {
+	private function settingsController(SettingsService $service): SettingsController {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParams')->willReturn(['woo_index_registration_status' => 'registered']);
 
@@ -186,47 +185,41 @@ class ConnectionReportCallersTest extends TestCase {
 			$request,
 			$service,
 			$this->createMock(IL10N::class),
-			$this->createMock(IUserSession::class),
-			$reporter
+			$this->createMock(IUserSession::class)
 		);
 	}//end settingsController()
 
 	/**
-	 * A settings save hands the keys it wrote to the reporter, and answers as before.
+	 * A settings save goes to the service's save, which asks the reporter (SettingsSaveTest), and answers what it saved.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/admin-settings/tasks.md#task-1.5
 	 */
 	public function testASettingsSaveHandsTheWrittenKeysToTheReporter(): void {
 		$written = ['woo_index_registration_status' => 'registered', 'catalog_register' => '3'];
-		$service = $this->createMock(SettingsService::class);
-		$service->method('updateSettings')->willReturn($written);
+		$service = $this->createMock(originalClassName: SettingsService::class);
+		$service->expects($this->once())
+			->method('saveSettings')
+			->with(['woo_index_registration_status' => 'registered'])
+			->willReturn($written);
+		$service->expects($this->never())->method('updateSettings');
 
-		$reporter = $this->reporter();
-		$reporter->expects($this->once())
-			->method('refreshFromSave')
-			->with(['woo_index_registration_status', 'catalog_register'])
-			->willReturn(['woo-index']);
-
-		$with = $this->settingsController($service, $reporter)->update();
-		$without = $this->settingsController($service, null)->update();
-
-		$this->assertSame($written, $with->getData());
-		$this->assertSame($without->getData(), $with->getData());
+		$this->assertSame(expected: $written, actual: $this->settingsController(service: $service)->update()->getData());
 	}//end testASettingsSaveHandsTheWrittenKeysToTheReporter()
 
 	/**
-	 * A settings save that fails asks for nothing: no setting changed.
+	 * A settings save that fails answers 500.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/admin-settings/tasks.md#task-1.5
 	 */
 	public function testAFailedSettingsSaveAsksForNothing(): void {
 		$service = $this->createMock(SettingsService::class);
-		$service->method('updateSettings')->willThrowException(new RuntimeException('write failed'));
+		$service->method('saveSettings')->willThrowException(new RuntimeException('write failed'));
 
-		$reporter = $this->reporter();
-		$reporter->expects($this->never())->method('refreshFromSave');
-
-		$this->assertSame(500, $this->settingsController($service, $reporter)->update()->getStatus());
+		$this->assertSame(expected: 500, actual: $this->settingsController(service: $service)->update()->getStatus());
 	}//end testAFailedSettingsSaveAsksForNothing()
 
 	/**

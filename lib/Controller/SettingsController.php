@@ -30,16 +30,12 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use InvalidArgumentException;
-use OCA\OpenCatalogi\BackgroundJob\PublicationLinksRewrite;
-use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\BackgroundJob\IJobList;
-use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
@@ -52,13 +48,6 @@ use OCP\IUserSession;
 class SettingsController extends Controller {
 
 	/**
-	 * The settings whose change rewrites every publication's pages (REQ-PTS-001).
-	 *
-	 * @var array<int, string>
-	 */
-	private const LINK_SETTINGS = ['publication_url_template', 'publication_url_catalog'];
-
-	/**
 	 * SettingsController constructor.
 	 *
 	 * @param string $appName The name of the app
@@ -66,11 +55,8 @@ class SettingsController extends Controller {
 	 * @param SettingsServiceInterface $settingsService The settings service.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The user session.
-	 * @param ConnectionReporterInterface|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
-	 * @param IJobList|null $jobs Queues the rewrite of every publication's pages.
-	 * @param IAppConfig|null $config Reads the link settings before a save.
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
+	 * @spec openspec/changes/admin-settings/tasks.md#task-1.5
 	 */
 	public function __construct(
 		$appName,
@@ -78,9 +64,6 @@ class SettingsController extends Controller {
 		private readonly SettingsServiceInterface $settingsService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly ?ConnectionReporterInterface $connectionReporter = null,
-		private readonly ?IJobList $jobs = null,
-		private readonly ?IAppConfig $config = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -150,25 +133,20 @@ class SettingsController extends Controller {
 	 * returns true unconditionally for any request carrying `OCS-APIRequest`,
 	 * which is what `tests/e2e/ci-seed.sh` already sends.
 	 *
-	 * After the write it asks integriq to resolve every connection whose keys
-	 * the save wrote, such as the Woo-index registration status
-	 * (adopt-connection-registry). That never throws, does nothing without
-	 * integriq, and never changes the response.
+	 * The save, and what it sets off (asking integriq to look again at the
+	 * connections whose keys it wrote, and queueing the rewrite of every
+	 * publication's pages when a link setting changed), is
+	 * {@see SettingsServiceInterface::saveSettings()}.
 	 *
 	 * @return JSONResponse JSON response containing the updated settings.
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
-	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
+	 * @spec openspec/changes/admin-settings/tasks.md#task-1.5
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function update(): JSONResponse {
 		try {
-			$data = $this->request->getParams();
-			$links = $this->linkSettings();
-			$result = $this->settingsService->updateSettings($data);
-			$this->connectionReporter?->refreshFromSave(savedKeys: array_keys($result));
-			$this->queueLinkRewrite(before: $links, saved: $result);
-			return new JSONResponse($result);
+			return new JSONResponse($this->settingsService->saveSettings(data: $this->request->getParams()));
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 400);
 		} catch (\Exception $e) {
@@ -176,43 +154,6 @@ class SettingsController extends Controller {
 		}
 
 	}//end update()
-
-	/**
-	 * The stored settings that shape a publication's public and officer pages.
-	 *
-	 * @return array<string, string> The values by key, empty without app config.
-	 *
-	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
-	 */
-	private function linkSettings(): array {
-		$values = [];
-		foreach (self::LINK_SETTINGS as $key) {
-			if ($this->config !== null) {
-				$values[$key] = $this->config->getValueString('opencatalogi', $key, '');
-			}
-		}
-
-		return $values;
-	}//end linkSettings()
-
-	/**
-	 * Queue the rewrite of every publication's pages when a link setting changed.
-	 *
-	 * @param array<string, string> $before The link settings before the save.
-	 * @param array<string, mixed>  $saved  The persisted values by key.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/archive/2026-11-25-publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
-	 */
-	private function queueLinkRewrite(array $before, array $saved): void {
-		foreach (self::LINK_SETTINGS as $key) {
-			if (array_key_exists($key, $saved) === true && array_key_exists($key, $before) === true && (string)$saved[$key] !== $before[$key]) {
-				$this->jobs?->add(PublicationLinksRewrite::class);
-				return;
-			}
-		}
-	}//end queueLinkRewrite()
 
 	/**
 	 * Legacy alias for {@see update()} — handles the post request to update settings.
@@ -421,31 +362,22 @@ class SettingsController extends Controller {
 	 * @return JSONResponse JSON response containing import results.
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md
+	 * @spec openspec/changes/admin-settings/tasks.md#task-1.5
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function manualImport(): JSONResponse {
 		try {
-			$params = $this->request->getParams();
-			$forceImport = isset($params['force']) === true && $params['force'] === true;
-
-			$result = $this->settingsService->manualImport($forceImport);
-
-			if ($result['success'] === true) {
-				return new JSONResponse($result);
-			}
-
-			return new JSONResponse(data: $result, statusCode: 400);
+			$result = $this->settingsService->manualImport(forceImport: ($this->request->getParams()['force'] ?? null) === true);
+			$status = match ($result['success']) {
+				true => Http::STATUS_OK,
+				default => Http::STATUS_BAD_REQUEST,
+			};
+			return new JSONResponse(data: $result, statusCode: $status);
 		} catch (\Exception $e) {
 			$this->settingsService->recordFailure(context: 'importing the configuration', exception: $e);
-			return new JSONResponse(
-				data: [
-					'success' => false,
-					'message' => $this->l10n->t('Import failed'),
-					'error' => $this->genericError(),
-				],
-				statusCode: 500
-			);
-		}//end try
+			$failure = ['success' => false, 'message' => $this->l10n->t('Import failed'), 'error' => $this->genericError()];
+			return new JSONResponse(data: $failure, statusCode: Http::STATUS_INTERNAL_SERVER_ERROR);
+		}
 
 	}//end manualImport()
 	/**

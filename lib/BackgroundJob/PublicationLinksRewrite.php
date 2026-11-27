@@ -3,7 +3,7 @@
 /**
  * Rewrites every publication's public and officer pages once, after a link setting changed.
  *
- * Queued by SettingsController when `publication_url_template` or
+ * Queued by SettingsService::saveSettings() when `publication_url_template` or
  * `publication_url_catalog` changes (publication-tells-its-source, REQ-PTS-001).
  *
  * @category BackgroundJob
