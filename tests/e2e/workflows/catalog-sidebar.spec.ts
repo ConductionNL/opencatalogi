@@ -292,7 +292,7 @@ test.describe('catalog entries in the navigation', () => {
 		await expect(index).toBeVisible({ timeout: 15000 })
 		await expect(
 			index.locator('[data-testid="cn-cta-primary"]').first(),
-		).toHaveAccessibleName('Add Publication')
+		).toHaveAccessibleName('New Publication')
 
 		// Switching catalogs moves the active state with it.
 		await catalogEntry(page, slugB).click()
