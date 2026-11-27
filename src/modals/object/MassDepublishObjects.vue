@@ -74,6 +74,12 @@
 			<NcNoteCard v-if="alreadyDepublishedCount > 0" type="warning">
 				{{ alreadyDepublishedWarning }}
 			</NcNoteCard>
+			<NcNoteCard v-if="conceptCount > 0" type="warning">
+				{{ conceptWarning }}
+			</NcNoteCard>
+			<NcNoteCard v-if="unscheduledCount > 0" type="warning">
+				{{ unscheduledWarning }}
+			</NcNoteCard>
 			<NcNoteCard v-if="unsupportedCount > 0" type="warning">
 				{{ unsupportedWarning }}
 			</NcNoteCard>
@@ -90,7 +96,12 @@ import { NcDateTimePicker, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 import MassObjectActionDialog from './MassObjectActionDialog.vue'
-import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
+import {
+	depublishPatch,
+	publicationDateFields,
+	publicationWindowStatus,
+	todayDate,
+} from '../../services/publicationWindow.js'
 import { objectStore } from '../../store/store.js'
 import massObjectAction from './massObjectAction.js'
 
@@ -125,7 +136,12 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		today() {
-			return new Date().toISOString().slice(0, 10)
+			return todayDate()
+		},
+
+		/** The date this depublish writes. @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004 */
+		targetDate() {
+			return this.mode === 'later' ? this.depublishDate : this.today
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
@@ -149,8 +165,70 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		alreadyDepublishedCount() {
-			return this.selectedObjects.filter((obj) => this.isDepublished(obj))
-				.length
+			return this.countWithStatus('depublished')
+		},
+
+		/** @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004 */
+		conceptCount() {
+			return this.countWithStatus('concept')
+		},
+
+		/** @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004 */
+		conceptWarning() {
+			const count = this.conceptCount
+			if (count === 1) {
+				return t(
+					'opencatalogi',
+					'1 of the selected publications is a concept and will be skipped.',
+				)
+			}
+			return t(
+				'opencatalogi',
+				'{count} of the selected publications are concepts and will be skipped.',
+				{ count },
+			)
+		},
+
+		/**
+		 * How many scheduled publications this depublish takes back to concept,
+		 * because the date does not fall after their publication date.
+		 *
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
+		 */
+		unscheduledCount() {
+			if (!this.targetDate) return 0
+			return this.selectedObjects.filter((obj) => {
+				const patch = depublishPatch(obj, this.targetDate, this.today)
+				const fields = publicationDateFields(obj)
+				return patch !== null && Object.hasOwn(patch, fields.publication)
+			}).length
+		},
+
+		/** @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004 */
+		unscheduledWarning() {
+			const count = this.unscheduledCount
+			if (count === 1) {
+				return t(
+					'opencatalogi',
+					'1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.',
+				)
+			}
+			return t(
+				'opencatalogi',
+				'{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.',
+				{ count },
+			)
+		},
+
+		/**
+		 * How many selected publications this depublish changes.
+		 *
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
+		 */
+		depublishableCount() {
+			return this.selectedObjects.filter(
+				(obj) => depublishPatch(obj, this.today, this.today) !== null,
+			).length
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
@@ -171,9 +249,8 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
 		unsupportedCount() {
-			return this.selectedObjects.filter(
-				(obj) => !schemaHasPublicationDateFields(obj),
-			).length
+			return this.selectedObjects.filter((obj) => this.isObjectUnsupported(obj))
+				.length
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
@@ -229,10 +306,7 @@ export default {
 			if (this.selectedObjects.length === 0) return true
 			if (this.mode === 'later' && !this.depublishDate) return true
 			// Nothing to do if every selected item would be skipped.
-			if (this.unsupportedCount === this.selectedObjects.length) return true
-			if (this.alreadyDepublishedCount === this.selectedObjects.length)
-				return true
-			return false
+			return this.depublishableCount === 0
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2 */
@@ -251,59 +325,32 @@ export default {
 
 	methods: {
 		/**
-		 * Normalize a date-like value to a YYYY-MM-DD string for comparison, or null.
-		 * Absent/empty values return null. depublicationDate/publicationDate are
-		 * schema-declared as format: 'date', so values are YYYY-MM-DD strings;
-		 * lexicographic comparison matches chronological order.
+		 * How many selected publications whose schema has a depublication date
+		 * stand at this status.
 		 *
-		 * @param {unknown} value - The raw date value from the object
-		 * @return {string|null} The normalized YYYY-MM-DD string or null
+		 * @param {string} status The publication window status.
+		 * @return {number} The count.
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
 		 */
-		/**
-		 * @param value
-		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2
-		 */
-		normalizeDate(value) {
-			if (value == null || value === '') return null
-			return String(value).slice(0, 10)
+		countWithStatus(status) {
+			return this.selectedObjects.filter(
+				(obj) =>
+					!this.isObjectUnsupported(obj)
+					&& publicationWindowStatus(obj, this.today) === status,
+			).length
 		},
 
 		/**
-		 * Determine if an object is currently depublished: depublish date is set,
-		 * has already passed (today or earlier), and is the most recent of
-		 * publicationDate/depublicationDate. A future depublicationDate means the
-		 * item is *scheduled* to be depublished but is still published today, so
-		 * it should NOT be treated as depublished here — the user must be able to
-		 * reschedule or depublish it immediately.
-		 *
-		 * Tiebreaker on equal dates: depublish wins.
-		 *
-		 * @param {object} obj - The publication object
-		 * @return {boolean} true if currently depublished
-		 */
-		/**
-		 * @param obj
-		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-2
-		 */
-		isDepublished(obj) {
-			const depub = this.normalizeDate(obj?.depublicationDate)
-			if (!depub) return false
-			if (depub > this.today) return false
-			const pub = this.normalizeDate(obj?.publicationDate)
-			if (!pub) return true
-			return depub >= pub
-		},
-
-		/**
-		 * Predicate passed to SelectedObjectsList: items whose schema does not
-		 * declare both publicationDate and depublicationDate render at reduced
-		 * opacity and are skipped during the depublish loop.
+		 * Predicate passed to SelectedObjectsList: items whose schema has no
+		 * depublication date (`depublicationDate` or `depublicatiedatum`) render
+		 * at reduced opacity and are skipped during the depublish loop.
 		 *
 		 * @param {object} obj - The publication object.
 		 * @return {boolean} true when the object will be skipped.
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
 		 */
 		isObjectUnsupported(obj) {
-			return !schemaHasPublicationDateFields(obj)
+			return !publicationDateFields(obj).depublication
 		},
 
 		/**
@@ -371,27 +418,19 @@ export default {
 			this.loading = true
 			this.error = false
 
-			const targetDate =
-				this.mode === 'later' ? this.depublishDate : this.today
 			const objectsToProcess = [...this.selectedObjects]
 			const successful = []
 			const failed = []
 
 			for (const obj of objectsToProcess) {
 				try {
-					// Skip publications whose schema lacks the publication date
-					// fields the depublish flow writes to.
-					if (!schemaHasPublicationDateFields(obj)) {
-						continue
-					}
-					// Skip already-depublished items: their depublicationDate must not be overwritten.
-					if (this.isDepublished(obj)) {
+					// Unsupported, concept and depublished items are left alone.
+					const patch = depublishPatch(obj, this.targetDate, this.today)
+					if (patch === null) {
 						continue
 					}
 
-					const clone = JSON.parse(JSON.stringify(obj))
-					clone.depublicationDate = targetDate
-					// publicationDate is left unchanged on purpose
+					const clone = Object.assign(JSON.parse(JSON.stringify(obj)), patch)
 
 					const register = clone['@self']?.register ?? clone.register
 					const schema = clone['@self']?.schema ?? clone.schema

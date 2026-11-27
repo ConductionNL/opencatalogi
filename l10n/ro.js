@@ -911,7 +911,11 @@ OC.L10N.register(
         "The organisation could not be saved: %s": "Organizația nu a putut fi salvată: %s",
         "The organisation registers could not be read: %s": "Registrele de organizații nu au putut fi citite: %s",
         "Failed to save settings": "Setările nu au putut fi salvate",
-        "Title not written: the redaction check did not pass": "Titlul nu a fost scris: verificarea anonimizării nu a trecut"
+        "Title not written: the redaction check did not pass": "Titlul nu a fost scris: verificarea anonimizării nu a trecut",
+        "1 of the selected publications is a concept and will be skipped.": "1 dintre publicațiile selectate este un concept și va fi omisă.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} dintre publicațiile selectate sunt concepte și vor fi omise.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 dintre publicațiile selectate este programată și redevine concept: data sa de publicare este ștearsă.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} dintre publicațiile selectate sunt programate și redevin concepte: datele lor de publicare sunt șterse."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

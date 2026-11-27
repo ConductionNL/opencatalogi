@@ -159,3 +159,97 @@ test.describe('Publications selection bar', () => {
 		}
 	})
 })
+
+/*
+ * Publish and Depublish on a single row, and what Depublish does with a
+ * scheduled publication and a concept (PSA-004, PSA-005).
+ *
+ * @e2e openspec/specs/publication-selection-actions/spec.md#scenario-depublishing-one-published-row
+ * @e2e openspec/specs/publication-selection-actions/spec.md#scenario-a-concept-row-offers-no-depublish
+ * @e2e openspec/specs/publication-selection-actions/spec.md#scenario-depublishing-a-scheduled-publication
+ * @e2e openspec/specs/publication-selection-actions/spec.md#scenario-a-concept-is-not-depublished
+ */
+test.describe('Publish and depublish on a row', () => {
+	test.describe.configure({ mode: 'serial' })
+
+	const runId = `psr-${Date.now()}`
+	const fixtures = {
+		published: { title: `${runId} Raadsstukken voor de vergadering van 15 oktober`, publicationDate: '2020-01-01' },
+		scheduled: { title: `${runId} Besluit windpark Oostpolder`, publicationDate: '2099-01-01' },
+		concept: { title: `${runId} Concept jaarverslag` },
+	}
+	const ids: Record<string, string> = {}
+	let path = ''
+	let scope = { register: 0, schema: 0 }
+
+	test.beforeAll(async ({ request }) => {
+		scope = await publicationScope(request)
+		path = (await publicationCatalog(request, runId)).path
+		for (const [key, data] of Object.entries(fixtures)) {
+			const res = await request.post(
+				`${OR_API}/objects/${scope.register}/${scope.schema}`,
+				{ data: { summary: 'Row action fixture', ...data } },
+			)
+			expect(res.ok(), `seed ${key}`).toBe(true)
+			ids[key] = String((await res.json()).id)
+		}
+	})
+
+	test.afterAll(async ({ request }) => {
+		for (const id of Object.values(ids)) {
+			await request.delete(
+				`${OR_API}/objects/${scope.register}/${scope.schema}/${id}`,
+			)
+		}
+	})
+
+	test.beforeEach(async ({ page }) => {
+		await page.goto(`${APP}${path}&_search=${encodeURIComponent(runId)}`)
+		await dismissOverlays(page)
+		await expect(row(page, fixtures.published.title)).toBeVisible({ timeout: 30_000 })
+	})
+
+	/**
+	 * Open a row's actions menu.
+	 *
+	 * @param page The page.
+	 * @param title The row's title.
+	 */
+	async function openRowActions(page: Page, title: string): Promise<void> {
+		await row(page, title)
+			.locator('[data-testid="cn-row-actions"] button')
+			.first()
+			.click()
+	}
+
+	test('Depublish on a published row opens the dialog on that row only', async ({ page }) => {
+		await openRowActions(page, fixtures.published.title)
+		await page.getByRole('menuitem', { name: /^(Depublish|Depubliceren)$/ }).click()
+
+		const dialog = page.getByRole('dialog')
+		await expect(dialog).toContainText(fixtures.published.title)
+		await expect(dialog).not.toContainText(fixtures.scheduled.title)
+	})
+
+	test('a concept row offers Publish and not Depublish', async ({ page }) => {
+		await openRowActions(page, fixtures.concept.title)
+
+		await expect(page.getByRole('menuitem', { name: /^(Publish|Publiceren)$/ })).toBeVisible()
+		await expect(page.getByRole('menuitem', { name: /^(Depublish|Depubliceren)$/ })).toHaveCount(0)
+	})
+
+	test('Depublish skips a concept and takes a scheduled publication back to concept', async ({ page, request }) => {
+		await select(page, [fixtures.scheduled.title, fixtures.concept.title])
+		await page.locator('[data-testid="cn-bulk-action-depublish"]').first().click()
+
+		const dialog = page.getByRole('dialog')
+		await expect(dialog).toContainText(/is a concept and will be skipped|is een concept en wordt overgeslagen/)
+		await expect(dialog).toContainText(/goes back to concept|wordt weer een concept/)
+		await dialog.getByRole('button', { name: /^(Depublish|Depubliceren)$/ }).click()
+
+		await expect.poll(async () => {
+			const res = await request.get(`${OR_API}/objects/${scope.register}/${scope.schema}/${ids.scheduled}`)
+			return (await res.json()).publicationDate ?? null
+		}, { timeout: 15_000 }).toBeNull()
+	})
+})

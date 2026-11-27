@@ -911,7 +911,11 @@ OC.L10N.register(
         "The organisation could not be saved: %s": "Организацијата не можеше да се зачува: %s",
         "The organisation registers could not be read: %s": "Регистрите на организации не можеа да се прочитаат: %s",
         "Failed to save settings": "Поставките не можеа да се зачуваат",
-        "Title not written: the redaction check did not pass": "Насловот не е запишан: проверката на затемнувањето не помина"
+        "Title not written: the redaction check did not pass": "Насловот не е запишан: проверката на затемнувањето не помина",
+        "1 of the selected publications is a concept and will be skipped.": "1 од избраните објави е концепт и ќе биде прескокната.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} од избраните објави се концепти и ќе бидат прескокнати.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 од избраните објави е закажана и повторно станува концепт: нејзиниот датум на објавување се брише.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} од избраните објави се закажани и повторно стануваат концепти: нивните датуми на објавување се бришат."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -674,6 +674,37 @@ describe('CatalogPublicationsIndex', () => {
 			expect(lock.menu).toBe(true)
 		})
 
+		it('binds the selection actions of a catalog without the publication pair', async () => {
+			objectStore.menuCatalogs = [catalog('woo', [19], [184])]
+			const openSelectionDialog = jest.fn(() => true)
+			const { wrapper } = mountPage({
+				otherPairConfig: { bulkActions },
+				handlers: { openSelectionDialog },
+			})
+			await flushPromises()
+
+			const page = indexPage(wrapper)
+			const other = { id: 'a', '@self': { id: 'a', register: 19, schema: 184 } }
+			page.vm.selectedObjects = [other]
+			page.vm.$attrs.bulkActions[0].handler({ selectedIds: ['a'], count: 1 })
+
+			expect(openSelectionDialog).toHaveBeenCalledWith(
+				expect.objectContaining({ objects: [other], props: { dialog: 'massLockObjects' } }),
+			)
+		})
+
+		it('offers Publish and Depublish in the manifest for every catalog', () => {
+			const manifest = require('../../manifest.json')
+			const config = manifest.pages.find((p) => p.id === 'Publications').config
+			const ids = (actions) => actions
+				.filter((action) => typeof action === 'object' && action.handler === 'openSelectionDialog' && action.props?.dialog?.match(/^mass(De)?publishObjects$/i))
+				.map((action) => action.id)
+
+			expect(ids(config.otherPairConfig.bulkActions)).toEqual(['publish', 'depublish'])
+			expect(ids(config.otherPairConfig.actions)).toEqual(['publish', 'depublish'])
+			expect(ids(config.publicationPairConfig.actions)).toEqual(['publish', 'depublish'])
+		})
+
 		it('puts Lock, Unlock, Validate, Merge and Migrate under More in the manifest', () => {
 			const manifest = require('../../manifest.json')
 			const config = manifest.pages.find((p) => p.id === 'Publications').config
@@ -686,6 +717,77 @@ describe('CatalogPublicationsIndex', () => {
 
 			expect(underMore).toEqual(['lock', 'unlock', 'validate', 'merge', 'migrate'])
 			expect(asButtons).toEqual(['publish', 'depublish'])
+		})
+	})
+
+	describe('publish and depublish row actions', () => {
+		const actions = [
+			'builtin:view',
+			{ id: 'publish', handler: 'openSelectionDialog', props: { dialog: 'massPublishObjects' } },
+			{ id: 'depublish', handler: 'openSelectionDialog', props: { dialog: 'massDepublishObjects' } },
+		]
+		/**
+		 * A row of schema 184, whose schema has Dutch date properties.
+		 *
+		 * @param {object} dates Its date properties.
+		 * @return {object} The row.
+		 */
+		const woo = (dates = {}) => ({ id: 'w1', ...dates, '@self': { id: 'w1', register: 19, schema: 184 } })
+
+		beforeEach(() => {
+			objectStore.settings = {
+				availableRegisters: [{
+					id: 19,
+					schemas: [{ id: 184, properties: { publicatiedatum: {}, depublicatiedatum: {} } }],
+				}],
+			}
+		})
+
+		afterEach(() => {
+			objectStore.settings = null
+			navigationStore.setDialog(false)
+		})
+
+		it('shows Publish on a row not yet published and Depublish on a published one, of any schema', async () => {
+			objectStore.menuCatalogs = [catalog('woo', [19], [173, 184])]
+			const { wrapper } = mountPage({
+				publicationPairConfig: { actions },
+				handlers: { openSelectionDialog: jest.fn() },
+			})
+			await flushPromises()
+
+			const [, publish, depublish] = indexPage(wrapper).vm.$attrs.actions
+			const concept = woo()
+			const live = woo({ publicatiedatum: '2020-01-01' })
+			expect([publish.visible(concept), depublish.visible(concept)]).toEqual([true, false])
+			expect([publish.visible(live), depublish.visible(live)]).toEqual([false, true])
+		})
+
+		it('opens the dialog on its own row and reloads the list when it closes, keeping the selection', async () => {
+			objectStore.menuCatalogs = [catalog('woo', [19], [184])]
+			const openSelectionDialog = jest.fn(() => {
+				navigationStore.setDialog('massDepublishObjects')
+				return true
+			})
+			const { wrapper } = mountPage({
+				otherPairConfig: { actions },
+				handlers: { openSelectionDialog },
+			})
+			await flushPromises()
+
+			const page = indexPage(wrapper)
+			const selected = woo({ id: 'w2' })
+			page.vm.selectedObjects = [selected]
+			const row = woo({ publicatiedatum: '2020-01-01' })
+			page.vm.$attrs.actions[2].handler(row)
+
+			expect(openSelectionDialog).toHaveBeenCalledWith({ objects: [row], props: { dialog: 'massDepublishObjects' } })
+			await flushPromises()
+			navigationStore.setDialog(false)
+			await flushPromises()
+
+			expect(page.vm.refreshCount).toBe(1)
+			expect(page.vm.selectedObjects).toEqual([selected])
 		})
 	})
 

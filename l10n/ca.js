@@ -911,7 +911,11 @@ OC.L10N.register(
         "The organisation could not be saved: %s": "No s’ha pogut desar l’organització: %s",
         "The organisation registers could not be read: %s": "No s’han pogut llegir els registres d’organitzacions: %s",
         "Failed to save settings": "No s'ha pogut desar la configuració",
-        "Title not written: the redaction check did not pass": "Títol no escrit: la comprovació de l’anonimització no ha passat"
+        "Title not written: the redaction check did not pass": "Títol no escrit: la comprovació de l’anonimització no ha passat",
+        "1 of the selected publications is a concept and will be skipped.": "1 de les publicacions seleccionades és un concepte i s'ometrà.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} de les publicacions seleccionades són conceptes i s'ometran.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 de les publicacions seleccionades està programada i torna a ser un concepte: s'esborra la seva data de publicació.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} de les publicacions seleccionades estan programades i tornen a ser conceptes: s'esborren les seves dates de publicació."
     },
     "nplurals=2; plural=(n != 1);"
 )

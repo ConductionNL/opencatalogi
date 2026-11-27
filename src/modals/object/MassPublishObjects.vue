@@ -112,10 +112,15 @@ import {
 	publishThroughLifecycle,
 } from '../../services/publicationTransition.js'
 import {
+	publicationDateFields,
+	publicationWindowStatus,
+	publishPatch,
+	todayDate,
+} from '../../services/publicationWindow.js'
+import {
 	missingToPublish,
 	refusalMessage,
 } from '../../services/requiredToPublish.js'
-import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 import { objectStore } from '../../store/store.js'
 import massObjectAction from './massObjectAction.js'
 
@@ -150,7 +155,7 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		today() {
-			return new Date().toISOString().slice(0, 10)
+			return todayDate()
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
@@ -209,9 +214,8 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		unsupportedCount() {
-			return this.selectedObjects.filter(
-				(obj) => !schemaHasPublicationDateFields(obj),
-			).length
+			return this.selectedObjects.filter((obj) => this.isObjectUnsupported(obj))
+				.length
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
@@ -241,7 +245,7 @@ export default {
 			return this.selectedObjects
 				.filter(
 					(obj) =>
-						schemaHasPublicationDateFields(obj)
+						!this.isObjectUnsupported(obj)
 						&& !this.isAlreadyPublished(obj),
 				)
 				.map((obj) => ({
@@ -262,7 +266,7 @@ export default {
 			return (
 				this.selectedObjects.filter(
 					(obj) =>
-						schemaHasPublicationDateFields(obj)
+						!this.isObjectUnsupported(obj)
 						&& (this.mode === 'retroactive'
 							|| !this.isAlreadyPublished(obj)),
 				).length - this.incompleteObjects.length
@@ -413,76 +417,40 @@ export default {
 
 	methods: {
 		/**
-		 * Normalize a date-like value to a YYYY-MM-DD string for comparison, or null.
-		 * Absent/empty values return null. publicationDate is schema-declared as
-		 * format: 'date', so values are YYYY-MM-DD strings; lexicographic comparison
-		 * matches chronological order.
-		 *
-		 * @param {unknown} value - The raw date value from the object
-		 * @return {string|null} The normalized YYYY-MM-DD string or null
-		 */
-		/**
-		 * @param value
-		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1
-		 */
-		normalizeDate(value) {
-			if (value == null || value === '') return null
-			return String(value).slice(0, 10)
-		},
-
-		/**
-		 * Determine if an object is currently published (live): publicationDate is in
-		 * the past or today, and is more recent than any depublicationDate.
-		 * A future publicationDate means the publication is scheduled but not yet live,
-		 * so it is not considered "already published" and can be re-targeted to now.
+		 * Whether an object is published (live) today, its depublication date
+		 * still ahead or not set. A scheduled one is not, so it can be moved to now.
 		 *
 		 * @param {object} obj - The publication object
 		 * @return {boolean} true if currently published
-		 */
-		/**
-		 * @param obj
-		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
 		 */
 		isAlreadyPublished(obj) {
-			const pub = this.normalizeDate(obj?.publicationDate)
-			if (!pub) return false
-			// Future publication date → scheduled but not yet live; allow re-publishing.
-			if (pub > this.today) return false
-			const depub = this.normalizeDate(obj?.depublicationDate)
-			if (!depub) return true
-			return pub > depub
+			return publicationWindowStatus(obj, this.today) === 'published'
 		},
 
 		/**
-		 * Determine if an object is currently depublished: depublish date is the
-		 * most recent, or the only one set. Drives the 'Publish retroactive' option.
+		 * Whether an object is depublished: its depublication date has come.
+		 * Drives the 'Publish retroactive' option.
 		 *
 		 * @param {object} obj - The publication object
 		 * @return {boolean} true if currently depublished
-		 */
-		/**
-		 * @param obj
-		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
 		 */
 		isDepublished(obj) {
-			const depub = this.normalizeDate(obj?.depublicationDate)
-			if (!depub) return false
-			const pub = this.normalizeDate(obj?.publicationDate)
-			if (!pub) return true
-			// Tiebreaker: depublish wins on equal dates.
-			return depub >= pub
+			return publicationWindowStatus(obj, this.today) === 'depublished'
 		},
 
 		/**
-		 * Predicate passed to SelectedObjectsList: items whose schema does not
-		 * declare both publicationDate and depublicationDate render at reduced
-		 * opacity and are skipped during the publish loop.
+		 * Predicate passed to SelectedObjectsList: items whose schema has no
+		 * publication date (`publicationDate` or `publicatiedatum`) render at
+		 * reduced opacity and are skipped during the publish loop.
 		 *
 		 * @param {object} obj - The publication object.
 		 * @return {boolean} true when the object will be skipped.
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
 		 */
 		isObjectUnsupported(obj) {
-			return !schemaHasPublicationDateFields(obj)
+			return !publicationDateFields(obj).publication
 		},
 
 		/**
@@ -557,7 +525,7 @@ export default {
 		 * @spec openspec/changes/archive/2026-11-25-publication-required-at-publish/specs/publications/spec.md#requirement-the-forms-say-what-is-needed-to-publish-req-prp-003
 		 */
 		skipsPublish(obj, incomplete) {
-			if (!schemaHasPublicationDateFields(obj)) return true
+			if (this.isObjectUnsupported(obj)) return true
 			if (this.mode !== 'retroactive' && this.isAlreadyPublished(obj)) {
 				return true
 			}
@@ -580,12 +548,12 @@ export default {
 				return
 			}
 
-			const clone = JSON.parse(JSON.stringify(obj))
-			// In retroactive mode the publicationDate is left unchanged on purpose.
-			if (this.mode !== 'retroactive') {
-				clone.publicationDate = targetDate
-			}
-			clone.depublicationDate = null
+			// In retroactive mode the publication date is left unchanged on purpose.
+			const patch = publishPatch(
+				obj,
+				this.mode === 'retroactive' ? null : targetDate,
+			)
+			const clone = Object.assign(JSON.parse(JSON.stringify(obj)), patch)
 
 			const register = clone['@self']?.register ?? clone.register
 			const schema = clone['@self']?.schema ?? clone.schema

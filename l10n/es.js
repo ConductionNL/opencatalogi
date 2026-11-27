@@ -911,7 +911,11 @@ OC.L10N.register(
         "The organisation could not be saved: %s": "No se pudo guardar la organización: %s",
         "The organisation registers could not be read: %s": "No se pudieron leer los registros de organizaciones: %s",
         "Failed to save settings": "No se pudo guardar la configuración",
-        "Title not written: the redaction check did not pass": "Título no escrito: la comprobación de la anonimización no se ha superado"
+        "Title not written: the redaction check did not pass": "Título no escrito: la comprobación de la anonimización no se ha superado",
+        "1 of the selected publications is a concept and will be skipped.": "1 de las publicaciones seleccionadas es un concepto y se omitirá.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} de las publicaciones seleccionadas son conceptos y se omitirán.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 de las publicaciones seleccionadas está programada y vuelve a ser un concepto: se borra su fecha de publicación.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} de las publicaciones seleccionadas están programadas y vuelven a ser conceptos: se borran sus fechas de publicación."
     },
     "nplurals=2; plural=(n != 1);"
 )

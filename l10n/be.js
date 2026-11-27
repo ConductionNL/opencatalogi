@@ -911,7 +911,11 @@ OC.L10N.register(
         "The organisation could not be saved: %s": "Не ўдалося захаваць арганізацыю: %s",
         "The organisation registers could not be read: %s": "Не ўдалося прачытаць рэестры арганізацый: %s",
         "Failed to save settings": "Не ўдалося захаваць налады",
-        "Title not written: the redaction check did not pass": "Назва не запісана: праверка пакрыцця не пройдзена"
+        "Title not written: the redaction check did not pass": "Назва не запісана: праверка пакрыцця не пройдзена",
+        "1 of the selected publications is a concept and will be skipped.": "1 з выбраных публікацый з'яўляецца канцэптам і будзе прапушчана.",
+        "{count} of the selected publications are concepts and will be skipped.": "{count} з выбраных публікацый з'яўляюцца канцэптамі і будуць прапушчаны.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "1 з выбраных публікацый запланаваная і зноў становіцца канцэптам: яе дата публікацыі ачышчаецца.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "{count} з выбраных публікацый запланаваныя і зноў становяцца канцэптамі: іх даты публікацыі ачышчаюцца."
     },
     "nplurals=2; plural=(n != 1);"
 )

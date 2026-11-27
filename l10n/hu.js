@@ -911,7 +911,11 @@ OC.L10N.register(
         "The organisation could not be saved: %s": "A szervezetet nem sikerült menteni: %s",
         "The organisation registers could not be read: %s": "A szervezeti nyilvántartásokat nem sikerült beolvasni: %s",
         "Failed to save settings": "Nem sikerült menteni a beállításokat",
-        "Title not written: the redaction check did not pass": "A cím nincs beírva: a kitakarás ellenőrzése nem sikerült"
+        "Title not written: the redaction check did not pass": "A cím nincs beírva: a kitakarás ellenőrzése nem sikerült",
+        "1 of the selected publications is a concept and will be skipped.": "A kiválasztott közzétételek közül 1 vázlat, ezért kihagyásra kerül.",
+        "{count} of the selected publications are concepts and will be skipped.": "A kiválasztott közzétételek közül {count} vázlat, ezért kihagyásra kerül.",
+        "1 of the selected publications is scheduled and goes back to concept: its publication date is cleared.": "A kiválasztott közzétételek közül 1 ütemezett, és újra vázlat lesz: a közzétételi dátuma törlődik.",
+        "{count} of the selected publications are scheduled and go back to concept: their publication dates are cleared.": "A kiválasztott közzétételek közül {count} ütemezett, és újra vázlat lesz: a közzétételi dátumuk törlődik."
     },
     "nplurals=2; plural=(n != 1);"
 )
