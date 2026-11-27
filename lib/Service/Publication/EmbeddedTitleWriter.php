@@ -106,15 +106,15 @@ class EmbeddedTitleWriter {
 	 *
 	 * @param File   $file       The published copy.
 	 * @param EmbeddedTitle $facts The official title and the publication identifier.
-	 * @param array{values: array<int, string>, outputMode: string}|null $redaction The redacted values and
-	 *        the output mode of a redacted copy, in memory only; null for a document that was not redacted.
+	 * @param RedactedValues|null $redaction What a redacted copy is verified against; null for a document
+	 *                                      that was not redacted.
 	 *
 	 * @return array{status: string, hashBefore: string|null, hashAfter: string|null, reason?: string, verdict?: string}
 	 *
 	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-the-published-file-carries-its-official-title-req-pff-002
 	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
 	 */
-	public function write(File $file, EmbeddedTitle $facts, ?array $redaction = null): array {
+	public function write(File $file, EmbeddedTitle $facts, ?RedactedValues $redaction = null): array {
 		try {
 			$before = $file->getContent();
 		} catch (Throwable $e) {
@@ -135,14 +135,9 @@ class EmbeddedTitleWriter {
 			return $this->failed(file: $file, hash: $hash, error: $e);
 		}
 
-		$verification = null;
-		if ($redaction !== null) {
-			$verification = $this->verifyAgain(bytes: $after, redaction: $redaction);
-			if (($verification['verdict'] ?? '') !== 'clean' || ($verification['mayBePublished'] ?? false) !== true) {
-				$outcome = self::outcome(status: self::SKIPPED, before: $hash, after: $hash, reason: self::VERIFIER);
-				$outcome['verdict'] = (string)($verification['verdict'] ?? 'unverifiable');
-				return $outcome;
-			}
+		[$verification, $refusal] = $this->checkedAgain(bytes: $after, hash: $hash, redaction: $redaction);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		try {
@@ -151,29 +146,73 @@ class EmbeddedTitleWriter {
 			return $this->failed(file: $file, hash: $hash, error: $e);
 		}
 
-		$outcome = self::outcome(status: self::WRITTEN, before: $hash, after: hash('sha256', $after));
+		return $this->written(file: $file, before: $hash, after: $after, verification: $verification);
+	}//end write()
+
+	/**
+	 * For a redacted copy, OpenRegister's verdict on the bytes with the title,
+	 * and the outcome that refuses them when it is not clean.
+	 *
+	 * @param string              $bytes     The bytes with the title.
+	 * @param string              $hash      The sha256 of the bytes as they are.
+	 * @param RedactedValues|null $redaction What a redacted copy is verified against, null otherwise.
+	 *
+	 * @return array{0: array<string, mixed>|null, 1: array<string, mixed>|null} The verdict and the refusal.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 */
+	private function checkedAgain(string $bytes, string $hash, ?RedactedValues $redaction): array {
+		if ($redaction === null) {
+			return [null, null];
+		}
+
+		$verification = $this->verifyAgain(bytes: $bytes, redaction: $redaction);
+		if (($verification['verdict'] ?? '') === 'clean' && ($verification['mayBePublished'] ?? false) === true) {
+			return [$verification, null];
+		}
+
+		$refusal = self::outcome(status: self::SKIPPED, before: $hash, after: $hash, reason: self::VERIFIER);
+		$refusal['verdict'] = (string)($verification['verdict'] ?? 'unverifiable');
+
+		return [$verification, $refusal];
+	}//end checkedAgain()
+
+	/**
+	 * The outcome of a written title; a redacted copy's clean verdict is kept on it.
+	 *
+	 * @param File                      $file         The copy.
+	 * @param string                    $before       The sha256 before.
+	 * @param string                    $after        The bytes written.
+	 * @param array<string, mixed>|null $verification The clean verdict of a redacted copy, null otherwise.
+	 *
+	 * @return array{status: string, hashBefore: string|null, hashAfter: string|null, reason?: string, verdict?: string}
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
+	 */
+	private function written(File $file, string $before, string $after, ?array $verification): array {
+		$outcome = self::outcome(status: self::WRITTEN, before: $before, after: hash('sha256', $after));
 		if ($verification !== null) {
 			$this->keepVerdict(file: $file, verification: $verification);
 			$outcome['verdict'] = 'clean';
 		}
 
 		return $outcome;
-	}//end write()
+	}//end written()
 
 	/**
 	 * OpenRegister's verdict on the bytes about to be written, against the
 	 * values that were redacted. Without the verifier, or when it fails, the
 	 * verdict is `unverifiable`, which writes nothing.
 	 *
-	 * @param string $bytes The bytes with the title.
-	 * @param array{values: array<int, string>, outputMode: string} $redaction The redacted values and the output mode.
+	 * @param string         $bytes     The bytes with the title.
+	 * @param RedactedValues $redaction The redacted values and the output mode.
 	 *
 	 * @return array<string, mixed> The verifier's result.
 	 *
 	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
 	 */
-	private function verifyAgain(string $bytes, array $redaction): array {
-		$mode = (string)($redaction['outputMode'] ?? '');
+	private function verifyAgain(string $bytes, RedactedValues $redaction): array {
+		$mode = $redaction->outputMode();
 		if ($mode === '' && str_starts_with($bytes, '%PDF-') === true) {
 			// An assessment from before the output mode was kept: this writer only changes a PDF that way.
 			$mode = 'pdf';
@@ -185,7 +224,7 @@ class EmbeddedTitleWriter {
 				return ['verdict' => 'unverifiable', 'mayBePublished' => false];
 			}
 
-			$result = $verifier->verify(bytes: $bytes, redactedValues: array_values((array)($redaction['values'] ?? [])), outputMode: $mode);
+			$result = $verifier->verify(bytes: $bytes, redactedValues: $redaction->values(), outputMode: $mode);
 		} catch (Throwable $e) {
 			// The class only: a message could quote a redacted value.
 			$this->logger->warning('[EmbeddedTitleWriter] The redaction could not be verified again: ' . get_class($e));
@@ -213,7 +252,9 @@ class EmbeddedTitleWriter {
 	private function keepVerdict(File $file, array $verification): void {
 		try {
 			$store = $this->container?->get(self::VERDICT_STORE_CLASS);
-			if (is_object($store) === true && method_exists($store, 'record') === true && $store->record(fileId: (int)$file->getId(), verification: $verification) === true) {
+			$kept = (is_object($store) === true && method_exists($store, 'record') === true)
+				&& $store->record(fileId: (int)$file->getId(), verification: $verification) === true;
+			if ($kept === true) {
 				return;
 			}
 		} catch (Throwable $e) {

@@ -1529,26 +1529,30 @@ class WooServiceTest extends TestCase {
 		) extends \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter {
 
 			/**
-			 * What publishDocuments() received as redactions.
+			 * The redacted values each listing carried into publishDocuments(), by its document.
 			 *
-			 * @var array<string, mixed>|null
+			 * @var array<string, mixed>
 			 */
-			public ?array $handed = null;
+			public array $handed = [];
 
 			/**
-			 * Records the redactions, then publishes as usual.
+			 * Records the redacted values, then publishes as usual.
 			 *
 			 * @param array    $batch        The batch.
 			 * @param array    $listings     The listings.
 			 * @param string   $now          The moment.
 			 * @param callable $keepProgress Stores progress.
-			 * @param array    $redactions   The redactions.
 			 *
 			 * @return array
 			 */
-			public function publishDocuments(array $batch, array $listings, string $now, callable $keepProgress, array $redactions = []): array {
-				$this->handed = $redactions;
-				return parent::publishDocuments(batch: $batch, listings: $listings, now: $now, keepProgress: $keepProgress, redactions: $redactions);
+			public function publishDocuments(array $batch, array $listings, string $now, callable $keepProgress): array {
+				foreach ($listings as $listing) {
+					if (isset($listing['redaction']) === true) {
+						$this->handed[$listing['document']] = [$listing['redaction']->values(), $listing['redaction']->outputMode()];
+					}
+				}
+
+				return parent::publishDocuments(batch: $batch, listings: $listings, now: $now, keepProgress: $keepProgress);
 			}//end publishDocuments()
 		};
 		$service = new WooService(
@@ -1562,7 +1566,7 @@ class WooServiceTest extends TestCase {
 
 		$service->publishBatch('batch-1');
 
-		$this->assertSame(expected: ['doc-c-anon' => ['values' => ['Jan Jansen'], 'outputMode' => 'pdf']], actual: $writer->handed);
+		$this->assertSame(expected: ['doc-c-anon' => [['Jan Jansen'], 'pdf']], actual: $writer->handed);
 	}//end testThePublishHandsEachRedactedDocumentsValuesToTheAttach()
 
 	/**

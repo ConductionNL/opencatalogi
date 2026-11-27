@@ -26,6 +26,7 @@ use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
 use OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate;
 use OCA\OpenCatalogi\Service\Publication\PdfTitleUpdate;
+use OCA\OpenCatalogi\Service\Publication\RedactedValues;
 use OCP\Files\File;
 use OCP\Files\NotPermittedException;
 use PHPUnit\Framework\TestCase;
@@ -45,6 +46,7 @@ require_once __DIR__ . '/PdfReadBack.php';
  * @covers \OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate
  * @covers \OCA\OpenCatalogi\Service\Publication\TitleNotWritten
  * @covers \OCA\OpenCatalogi\Service\Publication\EmbeddedTitle
+ * @covers \OCA\OpenCatalogi\Service\Publication\RedactedValues
  */
 class EmbeddedTitleWriterTest extends TestCase {
 
@@ -556,6 +558,21 @@ class EmbeddedTitleWriterTest extends TestCase {
 	private ?object $store = null;
 
 	/**
+	 * What a redacted copy is verified against.
+	 *
+	 * @param array<int, string> $values The redacted values.
+	 * @param string             $mode   The output mode.
+	 *
+	 * @return RedactedValues
+	 */
+	private static function redacted(array $values, string $mode): RedactedValues {
+		return new RedactedValues(
+			redactionLog: array_map(static fn (string $value): array => ['value' => $value], $values),
+			verification: ['outputMode' => $mode]
+		);
+	}//end redacted()
+
+	/**
 	 * Task 2.2b: OpenRegister's verifier runs again on the bytes with the
 	 * title, against the redacted values; a clean verdict writes them and is
 	 * kept on the copy.
@@ -570,7 +587,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 		$outcome = $writer->write(
 			file: $this->file(bytes: self::fixture(name: 'plain')),
 			facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER),
-			redaction: ['values' => ['Jan Jansen', '0612345678'], 'outputMode' => 'pdf']
+			redaction: self::redacted(values: ['Jan Jansen', '0612345678'], mode: 'pdf')
 		);
 
 		$this->assertSame(expected: EmbeddedTitleWriter::WRITTEN, actual: $outcome['status']);
@@ -597,7 +614,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 		$outcome = $writer->write(
 			file: $this->file(bytes: $plain),
 			facts: new EmbeddedTitle(title: 'Besluit op het verzoek van Jan Jansen', identifier: self::IDENTIFIER),
-			redaction: ['values' => ['Jan Jansen'], 'outputMode' => 'pdf']
+			redaction: self::redacted(values: ['Jan Jansen'], mode: 'pdf')
 		);
 
 		$this->assertSame(expected: EmbeddedTitleWriter::SKIPPED, actual: $outcome['status']);
@@ -618,7 +635,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 	 */
 	public function testWithoutAVerdictARedactedCopyIsNotWritten(): void {
 		$facts = new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER);
-		$redaction = ['values' => ['Jan Jansen'], 'outputMode' => 'pdf'];
+		$redaction = self::redacted(values: ['Jan Jansen'], mode: 'pdf');
 
 		$outcome = $this->writer()->write(file: $this->file(bytes: self::fixture(name: 'plain')), facts: $facts, redaction: $redaction);
 		$this->assertSame(expected: [EmbeddedTitleWriter::SKIPPED, EmbeddedTitleWriter::VERIFIER, 'unverifiable'], actual: [$outcome['status'], $outcome['reason'], $outcome['verdict']]);
@@ -632,7 +649,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 		$outcome = $this->writer(container: $this->withVerifier())->write(
 			file: $this->file(bytes: self::fixture(name: 'plain')),
 			facts: $facts,
-			redaction: ['values' => [], 'outputMode' => 'pdf']
+			redaction: self::redacted(values: [], mode: 'pdf')
 		);
 		$this->assertSame(expected: 'unverifiable', actual: $outcome['verdict'], message: 'no redacted values is nothing to verify against');
 		$this->assertNull(actual: $this->written);
@@ -641,7 +658,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 		$outcome = $this->writer(container: $this->withVerifier())->write(
 			file: $this->file(bytes: self::fixture(name: 'plain')),
 			facts: $facts,
-			redaction: ['values' => ['Jan Jansen'], 'outputMode' => '']
+			redaction: self::redacted(values: ['Jan Jansen'], mode: '')
 		);
 		$this->assertSame(expected: EmbeddedTitleWriter::WRITTEN, actual: $outcome['status']);
 	}//end testWithoutAVerdictARedactedCopyIsNotWritten()
@@ -657,7 +674,7 @@ class EmbeddedTitleWriterTest extends TestCase {
 		$outcome = $this->writer(container: $this->withVerifier(keeps: false))->write(
 			file: $this->file(bytes: self::fixture(name: 'plain')),
 			facts: new EmbeddedTitle(title: self::TITLE, identifier: self::IDENTIFIER),
-			redaction: ['values' => ['Jan Jansen'], 'outputMode' => 'pdf']
+			redaction: self::redacted(values: ['Jan Jansen'], mode: 'pdf')
 		);
 
 		$this->assertSame(expected: EmbeddedTitleWriter::WRITTEN, actual: $outcome['status']);

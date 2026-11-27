@@ -24,6 +24,7 @@ namespace Unit\Service\Woo;
 
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
+use OCA\OpenCatalogi\Service\Publication\RedactedValues;
 use OCA\OpenCatalogi\Service\Publication\OfficeTitleUpdate;
 use OCA\OpenCatalogi\Service\Publication\PdfTitleUpdate;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
@@ -464,12 +465,12 @@ class BatchPublicationWriterTest extends TestCase {
 		$titles = new EmbeddedTitleWriter(new PdfTitleUpdate(), new OfficeTitleUpdate(), $this->createMock(originalClassName: LoggerInterface::class), $container);
 
 		[$batch, $listings] = self::batch(documents: ['Woo/besluit.pdf', 'Woo/ondertekend.pdf']);
+		$listings[0]['redaction'] = new RedactedValues(redactionLog: [['value' => 'Jan Jansen']], verification: ['outputMode' => 'pdf']);
 		$result = $this->writer(titles: $titles)->publishDocuments(
 			batch: $batch,
 			listings: $listings,
 			now: '2026-11-15T10:00:00+00:00',
-			keepProgress: static fn (): null => null,
-			redactions: ['Woo/besluit.pdf' => ['values' => ['Jan Jansen'], 'outputMode' => 'pdf']]
+			keepProgress: static fn (): null => null
 		);
 
 		$this->assertSame(expected: [['values' => ['Jan Jansen'], 'outputMode' => 'pdf']], actual: $verifier->calls);
@@ -479,34 +480,31 @@ class BatchPublicationWriterTest extends TestCase {
 	}//end testARedactedCopyIsVerifiedAgainWithItsOwnValues()
 
 	/**
-	 * Task 2.2b: the redacted values come from the redaction log, by the
-	 * redacted document's reference, with the stored output mode.
+	 * Task 2.2b: a partly public listing carries what its copy is verified
+	 * against, read from its redaction log, and serialises without the values.
 	 *
 	 * @spec openspec/changes/published-file-carries-its-facts/tasks.md#task-2.2b
 	 *
 	 * @return void
 	 */
-	public function testTheRedactionsAreReadFromTheLogByReference(): void {
-		$redactions = $this->writer()->redactions(
+	public function testAPartlyPublicListingCarriesItsRedactedValues(): void {
+		$listings = $this->writer()->listings(
 			assessments: [
 				[
 					'assessment' => 'deels_openbaar',
+					'documentReference' => 'origineel.pdf',
 					'anonymizedDocument' => '12',
-					'redactionLog' => [['value' => 'Jan Jansen'], ['value' => 'Jan Jansen'], ['value' => '0612345678'], ['value' => ''], 'noise'],
-					'redactionVerification' => ['verdict' => 'clean', 'outputMode' => 'pdf'],
+					'redactionLog' => [['value' => 'Jan Jansen'], ['value' => '0612345678']],
+					'redactionVerification' => ['verdict' => 'clean', 'mayBePublished' => true, 'outputMode' => 'pdf'],
 				],
-				['assessment' => 'deels_openbaar', 'anonymizedDocument' => '13', 'redactionVerification' => ['outputMode' => ['pdf']]],
-				['assessment' => 'deels_openbaar', 'anonymizedDocument' => ''],
-				['assessment' => 'openbaar', 'anonymizedDocument' => '14', 'redactionLog' => [['value' => 'Piet']]],
+				['assessment' => 'openbaar', 'documentReference' => 'open.pdf'],
 			]
 		);
 
-		$this->assertSame(
-			expected: [
-				'12' => ['values' => ['Jan Jansen', '0612345678'], 'outputMode' => 'pdf'],
-				'13' => ['values' => [], 'outputMode' => ''],
-			],
-			actual: $redactions
-		);
-	}//end testTheRedactionsAreReadFromTheLogByReference()
+		$this->assertInstanceOf(expected: RedactedValues::class, actual: $listings[0]['redaction']);
+		$this->assertSame(expected: ['Jan Jansen', '0612345678'], actual: $listings[0]['redaction']->values());
+		$this->assertSame(expected: 'pdf', actual: $listings[0]['redaction']->outputMode());
+		$this->assertArrayNotHasKey(key: 'redaction', array: $listings[1]);
+		$this->assertStringNotContainsString(needle: 'Jan Jansen', haystack: (string)json_encode($listings));
+	}//end testAPartlyPublicListingCarriesItsRedactedValues()
 }//end class
