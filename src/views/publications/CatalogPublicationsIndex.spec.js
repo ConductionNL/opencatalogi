@@ -540,6 +540,20 @@ describe('CatalogPublicationsIndex', () => {
 		expect(setModal).toHaveBeenCalledWith('viewObject')
 	})
 
+	it.each([
+		['the publication pair', 'woo', [173]],
+		['another schema as its first pair', 'code', [184, 185]],
+	])(
+		'names the add button like the dashboard on a catalog with %s',
+		async (_, slug, schemas) => {
+			objectStore.menuCatalogs = [catalog(slug, [19], schemas)]
+			const { wrapper } = mountPage({ slug })
+			await flushPromises()
+
+			expect(indexPage(wrapper).vm.$attrs.addLabel).toBe('New Publication')
+		},
+	)
+
 	it('discards a lookup that resolves after a slug switch', async () => {
 		let releaseLookup
 		lookup.mockReturnValue(

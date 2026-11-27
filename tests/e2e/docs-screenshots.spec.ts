@@ -247,14 +247,14 @@ test.describe('docs: user track', () => {
 			page,
 			'user',
 			'06-publish-an-item-01.png',
-			/Add publication|Add Item|Add Publication/i,
+			/New Publication|Add publication|Add Item/i,
 		)
 		if (had) {
 			await captureCreateDialog(
 				page,
 				'user',
 				'06-publish-an-item-02.png',
-				/Add publication|Add Item|Add Publication/i,
+				/New Publication|Add publication|Add Item/i,
 			)
 		} else {
 			await shoot(page, 'user', '06-publish-an-item-01.png')

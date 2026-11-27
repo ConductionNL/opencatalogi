@@ -53,6 +53,7 @@
 		v-bind="indexProps"
 		:title="t('opencatalogi', 'Publications')"
 		:description="t('opencatalogi', 'Manage your publications and their status')"
+		:addLabel="t('opencatalogi', 'New Publication')"
 		:showTitle="true"
 		:register="String(primaryPair.register)"
 		:schema="String(primaryPair.schema)"
