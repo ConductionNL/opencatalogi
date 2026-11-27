@@ -235,6 +235,9 @@ interface SettingsServiceInterface {
 	 * @throws \InvalidArgumentException If a value is refused; nothing is written.
 	 * @throws \RuntimeException If the write fails.
 	 *
+	 * @contract-shift internal-only — SettingsService is its only implementation and SettingsController its only caller;
+	 *                 a GitHub code search of ConductionNL finds no other implementer.
+	 *
 	 * @spec openspec/changes/admin-settings/tasks.md#task-1.5
 	 */
 	public function saveSettings(array $data): array;

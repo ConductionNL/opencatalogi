@@ -184,8 +184,8 @@ class ConnectionReportCallersTest extends TestCase {
 			'opencatalogi',
 			$request,
 			$service,
-			$this->createMock(IL10N::class),
-			$this->createMock(IUserSession::class)
+			$this->createMock(originalClassName: IL10N::class),
+			$this->createMock(originalClassName: IUserSession::class)
 		);
 	}//end settingsController()
 
