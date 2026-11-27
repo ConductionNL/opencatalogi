@@ -63,6 +63,7 @@ use OCA\OpenCatalogi\Listener\SingleLawfulValueListener;
 use OCA\OpenCatalogi\Listener\TermRollListener;
 use OCA\OpenCatalogi\Listener\HandedOverRecordsListener;
 use OCA\OpenCatalogi\Listener\PublishedTableReimportListener;
+use OCA\OpenCatalogi\Listener\PublisherStampListener;
 use OCA\OpenCatalogi\Listener\ThemeFeaturedCheckListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Listener\WooReadinessTriggerListener;
@@ -172,6 +173,7 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', ValueListChoiceListener::class],
 				[\OCP\Files\Events\Node\NodeWrittenEvent::class, PublishedTableReimportListener::class],
 				[$e . 'FileVersionRestoredEvent', PublishedTableReimportListener::class],
+				[$e . 'FileAddedEvent', PublisherStampListener::class],
 				[$e . 'ObjectCreatingEvent', PublicationRelationsListener::class],
 				[$e . 'ObjectUpdatingEvent', PublicationRelationsListener::class],
 				[$e . 'ObjectCreatingEvent', DocumentReferenceListener::class],

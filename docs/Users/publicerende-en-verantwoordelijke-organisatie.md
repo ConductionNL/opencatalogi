@@ -24,4 +24,4 @@ Het RSIN wordt alleen gebruikt als het negen cijfers heeft en de elfproef doorst
 
 Lukt het opslaan van `publisherRsin` op de publicatie niet, dan wordt het document toch gepubliceerd en staat de reden in het logboek van Nextcloud.
 
-Op dit moment gebeurt dit wanneer een Woo-batch wordt gepubliceerd. Een document dat je los uploadt op de pagina van een publicatie krijgt de labels nog niet.
+Dit gebeurt wanneer een Woo-batch wordt gepubliceerd, en ook wanneer je een document los uploadt op de pagina van een publicatie. Voor een losse upload heeft OpenRegister een versie nodig die meldt dat er een bestand aan een object is toegevoegd (`FileAddedEvent`); met een oudere OpenRegister krijgt zo'n document de labels nog niet.
