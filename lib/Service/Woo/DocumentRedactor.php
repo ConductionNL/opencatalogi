@@ -47,7 +47,8 @@ use Throwable;
  *     anonymizedDocumentHash: string,
  *     redactionStatus: string,
  *     redactionMessage: string,
- *     redactionLog: array<int, array<string, mixed>>
+ *     redactionLog: array<int, array<string, mixed>>,
+ *     redactionVerification: array<string, mixed>
  * }
  *
  * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
@@ -63,6 +64,18 @@ class DocumentRedactor {
 	 * No verified redacted version exists; the document cannot be published.
 	 */
 	public const FAILED = 'failed';
+
+	/**
+	 * OpenRegister's review gate refused the redaction: a person must check
+	 * the findings first, and nothing was written.
+	 */
+	public const AWAITING_REVIEW = 'awaiting-review';
+
+	/**
+	 * The exception OpenRegister's review gate throws (REQ-RRS-002), named as
+	 * a string so an OpenRegister without the gate loads this class.
+	 */
+	private const REVIEW_REQUIRED = 'OCA\\OpenRegister\\Exception\\ReviewRequiredException';
 
 	/**
 	 * The redaction log lists every redacted passage, each with a ground.
@@ -125,6 +138,7 @@ class DocumentRedactor {
 				'redactionStatus' => '',
 				'redactionMessage' => '',
 				'redactionLog' => [],
+				'redactionVerification' => [],
 			];
 		}
 
@@ -204,6 +218,7 @@ class DocumentRedactor {
 	 * @return string|null
 	 *
 	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
 	 */
 	public function verificationRefusal(array $assessment, ?string $batchId, string $fallbackOwner): ?string {
 		$refusal = $this->statusRefusal(assessment: $assessment);
@@ -216,6 +231,7 @@ class DocumentRedactor {
 			'original' => (string)($assessment['documentReference'] ?? ''),
 			'redactionStatus' => self::VERIFIED,
 			'redactionHash' => (string)($assessment['anonymizedDocumentHash'] ?? ''),
+			'redactionVerdict' => RedactionVerdict::verdictOf(summary: ($assessment['redactionVerification'] ?? null)),
 		];
 		if ($this->isVerified(listing: $listing, owner: $this->ownerOf(batchId: $batchId, fallback: $fallbackOwner)) === false) {
 			return $this->l10n->t('The redacted file no longer matches the version that was verified.');
@@ -232,6 +248,7 @@ class DocumentRedactor {
 	 * @return string|null
 	 *
 	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
 	 */
 	private function statusRefusal(array $assessment): ?string {
 		if ((string)($assessment['assessment'] ?? '') !== 'deels_openbaar') {
@@ -239,6 +256,10 @@ class DocumentRedactor {
 		}
 
 		$status = (string)($assessment['redactionStatus'] ?? '');
+		if ($status === self::VERIFIED && RedactionVerdict::isClean(summary: ($assessment['redactionVerification'] ?? null)) === false) {
+			return $this->l10n->t('OpenRegister has not confirmed that the redacted values are gone from the redacted file.');
+		}
+
 		if ($status === self::VERIFIED) {
 			return null;
 		}
@@ -372,20 +393,47 @@ class DocumentRedactor {
 	 * @param array<int, array<string, string>> $entities The entities to redact.
 	 *
 	 * @return RedactionFields
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
 	 */
 	private function anonymize(RedactionRun $run, array $entities): array {
 		try {
 			$redacted = $run->files->anonymizeDocument(node: $run->original, entities: $entities);
 			$residuals = $run->files->getLastResidualEntities();
+			$verification = $this->lastVerification(files: $run->files);
 		} catch (Throwable $e) {
 			// Log the class only: an exception message may quote the text
 			// that was meant to be redacted.
 			$this->logger->warning('[DocumentRedactor] redaction failed for file ' . $run->original->getId() . ': ' . get_class($e));
+			if (is_a($e, self::REVIEW_REQUIRED) === true) {
+				return $this->awaitingReview(message: $e->getMessage());
+			}
+
 			return $this->failed(reason: $this->l10n->t('Redaction failed in OpenRegister. The document stays unpublished.'));
 		}
 
-		return $this->withRedactionLog(run: $run, result: $this->verify(original: $run->original, redacted: $redacted, residuals: $residuals));
+		$result = $this->verify(original: $run->original, redacted: $redacted, residuals: $residuals, verification: $verification);
+
+		return $this->withRedactionLog(run: $run, result: $result);
 	}//end anonymize()
+
+	/**
+	 * OpenRegister's verdict on the copy it just wrote, or null when this
+	 * OpenRegister reports none (which no redaction can pass).
+	 *
+	 * @param object $files OpenRegister's FileService.
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 */
+	private function lastVerification(object $files): mixed {
+		if (method_exists($files, 'getLastVerification') === false) {
+			return null;
+		}
+
+		return $files->getLastVerification();
+	}//end lastVerification()
 
 	/**
 	 * A verified redaction with its log: what OpenRegister removed from the
@@ -481,17 +529,20 @@ class DocumentRedactor {
 
 	/**
 	 * Accept a redacted file only when it is a different file, with different
-	 * bytes, and OpenRegister reports nothing left readable.
+	 * bytes, OpenRegister reports nothing left readable, and its verifier's
+	 * verdict is `clean`. Changed bytes alone are never enough.
 	 *
 	 * @param File $original The original document.
 	 * @param mixed $redacted What OpenRegister returned.
 	 * @param mixed $residuals Findings OpenRegister could not remove.
+	 * @param mixed $verification OpenRegister's verdict on the redacted file (REQ-RRS-001).
 	 *
 	 * @return RedactionFields
 	 *
 	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
 	 */
-	public function verify(File $original, mixed $redacted, mixed $residuals): array {
+	public function verify(File $original, mixed $redacted, mixed $residuals, mixed $verification = null): array {
 		if (($redacted instanceof File) === false || $redacted->getId() === $original->getId()) {
 			return $this->failed(reason: $this->l10n->t('OpenRegister did not return a separate redacted file.'));
 		}
@@ -506,15 +557,42 @@ class DocumentRedactor {
 			return $this->failed(reason: $this->l10n->t('The redacted file cannot be verified.'));
 		}
 
+		$summary = RedactionVerdict::summary(verification: $verification);
+		if (RedactionVerdict::isClean(summary: $summary) === false) {
+			$result = $this->failed(reason: $this->verdictRefusal(summary: $summary));
+			$result['redactionVerification'] = $summary;
+			return $result;
+		}
+
 		return [
 			'anonymizedDocument' => (string)$redacted->getId(),
 			'anonymizedDocumentHash' => $hash,
 			'redactionStatus' => self::VERIFIED,
 			'redactionMessage' => '',
 			'redactionLog' => [],
+			'redactionVerification' => $summary,
 		];
 
 	}//end verify()
+
+	/**
+	 * Why a verdict other than `clean` refuses the redaction, naming the
+	 * routes and counts and never a value.
+	 *
+	 * @param array{verdict: string, outputMode: string, routesChecked: array<int, string>, findings: array<int, array{route: string, count: int}>} $summary The verdict.
+	 *
+	 * @return string The officer's reason.
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 */
+	private function verdictRefusal(array $summary): string {
+		$routes = RedactionVerdict::routeCounts(summary: $summary);
+		if ($summary['verdict'] === RedactionVerdict::UNVERIFIABLE || $routes === '') {
+			return $this->l10n->t('OpenRegister could not confirm that the redacted values are gone (verdict: %s). The document stays unpublished.', [$summary['verdict']]);
+		}
+
+		return $this->l10n->t('OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished.', [$routes]);
+	}//end verdictRefusal()
 
 	/**
 	 * Why the findings OpenRegister could not remove refuse the redaction:
@@ -675,6 +753,7 @@ class DocumentRedactor {
 	 * @return bool
 	 *
 	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
 	 */
 	private function isVerified(array $listing, string $owner): bool {
 		$reference = (string)($listing['document'] ?? '');
@@ -682,6 +761,11 @@ class DocumentRedactor {
 		// The original reached under its own reference, or under another
 		// one, is caught by the file id comparison below.
 		if ((string)($listing['redactionStatus'] ?? '') !== self::VERIFIED || $expected === '') {
+			return false;
+		}
+
+		// Changed bytes are not enough: the engine's verdict must be clean (REQ-WRT-002).
+		if ((string)($listing['redactionVerdict'] ?? '') !== RedactionVerdict::CLEAN) {
 			return false;
 		}
 
@@ -780,7 +864,25 @@ class DocumentRedactor {
 			'redactionStatus' => self::FAILED,
 			'redactionMessage' => $reason,
 			'redactionLog' => [],
+			'redactionVerification' => [],
 		];
 
 	}//end failed()
+
+	/**
+	 * The fields a review gate refusal leaves on the assessment: nothing was
+	 * written, and OpenRegister's message says what a person must check.
+	 *
+	 * @param string $message OpenRegister's message (counts and the checker, never a finding).
+	 *
+	 * @return RedactionFields
+	 *
+	 * @spec openspec/changes/woo-redaction-scans-and-text-layer/specs/woo-transparency/spec.md#requirement-the-woo-pipeline-trusts-only-the-engines-verdict-and-its-human-gate-req-wrt-002
+	 */
+	private function awaitingReview(string $message): array {
+		$result = $this->failed(reason: $message);
+		$result['redactionStatus'] = self::AWAITING_REVIEW;
+
+		return $result;
+	}//end awaitingReview()
 }//end class

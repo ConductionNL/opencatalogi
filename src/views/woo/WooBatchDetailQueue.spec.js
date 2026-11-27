@@ -133,6 +133,18 @@ describe('the queue', () => {
 		expect(s.redactionLabel(s.assessments[0])).toBe('Redacted, not verified')
 	})
 
+	it('labels a redaction the review gate refused (REQ-WRT-002)', () => {
+		const s = state({ assessments: [] })
+
+		expect(
+			s.redactionLabel({
+				assessment: 'deels_openbaar',
+				redactionStatus: 'awaiting-review',
+				redactionMessage: 'This document must be checked before it is anonymised.',
+			}),
+		).toBe('Findings must be checked first')
+	})
+
 	it('saves a keyboard move to public at once and announces it', async () => {
 		axios.put.mockResolvedValue({ data: { id: 'a1', assessment: 'openbaar' } })
 		axios.get.mockResolvedValue({ data: { caseReference: 'WOO-2026-031' } })

@@ -192,4 +192,18 @@ describe('the redaction page', () => {
 		expect(s.state).toBe('unchecked')
 		expect(s.verifying).toBe(false)
 	})
+
+	it('reads a review gate refusal as its own state (REQ-WRT-002)', () => {
+		const s = state({
+			assessment: {
+				...unchecked,
+				redactionStatus: 'awaiting-review',
+				anonymizedDocument: '',
+				redactionMessage: 'This document must be checked before it is anonymised.',
+			},
+		})
+
+		expect(s.state).toBe('review')
+		expect(s.canVerify).toBe(false)
+	})
 })

@@ -1,0 +1,63 @@
+{
+  "_note": "Register fragment for woo-redaction-scans-and-text-layer (REQ-WRT-002). The assessment keeps the verdict OpenRegister's verifier gave the redacted file: routes and counts, never a value. DocumentRedactor sets redactionStatus verified only on a clean verdict, failed on leaking or unverifiable, and awaiting-review when OpenRegister's review gate refused the redaction. Named to sort after every other wooAssessment fragment, so its version wins the merge. Admin-only, as the rest of wooAssessment.",
+  "components": {
+    "schemas": {
+      "wooAssessment": {
+        "version": "0.8.0",
+        "properties": {
+          "redactionStatus": {
+            "description": "Whether a verified redacted version exists: verified, failed, awaiting-review (a person must check the findings first), or empty when the document is not partly public"
+          },
+          "redactionVerification": {
+            "type": "object",
+            "description": "OpenRegister's verdict on the redacted file: the verdict (clean, leaking or unverifiable), the output mode, the routes it checked, and per finding the route and the count. Never a redacted value. Internal: never part of a public response.",
+            "facetable": false,
+            "title": "Redaction verdict",
+            "properties": {
+              "verdict": {
+                "title": "Verdict",
+                "description": "clean, leaking or unverifiable.",
+                "type": "string",
+                "maxLength": 32
+              },
+              "outputMode": {
+                "title": "Output mode",
+                "description": "How OpenRegister wrote the redacted file.",
+                "type": "string",
+                "maxLength": 64
+              },
+              "routesChecked": {
+                "title": "Routes checked",
+                "description": "The routes through which a redacted value could be recovered that OpenRegister checked.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "findings": {
+                "title": "Findings",
+                "description": "Per route on which a redacted value was still found, the route and how often.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "route": {
+                      "title": "Route",
+                      "description": "The route the value was found on.",
+                      "type": "string"
+                    },
+                    "count": {
+                      "title": "Count",
+                      "description": "How often.",
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

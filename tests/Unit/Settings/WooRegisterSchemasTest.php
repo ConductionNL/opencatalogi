@@ -105,6 +105,8 @@ class WooRegisterSchemasTest extends TestCase {
 		'redactionMessage',
 		// The redaction log: what was removed and on which grounds (woo-review-surface, REQ-WRV-003).
 		'redactionLog',
+		// OpenRegister's verdict on the redacted file, routes and counts only (REQ-WRT-002).
+		'redactionVerification',
 		// Written by BatchReview::sendBack(): why a reviewer sent the document back (REQ-WRV-002).
 		'sentBackReason',
 		// Set by verifyRedaction() when a person checked the redaction (REQ-WDA-004).

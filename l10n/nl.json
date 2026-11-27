@@ -2421,7 +2421,12 @@
         "The organisation could not be saved: %s": "De organisatie kon niet worden opgeslagen: %s",
         "The organisation registers could not be read: %s": "De organisatieregisters konden niet worden gelezen: %s",
         "The licence of this publication's data, from the EU licences list. Empty: the catalogue's or the instance's default licence applies.": "De licentie van de gegevens van deze publicatie, uit de lijst met EU-licenties. Leeg: de standaardlicentie van de catalogus of de installatie geldt.",
-        "Failed to save settings": "Instellingen opslaan mislukt"
+        "Failed to save settings": "Instellingen opslaan mislukt",
+        "Findings must be checked first": "Bevindingen moeten eerst worden gecontroleerd",
+        "A person must check the findings before this document can be redacted.": "Een persoon moet de bevindingen controleren voordat dit document kan worden gelakt.",
+        "OpenRegister has not confirmed that the redacted values are gone from the redacted file.": "OpenRegister heeft niet bevestigd dat de gelakte waarden uit het gelakte bestand zijn verdwenen.",
+        "OpenRegister could not confirm that the redacted values are gone (verdict: %s). The document stays unpublished.": "OpenRegister kon niet bevestigen dat de gelakte waarden zijn verdwenen (oordeel: %s). Het document blijft ongepubliceerd.",
+        "OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished.": "OpenRegister vond gelakte waarden die nog te herstellen zijn in het gelakte bestand: %s. Het document blijft ongepubliceerd."
     },
     "plurals": {}
 }
