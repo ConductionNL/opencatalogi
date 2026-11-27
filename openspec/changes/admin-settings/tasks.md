@@ -215,7 +215,8 @@ Before implementation, verify no overlap with existing OpenRegister services:
 - **acceptance_criteria:**
   - GIVEN all user-visible strings in `Settings.vue` and `AdminRoot.vue` WHEN `npm run check:l10n` is run THEN zero MISSING keys are reported
 - [x] 12.1 Run `node scripts/l10n-ai.js list-locales` to identify all locales (verified 2026-11-24: 37 locales, be to uk)
-- [ ] 12.2 For each new `t('opencatalogi', '...')` key in the settings UI, run `node scripts/l10n-ai.js add "<key>" --value en="<key>" --value nl="<dutch translation>"`
+- [x] 12.2 For each new `t('opencatalogi', '...')` key in the settings UI, run `node scripts/l10n-ai.js add "<key>" --value en="<key>" --value nl="<dutch translation>"`
+  - 27 Nov 2026 (b-opencatalogi): 8 of the 86 strings on the settings page had no Dutch value and showed in English: the Woo-index harvester readiness card (title, description, both states, "No readiness check has been run yet.", "Run check", "Readiness check failed.", and the no-Woo-catalogue notice). Added to `l10n/nl.json` and rebuilt `nl.js` with `npm run l10n:build` (this repo's `.json` is the source and `l10n-ai.js` writes only `.js`). The other locales carry 911 keys each and are not part of this task. Test: `tests/vitest/settingsDutchCatalogue.spec.js` reads every `t()` key of `Settings.vue` and `AdminRoot.vue` and requires a non-empty Dutch value, identical in `nl.json` and `nl.js` (8 cases fail on development).
 - [x] 12.3 Run `npm run check:l10n` — confirm zero MISSING and zero UNWRAPPED (verified 2026-11-24 on development after #2914: all clean)
 - [x] 12.4 Run `npm run find:unwrapped -- src/views/settings/` — confirm no unwrapped prose candidates remain
 

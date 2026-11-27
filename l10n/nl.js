@@ -2428,7 +2428,15 @@ OC.L10N.register(
         "OpenRegister has not confirmed that the redacted values are gone from the redacted file.": "OpenRegister heeft niet bevestigd dat de gelakte waarden uit het gelakte bestand zijn verdwenen.",
         "OpenRegister could not confirm that the redacted values are gone (verdict: %s). The document stays unpublished.": "OpenRegister kon niet bevestigen dat de gelakte waarden zijn verdwenen (oordeel: %s). Het document blijft ongepubliceerd.",
         "OpenRegister found redacted values still recoverable in the redacted file: %s. The document stays unpublished.": "OpenRegister vond gelakte waarden die nog te herstellen zijn in het gelakte bestand: %s. Het document blijft ongepubliceerd.",
-        "Title not written: the redaction check did not pass": "Titel niet geschreven: de lakcontrole is niet geslaagd"
+        "Title not written: the redaction check did not pass": "Titel niet geschreven: de lakcontrole is niet geslaagd",
+        "Woo-index harvester readiness": "Gereedheid voor de harvester van de Woo-index",
+        "Verify that the KOOP Woo-harvester can actually reach and ingest this instance, and track its Woo-index registration status": "Controleer of de Woo-harvester van KOOP deze instantie echt kan bereiken en inlezen, en volg de registratiestatus bij de Woo-index",
+        "This instance is harvester-ready": "Deze instantie is klaar voor de harvester",
+        "This instance is not yet harvester-ready": "Deze instantie is nog niet klaar voor de harvester",
+        "No readiness check has been run yet.": "Er is nog geen gereedheidscontrole uitgevoerd.",
+        "Run check": "Controle uitvoeren",
+        "Readiness check failed.": "De gereedheidscontrole is mislukt.",
+        "No Woo-enabled catalog is configured yet — enable Woo sitemaps on a catalog first.": "Er is nog geen catalogus met Woo ingesteld: zet eerst de Woo-sitemaps aan op een catalogus."
     },
     "nplurals=2; plural=(n != 1);"
 )
