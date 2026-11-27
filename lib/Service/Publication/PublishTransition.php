@@ -172,6 +172,21 @@ class PublishTransition {
 	}//end publish()
 
 	/**
+	 * Archive: run the lifecycle's `archive` transition as the signed-in user.
+	 *
+	 * @param string $id The publication uuid.
+	 *
+	 * @return object The publication as the engine answers it.
+	 *
+	 * @throws \Throwable Whatever the engine refuses (the move from the stored state, rights, guards).
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 */
+	public function archive(string $id): object {
+		return $this->container->get(self::ENGINE)->transition($id, 'archive', []);
+	}//end archive()
+
+	/**
 	 * Record a review that happened elsewhere (a Woo batch's approval chain) on the publication's
 	 * own lifecycle: `submit` from draft and `approve` from in review, as the system. A publication
 	 * starts in draft (OpenRegister refuses any other initial state), so a writer that already holds

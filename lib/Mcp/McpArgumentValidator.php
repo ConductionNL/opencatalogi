@@ -58,6 +58,13 @@ class McpArgumentValidator {
 	public const PUBLISH_FIELDS = ['publicationDate', 'depublicationDate', 'status'];
 
 	/**
+	 * The longest reason a withdrawal or archive request carries.
+	 *
+	 * @var int
+	 */
+	public const MAX_REASON = 2000;
+
+	/**
 	 * The fields of a draft, or the refusal of the whole call.
 	 *
 	 * @param array<array-key, mixed> $fields The draft the agent sent.
@@ -242,6 +249,29 @@ class McpArgumentValidator {
 
 		return ['ids' => array_keys($clean)];
 	}//end publicationIds()
+
+	/**
+	 * The reason an agent gives for a withdrawal or an archive, trimmed.
+	 *
+	 * The reason travels on the task a publisher completes, so a call without one is refused.
+	 *
+	 * @param mixed $reason The reason argument.
+	 *
+	 * @return array{reason: string}|array{error: array{code: string, message: string}} The reason, or the envelope.
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 */
+	public function reason(mixed $reason): array {
+		if (is_string($reason) === false || trim($reason) === '') {
+			return self::error(message: 'Field "reason" must say why, in a sentence a publisher can act on.');
+		}
+
+		if (mb_strlen(trim($reason)) > self::MAX_REASON) {
+			return self::error(message: 'Field "reason" may be at most ' . self::MAX_REASON . ' characters.');
+		}
+
+		return ['reason' => trim($reason)];
+	}//end reason()
 
 	/**
 	 * The invalid-arguments envelope.

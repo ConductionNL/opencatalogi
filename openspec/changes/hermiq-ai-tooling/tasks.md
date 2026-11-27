@@ -41,8 +41,8 @@
   - GIVEN phase 2 WHEN invoked without a token, with an expired token, with a token minted for the acting agent, or with a token bound to a different batch THEN it is refused and nothing is written
   - GIVEN phase 2 WHEN invoked with a valid human-approver token bound to the batch THEN each item's allow-listed property is written via Task 2's path
   - GIVEN `createDraftPublication` WHEN invoked THEN it is single-phase (no token concept)
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
   - 25 Nov 2026 (decision 25 Nov 13:50, Ruben): the approval is the publication lifecycle's own review, not a
     token; REQ-009 is amended to say so. Built: `publishPublication` (`lib/Mcp/PublicationAgentTools.php` over
     `lib/Service/Publication/AgentPublishing.php`) publishes only `approved` publications, through the publish
@@ -50,8 +50,32 @@
     `embargo_holds`, `no_documents`, `not_found`, `not_published`); an embargo is judged with nobody allowed to lift
     it, so an agent never releases one early. Tests:
     `tests/Unit/Service/Publication/AgentPublishingTest.php`, `tests/Unit/Mcp/PublicationAgentToolsTest.php`.
-    Left: `depublishPublication` and `archivePublication` as an OpenRegister approval task a publisher completes,
-    and the completion that withdraws or archives.
+    25 Nov 2026 (b-opencatalogi, the staging half): `depublishPublication` and `archivePublication`
+    (`lib/Mcp/PublicationAgentTools.php` over `lib/Service/Publication/AgentWithdrawal.php`) write nothing about
+    the publication. Each item is read with RBAC as the session user and refused by name when it cannot take the
+    action (`not_found`, `forbidden`, `not_public` for a withdrawal, `already_archived`, `not_staged`); every other
+    one gets an OpenRegister task through `TaskManagerInterface::create()` as that user (`OpenRegisterTasks`):
+    kind `approval`, on the publication (`objectUuid`), offered to `opencatalogi-publishers`, the reason as its
+    description, and `metadata` {action, publication, reason, requestedBy, tool}. A reason is required (at most
+    2000 characters). Tests: `tests/Unit/Service/Publication/AgentWithdrawalTest.php` (including OpenRegister's own
+    `TaskBuilder` accepting the payload as an `available` task for the group), `tests/Unit/Mcp/PublicationAgentToolsTest.php`.
+    25 Nov 2026 (b-opencatalogi, the completion half): the withdraw button's path moved out of
+    `PublicationStateController` into `lib/Service/Publication/PublicationTakeDown.php` (the controller delegates
+    and answers exactly as before; its tests and the withdraw golden recording are unchanged). `AgentTaskCompletionListener`
+    on OpenRegister's `TaskTerminalEvent`, after commit, reads a task this app staged (`AgentTaskCompleted`: appId,
+    kind `approval`, state `completed`, outcome empty/`done`/`approved`) and `AgentTaskCompletion` takes its action
+    only in the session of the person who completed it, with that person's publish and update rights and RBAC:
+    withdraw through `PublicationTakeDown` (reason from the task, the completer as `depublishedBy`), archive through
+    the lifecycle's `archive` transition (`PublishTransition::archive()`). Every outcome is logged with the task and
+    the publication. Tests: `AgentTaskCompletionTest` (5), `PublicationTakeDownTest` (3),
+    `AgentTaskCompletionListenerTest` (3, on OpenRegister's real `Task` and `TaskTerminalEvent`).
+    Live 25 Nov 2026 (sandbox Nextcloud 34.0.6 + PostgreSQL 16, OpenRegister main): `depublishPublication` staged
+    task "Withdraw publication \"Legacy A\"" (available, opencatalogi-publishers, the publication stayed public);
+    admin (a publisher) claimed and completed it through `/api/flow-tasks/{uuid}/complete`; the publication was
+    withdrawn (visibility `withdrawn`, out of the public list, tombstone on the public route) and the depublication
+    record holds the agent's reason with `depublishedBy` admin. `archivePublication` then completed the same way left
+    Legacy B `archived`. A completion on a row the required-to-publish rule refuses ends `not-saved`, exactly as the
+    withdraw button does on that row. Not built: Task 4's agent attribution on the audit trail.
 
 ### Task 4: Agent-principal attribution (must / MVP)
 - **spec_ref**: `openspec/specs/mcp-tool-surface/spec.md#requirement-every-agent-write-is-attributed-to-the-agent-principal-in-the-audit-trail-req-010`
@@ -62,6 +86,18 @@
   - GIVEN the same write performed through the UI WHEN audited THEN it carries no agent fields (control)
 - [ ] Implement
 - [ ] Test
+  - 25 Nov 2026 (b-opencatalogi, partly): every call of the four tools is recorded through OpenRegister's
+    `ToolInvocationRecorderInterface` (`PublicationAgentTools::recorded()`), refusals included: a hash-chained audit
+    row `mcp.<tool>` with the signed-in user (the granting user), `toolId` `opencatalogi.<tool>`, a digest of the
+    arguments and a summary of the answer, pointing at the created draft for `createDraftPublication`. The approval
+    reference of a gated write is the staged task (its uuid is in the tool's answer and on the task's own trail), since
+    the 13:50 decision replaced tokens with the lifecycle and the task. A write through the screen goes nowhere near the
+    recorder (the control). Live 25 Nov on NC 34 + PG16: rows `mcp.createDraftPublication | admin |
+    opencatalogi.createDraftPublication | <draft uuid>` and `mcp.publishPublication | admin | ...` read back from
+    `oc_openregister_audit_trails`. Test: `PublicationAgentToolsTest::testEveryToolCallIsRecorded`.
+    Left, needs a dependency: the acting agent's identity. OpenRegister's tool-invocation row has no agent field and
+    the MCP call reaches the app without an agent principal; Hermiq (or OpenRegister's MCP layer) has to pass one, and
+    OpenRegister's recorder has to store it. Until then the row names the person the agent acts for, not the agent.
 
 ### Task 5: Hermiq classification check + chat-scenario e2e + docs (must / MVP)
 - **spec_ref**: `openspec/specs/mcp-tool-surface/spec.md#requirement-hermiq-governance-is-honoured-but-never-relied-upon-req-011`
@@ -73,6 +109,16 @@
   - GIVEN `CHANGELOG.md` WHEN read THEN it records the governed write surface
 - [ ] Implement
 - [ ] Test
+  - 25 Nov 2026 (b-opencatalogi, partly): `tests/e2e/spec-coverage/hermiq-ai-tooling.spec.ts` calls the tools the
+    way an agent does, JSON-RPC on OpenRegister's `/api/mcp` after `initialize`: the four write tools are served; a
+    draft from `createDraftPublication` is refused `not_approved` and stays a draft; a publication a person approved
+    (with a document) is published by `publishPublication`; `depublishPublication` stages a task for
+    `opencatalogi-publishers`, the publication stays public until a publisher claims and completes it, then it is
+    withdrawn; `archivePublication` on a draft is refused `not_published`. Live 25 Nov on NC 34 + PostgreSQL 16 with
+    OpenRegister main and Redis (MCP sessions need a distributed cache): 4 passed. `docs/features/agent-tools.md`
+    records the tool table (scope, reach, human step), the approval model, the irreversibility of external reach, the
+    absence of write tools on other schemas and the audit; `CHANGELOG.md` records the governed write surface.
+    Left: the classification check against a live Hermiq (not installed in this sandbox).
 
 ## Verification
 - [ ] All tasks checked off

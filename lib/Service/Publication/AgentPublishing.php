@@ -119,6 +119,8 @@ class AgentPublishing implements AgentPublishingInterface {
 	 *
 	 * @return string|null Null when published; else `not_found`, `forbidden`, `not_approved`,
 	 *                     `embargo_holds`, `no_documents` or `not_published`.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) ObjectProperties::fromObject() is a pure read of the answer.
 	 */
 	private function publishOne(string $id, ObjectFindOptions $options): ?string {
 		try {
@@ -137,7 +139,7 @@ class AgentPublishing implements AgentPublishingInterface {
 		}
 
 		try {
-			$record = $this->states->publishedRecord(publication: self::propertiesOf(publication: $publication));
+			$record = $this->states->publishedRecord(publication: ObjectProperties::fromObject(object: $publication));
 			$this->publisher->publish(id: $id, stored: 'approved', publicationDate: (string)$record['publicationDate']);
 		} catch (Throwable) {
 			return 'not_published';
@@ -153,13 +155,15 @@ class AgentPublishing implements AgentPublishingInterface {
 	 * @param object $publication The publication as read with RBAC.
 	 *
 	 * @return string|null The refusal code, or null.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) ObjectProperties::fromObject() is a pure read of the answer.
 	 */
 	private function refusal(string $id, object $publication): ?string {
 		if ($this->rights->mayUpdate(publication: $publication) === false) {
 			return 'forbidden';
 		}
 
-		$properties = self::propertiesOf(publication: $publication);
+		$properties = ObjectProperties::fromObject(object: $publication);
 		if (trim((string)($properties['status'] ?? '')) !== 'approved') {
 			return 'not_approved';
 		}
@@ -179,22 +183,4 @@ class AgentPublishing implements AgentPublishingInterface {
 
 		return null;
 	}//end refusal()
-
-	/**
-	 * The properties of a publication as OpenRegister answers it.
-	 *
-	 * @param object $publication The publication.
-	 *
-	 * @return array<string, mixed> Its properties.
-	 */
-	private static function propertiesOf(object $publication): array {
-		if (method_exists($publication, 'jsonSerialize') === true) {
-			$data = $publication->jsonSerialize();
-			if (is_array($data) === true) {
-				return $data;
-			}
-		}
-
-		return get_object_vars($publication);
-	}//end propertiesOf()
 }//end class

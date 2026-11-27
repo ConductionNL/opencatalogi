@@ -16,6 +16,8 @@ namespace Unit\Mcp;
 use OCA\OpenCatalogi\Mcp\McpArgumentValidator;
 use OCA\OpenCatalogi\Mcp\PublicationAgentTools;
 use OCA\OpenCatalogi\Contract\AgentPublishingInterface;
+use OCA\OpenCatalogi\Contract\AgentWithdrawalCall;
+use OCA\OpenCatalogi\Contract\AgentWithdrawalInterface;
 use OCA\OpenRegister\Mcp\Attribute\McpTool;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -54,18 +56,24 @@ class PublicationAgentToolsTest extends TestCase {
 	/**
 	 * The tools with the object service double and the given register and schema.
 	 *
-	 * @param string $configured The configured publication register and schema.
+	 * @param string                        $configured The configured publication register and schema.
+	 * @param AgentPublishingInterface|null $publishing The publishing service, if any.
+	 * @param AgentWithdrawalInterface|null $withdrawal The staging service, if any.
 	 *
 	 * @return PublicationAgentTools The tools.
 	 */
-	private function tools(string $configured = 'publication', ?AgentPublishingInterface $publishing = null): PublicationAgentTools {
+	private function tools(
+		string $configured = 'publication',
+		?AgentPublishingInterface $publishing = null,
+		?AgentWithdrawalInterface $withdrawal = null
+	): PublicationAgentTools {
 		$config = $this->createConfiguredStub(
 			originalClassName: IAppConfig::class,
 			configuration: ['getValueString' => $configured]
 		);
 
 		return new PublicationAgentTools(
-			container: new ObjectsContainer(objects: $this->objects),
+			container: new ObjectsContainer(objects: $this->objects, withdrawal: $withdrawal),
 			config: $config,
 			validator: new McpArgumentValidator(),
 			publishing: $publishing
@@ -226,7 +234,10 @@ class PublicationAgentToolsTest extends TestCase {
 			}
 		}
 
-		$this->assertSame(expected: ['createDraftPublication', 'publishPublication'], actual: array_keys($tools));
+		$this->assertSame(
+			expected: ['createDraftPublication', 'publishPublication', 'depublishPublication', 'archivePublication'],
+			actual: array_keys($tools)
+		);
 		$tool = $tools['createDraftPublication'];
 		$this->assertSame(expected: 'createDraftPublication', actual: $tool->name);
 		$this->assertSame(expected: 'create', actual: $tool->scope);
@@ -302,6 +313,146 @@ class PublicationAgentToolsTest extends TestCase {
 		$all->method('publishApproved')->willReturn(['published' => ['a'], 'refused' => []]);
 		$this->assertTrue(condition: $this->tools(publishing: $all)->publishPublication(ids: ['a'])['success']);
 	}//end testThePublishToolAnswersAWholeRefusal()
+
+	/**
+	 * Depublish and archive declare their reach, say they write nothing, and require a reason.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-write-actions-are-curated-tools-with-allow-listed-properties-req-007
+	 */
+	public function testTheStagingToolsDeclareTheirReachAndWriteNothing(): void {
+		foreach (['depublishPublication' => 'external', 'archivePublication' => 'instance'] as $name => $reach) {
+			$method = new ReflectionMethod(objectOrMethod: PublicationAgentTools::class, method: $name);
+			$tool   = $method->getAttributes(name: McpTool::class)[0]->newInstance();
+
+			$this->assertSame(expected: $name, actual: $tool->name);
+			$this->assertSame(expected: 'update', actual: $tool->scope);
+			$this->assertSame(expected: $reach, actual: $tool->reach);
+			$this->assertStringContainsString(needle: 'does not', haystack: $tool->description);
+			$this->assertStringContainsString(needle: 'publishers group', haystack: $tool->description);
+			$this->assertSame(expected: ['ids', 'reason'], actual: array_map(static fn ($p) => $p->getName(), $method->getParameters()));
+			$this->assertFalse(condition: $method->getParameters()[1]->isOptional());
+		}
+	}//end testTheStagingToolsDeclareTheirReachAndWriteNothing()
+
+	/**
+	 * Bad ids and a missing reason are refused before the service is asked; good ones go on deduplicated and trimmed.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 */
+	public function testTheStagingToolsCheckIdsAndReason(): void {
+		$withdrawal = $this->createMock(originalClassName: AgentWithdrawalInterface::class);
+		$withdrawal->expects($this->exactly(count: 2))->method('stage')->willReturnCallback(
+			static fn (AgentWithdrawalCall $call): array => [
+				'staged'  => [['id' => $call->ids[0], 'task' => 'task-' . $call->action . '-' . $call->reason]],
+				'refused' => [['id' => $call->ids[1], 'code' => 'not_public']],
+			]
+		);
+		$tools = $this->tools(withdrawal: $withdrawal);
+
+		foreach ([[], [''], [3]] as $ids) {
+			$answer = $tools->depublishPublication(ids: $ids, reason: 'Rechterlijke uitspraak');
+			$this->assertSame(expected: 'invalid_arguments', actual: $answer['error']['code']);
+		}
+
+		foreach (['', '   ', str_repeat(string: 'x', times: 2001)] as $reason) {
+			$this->assertSame(expected: 'invalid_arguments', actual: $tools->archivePublication(ids: ['a'], reason: $reason)['error']['code']);
+		}
+
+		$this->assertSame(
+			expected: [
+				'success' => false,
+				'staged'  => [['id' => 'a', 'task' => 'task-depublish-Rechterlijke uitspraak']],
+				'refused' => [['id' => 'b', 'code' => 'not_public']],
+			],
+			actual: $tools->depublishPublication(ids: ['a', ' b ', 'a'], reason: ' Rechterlijke uitspraak ')
+		);
+		$this->assertSame(
+			expected: [['id' => 'a', 'task' => 'task-archive-Bewaartermijn verstreken']],
+			actual: $tools->archivePublication(ids: ['a', 'b'], reason: 'Bewaartermijn verstreken')['staged']
+		);
+	}//end testTheStagingToolsCheckIdsAndReason()
+
+	/**
+	 * No staging service, no tasks or no register is an error envelope, and nothing is saved.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-publish-depublish-and-archive-execute-only-after-a-server-verified-human-approval-req-009
+	 */
+	public function testTheStagingToolsAnswerAWholeRefusal(): void {
+		$this->assertSame(expected: 'not_configured', actual: $this->tools()->depublishPublication(ids: ['a'], reason: 'R')['error']['code']);
+
+		foreach (['tasks_unavailable', 'not_configured'] as $code) {
+			$withdrawal = $this->createMock(originalClassName: AgentWithdrawalInterface::class);
+			$withdrawal->method('stage')->willReturn(['error' => $code]);
+			$answer = $this->tools(withdrawal: $withdrawal)->archivePublication(ids: ['a'], reason: 'R');
+			$this->assertSame(expected: $code, actual: $answer['error']['code']);
+			$this->assertNotSame(expected: '', actual: $answer['error']['message']);
+		}
+
+		$this->assertSame(expected: [], actual: $this->objects->saves);
+	}//end testTheStagingToolsAnswerAWholeRefusal()
+
+	/**
+	 * Every tool call is recorded on OpenRegister's audit trail as `opencatalogi.<tool>`, with the arguments and the
+	 * answer the agent got, refusals included; the answer itself is unchanged.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-tool-surface/spec.md#requirement-every-agent-write-is-attributed-to-the-agent-principal-in-the-audit-trail-req-010
+	 */
+	public function testEveryToolCallIsRecorded(): void {
+		$recorder = new class {
+			/**
+			 * The recorded calls.
+			 *
+			 * @var list<array{0: string, 1: array<string, mixed>, 2: array<string, mixed>}>
+			 */
+			public array $calls = [];
+
+			/**
+			 * @param string               $toolId    The tool id.
+			 * @param array<string, mixed> $arguments The arguments.
+			 * @param array<string, mixed> $result    The answer.
+			 *
+			 * @return void
+			 */
+			public function record(string $toolId, array $arguments, array $result): void {
+				$this->calls[] = [$toolId, $arguments, $result];
+			}
+		};
+		$tools = new PublicationAgentTools(
+			container: new ObjectsContainer(objects: $this->objects, recorder: $recorder),
+			config: $this->createConfiguredStub(originalClassName: IAppConfig::class, configuration: ['getValueString' => 'publication']),
+			validator: new McpArgumentValidator()
+		);
+
+		$this->objects->answer = ['id' => 'pub-new', 'title' => 'Raadsbesluit'];
+		$draft = $tools->createDraftPublication(publication: ['title' => 'Raadsbesluit']);
+		$this->assertSame(expected: 'pub-new', actual: $draft['publication']['id']);
+		$publish = $tools->publishPublication(ids: ['a']);
+		$depublish = $tools->depublishPublication(ids: [], reason: 'R');
+		$archive = $tools->archivePublication(ids: ['a'], reason: 'R');
+
+		$this->assertSame(
+			expected: [
+				'opencatalogi.createDraftPublication',
+				'opencatalogi.publishPublication',
+				'opencatalogi.depublishPublication',
+				'opencatalogi.archivePublication',
+			],
+			actual: array_column($recorder->calls, 0)
+		);
+		$this->assertSame(expected: ['publication' => ['title' => 'Raadsbesluit']], actual: $recorder->calls[0][1]);
+		$this->assertSame(expected: ['ids' => [], 'reason' => 'R'], actual: $recorder->calls[2][1]);
+		$this->assertSame(expected: $draft + ['id' => $draft['publication']['id']], actual: $recorder->calls[0][2]);
+		$this->assertSame(expected: [$publish, $depublish, $archive], actual: array_slice(array_column($recorder->calls, 2), 1));
+		$this->assertSame(expected: 'invalid_arguments', actual: $depublish['error']['code']);
+	}//end testEveryToolCallIsRecorded()
 }//end class
 
 /**
@@ -312,9 +463,15 @@ class ObjectsContainer implements ContainerInterface {
 	/**
 	 * Build the container.
 	 *
-	 * @param RecordingObjects $objects The object service double.
+	 * @param RecordingObjects              $objects    The object service double.
+	 * @param AgentWithdrawalInterface|null $withdrawal The staging service double, if any.
+	 * @param object|null                   $recorder   The tool invocation recorder double, if any.
 	 */
-	public function __construct(private readonly RecordingObjects $objects) {
+	public function __construct(
+		private readonly RecordingObjects $objects,
+		private readonly ?AgentWithdrawalInterface $withdrawal = null,
+		private readonly ?object $recorder = null
+	) {
 	}//end __construct()
 
 	/**
@@ -325,6 +482,14 @@ class ObjectsContainer implements ContainerInterface {
 	 * @return mixed The double.
 	 */
 	public function get(string $id): mixed {
+		if ($id === AgentWithdrawalInterface::class && $this->withdrawal !== null) {
+			return $this->withdrawal;
+		}
+
+		if ($id === PublicationAgentTools::RECORDER && $this->recorder !== null) {
+			return $this->recorder;
+		}
+
 		if ($id !== 'OCA\OpenRegister\Service\ObjectService') {
 			throw new RuntimeException(message: 'Unexpected service ' . $id);
 		}

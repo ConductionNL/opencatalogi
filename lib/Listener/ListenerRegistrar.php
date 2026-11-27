@@ -106,18 +106,9 @@ class ListenerRegistrar {
 		$context->registerEventListener(event: ObjectUpdatedEvent::class, listener: WooReadinessTriggerListener::class);
 
 		// Register catalog cache event listeners.
-		$context->registerEventListener(
-			event: ObjectCreatedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectDeletedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
+		foreach ([ObjectCreatedEvent::class, ObjectUpdatedEvent::class, ObjectDeletedEvent::class] as $cacheEvent) {
+			$context->registerEventListener($cacheEvent, CatalogCacheEventListener::class);
+		}
 
 		// Register catalog rewrite event listeners on the *pre-save* events so the
 		// listener can mutate the in-flight payload via `setModifiedData(...)` instead
@@ -183,6 +174,8 @@ class ListenerRegistrar {
 		// A Woo batch whose review task is rejected in OpenRegister goes back to its
 		// author with the task's comment (woo-review-surface, REQ-WRV-002).
 		$context->registerEventListener(TaskTerminalEvent::class, BatchReviewTaskListener::class);
+		// An agent's withdrawal or archive request is taken when a publisher completes its task (hermiq-ai-tooling REQ-009).
+		$context->registerEventListener(TaskTerminalEvent::class, AgentTaskCompletionListener::class);
 
 		// A publication records whether it is complete and public; a source
 		// system subscribes to the move to complete (publication-tells-its-source, REQ-PTS-002).

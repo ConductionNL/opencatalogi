@@ -35,10 +35,14 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRightsInterface;
+use OCA\OpenCatalogi\Service\Publication\PublicationTakeDown;
+use OCA\OpenCatalogi\Service\Publication\PublicationTakeDownRefused;
+use OCA\OpenCatalogi\Service\Publication\PublicationTakeDownRequest;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenCatalogi\Service\Publication\PublishRefusedException;
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenCatalogi\Service\Publication\SourceAbsence;
+use OCA\OpenCatalogi\Service\Publication\WithdrawalReason;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
@@ -472,20 +476,6 @@ class PublicationStateController extends Controller {
 	 * @spec openspec/changes/archive/2026-11-25-publication-withdrawal-aftercare/tasks.md#task-2.1
 	 */
 	private function withdrawWithReason(string $id, array $properties): JSONResponse {
-		$state = $this->takeDown(id: $id, properties: $properties);
-		if ($state instanceof JSONResponse) {
-			return $state;
-		}
-
-		$depublication = $this->registers->depublish(
-			withdrawal: [
-				'publication' => array_replace($properties, ['id' => $id]),
-				'reason' => $this->reason(),
-				'depublishedBy' => $this->actor(),
-				'channels' => $this->channelsFor(state: $state, properties: $properties),
-			]
-		);
-
 		// What the public tombstone says, as the officer chose it (REQ-PWA-002): a
 		// public reason that is not empty, and Show the title when it is a yes. A
 		// no, or a choice the request does not send, keeps the schema's default.
@@ -494,51 +484,49 @@ class PublicationStateController extends Controller {
 			'tombstoneShowsTitle' => filter_var($this->request->getParam('tombstoneShowsTitle', false), FILTER_VALIDATE_BOOLEAN),
 		];
 
-		return $this->record(depublication: $depublication + array_filter($tombstone));
+		try {
+			$answer = $this->takeDowns()->withdraw(
+				request: new PublicationTakeDownRequest(
+					id: $id,
+					properties: $properties,
+					why: new WithdrawalReason(reason: $this->reason(), actor: $this->actor(), tombstone: $tombstone)
+				)
+			);
+		} catch (PublicationTakeDownRefused $e) {
+			return $this->takeDownRefusal(e: $e);
+		}
+
+		return new JSONResponse($answer);
 
 	}//end withdrawWithReason()
 
 	/**
-	 * Save the withdrawn record of a public or scheduled publication.
+	 * The withdraw button's path, shared with the completion of an agent's withdrawal task.
 	 *
-	 * Down first: the mistake leaves the public API now, whatever the
-	 * channels answer after.
-	 *
-	 * @param string $id The publication id.
-	 * @param array<string, mixed> $properties The publication's properties.
-	 *
-	 * @return string|JSONResponse The state it was in, or 409 for another state, or the save refusal.
+	 * @return PublicationTakeDown The take-down over this controller's registers.
 	 */
-	private function takeDown(string $id, array $properties): string|JSONResponse {
-		$state = $this->registers->stateOf(publication: $properties);
-		if ($state !== PublicationStateServiceInterface::STATE_PUBLIC && $state !== PublicationStateServiceInterface::STATE_SCHEDULED) {
-			return $this->conflict(state: $state);
-		}
-
-		try {
-			$this->save(id: $id, record: $this->registers->withdrawnRecord(publication: $properties));
-		} catch (\Throwable $e) {
-			return $this->refused(e: $e);
-		}
-
-		return $state;
-	}//end takeDown()
+	private function takeDowns(): PublicationTakeDown {
+		return new PublicationTakeDown(registers: $this->registers);
+	}//end takeDowns()
 
 	/**
-	 * The channels to tell: those a public publication reached, none for a scheduled one.
+	 * The answer for a withdrawal the take-down stopped: 409 for the state, the save refusal, or 503 when unstored.
 	 *
-	 * @param string $state The state before the withdrawal.
-	 * @param array<string, mixed> $properties The publication's properties.
+	 * @param PublicationTakeDownRefused $e Why it stopped.
 	 *
-	 * @return array<int, string> The channels.
+	 * @return JSONResponse The answer.
 	 */
-	private function channelsFor(string $state, array $properties): array {
-		if ($state !== PublicationStateServiceInterface::STATE_PUBLIC) {
-			return [];
+	private function takeDownRefusal(PublicationTakeDownRefused $e): JSONResponse {
+		if ($e->reason === PublicationTakeDownRefused::WRONG_STATE) {
+			return $this->conflict(state: $e->state);
 		}
 
-		return $this->registers->channelsReached(publication: $properties);
-	}//end channelsFor()
+		if ($e->reason === PublicationTakeDownRefused::NOT_SAVED) {
+			return $this->refused(e: ($e->getPrevious() ?? $e));
+		}
+
+		return $this->unstored();
+	}//end takeDownRefusal()
 
 	/**
 	 * The withdrawal reason from the request, trimmed.
@@ -829,45 +817,28 @@ class PublicationStateController extends Controller {
 	 */
 	private function record(array $depublication): JSONResponse {
 		try {
-			$configuration = $this->resolveRegisterConfiguration(
-				registerKey: 'publication_register',
-				schemaKey: 'depublication_schema'
-			);
-			$saved = $this->registers->getObjectService()->saveObject(
-				object: $this->registers->storable(depublication: $depublication),
-				options: new ObjectSaveOptions(
-					target: new ObjectFindTarget(
-							register: $configuration['register'],
-							schema: $configuration['schema']
-						),
-					actor: new SaveActor(unowned: true)
-				),
-				_rbac: false
-			);
-		} catch (\Throwable $e) {
-			return new JSONResponse(
-				data: [
-					'state' => PublicationStateServiceInterface::STATE_WITHDRAWN,
-					'error' => 'depublication-unstored',
-					'message' => $this->l10n->t('It was taken down, but the record of why could not be stored.'),
-				],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
+			return new JSONResponse($this->takeDowns()->store(depublication: $depublication));
+		} catch (PublicationTakeDownRefused) {
+			return $this->unstored();
 		}
 
-		$stored = $this->asArray(object: $saved);
-		$outstanding = $this->registers->outstandingChannels(depublication: $depublication);
-
-		return new JSONResponse(
-			[
-				'state' => PublicationStateServiceInterface::STATE_WITHDRAWN,
-				'depublication' => $stored,
-				'outstandingChannels' => $outstanding,
-				'complete' => ($outstanding === []),
-			]
-		);
-
 	}//end record()
+
+	/**
+	 * The answer when a publication is down but the record of why could not be stored.
+	 *
+	 * @return JSONResponse 503.
+	 */
+	private function unstored(): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'state' => PublicationStateServiceInterface::STATE_WITHDRAWN,
+				'error' => 'depublication-unstored',
+				'message' => $this->l10n->t('It was taken down, but the record of why could not be stored.'),
+			],
+			statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+		);
+	}//end unstored()
 
 	/**
 	 * Load a publication by id with RBAC on.
@@ -909,20 +880,7 @@ class PublicationStateController extends Controller {
 	 * @return void
 	 */
 	private function save(string $id, array $record): void {
-		$configuration = $this->resolveRegisterConfiguration(
-			registerKey: 'publication_register',
-			schemaKey: 'publication_schema'
-		);
-		unset($record['id']);
-
-		$this->registers->getObjectService()->saveObject(
-			object: $record,
-			options: new ObjectSaveOptions(
-				target: new ObjectFindTarget(register: $configuration['register'], schema: $configuration['schema']),
-				uuid: $id
-			),
-			_rbac: true
-		);
+		$this->takeDowns()->save(id: $id, record: $record);
 
 	}//end save()
 

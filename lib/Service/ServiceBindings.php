@@ -177,6 +177,8 @@ use OCA\OpenCatalogi\Contract\OrganisationActivationInterface;
 use OCA\OpenCatalogi\Service\ValueList\OrganisationActivation;
 use OCA\OpenCatalogi\Contract\AgentPublishingInterface;
 use OCA\OpenCatalogi\Service\Publication\AgentPublishing;
+use OCA\OpenCatalogi\Contract\AgentWithdrawalInterface;
+use OCA\OpenCatalogi\Service\Publication\AgentWithdrawal;
 use OCA\OpenCatalogi\Service\Vocabulary\ValueListRefresh;
 use OCA\OpenCatalogi\Service\Vocabulary\OpenRegisterVocabulary;
 
@@ -215,6 +217,7 @@ final class ServiceBindings {
 		ValueListRefreshInterface::class => ValueListRefresh::class,
 		OrganisationActivationInterface::class => OrganisationActivation::class,
 		AgentPublishingInterface::class => AgentPublishing::class,
+		AgentWithdrawalInterface::class => AgentWithdrawal::class,
 		DocumentReferenceUrlPolicyInterface::class => DocumentReferenceUrlPolicy::class,
 		DonlRegistrationServiceInterface::class => DonlRegistrationService::class,
 		UsageCounterServiceInterface::class => UsageCounterService::class,
