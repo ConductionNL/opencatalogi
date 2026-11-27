@@ -149,6 +149,9 @@ class ListenerRegistrar {
 		$this->registerWriteGuards(context: $context);
 		$this->registerTableImports(context: $context);
 
+		// A file uploaded to a publication carries the publisher's labels too (REQ-PRO-002, task 2.2d).
+		$context->registerEventListener(PublisherStampListener::FILE_ADDED_EVENT, PublisherStampListener::class);
+
 		// Refuse a self-relation and mirror caseReference into sourceIdentifiers (REQ-PRS-001, REQ-PRS-003).
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationRelationsListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationRelationsListener::class);
