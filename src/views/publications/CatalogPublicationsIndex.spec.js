@@ -763,6 +763,31 @@ describe('CatalogPublicationsIndex', () => {
 			expect([publish.visible(live), depublish.visible(live)]).toEqual([false, true])
 		})
 
+		it('offers Publish and Depublish in the selection bar only for a selected row they apply to', async () => {
+			objectStore.menuCatalogs = [catalog('woo', [19], [184])]
+			objectStore.settings.availableRegisters[0].schemas.push({ id: 185, properties: { publicatiedatum: {} } })
+			const { wrapper } = mountPage({
+				otherPairConfig: { bulkActions: actions.slice(1) },
+				handlers: { openSelectionDialog: jest.fn() },
+			})
+			await flushPromises()
+
+			const page = indexPage(wrapper)
+			const offered = async (rows) => {
+				page.vm.selectedObjects = rows
+				page.vm.$emit('select', rows.map((row) => row.id))
+				await flushPromises()
+				return page.vm.$attrs.bulkActions.map((action) => action.id)
+			}
+			const noEnd = (dates) => ({ ...woo(dates), id: 'n1', '@self': { id: 'n1', register: 19, schema: 185 } })
+
+			expect(await offered([])).toEqual([])
+			expect(await offered([woo()])).toEqual(['publish'])
+			expect(await offered([woo({ publicatiedatum: '2020-01-01' })])).toEqual(['depublish'])
+			expect(await offered([noEnd({ publicatiedatum: '2020-01-01' })])).toEqual([])
+			expect(await offered([noEnd(), woo({ id: 'w3', publicatiedatum: '2020-01-01' })])).toEqual(['publish', 'depublish'])
+		})
+
 		it('opens the dialog on its own row and reloads the list when it closes, keeping the selection', async () => {
 			objectStore.menuCatalogs = [catalog('woo', [19], [184])]
 			const openSelectionDialog = jest.fn(() => {

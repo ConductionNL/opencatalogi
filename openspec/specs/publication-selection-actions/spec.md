@@ -62,7 +62,10 @@ switched off.
 ### Requirement: Publish and depublish work on any schema with publication date fields (PSA-004)
 
 Publish and Depublish SHALL be offered in the selection bar of every catalog,
-also one whose page pair is not the publication schema. Each selected object
+also one whose page pair is not the publication schema, but only while at
+least one selected object can be published or depublished: its schema has
+the date property the action writes, and it is not yet published (Publish)
+or it is published or scheduled (Depublish). Each selected object
 MUST be handled by its own schema's date properties: `publicationDate`, else
 `publicatiedatum`, for the publication date (P) and `depublicationDate`, else
 `depublicatiedatum`, for the depublication date (D). Its status MUST follow
@@ -87,6 +90,20 @@ objects and objects whose schema has no publication date.
 - **THEN** its `depublicatiedatum` is saved as 2026-06-15 and its `publicatiedatum` stays 2026-01-10
 
 @e2e exclude no Dutch-named schema ships in the e2e seed; the property-name resolution is unit-level, covered by publicationWindow.spec.js and MassPublicationDates.spec.js
+
+#### Scenario: Depublish is not offered for a selection it would skip
+
+- **GIVEN** a catalog whose schema declares `publicatiedatum` but no depublication date
+- **WHEN** an editor selects a document of it
+- **THEN** the selection bar offers no Depublish
+
+@e2e exclude no schema without a depublication date ships in the e2e seed; covered by CatalogPublicationsIndex.spec.js
+
+#### Scenario: Only Publish is offered for a selected concept
+
+- **GIVEN** only a publication without a publication date is selected
+- **WHEN** the editor looks at the selection bar
+- **THEN** it offers Publish and no Depublish
 
 #### Scenario: Depublishing a scheduled publication
 

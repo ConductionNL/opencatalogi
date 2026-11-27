@@ -168,6 +168,7 @@ test.describe('Publications selection bar', () => {
  * @e2e openspec/specs/publication-selection-actions/spec.md#scenario-a-concept-row-offers-no-depublish
  * @e2e openspec/specs/publication-selection-actions/spec.md#scenario-depublishing-a-scheduled-publication
  * @e2e openspec/specs/publication-selection-actions/spec.md#scenario-a-concept-is-not-depublished
+ * @e2e openspec/specs/publication-selection-actions/spec.md#scenario-only-publish-is-offered-for-a-selected-concept
  */
 test.describe('Publish and depublish on a row', () => {
 	test.describe.configure({ mode: 'serial' })
@@ -236,6 +237,13 @@ test.describe('Publish and depublish on a row', () => {
 
 		await expect(page.getByRole('menuitem', { name: /^(Publish|Publiceren)$/ })).toBeVisible()
 		await expect(page.getByRole('menuitem', { name: /^(Depublish|Depubliceren)$/ })).toHaveCount(0)
+	})
+
+	test('a selected concept gets Publish and no Depublish in the selection bar', async ({ page }) => {
+		await select(page, [fixtures.concept.title])
+
+		await expect(page.locator('[data-testid="cn-bulk-action-publish"]').first()).toBeVisible()
+		await expect(page.locator('[data-testid="cn-bulk-action-depublish"]')).toHaveCount(0)
 	})
 
 	test('Depublish skips a concept and takes a scheduled publication back to concept', async ({ page, request }) => {

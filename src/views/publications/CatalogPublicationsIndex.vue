@@ -64,6 +64,7 @@
 		@vue:mounted="followDeleteTarget"
 		@rowClick="onRowOpen"
 		@rowAuxClick="onRowOpen"
+		@select="onSelectionChange"
 		@view="onView"
 		@editOpen="onEdit"
 		@add="onAdd" />
@@ -190,6 +191,8 @@ export default {
 			 * clears the selection) or 'row', or null.
 			 */
 			selectionActionOpen: null,
+			/** The selected rows, which decide the bulk actions that apply. */
+			selectedRows: [],
 			/** The row CnIndexPage's single-delete dialog is for, or null. */
 			deleteTarget: null,
 			/** Stops following the delete target of an index page that was replaced. */
@@ -347,6 +350,15 @@ export default {
 			index?.onRefreshEvent?.()
 		},
 
+		/**
+		 * A new index page (another catalog) starts without a selection.
+		 *
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
+		 */
+		indexKey() {
+			this.selectedRows = []
+		},
+
 		catalogSlug: {
 			immediate: true,
 			/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
@@ -497,12 +509,38 @@ export default {
 		 * @param {Array<object>} bulkActions - The bulk actions
 		 * @return {Array<object>} The bound actions
 		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-selection-actions-follow-the-delete-right-psa-003
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
 		 */
 		boundBulkActions(bulkActions) {
 			if (this.actionToggles.showDeleteAction === false) {
 				return []
 			}
-			return bulkActions.map((action) => this.bindBulkAction(action))
+			return bulkActions
+				.filter((action) => this.appliesToSelection(action))
+				.map((action) => this.bindBulkAction(action))
+		},
+
+		/**
+		 * Whether a bulk action applies to the selection: a dialog with a row
+		 * rule (Publish, Depublish) needs a selected row it applies to, so the
+		 * bar never offers an action every selected row would skip.
+		 *
+		 * @param {object} action - The bulk action
+		 * @return {boolean} True when it applies
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
+		 */
+		appliesToSelection(action) {
+			const applies = ROW_DIALOG_APPLIES[action?.props?.dialog || action?.props?.modal]
+			return !applies || this.selectedRows.some((row) => applies(row))
+		},
+
+		/**
+		 * Keep the selected rows when the selection changes.
+		 *
+		 * @spec openspec/specs/publication-selection-actions/spec.md#requirement-publish-and-depublish-work-on-any-schema-with-publication-date-fields-psa-004
+		 */
+		onSelectionChange() {
+			this.selectedRows = [...(this.$refs.index?.selectedObjects || [])]
 		},
 
 		/**
