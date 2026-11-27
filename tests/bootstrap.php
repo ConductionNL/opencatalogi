@@ -199,3 +199,4 @@ spl_autoload_register(
 require_once __DIR__ . '/Unit/Support/ServerAwareRequest.php';
 require_once __DIR__ . '/Unit/Support/AllowingCapabilityRights.php';
 require_once __DIR__ . '/Unit/Support/RecordedTooiRegister.php';
+require_once __DIR__ . '/Unit/Support/ServedCategories.php';

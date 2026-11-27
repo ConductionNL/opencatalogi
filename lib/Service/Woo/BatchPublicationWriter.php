@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Service\Woo;
 
 use OCA\OpenCatalogi\Service\Publication\PublishTransition;
 use OCA\OpenCatalogi\Contract\AttachmentReadingQueueInterface;
+use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitle;
 use OCA\OpenCatalogi\Service\Publication\EmbeddedTitleWriter;
@@ -509,22 +510,53 @@ class BatchPublicationWriter {
 	}//end organisationOf()
 
 	/**
-	 * The batch's information category, else the Woo request category.
+	 * The batch's information category when the category registry serves it, else the Woo request category.
+	 *
+	 * The registry holds the value-list members the vocabulary register answers
+	 * and the categories an operator added, so a batch filed under an
+	 * operator-added category keeps it. Without a readable registry the batch is
+	 * filed under the Woo request category, as for an unknown one.
 	 *
 	 * @param array<string, mixed> $batch The batch.
 	 *
 	 * @return string
 	 *
 	 * @spec openspec/changes/woo-batch-creates-publications/specs/woo-transparency/spec.md#requirement-publishing-a-woo-batch-creates-a-public-publication-with-its-documents-attached-req-wbp-001
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
 	 */
 	public function category(array $batch): string {
 		$category = (string)($batch['wooCategory'] ?? '');
-		if (array_key_exists($category, WooCategory::ALL) === true) {
+		if ($category !== '' && $this->categoryRegistry()?->find(code: $category) !== null) {
 			return $category;
 		}
 
 		return WooCategory::WOO_REQUEST;
 	}//end category()
+
+	/**
+	 * The information category registry, or null when it cannot be resolved.
+	 *
+	 * Resolved from the container on use rather than injected, so this
+	 * writer's constructor keeps its collaborators.
+	 *
+	 * @return InformationCategoryRegistryInterface|null
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
+	 */
+	private function categoryRegistry(): ?InformationCategoryRegistryInterface {
+		$registry = null;
+		try {
+			$registry = $this->container->get(InformationCategoryRegistryInterface::class);
+		} catch (\Throwable) {
+			// No registry: every batch is filed under the Woo request category.
+		}
+
+		if ($registry instanceof InformationCategoryRegistryInterface === false) {
+			return null;
+		}
+
+		return $registry;
+	}//end categoryRegistry()
 
 	/**
 	 * Attach one file to the publication, write the official title into the

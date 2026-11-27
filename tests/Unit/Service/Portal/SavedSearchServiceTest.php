@@ -37,7 +37,7 @@ class SavedSearchServiceTest extends TestCase {
 
 	protected function setUp(): void {
 		$this->store = new FakePortalObjectStore();
-		$this->service = new SavedSearchService(store: $this->store);
+		$this->service = new SavedSearchService(store: $this->store, categories: new \Unit\Support\ServedCategories());
 	}
 
 	/**
@@ -146,5 +146,34 @@ class SavedSearchServiceTest extends TestCase {
 		}
 
 		$this->assertSame([], ($this->store->objects['savedSearch'] ?? []));
+	}
+
+	/**
+	 * An operator-added category is a known filter, because the registry serves it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
+	 */
+	public function testAnOperatorAddedCategoryIsAKnownFilter(): void {
+		$service = new SavedSearchService(store: $this->store, categories: new \Unit\Support\ServedCategories(added: ['aanbestedingen']));
+		$saved = $service->save(owner: 'subject-1', input: ['title' => 'x', 'query' => ['filters' => ['informatiecategorie' => ['aanbestedingen', 'infocat014']]]]);
+
+		$this->assertSame(['aanbestedingen', 'infocat014'], $this->store->objects['savedSearch'][$saved['id']]['query']['filters']['informatiecategorie']);
+	}
+
+	/**
+	 * Without a readable vocabulary register no category is known, so a category filter is refused.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
+	 */
+	public function testWithoutTheRegisterACategoryFilterIsRefused(): void {
+		$service = new SavedSearchService(store: $this->store, categories: new \Unit\Support\ServedCategories(unreadable: true));
+
+		$this->expectException(PortalInputException::class);
+		$this->expectExceptionMessage('Unknown information category: infocat014');
+		$service->save(owner: 'subject-1', input: ['title' => 'x', 'query' => ['filters' => ['informatiecategorie' => ['infocat014']]]]);
 	}
 }

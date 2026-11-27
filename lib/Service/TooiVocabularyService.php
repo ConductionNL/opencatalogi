@@ -134,59 +134,69 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	 * schema titles match (TOOI's `skos:prefLabel` is the singular, lower-case
 	 * form and is accepted as a name too); `aliases` are the version 1 and 2
 	 * `skos:prefLabel` forms, so a label written into a stored record years ago
-	 * keeps resolving.
+	 * keeps resolving. `en` is the English name: the `l10n/` source string the
+	 * category routes translate, and the schema's `x-enum-labels` entry, because
+	 * the TOOI concepts carry Dutch labels only.
 	 *
-	 * @var array<string, array{id: string, label: string, aliases: array<int, string>}>
+	 * @var array<string, array{id: string, label: string, en: string, aliases: array<int, string>}>
 	 */
 	private const INFORMATIECATEGORIEEN = [
 		'infocat001' => [
 			'id' => 'c_139c6280',
 			'label' => 'Wetten en algemeen verbindende voorschriften',
+			'en' => 'Laws and generally binding regulations',
 			'aliases' => ['wet of algemeen verbindend voorschrift'],
 		],
 		'infocat002' => [
 			'id' => 'c_aab6bfc7',
 			'label' => 'Overige besluiten van algemene strekking',
+			'en' => 'Other decisions of general scope',
 			'aliases' => ['overig besluit van algemene strekking'],
 		],
 		'infocat003' => [
 			'id' => 'c_759721e2',
 			'label' => 'Ontwerpen van wet- en regelgeving met adviesaanvraag',
+			'en' => 'Draft legislation sent out for advice',
 			'aliases' => ['ontwerp wet- en regelgeving', 'ontwerp van wet- en regelgeving met adviesaanvraag'],
 		],
-		'infocat004' => ['id' => 'c_40a05794', 'label' => 'Organisatie en werkwijze', 'aliases' => []],
-		'infocat005' => ['id' => 'c_89ee6784', 'label' => 'Bereikbaarheidsgegevens', 'aliases' => []],
+		'infocat004' => ['id' => 'c_40a05794', 'label' => 'Organisatie en werkwijze', 'en' => 'Organisation and working methods', 'aliases' => []],
+		'infocat005' => ['id' => 'c_89ee6784', 'label' => 'Bereikbaarheidsgegevens', 'en' => 'Contact details', 'aliases' => []],
 		'infocat006' => [
 			'id' => 'c_8c840238',
 			'label' => 'Bij vertegenwoordigende organen ingekomen stukken',
+			'en' => 'Documents received by representative bodies',
 			'aliases' => ['bij vertegenwoordigend lichaam ingekomen stuk', 'bij vertegenwoordigend orgaan ingekomen stuk'],
 		],
-		'infocat007' => ['id' => 'c_c76862ab', 'label' => 'Vergaderstukken Staten-Generaal', 'aliases' => ['vergaderstuk staten-generaal']],
+		'infocat007' => ['id' => 'c_c76862ab', 'label' => 'Vergaderstukken Staten-Generaal', 'en' => 'Meeting documents of the States General', 'aliases' => ['vergaderstuk staten-generaal']],
 		'infocat008' => [
 			'id' => 'c_db4862c3',
 			'label' => 'Vergaderstukken decentrale overheden',
+			'en' => 'Meeting documents of local and regional governments',
 			'aliases' => ['vergaderstuk lager vertegenwoordigend of openbaar lichaam', 'vergaderstuk decentrale overheid'],
 		],
 		'infocat009' => [
 			'id' => 'c_3a248e3a',
 			'label' => "Agenda's en besluitenlijsten bestuurscolleges",
+			'en' => 'Agendas and decision lists of executive boards',
 			'aliases' => ['agenda of besluitenlijst bestuurscollege'],
 		],
-		'infocat010' => ['id' => 'c_99a836c7', 'label' => 'Adviezen', 'aliases' => ['advies']],
-		'infocat011' => ['id' => 'c_8fc2335c', 'label' => 'Convenanten', 'aliases' => ['convenant']],
-		'infocat012' => ['id' => 'c_c6cd1213', 'label' => 'Jaarplannen en jaarverslagen', 'aliases' => ['jaarplan of jaarverslag']],
+		'infocat010' => ['id' => 'c_99a836c7', 'label' => 'Adviezen', 'en' => 'Advice', 'aliases' => ['advies']],
+		'infocat011' => ['id' => 'c_8fc2335c', 'label' => 'Convenanten', 'en' => 'Covenants', 'aliases' => ['convenant']],
+		'infocat012' => ['id' => 'c_c6cd1213', 'label' => 'Jaarplannen en jaarverslagen', 'en' => 'Annual plans and annual reports', 'aliases' => ['jaarplan of jaarverslag']],
 		'infocat013' => [
 			'id' => 'c_cf268088',
 			'label' => 'Subsidieverplichtingen anders dan met beschikking',
+			'en' => 'Subsidy obligations other than by decision',
 			'aliases' => ['subsidieverplichting', 'subsidieverplichting anders dan met beschikking'],
 		],
-		'infocat014' => ['id' => 'c_3baef532', 'label' => 'Woo-verzoeken en -besluiten', 'aliases' => ['woo-verzoek', 'woo-verzoek of -besluit']],
-		'infocat015' => ['id' => 'c_fdaee95e', 'label' => 'Onderzoeksrapporten', 'aliases' => ['onderzoeksrapport']],
-		'infocat016' => ['id' => 'c_46a81018', 'label' => 'Beschikkingen', 'aliases' => ['beschikking']],
-		'infocat017' => ['id' => 'c_a870c43d', 'label' => 'Klachtoordelen', 'aliases' => ['klachtoordeel']],
+		'infocat014' => ['id' => 'c_3baef532', 'label' => 'Woo-verzoeken en -besluiten', 'en' => 'Woo requests and decisions', 'aliases' => ['woo-verzoek', 'woo-verzoek of -besluit']],
+		'infocat015' => ['id' => 'c_fdaee95e', 'label' => 'Onderzoeksrapporten', 'en' => 'Research reports', 'aliases' => ['onderzoeksrapport']],
+		'infocat016' => ['id' => 'c_46a81018', 'label' => 'Beschikkingen', 'en' => 'Individual decisions', 'aliases' => ['beschikking']],
+		'infocat017' => ['id' => 'c_a870c43d', 'label' => 'Klachtoordelen', 'en' => 'Complaint rulings', 'aliases' => ['klachtoordeel']],
 		'infocat018' => [
 			'id' => 'c_816e508d',
 			'label' => 'Inspanningsverplichting art 3.1 Woo',
+			'en' => 'Best-efforts obligation under art. 3.1 Woo',
 			'aliases' => ['inspanningsverplichting art 3.1 woo', 'inspanningsverplichting'],
 		],
 	];
@@ -371,14 +381,15 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 	}//end readActivated()
 
 	/**
-	 * The informatiecategorie value list (code → uri + heading), in code order: the members the register holds.
+	 * The informatiecategorie value list (code → uri, heading and English name), in code order: the members the register holds.
 	 *
-	 * @return array<string, array{uri: string, label: string}> The value list.
+	 * @return array<string, array{uri: string, label: string, labelEn: string}> The value list.
 	 *
 	 * @throws RuntimeException When the vocabulary register cannot be read.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
 	 */
 	public function informatiecategorieList(): array {
 		$concepts = $this->conceptsOf(scheme: self::CATEGORIES_SCHEME);
@@ -386,12 +397,30 @@ class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 		foreach (self::INFORMATIECATEGORIEEN as $code => $entry) {
 			$uri = self::KERN_BASE . $entry['id'];
 			if (isset($concepts[$uri]) === true) {
-				$out[$code] = ['uri' => $uri, 'label' => $entry['label']];
+				$out[$code] = ['uri' => $uri, 'label' => $entry['label'], 'labelEn' => $entry['en']];
 			}
 		}
 
 		return $out;
 	}//end informatiecategorieList()
+
+	/**
+	 * The heading of a category route code, or null for a code this app does not serve.
+	 *
+	 * Reads the app's code map only, not the register, so a caller without a
+	 * service instance (a publication rule's validation) can name a category.
+	 * Whether the register still holds the concept is
+	 * {@see informatiecategorieList()}'s answer.
+	 *
+	 * @param string $code The route code, e.g. `infocat010`.
+	 *
+	 * @return string|null The heading, e.g. `Adviezen`.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
+	 */
+	public static function categoryHeading(string $code): ?string {
+		return (self::INFORMATIECATEGORIEEN[$code]['label'] ?? null);
+	}//end categoryHeading()
 
 	/**
 	 * Resolve a document type to a member of the DiWoo documentsoorten list.

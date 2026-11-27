@@ -91,7 +91,7 @@ class PortalCollectionControllerTest extends TestCase {
 			appName: 'opencatalogi',
 			request: $this->request(params: $params, header: $header),
 			verifier: new PortalAssertionVerifier(secretOverride: self::SECRET),
-			searches: new SavedSearchService(store: $this->store),
+			searches: new SavedSearchService(store: $this->store, categories: new \Unit\Support\ServedCategories()),
 			logger: new NullLogger()
 		);
 	}

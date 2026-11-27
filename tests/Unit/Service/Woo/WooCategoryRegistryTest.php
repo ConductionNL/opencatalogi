@@ -172,6 +172,67 @@ class WooCategoryRegistryTest extends TestCase {
 	}//end testAHiddenCategoryKeepsItsSitemapIndexAndRobotsLine()
 
 	/**
+	 * REQ-WVC-005: the categories are the register's concepts, not a constant. A register
+	 * holding two of the eighteen serves exactly those two, each with its English name.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
+	 */
+	public function testTheCategoriesComeFromTheRegisterNotTheConstant(): void {
+		$register = new class implements \OCA\OpenCatalogi\Contract\VocabularyRegisterInterface {
+			/**
+			 * Two categories only: Adviezen and Convenanten.
+			 *
+			 * @param string $schemeUri The scheme.
+			 *
+			 * @return array<string, array{label: string, notation: string, deprecated: bool}>
+			 */
+			public function concepts(string $schemeUri): array {
+				if ($schemeUri !== TooiVocabularyService::CATEGORIES_SCHEME) {
+					return [];
+				}
+
+				return [
+					TooiVocabularyService::KERN_BASE . 'c_99a836c7' => ['label' => 'advies', 'notation' => '', 'deprecated' => false],
+					TooiVocabularyService::KERN_BASE . 'c_8fc2335c' => ['label' => 'convenant', 'notation' => '', 'deprecated' => false],
+				];
+			}
+
+			/**
+			 * Every concept is active.
+			 *
+			 * @param string $schemeUri The scheme.
+			 *
+			 * @return array<int, string>
+			 */
+			public function activeConceptUris(string $schemeUri): array {
+				return array_keys($this->concepts(schemeUri: $schemeUri));
+			}
+
+			/**
+			 * Not used.
+			 *
+			 * @param array<string, mixed> $jsonLd The document.
+			 *
+			 * @return array{scheme: string, created: int, updated: int, unchanged: int, deprecated: int}
+			 */
+			public function import(array $jsonLd): array {
+				return ['scheme' => '', 'created' => 0, 'updated' => 0, 'unchanged' => 0, 'deprecated' => 0];
+			}
+		};
+		$tooi = new TooiVocabularyService(register: $register);
+		$settings = $this->createMock(originalClassName: SettingsService::class);
+		$registry = new WooCategoryRegistry($tooi, $settings, $this->createMock(LoggerInterface::class), new LocalCategoryAdmission($tooi));
+
+		$this->assertSame(expected: ['infocat010', 'infocat011'], actual: array_keys($registry->all()));
+		$this->assertSame(expected: 'Advice', actual: $registry->find(code: 'infocat010')['labelEn']);
+		$this->assertSame(expected: 'Convenanten', actual: $registry->find(code: 'infocat011')['label']);
+		$this->assertNull(actual: $registry->find(code: 'infocat001'));
+		$this->assertFalse(condition: (new \ReflectionClass(\OCA\OpenCatalogi\Service\WooCategory::class))->hasConstant('ALL'));
+	}//end testTheCategoriesComeFromTheRegisterNotTheConstant()
+
+	/**
 	 * A registry over a given settings service.
 	 *
 	 * @param SettingsService $settings The settings service.

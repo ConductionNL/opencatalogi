@@ -36,7 +36,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
-use OCA\OpenCatalogi\Service\WooCategory;
+use OCA\OpenCatalogi\Service\TooiVocabularyService;
 
 /**
  * Decides what publishes and what an anonymous reader may read of it.
@@ -113,10 +113,11 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 * @return string|null The category code, such as `infocat004`.
 	 *
 	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
 	 */
 	public static function categoryOf(array $rule): ?string {
 		$code = ($rule['wooCategory'] ?? null);
-		if (is_string($code) === false || array_key_exists($code, WooCategory::ALL) === false) {
+		if (is_string($code) === false || TooiVocabularyService::categoryHeading(code: $code) === null) {
 			return null;
 		}
 
@@ -131,9 +132,10 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 * @return string The label.
 	 *
 	 * @spec openspec/changes/archive/2026-11-24-capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
 	 */
 	public static function categoryLabel(string $code): string {
-		return WooCategory::ALL[$code]['nl'] . ' (' . $code . ')';
+		return TooiVocabularyService::categoryHeading(code: $code) . ' (' . $code . ')';
 	}//end categoryLabel()
 
 	/**

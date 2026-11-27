@@ -85,7 +85,7 @@ class SavedSearchInputGoldenTest extends TestCase {
 	public function testSave(array $input, array|string $expected): void {
 		$store = new FakePortalObjectStore();
 		try {
-			$saved = (new SavedSearchService(store: $store))->save(owner: 'subject-1', input: $input);
+			$saved = (new SavedSearchService(store: $store, categories: new \Unit\Support\ServedCategories()))->save(owner: 'subject-1', input: $input);
 			unset($saved['id']);
 			$actual = $saved;
 		} catch (PortalInputException $e) {
@@ -104,7 +104,7 @@ class SavedSearchInputGoldenTest extends TestCase {
 	 */
 	public function testTheLimitIsCheckedAfterTheInput(): void {
 		$store = new FakePortalObjectStore();
-		$service = new SavedSearchService(store: $store);
+		$service = new SavedSearchService(store: $store, categories: new \Unit\Support\ServedCategories());
 		for ($i = 0; $i < SavedSearchService::MAX_PER_OWNER; $i++) {
 			$service->save(owner: 'subject-1', input: ['title' => 'T' . $i, 'query' => []]);
 		}

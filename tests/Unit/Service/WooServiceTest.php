@@ -443,6 +443,10 @@ class WooServiceTest extends TestCase {
 					return $this->deck;
 				}
 
+				if ($id === \OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface::class) {
+					return new \Unit\Support\ServedCategories();
+				}
+
 				if ($id === 'OCA\OpenRegister\Db\TaskSequenceMapper') {
 					return $this->sequences;
 				}

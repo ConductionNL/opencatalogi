@@ -368,6 +368,7 @@ unset($integriqStubEvent);
 require_once __DIR__ . '/Unit/Support/ServerAwareRequest.php';
 require_once __DIR__ . '/Unit/Support/AllowingCapabilityRights.php';
 require_once __DIR__ . '/Unit/Support/RecordedTooiRegister.php';
+require_once __DIR__ . '/Unit/Support/ServedCategories.php';
 
 // Test helpers for OpenRegister's option objects (tests carry no PSR-4 test namespace).
 require_once __DIR__ . '/Support/ReleaseObjectSignatures.php';

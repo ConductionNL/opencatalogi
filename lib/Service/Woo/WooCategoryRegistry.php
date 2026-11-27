@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * The categories used to be two PHP constants: a list of 17 codes in
- * `WooCategory::ALL` and a map of 17 sitemap file names in
+ * `WooCategory` and a map of 17 sitemap file names in
  * `SitemapService::INFO_CAT`. An eighteenth category therefore needed a code
  * change, and the two constants could disagree. This registry replaces both.
  *
@@ -45,7 +45,6 @@ namespace OCA\OpenCatalogi\Service\Woo;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
-use OCA\OpenCatalogi\Service\WooCategory;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -381,12 +380,15 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 	/**
 	 * The waardelijst members the vocabulary register holds, as category records.
 	 *
+	 * The English name is the `l10n/` source string the value list carries beside
+	 * each member; there is no second list of categories to fall out of step with.
+	 *
 	 * @return array<string, array<string, mixed>> The records, keyed by code; none when the register cannot be read.
 	 *
 	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/specs/woo-compliance/spec.md#requirement-the-tooi-lists-are-read-from-openregisters-vocabulary-register-req-wvc-001
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
 	 */
 	private function bundled(): array {
-		$english = WooCategory::ALL;
 		$records = [];
 		try {
 			$members = $this->tooiVocabulary->informatiecategorieList();
@@ -403,7 +405,7 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 			$records[$code] = [
 				'code' => $code,
 				'label' => $member['label'],
-				'labelEn' => (string)($english[$code]['en'] ?? $member['label']),
+				'labelEn' => (string)($member['labelEn'] ?? $member['label']),
 				'tooiUri' => $member['uri'],
 				'tooiLabel' => $member['label'],
 				'mapsTo' => $code,
