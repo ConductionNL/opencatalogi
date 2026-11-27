@@ -32,7 +32,6 @@ namespace Unit\Settings;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
-use OCA\OpenCatalogi\Service\WooCategory;
 use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Validator;
 use PHPUnit\Framework\TestCase;
@@ -96,16 +95,16 @@ class PublicationWooCategoryTest extends TestCase {
 		$this->assertSame('string', $property['type']);
 		$this->assertArrayNotHasKey('format', $property);
 
-		// The waardelijst resolver is the one authority for the member list.
-		$expected = array_keys((\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList());
+		// The waardelijst resolver is the one authority for the member list and its English names.
+		$list = (\Unit\Support\RecordedTooiRegister::service())->informatiecategorieList();
+		$expected = array_keys($list);
 		$this->assertCount(18, $expected);
 		$this->assertContains('infocat018', $expected, 'The art 3.1 category is missing.');
 
 		$this->assertSame($expected, $property['enum']);
-		$this->assertSame($expected, array_keys(WooCategory::ALL));
 		$this->assertSame(array_keys($property['x-enum-labels']), $expected);
-		foreach (WooCategory::ALL as $code => $names) {
-			$this->assertSame($names['en'], $property['x-enum-labels'][$code]);
+		foreach ($list as $code => $member) {
+			$this->assertSame(expected: $member['labelEn'], actual: $property['x-enum-labels'][$code]);
 		}
 	}
 

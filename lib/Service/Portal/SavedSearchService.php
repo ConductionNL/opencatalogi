@@ -25,10 +25,10 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Portal;
 
+use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\SavedSearchServiceInterface;
 use OCA\OpenCatalogi\Exception\PortalInputException;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
-use OCA\OpenCatalogi\Service\WooCategory;
 
 /**
  * Keeps a resident's saved searches.
@@ -55,10 +55,14 @@ class SavedSearchService implements SavedSearchServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param PortalObjectStore $store Reads and writes as the system.
+	 * @param PortalObjectStore                    $store      Reads and writes as the system.
+	 * @param InformationCategoryRegistryInterface $categories The categories a catalogue publishes under, operator-added ones included.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
 	 */
 	public function __construct(
 		private readonly PortalObjectStore $store,
+		private readonly InformationCategoryRegistryInterface $categories,
 	) {
 
 	}//end __construct()
@@ -281,18 +285,24 @@ class SavedSearchService implements SavedSearchServiceInterface {
 	}//end filters()
 
 	/**
-	 * The information categories filter, each one a known category.
+	 * The information categories filter, each one a category the registry serves.
+	 *
+	 * The registry reads the value list from the vocabulary register and adds the
+	 * categories an operator added, so a category is known when it is published
+	 * under, not when a constant lists it.
 	 *
 	 * @param array<string, mixed> $filters The filters as given.
 	 *
 	 * @return array<int, string> The categories.
 	 *
 	 * @throws PortalInputException When it is not a list of known categories.
+	 *
+	 * @spec openspec/changes/woo-value-lists-on-the-concept-register/tasks.md#task-2.3
 	 */
 	private function categories(array $filters): array {
 		$categories = $this->list(value: ($filters['informatiecategorie'] ?? []), field: 'informatiecategorie');
 		foreach ($categories as $category) {
-			if (array_key_exists($category, WooCategory::ALL) === false) {
+			if ($this->categories->find(code: $category) === null) {
 				throw new PortalInputException(message: 'Unknown information category: ' . $category);
 			}
 		}
