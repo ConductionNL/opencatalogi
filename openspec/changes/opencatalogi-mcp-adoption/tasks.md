@@ -47,8 +47,9 @@
   - GIVEN the same catalogue WHEN every tool is inspected THEN no tool can write `publicatiedatum` or `published`
   - GIVEN `CHANGELOG.md` WHEN read THEN it records the ADR-063 migration and the breaking tool-id changes
 - [x] Implement
-- [ ] Test
-  - Implement done 17 Nov (CHANGELOG). Test left open: re-importing the register and enumerating the live MCP catalogue needs a running instance. The validator half is covered by `McpToolSurfaceDeclarationTest`; with three schemas the catalogue holds 8 tools, not 12.
+- [x] Test
+  - Implement done 17 Nov (CHANGELOG). The validator half is covered by `McpToolSurfaceDeclarationTest`; with three schemas the catalogue holds 8 tools, not 12.
+  - Test built 28 Nov: `tests/Unit/Mcp/DerivedToolSurfaceTest.php` derives the catalogue in process the way OpenRegister does, with no instance: the schema tools from the `x-openregister-mcp` blocks of the merged shipped register, the service tools by running OpenRegister's own `AttributeToolScanner` over `OpenCatalogiScannableServices`. It asserts the 8 read tools (search and get on `publication`, `catalog`, `theme`, plus `searchCatalogPublications` and `listPublicationFiles`), that `opencatalogi.searchCatalog` and `opencatalogi.getPublication` are absent and no id is served twice, and that no read tool takes `publicationDate` or `published`; the only non-read tools are the governed writes of `PublicationAgentTools` (hermiq-ai-tooling). Skipped with its reason when OpenRegister is not next to the app.
 
 ## Verification
 - [ ] All tasks checked off

@@ -12,8 +12,15 @@
   - GIVEN each write tool WHEN its metadata is read THEN scope/reach match REQ-007 (`publishPublication`/`depublishPublication` = reach `external`) and both external-reach descriptions state distribution irreversibility
   - GIVEN `createDraftPublication` WHEN called with `publicationDate`, `depublicationDate`, `status`, or a retention property THEN it rejects with a structured invalid-arguments error and creates nothing
   - GIVEN the new PHP WHEN `composer check:strict` runs THEN it is clean
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
+  - 28 Nov 2026 (b-opencatalogi): all four write tools exist (`createDraftPublication` below, the other three with
+    Task 3). `tests/Unit/Mcp/DerivedToolSurfaceTest.php::testTheCatalogueCarriesExactlyFourGovernedWrites` runs
+    OpenRegister's own `AttributeToolScanner` over `OpenCatalogiScannableServices` and the merged shipped register:
+    the catalogue holds 12 tools (the parent change ships 8, not 12, see its Task 4), every curated id is two
+    segments, exactly the four writes are non-read with the scope and reach REQ-007 names, none declares `delete`,
+    and the publish and depublish descriptions say the distribution cannot be recalled. The forbidden draft fields
+    are refused in `PublicationAgentToolsTest::testADraftCannotArrivePublished`.
   - 25 Nov 2026: `createDraftPublication` built in `lib/Mcp/PublicationAgentTools.php` with its allow-list in
     `lib/Mcp/McpArgumentValidator.php` and registered in `OpenCatalogiScannableServices`; tests in
     `tests/Unit/Mcp/PublicationAgentToolsTest.php`. The tool takes one `publication` object, because
