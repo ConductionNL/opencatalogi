@@ -578,4 +578,53 @@ class DcatMappingServiceTest extends TestCase {
 		$this->assertArrayNotHasKey('dct:format', $broken);
 		$this->assertSame('https://host/d/12', $broken['@id']);
 	}
+	/**
+	 * A harvested publication names its source dataset as `dct:source`.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/harvest-feed-intake/tasks.md#task-2.3
+	 */
+	public function testAHarvestedPublicationWritesItsSourceAsDctSource(): void {
+		$publication = [
+			'id' => 'uuid-9',
+			'title' => 'Afvalinzameling',
+			'source' => 'https://data.example.nl/dataset/afvalinzameling',
+			'derivedFrom' => '5d1f0c2e-0000-4000-8000-000000000009',
+			'@self' => ['uuid' => 'uuid-9', 'updated' => '2026-11-20T00:00:00+00:00'],
+		];
+
+		$dataset = $this->mapDataset(
+			publication: $publication,
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: [],
+			datasetIri: 'https://host/api/cat/uuid-9',
+			defaults: []
+		);
+
+		$this->assertSame(expected: ['@id' => 'https://data.example.nl/dataset/afvalinzameling'], actual: $dataset['dct:source']);
+
+	}//end testAHarvestedPublicationWritesItsSourceAsDctSource()
+
+	/**
+	 * A source that is not an address is left out rather than written as a literal.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/harvest-feed-intake/tasks.md#task-2.3
+	 */
+	public function testASourceThatIsNotAnAddressIsLeftOut(): void {
+		$publication = ['id' => 'uuid-10', 'title' => 'Local', 'source' => 'not an address'];
+
+		$dataset = $this->mapDataset(
+			publication: $publication,
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: [],
+			datasetIri: 'https://host/api/cat/uuid-10',
+			defaults: []
+		);
+
+		$this->assertArrayNotHasKey(key: 'dct:source', array: $dataset);
+
+	}//end testASourceThatIsNotAnAddressIsLeftOut()
 }//end class

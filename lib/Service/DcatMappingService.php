@@ -54,6 +54,7 @@ class DcatMappingService {
 		'dcat:keyword' => 'tags[]',
 		'dcat:theme' => 'category',
 		'dct:license' => 'license',
+		'dct:source' => 'source',
 	];
 
 	/**
@@ -217,6 +218,7 @@ class DcatMappingService {
 	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
 	 * @spec openspec/changes/dcat-catalogue-completion/specs/dcat-ap-harvest/spec.md#requirement-the-licence-comes-from-a-controlled-list-bind-or-omit-req-dcc-001
+	 * @spec openspec/changes/harvest-feed-intake/tasks.md#task-2.3
 	 */
 	private function mapProperties(DcatDatasetSource $source, array $mapping): array {
 		$values = $this->mappedValues(publication: $source->publication, mapping: $mapping);
@@ -228,6 +230,14 @@ class DcatMappingService {
 
 		if (isset($values['dct:license']) === true) {
 			$properties['dct:license'] = $this->datasetLicenceNode(source: $source, value: $values['dct:license']);
+		}
+
+		// A harvested publication names the dataset it came from (harvest-feed-intake, REQ-HFI-005).
+		if (isset($values['dct:source']) === true) {
+			$properties['dct:source'] = null;
+			if ($this->isHttpUri(value: $values['dct:source']) === true) {
+				$properties['dct:source'] = ['@id' => $values['dct:source']];
+			}
 		}
 
 		foreach (self::LANGUAGE_TAGGED as $dcatProperty) {

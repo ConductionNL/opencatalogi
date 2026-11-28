@@ -1,0 +1,23 @@
+{
+  "_note": "Register fragment for harvest-feed-intake (REQ-HFI-005, ADR-037). A publication harvested from a DCAT feed names its source: `source` is the harvested dataset's @id (written as dct:source in the outbound DCAT feed) and `derivedFrom` is the uuid of the OpenRegister source that harvested it (prov:wasDerivedFrom). OpenRegister writes both after mapping, from each feed's `provenance` setting, so a mapping cannot override them. The version bump for these properties is carried by woo-x-access-boundary-hardening.json, which sorts last and wins the scalar merge.",
+  "components": {
+    "schemas": {
+      "publication": {
+        "slug": "publication",
+        "properties": {
+          "source": {
+            "type": "string",
+            "format": "uri",
+            "title": "Source",
+            "description": "The dataset this publication was harvested from, as its @id in the source catalogue."
+          },
+          "derivedFrom": {
+            "type": "string",
+            "title": "Harvested from",
+            "description": "The harvest feed that brought this publication in, as its OpenRegister source uuid."
+          }
+        }
+      }
+    }
+  }
+}
