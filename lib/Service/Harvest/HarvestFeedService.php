@@ -271,10 +271,8 @@ class HarvestFeedService implements HarvestFeedServiceInterface {
 		try {
 			return $write($this->sourceService())->jsonSerialize();
 		} catch (InvalidArgumentException $e) {
-			$field = 'config';
-			if (property_exists($e, 'field') === true) {
-				$field = (string) $e->field;
-			}
+			// OpenRegister's SourceRefused names the refused field in its public `field`.
+			$field = (string) (get_object_vars($e)['field'] ?? 'config');
 
 			throw new HarvestFeedRefused(status: 422, field: $field, message: $e->getMessage());
 		}
