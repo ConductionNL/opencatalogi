@@ -3,8 +3,19 @@
 /**
  * Tests for the listener that adds the DCAT catalogue fetcher to OpenRegister.
  *
+ * @category Test
+ * @package  OCA\OpenCatalogi\Tests\Unit\Listener
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
  *
  * @spec openspec/changes/harvest-feed-intake/specs/harvest-feed-intake/spec.md#requirement-opencatalogi-registers-a-dcat-json-ld-fetcher-req-hfi-001
  */
@@ -27,41 +38,69 @@ use Psr\Log\LoggerInterface;
  */
 class RegisterSourceFetchersListenerTest extends TestCase {
 
+	/**
+	 * Skip where OpenRegister's harvest classes are not next to the app.
+	 *
+	 * @return void
+	 */
 	protected function setUp(): void {
 		if (class_exists(SourceFetcherRegistry::class) === false) {
-			$this->markTestSkipped('OpenRegister\'s harvest classes are not next to the app.');
+			$this->markTestSkipped(message: 'OpenRegister\'s harvest classes are not next to the app.');
 		}
-	}
 
+	}//end setUp()
+
+	/**
+	 * The fetcher under test.
+	 *
+	 * @return DcatJsonLdFetcher
+	 */
 	private function fetcher(): DcatJsonLdFetcher {
 		return new DcatJsonLdFetcher(
-			container: $this->createMock(ContainerInterface::class),
-			logger: $this->createMock(LoggerInterface::class)
+			container: $this->createMock(originalClassName: ContainerInterface::class),
+			logger: $this->createMock(originalClassName: LoggerInterface::class)
 		);
-	}
 
+	}//end fetcher()
+
+	/**
+	 * The type is listed with its display name, owned by this app.
+	 *
+	 * @return void
+	 */
 	public function testTheTypeIsOfferedToForms(): void {
 		$fetcher  = $this->fetcher();
 		$registry = new SourceFetcherRegistry();
 
-		(new RegisterSourceFetchersListener($fetcher))->handle(new RegisterSourceFetchersEvent($registry));
+		$listener = new RegisterSourceFetchersListener(fetcher: $fetcher);
+		$listener->handle(event: new RegisterSourceFetchersEvent(registry: $registry));
 
-		$this->assertSame($fetcher, $registry->get('opencatalogi.dcat-jsonld'));
+		$this->assertSame(expected: $fetcher, actual: $registry->get(type: 'opencatalogi.dcat-jsonld'));
 
-		$listed = array_values(array_filter(
-			$registry->types(),
-			static fn (array $type): bool => ($type['type'] ?? null) === 'opencatalogi.dcat-jsonld'
-		));
-		$this->assertCount(1, $listed);
-		$this->assertSame('DCAT catalogue (JSON-LD)', $listed[0]['displayName']);
-		$this->assertSame('opencatalogi', $listed[0]['application']);
-	}
+		$listed = array_values(
+			array_filter(
+				$registry->types(),
+				static fn (array $type): bool => ($type['type'] ?? null) === 'opencatalogi.dcat-jsonld'
+			)
+		);
+		$this->assertCount(expectedCount: 1, haystack: $listed);
+		$this->assertSame(expected: 'DCAT catalogue (JSON-LD)', actual: $listed[0]['displayName']);
+		$this->assertSame(expected: 'opencatalogi', actual: $listed[0]['application']);
 
+	}//end testTheTypeIsOfferedToForms()
+
+	/**
+	 * Any other event leaves the registry alone.
+	 *
+	 * @return void
+	 */
 	public function testAnotherEventIsIgnored(): void {
 		$registry = new SourceFetcherRegistry();
 
-		(new RegisterSourceFetchersListener($this->fetcher()))->handle(new Event());
+		$listener = new RegisterSourceFetchersListener(fetcher: $this->fetcher());
+		$listener->handle(event: new Event());
 
-		$this->assertNull($registry->get('opencatalogi.dcat-jsonld'));
-	}
-}
+		$this->assertNull(actual: $registry->get(type: 'opencatalogi.dcat-jsonld'));
+
+	}//end testAnotherEventIsIgnored()
+}//end class

@@ -1,10 +1,21 @@
 <?php
 
 /**
- * Tests for the DCAT catalogue (JSON-LD) source fetcher.
+ * Tests for the DCAT catalogue (JSON-LD) source fetcher and its dataset reader.
+ *
+ * @category Test
+ * @package  OCA\OpenCatalogi\Tests\Unit\Harvest
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
  *
  * @spec openspec/changes/harvest-feed-intake/specs/harvest-feed-intake/spec.md#requirement-opencatalogi-registers-a-dcat-json-ld-fetcher-req-hfi-001
  */
@@ -16,9 +27,9 @@ namespace OCA\OpenCatalogi\Tests\Unit\Harvest;
 use GuzzleHttp\Psr7\Response;
 use OCA\OpenCatalogi\Harvest\DcatDatasetReader;
 use OCA\OpenCatalogi\Harvest\DcatJsonLdFetcher;
-use OCA\OpenRegister\Service\Sync\SourceFetcherRegistry;
 use OCA\OpenRegister\Db\Source;
 use OCA\OpenRegister\Service\Sync\HarvestHttpClient;
+use OCA\OpenRegister\Service\Sync\SourceFetcherRegistry;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -30,330 +41,570 @@ use RuntimeException;
  */
 class DcatJsonLdFetcherTest extends TestCase {
 
+	/**
+	 * The feed's address.
+	 */
 	private const URL = 'https://data.example.nl/catalog.jsonld';
 
+	/**
+	 * Skip where OpenRegister's harvest classes are not next to the app.
+	 *
+	 * @return void
+	 */
 	protected function setUp(): void {
 		if (class_exists(SourceFetcherRegistry::class) === false) {
-			$this->markTestSkipped('OpenRegister\'s harvest classes are not next to the app.');
+			$this->markTestSkipped(message: 'OpenRegister\'s harvest classes are not next to the app.');
 		}
-	}
+
+	}//end setUp()
 
 	/**
 	 * A container that has none of the asked services.
 	 *
-	 * @return ContainerInterface The container.
+	 * @return ContainerInterface
 	 */
 	private function emptyContainer(): ContainerInterface {
-		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willThrowException(
-			new class('not installed') extends RuntimeException implements NotFoundExceptionInterface {
-			}
-		);
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
+		$container->method('get')->willThrowException(self::notFound());
 		return $container;
-	}
 
-	private function fetcher(?ContainerInterface $container = null): DcatJsonLdFetcher {
+	}//end emptyContainer()
+
+	/**
+	 * The container's answer for a service that is not installed.
+	 *
+	 * @return RuntimeException
+	 */
+	private static function notFound(): RuntimeException {
+		return new class('not installed') extends RuntimeException implements NotFoundExceptionInterface {
+		};
+
+	}//end notFound()
+
+	/**
+	 * The fetcher under test.
+	 *
+	 * @param ContainerInterface|null $container The container, or one without integriq.
+	 *
+	 * @return DcatJsonLdFetcher
+	 */
+	private function fetcher(?ContainerInterface $container=null): DcatJsonLdFetcher {
 		return new DcatJsonLdFetcher(
 			container: ($container ?? $this->emptyContainer()),
-			logger: $this->createMock(LoggerInterface::class)
+			logger: $this->createMock(originalClassName: LoggerInterface::class)
 		);
-	}
+
+	}//end fetcher()
 
 	/**
 	 * A feed source with the given config.
 	 *
 	 * @param array<string, mixed> $config The config.
 	 *
-	 * @return Source The source.
+	 * @return Source
 	 */
 	private function source(array $config): Source {
 		$source = new Source();
 		$source->setConfig($config);
 		return $source;
-	}
+
+	}//end source()
 
 	/**
-	 * A guarded client that answers the feed URL with the body and status given.
+	 * A feed with a source URL.
+	 *
+	 * @return Source
 	 */
-	private function http(string $body, int $status = 200): HarvestHttpClient {
-		$http = $this->createMock(HarvestHttpClient::class);
-		$http->expects($this->once())->method('get')
-			->with(self::URL, $this->arrayHasKey('Accept'))
-			->willReturn(new Response($status, [], $body));
-		return $http;
-	}
-
-	private function fixture(string $name): string {
-		return (string) file_get_contents(__DIR__ . '/../../fixtures/harvest/' . $name);
-	}
-
 	private function urlSource(): Source {
-		return $this->source(['sourceUrl' => self::URL, 'targetCatalog' => 'c0ffee00-0000-4000-8000-000000000001']);
-	}
+		return $this->source(config: ['sourceUrl' => self::URL, 'targetCatalog' => 'c0ffee00-0000-4000-8000-000000000001']);
 
-	public function testTheTypeAndNameAreTheOnesFormsList(): void {
-		$fetcher = $this->fetcher();
+	}//end urlSource()
 
-		$this->assertSame('opencatalogi.dcat-jsonld', $fetcher->getType());
-		$this->assertSame('DCAT catalogue (JSON-LD)', $fetcher->getDisplayName());
-		$this->assertTrue($fetcher->supports('opencatalogi.dcat-jsonld'));
-		$this->assertFalse($fetcher->supports('rest-api'));
-	}
+	/**
+	 * A feed with a source slug.
+	 *
+	 * @param string $slug The integriq source.
+	 *
+	 * @return Source
+	 */
+	private function slugSource(string $slug='data-overheid'): Source {
+		return $this->source(config: ['sourceSlug' => $slug, 'targetCatalog' => 'c0ffee00-0000-4000-8000-000000000001']);
 
-	public function testTheConfigNeedsACatalogueAndExactlyOneSource(): void {
-		$schema = $this->fetcher()->getConfigSchema();
+	}//end slugSource()
 
-		$this->assertSame(['targetCatalog'], $schema['required']);
-		$this->assertSame([['required' => ['sourceUrl']], ['required' => ['sourceSlug']]], $schema['oneOf']);
-		$this->assertSame('uri', $schema['properties']['sourceUrl']['format']);
-	}
+	/**
+	 * A guarded client that answers the feed URL once.
+	 *
+	 * @param string $body   The body.
+	 * @param int    $status The status.
+	 *
+	 * @return HarvestHttpClient
+	 */
+	private function http(string $body, int $status=200): HarvestHttpClient {
+		$http = $this->createMock(originalClassName: HarvestHttpClient::class);
+		$http->expects($this->once())->method('get')
+			->with(self::URL, $this->arrayHasKey(key: 'Accept'))
+			->willReturn(new Response(status: $status, headers: [], body: $body));
+		return $http;
 
-	public function testDatasetsInAGraphAreItems(): void {
-		$document = json_encode([
-			'@graph' => [
-				['@id' => 'https://data.example.nl/catalog', '@type' => 'dcat:Catalog'],
-				['@id' => 'https://data.example.nl/a', '@type' => 'dcat:Dataset', 'dct:title' => 'A'],
-				['@id' => 'https://data.example.nl/b', '@type' => ['dcat:Dataset'], 'dct:title' => 'B'],
-				['@id' => 'https://data.example.nl/c', '@type' => 'http://www.w3.org/ns/dcat#Dataset'],
-			],
-		]);
+	}//end http()
 
-		$batch = $this->fetcher()->gatherItems($this->urlSource(), null, $this->http((string) $document));
-
-		$this->assertTrue($batch->complete);
-		$this->assertSame(
-			['https://data.example.nl/a', 'https://data.example.nl/b', 'https://data.example.nl/c'],
-			array_keys($batch->items)
-		);
-		$this->assertSame('A', $batch->items['https://data.example.nl/a']['dct:title']);
-		$this->assertSame([], $batch->errors);
-	}
-
-	public function testDatasetsUnderTheCatalogueAreItems(): void {
-		$document = json_encode([
-			'@id' => 'https://data.example.nl/catalog',
-			'@type' => 'dcat:Catalog',
-			'dcat:dataset' => [
-				['@id' => 'https://data.example.nl/a', 'dct:title' => 'A'],
-				['@id' => 'https://data.example.nl/b', 'dct:title' => 'B'],
-			],
-		]);
-
-		$batch = $this->fetcher()->gatherItems($this->urlSource(), null, $this->http((string) $document));
-
-		$this->assertTrue($batch->complete);
-		$this->assertSame(['https://data.example.nl/a', 'https://data.example.nl/b'], array_keys($batch->items));
-	}
-
-	public function testASingleListedDatasetIsAnItem(): void {
-		$batch = (new DcatDatasetReader())->batchOf([
-			'@type' => 'Catalog',
-			'dataset' => ['@id' => 'https://data.example.nl/only', 'title' => 'Only'],
-		]);
-
-		$this->assertSame(['https://data.example.nl/only'], array_keys($batch->items));
-	}
-
-	public function testABareReferenceIsNotCountedTwice(): void {
-		$batch = (new DcatDatasetReader())->batchOf([
-			'@graph' => [
-				[
-					'@type' => 'dcat:Catalog',
-					'dcat:dataset' => [['@id' => 'https://data.example.nl/a']],
-				],
-				['@id' => 'https://data.example.nl/a', '@type' => 'dcat:Dataset', 'dct:title' => 'A'],
-			],
-		]);
-
-		$this->assertSame(['https://data.example.nl/a'], array_keys($batch->items));
-		$this->assertSame('A', $batch->items['https://data.example.nl/a']['dct:title']);
-		$this->assertSame([], $batch->errors);
-	}
-
-	public function testADatasetWithoutIdIsAnError(): void {
-		$batch = (new DcatDatasetReader())->batchOf([
-			'@type' => 'dcat:Catalog',
-			'dcat:dataset' => [
-				['@id' => 'https://data.example.nl/a'  , 'dct:title' => 'A'],
-				['@id' => 'https://data.example.nl/b'  , 'dct:title' => 'B'],
-				['dct:title' => ['@value' => 'Zonder id', '@language' => 'nl']],
-				['@id' => 'https://data.example.nl/c'  , 'dct:title' => 'C'],
-			],
-		]);
-
-		$this->assertTrue($batch->complete);
-		$this->assertCount(3, $batch->items);
-		$this->assertCount(1, $batch->errors);
-		$this->assertNull($batch->errors[0]['externalId']);
-		$this->assertStringContainsString('"Zonder id"', $batch->errors[0]['message']);
-	}
-
-	public function testTheFixtureCatalogueHoldsThreeDatasets(): void {
-		$batch = $this->fetcher()->gatherItems($this->urlSource(), null, $this->http($this->fixture('dcat-catalog.jsonld')));
-
-		$this->assertTrue($batch->complete);
-		$this->assertSame(
-			[
-				'https://data.example.nl/dataset/afvalinzameling',
-				'https://data.example.nl/dataset/speelplaatsen',
-				'https://data.example.nl/dataset/parkeerzones',
-			],
-			array_keys($batch->items)
-		);
-		$this->assertSame([], $batch->errors);
-	}
-
-	public function testTheSecondFixtureChangesOneRemovesOneAndHasOneWithoutId(): void {
-		$batch = $this->fetcher()->gatherItems($this->urlSource(), null, $this->http($this->fixture('dcat-catalog-v2.jsonld')));
-
-		$this->assertTrue($batch->complete);
-		$this->assertSame(
-			['https://data.example.nl/dataset/afvalinzameling', 'https://data.example.nl/dataset/parkeerzones'],
-			array_keys($batch->items)
-		);
-		$this->assertSame('2026-11-20', $batch->items['https://data.example.nl/dataset/afvalinzameling']['dct:modified']);
-		$this->assertCount(1, $batch->errors);
-		$this->assertStringContainsString('Bomenregister', $batch->errors[0]['message']);
-	}
-
-	public function testAParseErrorIsIncomplete(): void {
-		$batch = $this->fetcher()->gatherItems($this->urlSource(), null, $this->http('{"@graph": [ not json'));
-
-		$this->assertFalse($batch->complete);
-		$this->assertSame([], $batch->items);
-		$this->assertSame('The source did not answer with a readable JSON-LD document.', $batch->errors[0]['message']);
-	}
-
-	public function testAnErrorStatusIsIncomplete(): void {
-		$batch = $this->fetcher()->gatherItems($this->urlSource(), null, $this->http('gone', 404));
-
-		$this->assertFalse($batch->complete);
-		$this->assertSame([], $batch->items);
-		$this->assertSame('The source answered with status 404.', $batch->errors[0]['message']);
-	}
-
-	public function testAFetchFailureIsIncomplete(): void {
-		$http = $this->createMock(HarvestHttpClient::class);
-		$http->method('get')->willThrowException(new RuntimeException('Harvest request failed after 3 attempts: timeout'));
-
-		$batch = $this->fetcher()->gatherItems($this->urlSource(), null, $http);
-
-		$this->assertFalse($batch->complete);
-		$this->assertSame([], $batch->items);
-		$this->assertStringContainsString('timeout', $batch->errors[0]['message']);
-	}
-
-	public function testAFeedWithoutASourceIsIncomplete(): void {
-		$http = $this->createMock(HarvestHttpClient::class);
+	/**
+	 * A guarded client that must not be asked.
+	 *
+	 * @return HarvestHttpClient
+	 */
+	private function unusedHttp(): HarvestHttpClient {
+		$http = $this->createMock(originalClassName: HarvestHttpClient::class);
 		$http->expects($this->never())->method('get');
+		return $http;
 
-		$batch = $this->fetcher()->gatherItems($this->source(['targetCatalog' => 'x']), null, $http);
+	}//end unusedHttp()
 
-		$this->assertFalse($batch->complete);
-		$this->assertSame('The feed names neither a source URL nor a source slug.', $batch->errors[0]['message']);
-	}
+	/**
+	 * A fixture document.
+	 *
+	 * @param string $name The fixture file.
+	 *
+	 * @return string
+	 */
+	private function fixture(string $name): string {
+		return (string) file_get_contents(__DIR__.'/../../fixtures/harvest/'.$name);
 
-	public function testASourceSlugWithoutIntegriqFailsWithAReason(): void {
-		$http = $this->createMock(HarvestHttpClient::class);
-		$http->expects($this->never())->method('get');
-
-		$batch = $this->fetcher()->gatherItems($this->source(['sourceSlug' => 'data-overheid', 'targetCatalog' => 'x']), null, $http);
-
-		$this->assertFalse($batch->complete);
-		$this->assertSame([], $batch->items);
-		$this->assertSame('integriq is not installed, so a source slug cannot be read', $batch->errors[0]['message']);
-	}
+	}//end fixture()
 
 	/**
 	 * A container that answers integriq's call service with the given double.
+	 *
+	 * @param object $callService The call service double.
+	 *
+	 * @return ContainerInterface
 	 */
 	private function integriq(object $callService): ContainerInterface {
-		$container = $this->createMock(ContainerInterface::class);
+		$notFound  = self::notFound();
+		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			static function (string $id) use ($callService): object {
+			static function (string $id) use ($callService, $notFound): object {
 				if ($id === 'OCA\Integriq\Service\CallService') {
 					return $callService;
 				}
 
-				throw new class('not installed') extends RuntimeException implements NotFoundExceptionInterface {
-				};
+				throw $notFound;
 			}
 		);
 		return $container;
-	}
 
+	}//end integriq()
+
+	/**
+	 * The type and name are the ones forms list.
+	 *
+	 * @return void
+	 */
+	public function testTheTypeAndNameAreTheOnesFormsList(): void {
+		$fetcher = $this->fetcher();
+
+		$this->assertSame(expected: 'opencatalogi.dcat-jsonld', actual: $fetcher->getType());
+		$this->assertSame(expected: 'DCAT catalogue (JSON-LD)', actual: $fetcher->getDisplayName());
+		$this->assertTrue(condition: $fetcher->supports(type: 'opencatalogi.dcat-jsonld'));
+		$this->assertFalse(condition: $fetcher->supports(type: 'rest-api'));
+
+	}//end testTheTypeAndNameAreTheOnesFormsList()
+
+	/**
+	 * The config needs a catalogue and exactly one of URL and slug.
+	 *
+	 * @return void
+	 */
+	public function testTheConfigNeedsACatalogueAndExactlyOneSource(): void {
+		$schema = $this->fetcher()->getConfigSchema();
+
+		$this->assertSame(expected: ['targetCatalog'], actual: $schema['required']);
+		$this->assertSame(expected: [['required' => ['sourceUrl']], ['required' => ['sourceSlug']]], actual: $schema['oneOf']);
+		$this->assertSame(expected: 'uri', actual: $schema['properties']['sourceUrl']['format']);
+
+	}//end testTheConfigNeedsACatalogueAndExactlyOneSource()
+
+	/**
+	 * Datasets typed in a graph are items keyed by their `@id`.
+	 *
+	 * @return void
+	 */
+	public function testDatasetsInAGraphAreItems(): void {
+		$document = (string) json_encode(
+			[
+				'@graph' => [
+					['@id' => 'https://data.example.nl/catalog', '@type' => 'dcat:Catalog'],
+					['@id' => 'https://data.example.nl/a', '@type' => 'dcat:Dataset', 'dct:title' => 'A'],
+					['@id' => 'https://data.example.nl/b', '@type' => ['dcat:Dataset'], 'dct:title' => 'B'],
+					['@id' => 'https://data.example.nl/c', '@type' => 'http://www.w3.org/ns/dcat#Dataset'],
+				],
+			]
+		);
+
+		$batch = $this->fetcher()->gatherItems(source: $this->urlSource(), since: null, http: $this->http(body: $document));
+
+		$this->assertTrue(condition: $batch->complete);
+		$this->assertSame(
+			expected: ['https://data.example.nl/a', 'https://data.example.nl/b', 'https://data.example.nl/c'],
+			actual: array_keys($batch->items)
+		);
+		$this->assertSame(expected: 'A', actual: $batch->items['https://data.example.nl/a']['dct:title']);
+		$this->assertSame(expected: [], actual: $batch->errors);
+
+	}//end testDatasetsInAGraphAreItems()
+
+	/**
+	 * Datasets a catalogue lists are items, typed or not.
+	 *
+	 * @return void
+	 */
+	public function testDatasetsUnderTheCatalogueAreItems(): void {
+		$document = (string) json_encode(
+			[
+				'@id' => 'https://data.example.nl/catalog',
+				'@type' => 'dcat:Catalog',
+				'dcat:dataset' => [
+					['@id' => 'https://data.example.nl/a', 'dct:title' => 'A'],
+					['@id' => 'https://data.example.nl/b', 'dct:title' => 'B'],
+				],
+			]
+		);
+
+		$batch = $this->fetcher()->gatherItems(source: $this->urlSource(), since: null, http: $this->http(body: $document));
+
+		$this->assertTrue(condition: $batch->complete);
+		$this->assertSame(expected: ['https://data.example.nl/a', 'https://data.example.nl/b'], actual: array_keys($batch->items));
+
+	}//end testDatasetsUnderTheCatalogueAreItems()
+
+	/**
+	 * One dataset listed as an object, not a list, is an item.
+	 *
+	 * @return void
+	 */
+	public function testASingleListedDatasetIsAnItem(): void {
+		$batch = (new DcatDatasetReader())->batchOf(
+			document: [
+				'@type' => 'Catalog',
+				'dataset' => ['@id' => 'https://data.example.nl/only', 'title' => 'Only'],
+			]
+		);
+
+		$this->assertSame(expected: ['https://data.example.nl/only'], actual: array_keys($batch->items));
+
+	}//end testASingleListedDatasetIsAnItem()
+
+	/**
+	 * A catalogue's bare reference to a dataset in the graph counts once.
+	 *
+	 * @return void
+	 */
+	public function testABareReferenceIsNotCountedTwice(): void {
+		$batch = (new DcatDatasetReader())->batchOf(
+			document: [
+				'@graph' => [
+					['@type' => 'dcat:Catalog', 'dcat:dataset' => [['@id' => 'https://data.example.nl/a']]],
+					['@id' => 'https://data.example.nl/a', '@type' => 'dcat:Dataset', 'dct:title' => 'A'],
+				],
+			]
+		);
+
+		$this->assertSame(expected: ['https://data.example.nl/a'], actual: array_keys($batch->items));
+		$this->assertSame(expected: 'A', actual: $batch->items['https://data.example.nl/a']['dct:title']);
+		$this->assertSame(expected: [], actual: $batch->errors);
+
+	}//end testABareReferenceIsNotCountedTwice()
+
+	/**
+	 * A dataset without `@id` is an error naming its title, not an item.
+	 *
+	 * @return void
+	 */
+	public function testADatasetWithoutIdIsAnError(): void {
+		$batch = (new DcatDatasetReader())->batchOf(
+			document: [
+				'@type' => 'dcat:Catalog',
+				'dcat:dataset' => [
+					['@id' => 'https://data.example.nl/a', 'dct:title' => 'A'],
+					['@id' => 'https://data.example.nl/b', 'dct:title' => 'B'],
+					['dct:title' => ['@value' => 'Zonder id', '@language' => 'nl']],
+					['@id' => 'https://data.example.nl/c', 'dct:title' => 'C'],
+				],
+			]
+		);
+
+		$this->assertTrue(condition: $batch->complete);
+		$this->assertCount(expectedCount: 3, haystack: $batch->items);
+		$this->assertCount(expectedCount: 1, haystack: $batch->errors);
+		$this->assertNull(actual: $batch->errors[0]['externalId']);
+		$this->assertStringContainsString(needle: '"Zonder id"', haystack: $batch->errors[0]['message']);
+
+	}//end testADatasetWithoutIdIsAnError()
+
+	/**
+	 * An untitled dataset without `@id` still says what it is.
+	 *
+	 * @return void
+	 */
+	public function testAnUntitledDatasetWithoutIdIsNamedUntitled(): void {
+		$batch = (new DcatDatasetReader())->batchOf(document: [['@type' => 'dcat:Dataset', '@id' => '  ']]);
+
+		$this->assertSame(expected: [], actual: $batch->items);
+		$this->assertStringContainsString(needle: '(untitled)', haystack: $batch->errors[0]['message']);
+
+	}//end testAnUntitledDatasetWithoutIdIsNamedUntitled()
+
+	/**
+	 * The fixture catalogue holds three datasets.
+	 *
+	 * @return void
+	 */
+	public function testTheFixtureCatalogueHoldsThreeDatasets(): void {
+		$http  = $this->http(body: $this->fixture(name: 'dcat-catalog.jsonld'));
+		$batch = $this->fetcher()->gatherItems(source: $this->urlSource(), since: null, http: $http);
+
+		$this->assertTrue(condition: $batch->complete);
+		$this->assertSame(
+			expected: [
+				'https://data.example.nl/dataset/afvalinzameling',
+				'https://data.example.nl/dataset/speelplaatsen',
+				'https://data.example.nl/dataset/parkeerzones',
+			],
+			actual: array_keys($batch->items)
+		);
+		$this->assertSame(expected: [], actual: $batch->errors);
+
+	}//end testTheFixtureCatalogueHoldsThreeDatasets()
+
+	/**
+	 * The second fixture changes one, removes one and has one without `@id`.
+	 *
+	 * @return void
+	 */
+	public function testTheSecondFixtureChangesOneRemovesOneAndHasOneWithoutId(): void {
+		$http  = $this->http(body: $this->fixture(name: 'dcat-catalog-v2.jsonld'));
+		$batch = $this->fetcher()->gatherItems(source: $this->urlSource(), since: null, http: $http);
+
+		$this->assertTrue(condition: $batch->complete);
+		$this->assertSame(
+			expected: ['https://data.example.nl/dataset/afvalinzameling', 'https://data.example.nl/dataset/parkeerzones'],
+			actual: array_keys($batch->items)
+		);
+		$this->assertSame(expected: '2026-11-20', actual: $batch->items['https://data.example.nl/dataset/afvalinzameling']['dct:modified']);
+		$this->assertCount(expectedCount: 1, haystack: $batch->errors);
+		$this->assertStringContainsString(needle: 'Bomenregister', haystack: $batch->errors[0]['message']);
+
+	}//end testTheSecondFixtureChangesOneRemovesOneAndHasOneWithoutId()
+
+	/**
+	 * A document that is not JSON gives an incomplete batch with no items.
+	 *
+	 * @return void
+	 */
+	public function testAParseErrorIsIncomplete(): void {
+		$http  = $this->http(body: '{"@graph": [ not json');
+		$batch = $this->fetcher()->gatherItems(source: $this->urlSource(), since: null, http: $http);
+
+		$this->assertFalse(condition: $batch->complete);
+		$this->assertSame(expected: [], actual: $batch->items);
+		$this->assertSame(expected: 'The source did not answer with a readable JSON-LD document.', actual: $batch->errors[0]['message']);
+
+	}//end testAParseErrorIsIncomplete()
+
+	/**
+	 * An error status gives an incomplete batch naming the status.
+	 *
+	 * @return void
+	 */
+	public function testAnErrorStatusIsIncomplete(): void {
+		$batch = $this->fetcher()->gatherItems(source: $this->urlSource(), since: null, http: $this->http(body: 'gone', status: 404));
+
+		$this->assertFalse(condition: $batch->complete);
+		$this->assertSame(expected: [], actual: $batch->items);
+		$this->assertSame(expected: 'The source answered with status 404.', actual: $batch->errors[0]['message']);
+
+	}//end testAnErrorStatusIsIncomplete()
+
+	/**
+	 * A request that fails gives an incomplete batch with the reason.
+	 *
+	 * @return void
+	 */
+	public function testAFetchFailureIsIncomplete(): void {
+		$http = $this->createMock(originalClassName: HarvestHttpClient::class);
+		$http->method('get')->willThrowException(new RuntimeException(message: 'Harvest request failed after 3 attempts: timeout'));
+
+		$batch = $this->fetcher()->gatherItems(source: $this->urlSource(), since: null, http: $http);
+
+		$this->assertFalse(condition: $batch->complete);
+		$this->assertSame(expected: [], actual: $batch->items);
+		$this->assertStringContainsString(needle: 'timeout', haystack: $batch->errors[0]['message']);
+
+	}//end testAFetchFailureIsIncomplete()
+
+	/**
+	 * A feed with neither URL nor slug asks nothing and says why.
+	 *
+	 * @return void
+	 */
+	public function testAFeedWithoutASourceIsIncomplete(): void {
+		$source = $this->source(config: ['targetCatalog' => 'c0ffee00-0000-4000-8000-000000000001']);
+		$batch  = $this->fetcher()->gatherItems(source: $source, since: null, http: $this->unusedHttp());
+
+		$this->assertFalse(condition: $batch->complete);
+		$this->assertSame(expected: 'The feed names neither a source URL nor a source slug.', actual: $batch->errors[0]['message']);
+
+	}//end testAFeedWithoutASourceIsIncomplete()
+
+	/**
+	 * A source slug without integriq says what is missing.
+	 *
+	 * @return void
+	 */
+	public function testASourceSlugWithoutIntegriqFailsWithAReason(): void {
+		$batch = $this->fetcher()->gatherItems(source: $this->slugSource(), since: null, http: $this->unusedHttp());
+
+		$this->assertFalse(condition: $batch->complete);
+		$this->assertSame(expected: [], actual: $batch->items);
+		$this->assertSame(expected: 'integriq is not installed, so a source slug cannot be read', actual: $batch->errors[0]['message']);
+
+	}//end testASourceSlugWithoutIntegriqFailsWithAReason()
+
+	/**
+	 * A source slug is read through integriq's call service.
+	 *
+	 * @return void
+	 */
 	public function testASourceSlugIsReadThroughIntegriq(): void {
-		$callService = new class($this->fixture('dcat-catalog.jsonld')) {
-			/** @var array<int, array<string, string>> */
+		$callService = new class($this->fixture(name: 'dcat-catalog.jsonld')) {
+
+			/**
+			 * The calls asked.
+			 *
+			 * @var array<int, array<string, string>>
+			 */
 			public array $calls = [];
 
+			/**
+			 * Constructor.
+			 *
+			 * @param string $body The body to answer with.
+			 */
 			public function __construct(private string $body) {
-			}
+			}//end __construct()
 
+			/**
+			 * Integriq's call, recorded.
+			 *
+			 * @param string $source   The source.
+			 * @param string $endpoint The endpoint.
+			 * @param string $method   The method.
+			 *
+			 * @return array<string, string>
+			 */
 			public function call(string $source, string $endpoint, string $method): array {
 				$this->calls[] = ['source' => $source, 'endpoint' => $endpoint, 'method' => $method];
 				return ['body' => $this->body];
-			}
+			}//end call()
 		};
 
-		$http = $this->createMock(HarvestHttpClient::class);
-		$http->expects($this->never())->method('get');
+		$fetcher = $this->fetcher(container: $this->integriq(callService: $callService));
+		$batch   = $fetcher->gatherItems(source: $this->slugSource(), since: null, http: $this->unusedHttp());
 
-		$batch = $this->fetcher($this->integriq($callService))
-			->gatherItems($this->source(['sourceSlug' => 'data-overheid', 'targetCatalog' => 'x']), null, $http);
+		$this->assertTrue(condition: $batch->complete);
+		$this->assertCount(expectedCount: 3, haystack: $batch->items);
+		$this->assertSame(expected: [['source' => 'data-overheid', 'endpoint' => '', 'method' => 'GET']], actual: $callService->calls);
 
-		$this->assertTrue($batch->complete);
-		$this->assertCount(3, $batch->items);
-		$this->assertSame([['source' => 'data-overheid', 'endpoint' => '', 'method' => 'GET']], $callService->calls);
-	}
+	}//end testASourceSlugIsReadThroughIntegriq()
 
+	/**
+	 * Integriq's call log answer is read through its response.
+	 *
+	 * @return void
+	 */
 	public function testAnIntegriqCallLogResponseIsRead(): void {
-		$callLog = new class {
-			public function getResponse(): array {
-				return ['@graph' => [['@id' => 'https://data.example.nl/a', '@type' => 'dcat:Dataset']]];
-			}
-		};
-		$callService = new class($callLog) {
-			public function __construct(private object $log) {
-			}
+		$callService = new class {
 
+			/**
+			 * Integriq's call, answered with a call log.
+			 *
+			 * @param string $source   The source.
+			 * @param string $endpoint The endpoint.
+			 * @param string $method   The method.
+			 *
+			 * @return object
+			 */
 			public function call(string $source, string $endpoint, string $method): object {
-				return $this->log;
-			}
+				return new class {
+
+					/**
+					 * The decoded response.
+					 *
+					 * @return array<string, mixed>
+					 */
+					public function getResponse(): array {
+						return ['@graph' => [['@id' => 'https://data.example.nl/a', '@type' => 'dcat:Dataset']]];
+					}//end getResponse()
+				};
+			}//end call()
 		};
 
-		$batch = $this->fetcher($this->integriq($callService))
-			->gatherItems($this->source(['sourceSlug' => 's', 'targetCatalog' => 'x']), null, $this->createMock(HarvestHttpClient::class));
+		$fetcher = $this->fetcher(container: $this->integriq(callService: $callService));
+		$batch   = $fetcher->gatherItems(source: $this->slugSource(slug: 's'), since: null, http: $this->unusedHttp());
 
-		$this->assertTrue($batch->complete);
-		$this->assertSame(['https://data.example.nl/a'], array_keys($batch->items));
-	}
+		$this->assertTrue(condition: $batch->complete);
+		$this->assertSame(expected: ['https://data.example.nl/a'], actual: array_keys($batch->items));
 
+	}//end testAnIntegriqCallLogResponseIsRead()
+
+	/**
+	 * An integriq answer the fetcher cannot read is incomplete.
+	 *
+	 * @return void
+	 */
 	public function testAnUnreadableIntegriqAnswerIsIncomplete(): void {
 		$callService = new class {
+
+			/**
+			 * Integriq's call, answered with something unreadable.
+			 *
+			 * @param string $source   The source.
+			 * @param string $endpoint The endpoint.
+			 * @param string $method   The method.
+			 *
+			 * @return integer
+			 */
 			public function call(string $source, string $endpoint, string $method): int {
 				return 500;
-			}
+			}//end call()
 		};
 
-		$batch = $this->fetcher($this->integriq($callService))
-			->gatherItems($this->source(['sourceSlug' => 's', 'targetCatalog' => 'x']), null, $this->createMock(HarvestHttpClient::class));
+		$fetcher = $this->fetcher(container: $this->integriq(callService: $callService));
+		$batch   = $fetcher->gatherItems(source: $this->slugSource(slug: 's'), since: null, http: $this->unusedHttp());
 
-		$this->assertFalse($batch->complete);
-		$this->assertStringContainsString('cannot read for source s', $batch->errors[0]['message']);
-	}
+		$this->assertFalse(condition: $batch->complete);
+		$this->assertStringContainsString(needle: 'cannot read for source s', haystack: $batch->errors[0]['message']);
 
+	}//end testAnUnreadableIntegriqAnswerIsIncomplete()
+
+	/**
+	 * A batch fetcher refuses the per-item questions.
+	 *
+	 * @return void
+	 */
 	public function testItIsNeverAskedForAnIdListOrOneItem(): void {
 		$fetcher = $this->fetcher();
 
 		try {
-			$fetcher->gather($this->urlSource());
-			$this->fail('gather() must refuse');
+			$fetcher->gather(source: $this->urlSource());
+			$this->fail(message: 'gather() must refuse');
 		} catch (RuntimeException $e) {
-			$this->assertStringContainsString('gatherItems', $e->getMessage());
+			$this->assertStringContainsString(needle: 'gatherItems', haystack: $e->getMessage());
 		}
 
-		$this->expectException(RuntimeException::class);
-		$fetcher->fetch($this->urlSource(), 'https://data.example.nl/a');
-	}
-}
+		$this->expectException(exception: RuntimeException::class);
+		$fetcher->fetch(source: $this->urlSource(), externalId: 'https://data.example.nl/a');
+
+	}//end testItIsNeverAskedForAnIdListOrOneItem()
+}//end class
