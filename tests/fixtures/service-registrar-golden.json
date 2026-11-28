@@ -156,6 +156,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\HarvestFeedServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\Harvest\\HarvestFeedService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\OoapiServiceInterface",
         "OCA\\OpenCatalogi\\Service\\OoapiService"
     ],

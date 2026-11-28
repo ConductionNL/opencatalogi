@@ -127,6 +127,11 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// Who receives the Woo pipeline incidents, and the open ones (woo-national-output-assurance REQ-WNO-004).
 		['name' => 'wooIncidents#index', 'url' => '/api/woo/incidents', 'verb' => 'GET'],
 		['name' => 'wooIncidents#setGroup', 'url' => '/api/woo/incidents/group', 'verb' => 'PUT'],
+		// Harvest feeds: OpenRegister sources of type opencatalogi.dcat-jsonld (harvest-feed-intake, REQ-HFI-002). Admin only.
+		['name' => 'harvestFeed#index', 'url' => '/api/harvest/feeds', 'verb' => 'GET'],
+		['name' => 'harvestFeed#create', 'url' => '/api/harvest/feeds', 'verb' => 'POST'],
+		['name' => 'harvestFeed#update', 'url' => '/api/harvest/feeds/{id}', 'verb' => 'PUT', 'requirements' => ['id' => '\\d+']],
+		['name' => 'harvestFeed#destroy', 'url' => '/api/harvest/feeds/{id}', 'verb' => 'DELETE', 'requirements' => ['id' => '\\d+']],
 		// GitHub publiccode harvest (publiccode-github-harvest). Admin only.
 		['name' => 'publiccodeHarvest#status', 'url' => '/api/settings/publiccode-harvest', 'verb' => 'GET'],
 		['name' => 'publiccodeHarvest#setup', 'url' => '/api/settings/publiccode-harvest/setup', 'verb' => 'POST'],
