@@ -36,6 +36,7 @@ use OCA\OpenRegister\Event\TaskTerminalEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
 use OCA\OpenCatalogi\BackgroundJob\MetadataSuggestionQueue;
 use OCA\OpenCatalogi\Contract\MetadataSuggestionQueueInterface;
+use OCA\OpenCatalogi\Controller\Setup\ProvideShellStateListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCP\Files\Events\Node\NodeWrittenEvent;
@@ -205,19 +206,40 @@ class ListenerRegistrar {
 			listener: ToolRegistrationListener::class
 		);
 
-		// Provide the manifest-config initial state on every SPA `index` render,
-		// controller-independent. After the AppHost adoption (ADR-040) the `/`
-		// index route resolves to OpenRegister's shared AppHost dashboard
-		// controller, which serves templates/index.php without OpenCatalogi's
-		// register/schema config, so a clean install then rendered no SPA. Hooking
-		// the provision to BeforeTemplateRenderedEvent restores it for both the
-		// AppHost `/` page and the UiController-served deep-link routes.
+		$this->registerPageStateListeners(context: $context);
+
+	}//end register()
+
+	/**
+	 * The listeners that put initial state into every SPA `index` render.
+	 *
+	 * Provide the manifest-config initial state on every SPA `index` render,
+	 * controller-independent. After the AppHost adoption (ADR-040) the `/`
+	 * index route resolves to OpenRegister's shared AppHost dashboard
+	 * controller, which serves templates/index.php without OpenCatalogi's
+	 * register/schema config, so a clean install then rendered no SPA. Hooking
+	 * the provision to BeforeTemplateRenderedEvent restores it for both the
+	 * AppHost `/` page and the UiController-served deep-link routes. The setup
+	 * status and walkthrough preferences ride along on the same render, so the
+	 * shell does not ask for them on every page open.
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
+	 */
+	private function registerPageStateListeners(IRegistrationContext $context): void {
 		$context->registerEventListener(
 			event: BeforeTemplateRenderedEvent::class,
 			listener: ProvideManifestConfigStateListener::class
 		);
+		$context->registerEventListener(
+			event: BeforeTemplateRenderedEvent::class,
+			listener: ProvideShellStateListener::class
+		);
 
-	}//end register()
+	}//end registerPageStateListeners()
 
 	/**
 	 * The listeners that check an object before OpenRegister writes it.

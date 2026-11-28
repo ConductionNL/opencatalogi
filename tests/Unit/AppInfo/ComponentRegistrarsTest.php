@@ -57,6 +57,7 @@ use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
 use OCA\OpenCatalogi\Listener\SourceAbsenceListener;
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Listener\ProvideManifestConfigStateListener;
+use OCA\OpenCatalogi\Controller\Setup\ProvideShellStateListener;
 use OCA\OpenCatalogi\Listener\PublicationLinksListener;
 use OCA\OpenCatalogi\Listener\RuleCategoryListener;
 use OCA\OpenCatalogi\Listener\PublicationRelationsListener;
@@ -200,6 +201,7 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'RegisterUpdatedEvent', CatalogScopePendingListener::class],
 				[$e . 'ToolRegistrationEvent', ToolRegistrationListener::class],
 				['OCP\\AppFramework\\Http\\Events\\BeforeTemplateRenderedEvent', ProvideManifestConfigStateListener::class],
+				['OCP\\AppFramework\\Http\\Events\\BeforeTemplateRenderedEvent', ProvideShellStateListener::class],
 			],
 			$pairs
 		);
