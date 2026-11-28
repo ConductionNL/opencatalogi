@@ -1,6 +1,25 @@
 # DCAT linked data and the data.overheid.nl registration
 
-The DCAT-AP-NL feed puts a catalogue on data.overheid.nl. This page covers two things around that feed: the dataset IRIs answer as linked data, and the admin settings show whether data.overheid.nl actually harvests the feed.
+The DCAT-AP-NL feed puts a catalogue on data.overheid.nl. This page covers three things around that feed: the licences a catalogue or publication can carry, the dataset IRIs that answer as linked data, and the admin settings that show whether data.overheid.nl actually harvests the feed.
+
+## The licence list
+
+A licence in the feed is always an IRI from the EU licences authority list (`http://publications.europa.eu/resource/authority/licence`). OpenCatalogi bundles the members of that list that data.overheid.nl accepts, checked against its CKAN `license_list`. The bundled list is in `lib/Settings/dcat_waardelijsten.json` under `licences`, with its source and version.
+
+| Code | Licence | data.overheid.nl label |
+|---|---|---|
+| `CC0` | Creative Commons CC0 1.0 Universal | CC-0 (1.0) |
+| `CC_BY_4_0` | Creative Commons Attribution 4.0 International | CC-BY (4.0) |
+| `CC_BYNC_4_0` | Creative Commons Attribution-NonCommercial 4.0 International | CC-BY-NC (4.0) |
+| `CC_BYSA_4_0` | Creative Commons Attribution-ShareAlike 4.0 International | CC-BY-SA (4.0) |
+| `CC_PDM_1_0` | Creative Commons Public Domain Mark 1.0 Universal | Publiek domein |
+
+The three OWMS licences on the data.overheid.nl list (geslotenlicentie, geogedeeld, licentieonbekend) have no EU authority IRI, so they are not offered.
+
+- **Where you pick one.** The catalogue form (once the DCAT feed is on), the publication form and the instance default in the admin DCAT settings each offer the list in a picker. Nothing outside the list can be typed. The stored value is the authority IRI. A publication without a licence takes its catalogue's licence, and a catalogue without one takes the instance default.
+- **What is refused.** Saving a new or changed licence that is not on the list is refused with the name of the property. A stored value from before the list existed can stay as it is, so an unrelated edit is not blocked.
+- **What the feed does with an unknown value.** A licence the list does not resolve is left out of the feed and reported once per dataset by the DCAT validator (`axis: dct:license`).
+- **The list over the API.** `GET /apps/opencatalogi/api/dcat/licences` answers the list with its source and version, for any signed-in user.
 
 ## A dataset IRI answers as linked data
 
