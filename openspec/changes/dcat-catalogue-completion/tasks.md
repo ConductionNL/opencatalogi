@@ -31,6 +31,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 ## 4. Docs
 
 - [ ] 4.1 Document the licence list, the DONL status and the SPARQL endpoint in `docs/`, and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+  - 28 Nov 2026 (b-opencatalogi, part): `docs/features/dcat-linked-data-and-donl.md` documents the licence list (the five bundled EU authority members with their data.overheid.nl labels, the left-out OWMS licences, the three pickers and the publication, catalogue, instance fallback, the refusal on save, the feed's omit-and-report, `GET /api/dcat/licences`) beside the DONL status it already had; no U+2014. The licence and DONL strings are in `l10n/` already. Left open for the SPARQL endpoint, which waits on 3.2.
 
 ## 5. Verification
 
