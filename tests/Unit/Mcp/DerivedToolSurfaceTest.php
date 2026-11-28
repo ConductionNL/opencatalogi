@@ -59,7 +59,7 @@ class DerivedToolSurfaceTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		if (class_exists(AttributeToolScanner::class) === false) {
-			$this->markTestSkipped('OpenRegister is not next to the app, so its AttributeToolScanner cannot derive the catalogue.');
+			$this->markTestSkipped(message: 'OpenRegister is not next to the app, so its AttributeToolScanner cannot derive the catalogue.');
 		}
 	}//end setUp()
 
@@ -106,8 +106,8 @@ class DerivedToolSurfaceTest extends TestCase {
 	private function serviceTools(array $classes): array {
 		$app = new McpLeafApp(
 			appId: 'opencatalogi',
-			container: $this->createMock(ContainerInterface::class),
-			logger: $this->createMock(LoggerInterface::class),
+			container: $this->createMock(originalClassName: ContainerInterface::class),
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
 		);
 
 		return (new AttributeToolScanner())->scanClasses(app: $app, classNames: $classes);
@@ -121,15 +121,15 @@ class DerivedToolSurfaceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheReadServiceDerivesTheTwoCuratedTools(): void {
-		$tools = $this->serviceTools([PublicationService::class]);
+		$tools = $this->serviceTools(classes: [PublicationService::class]);
 
 		$ids = array_column($tools, 'id');
 		sort($ids);
-		$this->assertSame(['opencatalogi.listPublicationFiles', 'opencatalogi.searchCatalogPublications'], $ids);
+		$this->assertSame(expected: ['opencatalogi.listPublicationFiles', 'opencatalogi.searchCatalogPublications'], actual: $ids);
 		foreach ($tools as $tool) {
-			$this->assertTrue($tool['readOnlyHint'], $tool['id']);
-			$this->assertFalse($tool['destructiveHint'], $tool['id']);
-			$this->assertSame('read', $tool['scope'], $tool['id']);
+			$this->assertTrue(condition: $tool['readOnlyHint'], message: $tool['id']);
+			$this->assertFalse(condition: $tool['destructiveHint'], message: $tool['id']);
+			$this->assertSame(expected: 'read', actual: $tool['scope'], message: $tool['id']);
 		}
 	}//end testTheReadServiceDerivesTheTwoCuratedTools()
 
@@ -143,7 +143,7 @@ class DerivedToolSurfaceTest extends TestCase {
 		$schemaIds = array_keys($this->schemaTools());
 		sort($schemaIds);
 		$this->assertSame(
-			[
+			expected: [
 				'opencatalogi.catalog.get',
 				'opencatalogi.catalog.search',
 				'opencatalogi.publication.get',
@@ -151,10 +151,11 @@ class DerivedToolSurfaceTest extends TestCase {
 				'opencatalogi.theme.get',
 				'opencatalogi.theme.search',
 			],
-			$schemaIds
+			actual: $schemaIds
 		);
 
-		$this->assertCount(8, array_merge($schemaIds, array_column($this->serviceTools([PublicationService::class]), 'id')));
+		$serviceIds = array_column($this->serviceTools(classes: [PublicationService::class]), 'id');
+		$this->assertCount(expectedCount: 8, haystack: array_merge($schemaIds, $serviceIds));
 	}//end testTheReadSurfaceHoldsEightTools()
 
 	/**
@@ -166,13 +167,13 @@ class DerivedToolSurfaceTest extends TestCase {
 	 */
 	public function testNoRetiredIdShadowsTheDerivedTools(): void {
 		$classes = (new OpenCatalogiScannableServices())->getScannableServiceClasses();
-		$ids = array_merge(array_keys($this->schemaTools()), array_column($this->serviceTools($classes), 'id'));
+		$ids = array_merge(array_keys($this->schemaTools()), array_column($this->serviceTools(classes: $classes), 'id'));
 
 		foreach (self::RETIRED_IDS as $retired) {
-			$this->assertNotContains($retired, $ids);
+			$this->assertNotContains(needle: $retired, haystack: $ids);
 		}
 
-		$this->assertSame($ids, array_values(array_unique($ids)));
+		$this->assertSame(expected: $ids, actual: array_values(array_unique($ids)));
 	}//end testNoRetiredIdShadowsTheDerivedTools()
 
 	/**
@@ -183,19 +184,19 @@ class DerivedToolSurfaceTest extends TestCase {
 	 */
 	public function testNoReadToolCanSetThePublicationDate(): void {
 		foreach ($this->schemaTools() as $id => $tool) {
-			$this->assertSame('read', $tool['scope'], $id);
-			$this->assertTrue($tool['readOnlyHint'], $id);
+			$this->assertSame(expected: 'read', actual: $tool['scope'], message: $id);
+			$this->assertTrue(condition: $tool['readOnlyHint'], message: $id);
 		}
 
 		$classes = (new OpenCatalogiScannableServices())->getScannableServiceClasses();
-		foreach ($this->serviceTools($classes) as $tool) {
+		foreach ($this->serviceTools(classes: $classes) as $tool) {
 			if (($tool['readOnlyHint'] ?? false) === true) {
 				$properties = array_keys($tool['inputSchema']['properties'] ?? []);
-				$this->assertEmpty(array_intersect($properties, ['publicationDate', 'publicatiedatum', 'published']), $tool['id']);
+				$this->assertEmpty(actual: array_intersect($properties, ['publicationDate', 'publicatiedatum', 'published']), message: $tool['id']);
 				continue;
 			}
 
-			$this->assertSame(PublicationAgentTools::class, $tool['class'], $tool['id'] . ' writes outside the governed tools');
+			$this->assertSame(expected: PublicationAgentTools::class, actual: $tool['class'], message: $tool['id'] . ' writes outside the governed tools');
 		}
 	}//end testNoReadToolCanSetThePublicationDate()
 
@@ -210,31 +211,31 @@ class DerivedToolSurfaceTest extends TestCase {
 	 */
 	public function testTheCatalogueCarriesExactlyFourGovernedWrites(): void {
 		$classes = (new OpenCatalogiScannableServices())->getScannableServiceClasses();
-		$service = $this->serviceTools($classes);
-		$this->assertCount(12, array_merge(array_keys($this->schemaTools()), array_column($service, 'id')));
+		$service = $this->serviceTools(classes: $classes);
+		$this->assertCount(expectedCount: 12, haystack: array_merge(array_keys($this->schemaTools()), array_column($service, 'id')));
 
 		$writes = [];
 		foreach ($service as $tool) {
-			$this->assertSame(1, substr_count($tool['id'], '.'), $tool['id'] . ' is a two-segment curated id');
+			$this->assertSame(expected: 1, actual: substr_count($tool['id'], '.'), message: $tool['id'] . ' is a two-segment curated id');
 			if (($tool['readOnlyHint'] ?? false) === false) {
 				$writes[$tool['id']] = [$tool['scope'], $tool['reach']];
-				$this->assertNotSame('delete', $tool['scope'], $tool['id']);
+				$this->assertNotSame(expected: 'delete', actual: $tool['scope'], message: $tool['id']);
 			}
 		}
 
 		ksort($writes);
 		$this->assertSame(
-			[
+			expected: [
 				'opencatalogi.archivePublication' => ['update', 'instance'],
 				'opencatalogi.createDraftPublication' => ['create', 'instance'],
 				'opencatalogi.depublishPublication' => ['update', 'external'],
 				'opencatalogi.publishPublication' => ['update', 'external'],
 			],
-			$writes
+			actual: $writes
 		);
 
 		$descriptions = array_column($service, 'description', 'id');
-		$this->assertStringContainsString('cannot be undone', $descriptions['opencatalogi.publishPublication']);
-		$this->assertStringContainsString('does not recall', $descriptions['opencatalogi.depublishPublication']);
+		$this->assertStringContainsString(needle: 'cannot be undone', haystack: $descriptions['opencatalogi.publishPublication']);
+		$this->assertStringContainsString(needle: 'does not recall', haystack: $descriptions['opencatalogi.depublishPublication']);
 	}//end testTheCatalogueCarriesExactlyFourGovernedWrites()
 }//end class
