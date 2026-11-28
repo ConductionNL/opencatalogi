@@ -5,7 +5,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
@@ -15,7 +16,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
@@ -25,7 +27,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
@@ -35,7 +38,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
@@ -45,7 +49,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
@@ -55,7 +60,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
@@ -65,7 +71,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
@@ -83,7 +90,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": {
             "legislation": "https://eli/x"
@@ -95,7 +103,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
@@ -105,7 +114,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
@@ -115,7 +125,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
@@ -131,7 +142,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
@@ -141,7 +153,8 @@
             "dct:description": "description",
             "dcat:keyword": "tags[]",
             "dcat:theme": "category",
-            "dct:license": "license"
+            "dct:license": "license",
+            "dct:source": "source"
         },
         "hvd": null
     },
