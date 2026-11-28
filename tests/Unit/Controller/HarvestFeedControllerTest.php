@@ -26,7 +26,7 @@ namespace OCA\OpenCatalogi\Tests\Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\HarvestFeedController;
 use OCA\OpenCatalogi\Service\Harvest\HarvestFeedRefused;
-use OCA\OpenCatalogi\Service\Harvest\HarvestFeedService;
+use OCA\OpenCatalogi\Contract\HarvestFeedServiceInterface;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -43,9 +43,9 @@ class HarvestFeedControllerTest extends TestCase {
 	/**
 	 * The feeds.
 	 *
-	 * @var HarvestFeedService&MockObject
+	 * @var HarvestFeedServiceInterface&MockObject
 	 */
-	private HarvestFeedService&MockObject $feeds;
+	private HarvestFeedServiceInterface&MockObject $feeds;
 
 	/**
 	 * The request.
@@ -60,7 +60,7 @@ class HarvestFeedControllerTest extends TestCase {
 	 * @return void
 	 */
 	protected function setUp(): void {
-		$this->feeds   = $this->createMock(originalClassName: HarvestFeedService::class);
+		$this->feeds   = $this->createMock(originalClassName: HarvestFeedServiceInterface::class);
 		$this->request = $this->createMock(originalClassName: IRequest::class);
 
 	}//end setUp()

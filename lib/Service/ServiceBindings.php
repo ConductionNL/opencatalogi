@@ -49,6 +49,7 @@ use OCA\OpenCatalogi\Service\MetadataSuggestion\MetadataSuggestionStore;
 use OCA\OpenCatalogi\Service\MetadataSuggestion\SingleLawfulValue;
 use OCA\OpenCatalogi\Contract\RedactedOriginalGuardInterface;
 use OCA\OpenCatalogi\Contract\DraftPurgeServiceInterface;
+use OCA\OpenCatalogi\Service\Harvest\HarvestFeedService;
 use OCA\OpenCatalogi\Service\Publication\DraftPurgeService;
 use OCA\OpenCatalogi\Service\Publication\PublisherFileStamp;
 use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingOverview;
@@ -64,6 +65,7 @@ use OCA\OpenCatalogi\Contract\CmsMigrationServiceInterface;
 use OCA\OpenCatalogi\Contract\CollectionShareServiceInterface;
 use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCA\OpenCatalogi\Contract\CouncilHarvestServiceInterface;
+use OCA\OpenCatalogi\Contract\HarvestFeedServiceInterface;
 use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
@@ -229,6 +231,7 @@ final class ServiceBindings {
 		EventServiceInterface::class => EventService::class,
 		PubliccodeHarvestServiceInterface::class => PubliccodeHarvestService::class,
 		CouncilHarvestServiceInterface::class => CouncilHarvestService::class,
+		HarvestFeedServiceInterface::class => HarvestFeedService::class,
 		OoapiServiceInterface::class => OoapiService::class,
 		QualityServiceInterface::class => QualityService::class,
 		DcatSerializerInterface::class => DcatSerializer::class,

@@ -24,18 +24,19 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\Harvest\HarvestFeedRefused;
-use OCA\OpenCatalogi\Service\Harvest\HarvestFeedService;
+use JsonSerializable;
+use OCA\OpenCatalogi\Contract\HarvestFeedServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IRequest;
+use RuntimeException;
 use Throwable;
 
 /**
- * Admin only: list, create, update and delete feeds through HarvestFeedService.
+ * Admin only: list, create, update and delete feeds through HarvestFeedServiceInterface.
  * Run now is OpenRegister's `POST /api/sources/{id}/sync`; there is no run path here.
  *
  * @spec openspec/changes/harvest-feed-intake/specs/harvest-feed-intake/spec.md#requirement-a-harvest-feed-is-an-openregister-source-owned-by-opencatalogi-req-hfi-002
@@ -47,12 +48,12 @@ class HarvestFeedController extends Controller {
 	 *
 	 * @param string             $appName The app name.
 	 * @param IRequest           $request The request.
-	 * @param HarvestFeedService $feeds   The feeds.
+	 * @param HarvestFeedServiceInterface $feeds The feeds.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly HarvestFeedService $feeds,
+		private readonly HarvestFeedServiceInterface $feeds,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 	}//end __construct()
@@ -121,6 +122,9 @@ class HarvestFeedController extends Controller {
 	/**
 	 * Answer a call, mapping a refusal onto its status and field.
 	 *
+	 * A refusal carries its HTTP status as its code and serialises to
+	 * `{error, field}`; anything else (OpenRegister absent) is a 503.
+	 *
 	 * @param callable(): array<string, mixed> $call   The call.
 	 * @param int                              $status The status on success.
 	 *
@@ -129,8 +133,18 @@ class HarvestFeedController extends Controller {
 	private function answer(callable $call, int $status=Http::STATUS_OK): JSONResponse {
 		try {
 			return new JSONResponse($call(), $status);
-		} catch (HarvestFeedRefused $e) {
-			return new JSONResponse($e->toArray(), $e->status);
+		} catch (RuntimeException $e) {
+			$code = $e->getCode();
+			if ($code < 400 || $code > 499) {
+				$code = Http::STATUS_SERVICE_UNAVAILABLE;
+			}
+
+			$body = ['error' => $e->getMessage()];
+			if ($e instanceof JsonSerializable) {
+				$body = $e->jsonSerialize();
+			}
+
+			return new JSONResponse($body, $code);
 		} catch (Throwable $e) {
 			return new JSONResponse(['error' => $e->getMessage()], Http::STATUS_SERVICE_UNAVAILABLE);
 		}

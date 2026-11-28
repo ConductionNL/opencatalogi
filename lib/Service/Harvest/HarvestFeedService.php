@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Harvest;
 
 use InvalidArgumentException;
+use OCA\OpenCatalogi\Contract\HarvestFeedServiceInterface;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\IGroupManager;
 use OCP\IUserSession;
@@ -42,7 +43,7 @@ use Throwable;
  *
  * @spec openspec/changes/harvest-feed-intake/specs/harvest-feed-intake/spec.md#requirement-a-harvest-feed-is-an-openregister-source-owned-by-opencatalogi-req-hfi-002
  */
-class HarvestFeedService {
+class HarvestFeedService implements HarvestFeedServiceInterface {
 
 	/**
 	 * The application every feed is owned by.

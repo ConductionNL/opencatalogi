@@ -568,7 +568,7 @@ class HarvestFeedServiceTest extends TestCase {
 
 		$this->assertSame(expected: 422, actual: $refusal->status);
 		$this->assertSame(expected: 'runAs', actual: $refusal->field);
-		$this->assertSame(expected: ['error' => 'A scheduled harvest needs an account to act as.', 'field' => 'runAs'], actual: $refusal->toArray());
+		$this->assertSame(expected: ['error' => 'A scheduled harvest needs an account to act as.', 'field' => 'runAs'], actual: $refusal->jsonSerialize());
 
 	}//end testARunAsRefusalIsShownOnTheField()
 

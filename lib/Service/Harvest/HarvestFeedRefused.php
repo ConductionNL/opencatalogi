@@ -24,15 +24,16 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Harvest;
 
+use JsonSerializable;
 use RuntimeException;
 
 /**
  * The refusal: 403 for a non-administrator, 404 for a feed that is not this
- * app's, 422 naming the field a save broke.
+ * app's, 422 naming the field a save broke. The status is also the code.
  *
  * @spec openspec/changes/harvest-feed-intake/specs/harvest-feed-intake/spec.md#requirement-a-harvest-feed-is-an-openregister-source-owned-by-opencatalogi-req-hfi-002
  */
-final class HarvestFeedRefused extends RuntimeException {
+final class HarvestFeedRefused extends RuntimeException implements JsonSerializable {
 
 	/**
 	 * Constructor.
@@ -46,7 +47,7 @@ final class HarvestFeedRefused extends RuntimeException {
 		string $message,
 		public readonly ?string $field=null,
 	) {
-		parent::__construct(message: $message);
+		parent::__construct(message: $message, code: $status);
 	}//end __construct()
 
 	/**
@@ -56,12 +57,12 @@ final class HarvestFeedRefused extends RuntimeException {
 	 *
 	 * @spec openspec/changes/harvest-feed-intake/tasks.md#task-2.2
 	 */
-	public function toArray(): array {
+	public function jsonSerialize(): array {
 		$body = ['error' => $this->getMessage()];
 		if ($this->field !== null) {
 			$body['field'] = $this->field;
 		}
 
 		return $body;
-	}//end toArray()
+	}//end jsonSerialize()
 }//end class
