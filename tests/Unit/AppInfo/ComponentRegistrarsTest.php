@@ -65,6 +65,7 @@ use OCA\OpenCatalogi\Listener\TermRollListener;
 use OCA\OpenCatalogi\Listener\HandedOverRecordsListener;
 use OCA\OpenCatalogi\Listener\PublishedTableReimportListener;
 use OCA\OpenCatalogi\Listener\PublisherStampListener;
+use OCA\OpenCatalogi\Harvest\RegisterSourceFetchersListener;
 use OCA\OpenCatalogi\Listener\ThemeFeaturedCheckListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Listener\WooReadinessTriggerListener;
@@ -175,6 +176,8 @@ class ComponentRegistrarsTest extends TestCase {
 				[\OCP\Files\Events\Node\NodeWrittenEvent::class, PublishedTableReimportListener::class],
 				[$e . 'FileVersionRestoredEvent', PublishedTableReimportListener::class],
 				[$e . 'FileAddedEvent', PublisherStampListener::class],
+				[$e . 'ToolRegistrationEvent', ToolRegistrationListener::class],
+				['OCA\\OpenRegister\\Service\\Sync\\RegisterSourceFetchersEvent', RegisterSourceFetchersListener::class],
 				[$e . 'ObjectCreatingEvent', PublicationRelationsListener::class],
 				[$e . 'ObjectUpdatingEvent', PublicationRelationsListener::class],
 				[$e . 'ObjectCreatingEvent', DocumentReferenceListener::class],
@@ -198,7 +201,6 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectUpdatingEvent', RuleCategoryListener::class],
 				[$e . 'RegisterCreatedEvent', CatalogScopePendingListener::class],
 				[$e . 'RegisterUpdatedEvent', CatalogScopePendingListener::class],
-				[$e . 'ToolRegistrationEvent', ToolRegistrationListener::class],
 				['OCP\\AppFramework\\Http\\Events\\BeforeTemplateRenderedEvent', ProvideManifestConfigStateListener::class],
 			],
 			$pairs

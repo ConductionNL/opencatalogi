@@ -34,6 +34,8 @@ use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
+use OCA\OpenCatalogi\Harvest\RegisterSourceFetchersListener;
+use OCA\OpenRegister\Service\Sync\RegisterSourceFetchersEvent;
 use OCA\OpenCatalogi\BackgroundJob\MetadataSuggestionQueue;
 use OCA\OpenCatalogi\Contract\MetadataSuggestionQueueInterface;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
@@ -139,6 +141,7 @@ class ListenerRegistrar {
 
 		$this->registerWriteGuards(context: $context);
 		$this->registerFileListeners(context: $context);
+		$this->registerContributions(context: $context);
 
 		// Refuse a self-relation and mirror caseReference into sourceIdentifiers (REQ-PRS-001, REQ-PRS-003).
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationRelationsListener::class);
@@ -198,12 +201,6 @@ class ListenerRegistrar {
 		// (publish-from-stackiq, REQ-PFS-004).
 		$context->registerEventListener(RegisterCreatedEvent::class, CatalogScopePendingListener::class);
 		$context->registerEventListener(RegisterUpdatedEvent::class, CatalogScopePendingListener::class);
-
-		// Register tool registration listener for OpenRegister agents.
-		$context->registerEventListener(
-			event: ToolRegistrationEvent::class,
-			listener: ToolRegistrationListener::class
-		);
 
 		// Provide the manifest-config initial state on every SPA `index` render,
 		// controller-independent. After the AppHost adoption (ADR-040) the `/`
@@ -288,4 +285,20 @@ class ListenerRegistrar {
 		);
 		$context->registerEventListener(event: PublisherStampListener::FILE_ADDED_EVENT, listener: PublisherStampListener::class);
 	}//end registerFileListeners()
+
+	/**
+	 * The listeners that answer OpenRegister when it asks apps for their
+	 * contributions: this app's agent tools, and its harvest source fetchers
+	 * (harvest-feed-intake, REQ-HFI-001).
+	 *
+	 * @param IRegistrationContext $context The registration context.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/harvest-feed-intake/tasks.md#task-1.2
+	 */
+	private function registerContributions(IRegistrationContext $context): void {
+		$context->registerEventListener(event: ToolRegistrationEvent::class, listener: ToolRegistrationListener::class);
+		$context->registerEventListener(event: RegisterSourceFetchersEvent::class, listener: RegisterSourceFetchersListener::class);
+	}//end registerContributions()
 }//end class
