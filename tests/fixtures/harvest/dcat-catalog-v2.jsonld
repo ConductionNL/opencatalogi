@@ -1,0 +1,36 @@
+{
+  "@context": {
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "dct": "http://purl.org/dc/terms/"
+  },
+  "@graph": [
+    {
+      "@id": "https://data.example.nl/catalog",
+      "@type": "dcat:Catalog",
+      "dct:title": "Open data Zuiddrecht",
+      "dcat:dataset": [
+        {
+          "@id": "https://data.example.nl/dataset/afvalinzameling",
+          "@type": "dcat:Dataset",
+          "dct:title": "Afvalinzameling",
+          "dct:description": "Ophaaldagen per wijk, met de kerstbomenroute.",
+          "dcat:keyword": ["afval", "wijken", "kerstbomen"],
+          "dct:modified": "2026-11-20"
+        },
+        {
+          "@type": "dcat:Dataset",
+          "dct:title": "Bomenregister",
+          "dct:description": "Een dataset zonder identifier."
+        }
+      ]
+    },
+    {
+      "@id": "https://data.example.nl/dataset/parkeerzones",
+      "@type": "dcat:Dataset",
+      "dct:title": "Parkeerzones",
+      "dct:description": "Betaald parkeren per zone.",
+      "dcat:keyword": ["parkeren"],
+      "dct:modified": "2026-07-30"
+    }
+  ]
+}
