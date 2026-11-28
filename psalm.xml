@@ -76,6 +76,12 @@
                 <referencedClass name="OCP\Notification\IManager"/>
                 <referencedClass name="OCP\Share\IManager"/>
                 <!-- OpenRegister cross-app classes (loaded dynamically) -->
+                <!-- OpenRegister's harvest fetcher contract, which DcatJsonLdFetcher implements (harvest-feed-intake). -->
+                <referencedClass name="OCA\OpenRegister\Service\Sync\IBatchSourceFetcher"/>
+                <referencedClass name="OCA\OpenRegister\Service\Sync\HarvestBatch"/>
+                <referencedClass name="OCA\OpenRegister\Service\Sync\HarvestHttpClient"/>
+                <referencedClass name="OCA\OpenRegister\Service\Sync\RegisterSourceFetchersEvent"/>
+                <referencedClass name="OCA\OpenRegister\Db\Source"/>
                 <referencedClass name="OCA\OpenRegister\Kernel\Contracts\RenderSelection"/>
                 <!-- The value objects ObjectService's find and save take (openregister lib/Kernel/Contracts/Value). -->
                 <referencedClass name="OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions"/>
