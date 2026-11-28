@@ -4,7 +4,7 @@
  * Tests for the listener that adds the DCAT catalogue fetcher to OpenRegister.
  *
  * @category Test
- * @package  OCA\OpenCatalogi\Tests\Unit\Listener
+ * @package  OCA\OpenCatalogi\Tests\Unit\Harvest
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,10 +22,10 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Tests\Unit\Listener;
+namespace OCA\OpenCatalogi\Tests\Unit\Harvest;
 
 use OCA\OpenCatalogi\Harvest\DcatJsonLdFetcher;
-use OCA\OpenCatalogi\Listener\RegisterSourceFetchersListener;
+use OCA\OpenCatalogi\Harvest\RegisterSourceFetchersListener;
 use OCA\OpenRegister\Service\Sync\RegisterSourceFetchersEvent;
 use OCA\OpenRegister\Service\Sync\SourceFetcherRegistry;
 use OCP\EventDispatcher\Event;

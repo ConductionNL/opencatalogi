@@ -65,7 +65,7 @@ use OCA\OpenCatalogi\Listener\TermRollListener;
 use OCA\OpenCatalogi\Listener\HandedOverRecordsListener;
 use OCA\OpenCatalogi\Listener\PublishedTableReimportListener;
 use OCA\OpenCatalogi\Listener\PublisherStampListener;
-use OCA\OpenCatalogi\Listener\RegisterSourceFetchersListener;
+use OCA\OpenCatalogi\Harvest\RegisterSourceFetchersListener;
 use OCA\OpenCatalogi\Listener\ThemeFeaturedCheckListener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Listener\WooReadinessTriggerListener;

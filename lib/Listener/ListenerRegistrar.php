@@ -34,6 +34,7 @@ use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
 use OCA\OpenRegister\Event\TaskTerminalEvent;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
+use OCA\OpenCatalogi\Harvest\RegisterSourceFetchersListener;
 use OCA\OpenRegister\Service\Sync\RegisterSourceFetchersEvent;
 use OCA\OpenCatalogi\BackgroundJob\MetadataSuggestionQueue;
 use OCA\OpenCatalogi\Contract\MetadataSuggestionQueueInterface;

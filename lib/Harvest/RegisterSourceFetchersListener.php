@@ -3,8 +3,8 @@
 /**
  * Adds OpenCatalogi's DCAT catalogue fetcher to OpenRegister's source types.
  *
- * @category Listener
- * @package  OCA\OpenCatalogi\Listener
+ * @category Harvest
+ * @package  OCA\OpenCatalogi\Harvest
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,9 +22,8 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Listener;
+namespace OCA\OpenCatalogi\Harvest;
 
-use OCA\OpenCatalogi\Harvest\DcatJsonLdFetcher;
 use OCA\OpenRegister\Service\Sync\RegisterSourceFetchersEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
